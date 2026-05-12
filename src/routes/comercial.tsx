@@ -70,6 +70,7 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="negociacao">Propostas & Contratos</TabsTrigger>
           <TabsTrigger value="volume">Volume Mensal</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -77,6 +78,9 @@ function ComercialPage() {
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="indicadores" className="mt-5">
+          <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
         </TabsContent>
         <TabsContent value="negociacao" className="mt-5">
           <NegociacaoTab contratos={contratos} setContratos={setContratos} propostas={propostas} setPropostas={setPropostas} />

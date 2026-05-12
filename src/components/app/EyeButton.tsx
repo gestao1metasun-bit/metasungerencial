@@ -9,9 +9,9 @@ export function EyeButton({ onClick, label = "Ver detalhes" }: { onClick?: () =>
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="h-7 w-7 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition"
+      className="h-5 w-5 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition"
     >
-      <Eye className="h-4 w-4" />
+      <Eye className="h-3 w-3" />
     </Button>
   );
 }

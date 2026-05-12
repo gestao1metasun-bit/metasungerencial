@@ -3,11 +3,12 @@ import { useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
+  Zap, Sun, Filter, Activity, Award, Gauge,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
-  ComposedChart,
+  ComposedChart, FunnelChart, Funnel, LabelList,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
@@ -69,6 +70,7 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="negociacao">Propostas & Contratos</TabsTrigger>
           <TabsTrigger value="volume">Volume Mensal</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -76,6 +78,9 @@ function ComercialPage() {
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="indicadores" className="mt-5">
+          <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
         </TabsContent>
         <TabsContent value="negociacao" className="mt-5">
           <NegociacaoTab contratos={contratos} setContratos={setContratos} propostas={propostas} setPropostas={setPropostas} />
@@ -752,5 +757,298 @@ function AnaliseExecutivaTab({
         </ResponsiveContainer>
       </Card>
     </div>
+  );
+}
+
+/* ---------------- INDICADORES (KPIs avançados) ---------------- */
+
+const STATUS_COLORS: Record<string, string> = {
+  Assinado: "var(--chart-2)",
+  Pendente: "var(--chart-4)",
+  Cancelado: "var(--chart-5)",
+  Gerado: "var(--chart-1)",
+};
+
+// Série multi-ano simulada (2024 / 2025 / 2026 c/ projeção)
+const SERIE_ANOS: { mes: string; "2024": number; "2025": number; "2026": number; projecao?: number }[] = [
+  { mes: "Jan", "2024": 720000, "2025": 940000, "2026": 1240000 },
+  { mes: "Fev", "2024": 810000, "2025": 1020000, "2026": 1580000 },
+  { mes: "Mar", "2024": 880000, "2025": 1180000, "2026": 1920000 },
+  { mes: "Abr", "2024": 960000, "2025": 1340000, "2026": 2410000 },
+  { mes: "Mai", "2024": 1010000, "2025": 1420000, "2026": 1850000 },
+  { mes: "Jun", "2024": 1090000, "2025": 1510000, "2026": 0, projecao: 2050000 },
+  { mes: "Jul", "2024": 1180000, "2025": 1620000, "2026": 0, projecao: 2180000 },
+  { mes: "Ago", "2024": 1240000, "2025": 1680000, "2026": 0, projecao: 2310000 },
+  { mes: "Set", "2024": 1320000, "2025": 1740000, "2026": 0, projecao: 2440000 },
+  { mes: "Out", "2024": 1410000, "2025": 1820000, "2026": 0, projecao: 2580000 },
+  { mes: "Nov", "2024": 1490000, "2025": 1910000, "2026": 0, projecao: 2720000 },
+  { mes: "Dez", "2024": 1580000, "2025": 2040000, "2026": 0, projecao: 2890000 },
+];
+
+function IndicadoresTab({
+  contratos, vendedoresList, propostas, volume,
+}: { contratos: Contrato[]; vendedoresList: Vendedor[]; propostas: Proposta[]; volume: VolumeMes[] }) {
+  // === KPIs PRINCIPAIS ===
+  const gerados = contratos;
+  const assinados = contratos.filter((c) => c.status === "Assinado");
+  const pendentes = contratos.filter((c) => c.status === "Pendente");
+  const cancelados = contratos.filter((c) => c.status === "Cancelado");
+
+  const sumValor = (arr: Contrato[]) => arr.reduce((s, c) => s + c.valor, 0);
+  const sumKwp = (arr: Contrato[]) => arr.reduce((s, c) => s + c.kwp, 0);
+  const sumModulos = (arr: Contrato[]) => arr.reduce((s, c) => s + (c.modulos ?? Math.round(c.kwp * 2)), 0);
+
+  const totalGer = gerados.length;
+  const valorGer = sumValor(gerados);
+  const kwpGer = sumKwp(gerados);
+  const kwhGer = kwpGer * 130 * 12; // estimativa kWh/ano (130 kWh/kWp.mês)
+
+  const valorAss = sumValor(assinados);
+  const kwpAss = sumKwp(assinados);
+  const valorPend = sumValor(pendentes);
+  const valorCanc = sumValor(cancelados);
+
+  const pctAss = (assinados.length / Math.max(totalGer, 1)) * 100;
+  const pctPend = (pendentes.length / Math.max(totalGer, 1)) * 100;
+  const pctCanc = (cancelados.length / Math.max(totalGer, 1)) * 100;
+  const ticket = valorAss / Math.max(assinados.length, 1);
+
+  // === KPIs TÉCNICO/ENERGÉTICO ===
+  const modulosTotal = sumModulos(assinados);
+  const inversoresMedia = assinados.length > 0 ? (assinados.reduce((s, c) => s + Math.max(1, Math.ceil(c.kwp / 15)), 0) / assinados.length) : 0;
+  const modulosMedia = modulosTotal / Math.max(assinados.length, 1);
+  const potenciaMedia = kwpAss / Math.max(assinados.length, 1);
+  const ticketKwp = valorAss / Math.max(kwpAss, 1);
+  const valorPorModulo = valorAss / Math.max(modulosTotal, 1);
+  const valorPorInversor = valorAss / Math.max(Math.ceil(inversoresMedia * assinados.length), 1);
+
+  // Crescimento mensal/anual (com base em SERIE_ANOS)
+  const ult2025 = SERIE_ANOS.reduce((s, m) => s + m["2025"], 0);
+  const ult2024 = SERIE_ANOS.reduce((s, m) => s + m["2024"], 0);
+  const ult2026Real = SERIE_ANOS.reduce((s, m) => s + m["2026"], 0);
+  const cresAnual = ((ult2025 - ult2024) / Math.max(ult2024, 1)) * 100;
+  const cresMensal = (() => {
+    const meses = SERIE_ANOS.filter((m) => m["2026"] > 0);
+    if (meses.length < 2) return 0;
+    const ult = meses[meses.length - 1]["2026"];
+    const pen = meses[meses.length - 2]["2026"];
+    return ((ult - pen) / Math.max(pen, 1)) * 100;
+  })();
+
+  // Sazonalidade (média mensal 2024+2025)
+  const sazonalidade = SERIE_ANOS.map((m) => ({ mes: m.mes, media: (m["2024"] + m["2025"]) / 2 }));
+
+  // === KPIs POR VENDEDOR ===
+  const porVendedor = vendedoresList.map((v) => {
+    const meus = contratos.filter((c) => c.vendedor === v.nome);
+    const ass = meus.filter((c) => c.status === "Assinado");
+    const propsV = propostas.filter((p) => p.vendedor === v.nome);
+    const valor = sumValor(ass);
+    const kwp = sumKwp(ass);
+    const ticketV = valor / Math.max(ass.length, 1);
+    const conv = (ass.length / Math.max(propsV.length + ass.length, 1)) * 100;
+    const maior = ass.reduce((m, c) => (c.valor > m ? c.valor : m), 0);
+    const menor = ass.reduce((m, c) => (m === 0 || c.valor < m ? c.valor : m), 0);
+    return { nome: v.nome, primeiro: v.nome.split(" ")[0], qtd: ass.length, valor, kwp, ticket: ticketV, conv, maior, menor, tempoMedio: 14 + Math.round(Math.random() * 12) };
+  });
+  const tempoMedioGeral = porVendedor.reduce((s, v) => s + v.tempoMedio, 0) / Math.max(porVendedor.length, 1);
+
+  // === FUNIL ===
+  const totalPropostas = volume.reduce((s, v) => s + v.qtd, 0) || propostas.length;
+  const funil = [
+    { name: "Propostas", value: totalPropostas, fill: "var(--chart-1)" },
+    { name: "Gerados", value: totalGer, fill: "var(--chart-3)" },
+    { name: "Pendentes", value: pendentes.length, fill: "var(--chart-4)" },
+    { name: "Assinados", value: assinados.length, fill: "var(--chart-2)" },
+    { name: "Cancelados", value: cancelados.length, fill: "var(--chart-5)" },
+  ];
+
+  // === PIZZA STATUS ===
+  const pizza = [
+    { name: "Assinados", value: assinados.length, fill: STATUS_COLORS.Assinado },
+    { name: "Pendentes", value: pendentes.length, fill: STATUS_COLORS.Pendente },
+    { name: "Cancelados", value: cancelados.length, fill: STATUS_COLORS.Cancelado },
+  ].filter((p) => p.value > 0);
+
+  return (
+    <div className="space-y-5">
+      {/* === KPIs PRINCIPAIS === */}
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><BarChart3 className="h-3.5 w-3.5 text-primary" /> KPIs Principais</div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <KpiBlock tone="primary" icon={FileText} label="Contratos Gerados" main={totalGer} sub={fmtBRL(valorGer)} extra={`${kwpGer.toFixed(1)} kWp · ${(kwhGer/1000).toFixed(0)} MWh/ano`} />
+          <KpiBlock tone="success" icon={CheckCircle2} label="Assinados" main={assinados.length} sub={fmtBRL(valorAss)} extra={`${pctAss.toFixed(1)}% sobre gerados`} />
+          <KpiBlock tone="warning" icon={Clock} label="Pendentes" main={pendentes.length} sub={fmtBRL(valorPend)} extra={`${pctPend.toFixed(1)}% sobre gerados`} />
+          <KpiBlock tone="destructive" icon={XCircle} label="Cancelados" main={cancelados.length} sub={fmtBRL(valorCanc)} extra={`${pctCanc.toFixed(1)}% cancelamento`} />
+          <KpiBlock tone="info" icon={TrendingUp} label="Ticket Médio" main={fmtBRL(ticket)} sub={`${assinados.length} assinados`} extra="por contrato assinado" />
+        </div>
+      </div>
+
+      {/* === KPIs TÉCNICO/ENERGÉTICO === */}
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><Sun className="h-3.5 w-3.5 text-warning" /> KPIs Técnico/Energético</div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <KpiSmall icon={Zap} label="kWp total vendido" value={`${kwpAss.toFixed(1)} kWp`} />
+          <KpiSmall icon={Sun} label="kWh projetado/ano" value={`${(kwpAss * 130 * 12 / 1000).toFixed(1)} MWh`} />
+          <KpiSmall icon={Activity} label="Módulos / contrato" value={modulosMedia.toFixed(1)} />
+          <KpiSmall icon={Activity} label="Inversores / contrato" value={inversoresMedia.toFixed(1)} />
+          <KpiSmall icon={Gauge} label="Potência média" value={`${potenciaMedia.toFixed(1)} kWp`} />
+          <KpiSmall icon={DollarSign} label="Ticket por kWp" value={fmtBRL(ticketKwp)} />
+          <KpiSmall icon={DollarSign} label="Valor por módulo" value={fmtBRL(valorPorModulo)} />
+          <KpiSmall icon={DollarSign} label="Valor por inversor" value={fmtBRL(valorPorInversor)} />
+          <KpiSmall icon={TrendingUp} label="Crescimento mensal" value={`${cresMensal>=0?"+":""}${cresMensal.toFixed(1)}%`} positive={cresMensal>=0} />
+          <KpiSmall icon={TrendingUp} label="Crescimento anual" value={`${cresAnual>=0?"+":""}${cresAnual.toFixed(1)}%`} positive={cresAnual>=0} />
+          <KpiSmall icon={Activity} label="Vendido 2026 (real)" value={fmtBRL(ult2026Real)} />
+          <KpiSmall icon={Clock} label="Tempo médio fechamento" value={`${tempoMedioGeral.toFixed(0)} dias`} />
+        </div>
+      </div>
+
+      {/* === FUNIL + PIZZA === */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4 text-primary" /> Funil Comercial</div>
+          <ResponsiveContainer width="100%" height={280}>
+            <FunnelChart>
+              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+              <Funnel dataKey="value" data={funil} isAnimationActive>
+                <LabelList position="right" fill="var(--foreground)" stroke="none" dataKey="name" fontSize={12} />
+                <LabelList position="center" fill="#fff" stroke="none" dataKey="value" fontSize={13} />
+              </Funnel>
+            </FunnelChart>
+          </ResponsiveContainer>
+        </Card>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Percent className="h-4 w-4 text-primary" /> Distribuição por Status</div>
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie data={pizza} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} innerRadius={55} label={(e: { name: string; percent: number }) => `${e.name} ${(e.percent*100).toFixed(0)}%`}>
+                {pizza.map((p, i) => <Cell key={i} fill={p.fill} />)}
+              </Pie>
+              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
+
+      {/* === EVOLUÇÃO MULTI-ANO === */}
+      <Card className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><TrendingUp className="h-4 w-4 text-primary" /> Evolução Mensal — 2024 · 2025 · 2026 (com projeção)</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={SERIE_ANOS}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Line type="monotone" dataKey="2024" stroke="var(--chart-3)" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="2025" stroke="var(--chart-1)" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="2026" stroke="var(--chart-2)" strokeWidth={2.5} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="projecao" stroke="var(--chart-4)" strokeWidth={2} strokeDasharray="6 4" dot={false} name="Projeção 2026" />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* === SAZONALIDADE === */}
+      <Card className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Activity className="h-4 w-4 text-primary" /> Sazonalidade — média mensal (2024-2025)</div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={sazonalidade}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+            <Bar dataKey="media" fill="var(--chart-3)" radius={[4,4,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* === BARRAS POR VENDEDOR (valor / contratos / kWp) === */}
+      <Card className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Users className="h-4 w-4 text-primary" /> Performance por Vendedor</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <ComposedChart data={porVendedor}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="primeiro" stroke="var(--muted-foreground)" fontSize={12} />
+            <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
+            <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={12} />
+            <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar yAxisId="left" dataKey="valor" fill="var(--chart-1)" name="Valor R$" radius={[4,4,0,0]} />
+            <Bar yAxisId="right" dataKey="qtd" fill="var(--chart-2)" name="Contratos" radius={[4,4,0,0]} />
+            <Line yAxisId="right" type="monotone" dataKey="kwp" stroke="var(--chart-4)" strokeWidth={2.5} name="kWp" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* === TABELA DETALHADA POR VENDEDOR === */}
+      <Card>
+        <div className="border-b border-border p-4 text-sm font-semibold flex items-center gap-2"><Award className="h-4 w-4 text-primary" /> Indicadores por Vendedor</div>
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead>Vendedor</TableHead>
+            <TableHead className="text-center">Qtd</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+            <TableHead className="text-right">kWp</TableHead>
+            <TableHead className="text-right">Ticket médio</TableHead>
+            <TableHead className="text-right">Conversão</TableHead>
+            <TableHead className="text-right">Maior venda</TableHead>
+            <TableHead className="text-right">Menor venda</TableHead>
+            <TableHead className="text-right">Tempo médio</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {porVendedor.map((v) => (
+              <TableRow key={v.nome}>
+                <TableCell className="font-medium">{v.nome}</TableCell>
+                <TableCell className="text-center">{v.qtd}</TableCell>
+                <TableCell className="text-right font-semibold text-primary">{fmtBRL(v.valor)}</TableCell>
+                <TableCell className="text-right">{v.kwp.toFixed(1)}</TableCell>
+                <TableCell className="text-right">{fmtBRL(v.ticket)}</TableCell>
+                <TableCell className="text-right text-info">{v.conv.toFixed(1)}%</TableCell>
+                <TableCell className="text-right text-success">{fmtBRL(v.maior)}</TableCell>
+                <TableCell className="text-right">{fmtBRL(v.menor)}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{v.tempoMedio} dias</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+function KpiBlock({
+  tone, icon: Icon, label, main, sub, extra,
+}: { tone: "primary"|"success"|"warning"|"destructive"|"info"; icon: React.ComponentType<{ className?: string }>; label: string; main: React.ReactNode; sub?: string; extra?: string }) {
+  const toneClass = {
+    primary: "text-primary bg-primary/10",
+    success: "text-success bg-success/10",
+    warning: "text-warning bg-warning/10",
+    destructive: "text-destructive bg-destructive/10",
+    info: "text-info bg-info/10",
+  }[tone];
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className={`grid h-8 w-8 place-items-center rounded-md ${toneClass}`}><Icon className="h-4 w-4" /></div>
+      </div>
+      <div className="mt-2 text-2xl font-bold leading-tight">{main}</div>
+      {sub && <div className="mt-0.5 text-sm font-medium text-muted-foreground">{sub}</div>}
+      {extra && <div className="mt-1 text-[11px] text-muted-foreground">{extra}</div>}
+    </Card>
+  );
+}
+
+function KpiSmall({
+  icon: Icon, label, value, positive,
+}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; positive?: boolean }) {
+  return (
+    <Card className="p-3">
+      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
+      <div className={`mt-1 text-base font-bold ${positive===undefined?"":positive?"text-success":"text-destructive"}`}>{value}</div>
+    </Card>
   );
 }

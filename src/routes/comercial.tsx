@@ -25,7 +25,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { contratos, clientes, vendedores, evolucaoMensal, fmtBRL } from "@/lib/mock-data";
+import { contratos, clientes, vendedores, evolucaoMensal, propostas, fmtBRL } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),
@@ -43,15 +43,98 @@ function ComercialPage() {
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
+          <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardComercial /></TabsContent>
         <TabsContent value="clientes" className="mt-5"><ClientesTab /></TabsContent>
+        <TabsContent value="propostas" className="mt-5"><PropostasTab /></TabsContent>
         <TabsContent value="contratos" className="mt-5"><ContratosTab /></TabsContent>
         <TabsContent value="vendedores" className="mt-5"><VendedoresTab /></TabsContent>
+        <TabsContent value="analise" className="mt-5"><AnaliseExecutivaTab /></TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function PropostasTab() {
+  const [q, setQ] = useState("");
+  const list = propostas.filter((p) => [p.id, p.cliente, p.vendedor].some((v) => v.toLowerCase().includes(q.toLowerCase())));
+  return (
+    <Card className="bg-[image:var(--gradient-card)]">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
+        <div className="relative flex-1 min-w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar proposta, cliente ou vendedor" className="pl-9 bg-input/60" />
+        </div>
+        <Button className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
+          <Plus className="mr-2 h-4 w-4" /> Nova Proposta
+        </Button>
+      </div>
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>Proposta</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
+          <TableHead className="text-right">Valor</TableHead><TableHead className="text-right">kWp</TableHead>
+          <TableHead>Status</TableHead><TableHead>Data</TableHead><TableHead>Validade</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {list.map((p) => (
+            <TableRow key={p.id}>
+              <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+              <TableCell className="font-medium">{p.cliente}</TableCell>
+              <TableCell className="text-muted-foreground">{p.vendedor}</TableCell>
+              <TableCell className="text-right font-medium">{fmtBRL(p.valor)}</TableCell>
+              <TableCell className="text-right">{p.kwp.toFixed(1)}</TableCell>
+              <TableCell><StatusBadge status={p.status} /></TableCell>
+              <TableCell className="text-muted-foreground">{p.data}</TableCell>
+              <TableCell className="text-muted-foreground">{p.validade}</TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function AnaliseExecutivaTab() {
+  const total = contratos.reduce((s, c) => s + c.valor, 0);
+  const meta = 2500000;
+  const cumprimento = (total / meta) * 100;
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <Card className="p-5 bg-[image:var(--gradient-card)] lg:col-span-1">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground">Meta do mês</div>
+        <div className="mt-2 text-3xl font-bold tracking-tight text-primary">{fmtBRL(meta)}</div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-[image:var(--gradient-primary)]" style={{ width: `${Math.min(cumprimento, 100)}%` }} />
+        </div>
+        <div className="mt-2 text-sm text-muted-foreground">{cumprimento.toFixed(1)}% atingido — {fmtBRL(total)}</div>
+      </Card>
+      <Card className="p-5 bg-[image:var(--gradient-card)] lg:col-span-2">
+        <div className="mb-3 text-sm font-semibold">Ranking de vendedores</div>
+        <div className="space-y-3">
+          {[...vendedores].sort((a, b) => b.vendido - a.vendido).map((v, i) => (
+            <div key={v.id} className="flex items-center gap-3 rounded-lg border border-border bg-card/40 p-3">
+              <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">{i + 1}</div>
+              <div className="flex-1">
+                <div className="font-medium">{v.nome}</div>
+                <div className="text-xs text-muted-foreground">{v.contratos} contratos</div>
+              </div>
+              <div className="text-right">
+                <div className="font-semibold text-primary">{fmtBRL(v.vendido)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
   );
 }
 

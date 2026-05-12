@@ -39,7 +39,12 @@ export const Route = createFileRoute("/comercial")({
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
-type Contrato = (typeof contratosSeed)[number] & { banco?: string; modulos?: number; obs?: string };
+type Contrato = (typeof contratosSeed)[number] & {
+  banco?: string; modulos?: number; obs?: string;
+  potencia?: number; inv1?: string; inv2?: string; inv3?: string; parametro?: string;
+  dataCadastro?: string; dataAssinatura?: string;
+  comissaoPct?: number; comissaoValor?: number;
+};
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];
 export type VolumeMes = { id: string; mes: string; ano: number; qtd: number; valor: number };
@@ -73,7 +78,8 @@ function ComercialPage() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="negociacao">Propostas & Contratos</TabsTrigger>
-          <TabsTrigger value="volume">Volume Mensal</TabsTrigger>
+          <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
+          <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
@@ -86,8 +92,11 @@ function ComercialPage() {
         <TabsContent value="negociacao" className="mt-5">
           <NegociacaoTab contratos={contratos} setContratos={setContratos} propostas={propostas} setPropostas={setPropostas} />
         </TabsContent>
-        <TabsContent value="volume" className="mt-5">
+        <TabsContent value="cad-proposta" className="mt-5">
           <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />
+        </TabsContent>
+        <TabsContent value="cad-contrato" className="mt-5">
+          <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />

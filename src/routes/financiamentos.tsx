@@ -40,6 +40,16 @@ const STATUS_LIST = [
 
 type FinOp = (typeof finSeed)[number];
 
+/** Formata contrato vindo do cadastro (ex.: "CT-2025-0142") como "142/2026".
+ *  Manuais (sem contrato vinculado) ficam em branco. */
+function fmtContrato(id?: string): string {
+  if (!id) return "";
+  const m = id.match(/(\d{1,4})\s*$/);
+  if (!m) return "";
+  const num = String(parseInt(m[1], 10)).padStart(3, "0");
+  return `${num}/2026`;
+}
+
 /* ---------------- Página ---------------- */
 
 function FinanciamentosPage() {
@@ -453,7 +463,7 @@ function Carteira({
             return (
               <TableRow key={o.id}>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{o.contrato}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato) || <span className="text-muted-foreground/50">—</span>}</TableCell>
                 <TableCell>{o.banco}</TableCell>
                 <TableCell className="text-muted-foreground">{o.gerente}</TableCell>
                 <TableCell className="text-right">{fmtBRL(o.valorContrato)}</TableCell>
@@ -509,7 +519,7 @@ function EditOpDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar operação {op.id}</DialogTitle>
-          <DialogDescription>{op.cliente} · {op.contrato}</DialogDescription>
+          <DialogDescription>{op.cliente}{op.contrato ? ` · ${fmtContrato(op.contrato)}` : ""}</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>Banco</Label>

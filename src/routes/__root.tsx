@@ -79,10 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Plataforma interna de gestão operacional, comercial, financeira e de engenharia da Meta Sun Energia Solar." },
       { name: "author", content: "Meta Sun" },
       { property: "og:title", content: "Meta Sun Gerencial" },
-      { property: "og:description", content: "Plataforma interna de gestão Meta Sun." },
+      { property: "og:description", content: "Plataforma interna de gestão operacional, comercial, financeira e de engenharia da Meta Sun Energia Solar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Meta Sun Gerencial" },
+      { name: "twitter:description", content: "Plataforma interna de gestão operacional, comercial, financeira e de engenharia da Meta Sun Energia Solar." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c02b2a43-3137-4606-9a12-caa4c233f702/id-preview-4c3decc2--55eb209b-3c9f-49b7-808a-4ba1686c95d7.lovable.app-1778628832590.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c02b2a43-3137-4606-9a12-caa4c233f702/id-preview-4c3decc2--55eb209b-3c9f-49b7-808a-4ba1686c95d7.lovable.app-1778628832590.png" },
     ],
     links: [
       {

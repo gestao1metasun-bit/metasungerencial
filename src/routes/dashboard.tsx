@@ -274,7 +274,7 @@ function DetailModal({
                   <TableCell>{f.cliente}</TableCell>
                   <TableCell className="text-muted-foreground">{f.banco}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(f.valorFinanciado)}</TableCell>
-                  <TableCell><StatusBadge status={f.status} /></TableCell>
+                  <TableCell><StatusBadge status={f.statusOp} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

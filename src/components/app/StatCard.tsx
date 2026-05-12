@@ -26,12 +26,12 @@ export function StatCard({
 }) {
   return (
     <Card className="relative overflow-hidden border-border bg-card p-4 shadow-[var(--shadow-elegant)] transition hover:shadow-md">
-      {onView && (
-        <div className="absolute right-2 top-2"><EyeButton onClick={onView} /></div>
-      )}
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 pr-6">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+            {onView && <EyeButton onClick={onView} />}
+          </div>
           <div className="mt-2 truncate text-2xl font-bold tracking-tight text-foreground">{value}</div>
           {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
           {trend && (

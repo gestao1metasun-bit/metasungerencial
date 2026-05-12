@@ -157,6 +157,59 @@ function FinanceiroPage() {
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="receitas" className="mt-5">
+          <Card className="bg-[image:var(--gradient-card)] p-5">
+            <div className="mb-3 text-sm font-semibold">Receitas por mês</div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={receitaDespesa}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                <Bar dataKey="receita" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="despesas" className="mt-5">
+          <Card className="bg-[image:var(--gradient-card)] p-5">
+            <div className="mb-3 text-sm font-semibold">Despesas por mês</div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={receitaDespesa}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                <Bar dataKey="despesa" fill="var(--chart-5)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="import" className="mt-5">
+          <Card className="bg-[image:var(--gradient-card)] p-6">
+            <h2 className="text-base font-semibold">Importações futuras</h2>
+            <p className="mt-1 text-sm text-muted-foreground">O módulo financeiro está preparado para receber dados externos.</p>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {[
+                { n: "Google Sheets", d: "Sincronizar planilhas operacionais" },
+                { n: "Arquivo CSV", d: "Upload de extrato bancário" },
+                { n: "Excel (.xlsx)", d: "Lançamentos em lote" },
+                { n: "API Bancária (Open Finance)", d: "Conciliação automática" },
+              ].map((i) => (
+                <div key={i.n} className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-4">
+                  <div>
+                    <div className="font-medium">{i.n}</div>
+                    <div className="text-xs text-muted-foreground">{i.d}</div>
+                  </div>
+                  <Button variant="outline" size="sm"><FileSpreadsheet className="mr-2 h-4 w-4" /> Conectar</Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </>
   );

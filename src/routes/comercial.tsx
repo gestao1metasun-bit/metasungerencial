@@ -55,7 +55,7 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          
           <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>

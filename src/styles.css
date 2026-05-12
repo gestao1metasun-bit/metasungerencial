@@ -85,10 +85,10 @@
   --success: oklch(0.62 0.17 150);
   --success-foreground: oklch(1 0 0);
 
-  --warning: oklch(0.78 0.15 75);
-  --warning-foreground: oklch(0.24 0.05 255);
+  --warning: oklch(0.62 0.16 60);
+  --warning-foreground: oklch(1 0 0);
 
-  --info: oklch(0.6 0.14 240);
+  --info: oklch(0.5 0.14 240);
   --info-foreground: oklch(1 0 0);
 
   /* #D9E1EC */

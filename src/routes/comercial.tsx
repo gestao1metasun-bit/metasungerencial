@@ -606,6 +606,167 @@ function NovoVolumeDialog({ onSave }: { onSave: (v: VolumeMes) => void }) {
   );
 }
 
+/* ---------------- CADASTRAR CONTRATO ---------------- */
+
+function nextContratoId(contratos: Contrato[]): string {
+  const ano = new Date().getFullYear();
+  const nums = contratos
+    .map((c) => {
+      const m = c.id.match(/(\d+)\s*$/);
+      return m ? parseInt(m[1], 10) : 0;
+    })
+    .filter((n) => n > 0);
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return `CT-${ano}-${String(next).padStart(4, "0")}`;
+}
+
+function CadastrarContratoTab({
+  contratos, setContratos, vendedoresList,
+}: { contratos: Contrato[]; setContratos: (c: Contrato[]) => void; vendedoresList: Vendedor[] }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const proximo = nextContratoId(contratos);
+  const [form, setForm] = useState({
+    cliente: "", dataAssinatura: "", modulos: "", potencia: "",
+    inv1: "", inv2: "", inv3: "", parametro: "",
+    valor: "", vendedor: "", comissaoPct: "3",
+  });
+
+  const valorNum = Number(form.valor) || 0;
+  const pctNum = Number(form.comissaoPct) || 0;
+  const comissaoValor = (valorNum * pctNum) / 100;
+
+  const submit = () => {
+    if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
+    if (!valorNum) { toast.error("Informe o valor da venda"); return; }
+
+    const novo: Contrato = {
+      id: nextContratoId(contratos),
+      cliente: form.cliente.trim(),
+      vendedor: form.vendedor,
+      valor: valorNum,
+      kwp: Number(form.potencia) || 0,
+      status: "Gerado",
+      data: today,
+      pagamento: "À definir",
+      banco: "",
+      modulos: Number(form.modulos) || 0,
+      obs: "",
+      potencia: Number(form.potencia) || 0,
+      inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
+      parametro: form.parametro,
+      dataCadastro: today,
+      dataAssinatura: form.dataAssinatura,
+      comissaoPct: pctNum,
+      comissaoValor,
+    };
+    setContratos([novo, ...contratos]);
+    toast.success(`Contrato ${novo.id} cadastrado`);
+    setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
+      inv1: "", inv2: "", inv3: "", parametro: "",
+      valor: "", vendedor: "", comissaoPct: "3" });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold">Novo contrato</div>
+            <div className="text-xs text-muted-foreground">Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Cadastro: {today}</div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-1.5"><Label>Nº contrato (auto)</Label>
+            <Input value={proximo} readOnly className="bg-muted font-mono" />
+          </div>
+          <div className="space-y-1.5"><Label>Data cadastro</Label>
+            <Input value={today} readOnly className="bg-muted" />
+          </div>
+          <div className="space-y-1.5"><Label>Data assinatura</Label>
+            <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
+          </div>
+
+          <div className="space-y-1.5 md:col-span-2"><Label>Cliente</Label>
+            <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} placeholder="Nome do cliente" />
+          </div>
+          <div className="space-y-1.5"><Label>Vendedor (do cadastro)</Label>
+            <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+              <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5"><Label>Qtd módulos</Label>
+            <Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: e.target.value })} />
+          </div>
+          <div className="space-y-1.5"><Label>Potência (kWp)</Label>
+            <Input type="number" step="0.01" value={form.potencia} onChange={(e) => setForm({ ...form, potencia: e.target.value })} />
+          </div>
+          <div className="space-y-1.5"><Label>Parâmetro</Label>
+            <Input value={form.parametro} onChange={(e) => setForm({ ...form, parametro: e.target.value })} placeholder="Ex.: 220V trifásico" />
+          </div>
+
+          <div className="space-y-1.5"><Label>Inversor 1</Label>
+            <Input value={form.inv1} onChange={(e) => setForm({ ...form, inv1: e.target.value })} placeholder="Modelo / potência" />
+          </div>
+          <div className="space-y-1.5"><Label>Inversor 2</Label>
+            <Input value={form.inv2} onChange={(e) => setForm({ ...form, inv2: e.target.value })} placeholder="Opcional" />
+          </div>
+          <div className="space-y-1.5"><Label>Inversor 3</Label>
+            <Input value={form.inv3} onChange={(e) => setForm({ ...form, inv3: e.target.value })} placeholder="Opcional" />
+          </div>
+
+          <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
+            <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+          </div>
+          <div className="space-y-1.5"><Label>% comissão sugerida</Label>
+            <Input type="number" step="0.1" value={form.comissaoPct} onChange={(e) => setForm({ ...form, comissaoPct: e.target.value })} />
+          </div>
+          <div className="space-y-1.5"><Label>R$ valor comissão (auto)</Label>
+            <Input value={fmtBRL(comissaoValor)} readOnly className="bg-muted font-semibold text-primary" />
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", parametro: "", valor: "", vendedor: "", comissaoPct: "3" })}>Limpar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={submit}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="border-b border-border p-4 text-sm font-semibold">Últimos contratos cadastrados</div>
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
+            <TableHead className="text-right">kWp</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+            <TableHead className="text-right">% Com.</TableHead>
+            <TableHead className="text-right">R$ Comissão</TableHead>
+            <TableHead>Status</TableHead><TableHead>Assinatura</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {contratos.slice(0, 12).map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="font-mono text-xs text-primary">{c.id}</TableCell>
+                <TableCell className="font-medium">{c.cliente}</TableCell>
+                <TableCell className="text-muted-foreground">{c.vendedor}</TableCell>
+                <TableCell className="text-right">{(c.kwp ?? 0).toFixed(2)}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                <TableCell className="text-right">{c.comissaoPct ? `${c.comissaoPct}%` : "—"}</TableCell>
+                <TableCell className="text-right text-primary">{c.comissaoValor ? fmtBRL(c.comissaoValor) : "—"}</TableCell>
+                <TableCell><StatusBadge status={c.status} /></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{c.dataAssinatura || "—"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
 /* ---------------- VENDEDORES ---------------- */
 
 function VendedoresTab({

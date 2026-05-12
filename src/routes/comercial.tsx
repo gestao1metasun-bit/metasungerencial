@@ -610,14 +610,26 @@ function NovoVolumeDialog({ onSave }: { onSave: (v: VolumeMes) => void }) {
 
 function nextContratoId(contratos: Contrato[]): string {
   const ano = new Date().getFullYear();
+  const sufixo = `/${ano}`;
   const nums = contratos
     .map((c) => {
-      const m = c.id.match(/(\d+)\s*$/);
+      // suporta tanto novo formato "090/2026" quanto antigo "CT-2026-0143"
+      const m = c.id.match(/^(\d{1,4})\s*\/\s*\d{4}$/) ?? c.id.match(/(\d+)\s*$/);
       return m ? parseInt(m[1], 10) : 0;
     })
     .filter((n) => n > 0);
   const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `CT-${ano}-${String(next).padStart(4, "0")}`;
+  return `${String(next).padStart(3, "0")}${sufixo}`;
+}
+
+/** Faixas de comissão definidas pelo parâmetro (R$/kWp). */
+function comissaoFromParametro(parametro: number): { pct: number | null; aprovacao: boolean } {
+  if (!isFinite(parametro) || parametro <= 0) return { pct: null, aprovacao: false };
+  if (parametro < 2000) return { pct: null, aprovacao: true };
+  if (parametro <= 2100) return { pct: 3, aprovacao: false };
+  if (parametro <= 2300) return { pct: 4, aprovacao: false };
+  if (parametro <= 2449) return { pct: 5, aprovacao: false };
+  return { pct: 6, aprovacao: false };
 }
 
 function CadastrarContratoTab({
@@ -627,44 +639,50 @@ function CadastrarContratoTab({
   const proximo = nextContratoId(contratos);
   const [form, setForm] = useState({
     cliente: "", dataAssinatura: "", modulos: "", potencia: "",
-    inv1: "", inv2: "", inv3: "", parametro: "",
-    valor: "", vendedor: "", comissaoPct: "3",
+    inv1: "", inv2: "", inv3: "",
+    valor: "", vendedor: "",
   });
 
+  // Cálculos automáticos
+  const modulosNum = Number(form.modulos) || 0;
+  const potenciaWp = Number(form.potencia) || 0; // potência por módulo em W (ex.: 620)
+  const kwpTotal = (modulosNum * potenciaWp) / 1000; // 15 * 620 / 1000 = 9.3
   const valorNum = Number(form.valor) || 0;
-  const pctNum = Number(form.comissaoPct) || 0;
-  const comissaoValor = (valorNum * pctNum) / 100;
+  const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
+  const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
+  const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const submit = () => {
     if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
+    if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
 
     const novo: Contrato = {
       id: nextContratoId(contratos),
       cliente: form.cliente.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
-      kwp: Number(form.potencia) || 0,
+      kwp: kwpTotal,
       status: "Gerado",
       data: today,
       pagamento: "À definir",
       banco: "",
-      modulos: Number(form.modulos) || 0,
+      modulos: modulosNum,
       obs: "",
-      potencia: Number(form.potencia) || 0,
+      potencia: potenciaWp,
       inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
-      parametro: form.parametro,
+      parametro: parametroNum.toFixed(4),
       dataCadastro: today,
       dataAssinatura: form.dataAssinatura,
-      comissaoPct: pctNum,
+      comissaoPct: comissaoPct ?? 0,
       comissaoValor,
     };
     setContratos([novo, ...contratos]);
     toast.success(`Contrato ${novo.id} cadastrado`);
     setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
-      inv1: "", inv2: "", inv3: "", parametro: "",
-      valor: "", vendedor: "", comissaoPct: "3" });
+      inv1: "", inv2: "", inv3: "",
+      valor: "", vendedor: "" });
   };
 
   return (
@@ -701,11 +719,11 @@ function CadastrarContratoTab({
           <div className="space-y-1.5"><Label>Qtd módulos</Label>
             <Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: e.target.value })} />
           </div>
-          <div className="space-y-1.5"><Label>Potência (kWp)</Label>
-            <Input type="number" step="0.01" value={form.potencia} onChange={(e) => setForm({ ...form, potencia: e.target.value })} />
+          <div className="space-y-1.5"><Label>Potência por módulo (W)</Label>
+            <Input type="number" step="1" value={form.potencia} onChange={(e) => setForm({ ...form, potencia: e.target.value })} placeholder="Ex.: 620" />
           </div>
-          <div className="space-y-1.5"><Label>Parâmetro</Label>
-            <Input value={form.parametro} onChange={(e) => setForm({ ...form, parametro: e.target.value })} placeholder="Ex.: 220V trifásico" />
+          <div className="space-y-1.5"><Label>kWp total (auto)</Label>
+            <Input value={kwpTotal ? kwpTotal.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
           </div>
 
           <div className="space-y-1.5"><Label>Inversor 1</Label>
@@ -721,17 +739,27 @@ function CadastrarContratoTab({
           <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
             <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
           </div>
-          <div className="space-y-1.5"><Label>% comissão sugerida</Label>
-            <Input type="number" step="0.1" value={form.comissaoPct} onChange={(e) => setForm({ ...form, comissaoPct: e.target.value })} />
+          <div className="space-y-1.5"><Label>Parâmetro (auto = valor / kWp)</Label>
+            <Input value={parametroNum ? parametroNum.toFixed(4) : ""} readOnly className="bg-muted font-mono" />
           </div>
-          <div className="space-y-1.5"><Label>R$ valor comissão (auto)</Label>
-            <Input value={fmtBRL(comissaoValor)} readOnly className="bg-muted font-semibold text-primary" />
+          <div className="space-y-1.5"><Label>Comissão (auto)</Label>
+            {aprovacao ? (
+              <Input value="APROVAÇÃO DIRETORIA" readOnly className="bg-destructive/10 font-bold text-destructive" />
+            ) : (
+              <Input value={comissaoPct != null ? `${comissaoPct}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
+            )}
           </div>
         </div>
 
+        {parametroNum > 0 && (
+          <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <span className="font-semibold">Faixas:</span> &lt;2000 = aprovação diretoria · 2000–2100 = 3% · 2101–2300 = 4% · 2301–2449 = 5% · 2450+ = 6%
+          </div>
+        )}
+
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", parametro: "", valor: "", vendedor: "", comissaoPct: "3" })}>Limpar</Button>
-          <Button className="bg-primary text-primary-foreground" onClick={submit}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
+          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "" })}>Limpar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
         </div>
       </Card>
 
@@ -742,9 +770,10 @@ function CadastrarContratoTab({
             <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
             <TableHead className="text-right">kWp</TableHead>
             <TableHead className="text-right">Valor</TableHead>
+            <TableHead className="text-right">Parâmetro</TableHead>
             <TableHead className="text-right">% Com.</TableHead>
             <TableHead className="text-right">R$ Comissão</TableHead>
-            <TableHead>Status</TableHead><TableHead>Assinatura</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {contratos.slice(0, 12).map((c) => (
@@ -754,10 +783,10 @@ function CadastrarContratoTab({
                 <TableCell className="text-muted-foreground">{c.vendedor}</TableCell>
                 <TableCell className="text-right">{(c.kwp ?? 0).toFixed(2)}</TableCell>
                 <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{c.parametro || "—"}</TableCell>
                 <TableCell className="text-right">{c.comissaoPct ? `${c.comissaoPct}%` : "—"}</TableCell>
                 <TableCell className="text-right text-primary">{c.comissaoValor ? fmtBRL(c.comissaoValor) : "—"}</TableCell>
                 <TableCell><StatusBadge status={c.status} /></TableCell>
-                <TableCell className="text-xs text-muted-foreground">{c.dataAssinatura || "—"}</TableCell>
               </TableRow>
             ))}
           </TableBody>

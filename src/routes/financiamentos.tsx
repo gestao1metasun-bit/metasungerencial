@@ -508,27 +508,71 @@ function Carteira({
   );
 }
 
+function addDays(iso: string, days: number): string {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
 function EditOpDialog({
   op, onClose, onSave,
 }: { op: FinOp | null; onClose: () => void; onSave: (patch: Partial<FinOp>) => void }) {
   const [form, setForm] = useState<Partial<FinOp>>({});
   useEffect(() => { setForm(op ?? {}); }, [op]);
   if (!op) return null;
+
+  // Quando o prazo muda, dataBase = hoje, previsão = hoje + prazo (decai a cada dia)
+  const handlePrazo = (n: number) => {
+    const base = todayISO();
+    setForm((f) => ({ ...f, prazo: n, dataBase: base, previsao: n > 0 ? addDays(base, n) : "—" }));
+  };
+
+  const prazoAtual = form.prazo ?? op.prazo;
+  const baseAtual = form.dataBase ?? op.dataBase;
+  const previsaoAtual = form.previsao ?? op.previsao;
+  const diasRest = diasRestantes(previsaoAtual);
+
   return (
     <Dialog open={!!op} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar operação {op.id}</DialogTitle>
           <DialogDescription>{op.cliente}{op.contrato ? ` · ${fmtContrato(op.contrato)}` : ""}</DialogDescription>
         </DialogHeader>
+
+        {/* Dados do contrato (somente leitura — vem do cadastro) */}
+        <div className="rounded-md border border-border bg-muted/30 p-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Dados do contrato (do cadastro)</div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div><Label className="text-xs">Ordem</Label><Input value={op.id} readOnly className="bg-muted" /></div>
+            <div><Label className="text-xs">Contratante</Label><Input value={op.cliente} readOnly className="bg-muted" /></div>
+            <div><Label className="text-xs">Vendedor</Label><Input value={op.vendedor ?? "—"} readOnly className="bg-muted" /></div>
+            <div><Label className="text-xs">CPF/CNPJ</Label><Input value={op.cpfcnpj ?? "—"} readOnly className="bg-muted" /></div>
+            <div><Label className="text-xs">Valor contrato</Label><Input value={fmtBRL(op.valorContrato)} readOnly className="bg-muted" /></div>
+            <div><Label className="text-xs">Contrato</Label><Input value={fmtContrato(op.contrato) || "—"} readOnly className="bg-muted" /></div>
+          </div>
+        </div>
+
+        {/* Campos editáveis */}
         <div className="grid grid-cols-2 gap-4">
+          <div><Label>PF/PJ</Label>
+            <Select value={form.pfpj ?? op.pfpj ?? "PF"} onValueChange={(v) => setForm({ ...form, pfpj: v as "PF" | "PJ" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="PF">PF</SelectItem><SelectItem value="PJ">PJ</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div><Label>Envio ao banco</Label>
+            <Input type="date" value={form.envio ?? op.envio ?? ""} onChange={(e) => setForm({ ...form, envio: e.target.value })} />
+          </div>
           <div><Label>Banco</Label>
             <Select value={form.banco ?? op.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Gerente</Label>
+          <div><Label>Gerente <span className="text-xs text-muted-foreground">(do cadastro)</span></Label>
             <Select value={form.gerente ?? op.gerente} onValueChange={(v) => setForm({ ...form, gerente: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{gerentes.map((g) => <SelectItem key={g.id} value={g.nome}>{g.nome}</SelectItem>)}</SelectContent>
@@ -540,14 +584,29 @@ function EditOpDialog({
               <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Prazo (dias)</Label>
-            <Input type="number" value={form.prazo ?? op.prazo} onChange={(e) => setForm({ ...form, prazo: Number(e.target.value) })} />
-          </div>
           <div><Label>Valor financiado</Label>
             <Input type="number" value={form.valorFinanciado ?? op.valorFinanciado} onChange={(e) => setForm({ ...form, valorFinanciado: Number(e.target.value) })} />
           </div>
-          <div><Label>Previsão liberação</Label>
-            <Input type="date" value={form.previsao ?? op.previsao} onChange={(e) => setForm({ ...form, previsao: e.target.value })} />
+          <div><Label>Dias prazo</Label>
+            <Input type="number" min={0} value={prazoAtual} onChange={(e) => handlePrazo(Number(e.target.value))} />
+            <div className="mt-1 text-[11px] text-muted-foreground">Ao alterar, base = hoje e previsão recalculada.</div>
+          </div>
+          <div><Label>Liberação (data efetiva)</Label>
+            <Input type="date" value={form.liberacao ?? op.liberacao ?? ""} onChange={(e) => setForm({ ...form, liberacao: e.target.value })} />
+          </div>
+          <div className="col-span-2 grid grid-cols-3 gap-3 rounded-md border border-border bg-muted/30 p-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Base lib.</div>
+              <div className="mt-1 font-mono text-sm">{baseAtual || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Previsão (auto)</div>
+              <div className="mt-1 font-mono text-sm text-primary">{previsaoAtual || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Dias restantes</div>
+              <div className={`mt-1 font-mono text-sm ${diasRest <= 5 ? "text-warning" : diasRest <= 15 ? "text-info" : "text-foreground"}`}>{diasRest > 0 ? `${diasRest}d` : "—"}</div>
+            </div>
           </div>
           <div className="col-span-2"><Label>Observações</Label>
             <Textarea value={form.obs ?? op.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} rows={3} />

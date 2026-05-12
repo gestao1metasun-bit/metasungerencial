@@ -10,10 +10,10 @@ export const clientes = [
 ];
 
 export const vendedores = [
-  { id: "VEN-01", nome: "Rafael Mendes", email: "rafael@metasun.com", contratos: 18, vendido: 1850000, status: "Ativo" },
-  { id: "VEN-02", nome: "Patrícia Lopes", email: "patricia@metasun.com", contratos: 14, vendido: 1320000, status: "Ativo" },
-  { id: "VEN-03", nome: "Diego Almeida", email: "diego@metasun.com", contratos: 11, vendido: 980000, status: "Ativo" },
-  { id: "VEN-04", nome: "Juliana Reis", email: "juliana@metasun.com", contratos: 9, vendido: 760000, status: "Ativo" },
+  { id: "VEN-01", nome: "Rafael Mendes", email: "rafael@metasun.com", contratos: 18, vendido: 1850000, kwp: 245.6, conversao: 62, meta: 2000000, status: "Ativo" },
+  { id: "VEN-02", nome: "Patrícia Lopes", email: "patricia@metasun.com", contratos: 14, vendido: 1320000, kwp: 188.2, conversao: 58, meta: 1500000, status: "Ativo" },
+  { id: "VEN-03", nome: "Diego Almeida", email: "diego@metasun.com", contratos: 11, vendido: 980000, kwp: 142.0, conversao: 48, meta: 1200000, status: "Ativo" },
+  { id: "VEN-04", nome: "Juliana Reis", email: "juliana@metasun.com", contratos: 9, vendido: 760000, kwp: 110.5, conversao: 41, meta: 1000000, status: "Ativo" },
 ];
 
 export const contratos = [

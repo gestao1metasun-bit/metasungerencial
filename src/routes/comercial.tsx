@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
+import { EyeButton } from "@/components/app/EyeButton";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -870,19 +871,64 @@ function IndicadoresTab({
     { name: "Cancelados", value: cancelados.length, fill: STATUS_COLORS.Cancelado },
   ].filter((p) => p.value > 0);
 
+  const [openKpi, setOpenKpi] = useState<null | "gerados" | "assinados" | "pendentes" | "cancelados" | "ticket">(null);
+  const listKpi =
+    openKpi === "assinados" ? assinados :
+    openKpi === "pendentes" ? pendentes :
+    openKpi === "cancelados" ? cancelados :
+    openKpi === "ticket" ? [...assinados].sort((a,b)=>b.valor-a.valor) :
+    contratos;
+  const titlesKpi: Record<string, string> = {
+    gerados: "Contratos Gerados", assinados: "Contratos Assinados",
+    pendentes: "Contratos Pendentes", cancelados: "Contratos Cancelados",
+    ticket: "Análise de Ticket Médio",
+  };
+
   return (
     <div className="space-y-5">
       {/* === KPIs PRINCIPAIS === */}
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><BarChart3 className="h-3.5 w-3.5 text-primary" /> KPIs Principais</div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <KpiBlock tone="primary" icon={FileText} label="Contratos Gerados" main={totalGer} sub={fmtBRL(valorGer)} extra={`${kwpGer.toFixed(1)} kWp · ${(kwhGer/1000).toFixed(0)} MWh/ano`} />
-          <KpiBlock tone="success" icon={CheckCircle2} label="Assinados" main={assinados.length} sub={fmtBRL(valorAss)} extra={`${pctAss.toFixed(1)}% sobre gerados`} />
-          <KpiBlock tone="warning" icon={Clock} label="Pendentes" main={pendentes.length} sub={fmtBRL(valorPend)} extra={`${pctPend.toFixed(1)}% sobre gerados`} />
-          <KpiBlock tone="destructive" icon={XCircle} label="Cancelados" main={cancelados.length} sub={fmtBRL(valorCanc)} extra={`${pctCanc.toFixed(1)}% cancelamento`} />
-          <KpiBlock tone="info" icon={TrendingUp} label="Ticket Médio" main={fmtBRL(ticket)} sub={`${assinados.length} assinados`} extra="por contrato assinado" />
+          <KpiBlock tone="primary" icon={FileText} label="Contratos Gerados" main={totalGer} sub={fmtBRL(valorGer)} extra={`${kwpGer.toFixed(1)} kWp · ${(kwhGer/1000).toFixed(0)} MWh/ano`} onView={() => setOpenKpi("gerados")} />
+          <KpiBlock tone="success" icon={CheckCircle2} label="Assinados" main={assinados.length} sub={fmtBRL(valorAss)} extra={`${pctAss.toFixed(1)}% sobre gerados`} onView={() => setOpenKpi("assinados")} />
+          <KpiBlock tone="warning" icon={Clock} label="Pendentes" main={pendentes.length} sub={fmtBRL(valorPend)} extra={`${pctPend.toFixed(1)}% sobre gerados`} onView={() => setOpenKpi("pendentes")} />
+          <KpiBlock tone="destructive" icon={XCircle} label="Cancelados" main={cancelados.length} sub={fmtBRL(valorCanc)} extra={`${pctCanc.toFixed(1)}% cancelamento`} onView={() => setOpenKpi("cancelados")} />
+          <KpiBlock tone="info" icon={TrendingUp} label="Ticket Médio" main={fmtBRL(ticket)} sub={`${assinados.length} assinados`} extra="por contrato assinado" onView={() => setOpenKpi("ticket")} />
         </div>
       </div>
+
+      <Dialog open={openKpi !== null} onOpenChange={(v) => !v && setOpenKpi(null)}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{openKpi ? titlesKpi[openKpi] : ""}</DialogTitle>
+            <DialogDescription>
+              {listKpi.length} contrato(s) · Valor {fmtBRL(listKpi.reduce((s,c)=>s+c.valor,0))} · kWp {listKpi.reduce((s,c)=>s+c.kwp,0).toFixed(1)}
+            </DialogDescription>
+          </DialogHeader>
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead><TableHead className="text-right">kWp</TableHead>
+              <TableHead>Status</TableHead><TableHead>Data</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {listKpi.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs text-primary">{c.id}</TableCell>
+                  <TableCell className="font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.vendedor}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell className="text-right">{c.kwp.toFixed(1)}</TableCell>
+                  <TableCell><StatusBadge status={c.status} /></TableCell>
+                  <TableCell className="text-muted-foreground">{c.data}</TableCell>
+                </TableRow>
+              ))}
+              {listKpi.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhum registro</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
 
       {/* === KPIs TÉCNICO/ENERGÉTICO === */}
       <div>
@@ -1018,8 +1064,8 @@ function IndicadoresTab({
 }
 
 function KpiBlock({
-  tone, icon: Icon, label, main, sub, extra,
-}: { tone: "primary"|"success"|"warning"|"destructive"|"info"; icon: React.ComponentType<{ className?: string }>; label: string; main: React.ReactNode; sub?: string; extra?: string }) {
+  tone, icon: Icon, label, main, sub, extra, onView,
+}: { tone: "primary"|"success"|"warning"|"destructive"|"info"; icon: React.ComponentType<{ className?: string }>; label: string; main: React.ReactNode; sub?: string; extra?: string; onView?: () => void }) {
   const toneClass = {
     primary: "text-primary bg-primary/10",
     success: "text-success bg-success/10",
@@ -1030,7 +1076,10 @@ function KpiBlock({
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+          {onView && <EyeButton onClick={onView} />}
+        </div>
         <div className={`grid h-8 w-8 place-items-center rounded-md ${toneClass}`}><Icon className="h-4 w-4" /></div>
       </div>
       <div className="mt-2 text-2xl font-bold leading-tight">{main}</div>

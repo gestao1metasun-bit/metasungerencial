@@ -55,7 +55,7 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          
           <TabsTrigger value="propostas">Propostas</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -64,7 +64,7 @@ function ComercialPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} />
         </TabsContent>
-        <TabsContent value="clientes" className="mt-5"><ClientesTab clientes={clientes} setClientes={setClientes} /></TabsContent>
+        
         <TabsContent value="propostas" className="mt-5"><PropostasTab propostas={propostas} setPropostas={setPropostas} /></TabsContent>
         <TabsContent value="contratos" className="mt-5"><ContratosTab contratos={contratos} setContratos={setContratos} /></TabsContent>
         <TabsContent value="vendedores" className="mt-5"><VendedoresTab contratos={contratos} /></TabsContent>

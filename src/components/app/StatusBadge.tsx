@@ -30,6 +30,17 @@ const map: Record<string, string> = {
   "A pagar": "bg-warning/15 text-warning border-warning/30",
   "Pago": "bg-success/15 text-success border-success/30",
   "Vencido": "bg-destructive/15 text-destructive border-destructive/30",
+  // Estoque
+  "OK": "bg-success/15 text-success border-success/30",
+  "Baixo": "bg-warning/15 text-warning border-warning/30",
+  "Crítico": "bg-destructive/15 text-destructive border-destructive/30",
+  "Entrada": "bg-success/15 text-success border-success/30",
+  "Saída": "bg-info/15 text-info border-info/30",
+  // Propostas
+  "Enviada": "bg-info/15 text-info border-info/30",
+  "Em negociação": "bg-warning/15 text-warning border-warning/30",
+  "Convertida": "bg-success/15 text-success border-success/30",
+  "Recusada": "bg-destructive/15 text-destructive border-destructive/30",
 };
 
 export function StatusBadge({ status }: { status: string }) {

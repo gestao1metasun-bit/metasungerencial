@@ -107,5 +107,37 @@ export const contasPagar = [
   { id: "CP-004", descricao: "Aluguel sede", fornecedor: "Imobiliária Centro", valor: 12000, vencimento: "2025-05-10", status: "Pago" },
 ];
 
+export const propostas = [
+  { id: "PROP-2025-088", cliente: "João Pereira da Silva", vendedor: "Rafael Mendes", valor: 89000, kwp: 12.5, status: "Convertida", data: "2025-04-28", validade: "2025-05-12" },
+  { id: "PROP-2025-087", cliente: "Maria Souza Rodrigues", vendedor: "Diego Almeida", valor: 62000, kwp: 8.1, status: "Em negociação", data: "2025-04-29", validade: "2025-05-13" },
+  { id: "PROP-2025-086", cliente: "Carlos Eduardo Lima", vendedor: "Juliana Reis", valor: 74500, kwp: 10.2, status: "Enviada", data: "2025-05-02", validade: "2025-05-16" },
+  { id: "PROP-2025-085", cliente: "Empresa Lumen Indústria", vendedor: "Patrícia Lopes", valor: 540000, kwp: 88.0, status: "Em negociação", data: "2025-05-03", validade: "2025-05-20" },
+  { id: "PROP-2025-084", cliente: "Padaria São Jorge", vendedor: "Diego Almeida", valor: 38000, kwp: 5.4, status: "Recusada", data: "2025-04-22", validade: "2025-05-06" },
+];
+
+export const finsSemContrato = [
+  { id: "FIN-SC-021", cliente: "Roberto Pinheiro", doc: "234.567.890-11", telefone: "(92) 99000-1100", banco: "BASA", gerente: "Cláudio Ramos", valor: 45000, statusOp: "Em análise", obs: "Lead vindo de indicação" },
+  { id: "FIN-SC-020", cliente: "Mercearia Bom Jesus", doc: "33.444.555/0001-66", telefone: "(91) 99000-1101", banco: "SICREDI", gerente: "Beatriz Tavares", valor: 120000, statusOp: "Aprovado", obs: "Aguardando criação de contrato" },
+  { id: "FIN-SC-019", cliente: "Lúcia Fernandes", doc: "555.666.777-88", telefone: "(95) 99000-1102", banco: "Banco do Brasil", gerente: "Henrique Costa", valor: 68000, statusOp: "Aguardando documentação", obs: "" },
+];
+
+export const estoqueItens = [
+  { id: "EST-001", produto: "Módulo Solar 540W Mono", categoria: "Módulo", marca: "Canadian", quantidade: 480, minimo: 200, custo: 720, status: "OK" },
+  { id: "EST-002", produto: "Módulo Solar 580W Bifacial", categoria: "Módulo", marca: "JA Solar", quantidade: 120, minimo: 150, custo: 850, status: "Baixo" },
+  { id: "EST-003", produto: "Inversor Growatt MIN 8000", categoria: "Inversor", marca: "Growatt", quantidade: 22, minimo: 10, custo: 4200, status: "OK" },
+  { id: "EST-004", produto: "Inversor Solis 60K", categoria: "Inversor", marca: "Solis", quantidade: 4, minimo: 3, custo: 18500, status: "OK" },
+  { id: "EST-005", produto: "Estrutura cerâmico — kit 4 módulos", categoria: "Estrutura", marca: "Romagnole", quantidade: 60, minimo: 80, custo: 320, status: "Baixo" },
+  { id: "EST-006", produto: "Cabo solar 6mm² preto (m)", categoria: "Cabo", marca: "Cobrecom", quantidade: 1850, minimo: 500, custo: 8.5, status: "OK" },
+  { id: "EST-007", produto: "Conector MC4 par", categoria: "Acessório", marca: "Stäubli", quantidade: 8, minimo: 50, custo: 18, status: "Crítico" },
+  { id: "EST-008", produto: "String Box CC 1000V", categoria: "Proteção", marca: "Clamper", quantidade: 32, minimo: 15, custo: 580, status: "OK" },
+];
+
+export const movimentacoesEstoque = [
+  { id: "MOV-0142", data: "2025-05-11", produto: "Módulo Solar 540W Mono", tipo: "Saída", quantidade: 24, obra: "OB-0231", responsavel: "Marcos Vinícius" },
+  { id: "MOV-0141", data: "2025-05-10", produto: "Inversor Growatt MIN 8000", tipo: "Saída", quantidade: 1, obra: "OB-0231", responsavel: "Marcos Vinícius" },
+  { id: "MOV-0140", data: "2025-05-09", produto: "Módulo Solar 540W Mono", tipo: "Entrada", quantidade: 200, obra: null, responsavel: "Sandra Oliveira" },
+  { id: "MOV-0139", data: "2025-05-08", produto: "Conector MC4 par", tipo: "Saída", quantidade: 12, obra: "OB-0229", responsavel: "Felipe Andrade" },
+];
+
 export const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });

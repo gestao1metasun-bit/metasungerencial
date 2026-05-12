@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { financiamentos, bancos, fmtBRL } from "@/lib/mock-data";
+import { financiamentos, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({
@@ -36,14 +36,79 @@ function FinanciamentosPage() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="bancos">Bancos</TabsTrigger>
+          <TabsTrigger value="gerentes">Gerentes</TabsTrigger>
+          <TabsTrigger value="sem">Sem Contrato</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardFin /></TabsContent>
         <TabsContent value="carteira" className="mt-5"><Carteira /></TabsContent>
         <TabsContent value="bancos" className="mt-5"><BancosTab /></TabsContent>
+        <TabsContent value="gerentes" className="mt-5"><GerentesTab /></TabsContent>
+        <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><Carteira filterFin /></TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function GerentesTab() {
+  return (
+    <Card className="bg-[image:var(--gradient-card)]">
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>Gerente</TableHead><TableHead>Banco</TableHead><TableHead>Telefone</TableHead>
+          <TableHead className="text-center">Operações</TableHead><TableHead>Status</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {gerentes.map((g) => (
+            <TableRow key={g.id}>
+              <TableCell className="font-medium">{g.nome}</TableCell>
+              <TableCell>{g.banco}</TableCell>
+              <TableCell className="text-muted-foreground">{g.telefone}</TableCell>
+              <TableCell className="text-center">{g.operacoes}</TableCell>
+              <TableCell><StatusBadge status={g.status} /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function SemContratoTab() {
+  return (
+    <Card className="bg-[image:var(--gradient-card)]">
+      <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="text-sm font-semibold">Operações sem contrato vinculado</div>
+        <Button className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
+          <Plus className="mr-2 h-4 w-4" /> Novo financiamento avulso
+        </Button>
+      </div>
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>ID</TableHead><TableHead>Cliente</TableHead><TableHead>CPF/CNPJ</TableHead>
+          <TableHead>Banco</TableHead><TableHead>Gerente</TableHead>
+          <TableHead className="text-right">Valor</TableHead><TableHead>Status</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {finsSemContrato.map((f) => (
+            <TableRow key={f.id}>
+              <TableCell className="font-mono text-xs text-primary">{f.id}</TableCell>
+              <TableCell className="font-medium">{f.cliente}</TableCell>
+              <TableCell className="text-muted-foreground">{f.doc}</TableCell>
+              <TableCell>{f.banco}</TableCell>
+              <TableCell className="text-muted-foreground">{f.gerente}</TableCell>
+              <TableCell className="text-right font-medium">{fmtBRL(f.valor)}</TableCell>
+              <TableCell><StatusBadge status={f.statusOp} /></TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="sm" onClick={() => toast.success("Contrato vinculado")}>Vincular contrato</Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
   );
 }
 

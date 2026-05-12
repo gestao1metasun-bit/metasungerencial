@@ -1,5 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { EyeButton } from "./EyeButton";
 
 type Tone = "primary" | "success" | "warning" | "info" | "destructive" | "muted";
 
@@ -13,7 +14,7 @@ const toneMap: Record<Tone, string> = {
 };
 
 export function StatCard({
-  label, value, hint, icon: Icon, tone = "primary", trend,
+  label, value, hint, icon: Icon, tone = "primary", trend, onView,
 }: {
   label: string;
   value: string | number;
@@ -21,11 +22,15 @@ export function StatCard({
   icon?: LucideIcon;
   tone?: Tone;
   trend?: { value: string; positive?: boolean };
+  onView?: () => void;
 }) {
   return (
     <Card className="relative overflow-hidden border-border bg-card p-4 shadow-[var(--shadow-elegant)] transition hover:shadow-md">
+      {onView && (
+        <div className="absolute right-2 top-2"><EyeButton onClick={onView} /></div>
+      )}
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 pr-6">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
           <div className="mt-2 truncate text-2xl font-bold tracking-tight text-foreground">{value}</div>
           {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}

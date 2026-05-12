@@ -39,7 +39,10 @@ const map: Record<string, string> = {
   // Propostas
   "Enviada": "bg-info/15 text-info border-info/30",
   "Em negociação": "bg-warning/15 text-warning border-warning/30",
+  "Aguardando retorno": "bg-warning/15 text-warning border-warning/30",
+  "Fechada": "bg-success/15 text-success border-success/30",
   "Convertida": "bg-success/15 text-success border-success/30",
+  "Perdida": "bg-destructive/15 text-destructive border-destructive/30",
   "Recusada": "bg-destructive/15 text-destructive border-destructive/30",
 };
 

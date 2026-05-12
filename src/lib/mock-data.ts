@@ -10,10 +10,10 @@ export const clientes = [
 ];
 
 export const vendedores = [
-  { id: "VEN-01", nome: "Rafael Mendes", email: "rafael@metasun.com", contratos: 18, vendido: 1850000, status: "Ativo" },
-  { id: "VEN-02", nome: "Patrícia Lopes", email: "patricia@metasun.com", contratos: 14, vendido: 1320000, status: "Ativo" },
-  { id: "VEN-03", nome: "Diego Almeida", email: "diego@metasun.com", contratos: 11, vendido: 980000, status: "Ativo" },
-  { id: "VEN-04", nome: "Juliana Reis", email: "juliana@metasun.com", contratos: 9, vendido: 760000, status: "Ativo" },
+  { id: "VEN-01", nome: "Rafael Mendes", email: "rafael@metasun.com", contratos: 18, vendido: 1850000, kwp: 245.6, conversao: 62, meta: 2000000, status: "Ativo" },
+  { id: "VEN-02", nome: "Patrícia Lopes", email: "patricia@metasun.com", contratos: 14, vendido: 1320000, kwp: 188.2, conversao: 58, meta: 1500000, status: "Ativo" },
+  { id: "VEN-03", nome: "Diego Almeida", email: "diego@metasun.com", contratos: 11, vendido: 980000, kwp: 142.0, conversao: 48, meta: 1200000, status: "Ativo" },
+  { id: "VEN-04", nome: "Juliana Reis", email: "juliana@metasun.com", contratos: 9, vendido: 760000, kwp: 110.5, conversao: 41, meta: 1000000, status: "Ativo" },
 ];
 
 export const contratos = [
@@ -138,6 +138,35 @@ export const movimentacoesEstoque = [
   { id: "MOV-0140", data: "2025-05-09", produto: "Módulo Solar 540W Mono", tipo: "Entrada", quantidade: 200, obra: null, responsavel: "Sandra Oliveira" },
   { id: "MOV-0139", data: "2025-05-08", produto: "Conector MC4 par", tipo: "Saída", quantidade: 12, obra: "OB-0229", responsavel: "Felipe Andrade" },
 ];
+
+export const propostasMensais = [
+  { mes: "Jan", geradas: 18, enviadas: 16, fechadas: 12, perdidas: 4 },
+  { mes: "Fev", geradas: 22, enviadas: 19, fechadas: 14, perdidas: 5 },
+  { mes: "Mar", geradas: 28, enviadas: 24, fechadas: 18, perdidas: 6 },
+  { mes: "Abr", geradas: 34, enviadas: 30, fechadas: 22, perdidas: 8 },
+  { mes: "Mai", geradas: 26, enviadas: 22, fechadas: 16, perdidas: 6 },
+];
+
+export const conversaoMensal = [
+  { mes: "Jan", gerados: 14, assinados: 12 },
+  { mes: "Fev", gerados: 17, assinados: 14 },
+  { mes: "Mar", gerados: 21, assinados: 18 },
+  { mes: "Abr", gerados: 26, assinados: 22 },
+  { mes: "Mai", gerados: 19, assinados: 16 },
+];
+
+// Produtividade média por equipe (módulos por dia) e faixas de módulos
+export const produtividadeEquipe = [
+  { equipe: "Equipe A", mediaDia: 12, faixas: { "0-20": 1, "21-50": 1.5, "51-100": 2.2, "101-200": 3.0, "201-300": 4.5, "301-500": 7, "500+": 10 } },
+  { equipe: "Equipe B", mediaDia: 10, faixas: { "0-20": 1, "21-50": 1.8, "51-100": 2.5, "101-200": 3.5, "201-300": 5, "301-500": 8, "500+": 12 } },
+  { equipe: "Equipe C", mediaDia: 14, faixas: { "0-20": 1, "21-50": 1.3, "51-100": 1.9, "101-200": 2.8, "201-300": 4, "301-500": 6.5, "500+": 9 } },
+];
+
+export function diasPrevistos(equipeNome: string, modulos: number): number {
+  const eq = produtividadeEquipe.find((e) => e.equipe === equipeNome);
+  const media = eq?.mediaDia ?? 10;
+  return Math.max(1, Math.ceil(modulos / media));
+}
 
 export const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });

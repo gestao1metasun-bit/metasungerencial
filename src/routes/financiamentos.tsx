@@ -438,7 +438,7 @@ function Carteira({
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>Operação</TableHead><TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
+          <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
           <TableHead>Banco</TableHead><TableHead>Gerente</TableHead>
           <TableHead className="text-right">Contrato</TableHead>
           <TableHead className="text-right">Financiado</TableHead>
@@ -452,7 +452,6 @@ function Carteira({
             const dias = diasRestantes(o.previsao);
             return (
               <TableRow key={o.id}>
-                <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{o.contrato}</TableCell>
                 <TableCell>{o.banco}</TableCell>
@@ -476,7 +475,7 @@ function Carteira({
             );
           })}
           {list.length === 0 && (
-            <TableRow><TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+            <TableRow><TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
               <AlertCircle className="mx-auto mb-2 h-6 w-6" /> Nenhuma operação encontrada
             </TableCell></TableRow>
           )}

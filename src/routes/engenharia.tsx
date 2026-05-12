@@ -36,6 +36,7 @@ function EngenhariaPage() {
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
+          <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng /></TabsContent>
@@ -43,9 +44,55 @@ function EngenhariaPage() {
         <TabsContent value="cronograma" className="mt-5"><ObrasTab filter={(o) => ["Executando instalação", "Aguardando instalação"].includes(o.status)} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="equipes" className="mt-5"><EquipesTab /></TabsContent>
+        <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><ObrasTab filter={(o) => o.status === "Finalizado"} /></TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function ProdutividadeTab() {
+  const data = equipes.map((e) => {
+    const finalizadas = obras.filter((o) => o.equipe === e.nome && o.status === "Finalizado").length;
+    const ativas = obras.filter((o) => o.equipe === e.nome && o.status !== "Finalizado").length;
+    const pend = pendencias.filter((p) => p.equipe === e.nome && p.status === "Aguardando resolução").length;
+    return { nome: e.nome, finalizadas, ativas, pend };
+  });
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 text-sm font-semibold">Obras finalizadas vs ativas</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+            <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Bar dataKey="finalizadas" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="ativas" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 text-sm font-semibold">Indicadores por equipe</div>
+        <div className="space-y-3">
+          {data.map((d) => (
+            <div key={d.nome} className="rounded-lg border border-border bg-card/40 p-4">
+              <div className="flex items-center justify-between">
+                <div className="font-medium">{d.nome}</div>
+                <div className="text-xs text-muted-foreground">{d.pend} pendência(s) abertas</div>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="rounded-md bg-success/10 p-2"><div className="text-xs text-muted-foreground">Finalizadas</div><div className="font-bold text-success">{d.finalizadas}</div></div>
+                <div className="rounded-md bg-primary/10 p-2"><div className="text-xs text-muted-foreground">Ativas</div><div className="font-bold text-primary">{d.ativas}</div></div>
+                <div className="rounded-md bg-warning/10 p-2"><div className="text-xs text-muted-foreground">Pendências</div><div className="font-bold text-warning">{d.pend}</div></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
   );
 }
 

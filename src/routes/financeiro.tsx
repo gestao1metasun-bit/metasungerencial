@@ -37,11 +37,14 @@ function FinanceiroPage() {
       />
 
       <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="receitas">Receitas</TabsTrigger>
+          <TabsTrigger value="despesas">Despesas</TabsTrigger>
           <TabsTrigger value="receber">Contas a receber</TabsTrigger>
           <TabsTrigger value="pagar">Contas a pagar</TabsTrigger>
           <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
+          <TabsTrigger value="import">Importações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-5">

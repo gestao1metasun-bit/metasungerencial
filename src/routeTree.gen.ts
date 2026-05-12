@@ -9,18 +9,60 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as EngenhariaRouteImport } from './routes/engenharia'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as ComercialRouteImport } from './routes/comercial'
+import { Route as CadastrosRouteImport } from './routes/cadastros'
 import { Route as IndexRouteImport } from './routes/index'
 
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanciamentosRoute = FinanciamentosRouteImport.update({
+  id: '/financiamentos',
+  path: '/financiamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngenhariaRoute = EngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComercialRoute = ComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrosRoute = CadastrosRouteImport.update({
+  id: '/cadastros',
+  path: '/cadastros',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,36 +73,102 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cadastros': typeof CadastrosRoute
+  '/comercial': typeof ComercialRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/engenharia': typeof EngenhariaRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cadastros': typeof CadastrosRoute
+  '/comercial': typeof ComercialRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/engenharia': typeof EngenhariaRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cadastros': typeof CadastrosRoute
+  '/comercial': typeof ComercialRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/engenharia': typeof EngenhariaRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/cadastros'
+    | '/comercial'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/engenharia'
+    | '/financeiro'
+    | '/financiamentos'
+    | '/login'
+    | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/cadastros'
+    | '/comercial'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/engenharia'
+    | '/financeiro'
+    | '/financiamentos'
+    | '/login'
+    | '/relatorios'
+  id:
+    | '__root__'
+    | '/'
+    | '/cadastros'
+    | '/comercial'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/engenharia'
+    | '/financeiro'
+    | '/financiamentos'
+    | '/login'
+    | '/relatorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CadastrosRoute: typeof CadastrosRoute
+  ComercialRoute: typeof ComercialRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
+  EngenhariaRoute: typeof EngenhariaRoute
+  FinanceiroRoute: typeof FinanceiroRoute
+  FinanciamentosRoute: typeof FinanciamentosRoute
   LoginRoute: typeof LoginRoute
+  RelatoriosRoute: typeof RelatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -68,11 +176,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/financiamentos': {
+      id: '/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/financiamentos'
+      preLoaderRoute: typeof FinanciamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engenharia': {
+      id: '/engenharia'
+      path: '/engenharia'
+      fullPath: '/engenharia'
+      preLoaderRoute: typeof EngenhariaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comercial': {
+      id: '/comercial'
+      path: '/comercial'
+      fullPath: '/comercial'
+      preLoaderRoute: typeof ComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastros': {
+      id: '/cadastros'
+      path: '/cadastros'
+      fullPath: '/cadastros'
+      preLoaderRoute: typeof CadastrosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,8 +237,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CadastrosRoute: CadastrosRoute,
+  ComercialRoute: ComercialRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
+  EngenhariaRoute: EngenhariaRoute,
+  FinanceiroRoute: FinanceiroRoute,
+  FinanciamentosRoute: FinanciamentosRoute,
   LoginRoute: LoginRoute,
+  RelatoriosRoute: RelatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

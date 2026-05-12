@@ -3,11 +3,12 @@ import { useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
+  Zap, Sun, Filter, Activity, Award, Gauge,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
-  ComposedChart,
+  ComposedChart, FunnelChart, Funnel, LabelList,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";

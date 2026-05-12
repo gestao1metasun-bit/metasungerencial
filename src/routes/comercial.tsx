@@ -1018,8 +1018,8 @@ function IndicadoresTab({
 }
 
 function KpiBlock({
-  tone, icon: Icon, label, main, sub, extra,
-}: { tone: "primary"|"success"|"warning"|"destructive"|"info"; icon: React.ComponentType<{ className?: string }>; label: string; main: React.ReactNode; sub?: string; extra?: string }) {
+  tone, icon: Icon, label, main, sub, extra, onView,
+}: { tone: "primary"|"success"|"warning"|"destructive"|"info"; icon: React.ComponentType<{ className?: string }>; label: string; main: React.ReactNode; sub?: string; extra?: string; onView?: () => void }) {
   const toneClass = {
     primary: "text-primary bg-primary/10",
     success: "text-success bg-success/10",
@@ -1030,7 +1030,10 @@ function KpiBlock({
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+          {onView && <EyeButton onClick={onView} />}
+        </div>
         <div className={`grid h-8 w-8 place-items-center rounded-md ${toneClass}`}><Icon className="h-4 w-4" /></div>
       </div>
       <div className="mt-2 text-2xl font-bold leading-tight">{main}</div>

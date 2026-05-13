@@ -651,11 +651,12 @@ function CadastrarContratoTab({
     tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
     modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
     usarEnderecoCliente: boolean;
+    orcado: string;
   };
   const emptyProj = (): ProjetoDraft => ({
     tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
     modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
-    usarEnderecoCliente: true,
+    usarEnderecoCliente: true, orcado: "",
   });
   const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
   const [activeProj, setActiveProj] = useState(0);

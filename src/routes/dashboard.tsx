@@ -45,6 +45,8 @@ function DashboardGeral() {
   const receitas = receitaDespesa.reduce((s, r) => s + r.receita, 0);
   const despesas = receitaDespesa.reduce((s, r) => s + r.despesa, 0);
   const kwpTotal = contratos.reduce((s, c) => s + c.kwp, 0);
+  const obrasFinalizadasList = obras.filter((o) => o.status === "Finalizado");
+  const kwpInstalado = obrasFinalizadasList.reduce((s, o) => s + o.potencia, 0);
 
   const statusData = [
     { name: "Assinado", value: assinados },

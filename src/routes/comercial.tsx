@@ -1989,6 +1989,10 @@ function ProjetoEditCard({
   };
 
   const salvar = () => {
+    if (projeto.aprovado) {
+      toast.error("Este projeto já foi aprovado e possui vínculos gerados. Para editar, remova primeiro os lançamentos financeiros e registros de Engenharia vinculados.");
+      return;
+    }
     if (!d.endereco?.trim()) { toast.error(`Projeto ${index + 1}: informe o endereço`); return; }
     if (!(Number(d.valor) > 0)) { toast.error(`Projeto ${index + 1}: informe o valor`); return; }
     const valorContrato = Number(contrato.valor) || 0;

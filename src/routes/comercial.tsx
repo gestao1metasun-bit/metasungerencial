@@ -2842,14 +2842,24 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
     (s, c) => s + (c.projetos ?? []).filter((p) => !p.financeiroGerado).length, 0,
   );
 
-  const gerarFinanceiro = (contrato: Contrato, projeto: ProjetoVinculado) => {
-    if (!projeto.aprovado) { toast.error("Aprove o projeto antes de gerar o financeiro."); return; }
+  const aprovarPedido = (contrato: Contrato, projeto: ProjetoVinculado) => {
+    if (contrato.status !== "Aprovado") { toast.error("Contrato não está aprovado."); return; }
     const valorProj = Number(projeto.valor) || 0;
     if (valorProj <= 0) { toast.error("Defina o valor do projeto."); return; }
+    if (!projeto.endereco?.trim() || !projeto.cidade?.trim()) { toast.error("Endereço/cidade do projeto obrigatórios."); return; }
     const comp = composicaoSomaOk(contrato);
     if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}). Edite no contrato.`); return; }
     const novos = calcularLancamentosProjeto(contrato, projeto);
     if (novos.length === 0) { toast.error("Nada a gerar — verifique composição e valor do projeto."); return; }
+    // Aprova o projeto, libera para Engenharia e gera contas a receber
+    if (!projeto.aprovado) {
+      updateProjeto(contrato.id, projeto.id, {
+        aprovado: true,
+        dataAprovacao: new Date().toISOString(),
+        usuarioAprovacao: "Operador",
+        enviadoEngenharia: true,
+      });
+    }
     removeLancamentosDoProjeto(projeto.id);
     appendLancamentos(novos as any);
     updateProjeto(contrato.id, projeto.id, {
@@ -2857,7 +2867,7 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
       dataGeracaoFinanceiro: new Date().toISOString(),
       usuarioGeracao: "Operador",
     });
-    toast.success(`${novos.length} lançamento(s) gerado(s) por rateio · ${projeto.id}`);
+    toast.success(`Pedido aprovado · ${novos.length} lançamento(s) gerado(s) · projeto enviado à Engenharia`);
   };
 
   return (

@@ -648,17 +648,22 @@ function CadastrarContratoTab({
   const [cepLoading, setCepLoading] = useState(false);
 
   // ---- Projetos vinculados (cadastrados junto com o contrato) ----
+  type OrcMaterial = { id: string; itemId: string; qtd: number; unit: number };
+  type OrcOutro = { id: string; natureza: string; descricao: string; valor: number };
   type ProjetoDraft = {
     tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
     modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
     usarEnderecoCliente: boolean;
-    orcado: string;
+    materiais: OrcMaterial[];
+    outros: OrcOutro[];
   };
   const emptyProj = (): ProjetoDraft => ({
     tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
     modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
-    usarEnderecoCliente: true, orcado: "",
+    usarEnderecoCliente: true, materiais: [], outros: [],
   });
+  const orcTotal = (p: ProjetoDraft) =>
+    p.materiais.reduce((a, m) => a + m.qtd * m.unit, 0) + p.outros.reduce((a, o) => a + o.valor, 0);
   const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
   const [activeProj, setActiveProj] = useState(0);
   const [projCepLoading, setProjCepLoading] = useState<number | null>(null);

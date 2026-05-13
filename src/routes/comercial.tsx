@@ -1651,6 +1651,13 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
 
   const adicionar = () => {
     if (!draft.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
+    if (!(Number(draft.valor) > 0)) { toast.error("Informe o valor do projeto"); return; }
+    const somaAtual = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+    const valorContrato = Number(contrato.valor) || 0;
+    if (valorContrato > 0 && somaAtual + Number(draft.valor) - valorContrato > 0.5) {
+      toast.error(`Soma dos projetos (${fmtBRL(somaAtual + Number(draft.valor))}) excede o valor do contrato (${fmtBRL(valorContrato)}).`);
+      return;
+    }
     addProjeto(contrato.id, { ...draft, kwp: kwpAuto || draft.kwp });
     toast.success(`Projeto vinculado ao contrato ${contrato.id}`);
     setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 2}`));

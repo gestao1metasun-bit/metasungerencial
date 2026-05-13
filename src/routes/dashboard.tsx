@@ -210,8 +210,8 @@ function DashboardGeral() {
         modal={openModal}
         data={{
           contratos, assinadosList, pendentesList, canceladosList,
-          obrasAtivasList, financiamentos, receitaDespesa,
-          valorVendido, valorFinanciado, ticketMedio, kwpTotal,
+          obrasAtivasList, obrasFinalizadasList, financiamentos, receitaDespesa,
+          valorVendido, valorFinanciado, ticketMedio, kwpTotal, kwpInstalado,
           receitas, despesas,
         }}
       />

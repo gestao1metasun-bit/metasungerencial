@@ -2113,6 +2113,9 @@ function VendedoresTab({
                 <div className="flex justify-between text-xs"><span className="text-muted-foreground">Meta {fmtBRL(v.meta)}</span><span className="font-semibold">{pct.toFixed(0)}%</span></div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(pct, 100)}%` }} /></div>
               </div>
+              <div className="mt-3">
+                <HistoricoVendedorDialog vendedor={v.nome} contratos={meus} />
+              </div>
             </Card>
           );
         })}

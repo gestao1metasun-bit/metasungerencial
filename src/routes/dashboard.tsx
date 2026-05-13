@@ -249,7 +249,6 @@ function DetailModal({
     modal === "ticket" ? data.assinadosList :
     modal === "valor" ? [...data.assinadosList].sort((a,b)=>b.valor-a.valor) :
     modal === "kwp" ? [...data.contratos].sort((a,b)=>b.kwp-a.kwp) :
-    modal === "kwpInst" ? data.obrasFinalizadasList :
     data.contratos;
 
   return (

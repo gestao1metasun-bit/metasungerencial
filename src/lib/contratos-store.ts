@@ -7,6 +7,7 @@ export type ClienteFull = {
   nome: string;
   doc: string;          // CPF ou CNPJ
   telefone: string;
+  telefone2?: string;   // telefone alternativo
   email: string;
   cep: string;
   rua: string;

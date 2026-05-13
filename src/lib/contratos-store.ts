@@ -302,7 +302,10 @@ export type ContratoValidation = { ok: boolean; missing: string[] };
 
 const onlyDigits = (v: string) => (v ?? "").replace(/\D/g, "");
 
-export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
+export function validateContratoCompleto(
+  c: ContratoFull,
+  opts: { requireComposicao?: boolean } = { requireComposicao: true },
+): ContratoValidation {
   const missing: string[] = [];
   const cli = c.clienteFull;
   if (!c.cliente?.trim() && !cli?.nome?.trim()) missing.push("Nome do cliente");
@@ -325,15 +328,16 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
   if (!(Number(c.potencia) > 0)) missing.push("Potência/módulo");
   if (!(Number(c.modulos) > 0)) missing.push("Quantidade de módulos");
   if (!c.inv1?.trim()) missing.push("Inversor 1");
-  // Composição de pagamento substitui o campo "forma de pagamento"
-  // Composição de pagamento deve fechar com o valor total
-  const comp = c.composicaoPagto ?? [];
-  if (comp.length === 0) {
-    missing.push("Composição de pagamento (adicione ao menos 1 linha)");
-  } else {
-    const soma = comp.reduce((s, l) => s + (Number(l.valor) || 0), 0);
-    if (Math.abs(soma - Number(c.valor || 0)) > 0.5) {
-      missing.push(`Composição de pagamento (soma ${soma.toFixed(2)} ≠ contrato ${Number(c.valor||0).toFixed(2)})`);
+  // A composição financeira agora é definida em "Pedidos de venda".
+  if (opts.requireComposicao !== false) {
+    const comp = c.composicaoPagto ?? [];
+    if (comp.length === 0) {
+      missing.push("Composição de pagamento (defina em Pedidos de venda)");
+    } else {
+      const soma = comp.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+      if (Math.abs(soma - Number(c.valor || 0)) > 0.5) {
+        missing.push(`Composição de pagamento (soma ${soma.toFixed(2)} ≠ contrato ${Number(c.valor||0).toFixed(2)})`);
+      }
     }
   }
   return { ok: missing.length === 0, missing };

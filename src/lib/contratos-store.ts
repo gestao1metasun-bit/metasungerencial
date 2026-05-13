@@ -423,7 +423,7 @@ export function calcularLancamentosProjeto(
   (contrato.composicaoPagto ?? []).forEach((linha, li) => {
     const totalLinha = Number(linha.valor) || 0;
     if (totalLinha <= 0) return;
-    const parcN = Math.max(1, Number(linha.parcelas) || 1);
+    const parcN = parcelasFinanceiroReais(linha.formaPagamento, linha.parcelas);
     const baseValor = (totalLinha * pct) / parcN;
     for (let i = 0; i < parcN; i++) {
       const venc = i === 0 ? linha.dataPrevista : addMonthsISO(linha.dataPrevista, i);

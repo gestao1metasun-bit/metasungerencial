@@ -1323,7 +1323,7 @@ function CadastrarContratoTab({
                   <div className="flex flex-col gap-1">
                     <StatusBadge status={c.status} />
                     {c.status === "Aprovado" && (() => {
-                      const pend = (c.projetos ?? []).filter((p) => !p.aprovado || !p.financeiroGerado);
+                      const pend = (c.projetos ?? []).filter((p) => !p.aprovado);
                       if (pend.length === 0) return null;
                       return (
                         <span className="inline-flex w-fit items-center gap-1 rounded bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning" title="Aprove os pedidos na aba Pedidos de venda">

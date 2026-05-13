@@ -1071,20 +1071,27 @@ function CadastrarContratoTab({
 
   // Validação ao vivo (para mostrar pendências e travar botão)
   const previewContrato = buildContrato();
-  const validation = validateContratoCompleto(previewContrato);
+  const validation = validateContratoCompleto(previewContrato, { requireComposicao: false });
 
   const submit = () => {
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
     if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF/CNPJ inválido"); return; }
     if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone inválido"); return; }
+    // Se não selecionou cliente existente, valida duplicidade pelo CPF/CNPJ informado
+    if (!clienteId && cli.doc) {
+      const dup = findClienteByDoc(cli.doc);
+      if (dup) {
+        toast.error(`CPF/CNPJ já cadastrado (${dup.nome}). Selecione o cliente existente em vez de criar novo.`);
+        return;
+      }
+    }
     if (!validation.ok) {
       toast.error(`Não foi possível salvar. Preencha: ${validation.missing.slice(0, 5).join(", ")}${validation.missing.length > 5 ? "…" : ""}`);
       return;
     }
     const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
-    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · clique em Validar para liberar a aprovação`);
-    // Mantém modal aberto. Use Fechar/Cancelar para sair, ou continue editando outras abas.
+    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · configure a composição financeira em Pedidos de venda`);
   };
 
   return (

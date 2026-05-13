@@ -1614,7 +1614,9 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   <Textarea value={p.obs} onChange={(e) => updateProjeto(contrato.id, p.id, { obs: e.target.value })} />
                 </div>
               </div>
-              <ProjetoFinanceiro contrato={contrato} projeto={p} />
+              <div className="mt-3 rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
+                <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto agora é configurado na aba <b>Pedidos de venda</b> (após o contrato estar Aprovado e o projeto liberado).
+              </div>
             </Card>
           </TabsContent>
         ))}

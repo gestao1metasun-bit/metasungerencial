@@ -294,6 +294,16 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
   if (!c.inv1?.trim()) missing.push("Inversor 1");
   if (!c.pagamento?.trim()) missing.push("Forma de pagamento");
   if (c.pagamento === "Financiamento" && !c.banco?.trim()) missing.push("Banco (financiamento)");
+  // Composição de pagamento deve fechar com o valor total
+  const comp = c.composicaoPagto ?? [];
+  if (comp.length === 0) {
+    missing.push("Composição de pagamento (adicione ao menos 1 linha)");
+  } else {
+    const soma = comp.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+    if (Math.abs(soma - Number(c.valor || 0)) > 0.5) {
+      missing.push(`Composição de pagamento (soma ${soma.toFixed(2)} ≠ contrato ${Number(c.valor||0).toFixed(2)})`);
+    }
+  }
   return { ok: missing.length === 0, missing };
 }
 

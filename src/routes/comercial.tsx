@@ -28,7 +28,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
-import { appendLancamentos } from "@/lib/financeiro-store";
+import { appendLancamentos, readLancamentos } from "@/lib/financeiro-store";
 import { useNaturezas } from "@/lib/financeiro-store";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,

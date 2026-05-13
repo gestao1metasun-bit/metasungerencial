@@ -46,19 +46,10 @@ export const Route = createFileRoute("/comercial")({
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
-type Contrato = (typeof contratosSeed)[number] & {
-  banco?: string; modulos?: number; obs?: string;
-  potencia?: number; inv1?: string; inv2?: string; inv3?: string; parametro?: string;
-  dataCadastro?: string; dataAssinatura?: string;
-  comissaoPct?: number; comissaoValor?: number;
-};
+type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];
 export type VolumeMes = { id: string; mes: string; ano: number; qtd: number; valor: number };
-
-function enrich(c: (typeof contratosSeed)[number]): Contrato {
-  return { ...c, banco: "BASA", modulos: Math.round(c.kwp * 2), obs: "" };
-}
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 

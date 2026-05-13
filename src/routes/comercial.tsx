@@ -914,7 +914,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("dados");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
-    nome: contrato.cliente, doc: "", telefone: "", email: "",
+    nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   });
   const [cepLoading, setCepLoading] = useState(false);

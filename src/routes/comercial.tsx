@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
@@ -39,6 +39,7 @@ import {
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
   setComposicaoPagto, composicaoSomaOk, aprovarProjeto, calcularLancamentosProjeto,
+  parcelasFinanceiroReais, FORMAS_PAGAMENTO,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
   type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";
@@ -816,19 +817,28 @@ function ComposicaoEditor({
   const today = new Date().toISOString().slice(0, 10);
   const linhas = value ?? [];
   const soma = linhas.reduce((s, l) => s + (Number(l.valor) || 0), 0);
-  const diff = valorContrato - soma;
-  const bate = Math.abs(diff) <= 0.5 && linhas.length > 0;
+  const restante = valorContrato - soma;
+  const bate = Math.abs(restante) <= 0.5 && linhas.length > 0;
+  const excede = restante < -0.5;
 
   const addLinha = () => {
+    const valorSugerido = Math.max(0, Math.round(restante * 100) / 100);
     const nova: ComposicaoLinha = {
       id: `CP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      formaPagamento: "Pix", valor: 0, parcelas: 1,
+      formaPagamento: "Pix", valor: valorSugerido, parcelas: 1,
       dataPrevista: today, competencia: today.slice(0, 7),
     };
     onChange([...linhas, nova]);
   };
-  const setL = (id: string, patch: Partial<ComposicaoLinha>) =>
-    onChange(linhas.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  const setL = (id: string, patch: Partial<ComposicaoLinha>) => {
+    onChange(linhas.map((l) => {
+      if (l.id !== id) return l;
+      const next = { ...l, ...patch };
+      // Pix força 1 parcela; cartões mantêm parcelas como informativo
+      if (next.formaPagamento === "Pix") next.parcelas = 1;
+      return next;
+    }));
+  };
   const del = (id: string) => onChange(linhas.filter((l) => l.id !== id));
   const distribuir = () => {
     if (linhas.length === 0 || valorContrato <= 0) return;
@@ -837,68 +847,107 @@ function ComposicaoEditor({
     onChange(linhas.map((l, i) => ({ ...l, valor: i === linhas.length - 1 ? last : each })));
   };
 
+  const helperFor = (l: ComposicaoLinha): string => {
+    if (l.formaPagamento === "Pix") return "Pix gera 1 lançamento (à vista).";
+    if (l.formaPagamento === "Cartão de Débito") return "Cartão de débito: 1 lançamento financeiro.";
+    if (l.formaPagamento === "Cartão de Crédito") return `Cliente parcelou em ${l.parcelas}x · financeiro = 1 lançamento.`;
+    if (l.formaPagamento === "Boleto") return `Boleto em ${l.parcelas}x · gera ${l.parcelas} lançamento(s).`;
+    if (l.formaPagamento.startsWith("Financiamento")) return "Lançamento na liberação do financiamento.";
+    return `Gera ${parcelasFinanceiroReais(l.formaPagamento, l.parcelas)} lançamento(s).`;
+  };
+
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
+      {/* Resumo no topo */}
+      <div className="grid gap-2 md:grid-cols-4">
+        <div className="rounded-md border bg-muted/30 p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Valor total do contrato</div>
+          <div className="font-mono font-bold text-sm">{fmtBRL(valorContrato)}</div>
+        </div>
+        <div className="rounded-md border bg-muted/30 p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Valor já composto</div>
+          <div className="font-mono font-bold text-sm">{fmtBRL(soma)}</div>
+        </div>
+        <div className={`rounded-md border p-3 ${restante > 0.5 ? "border-warning/40 bg-warning/5" : excede ? "border-destructive/40 bg-destructive/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
+          <div className="text-[10px] uppercase text-muted-foreground">Valor restante</div>
+          <div className="font-mono font-bold text-sm">{fmtBRL(restante)}</div>
+        </div>
+        <div className="rounded-md border bg-muted/30 p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Formas de pagamento</div>
+          <div className="font-mono font-bold text-sm">{linhas.length}</div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between border-b pb-2">
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold">Composição de pagamento</span>
+          <span className="text-sm font-semibold">Formas de pagamento</span>
         </div>
         {!disabled && (
           <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={distribuir}>Distribuir</Button>
-            <Button type="button" size="sm" onClick={addLinha} className="bg-primary text-primary-foreground"><Plus className="mr-1 h-3.5 w-3.5" /> Linha</Button>
+            <Button type="button" size="sm" variant="outline" onClick={distribuir}>Distribuir igualmente</Button>
+            <Button type="button" size="sm" onClick={addLinha} className="bg-primary text-primary-foreground"><Plus className="mr-1 h-3.5 w-3.5" /> Forma</Button>
           </div>
         )}
       </div>
       {linhas.length === 0 ? (
-        <div className="py-4 text-center text-xs text-muted-foreground">Adicione ao menos 1 linha (forma + valor + previsão).</div>
+        <div className="py-4 text-center text-xs text-muted-foreground">Adicione ao menos 1 forma de pagamento.</div>
       ) : (
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead>Forma</TableHead>
+            <TableHead className="w-[200px]">Forma</TableHead>
             <TableHead className="text-right">Valor (R$)</TableHead>
-            <TableHead className="text-right">Parcelas</TableHead>
+            <TableHead className="text-right w-24">Parcelas</TableHead>
             <TableHead>Previsão</TableHead>
             <TableHead>Competência</TableHead>
             <TableHead>Obs.</TableHead>
             <TableHead className="w-10"></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {linhas.map((l) => (
-              <TableRow key={l.id}>
-                <TableCell>
-                  <Select value={l.formaPagamento} onValueChange={(v) => setL(l.id, { formaPagamento: v as FormaPagamento })} disabled={disabled}>
-                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
-                        <SelectItem key={f} value={f}>{f}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell><Input type="number" className="h-8 text-right" value={l.valor} onChange={(e) => setL(l.id, { valor: Number(e.target.value) || 0 })} disabled={disabled} /></TableCell>
-                <TableCell><Input type="number" min={1} className="h-8 text-right w-20" value={l.parcelas} onChange={(e) => setL(l.id, { parcelas: Math.max(1, Number(e.target.value) || 1) })} disabled={disabled} /></TableCell>
-                <TableCell><Input type="date" className="h-8" value={l.dataPrevista} onChange={(e) => setL(l.id, { dataPrevista: e.target.value, competencia: e.target.value.slice(0, 7) })} disabled={disabled} /></TableCell>
-                <TableCell><Input type="month" className="h-8" value={l.competencia} onChange={(e) => setL(l.id, { competencia: e.target.value })} disabled={disabled} /></TableCell>
-                <TableCell><Input className="h-8" value={l.observacao ?? ""} onChange={(e) => setL(l.id, { observacao: e.target.value })} disabled={disabled} /></TableCell>
-                <TableCell>
-                  {!disabled && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                </TableCell>
-              </TableRow>
-            ))}
+            {linhas.map((l) => {
+              const pixLike = l.formaPagamento === "Pix";
+              return (
+                <React.Fragment key={l.id}>
+                  <TableRow>
+                    <TableCell>
+                      <Select value={l.formaPagamento} onValueChange={(v) => setL(l.id, { formaPagamento: v as FormaPagamento })} disabled={disabled}>
+                        <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {FORMAS_PAGAMENTO.map((f) => (
+                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell><Input type="number" step="0.01" className="h-8 text-right" value={l.valor} onChange={(e) => setL(l.id, { valor: Number(e.target.value) || 0 })} disabled={disabled} /></TableCell>
+                    <TableCell>
+                      <Input type="number" min={1} className="h-8 text-right w-20"
+                        value={pixLike ? 1 : l.parcelas}
+                        disabled={disabled || pixLike}
+                        onChange={(e) => setL(l.id, { parcelas: Math.max(1, Number(e.target.value) || 1) })} />
+                    </TableCell>
+                    <TableCell><Input type="date" className="h-8" value={l.dataPrevista} onChange={(e) => setL(l.id, { dataPrevista: e.target.value, competencia: e.target.value.slice(0, 7) })} disabled={disabled} /></TableCell>
+                    <TableCell><Input type="month" className="h-8" value={l.competencia} onChange={(e) => setL(l.id, { competencia: e.target.value })} disabled={disabled} /></TableCell>
+                    <TableCell><Input className="h-8" value={l.observacao ?? ""} onChange={(e) => setL(l.id, { observacao: e.target.value })} disabled={disabled} placeholder={l.formaPagamento.startsWith("Financiamento") ? "Banco / status / liberação" : ""} /></TableCell>
+                    <TableCell>
+                      {!disabled && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={7} className="py-1 text-[11px] text-muted-foreground italic border-b-0">{helperFor(l)}</TableCell>
+                  </TableRow>
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       )}
-      <div className={`rounded-md border p-2 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
-          <span>Soma composição: <b className="font-mono">{fmtBRL(soma)}</b></span>
-          <span className={bate ? "text-emerald-600 font-semibold" : "text-destructive font-semibold"}>
-            Diferença: <b className="font-mono">{fmtBRL(Math.abs(diff))}</b> {bate ? "✓ OK" : (diff > 0 ? "(falta)" : "(excesso)")}
-          </span>
-        </div>
-        {!bate && <span className="text-destructive">Aprovação financeira bloqueada até bater.</span>}
+      <div className={`rounded-md border p-2 text-xs ${bate ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700" : excede ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-warning/40 bg-warning/5 text-warning-foreground"}`}>
+        {bate
+          ? "✓ Composição conciliada com o contrato."
+          : excede
+            ? `Pendente: composição (${fmtBRL(soma)}) excede o valor do contrato (${fmtBRL(valorContrato)}).`
+            : `Pendente: composição de pagamento não fecha com o valor do contrato. Restam ${fmtBRL(restante)}.`}
       </div>
     </div>
   );
@@ -1199,28 +1248,12 @@ function CadastrarContratoTab({
 
                 <div className="rounded-lg border bg-card p-5 space-y-4">
                   <div className="flex items-center gap-2 border-b pb-3">
-                    <span className="text-sm font-semibold">Forma de pagamento</span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-1.5"><Label>Forma de pagamento</Label>
-                      <Select value={form.pagamento} onValueChange={(v) => setForm({ ...form, pagamento: v })}>
-                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                        <SelectContent>
-                          {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => (
-                            <SelectItem key={p} value={p}>{p}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {form.pagamento === "Financiamento" && (
-                      <div className="space-y-1.5 md:col-span-2"><Label>Banco (financiamento)</Label>
-                        <Input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="BASA, SICREDI, BB…" />
-                      </div>
-                    )}
+                    <span className="text-sm font-semibold">Observações</span>
                   </div>
                   <div className="space-y-1.5"><Label>Observações</Label>
                     <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
                   </div>
+                  <div className="text-[11px] text-muted-foreground">A forma de pagamento é definida na próxima etapa (<b>Pagamento</b>).</div>
                 </div>
 
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
@@ -1412,7 +1445,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"dados" | "cliente" | "composicao" | "projetos" | "auditoria">("dados");
+  const [tab, setTab] = useState<"dados" | "cliente" | "composicao" | "projetos" | "auditoria">("cliente");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
     nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",
@@ -1492,11 +1525,11 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
           <TabsList>
-            <TabsTrigger value="dados">Dados do contrato</TabsTrigger>
-            <TabsTrigger value="cliente">Cliente</TabsTrigger>
-            <TabsTrigger value="composicao">Composição</TabsTrigger>
-            <TabsTrigger value="projetos">Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
-            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
+            <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
+            <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="composicao">4. Composição</TabsTrigger>
+            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> 5. Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
@@ -1537,17 +1570,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Data assinatura</Label>
                 <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
               </div>
-              <div className="space-y-1.5"><Label>Forma de pagamento</Label>
-                <Select value={f.pagamento ?? ""} onValueChange={(v) => setF({ ...f, pagamento: v })} disabled={contrato.status === "Aprovado"}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent>
-                    {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5"><Label>Banco</Label>
-                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} disabled={contrato.status === "Aprovado"} />
-              </div>
+              {/* Forma de pagamento e Banco foram movidos para a aba "Composição". */}
               <div className="space-y-1.5"><Label>Valor (R$)</Label>
                 <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>
@@ -1888,7 +1911,7 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
                   <Select value={l.formaPagamento ?? "Pix"} onValueChange={(v) => editLanc(l.id, { formaPagamento: v })}>
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                      {FORMAS_PAGAMENTO.map((f) => (
                         <SelectItem key={f} value={f}>{f}</SelectItem>
                       ))}
                     </SelectContent>
@@ -1917,7 +1940,27 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
   );
 }
 
-function ProjetosManager({ contrato }: { contrato: Contrato }) {
+function ConciliacaoCell({ label, contrato, soma, ok }: { label: string; contrato: string; soma: string; ok: boolean }) {
+  return (
+    <div className={`rounded-md border p-2 ${ok ? "border-emerald-500/30 bg-card" : "border-destructive/40 bg-card"}`}>
+      <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">Contrato</span>
+        <span className="font-mono text-xs font-semibold">{contrato}</span>
+      </div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">Projetos</span>
+        <span className={`font-mono text-xs font-semibold ${ok ? "text-emerald-700" : "text-destructive"}`}>{soma}</span>
+      </div>
+    </div>
+  );
+}
+
+function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
+  // Sempre puxar a versão MAIS recente do store para evitar valores em cache
+  // (ex.: contrato editado em outra aba, ou após salvar valor/módulos/inversores).
+  const todos = useContratos();
+  const contrato = todos.find((c) => c.id === contratoProp.id) ?? contratoProp;
   const projetos = contrato.projetos ?? [];
   const [activeTab, setActiveTab] = useState<string>(projetos[0]?.id ?? "novo");
   const [draft, setDraft] = useState<NovoProjForm>(() =>
@@ -1961,21 +2004,39 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
   const diff = valorContrato - somaProjetos;
   const bate = Math.abs(diff) <= 0.5;
 
+  const somaModulos = projetos.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
+  const totalModulosCt = Number(contrato.modulos) || 0;
+  const bateModulos = totalModulosCt === 0 || somaModulos === totalModulosCt;
+
+  const somaKwp = projetos.reduce((s, p) => s + (Number(p.kwp) || 0), 0);
+  const totalKwpCt = Number(contrato.kwp) || 0;
+  const bateKwp = totalKwpCt === 0 || Math.abs(somaKwp - totalKwpCt) <= 0.05;
+
+  // Inversores: comparar listas (cada projeto pode ter inv1/2/3)
+  const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3].filter((x) => x?.trim()).length;
+  const invsProjetos = projetos.reduce(
+    (s, p) => s + [p.inversor, p.inv2, p.inv3].filter((x) => x?.trim()).length, 0,
+  );
+  const bateInversores = invsContrato === 0 || invsProjetos >= invsContrato;
+
+  const tudoBate = bate && bateModulos && bateKwp && bateInversores;
+
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
         Cada projeto vira uma obra independente (tipo, endereço, módulos, equipe) mas mantém vínculo com o contrato {contrato.id}. Valor de venda, comissão e parâmetro permanecem no contrato.
       </div>
       {projetos.length > 0 && (
-        <div className={`rounded-md border p-3 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
-            <span>Soma projetos: <b className="font-mono">{fmtBRL(somaProjetos)}</b></span>
-            <span className={bate ? "text-emerald-600" : "text-destructive"}>
-              {bate ? "✓ valores batem" : `Diferença: ${fmtBRL(Math.abs(diff))} ${diff > 0 ? "(faltam)" : "(excesso)"}`}
-            </span>
+        <div className={`rounded-md border p-3 text-xs space-y-2 ${tudoBate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+          <div className="grid gap-2 md:grid-cols-4">
+            <ConciliacaoCell label="Valor" contrato={fmtBRL(valorContrato)} soma={fmtBRL(somaProjetos)} ok={bate} />
+            <ConciliacaoCell label="Módulos" contrato={String(totalModulosCt)} soma={String(somaModulos)} ok={bateModulos} />
+            <ConciliacaoCell label="kWp" contrato={totalKwpCt.toFixed(2)} soma={somaKwp.toFixed(2)} ok={bateKwp} />
+            <ConciliacaoCell label="Inversores" contrato={String(invsContrato)} soma={String(invsProjetos)} ok={bateInversores} />
           </div>
-          <span className="text-muted-foreground">Soma de valor/módulos não pode exceder o contrato. Pode aprovar por blocos.</span>
+          <div className={`text-[11px] font-semibold ${tudoBate ? "text-emerald-700" : "text-destructive"}`}>
+            {tudoBate ? "✓ Valores batem. Projetos conciliados com o contrato." : "Pendente: soma dos projetos diferente do contrato."}
+          </div>
         </div>
       )}
 

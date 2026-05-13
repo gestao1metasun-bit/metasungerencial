@@ -61,7 +61,37 @@ export type AuditEntry = {
   para: string;
 };
 
-export type FormaPagamento = "Pix" | "Boleto" | "Cartão" | "Transferência" | "Dinheiro" | "Financiamento";
+export type FormaPagamento =
+  | "Pix"
+  | "Permuta"
+  | "Financiamento BASA"
+  | "Financiamento SICREDI"
+  | "Financiamento BB"
+  | "Cartão de Débito"
+  | "Cartão de Crédito"
+  | "Boleto"
+  | "Dinheiro"
+  | "Outros";
+
+export const FORMAS_PAGAMENTO: FormaPagamento[] = [
+  "Pix",
+  "Permuta",
+  "Financiamento BASA",
+  "Financiamento SICREDI",
+  "Financiamento BB",
+  "Cartão de Débito",
+  "Cartão de Crédito",
+  "Boleto",
+  "Dinheiro",
+  "Outros",
+];
+
+/** Quantas parcelas reais a empresa recebe para uma forma. Pix/Cartão = 1. */
+export function parcelasFinanceiroReais(forma: FormaPagamento, parcelasInformadas: number): number {
+  if (forma === "Pix") return 1;
+  if (forma === "Cartão de Débito" || forma === "Cartão de Crédito") return 1;
+  return Math.max(1, Number(parcelasInformadas) || 1);
+}
 
 export type ParcelaPagto = {
   id: string;
@@ -292,8 +322,7 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
   if (!(Number(c.potencia) > 0)) missing.push("Potência/módulo");
   if (!(Number(c.modulos) > 0)) missing.push("Quantidade de módulos");
   if (!c.inv1?.trim()) missing.push("Inversor 1");
-  if (!c.pagamento?.trim()) missing.push("Forma de pagamento");
-  if (c.pagamento === "Financiamento" && !c.banco?.trim()) missing.push("Banco (financiamento)");
+  // Composição de pagamento substitui o campo "forma de pagamento"
   // Composição de pagamento deve fechar com o valor total
   const comp = c.composicaoPagto ?? [];
   if (comp.length === 0) {
@@ -394,7 +423,7 @@ export function calcularLancamentosProjeto(
   (contrato.composicaoPagto ?? []).forEach((linha, li) => {
     const totalLinha = Number(linha.valor) || 0;
     if (totalLinha <= 0) return;
-    const parcN = Math.max(1, Number(linha.parcelas) || 1);
+    const parcN = parcelasFinanceiroReais(linha.formaPagamento, linha.parcelas);
     const baseValor = (totalLinha * pct) / parcN;
     for (let i = 0; i < parcN; i++) {
       const venc = i === 0 ? linha.dataPrevista : addMonthsISO(linha.dataPrevista, i);

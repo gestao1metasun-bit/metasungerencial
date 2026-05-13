@@ -636,7 +636,7 @@ function CadastrarContratoTab({
   const today = new Date().toISOString().slice(0, 10);
   const proximo = nextContratoId(contratos);
   const emptyCliente: ClienteFull = {
-    nome: "", doc: "", telefone: "", email: "",
+    nome: "", doc: "", telefone: "", telefone2: "", email: "",
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   };
   const [form, setForm] = useState({

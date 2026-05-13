@@ -106,6 +106,7 @@ function DashboardGeral() {
         <StatCard label="Despesas" value={fmtBRL(despesas)} icon={ArrowUpCircle} tone="destructive" onView={open("despesas")} />
         <StatCard label="Resultado" value={fmtBRL(receitas - despesas)} icon={Wallet} tone="success" trend={{ value: "+18%", positive: true }} onView={open("resultado")} />
         <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" onView={open("kwp")} />
+        <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} onView={open("kwpInst")} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

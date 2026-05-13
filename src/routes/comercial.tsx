@@ -1541,8 +1541,9 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               </div>
             )}
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>Cliente (nome no contrato)</Label>
-                <Input value={f.cliente} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
+              <div className="space-y-1.5"><Label>Cliente (vinculado)</Label>
+                <Input value={f.cliente} readOnly className="bg-muted" />
+                <p className="text-[10px] text-muted-foreground">Para alterar dados do cliente, vá em <b>Cadastros &gt; Clientes</b>.</p>
               </div>
               <div className="space-y-1.5"><Label>Vendedor</Label>
                 <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })} disabled={contrato.status === "Aprovado"}>

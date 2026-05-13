@@ -1673,7 +1673,39 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   );
 }
 
-/* ---------------- APROVAR E ENVIAR PROJETOS À ENGENHARIA ---------------- */
+/* ---------------- COMPOSIÇÃO DE PAGAMENTO (aba do contrato) ---------------- */
+function ComposicaoTabPanel({ contrato }: { contrato: Contrato }) {
+  const [linhas, setLinhas] = useState<ComposicaoLinha[]>(contrato.composicaoPagto ?? []);
+  const valorContrato = Number(contrato.valor) || 0;
+  const aprovado = contrato.status === "Aprovado";
+  const projAprovados = (contrato.projetos ?? []).filter((p) => p.aprovado).length;
+  const lockEdicao = aprovado && projAprovados > 0;
+
+  const salvar = () => {
+    const soma = linhas.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+    if (linhas.length === 0) { toast.error("Adicione ao menos 1 linha de composição."); return; }
+    if (Math.abs(soma - valorContrato) > 0.5) {
+      toast.error(`Soma (${fmtBRL(soma)}) ≠ valor do contrato (${fmtBRL(valorContrato)}).`);
+      return;
+    }
+    setComposicaoPagto(contrato.id, linhas);
+    toast.success("Composição salva. Já pode aprovar projetos e gerar financeiro proporcional.");
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-muted-foreground">
+        A composição define como o valor total do contrato será recebido. O financeiro de cada projeto é gerado <b>proporcionalmente</b> a partir desta composição (rateio = valor do projeto ÷ valor do contrato).
+        {lockEdicao && <span className="block mt-1 text-warning">Há projeto(s) já aprovado(s). Alterações exigem regeneração do financeiro dos projetos afetados.</span>}
+      </div>
+      <ComposicaoEditor valorContrato={valorContrato} value={linhas} onChange={setLinhas} />
+      <div className="flex justify-end">
+        <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar composição</Button>
+      </div>
+    </div>
+  );
+}
+
 
 function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
   const [open, setOpen] = useState(false);

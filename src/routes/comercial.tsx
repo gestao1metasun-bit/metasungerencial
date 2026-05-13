@@ -640,7 +640,7 @@ function CadastrarContratoTab({
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   };
   const [form, setForm] = useState({
-    dataAssinatura: "", modulos: "", potencia: "",
+    dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "",
     inv1: "", inv2: "", inv3: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });

@@ -948,295 +948,360 @@ function CadastrarContratoTab({
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo contrato</DialogTitle>
-            <DialogDescription>Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Cadastro: {today}</DialogDescription>
-          </DialogHeader>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-1.5"><Label>Nº contrato (auto)</Label>
-            <Input value={proximo} readOnly className="bg-muted font-mono" />
-          </div>
-          <div className="space-y-1.5"><Label>Data cadastro</Label>
-            <Input type="date" value={form.dataCadastro} onChange={(e) => setForm({ ...form, dataCadastro: e.target.value })} />
-          </div>
-          <div className="space-y-1.5"><Label>Data assinatura</Label>
-            <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
-          </div>
-
-          <div className="space-y-1.5 md:col-span-2"><Label>Cliente — nome</Label>
-            <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
-          </div>
-          <div className="space-y-1.5"><Label>Vendedor (do cadastro)</Label>
-            <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-              <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Users className="h-3.5 w-3.5" /> Dados do cliente</div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
-              </div>
-              <div className="space-y-1.5"><Label>Telefone</Label>
-                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
-              </div>
-              <div className="space-y-1.5"><Label>Telefone 2</Label>
-                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
-              </div>
-              <div className="space-y-1.5"><Label>E-mail</Label>
-                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
-              </div>
-              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
-                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} placeholder="69000-000" maxLength={10} />
-              </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Número</Label>
-                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
-              </div>
-              <div className="space-y-1.5"><Label>Bairro</Label>
-                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Complemento</Label>
-                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Cidade</Label>
-                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>UF</Label>
-                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
-              </div>
-            </div>
-          </div>
-
-          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-                <Layers className="h-3.5 w-3.5" /> Projetos do contrato ({projs.length})
-                <span className="ml-2 font-mono text-primary">kWp total: {kwpTotal.toFixed(2)}</span>
-              </div>
-              <Button type="button" size="sm" variant="outline" onClick={addProj}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar projeto
-              </Button>
-            </div>
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {projs.map((p, i) => (
-                <button
-                  type="button"
-                  key={i}
-                  onClick={() => setActiveProj(i)}
-                  className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${activeProj === i ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"}`}
-                >
-                  {p.tipo || `Projeto ${i + 1}`}
-                </button>
-              ))}
-            </div>
-            {projs.map((p, i) => i !== activeProj ? null : (
-              <div key={i} className="grid gap-3 md:grid-cols-3">
-                <div className="space-y-1.5 md:col-span-2"><Label>Tipo / Nome do projeto</Label>
-                  <Input value={p.tipo} onChange={(e) => setProjField(i, "tipo", e.target.value)} placeholder={`Projeto ${i + 1} — ex.: Residencial telhado`} />
+        <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0">
+          {/* Header */}
+          <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="h-5 w-5" />
                 </div>
-                <div className="flex items-end justify-end">
-                  {projs.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => delProj(i)}>
-                      <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
-                    </Button>
+                <div>
+                  <DialogTitle className="text-xl">Novo contrato</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Nº <span className="font-mono font-semibold text-primary">{proximo}</span> · Cadastro {today}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          {/* Body */}
+          <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(92vh - 140px)" }}>
+            <Tabs defaultValue="cliente" className="space-y-5">
+              <TabsList className="grid w-full grid-cols-3 h-11">
+                <TabsTrigger value="cliente" className="gap-2"><Users className="h-4 w-4" /> 1. Cliente</TabsTrigger>
+                <TabsTrigger value="contrato" className="gap-2"><FileText className="h-4 w-4" /> 2. Contrato</TabsTrigger>
+                <TabsTrigger value="projetos" className="gap-2"><Layers className="h-4 w-4" /> 3. Projetos <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">{projs.length}</span></TabsTrigger>
+              </TabsList>
+
+              {/* ============ TAB CLIENTE ============ */}
+              <TabsContent value="cliente" className="mt-0 space-y-4">
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5 md:col-span-2"><Label>Cliente — nome</Label>
+                      <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
+                    </div>
+                    <div className="space-y-1.5"><Label>Vendedor</Label>
+                      <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                        <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border bg-card p-5">
+                  <div className="mb-4 flex items-center gap-2 border-b pb-3">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold">Dados do cliente</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
+                      <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Telefone</Label>
+                      <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Telefone 2</Label>
+                      <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
+                      <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+                    </div>
+                    <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                      <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} placeholder="69000-000" maxLength={10} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                      <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Número</Label>
+                      <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Bairro</Label>
+                      <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Complemento</Label>
+                      <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Cidade</Label>
+                      <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>UF</Label>
+                      <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* ============ TAB CONTRATO ============ */}
+              <TabsContent value="contrato" className="mt-0 space-y-4">
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold">Identificação</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Nº contrato (auto)</Label>
+                      <Input value={proximo} readOnly className="bg-muted font-mono" />
+                    </div>
+                    <div className="space-y-1.5"><Label>Data cadastro</Label>
+                      <Input type="date" value={form.dataCadastro} onChange={(e) => setForm({ ...form, dataCadastro: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Data assinatura</Label>
+                      <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Valores e comissão</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
+                      <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Parâmetro</Label>
+                      <Input value={parametroFmt} readOnly className="bg-muted font-mono" />
+                    </div>
+                    <div className="space-y-1.5"><Label>Comissão (auto)</Label>
+                      {aprovacao ? (
+                        <Input value="APROVAÇÃO DIRETORIA" readOnly className="bg-destructive/10 font-bold text-destructive" />
+                      ) : (
+                        <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
+                      )}
+                    </div>
+                    <div className="space-y-1.5"><Label>Financiamento?</Label>
+                      <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nao">Não</SelectItem>
+                          <SelectItem value="sim">Sim — Financiamentos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {parametroNum > 0 && (
+                    <div className="rounded-md bg-muted/50 p-2.5 text-[11px] text-muted-foreground">
+                      <span className="font-semibold">Faixas de comissão:</span> &lt;2000 = aprovação diretoria · 2000–2100 = 3% · 2101–2300 = 4% · 2301–2449 = 5% · 2450+ = 6%
+                    </div>
                   )}
                 </div>
 
-                <div className="md:col-span-3 flex items-center gap-2 text-xs">
-                  <input
-                    id={`useCli-${i}`}
-                    type="checkbox"
-                    checked={p.usarEnderecoCliente}
-                    onChange={(e) => setProjField(i, "usarEnderecoCliente", e.target.checked)}
-                  />
-                  <label htmlFor={`useCli-${i}`} className="cursor-pointer text-muted-foreground">
-                    <MapPin className="inline h-3 w-3" /> Usar endereço do cliente para este projeto
-                  </label>
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Dados técnicos</span>
+                    <span className="ml-auto text-xs text-muted-foreground">total que será dividido entre projetos</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Qtd módulos (contrato)</Label>
+                      <Input type="number" value={form.modulosContrato} onChange={(e) => setForm({ ...form, modulosContrato: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
+                      <Input type="number" value={form.potenciaContrato} onChange={(e) => setForm({ ...form, potenciaContrato: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>kWp esperado</Label>
+                      <Input value={((Number(form.modulosContrato) || 0) * (Number(form.potenciaContrato) || 0) / 1000).toFixed(2)} readOnly className="bg-muted font-mono" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-2 text-xs font-medium text-muted-foreground">Inversores (até 6)</div>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, idx) => (
+                        <div key={k} className="space-y-1.5"><Label className="text-xs">Inversor {idx + 1}</Label>
+                          <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={idx === 0 ? "Modelo / potência" : "Opcional"} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {!p.usarEnderecoCliente && (
-                  <>
-                    <div className="space-y-1.5"><Label>CEP {projCepLoading === i && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
-                      <Input value={p.cep} onChange={(e) => lookupProjCEP(i, e.target.value)} placeholder="69000-000" maxLength={10} />
+                <div className="rounded-lg border bg-card p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <span className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</span>
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
                     </div>
-                    <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                      <Input value={p.rua} onChange={(e) => setProjField(i, "rua", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Número</Label>
-                      <Input value={p.numero} onChange={(e) => setProjField(i, "numero", e.target.value)} maxLength={10} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Bairro</Label>
-                      <Input value={p.bairro} onChange={(e) => setProjField(i, "bairro", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Complemento</Label>
-                      <Input value={p.complemento} onChange={(e) => setProjField(i, "complemento", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Cidade</Label>
-                      <Input value={p.cidade} onChange={(e) => setProjField(i, "cidade", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5"><Label>UF</Label>
-                      <Input value={p.uf} onChange={(e) => setProjField(i, "uf", e.target.value.toUpperCase())} maxLength={2} />
-                    </div>
-                  </>
-                )}
+                  </div>
+                  <Table>
+                    <TableHeader><TableRow className="hover:bg-transparent">
+                      <TableHead className="w-10">#</TableHead>
+                      <TableHead>Emissão</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Competência</TableHead>
+                      <TableHead>Forma</TableHead>
+                      <TableHead className="text-right">Valor (R$)</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {parcelas.map((p, i) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                          <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setParc(p.id, { dataEmissao: e.target.value })} /></TableCell>
+                          <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setParc(p.id, { dataVencimento: e.target.value })} /></TableCell>
+                          <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setParc(p.id, { competencia: e.target.value })} /></TableCell>
+                          <TableCell>
+                            <Select value={p.formaPagamento} onValueChange={(v) => setParc(p.id, { formaPagamento: v as FormaPagamento })}>
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setParc(p.id, { valor: Number(e.target.value) || 0 })} />
+                          </TableCell>
+                          <TableCell>
+                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => delParc(p.id)} disabled={parcelas.length === 1}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="flex items-center justify-end gap-3 text-xs">
+                    <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParcelas)}</b></span>
+                    <span className={`font-mono ${erroValor ? "text-destructive" : "text-emerald-600"}`}>
+                      {erroValor ? `≠ valor venda (${fmtBRL(valorNum)})` : valorNum > 0 ? "✓ bate com valor da venda" : ""}
+                    </span>
+                  </div>
+                </div>
+              </TabsContent>
 
-                <div className="space-y-1.5"><Label>Qtd módulos</Label>
-                  <Input type="number" value={p.modulos} onChange={(e) => setProjField(i, "modulos", e.target.value)} />
-                </div>
-                <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
-                  <Input type="number" step="1" value={p.potenciaModuloW} onChange={(e) => setProjField(i, "potenciaModuloW", e.target.value)} placeholder="Ex.: 620" />
-                </div>
-                <div className="space-y-1.5"><Label>kWp do projeto (auto)</Label>
-                  <Input value={projsKwp[i] ? projsKwp[i].toFixed(2) : ""} readOnly className="bg-muted font-mono" />
-                </div>
-
-                <div className="space-y-1.5"><Label>Inversor 1</Label>
-                  <Input value={p.inv1} onChange={(e) => setProjField(i, "inv1", e.target.value)} placeholder="Modelo / potência" />
-                </div>
-                <div className="space-y-1.5"><Label>Inversor 2</Label>
-                  <Input value={p.inv2} onChange={(e) => setProjField(i, "inv2", e.target.value)} placeholder="Opcional" />
-                </div>
-                <div className="space-y-1.5"><Label>Inversor 3</Label>
-                  <Input value={p.inv3} onChange={(e) => setProjField(i, "inv3", e.target.value)} placeholder="Opcional" />
-                </div>
-
-                <div className="space-y-1.5 md:col-span-2"><Label>Equipe (opcional)</Label>
-                  <Input value={p.equipe} onChange={(e) => setProjField(i, "equipe", e.target.value)} placeholder="Equipe responsável" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Orçado da obra (R$)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input value={fmtBRL(orcTotal(p))} readOnly className="bg-muted font-mono" />
-                    <Button type="button" variant="outline" size="sm" onClick={() => setOrcOpen(i)}>
-                      <Pencil className="mr-1 h-3.5 w-3.5" /> Cadastrar
+              {/* ============ TAB PROJETOS ============ */}
+              <TabsContent value="projetos" className="mt-0 space-y-4">
+                <div className="rounded-lg border bg-card p-5">
+                  <div className="mb-4 flex items-center justify-between gap-2 border-b pb-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold">Projetos do contrato ({projs.length})</span>
+                      <span className="ml-2 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary">kWp total: {kwpTotal.toFixed(2)}</span>
+                    </div>
+                    <Button type="button" size="sm" variant="outline" onClick={addProj}>
+                      <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar projeto
                     </Button>
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {p.materiais.length} material(is) · {p.outros.length} outro(s) · vai p/ Financeiro como <b>Orçado futuro</b>.
+                  <div className="mb-4 flex flex-wrap gap-1.5">
+                    {projs.map((p, i) => (
+                      <button
+                        type="button"
+                        key={i}
+                        onClick={() => setActiveProj(i)}
+                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${activeProj === i ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:bg-accent"}`}
+                      >
+                        {p.tipo || `Projeto ${i + 1}`}
+                      </button>
+                    ))}
                   </div>
-                </div>
-              </div>
-            ))}
-            {projs.some((p) => orcTotal(p) > 0) && (
-              <div className="mt-3 rounded-md border border-border bg-background p-2 text-xs">
-                <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + orcTotal(p), 0))}
-                {valorNum > 0 && (
-                  <span className="ml-3 text-muted-foreground">
-                    Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + orcTotal(p), 0))}</b>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+                  {projs.map((p, i) => i !== activeProj ? null : (
+                    <div key={i} className="grid gap-4 md:grid-cols-3 rounded-md bg-muted/30 p-4">
+                      <div className="space-y-1.5 md:col-span-2"><Label>Tipo / Nome do projeto</Label>
+                        <Input value={p.tipo} onChange={(e) => setProjField(i, "tipo", e.target.value)} placeholder={`Projeto ${i + 1} — ex.: Residencial telhado`} />
+                      </div>
+                      <div className="flex items-end justify-end">
+                        {projs.length > 1 && (
+                          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => delProj(i)}>
+                            <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
+                          </Button>
+                        )}
+                      </div>
 
-          <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
-            <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
-          </div>
-          <div className="space-y-1.5"><Label>Parâmetro (auto = valor / kWp)</Label>
-            <Input value={parametroFmt} readOnly className="bg-muted font-mono" />
-          </div>
-          <div className="space-y-1.5"><Label>Comissão (auto)</Label>
-            {aprovacao ? (
-              <Input value="APROVAÇÃO DIRETORIA" readOnly className="bg-destructive/10 font-bold text-destructive" />
-            ) : (
-              <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
-            )}
-          </div>
-          <div className="space-y-1.5"><Label>Financiamento? <span className="text-[10px] font-normal text-muted-foreground">(vale p/ todos os projetos)</span></Label>
-            <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nao">Não</SelectItem>
-                <SelectItem value="sim">Sim — enviar para Financiamentos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          </div>
+                      <div className="md:col-span-3 flex items-center gap-2 text-xs">
+                        <input
+                          id={`useCli-${i}`}
+                          type="checkbox"
+                          checked={p.usarEnderecoCliente}
+                          onChange={(e) => setProjField(i, "usarEnderecoCliente", e.target.checked)}
+                        />
+                        <label htmlFor={`useCli-${i}`} className="cursor-pointer text-muted-foreground">
+                          <MapPin className="inline h-3 w-3" /> Usar endereço do cliente para este projeto
+                        </label>
+                      </div>
 
-          {/* ===== Dados do contrato — totais técnicos + parcelas ===== */}
-          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3 space-y-4">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Dados do contrato</div>
+                      {!p.usarEnderecoCliente && (
+                        <>
+                          <div className="space-y-1.5"><Label>CEP {projCepLoading === i && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                            <Input value={p.cep} onChange={(e) => lookupProjCEP(i, e.target.value)} placeholder="69000-000" maxLength={10} />
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                            <Input value={p.rua} onChange={(e) => setProjField(i, "rua", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5"><Label>Número</Label>
+                            <Input value={p.numero} onChange={(e) => setProjField(i, "numero", e.target.value)} maxLength={10} />
+                          </div>
+                          <div className="space-y-1.5"><Label>Bairro</Label>
+                            <Input value={p.bairro} onChange={(e) => setProjField(i, "bairro", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5"><Label>Complemento</Label>
+                            <Input value={p.complemento} onChange={(e) => setProjField(i, "complemento", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5"><Label>Cidade</Label>
+                            <Input value={p.cidade} onChange={(e) => setProjField(i, "cidade", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5"><Label>UF</Label>
+                            <Input value={p.uf} onChange={(e) => setProjField(i, "uf", e.target.value.toUpperCase())} maxLength={2} />
+                          </div>
+                        </>
+                      )}
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>Qtd módulos (contrato)</Label>
-                <Input type="number" value={form.modulosContrato} onChange={(e) => setForm({ ...form, modulosContrato: e.target.value })} />
-              </div>
-              <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
-                <Input type="number" value={form.potenciaContrato} onChange={(e) => setForm({ ...form, potenciaContrato: e.target.value })} />
-              </div>
-              <div className="space-y-1.5"><Label>kWp esperado</Label>
-                <Input value={((Number(form.modulosContrato) || 0) * (Number(form.potenciaContrato) || 0) / 1000).toFixed(2)} readOnly className="bg-muted font-mono" />
-              </div>
-              {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, idx) => (
-                <div key={k} className="space-y-1.5"><Label>Inversor {idx + 1}</Label>
-                  <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={idx === 0 ? "Modelo / potência" : "Opcional"} />
-                </div>
-              ))}
-            </div>
+                      <div className="space-y-1.5"><Label>Qtd módulos</Label>
+                        <Input type="number" value={p.modulos} onChange={(e) => setProjField(i, "modulos", e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
+                        <Input type="number" step="1" value={p.potenciaModuloW} onChange={(e) => setProjField(i, "potenciaModuloW", e.target.value)} placeholder="Ex.: 620" />
+                      </div>
+                      <div className="space-y-1.5"><Label>kWp do projeto (auto)</Label>
+                        <Input value={projsKwp[i] ? projsKwp[i].toFixed(2) : ""} readOnly className="bg-muted font-mono" />
+                      </div>
 
-            {/* Parcelas */}
-            <div className="rounded-md border border-border bg-background p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</div>
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
-                  <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
-                </div>
-              </div>
-              <Table>
-                <TableHeader><TableRow className="hover:bg-transparent">
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Emissão</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Competência</TableHead>
-                  <TableHead>Forma</TableHead>
-                  <TableHead className="text-right">Valor (R$)</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {parcelas.map((p, i) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                      <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setParc(p.id, { dataEmissao: e.target.value })} /></TableCell>
-                      <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setParc(p.id, { dataVencimento: e.target.value })} /></TableCell>
-                      <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setParc(p.id, { competencia: e.target.value })} /></TableCell>
-                      <TableCell>
-                        <Select value={p.formaPagamento} onValueChange={(v) => setParc(p.id, { formaPagamento: v as FormaPagamento })}>
-                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
-                              <SelectItem key={f} value={f}>{f}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setParc(p.id, { valor: Number(e.target.value) || 0 })} />
-                      </TableCell>
-                      <TableCell>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => delParc(p.id)} disabled={parcelas.length === 1}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </TableCell>
-                    </TableRow>
+                      <div className="space-y-1.5"><Label>Inversor 1</Label>
+                        <Input value={p.inv1} onChange={(e) => setProjField(i, "inv1", e.target.value)} placeholder="Modelo / potência" />
+                      </div>
+                      <div className="space-y-1.5"><Label>Inversor 2</Label>
+                        <Input value={p.inv2} onChange={(e) => setProjField(i, "inv2", e.target.value)} placeholder="Opcional" />
+                      </div>
+                      <div className="space-y-1.5"><Label>Inversor 3</Label>
+                        <Input value={p.inv3} onChange={(e) => setProjField(i, "inv3", e.target.value)} placeholder="Opcional" />
+                      </div>
+
+                      <div className="space-y-1.5 md:col-span-2"><Label>Equipe (opcional)</Label>
+                        <Input value={p.equipe} onChange={(e) => setProjField(i, "equipe", e.target.value)} placeholder="Equipe responsável" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Orçado da obra (R$)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input value={fmtBRL(orcTotal(p))} readOnly className="bg-muted font-mono" />
+                          <Button type="button" variant="outline" size="sm" onClick={() => setOrcOpen(i)}>
+                            <Pencil className="mr-1 h-3.5 w-3.5" /> Cadastrar
+                          </Button>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {p.materiais.length} material(is) · {p.outros.length} outro(s) · vai p/ Financeiro como <b>Orçado futuro</b>.
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-              <div className="mt-2 flex items-center justify-end gap-3 text-xs">
-                <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParcelas)}</b></span>
-                <span className={`font-mono ${erroValor ? "text-destructive" : "text-muted-foreground"}`}>
-                  {erroValor ? `≠ valor venda (${fmtBRL(valorNum)})` : valorNum > 0 ? "✓ bate com valor da venda" : ""}
-                </span>
-              </div>
-            </div>
+                  {projs.some((p) => orcTotal(p) > 0) && (
+                    <div className="mt-3 rounded-md border border-border bg-background p-3 text-xs">
+                      <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + orcTotal(p), 0))}
+                      {valorNum > 0 && (
+                        <span className="ml-3 text-muted-foreground">
+                          Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + orcTotal(p), 0))}</b>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
 
-            {/* Banner validação */}
+            {/* Banner validação — sempre visível */}
             {(erroModulos || erroValor || semProjeto || inversoresOrfaos.length > 0) && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive space-y-0.5">
+              <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
+                <div className="font-semibold">Pendências para cadastrar:</div>
                 {semProjeto && <div>• Cadastre ao menos 1 projeto com módulos.</div>}
                 {erroModulos && <div>• Soma de módulos dos projetos ({totalModulosProjs}) ≠ módulos do contrato ({modulosContratoNum}).</div>}
                 {erroValor && <div>• Soma das parcelas ({fmtBRL(totalParcelas)}) ≠ valor da venda ({fmtBRL(valorNum)}).</div>}
@@ -1245,16 +1310,12 @@ function CadastrarContratoTab({
             )}
           </div>
 
-
-        {parametroNum > 0 && (
-          <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <span className="font-semibold">Faixas:</span> &lt;2000 = aprovação diretoria · 2000–2100 = 3% · 2101–2300 = 4% · 2301–2449 = 5% · 2450+ = 6%
-          </div>
-        )}
-
-          <DialogFooter className="mt-5">
+          {/* Footer fixo */}
+          <DialogFooter className="border-t bg-muted/30 px-6 py-3">
             <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}>
+              <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

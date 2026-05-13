@@ -767,6 +767,42 @@ function CadastrarContratoTab({
             </Select>
           </div>
 
+          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Users className="h-3.5 w-3.5" /> Dados do cliente</div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
+                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>Telefone</Label>
+                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>E-mail</Label>
+                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+              </div>
+              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} placeholder="69000-000" maxLength={10} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Número</Label>
+                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+              </div>
+              <div className="space-y-1.5"><Label>Bairro</Label>
+                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Complemento</Label>
+                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Cidade</Label>
+                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>UF</Label>
+                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-1.5"><Label>Qtd módulos</Label>
             <Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: e.target.value })} />
           </div>

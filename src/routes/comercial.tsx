@@ -1225,7 +1225,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
             {projetos.length === 0
-              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Assinado."
+              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Aprovado."
               : "Selecione quais projetos devem ir para a Engenharia agora. Os não marcados ficam pendentes e podem ser liberados depois."}
           </DialogDescription>
         </DialogHeader>

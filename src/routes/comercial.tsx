@@ -1988,21 +1988,39 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const diff = valorContrato - somaProjetos;
   const bate = Math.abs(diff) <= 0.5;
 
+  const somaModulos = projetos.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
+  const totalModulosCt = Number(contrato.modulos) || 0;
+  const bateModulos = totalModulosCt === 0 || somaModulos === totalModulosCt;
+
+  const somaKwp = projetos.reduce((s, p) => s + (Number(p.kwp) || 0), 0);
+  const totalKwpCt = Number(contrato.kwp) || 0;
+  const bateKwp = totalKwpCt === 0 || Math.abs(somaKwp - totalKwpCt) <= 0.05;
+
+  // Inversores: comparar listas (cada projeto pode ter inv1/2/3)
+  const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3].filter((x) => x?.trim()).length;
+  const invsProjetos = projetos.reduce(
+    (s, p) => s + [p.inversor, p.inv2, p.inv3].filter((x) => x?.trim()).length, 0,
+  );
+  const bateInversores = invsContrato === 0 || invsProjetos >= invsContrato;
+
+  const tudoBate = bate && bateModulos && bateKwp && bateInversores;
+
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
         Cada projeto vira uma obra independente (tipo, endereço, módulos, equipe) mas mantém vínculo com o contrato {contrato.id}. Valor de venda, comissão e parâmetro permanecem no contrato.
       </div>
       {projetos.length > 0 && (
-        <div className={`rounded-md border p-3 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
-            <span>Soma projetos: <b className="font-mono">{fmtBRL(somaProjetos)}</b></span>
-            <span className={bate ? "text-emerald-600" : "text-destructive"}>
-              {bate ? "✓ valores batem" : `Diferença: ${fmtBRL(Math.abs(diff))} ${diff > 0 ? "(faltam)" : "(excesso)"}`}
-            </span>
+        <div className={`rounded-md border p-3 text-xs space-y-2 ${tudoBate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+          <div className="grid gap-2 md:grid-cols-4">
+            <ConciliacaoCell label="Valor" contrato={fmtBRL(valorContrato)} soma={fmtBRL(somaProjetos)} ok={bate} />
+            <ConciliacaoCell label="Módulos" contrato={String(totalModulosCt)} soma={String(somaModulos)} ok={bateModulos} />
+            <ConciliacaoCell label="kWp" contrato={totalKwpCt.toFixed(2)} soma={somaKwp.toFixed(2)} ok={bateKwp} />
+            <ConciliacaoCell label="Inversores" contrato={String(invsContrato)} soma={String(invsProjetos)} ok={bateInversores} />
           </div>
-          <span className="text-muted-foreground">Soma de valor/módulos não pode exceder o contrato. Pode aprovar por blocos.</span>
+          <div className={`text-[11px] font-semibold ${tudoBate ? "text-emerald-700" : "text-destructive"}`}>
+            {tudoBate ? "✓ Valores batem. Projetos conciliados com o contrato." : "Pendente: soma dos projetos diferente do contrato."}
+          </div>
         </div>
       )}
 

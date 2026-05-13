@@ -1521,7 +1521,7 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
               {bate ? "✓ valores batem" : `Diferença: ${fmtBRL(Math.abs(diff))} ${diff > 0 ? "(faltam)" : "(excesso)"}`}
             </span>
           </div>
-          <span className="text-muted-foreground">Para aprovar o contrato, a soma dos valores dos projetos deve bater com o total.</span>
+          <span className="text-muted-foreground">Soma de valor/módulos não pode exceder o contrato. Pode aprovar por blocos.</span>
         </div>
       )}
 

@@ -1,76 +1,56 @@
+# Plano — Fluxo operacional Contrato → Projeto → Engenharia → Financeiro
 
-# Plano — Expansão Comercial + Engenharia (Meta Sun Gerencial)
+Esse é um redesenho grande. Proponho dividir em **5 entregas sequenciais** para você aprovar/validar cada etapa antes da próxima. Assim eu não quebro o que já está funcionando e você consegue testar.
 
-Escopo grande. Vou implementar em frontend (mock data + estado local) mantendo o visual atual. Backend (Supabase) fica fora desta iteração — quando você quiser persistência real, ativamos Lovable Cloud e migramos os dados.
+---
 
-## 0. Correção rápida (fora do escopo, mas necessária)
-- Hydration mismatch em `PageHeader` por `new Date().toLocaleString()`. Mover para `useEffect` + state, renderizando vazio no SSR.
+## Entrega 1 — Cadastro + Validação + Aprovação do contrato
+**Arquivos:** `src/lib/contratos-store.ts`, `src/routes/comercial.tsx`
 
-## 1. Módulo Comercial (`src/routes/comercial.tsx`)
+- Novos status: `Pendente de informações`, `Em análise`, `Pronto para aprovação`, `Aprovado`, `Cancelado`.
+- Form "Novo Contrato" com **todos** os campos obrigatórios (cliente completo + dados do contrato + forma de pagto + banco se financiamento + obs).
+- Botão **Salvar** bloqueado se faltar campo; mostra lista exata: *"Preencha: X, Y, Z"*.
+- Tela de conferência com botão **Validar contrato** → roda checklist e move para `Pronto para aprovação` ou mantém `Pendente` listando o que falta.
+- Botão **Aprovar contrato** com confirmação resumida → status `Aprovado`.
+- Após aprovado: campos estruturais (nº, cliente, valor, potência, forma pagto) ficam **bloqueados**; botão **Solicitar alteração** exige motivo + usuário + data/hora, gravado em `auditoria`.
 
-**Abas:** Dashboard · Clientes · Propostas · Contratos · Vendedores · Análise Executiva
+## Entrega 2 — Aba Projetos dentro do contrato aprovado
+**Arquivos:** `src/lib/contratos-store.ts`, `src/routes/comercial.tsx`
 
-### Dashboard
-- 6 cards (Gerados, Assinados, Pendentes, Cancelados, Valor Assinado, Ticket Médio) com ícone de **olho** no canto superior direito.
-- Clique no olho → modal executivo com KPIs + tabela filtrada de contratos (ações: editar, mudar status, cancelar, marcar assinado).
-- Painel **Top Vendedores** (qtd, valor, ticket, kWp, conversão, %).
-- Gráficos: ranking vendedores, evolução mensal de propostas/contratos/assinaturas, conversão Gerados×Assinados, funil comercial, valor/kWp por mês.
+- Aba "Projetos" só liberada após `Aprovado`.
+- Novo Projeto: nome, local, potência prevista, valor previsto, obs, status inicial.
+- Trava: soma valores e soma potências dos projetos não pode exceder contrato (sem aprovação extra).
+- **Sem trava de quantidade de placas** — só potência e valor.
 
-### Clientes (novo CRUD)
-- Tabela + modal (nome, CPF/CNPJ, telefone, email, endereço, cidade, UF, vendedor, status, obs). Busca + filtro.
+## Entrega 3 — Aba Orçamento Previsto + aprovação
+**Arquivos:** `src/lib/contratos-store.ts` (novo tipo `OrcamentoPrevisto`), `src/routes/comercial.tsx`, `src/lib/financeiro-store.ts`
 
-### Propostas
-- CRUD existente, expandido: módulos, inversor, banco, status (Em negociação / Enviada / Aguardando retorno / Fechada / Perdida). Mini gráficos.
+- Por projeto: receita + custos (materiais, MO, despesas, logística, combustível, alimentação, comissão, impostos, taxas, outros).
+- Cálculo automático: custo total, margem, lucro, %margem.
+- Botão **Aprovar orçamento** → grava data/hora/usuário, lança no Financeiro como `Orçado futuro` / `A realizar`.
 
-### Contratos
-- Tabela com filtros por status, busca, edição inline de status. Modal de detalhes c/ histórico simples.
+## Entrega 4 — Envio para Engenharia + DASH do projeto
+**Arquivos:** `src/routes/comercial.tsx`, `src/routes/engenharia.tsx`, novo `src/lib/projeto-execucao-store.ts`
 
-### Vendedores
-- Cards individuais + ranking + mini-gráfico evolução.
+- Botão **Enviar para Engenharia** liberado só com contrato aprovado + projeto criado + orçamento aprovado.
+- DASH do projeto na Engenharia com status operacionais (Em projeto, Aguardando, Executando, Standby, Finalizado).
+- Abas dentro da DASH:
+  - **Materiais Utilizados** (lançamento manual → custo realizado + baixa estoque opcional + financeiro `Realizado`).
+  - **Despesas Realizadas** (combustível, frete, MO, etc → custo realizado + financeiro).
+- Trava: lançar custo exige projeto vinculado.
 
-### Análise Executiva
-- Alertas (vendedores abaixo da média, pendentes críticos, projeção, tendência).
+## Entrega 5 — Resultado Gerencial + Finalização + Alertas
+**Arquivos:** `src/routes/comercial.tsx`, `src/routes/engenharia.tsx`, `src/routes/dashboard.tsx`
 
-## 2. Módulo Engenharia (`src/routes/engenharia.tsx`)
+- Visão **Resultado Gerencial** por contrato/projeto: previsto × realizado × a realizar, margem prevista × real, desvio em R$ e %.
+- Alertas: custo > orçado, margem abaixo do previsto, despesa sem projeto, etc.
+- **Finalizar projeto** com checklist (potência entregue, datas, equipe, custos revisados). Se potência < contratada → exige justificativa.
+- Atualização incremental dos módulos (sem reload geral).
 
-**Abas:** Dashboard · Obras Ativas · Cronograma · Pendências · Equipes · Produtividade · Finalizados
+---
 
-### Dashboard
-- Cards com **olho** → modal listando obras daquele status com edição/alteração de status.
-- Gráficos: por status, por equipe, módulos por equipe/status, evolução finalizadas, produtividade média, pendências por equipe, prazo médio.
+## Pergunta antes de começar
 
-### Obras Ativas
-- Colunas: ordem, número, cliente, contrato, módulos, potência, INV, INV2, INV3, telhado (select), equipe, início, fim, status, ações.
-- Status "Finalizado" remove da aba e move para Finalizados (estado local).
+Confirma que posso seguir nessa ordem (1 → 5), commitando cada entrega para você testar antes da próxima? Ou prefere que eu faça **tudo de uma vez** num único bloco grande (mais arriscado, mais difícil de reverter se algo quebrar)?
 
-### Cronograma
-- Cards por equipe, divididos em Executando (verde) e Aguardando (amarelo).
-- Reordenação manual (botões ↑/↓) dentro da mesma equipe + status.
-- Recalcula `prev_final` automaticamente via produtividade média da equipe e faixa de módulos.
-
-### Pendências
-- CRUD: equipe, cliente, problema, solução, status. Contador vermelho por equipe no cronograma e dashboard.
-
-### Equipes
-- Cards com qtd obras (executando/aguardando), módulos, produtividade média, pendências abertas. CRUD.
-
-### Produtividade
-- Tabela + gráficos: módulos/dia por equipe, ranking, média por faixa.
-
-### Finalizados
-- Lista + olho (detalhes) + botão "Retornar para ativos".
-
-## 3. Mock data (`src/lib/mock-data.ts`)
-Expandir: clientes, vendedores (com kWp/conversão/meta), propostas (mais campos), contratos (banco, obs, kWp), obras (INV2, INV3, telhado, ordem), produtividade equipe (médias por faixa).
-
-## 4. Componentes auxiliares novos
-- `src/components/app/DetailModal.tsx` — modal reutilizável dos olhinhos.
-- `src/components/app/EyeButton.tsx` — botão de olho discreto.
-
-## Detalhes técnicos
-- Tudo client-side, React state + `sonner` para toasts.
-- Sem mudanças de tema; usa tokens existentes (`primary`, `success`, `warning`, `destructive`, `info`).
-- Gráficos com `recharts` (já instalado).
-- Sem Supabase nesta etapa (você confirma quando quiser ativar).
-
-Confirma que sigo? Ou prefere que eu **divida em 2 entregas** (1ª: Comercial, 2ª: Engenharia) para revisar antes?
+Sugiro fortemente entregar por partes — esse fluxo toca Comercial, Engenharia, Financeiro e Estoque ao mesmo tempo.

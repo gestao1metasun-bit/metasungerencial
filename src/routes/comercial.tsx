@@ -1976,8 +1976,8 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   {p.enviadoEngenharia ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span> : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  {!p.enviadoEngenharia && contrato.status === "Aprovado" && (
-                    <Button size="sm" variant="outline" onClick={() => {
+                  {!p.aprovado && contrato.status === "Aprovado" && (
+                    <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
                       const faltam: string[] = [];
                       if (!(Number(p.valor) > 0)) faltam.push("valor");
                       if (!(Number(p.modulos) > 0)) faltam.push("módulos");
@@ -1985,9 +1985,15 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                       if (!p.endereco?.trim()) faltam.push("endereço");
                       if (!p.status?.trim()) faltam.push("status");
                       if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
-                      updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-                      toast.success("Projeto liberado para Engenharia");
-                    }}>Liberar p/ Engenharia</Button>
+                      const comp = composicaoSomaOk(contrato);
+                      if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}).`); return; }
+                      if (!window.confirm(`Aprovar projeto ${p.id}?\nApós aprovado, o financeiro pode ser gerado proporcionalmente em Pedidos de venda.`)) return;
+                      aprovarProjeto(contrato.id, p.id);
+                      toast.success(`Projeto ${p.id} aprovado · pronto para gerar financeiro`);
+                    }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
+                  )}
+                  {p.aprovado && (
+                    <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>

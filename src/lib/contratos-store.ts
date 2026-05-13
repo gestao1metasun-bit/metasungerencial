@@ -42,6 +42,9 @@ export type ProjetoVinculado = {
   cronograma: string;    // texto livre opcional
   enviadoEngenharia?: boolean; // true quando liberado para engenharia
   orcado?: number;             // custo orçado da obra (R$)
+  valor?: number;              // valor financeiro deste projeto (parte do total do contrato)
+  parcelasPagto?: ParcelaPagto[]; // parcelas/financeiro próprias do projeto
+  financeiroGerado?: boolean;  // true quando lançamentos foram gerados no Financeiro
 };
 
 export type AuditEntry = {

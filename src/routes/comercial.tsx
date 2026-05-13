@@ -644,103 +644,14 @@ function CadastrarContratoTab({
   };
   const [form, setForm] = useState({
     dataCadastro: today, dataAssinatura: "",
-    valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
+    valor: "", vendedor: "",
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
-    statusContrato: "Pendente" as "Assinado" | "Pendente" | "Cancelado",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
 
-  // ---- Parcelas de pagamento (cada linha tem forma própria) ----
-  const addMonthsISO = (iso: string, n: number) => {
-    const [y, m, d] = iso.split("-").map(Number);
-    const dt = new Date(y, (m - 1) + n, d);
-    return dt.toISOString().slice(0, 10);
-  };
-  const novaParcela = (valor = 0, base?: ParcelaPagto): ParcelaPagto => ({
-    id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    valor,
-    dataEmissao: base?.dataEmissao ?? today,
-    dataVencimento: base ? addMonthsISO(base.dataVencimento, 1) : today,
-    competencia: base ? addMonthsISO(base.dataVencimento, 1).slice(0, 7) : today.slice(0, 7),
-    formaPagamento: base?.formaPagamento ?? "Pix",
-  });
-  const [parcelas, setParcelas] = useState<ParcelaPagto[]>([novaParcela()]);
-  const setParc = (id: string, patch: Partial<ParcelaPagto>) =>
-    setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  const addParc = () => setParcelas((arr) => [...arr, novaParcela(0, arr[arr.length - 1])]);
-  const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
-  const aplicarMesmaCompetencia = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, competencia: arr[0].competencia })) : arr);
-  const aplicarMesmaEmissao = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, dataEmissao: arr[0].dataEmissao })) : arr);
-  const redistribuirVencimentos = () => setParcelas((arr) => arr.map((p, i) => {
-    if (i === 0) return p;
-    const venc = addMonthsISO(arr[0].dataVencimento, i);
-    return { ...p, dataVencimento: venc, competencia: venc.slice(0, 7) };
-  }));
-  const distribuirValor = (totalParam?: number) => {
-    setParcelas((arr) => {
-      if (arr.length === 0) return arr;
-      const total = totalParam ?? arr.reduce((a, p) => a + p.valor, 0);
-      if (total <= 0) return arr;
-      const each = Math.round((total / arr.length) * 100) / 100;
-      const last = Math.round((total - each * (arr.length - 1)) * 100) / 100;
-      return arr.map((p, i) => ({ ...p, valor: i === arr.length - 1 ? last : each }));
-    });
-  };
-
-  // ---- Projetos vinculados (cadastrados junto com o contrato) ----
-  type OrcMaterial = { id: string; itemId: string; qtd: number; unit: number };
-  type OrcOutro = { id: string; natureza: string; descricao: string; valor: number };
-  type ProjetoDraft = {
-    tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
-    modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
-    usarEnderecoCliente: boolean;
-    materiais: OrcMaterial[];
-    outros: OrcOutro[];
-  };
-  const emptyProj = (): ProjetoDraft => ({
-    tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
-    modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
-    usarEnderecoCliente: true, materiais: [], outros: [],
-  });
-  const orcTotal = (p: ProjetoDraft) =>
-    p.materiais.reduce((a, m) => a + m.qtd * m.unit, 0) + p.outros.reduce((a, o) => a + o.valor, 0);
-  const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
-  const [activeProj, setActiveProj] = useState(0);
-  const [projCepLoading, setProjCepLoading] = useState<number | null>(null);
-  const [orcOpen, setOrcOpen] = useState<number | null>(null);
-  const [naturezas] = useNaturezas();
-
-  const setProjField = (idx: number, k: keyof ProjetoDraft, v: string | boolean) =>
-    setProjs((arr) => arr.map((p, i) => (i === idx ? { ...p, [k]: v } : p)));
-
-  const lookupProjCEP = async (idx: number, cep: string) => {
-    setProjField(idx, "cep", cep);
-    if (cep.replace(/\D/g, "").length !== 8) return;
-    setProjCepLoading(idx);
-    const r = await buscarCEP(cep);
-    setProjCepLoading(null);
-    if (r) {
-      setProjs((arr) => arr.map((p, i) => i === idx
-        ? { ...p, cep: r.cep ?? p.cep, rua: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "", complemento: r.complemento ?? "" }
-        : p));
-      toast.success("Endereço do projeto preenchido pelo CEP");
-    } else { toast.error("CEP não encontrado"); }
-  };
-
-  const addProj = () => {
-    setProjs((arr) => [...arr, { ...emptyProj(), tipo: `Projeto ${arr.length + 1}` }]);
-    setActiveProj(projs.length);
-  };
-  const delProj = (idx: number) => {
-    if (projs.length === 1) { toast.error("É necessário ao menos 1 projeto"); return; }
-    setProjs((arr) => arr.filter((_, i) => i !== idx));
-    setActiveProj(0);
-  };
-
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
-
   const lookupCEP = async (cep: string) => {
     setCliField("cep", cep);
     if (cep.replace(/\D/g, "").length !== 8) return;
@@ -750,32 +661,28 @@ function CadastrarContratoTab({
     if (r) {
       setCli((p) => ({ ...p, ...r } as ClienteFull));
       toast.success("Endereço preenchido pelo CEP");
-    } else {
-      toast.error("CEP não encontrado");
-    }
+    } else { toast.error("CEP não encontrado"); }
   };
 
-  // Cálculos automáticos — kWp total = soma dos kWp de todos os projetos
-  const projsKwp = projs.map((p) => ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000);
-  const kwpTotal = projsKwp.reduce((a, b) => a + b, 0);
-  const totalModulos = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
   const valorNum = Number(form.valor) || 0;
-  const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
+  const modulosNum = Number(form.modulosContrato) || 0;
+  const potenciaNum = Number(form.potenciaContrato) || 0;
+  const kwpEsperado = (modulosNum * potenciaNum) / 1000;
+  const parametroNum = kwpEsperado > 0 ? valorNum / kwpEsperado : 0;
   const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
+  const [openForm, setOpenForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"cliente" | "contrato">("cliente");
+
   const limpar = () => {
     setForm({
-      dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao",
+      dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "",
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
-      statusContrato: "Pendente",
     });
     setCli(emptyCliente);
-    setProjs([emptyProj()]);
-    setActiveProj(0);
-    setParcelas([novaParcela()]);
     setActiveTab("cliente");
   };
 
@@ -784,31 +691,22 @@ function CadastrarContratoTab({
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
-    for (let i = 0; i < projs.length; i++) {
-      const p = projs[i];
-      if (!p.tipo.trim()) { toast.error(`Projeto ${i + 1}: informe o tipo`); return; }
-      if (!Number(p.modulos)) { toast.error(`Projeto ${i + 1}: informe a qtd de módulos`); return; }
-    }
 
     const novoId = nextContratoId(contratos);
-    // 1º inversor / módulos do projeto principal ficam também no contrato (compatibilidade)
-    const principal = projs[0];
     const novo: Contrato = {
       id: novoId,
       cliente: cli.nome.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
-      kwp: kwpTotal,
-      status: form.statusContrato,
+      kwp: kwpEsperado,
+      status: "Pendente",
       data: form.dataCadastro || today,
-      pagamento: parcelas.map((p) => p.formaPagamento).join(" / "),
+      pagamento: "",
       banco: "",
-      modulos: totalModulos,
+      modulos: modulosNum,
       obs: "",
-      potencia: Number(form.potenciaContrato) || Number(principal.potenciaModuloW) || 0,
-      inv1: form.inv1 || principal.inv1,
-      inv2: form.inv2 || principal.inv2,
-      inv3: form.inv3 || principal.inv3,
+      potencia: potenciaNum,
+      inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
       inv4: form.inv4, inv5: form.inv5, inv6: form.inv6,
       parametro: parametroFmt,
       dataCadastro: form.dataCadastro || today,
@@ -817,140 +715,19 @@ function CadastrarContratoTab({
       comissaoValor,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [],
-      parcelasPagto: parcelas,
+      parcelasPagto: [],
       auditoria: [{
         id: `A-${Date.now()}`, data: new Date().toISOString(),
         usuario: "Operador", campo: "criação", de: "", para: novoId,
       }],
     };
     upsertContrato(novo);
-
-    const isAssinado = form.statusContrato === "Assinado";
-
-    // 2º criar projetos vinculados + lançamentos de orçado — APENAS se Assinado
-    const orcLancs: import("@/lib/financeiro-store").Lancamento[] = [];
-    if (isAssinado) {
-      projs.forEach((p, i) => {
-        const mods = Number(p.modulos) || 0;
-        const potW = Number(p.potenciaModuloW) || 0;
-        const useCli = p.usarEnderecoCliente;
-        const orcadoNum = orcTotal(p);
-        const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
-        addProjeto(novoId, {
-          tipo: p.tipo || `Projeto ${i + 1}`,
-          endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
-          numero: useCli ? cli.numero : p.numero,
-          bairro: useCli ? cli.bairro : p.bairro,
-          cep: useCli ? cli.cep : p.cep,
-          cidade: useCli ? cli.cidade : p.cidade,
-          uf: useCli ? cli.uf : p.uf,
-          modulos: mods,
-          potenciaModuloW: potW,
-          kwp: (mods * potW) / 1000,
-          inversor: p.inv1,
-          inv2: p.inv2,
-          inv3: p.inv3,
-          equipe: p.equipe,
-          status: "Em projeto/aprovação",
-          inicio: today,
-          previsto: "",
-          obs: "",
-          cronograma: "",
-          enviadoEngenharia: false,
-          orcado: orcadoNum,
-        });
-        p.materiais.forEach((m, mi) => {
-          const item = estoqueItens.find((x) => x.id === m.itemId);
-          const valor = m.qtd * m.unit;
-          if (valor <= 0) return;
-          orcLancs.push({
-            id: `L-ORC-M-${Date.now()}-${i}-${mi}`,
-            data: today,
-            descricao: `Orçado · ${projetoId} · ${item?.produto ?? "Material"} (${m.qtd}x)`,
-            tipo: "Saída", valor, camada: "Orçado futuro",
-            natureza: "Material", centroCusto: "Engenharia/Operação",
-            obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
-          });
-        });
-        p.outros.forEach((o, oi) => {
-          if (o.valor <= 0) return;
-          orcLancs.push({
-            id: `L-ORC-O-${Date.now()}-${i}-${oi}`,
-            data: today,
-            descricao: `Orçado · ${projetoId} · ${o.descricao || o.natureza}`,
-            tipo: "Saída", valor: o.valor, camada: "Orçado futuro",
-            natureza: o.natureza, centroCusto: "Engenharia/Operação",
-            obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
-          });
-        });
-      });
-    }
-    if (orcLancs.length > 0) appendLancamentos(orcLancs);
-
-    // 3º "A receber" — apenas se Assinado e sem financiamento
-    const recLancs: import("@/lib/financeiro-store").Lancamento[] = [];
-    if (isAssinado && form.financiamento !== "sim" && parcelas.length > 0 && kwpTotal > 0) {
-      parcelas.forEach((parc, pi) => {
-        projs.forEach((p, i) => {
-          const kwpProj = ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000;
-          const peso = kwpProj / kwpTotal;
-          if (peso <= 0) return;
-          const valorRateado = Math.round(parc.valor * peso * 100) / 100;
-          if (valorRateado <= 0) return;
-          const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
-          recLancs.push({
-            id: `L-REC-${Date.now()}-${pi}-${i}`,
-            data: parc.dataVencimento,
-            descricao: `Parc ${pi + 1}/${parcelas.length} · ${parc.formaPagamento} · ${projetoId} · ${cli.nome.trim()}`,
-            tipo: "Entrada",
-            valor: valorRateado,
-            camada: "A realizar",
-            natureza: "Recebimento de cliente",
-            centroCusto: "Comercial",
-            obra: projetoId,
-            empresa: "Meta Sun",
-            filial: "Manaus",
-            contrato: novoId,
-            cliente: cli.nome.trim(),
-            formaPagamento: parc.formaPagamento,
-            parcelaLabel: `${pi + 1}/${parcelas.length}`,
-            competencia: parc.competencia,
-            dataEmissao: parc.dataEmissao,
-          });
-        });
-      });
-    }
-    if (recLancs.length > 0) appendLancamentos(recLancs);
-
-    if (isAssinado && form.financiamento === "sim") {
-      addPendencia({
-        id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
-        valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
-      });
-      toast.success(`Contrato ${novoId} assinado · ${projs.length} projeto(s) · enviado p/ Pendências de Financiamento`);
-    } else if (isAssinado) {
-      toast.success(`Contrato ${novoId} assinado · ${projs.length} projeto(s) · gerado financeiro e engenharia`);
-    } else {
-      toast.success(`Contrato ${novoId} salvo como ${form.statusContrato} (sem gerar financeiro/engenharia)`);
-    }
+    toast.success(`Contrato ${novoId} cadastrado como Pendente · edite no lápis para adicionar projetos e financeiro`);
     limpar();
+    setOpenForm(false);
   };
 
-  const [openForm, setOpenForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"cliente" | "contrato" | "projetos">("cliente");
-
-  // ---- Validações de consistência projetos ↔ contrato ----
-  const totalModulosProjs = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
-  const modulosContratoNum = Number(form.modulosContrato) || 0;
-  const totalParcelas = parcelas.reduce((a, p) => a + (Number(p.valor) || 0), 0);
-  const inversoresContrato = [form.inv1, form.inv2, form.inv3, form.inv4, form.inv5, form.inv6]
-    .map((s) => s.trim()).filter(Boolean);
-  const inversoresProjs = projs.flatMap((p) => [p.inv1, p.inv2, p.inv3]).map((s) => s.trim()).filter(Boolean);
-  const inversoresOrfaos = inversoresProjs.filter((iv) => !inversoresContrato.includes(iv));
-  const erroModulos = modulosContratoNum > 0 && totalModulosProjs !== modulosContratoNum;
-  const erroValor = valorNum > 0 && Math.abs(totalParcelas - valorNum) > 0.5;
-  const semProjeto = projs.length === 0 || projs.every((p) => !Number(p.modulos));
-  const podeCadastrar = !aprovacao && !erroModulos && !erroValor && !semProjeto && inversoresOrfaos.length === 0;
+  const podeCadastrar = !aprovacao && !!cli.nome.trim() && !!form.vendedor && valorNum > 0;
 
   return (
     <div className="space-y-4">
@@ -958,7 +735,7 @@ function CadastrarContratoTab({
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold">Cadastro de contratos</div>
-            <div className="text-xs text-muted-foreground">Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Hoje: {today}</div>
+            <div className="text-xs text-muted-foreground">Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Hoje: {today} · Nasce como <b>Pendente</b>; projetos e financeiro são adicionados no lápis.</div>
           </div>
           <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenForm(true)}>
             <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
@@ -968,11 +745,10 @@ function CadastrarContratoTab({
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
         <DialogContent
-          className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0"
+          className="max-w-5xl max-h-[92vh] overflow-hidden p-0 gap-0"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          {/* Header */}
           <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
             <DialogHeader className="space-y-1">
               <div className="flex items-center gap-3">
@@ -982,32 +758,26 @@ function CadastrarContratoTab({
                 <div>
                   <DialogTitle className="text-xl">Novo contrato</DialogTitle>
                   <DialogDescription className="text-xs">
-                    Nº <span className="font-mono font-semibold text-primary">{proximo}</span> · Cadastro {today}
+                    Nº <span className="font-mono font-semibold text-primary">{proximo}</span> · Cadastro {today} · será criado como <b>Pendente</b>
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
           </div>
 
-          {/* Body */}
           <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(92vh - 140px)" }}>
-            <Tabs defaultValue="cliente" className="space-y-5">
-              <TabsList className="grid w-full grid-cols-3 h-11">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-5">
+              <TabsList className="grid w-full grid-cols-2 h-11">
                 <TabsTrigger value="cliente" className="gap-2"><Users className="h-4 w-4" /> 1. Cliente</TabsTrigger>
                 <TabsTrigger value="contrato" className="gap-2"><FileText className="h-4 w-4" /> 2. Contrato</TabsTrigger>
-                <TabsTrigger value="projetos" className="gap-2"><Layers className="h-4 w-4" /> 3. Projetos <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">{projs.length}</span></TabsTrigger>
               </TabsList>
 
-              {/* ============ TAB CLIENTE ============ */}
               <TabsContent value="cliente" className="mt-0 space-y-4">
                 <div className="rounded-lg border bg-card p-5 space-y-4">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-1.5 md:col-span-3"><Label>Cliente — nome</Label>
-                      <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
-                    </div>
+                  <div className="space-y-1.5"><Label>Cliente — nome</Label>
+                    <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
                   </div>
                 </div>
-
                 <div className="rounded-lg border bg-card p-5">
                   <div className="mb-4 flex items-center gap-2 border-b pb-3">
                     <Users className="h-4 w-4 text-primary" />
@@ -1051,7 +821,6 @@ function CadastrarContratoTab({
                 </div>
               </TabsContent>
 
-              {/* ============ TAB CONTRATO ============ */}
               <TabsContent value="contrato" className="mt-0 space-y-4">
                 <div className="rounded-lg border bg-card p-5 space-y-4">
                   <div className="flex items-center gap-2 border-b pb-3">
@@ -1074,16 +843,6 @@ function CadastrarContratoTab({
                     <div className="space-y-1.5"><Label>Data assinatura</Label>
                       <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
                     </div>
-                    <div className="space-y-1.5 md:col-span-2"><Label>Status do contrato</Label>
-                      <Select value={form.statusContrato} onValueChange={(v) => setForm({ ...form, statusContrato: v as "Assinado" | "Pendente" | "Cancelado" })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pendente">Pendente — só salva, não gera financeiro/engenharia</SelectItem>
-                          <SelectItem value="Assinado">Assinado — gera financeiro a receber e card na engenharia</SelectItem>
-                          <SelectItem value="Cancelado">Cancelado — só registro, sem geração</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                 </div>
 
@@ -1091,7 +850,7 @@ function CadastrarContratoTab({
                   <div className="flex items-center gap-2 border-b pb-3">
                     <span className="text-sm font-semibold">Valores e comissão</span>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
                       <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
                     </div>
@@ -1105,15 +864,6 @@ function CadastrarContratoTab({
                         <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
                       )}
                     </div>
-                    <div className="space-y-1.5"><Label>Financiamento?</Label>
-                      <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="nao">Não</SelectItem>
-                          <SelectItem value="sim">Sim — Financiamentos</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                   {parametroNum > 0 && (
                     <div className="rounded-md bg-muted/50 p-2.5 text-[11px] text-muted-foreground">
@@ -1124,8 +874,7 @@ function CadastrarContratoTab({
 
                 <div className="rounded-lg border bg-card p-5 space-y-4">
                   <div className="flex items-center gap-2 border-b pb-3">
-                    <span className="text-sm font-semibold">Dados técnicos</span>
-                    <span className="ml-auto text-xs text-muted-foreground">total que será dividido entre projetos</span>
+                    <span className="text-sm font-semibold">Dados técnicos do contrato</span>
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>Qtd módulos (contrato)</Label>
@@ -1135,7 +884,7 @@ function CadastrarContratoTab({
                       <Input type="number" value={form.potenciaContrato} onChange={(e) => setForm({ ...form, potenciaContrato: e.target.value })} />
                     </div>
                     <div className="space-y-1.5"><Label>kWp esperado</Label>
-                      <Input value={((Number(form.modulosContrato) || 0) * (Number(form.potenciaContrato) || 0) / 1000).toFixed(2)} readOnly className="bg-muted font-mono" />
+                      <Input value={kwpEsperado.toFixed(2)} readOnly className="bg-muted font-mono" />
                     </div>
                   </div>
                   <div>
@@ -1150,395 +899,18 @@ function CadastrarContratoTab({
                   </div>
                 </div>
 
-                <div className="rounded-lg border bg-card p-5 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
-                    <span className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</span>
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={redistribuirVencimentos}>Vencimentos +1 mês</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaCompetencia}>Mesma competência</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaEmissao}>Mesma emissão</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
-                    </div>
-                  </div>
-                  <Table>
-                    <TableHeader><TableRow className="hover:bg-transparent">
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Emissão</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Competência</TableHead>
-                      <TableHead>Forma</TableHead>
-                      <TableHead className="text-right">Valor (R$)</TableHead>
-                      <TableHead className="w-10"></TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {parcelas.map((p, i) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                          <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setParc(p.id, { dataEmissao: e.target.value })} /></TableCell>
-                          <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setParc(p.id, { dataVencimento: e.target.value })} /></TableCell>
-                          <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setParc(p.id, { competencia: e.target.value })} /></TableCell>
-                          <TableCell>
-                            <Select value={p.formaPagamento} onValueChange={(v) => setParc(p.id, { formaPagamento: v as FormaPagamento })}>
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
-                                  <SelectItem key={f} value={f}>{f}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setParc(p.id, { valor: Number(e.target.value) || 0 })} />
-                          </TableCell>
-                          <TableCell>
-                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => delParc(p.id)} disabled={parcelas.length === 1}><Trash2 className="h-3.5 w-3.5" /></Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="flex items-center justify-end gap-3 text-xs">
-                    <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParcelas)}</b></span>
-                    <span className={`font-mono ${erroValor ? "text-destructive" : "text-emerald-600"}`}>
-                      {erroValor ? `≠ valor venda (${fmtBRL(valorNum)})` : valorNum > 0 ? "✓ bate com valor da venda" : ""}
-                    </span>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* ============ TAB PROJETOS ============ */}
-              <TabsContent value="projetos" className="mt-0 space-y-4">
-                <div className="rounded-lg border bg-card p-5">
-                  <div className="mb-4 flex items-center justify-between gap-2 border-b pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold">Projetos do contrato ({projs.length})</span>
-                      <span className="ml-2 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary">kWp total: {kwpTotal.toFixed(2)}</span>
-                    </div>
-                    <Button type="button" size="sm" variant="outline" onClick={addProj}>
-                      <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar projeto
-                    </Button>
-                  </div>
-                  <div className="mb-4 flex flex-wrap gap-1.5">
-                    {projs.map((p, i) => (
-                      <button
-                        type="button"
-                        key={i}
-                        onClick={() => setActiveProj(i)}
-                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${activeProj === i ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:bg-accent"}`}
-                      >
-                        {p.tipo || `Projeto ${i + 1}`}
-                      </button>
-                    ))}
-                  </div>
-                  {projs.map((p, i) => i !== activeProj ? null : (
-                    <div key={i} className="grid gap-4 md:grid-cols-3 rounded-md bg-muted/30 p-4">
-                      <div className="space-y-1.5 md:col-span-2"><Label>Tipo / Nome do projeto</Label>
-                        <Input value={p.tipo} onChange={(e) => setProjField(i, "tipo", e.target.value)} placeholder={`Projeto ${i + 1} — ex.: Residencial telhado`} />
-                      </div>
-                      <div className="flex items-end justify-end">
-                        {projs.length > 1 && (
-                          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => delProj(i)}>
-                            <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="md:col-span-3 flex items-center gap-2 text-xs">
-                        <input
-                          id={`useCli-${i}`}
-                          type="checkbox"
-                          checked={p.usarEnderecoCliente}
-                          onChange={(e) => setProjField(i, "usarEnderecoCliente", e.target.checked)}
-                        />
-                        <label htmlFor={`useCli-${i}`} className="cursor-pointer text-muted-foreground">
-                          <MapPin className="inline h-3 w-3" /> Usar endereço do cliente para este projeto
-                        </label>
-                      </div>
-
-                      {!p.usarEnderecoCliente && (
-                        <>
-                          <div className="space-y-1.5"><Label>CEP {projCepLoading === i && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
-                            <Input value={p.cep} onChange={(e) => lookupProjCEP(i, e.target.value)} placeholder="69000-000" maxLength={10} />
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                            <Input value={p.rua} onChange={(e) => setProjField(i, "rua", e.target.value)} />
-                          </div>
-                          <div className="space-y-1.5"><Label>Número</Label>
-                            <Input value={p.numero} onChange={(e) => setProjField(i, "numero", e.target.value)} maxLength={10} />
-                          </div>
-                          <div className="space-y-1.5"><Label>Bairro</Label>
-                            <Input value={p.bairro} onChange={(e) => setProjField(i, "bairro", e.target.value)} />
-                          </div>
-                          <div className="space-y-1.5"><Label>Complemento</Label>
-                            <Input value={p.complemento} onChange={(e) => setProjField(i, "complemento", e.target.value)} />
-                          </div>
-                          <div className="space-y-1.5"><Label>Cidade</Label>
-                            <Input value={p.cidade} onChange={(e) => setProjField(i, "cidade", e.target.value)} />
-                          </div>
-                          <div className="space-y-1.5"><Label>UF</Label>
-                            <Input value={p.uf} onChange={(e) => setProjField(i, "uf", e.target.value.toUpperCase())} maxLength={2} />
-                          </div>
-                        </>
-                      )}
-
-                      <div className="space-y-1.5"><Label>Qtd módulos</Label>
-                        <Input type="number" value={p.modulos} onChange={(e) => setProjField(i, "modulos", e.target.value)} />
-                      </div>
-                      <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
-                        <Input type="number" step="1" value={p.potenciaModuloW} onChange={(e) => setProjField(i, "potenciaModuloW", e.target.value)} placeholder="Ex.: 620" />
-                      </div>
-                      <div className="space-y-1.5"><Label>kWp do projeto (auto)</Label>
-                        <Input value={projsKwp[i] ? projsKwp[i].toFixed(2) : ""} readOnly className="bg-muted font-mono" />
-                      </div>
-
-                      <div className="space-y-1.5"><Label>Inversor 1</Label>
-                        <Input value={p.inv1} onChange={(e) => setProjField(i, "inv1", e.target.value)} placeholder="Modelo / potência" />
-                      </div>
-                      <div className="space-y-1.5"><Label>Inversor 2</Label>
-                        <Input value={p.inv2} onChange={(e) => setProjField(i, "inv2", e.target.value)} placeholder="Opcional" />
-                      </div>
-                      <div className="space-y-1.5"><Label>Inversor 3</Label>
-                        <Input value={p.inv3} onChange={(e) => setProjField(i, "inv3", e.target.value)} placeholder="Opcional" />
-                      </div>
-
-                      <div className="space-y-1.5 md:col-span-2"><Label>Equipe (opcional)</Label>
-                        <Input value={p.equipe} onChange={(e) => setProjField(i, "equipe", e.target.value)} placeholder="Equipe responsável" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Orçado da obra (R$)</Label>
-                        <div className="flex items-center gap-2">
-                          <Input value={fmtBRL(orcTotal(p))} readOnly className="bg-muted font-mono" />
-                          <Button type="button" variant="outline" size="sm" onClick={() => setOrcOpen(i)}>
-                            <Pencil className="mr-1 h-3.5 w-3.5" /> Cadastrar
-                          </Button>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {p.materiais.length} material(is) · {p.outros.length} outro(s) · vai p/ Financeiro como <b>Orçado futuro</b>.
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {projs.some((p) => orcTotal(p) > 0) && (
-                    <div className="mt-3 rounded-md border border-border bg-background p-3 text-xs">
-                      <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + orcTotal(p), 0))}
-                      {valorNum > 0 && (
-                        <span className="ml-3 text-muted-foreground">
-                          Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + orcTotal(p), 0))}</b>
-                        </span>
-                      )}
-                    </div>
-                  )}
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
+                  <b className="text-foreground">Próximos passos:</b> após cadastrar, abra o contrato pelo lápis para adicionar os <b>projetos</b> (cada um com seus dados técnicos) e o <b>financeiro</b> (parcelas) de cada projeto. Cada projeto gera financeiro próprio. Aprovar projetos libera para Engenharia e Financeiro.
                 </div>
               </TabsContent>
             </Tabs>
-
-            {/* Banner validação — sempre visível */}
-            {(erroModulos || erroValor || semProjeto || inversoresOrfaos.length > 0) && (
-              <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
-                <div className="font-semibold">Pendências para cadastrar:</div>
-                {semProjeto && <div>• Cadastre ao menos 1 projeto com módulos.</div>}
-                {erroModulos && <div>• Soma de módulos dos projetos ({totalModulosProjs}) ≠ módulos do contrato ({modulosContratoNum}).</div>}
-                {erroValor && <div>• Soma das parcelas ({fmtBRL(totalParcelas)}) ≠ valor da venda ({fmtBRL(valorNum)}).</div>}
-                {inversoresOrfaos.length > 0 && <div>• Inversores nos projetos não constam no contrato: {inversoresOrfaos.join(", ")}.</div>}
-              </div>
-            )}
           </div>
 
-          {/* Footer fixo */}
           <DialogFooter className="border-t bg-muted/30 px-6 py-3">
             <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (podeCadastrar) setOpenForm(false); }} disabled={!podeCadastrar}>
-              <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+            <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={!podeCadastrar}>
+              <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato (Pendente)
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ===== Dialog de Orçado da Obra ===== */}
-      <Dialog open={orcOpen !== null} onOpenChange={(o) => !o && setOrcOpen(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Orçado da obra</DialogTitle>
-            <DialogDescription>
-              Cadastre <b>materiais</b> (puxando do estoque com custo médio) e <b>outros custos</b> (mão de obra, frete, etc — naturezas orçamentárias) por projeto.
-            </DialogDescription>
-          </DialogHeader>
-
-          <Tabs value={String(orcOpen ?? 0)} onValueChange={(v) => setOrcOpen(Number(v))}>
-            <TabsList className="flex flex-wrap">
-              {projs.map((p, i) => (
-                <TabsTrigger key={i} value={String(i)}>
-                  {p.tipo || `Projeto ${i + 1}`} · <span className="ml-1 font-mono text-primary">{fmtBRL(orcTotal(p))}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {projs.map((p, i) => (
-              <TabsContent key={i} value={String(i)} className="mt-4 space-y-6">
-                {/* MATERIAIS */}
-                <div className="rounded-md border border-border p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-sm font-semibold">1. Materiais (estoque)</div>
-                    <Button type="button" size="sm" variant="outline" onClick={() => {
-                      const first = estoqueItens[0];
-                      setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                        ...pp, materiais: [...pp.materiais, { id: `M-${Date.now()}`, itemId: first.id, qtd: 1, unit: first.custo }],
-                      }));
-                    }}><Plus className="mr-1 h-3.5 w-3.5" /> Adicionar material</Button>
-                  </div>
-                  {p.materiais.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-muted-foreground">Nenhum material orçado.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader><TableRow className="hover:bg-transparent">
-                        <TableHead>Item</TableHead><TableHead className="w-24 text-right">Qtd</TableHead>
-                        <TableHead className="w-32 text-right">Custo méd. (R$)</TableHead>
-                        <TableHead className="w-32 text-right">Subtotal</TableHead>
-                        <TableHead className="w-10"></TableHead>
-                      </TableRow></TableHeader>
-                      <TableBody>
-                        {p.materiais.map((m) => {
-                          const item = estoqueItens.find((x) => x.id === m.itemId);
-                          return (
-                            <TableRow key={m.id}>
-                              <TableCell>
-                                <Select value={m.itemId} onValueChange={(v) => {
-                                  const it = estoqueItens.find((x) => x.id === v);
-                                  setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                    ...pp, materiais: pp.materiais.map((mm) => mm.id === m.id ? { ...mm, itemId: v, unit: it?.custo ?? mm.unit } : mm),
-                                  }));
-                                }}>
-                                  <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    {estoqueItens.map((it) => (
-                                      <SelectItem key={it.id} value={it.id}>
-                                        {it.produto} <span className="text-muted-foreground">· {it.categoria}</span>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <div className="mt-1 text-[10px] text-muted-foreground">
-                                  Estoque: {item?.quantidade ?? 0} · custo médio: {fmtBRL(item?.custo ?? 0)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Input type="number" className="h-8 text-right" value={m.qtd} onChange={(e) => {
-                                  const v = Number(e.target.value) || 0;
-                                  setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                    ...pp, materiais: pp.materiais.map((mm) => mm.id === m.id ? { ...mm, qtd: v } : mm),
-                                  }));
-                                }} />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Input type="number" className="h-8 text-right" value={m.unit} onChange={(e) => {
-                                  const v = Number(e.target.value) || 0;
-                                  setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                    ...pp, materiais: pp.materiais.map((mm) => mm.id === m.id ? { ...mm, unit: v } : mm),
-                                  }));
-                                }} />
-                              </TableCell>
-                              <TableCell className="text-right font-mono">{fmtBRL(m.qtd * m.unit)}</TableCell>
-                              <TableCell>
-                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-                                  setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                    ...pp, materiais: pp.materiais.filter((mm) => mm.id !== m.id),
-                                  }));
-                                }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  )}
-                  <div className="mt-2 text-right text-xs">
-                    Subtotal materiais: <b className="font-mono">{fmtBRL(p.materiais.reduce((a, m) => a + m.qtd * m.unit, 0))}</b>
-                  </div>
-                </div>
-
-                {/* OUTROS CUSTOS (Naturezas) */}
-                <div className="rounded-md border border-border p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-sm font-semibold">2. Mão de obra & outros custos (naturezas orçamentárias)</div>
-                    <Button type="button" size="sm" variant="outline" onClick={() => {
-                      const nat = naturezas.find((n) => n.tipo === "Saída" && n.nome === "Mão de obra") ?? naturezas.find((n) => n.tipo === "Saída");
-                      setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                        ...pp, outros: [...pp.outros, { id: `O-${Date.now()}`, natureza: nat?.nome ?? "Mão de obra", descricao: "", valor: 0 }],
-                      }));
-                    }}><Plus className="mr-1 h-3.5 w-3.5" /> Adicionar custo</Button>
-                  </div>
-                  {p.outros.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-muted-foreground">Nenhum custo cadastrado.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader><TableRow className="hover:bg-transparent">
-                        <TableHead className="w-56">Natureza</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead className="w-32 text-right">Valor (R$)</TableHead>
-                        <TableHead className="w-10"></TableHead>
-                      </TableRow></TableHeader>
-                      <TableBody>
-                        {p.outros.map((o) => (
-                          <TableRow key={o.id}>
-                            <TableCell>
-                              <Select value={o.natureza} onValueChange={(v) => {
-                                setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                  ...pp, outros: pp.outros.map((oo) => oo.id === o.id ? { ...oo, natureza: v } : oo),
-                                }));
-                              }}>
-                                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {naturezas.filter((n) => n.tipo === "Saída").map((n) => (
-                                    <SelectItem key={n.id} value={n.nome}>{n.nome}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Input className="h-8" value={o.descricao} placeholder="Detalhes (opcional)" onChange={(e) => {
-                                const v = e.target.value;
-                                setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                  ...pp, outros: pp.outros.map((oo) => oo.id === o.id ? { ...oo, descricao: v } : oo),
-                                }));
-                              }} />
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Input type="number" className="h-8 text-right" value={o.valor} onChange={(e) => {
-                                const v = Number(e.target.value) || 0;
-                                setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                  ...pp, outros: pp.outros.map((oo) => oo.id === o.id ? { ...oo, valor: v } : oo),
-                                }));
-                              }} />
-                            </TableCell>
-                            <TableCell>
-                              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-                                setProjs((arr) => arr.map((pp, idx) => idx !== i ? pp : {
-                                  ...pp, outros: pp.outros.filter((oo) => oo.id !== o.id),
-                                }));
-                              }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                  <div className="mt-2 text-right text-xs">
-                    Subtotal outros: <b className="font-mono">{fmtBRL(p.outros.reduce((a, o) => a + o.valor, 0))}</b>
-                  </div>
-                </div>
-
-                <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
-                  <span className="font-semibold">Total orçado deste projeto:</span>{" "}
-                  <span className="font-mono text-primary">{fmtBRL(orcTotal(p))}</span>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-
-          <DialogFooter className="mt-4">
-            <Button onClick={() => setOrcOpen(null)}>Concluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1654,7 +1026,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Gerado", "Pendente", "Assinado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1696,7 +1068,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Aprovação para Engenharia</div>
-                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Assinados</b> e projetos <b>liberados</b> aparecem na Engenharia.</div>
+                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Aprovados</b> e projetos <b>liberados</b> aparecem na Engenharia. Aprovar gera o financeiro de cada projeto.</div>
                 </div>
                 <AprovarEnviarDialog contrato={contrato} />
               </div>
@@ -1796,18 +1168,47 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
   );
 
   const aprovar = () => {
-    // 1. marca contrato como Assinado
-    if (contrato.status !== "Assinado") {
-      updateContratoAudit(contrato.id, { status: "Assinado" });
+    // 1. marca contrato como Aprovado
+    if (contrato.status !== "Aprovado") {
+      updateContratoAudit(contrato.id, { status: "Aprovado" });
     }
-    // 2. libera projetos selecionados
+    // 2. libera projetos selecionados + gera financeiro de cada projeto a partir das suas parcelas
     const liberados = Object.entries(sel).filter(([, v]) => v).map(([id]) => id);
-    liberados.forEach((id) => updateProjeto(contrato.id, id, { enviadoEngenharia: true }));
+    const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
+    liberados.forEach((id) => {
+      const p = projetos.find((x) => x.id === id);
+      if (!p) return;
+      updateProjeto(contrato.id, id, { enviadoEngenharia: true, financeiroGerado: true });
+      const parc = p.parcelasPagto ?? [];
+      parc.forEach((pg, pi) => {
+        if (pg.valor <= 0) return;
+        novosLanc.push({
+          id: `L-REC-${Date.now()}-${id}-${pi}`,
+          data: pg.dataVencimento,
+          descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${id} · ${contrato.cliente}`,
+          tipo: "Entrada",
+          valor: pg.valor,
+          camada: "A realizar",
+          natureza: "Recebimento de cliente",
+          centroCusto: "Comercial",
+          obra: id,
+          empresa: "Meta Sun",
+          filial: "Manaus",
+          contrato: contrato.id,
+          cliente: contrato.cliente,
+          formaPagamento: pg.formaPagamento,
+          parcelaLabel: `${pi + 1}/${parc.length}`,
+          competencia: pg.competencia,
+          dataEmissao: pg.dataEmissao,
+        });
+      });
+    });
+    if (novosLanc.length > 0) appendLancamentos(novosLanc);
     if (projetos.length === 0) {
       toast.success(`Contrato ${contrato.id} aprovado · sem projetos vinculados`);
     } else {
       const pend = projetos.length - liberados.length;
-      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}`);
+      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
     }
     setOpen(false);
   };
@@ -1824,7 +1225,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
             {projetos.length === 0
-              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Assinado."
+              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Aprovado."
               : "Selecione quais projetos devem ir para a Engenharia agora. Os não marcados ficam pendentes e podem ser liberados depois."}
           </DialogDescription>
         </DialogHeader>
@@ -1881,6 +1282,119 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     cronograma: "",
     enviadoEngenharia: false,
   };
+}
+
+function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto: ProjetoVinculado }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const addMonthsISO = (iso: string, n: number) => {
+    if (!iso) return iso;
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(y, (m - 1) + n, d);
+    return dt.toISOString().slice(0, 10);
+  };
+  const novaParcela = (base?: ParcelaPagto): ParcelaPagto => ({
+    id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    valor: 0,
+    dataEmissao: base?.dataEmissao ?? today,
+    dataVencimento: base ? addMonthsISO(base.dataVencimento, 1) : today,
+    competencia: base ? addMonthsISO(base.dataVencimento, 1).slice(0, 7) : today.slice(0, 7),
+    formaPagamento: base?.formaPagamento ?? "Pix",
+  });
+  const parcelas = projeto.parcelasPagto ?? [];
+  const valorProj = projeto.valor ?? 0;
+  const totalParc = parcelas.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+
+  const save = (next: ParcelaPagto[]) => updateProjeto(contrato.id, projeto.id, { parcelasPagto: next });
+  const setValor = (v: number) => updateProjeto(contrato.id, projeto.id, { valor: v });
+  const add = () => save([...parcelas, novaParcela(parcelas[parcelas.length - 1])]);
+  const del = (id: string) => save(parcelas.filter((p) => p.id !== id));
+  const setP = (id: string, patch: Partial<ParcelaPagto>) =>
+    save(parcelas.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const distribuirValor = () => {
+    if (parcelas.length === 0 || valorProj <= 0) return;
+    const each = Math.round((valorProj / parcelas.length) * 100) / 100;
+    const last = Math.round((valorProj - each * (parcelas.length - 1)) * 100) / 100;
+    save(parcelas.map((p, i) => ({ ...p, valor: i === parcelas.length - 1 ? last : each })));
+  };
+  const vencPlus1 = () => {
+    if (parcelas.length === 0) return;
+    save(parcelas.map((p, i) => {
+      if (i === 0) return p;
+      const venc = addMonthsISO(parcelas[0].dataVencimento, i);
+      return { ...p, dataVencimento: venc, competencia: venc.slice(0, 7) };
+    }));
+  };
+  const mesmaComp = () => parcelas.length && save(parcelas.map((p) => ({ ...p, competencia: parcelas[0].competencia })));
+  const mesmaEmiss = () => parcelas.length && save(parcelas.map((p) => ({ ...p, dataEmissao: parcelas[0].dataEmissao })));
+
+  return (
+    <div className="mt-4 rounded-md border border-border bg-muted/20 p-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <DollarSign className="h-4 w-4 text-primary" /> Financeiro do projeto
+          {projeto.financeiroGerado && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO NO FINANCEIRO</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs">Valor do projeto (R$)</Label>
+          <Input type="number" className="h-8 w-32" value={valorProj} onChange={(e) => setValor(Number(e.target.value) || 0)} />
+        </div>
+      </div>
+      <div className="mb-2 flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={distribuirValor}>Distribuir valor</Button>
+        <Button type="button" size="sm" variant="outline" onClick={vencPlus1}>Vencimentos +1 mês</Button>
+        <Button type="button" size="sm" variant="outline" onClick={mesmaComp}>Mesma competência</Button>
+        <Button type="button" size="sm" variant="outline" onClick={mesmaEmiss}>Mesma emissão</Button>
+        <Button type="button" size="sm" variant="outline" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
+      </div>
+      {parcelas.length === 0 ? (
+        <div className="py-4 text-center text-xs text-muted-foreground">Sem parcelas. Adicione para gerar o financeiro deste projeto.</div>
+      ) : (
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead className="w-10">#</TableHead>
+            <TableHead>Emissão</TableHead><TableHead>Vencimento</TableHead><TableHead>Competência</TableHead>
+            <TableHead>Forma</TableHead><TableHead className="text-right">Valor (R$)</TableHead>
+            <TableHead className="w-10"></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {parcelas.map((p, i) => (
+              <TableRow key={p.id}>
+                <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setP(p.id, { dataEmissao: e.target.value })} /></TableCell>
+                <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setP(p.id, { dataVencimento: e.target.value })} /></TableCell>
+                <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setP(p.id, { competencia: e.target.value })} /></TableCell>
+                <TableCell>
+                  <Select value={p.formaPagamento} onValueChange={(v) => setP(p.id, { formaPagamento: v as FormaPagamento })}>
+                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setP(p.id, { valor: Number(e.target.value) || 0 })} />
+                </TableCell>
+                <TableCell>
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      <div className="mt-2 flex justify-end text-xs">
+        <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParc)}</b>
+        {valorProj > 0 && (
+          <span className={`ml-2 font-mono ${Math.abs(totalParc - valorProj) > 0.5 ? "text-destructive" : "text-emerald-600"}`}>
+            {Math.abs(totalParc - valorProj) > 0.5 ? `≠ valor projeto (${fmtBRL(valorProj)})` : "✓ bate com valor do projeto"}
+          </span>
+        )}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function ProjetosManager({ contrato }: { contrato: Contrato }) {
@@ -1943,7 +1457,7 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   {p.enviadoEngenharia ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span> : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  {!p.enviadoEngenharia && contrato.status === "Assinado" && (
+                  {!p.enviadoEngenharia && contrato.status === "Aprovado" && (
                     <Button size="sm" variant="outline" onClick={() => { updateProjeto(contrato.id, p.id, { enviadoEngenharia: true }); toast.success("Projeto liberado para Engenharia"); }}>Liberar p/ Engenharia</Button>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -2010,6 +1524,7 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   <Textarea value={p.obs} onChange={(e) => updateProjeto(contrato.id, p.id, { obs: e.target.value })} />
                 </div>
               </div>
+              <ProjetoFinanceiro contrato={contrato} projeto={p} />
             </Card>
           </TabsContent>
         ))}

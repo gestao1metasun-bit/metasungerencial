@@ -53,6 +53,9 @@ export type ProjetoVinculado = {
   usuarioAprovacao?: string;
   dataGeracaoFinanceiro?: string; // ISO
   usuarioGeracao?: string;
+  // Plano de contas (definido em Pedidos de venda antes de gerar o financeiro)
+  naturezaFinanceira?: string;
+  centroCusto?: string;
 };
 
 export type AuditEntry = {

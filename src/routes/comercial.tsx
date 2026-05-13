@@ -119,6 +119,7 @@ function ComercialPage() {
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
+          <TabsTrigger value="pedidos">Pedidos de venda</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>

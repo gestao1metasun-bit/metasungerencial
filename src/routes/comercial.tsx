@@ -636,7 +636,7 @@ function CadastrarContratoTab({
   const [form, setForm] = useState({
     cliente: "", dataAssinatura: "", modulos: "", potencia: "",
     inv1: "", inv2: "", inv3: "",
-    valor: "", vendedor: "",
+    valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
 
   // Cálculos automáticos
@@ -645,6 +645,7 @@ function CadastrarContratoTab({
   const kwpTotal = (modulosNum * potenciaWp) / 1000; // 15 * 620 / 1000 = 9.3
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
+  const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
@@ -654,8 +655,9 @@ function CadastrarContratoTab({
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
 
+    const novoId = nextContratoId(contratos);
     const novo: Contrato = {
-      id: nextContratoId(contratos),
+      id: novoId,
       cliente: form.cliente.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
@@ -668,17 +670,25 @@ function CadastrarContratoTab({
       obs: "",
       potencia: potenciaWp,
       inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
-      parametro: parametroNum.toFixed(4),
+      parametro: parametroFmt,
       dataCadastro: today,
       dataAssinatura: form.dataAssinatura,
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
     };
     setContratos([novo, ...contratos]);
-    toast.success(`Contrato ${novo.id} cadastrado`);
+    if (form.financiamento === "sim") {
+      addPendencia({
+        id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
+        valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
+      });
+      toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
+    } else {
+      toast.success(`Contrato ${novoId} cadastrado`);
+    }
     setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
       inv1: "", inv2: "", inv3: "",
-      valor: "", vendedor: "" });
+      valor: "", vendedor: "", financiamento: "nao" });
   };
 
   return (

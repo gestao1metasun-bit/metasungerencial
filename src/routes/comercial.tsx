@@ -1125,10 +1125,9 @@ function CadastrarContratoTab({
 
           <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(92vh - 140px)" }}>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-5">
-              <TabsList className="grid w-full grid-cols-3 h-11">
+              <TabsList className="grid w-full grid-cols-2 h-11">
                 <TabsTrigger value="cliente" className="gap-2"><Users className="h-4 w-4" /> 1. Cliente</TabsTrigger>
                 <TabsTrigger value="contrato" className="gap-2"><FileText className="h-4 w-4" /> 2. Contrato</TabsTrigger>
-                <TabsTrigger value="pagamento" className="gap-2"><DollarSign className="h-4 w-4" /> 3. Pagamento</TabsTrigger>
               </TabsList>
 
               <TabsContent value="cliente" className="mt-0 space-y-4">

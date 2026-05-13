@@ -39,6 +39,7 @@ import {
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
   setComposicaoPagto, composicaoSomaOk, aprovarProjeto, calcularLancamentosProjeto,
+  parcelasFinanceiroReais, FORMAS_PAGAMENTO,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
   type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";

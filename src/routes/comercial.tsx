@@ -1509,7 +1509,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
     }
-    setOpen(false);
+    // Mantém modal aberto — fechar somente via Fechar/X/Cancelar.
   };
 
   return (

@@ -1264,18 +1264,11 @@ function CadastrarContratoTab({
                   <div className="space-y-1.5"><Label>Observações</Label>
                     <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
                   </div>
-                  <div className="text-[11px] text-muted-foreground">A forma de pagamento é definida na próxima etapa (<b>Pagamento</b>).</div>
+                  <div className="text-[11px] text-muted-foreground">A composição financeira será definida em <b>Pedidos de venda</b> após a aprovação do contrato.</div>
                 </div>
 
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  <b className="text-foreground">Próximos passos:</b> ao salvar com tudo preenchido o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. Projetos só podem ser cadastrados após o contrato ser aprovado.
-                </div>
-              </TabsContent>
-
-              <TabsContent value="pagamento" className="mt-0 space-y-4">
-                <ComposicaoEditor valorContrato={valorNum} value={composicao} onChange={setComposicao} />
-                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  A soma das linhas precisa fechar com o valor do contrato. O financeiro será gerado proporcionalmente para cada projeto aprovado (rateio por % do contrato).
+                  <b className="text-foreground">Próximos passos:</b> ao salvar o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. A composição financeira (forma de pagamento, parcelas) é configurada depois em <b>Pedidos de venda</b>.
                 </div>
               </TabsContent>
             </Tabs>

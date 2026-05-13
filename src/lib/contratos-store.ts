@@ -61,7 +61,37 @@ export type AuditEntry = {
   para: string;
 };
 
-export type FormaPagamento = "Pix" | "Boleto" | "Cartão" | "Transferência" | "Dinheiro" | "Financiamento";
+export type FormaPagamento =
+  | "Pix"
+  | "Permuta"
+  | "Financiamento BASA"
+  | "Financiamento SICREDI"
+  | "Financiamento BB"
+  | "Cartão de Débito"
+  | "Cartão de Crédito"
+  | "Boleto"
+  | "Dinheiro"
+  | "Outros";
+
+export const FORMAS_PAGAMENTO: FormaPagamento[] = [
+  "Pix",
+  "Permuta",
+  "Financiamento BASA",
+  "Financiamento SICREDI",
+  "Financiamento BB",
+  "Cartão de Débito",
+  "Cartão de Crédito",
+  "Boleto",
+  "Dinheiro",
+  "Outros",
+];
+
+/** Quantas parcelas reais a empresa recebe para uma forma. Pix/Cartão = 1. */
+export function parcelasFinanceiroReais(forma: FormaPagamento, parcelasInformadas: number): number {
+  if (forma === "Pix") return 1;
+  if (forma === "Cartão de Débito" || forma === "Cartão de Crédito") return 1;
+  return Math.max(1, Number(parcelasInformadas) || 1);
+}
 
 export type ParcelaPagto = {
   id: string;

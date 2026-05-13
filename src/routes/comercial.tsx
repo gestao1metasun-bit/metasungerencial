@@ -1021,7 +1021,7 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const [openForm, setOpenForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"cliente" | "contrato" | "pagamento">("cliente");
+  const [activeTab, setActiveTab] = useState<"cliente" | "contrato">("cliente");
 
   const limpar = () => {
     setForm({

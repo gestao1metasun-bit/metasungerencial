@@ -159,6 +159,33 @@ export function appendLancamentos(novos: Lancamento[]) {
   } catch {}
 }
 
+/** Lê lançamentos do LocalStorage (sem hook). */
+export function readLancamentos(): Lancamento[] {
+  if (typeof window === "undefined") return seedLanc;
+  try {
+    const raw = localStorage.getItem(LS_LANC);
+    return raw ? JSON.parse(raw) : seedLanc;
+  } catch { return seedLanc; }
+}
+
+/** Remove todos os lançamentos vinculados a um contrato (libera edição). */
+export function removeLancamentosDoContrato(contratoId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = readLancamentos();
+    const next = cur.filter((l) => l.contrato !== contratoId && !(l.obra ?? "").startsWith(`${contratoId}-`));
+    localStorage.setItem(LS_LANC, JSON.stringify(next));
+  } catch {}
+}
+
+/** Existe lançamento Realizado/Confirmado vinculado ao contrato? */
+export function temLancamentoConcretizado(contratoId: string): boolean {
+  return readLancamentos().some((l) =>
+    (l.contrato === contratoId || (l.obra ?? "").startsWith(`${contratoId}-`)) &&
+    (l.camada === "Realizado" || l.camada === "Confirmado")
+  );
+}
+
 export const fmtBRLPrecise = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

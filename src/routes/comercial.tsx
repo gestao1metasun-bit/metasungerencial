@@ -1627,6 +1627,10 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
             </div>
           </TabsContent>
 
+          <TabsContent value="composicao" className="mt-4">
+            <ComposicaoTabPanel contrato={contrato} />
+          </TabsContent>
+
           <TabsContent value="projetos" className="mt-4">
             <ProjetosManager contrato={contrato} />
           </TabsContent>

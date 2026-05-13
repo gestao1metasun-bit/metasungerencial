@@ -1476,7 +1476,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
       modulos: f.modulos, potencia: f.potencia,
       inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
-      inv4: (f as any).inv4, inv5: (f as any).inv5, inv6: (f as any).inv6,
+      inv4: f.inv4, inv5: f.inv5, inv6: f.inv6,
       clienteFull: cli,
     });
 

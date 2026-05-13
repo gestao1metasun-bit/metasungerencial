@@ -73,9 +73,21 @@ export type ParcelaPagto = {
   descricao?: string;
 };
 
+/** Linha da composição de pagamento do CONTRATO. Cada linha é uma forma/parcela do recebimento total. */
+export type ComposicaoLinha = {
+  id: string;
+  formaPagamento: FormaPagamento;
+  valor: number;
+  parcelas: number;          // 1 = à vista; >1 distribui mensalmente
+  dataPrevista: string;      // YYYY-MM-DD
+  competencia: string;       // YYYY-MM
+  observacao?: string;
+};
+
 export type ContratoFull = {
   id: string;            // ex. 088/2026
   cliente: string;
+  clienteId?: string;    // referência ao cadastro de clientes
   vendedor: string;
   valor: number;
   kwp: number;
@@ -93,14 +105,11 @@ export type ContratoFull = {
   dataAssinatura?: string;
   comissaoPct?: number;
   comissaoValor?: number;
-  // Novo: dados completos do cliente
   clienteFull?: ClienteFull;
-  // Novo: projetos vinculados (desdobramento)
   projetos?: ProjetoVinculado[];
-  // Novo: auditoria de edições
   auditoria?: AuditEntry[];
-  // Novo: parcelas de pagamento detalhadas
-  parcelasPagto?: ParcelaPagto[];
+  parcelasPagto?: ParcelaPagto[];       // legado (migrado p/ composicaoPagto)
+  composicaoPagto?: ComposicaoLinha[];  // composição do recebimento do contrato
 };
 
 const KEY = "ms.contratos.v2";

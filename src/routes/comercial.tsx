@@ -799,7 +799,7 @@ function CadastrarContratoTab({
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpTotal,
-      status: "Gerado",
+      status: form.statusContrato,
       data: form.dataCadastro || today,
       pagamento: parcelas.map((p) => p.formaPagamento).join(" / "),
       banco: "",

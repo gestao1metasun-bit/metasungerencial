@@ -7,18 +7,25 @@ export type Recorrencia = "Única" | "Mensal" | "Quinzenal" | "Semanal" | "Anual
 
 export type Lancamento = {
   id: string;
-  data: string;            // YYYY-MM-DD
+  data: string;            // YYYY-MM-DD (vencimento)
   descricao: string;
   tipo: Tipo;
   valor: number;
   camada: Camada;
   natureza: string;        // ex: "Material", "Aluguel", "Folha"
   centroCusto: string;     // ex: "Administrativo", "OB-0231"
-  obra?: string;           // vínculo opcional com obra
-  empresa: string;         // ex: "Meta Sun"
-  filial: string;          // ex: "Manaus"
+  obra?: string;           // vínculo opcional com obra/projeto
+  empresa: string;
+  filial: string;
   responsavel?: string;
   obs?: string;
+  // Novos vínculos para "A receber" detalhado
+  contrato?: string;       // ex. 088/2026
+  cliente?: string;        // nome do cliente
+  formaPagamento?: string; // Pix, Boleto, Cartão, etc.
+  parcelaLabel?: string;   // ex. "1/3"
+  competencia?: string;    // YYYY-MM
+  dataEmissao?: string;    // YYYY-MM-DD
 };
 
 export type DespesaRecorrente = {

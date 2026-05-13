@@ -1157,7 +1157,93 @@ function CadastrarContratoTab({
               </SelectContent>
             </Select>
           </div>
-        </div>
+          </div>
+
+          {/* ===== Dados do contrato — totais técnicos + parcelas ===== */}
+          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3 space-y-4">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Dados do contrato</div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>Qtd módulos (contrato)</Label>
+                <Input type="number" value={form.modulosContrato} onChange={(e) => setForm({ ...form, modulosContrato: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
+                <Input type="number" value={form.potenciaContrato} onChange={(e) => setForm({ ...form, potenciaContrato: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>kWp esperado</Label>
+                <Input value={((Number(form.modulosContrato) || 0) * (Number(form.potenciaContrato) || 0) / 1000).toFixed(2)} readOnly className="bg-muted font-mono" />
+              </div>
+              {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, idx) => (
+                <div key={k} className="space-y-1.5"><Label>Inversor {idx + 1}</Label>
+                  <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={idx === 0 ? "Modelo / potência" : "Opcional"} />
+                </div>
+              ))}
+            </div>
+
+            {/* Parcelas */}
+            <div className="rounded-md border border-border bg-background p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
+                </div>
+              </div>
+              <Table>
+                <TableHeader><TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Emissão</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Competência</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead className="text-right">Valor (R$)</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {parcelas.map((p, i) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                      <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setParc(p.id, { dataEmissao: e.target.value })} /></TableCell>
+                      <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setParc(p.id, { dataVencimento: e.target.value })} /></TableCell>
+                      <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setParc(p.id, { competencia: e.target.value })} /></TableCell>
+                      <TableCell>
+                        <Select value={p.formaPagamento} onValueChange={(v) => setParc(p.id, { formaPagamento: v as FormaPagamento })}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                              <SelectItem key={f} value={f}>{f}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setParc(p.id, { valor: Number(e.target.value) || 0 })} />
+                      </TableCell>
+                      <TableCell>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => delParc(p.id)} disabled={parcelas.length === 1}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="mt-2 flex items-center justify-end gap-3 text-xs">
+                <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParcelas)}</b></span>
+                <span className={`font-mono ${erroValor ? "text-destructive" : "text-muted-foreground"}`}>
+                  {erroValor ? `≠ valor venda (${fmtBRL(valorNum)})` : valorNum > 0 ? "✓ bate com valor da venda" : ""}
+                </span>
+              </div>
+            </div>
+
+            {/* Banner validação */}
+            {(erroModulos || erroValor || semProjeto || inversoresOrfaos.length > 0) && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive space-y-0.5">
+                {semProjeto && <div>• Cadastre ao menos 1 projeto com módulos.</div>}
+                {erroModulos && <div>• Soma de módulos dos projetos ({totalModulosProjs}) ≠ módulos do contrato ({modulosContratoNum}).</div>}
+                {erroValor && <div>• Soma das parcelas ({fmtBRL(totalParcelas)}) ≠ valor da venda ({fmtBRL(valorNum)}).</div>}
+                {inversoresOrfaos.length > 0 && <div>• Inversores nos projetos não constam no contrato: {inversoresOrfaos.join(", ")}.</div>}
+              </div>
+            )}
+          </div>
 
 
         {parametroNum > 0 && (

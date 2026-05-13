@@ -951,8 +951,34 @@ function CadastrarContratoTab({
                   </div>
                 </div>
 
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Forma de pagamento</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Forma de pagamento</Label>
+                      <Select value={form.pagamento} onValueChange={(v) => setForm({ ...form, pagamento: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                        <SelectContent>
+                          {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {form.pagamento === "Financiamento" && (
+                      <div className="space-y-1.5 md:col-span-2"><Label>Banco (financiamento)</Label>
+                        <Input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="BASA, SICREDI, BB…" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5"><Label>Observações</Label>
+                    <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
+                  </div>
+                </div>
+
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  <b className="text-foreground">Próximos passos:</b> após cadastrar, abra o contrato pelo lápis para adicionar os <b>projetos</b> (cada um com seus dados técnicos) e o <b>financeiro</b> (parcelas) de cada projeto. Cada projeto gera financeiro próprio. Aprovar projetos libera para Engenharia e Financeiro.
+                  <b className="text-foreground">Próximos passos:</b> ao salvar com tudo preenchido o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. Projetos só podem ser cadastrados após o contrato ser aprovado.
                 </div>
               </TabsContent>
             </Tabs>

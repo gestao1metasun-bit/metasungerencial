@@ -786,11 +786,12 @@ function CadastrarContratoTab({
           </div>
         )}
 
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
-          <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
-        </div>
-      </Card>
+          <DialogFooter className="mt-5">
+            <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <div className="border-b border-border p-4 text-sm font-semibold">Últimos contratos cadastrados</div>

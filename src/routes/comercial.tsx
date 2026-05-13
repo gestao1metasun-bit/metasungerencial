@@ -1013,6 +1013,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Textarea value={f.obs ?? ""} onChange={(e) => setF({ ...f, obs: e.target.value })} />
               </div>
             </div>
+            <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">Aprovação para Engenharia</div>
+                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Assinados</b> e projetos <b>liberados</b> aparecem na Engenharia.</div>
+                </div>
+                <AprovarEnviarDialog contrato={contrato} />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="cliente" className="mt-4">

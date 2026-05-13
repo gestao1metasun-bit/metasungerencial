@@ -36,6 +36,39 @@ export const Route = createFileRoute("/engenharia")({
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const TELHADOS = ["Fibrocimento", "Cerâmica", "Metálico", "Solo", "Laje", "Outro"];
 const STATUS = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby", "Finalizado"];
+const STATUS_RANK: Record<string, number> = {
+  "Executando instalação": 0,
+  "Aguardando instalação": 1,
+  "Em projeto/aprovação": 2,
+  "Standby": 3,
+  "Finalizado": 4,
+};
+const STATUS_ROW_BG: Record<string, string> = {
+  "Executando instalação": "bg-success/5 hover:bg-success/10",
+  "Aguardando instalação": "bg-warning/5 hover:bg-warning/10",
+  "Em projeto/aprovação": "bg-info/5 hover:bg-info/10",
+  "Standby": "bg-muted/40 hover:bg-muted/60",
+  "Finalizado": "",
+};
+
+function fmtBR(iso?: string): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+function fmtContrato(id?: string): string {
+  if (!id) return "";
+  const m = id.match(/(\d{1,4})\s*$/);
+  if (!m) return id;
+  return `${String(parseInt(m[1], 10)).padStart(3, "0")}/2026`;
+}
+function addDaysISO(iso: string, days: number): string {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
@@ -241,10 +274,17 @@ function ObrasAtivasTab({
   const list = obras
     .filter((o) => o.status !== "Finalizado")
     .filter((o) => equipe === "todas" || o.equipe === equipe)
-    .sort((a, b) => a.ordem - b.ordem);
+    .sort((a, b) => {
+      const r = (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99);
+      return r !== 0 ? r : a.ordem - b.ordem;
+    });
 
   const update = (id: string, patch: Partial<Obra>) => {
-    setObras(obras.map((o) => o.id === id ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao } : o));
+    const next = obras.map((o) => o.id === id
+      ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao }
+      : o);
+    const target = next.find((o) => o.id === id)!;
+    setObras(chainSchedule(next, target.equipe, target.status));
   };
   const remove = (id: string) => {
     setObras(obras.filter((o) => o.id !== id));
@@ -267,7 +307,7 @@ function ObrasAtivasTab({
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
             <TableHead className="w-12">#</TableHead>
-            <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
+            <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
@@ -276,16 +316,19 @@ function ObrasAtivasTab({
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => (
-              <TableRow key={o.id}>
+              <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
-                <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{o.contrato}</TableCell>
-                <TableCell className="text-center">{o.modulos}</TableCell>
-                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-                <TableCell className="text-xs">{o.inversor}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
+                <TableCell className="text-center">
+                  <Input type="number" defaultValue={o.modulos} className="h-7 w-16 text-center" onBlur={(e)=>update(o.id,{ modulos: Number(e.target.value) || 0, previsto: recalcPrevisto(o.inicio, o.equipe, Number(e.target.value) || 0) })} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Input type="number" step="0.1" defaultValue={o.potencia} className="h-7 w-20 text-right" onBlur={(e)=>update(o.id,{ potencia: Number(e.target.value) || 0 })} />
+                </TableCell>
+                <TableCell><Input defaultValue={o.inversor} className="h-7 w-28 text-xs" onBlur={(e)=>update(o.id,{ inversor: e.target.value })} /></TableCell>
+                <TableCell><Input defaultValue={o.inv2} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv2: e.target.value })} /></TableCell>
+                <TableCell><Input defaultValue={o.inv3} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv3: e.target.value })} /></TableCell>
                 <TableCell>
                   <Select value={o.telhadoTipo} onValueChange={(v) => update(o.id, { telhadoTipo: v })}>
                     <SelectTrigger className="h-7 w-32"><SelectValue /></SelectTrigger>
@@ -298,8 +341,8 @@ function ObrasAtivasTab({
                     <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-32" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
-                <TableCell className="text-muted-foreground text-xs">{o.previsto}</TableCell>
+                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-36" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
+                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell>
                   <Select value={o.status} onValueChange={(v) => update(o.id, { status: v })}>
                     <SelectTrigger className="h-7 w-44"><SelectValue /></SelectTrigger>
@@ -307,15 +350,17 @@ function ObrasAtivasTab({
                   </Select>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Finalizar" onClick={() => update(o.id, { status: "Finalizado" })}><CheckCircle2 className="h-3.5 w-3.5 text-success" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={15} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
           </TableBody>
         </Table>
+      </div>
+      <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
+        Não editável: <span className="font-semibold">#</span>, <span className="font-semibold">Cliente</span> e <span className="font-semibold">Contrato</span>. Linhas coloridas conforme status.
       </div>
     </Card>
   );
@@ -324,9 +369,30 @@ function ObrasAtivasTab({
 function recalcPrevisto(inicio: string, equipe: string, modulos: number): string {
   if (!inicio) return "";
   const dias = diasPrevistos(equipe, modulos);
-  const d = new Date(inicio);
+  const d = new Date(inicio + "T00:00:00");
   d.setDate(d.getDate() + dias);
   return d.toISOString().slice(0,10);
+}
+
+/** Recalcula a cadeia de datas para uma equipe+status: cada obra começa 1 dia após a previsão da anterior. */
+function chainSchedule(obras: Obra[], equipe: string, status: string): Obra[] {
+  const same = obras
+    .filter((o) => o.equipe === equipe && o.status === status)
+    .sort((a, b) => a.ordem - b.ordem);
+  if (same.length <= 1) return obras;
+  const patches = new Map<string, Partial<Obra>>();
+  let prevPrev = same[0].previsto;
+  for (let i = 1; i < same.length; i++) {
+    const cur = same[i];
+    const newInicio = prevPrev ? addDaysISO(prevPrev, 1) : cur.inicio;
+    const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
+    if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
+      patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
+    }
+    prevPrev = newPrev;
+  }
+  if (patches.size === 0) return obras;
+  return obras.map((o) => patches.has(o.id) ? { ...o, ...patches.get(o.id)! } : o);
 }
 
 /* ---------------- CRONOGRAMA ---------------- */
@@ -343,11 +409,20 @@ function CronogramaTab({
     const idx = same.findIndex((o) => o.id === id);
     const swapWith = same[idx + dir];
     if (!swapWith) return;
-    setObras(obras.map((o) => {
+    const swapped = obras.map((o) => {
       if (o.id === target.id) return { ...o, ordem: swapWith.ordem };
       if (o.id === swapWith.id) return { ...o, ordem: target.ordem };
       return o;
-    }));
+    });
+    setObras(chainSchedule(swapped, target.equipe, target.status));
+  };
+
+  const editInicio = (id: string, inicio: string) => {
+    const target = obras.find((o) => o.id === id);
+    if (!target) return;
+    const previsto = recalcPrevisto(inicio, target.equipe, target.modulos);
+    const next = obras.map((o) => o.id === id ? { ...o, inicio, previsto } : o);
+    setObras(chainSchedule(next, target.equipe, target.status));
   };
 
   return (
@@ -367,7 +442,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onEditInicio={editInicio} />)}
                 </div>
               </div>
             )}
@@ -375,7 +450,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onEditInicio={editInicio} />)}
                 </div>
               </div>
             )}
@@ -386,7 +461,7 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onEditInicio: (id: string, inicio: string) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
@@ -398,7 +473,12 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground">{o.inicio} → <span className="font-medium text-foreground">{o.previsto}</span></div>
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <Input type="date" defaultValue={o.inicio} className="h-6 w-32 text-[11px]" onBlur={(e) => { if (e.target.value && e.target.value !== o.inicio) onEditInicio(o.id, e.target.value); }} />
+            <span>→</span>
+            <span className="font-medium text-foreground">{fmtBR(o.previsto)}</span>
+          </div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Início: {fmtBR(o.inicio)} · próximo herda +1d</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>

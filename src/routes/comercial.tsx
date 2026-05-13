@@ -37,6 +37,7 @@ import {
 import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
+  validateContratoCompleto, solicitarAlteracaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
   type ParcelaPagto, type FormaPagamento,
 } from "@/lib/contratos-store";
@@ -686,6 +687,7 @@ function CadastrarContratoTab({
     valor: "", vendedor: "",
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+    pagamento: "", banco: "", obs: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
@@ -720,30 +722,26 @@ function CadastrarContratoTab({
       dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "",
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+      pagamento: "", banco: "", obs: "",
     });
     setCli(emptyCliente);
     setActiveTab("cliente");
   };
 
-  const submit = () => {
-    if (!cli.nome.trim()) { toast.error("Informe o nome do cliente"); return; }
-    if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
-    if (!valorNum) { toast.error("Informe o valor da venda"); return; }
-    if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
-
+  const buildContrato = (): Contrato => {
     const novoId = nextContratoId(contratos);
-    const novo: Contrato = {
+    return {
       id: novoId,
-      cliente: cli.nome.trim(),
+      cliente: cli.nome.trim() || "—",
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpEsperado,
-      status: "Pendente",
+      status: "Pendente de informações",
       data: form.dataCadastro || today,
-      pagamento: "",
-      banco: "",
+      pagamento: form.pagamento,
+      banco: form.banco,
       modulos: modulosNum,
-      obs: "",
+      obs: form.obs,
       potencia: potenciaNum,
       inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
       inv4: form.inv4, inv5: form.inv5, inv6: form.inv6,
@@ -760,13 +758,26 @@ function CadastrarContratoTab({
         usuario: "Operador", campo: "criação", de: "", para: novoId,
       }],
     };
+  };
+
+  // Validação ao vivo (para mostrar pendências e travar botão)
+  const previewContrato = buildContrato();
+  const validation = validateContratoCompleto(previewContrato);
+
+  const submit = () => {
+    if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
+    if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF/CNPJ inválido"); return; }
+    if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone inválido"); return; }
+    if (!validation.ok) {
+      toast.error(`Não foi possível salvar. Preencha: ${validation.missing.slice(0, 5).join(", ")}${validation.missing.length > 5 ? "…" : ""}`);
+      return;
+    }
+    const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
-    toast.success(`Contrato ${novoId} cadastrado como Pendente · edite no lápis para adicionar projetos e financeiro`);
+    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · clique em Validar para liberar a aprovação`);
     limpar();
     setOpenForm(false);
   };
-
-  const podeCadastrar = !aprovacao && !!cli.nome.trim() && !!form.vendedor && valorNum > 0;
 
   return (
     <div className="space-y-4">
@@ -940,19 +951,56 @@ function CadastrarContratoTab({
                   </div>
                 </div>
 
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Forma de pagamento</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Forma de pagamento</Label>
+                      <Select value={form.pagamento} onValueChange={(v) => setForm({ ...form, pagamento: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                        <SelectContent>
+                          {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {form.pagamento === "Financiamento" && (
+                      <div className="space-y-1.5 md:col-span-2"><Label>Banco (financiamento)</Label>
+                        <Input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="BASA, SICREDI, BB…" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5"><Label>Observações</Label>
+                    <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
+                  </div>
+                </div>
+
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  <b className="text-foreground">Próximos passos:</b> após cadastrar, abra o contrato pelo lápis para adicionar os <b>projetos</b> (cada um com seus dados técnicos) e o <b>financeiro</b> (parcelas) de cada projeto. Cada projeto gera financeiro próprio. Aprovar projetos libera para Engenharia e Financeiro.
+                  <b className="text-foreground">Próximos passos:</b> ao salvar com tudo preenchido o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. Projetos só podem ser cadastrados após o contrato ser aprovado.
                 </div>
               </TabsContent>
             </Tabs>
           </div>
 
-          <DialogFooter className="border-t bg-muted/30 px-6 py-3">
-            <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={!podeCadastrar}>
-              <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato (Pendente)
-            </Button>
-          </DialogFooter>
+          <div className="border-t bg-muted/30 px-6 py-3 space-y-2">
+            {!validation.ok && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-[11px] text-destructive">
+                <b>Pendente:</b> {validation.missing.join(" · ")}
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={limpar}>Limpar</Button>
+              <Button
+                className="bg-primary text-primary-foreground"
+                onClick={submit}
+                disabled={aprovacao || !validation.ok}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -988,7 +1036,11 @@ function CadastrarContratoTab({
                 </TableCell>
                 <TableCell><StatusBadge status={c.status} /></TableCell>
                 <TableCell>
-                  <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                  <div className="flex items-center justify-end gap-1">
+                    <ValidarContratoButton contrato={c} />
+                    <AprovarContratoButton contrato={c} />
+                    <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -996,6 +1048,110 @@ function CadastrarContratoTab({
         </Table>
       </Card>
     </div>
+  );
+}
+
+/* ---------------- VALIDAR / APROVAR CONTRATO ---------------- */
+
+function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
+  if (contrato.status === "Aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
+  const validar = () => {
+    const r = validateContratoCompleto(contrato);
+    if (r.ok) {
+      updateContratoAudit(contrato.id, { status: "Pronto para aprovação" });
+      toast.success(`Contrato ${contrato.id} validado · pronto para aprovação`);
+    } else {
+      updateContratoAudit(contrato.id, { status: "Pendente de informações" });
+      toast.error(`Faltam: ${r.missing.join(" · ")}`, { duration: 6000 });
+    }
+  };
+  return (
+    <Button variant="ghost" size="sm" className="h-7 text-xs" title="Validar contrato" onClick={validar}>
+      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Validar
+    </Button>
+  );
+}
+
+function SolicitarAlteracaoButton({ contrato }: { contrato: Contrato }) {
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const enviar = () => {
+    if (motivo.trim().length < 5) { toast.error("Descreva o motivo (mínimo 5 caracteres)"); return; }
+    solicitarAlteracaoContrato(contrato.id, motivo.trim(), "Operador", {});
+    toast.success("Solicitação registrada na auditoria");
+    setMotivo(""); setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 text-xs"><History className="mr-1 h-3.5 w-3.5" /> Solicitar alteração</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Solicitar alteração — {contrato.id}</DialogTitle>
+          <DialogDescription>O contrato está aprovado. Informe o motivo da alteração; ficará registrado na auditoria com data, hora e usuário.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label>Motivo</Label>
+          <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={4} placeholder="Descreva o motivo da alteração" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={enviar}>Registrar solicitação</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
+  const [open, setOpen] = useState(false);
+  if (contrato.status === "Aprovado" || contrato.status === "Cancelado") return null;
+  const liberado = contrato.status === "Pronto para aprovação";
+  const cli = contrato.clienteFull;
+  const aprovar = () => {
+    const r = validateContratoCompleto(contrato);
+    if (!r.ok) {
+      toast.error(`Não pode aprovar. Faltam: ${r.missing.join(", ")}`);
+      return;
+    }
+    updateContratoAudit(contrato.id, { status: "Aprovado" });
+    toast.success(`Contrato ${contrato.id} aprovado · libere os projetos na aba Projetos do lápis`);
+    setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          className="h-7 px-2 text-xs bg-success text-success-foreground hover:opacity-90"
+          disabled={!liberado}
+          title={liberado ? "Aprovar contrato" : "Use Validar primeiro"}
+        >
+          <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprovar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
+          <DialogDescription>
+            Confirmar aprovação deste contrato? Após aprovado, dados estruturais terão controle de alteração.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 rounded-md border bg-muted/30 p-3 text-sm">
+          <div><b>Cliente:</b> {cli?.nome || contrato.cliente}</div>
+          <div><b>Nº contrato:</b> <span className="font-mono">{contrato.id}</span></div>
+          <div><b>Valor:</b> {fmtBRL(contrato.valor)}</div>
+          <div><b>Potência contratada:</b> {(contrato.kwp ?? 0).toFixed(2)} kWp · {contrato.modulos ?? 0} mód</div>
+          <div><b>Forma de pagamento:</b> {contrato.pagamento || "—"}{contrato.banco ? ` · ${contrato.banco}` : ""}</div>
+          <div><b>Vendedor:</b> {contrato.vendedor}</div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="bg-success text-success-foreground" onClick={aprovar}>Confirmar aprovação</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1090,12 +1246,18 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
+            {contrato.status === "Aprovado" && (
+              <div className="mb-3 flex items-center justify-between rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs">
+                <span className="text-success font-medium">Contrato aprovado · campos estruturais bloqueados.</span>
+                <SolicitarAlteracaoButton contrato={contrato} />
+              </div>
+            )}
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5"><Label>Cliente (nome no contrato)</Label>
-                <Input value={f.cliente} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
+                <Input value={f.cliente} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
               </div>
               <div className="space-y-1.5"><Label>Vendedor</Label>
-                <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })}>
+                <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })} disabled={contrato.status === "Aprovado"}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
                 </Select>
@@ -1103,21 +1265,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Status</Label>
                 <Select value={f.status} onValueChange={(v) => {
                   if (v === "Aprovado" && f.status !== "Aprovado") {
-                    const projs = contrato.projetos ?? [];
-                    if (projs.length === 0) { toast.error("Cadastre pelo menos 1 projeto na aba Projetos antes de aprovar."); return; }
-                    const valorContr = Number(f.valor) || 0;
-                    const modContr = Number(f.modulos) || 0;
-                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
-                    const somaMod = projs.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
-                    if (valorContr > 0 && somaProj - valorContr > 0.5) { toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) excede o contrato (${fmtBRL(valorContr)}).`); return; }
-                    if (modContr > 0 && somaMod > modContr) { toast.error(`Soma de módulos (${somaMod}) excede o contrato (${modContr}).`); return; }
-                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso libera os projetos para a Engenharia. O financeiro será configurado na aba "Pedidos de venda".`)) return;
+                    const r = validateContratoCompleto(contrato);
+                    if (!r.ok) { toast.error(`Faltam: ${r.missing.join(", ")}`); return; }
+                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nApós aprovado, dados estruturais terão controle de alteração.`)) return;
                   }
                   setF({ ...f, status: v });
-                }}>
+                }} disabled={contrato.status === "Aprovado"}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Pendente de informações", "Em análise", "Pronto para aprovação", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1127,20 +1283,28 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Data assinatura</Label>
                 <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
               </div>
+              <div className="space-y-1.5"><Label>Forma de pagamento</Label>
+                <Select value={f.pagamento ?? ""} onValueChange={(v) => setF({ ...f, pagamento: v })} disabled={contrato.status === "Aprovado"}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>
+                    {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label>Banco</Label>
-                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} />
+                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} disabled={contrato.status === "Aprovado"} />
               </div>
               <div className="space-y-1.5"><Label>Valor (R$)</Label>
-                <Input type="number" value={f.valor} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Módulos</Label>
-                <Input type="number" value={f.modulos ?? 0} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                <Input type="number" value={f.potencia ?? 0} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>kWp total</Label>
-                <Input type="number" step="0.01" value={f.kwp} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
+                <Input type="number" step="0.01" value={f.kwp} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />

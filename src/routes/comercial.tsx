@@ -1344,7 +1344,7 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   {p.enviadoEngenharia ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span> : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  {!p.enviadoEngenharia && contrato.status === "Assinado" && (
+                  {!p.enviadoEngenharia && contrato.status === "Aprovado" && (
                     <Button size="sm" variant="outline" onClick={() => { updateProjeto(contrato.id, p.id, { enviadoEngenharia: true }); toast.success("Projeto liberado para Engenharia"); }}>Liberar p/ Engenharia</Button>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>

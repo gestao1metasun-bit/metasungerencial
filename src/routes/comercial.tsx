@@ -2733,41 +2733,21 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
   );
 
   const gerarFinanceiro = (contrato: Contrato, projeto: ProjetoVinculado) => {
-    const parc = projeto.parcelasPagto ?? [];
-    if (parc.length === 0) { toast.error("Adicione ao menos 1 parcela antes de gerar."); return; }
-    const totalParc = parc.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+    if (!projeto.aprovado) { toast.error("Aprove o projeto antes de gerar o financeiro."); return; }
     const valorProj = Number(projeto.valor) || 0;
-    if (valorProj > 0 && Math.abs(totalParc - valorProj) > 0.5) {
-      toast.error(`Soma das parcelas (${fmtBRL(totalParc)}) ≠ valor do projeto (${fmtBRL(valorProj)}).`);
-      return;
-    }
-    try {
-      const cur = readLancamentos();
-      const sem = cur.filter((l) => l.obra !== projeto.id);
-      localStorage.setItem("metasun.fin.lancamentos.v1", JSON.stringify(sem));
-    } catch {}
-    const novos = parc.filter((p) => p.valor > 0).map((pg, pi) => ({
-      id: `L-REC-${Date.now()}-${projeto.id}-${pi}`,
-      data: pg.dataVencimento,
-      descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${projeto.id} · ${contrato.cliente}`,
-      tipo: "Entrada" as const,
-      valor: pg.valor,
-      camada: "A realizar" as const,
-      natureza: "Recebimento de cliente",
-      centroCusto: "Comercial",
-      obra: projeto.id,
-      empresa: "Meta Sun",
-      filial: "Manaus",
-      contrato: contrato.id,
-      cliente: contrato.cliente,
-      formaPagamento: pg.formaPagamento,
-      parcelaLabel: `${pi + 1}/${parc.length}`,
-      competencia: pg.competencia,
-      dataEmissao: pg.dataEmissao,
-    }));
-    appendLancamentos(novos);
-    updateProjeto(contrato.id, projeto.id, { financeiroGerado: true });
-    toast.success(`${novos.length} parcela(s) lançadas no Financeiro · ${projeto.id}`);
+    if (valorProj <= 0) { toast.error("Defina o valor do projeto."); return; }
+    const comp = composicaoSomaOk(contrato);
+    if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}). Edite no contrato.`); return; }
+    const novos = calcularLancamentosProjeto(contrato, projeto);
+    if (novos.length === 0) { toast.error("Nada a gerar — verifique composição e valor do projeto."); return; }
+    removeLancamentosDoProjeto(projeto.id);
+    appendLancamentos(novos as any);
+    updateProjeto(contrato.id, projeto.id, {
+      financeiroGerado: true,
+      dataGeracaoFinanceiro: new Date().toISOString(),
+      usuarioGeracao: "Operador",
+    });
+    toast.success(`${novos.length} lançamento(s) gerado(s) por rateio · ${projeto.id}`);
   };
 
   return (

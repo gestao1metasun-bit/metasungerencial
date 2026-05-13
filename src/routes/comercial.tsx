@@ -43,7 +43,7 @@ import {
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
   type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";
-import { useClientesFull, addClienteFull, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/comercial")({

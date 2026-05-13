@@ -1256,49 +1256,28 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
     Object.fromEntries(projetos.map((p) => [p.id, !p.enviadoEngenharia])),
   );
 
+  // Quotas do contrato vs soma dos projetos selecionados + já liberados
+  const valorContrato = Number(contrato.valor) || 0;
+  const modulosContrato = Number(contrato.modulos) || 0;
+  const ativos = projetos.filter((p) => p.enviadoEngenharia || sel[p.id]);
+  const somaValor = ativos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+  const somaMod = ativos.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
+  const excedeValor = valorContrato > 0 && somaValor - valorContrato > 0.5;
+  const excedeMod = modulosContrato > 0 && somaMod > modulosContrato;
+  const algumLiberado = ativos.length > 0;
+
   const aprovar = () => {
-    // 1. marca contrato como Aprovado
+    if (!algumLiberado) { toast.error("Selecione ao menos 1 projeto para liberar."); return; }
+    if (excedeValor) { toast.error(`Soma de valores (${fmtBRL(somaValor)}) excede o contrato (${fmtBRL(valorContrato)}).`); return; }
+    if (excedeMod) { toast.error(`Soma de módulos (${somaMod}) excede o contrato (${modulosContrato}).`); return; }
     if (contrato.status !== "Aprovado") {
       updateContratoAudit(contrato.id, { status: "Aprovado" });
     }
-    // 2. libera projetos selecionados + gera financeiro de cada projeto a partir das suas parcelas
     const liberados = Object.entries(sel).filter(([, v]) => v).map(([id]) => id);
-    const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
     liberados.forEach((id) => {
-      const p = projetos.find((x) => x.id === id);
-      if (!p) return;
-      updateProjeto(contrato.id, id, { enviadoEngenharia: true, financeiroGerado: true });
-      const parc = p.parcelasPagto ?? [];
-      parc.forEach((pg, pi) => {
-        if (pg.valor <= 0) return;
-        novosLanc.push({
-          id: `L-REC-${Date.now()}-${id}-${pi}`,
-          data: pg.dataVencimento,
-          descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${id} · ${contrato.cliente}`,
-          tipo: "Entrada",
-          valor: pg.valor,
-          camada: "A realizar",
-          natureza: "Recebimento de cliente",
-          centroCusto: "Comercial",
-          obra: id,
-          empresa: "Meta Sun",
-          filial: "Manaus",
-          contrato: contrato.id,
-          cliente: contrato.cliente,
-          formaPagamento: pg.formaPagamento,
-          parcelaLabel: `${pi + 1}/${parc.length}`,
-          competencia: pg.competencia,
-          dataEmissao: pg.dataEmissao,
-        });
-      });
+      updateProjeto(contrato.id, id, { enviadoEngenharia: true });
     });
-    if (novosLanc.length > 0) appendLancamentos(novosLanc);
-    if (projetos.length === 0) {
-      toast.success(`Contrato ${contrato.id} aprovado · sem projetos vinculados`);
-    } else {
-      const pend = projetos.length - liberados.length;
-      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
-    }
+    toast.success(`Contrato aprovado · ${liberados.length} projeto(s) liberado(s) · configure o financeiro na aba Pedidos de venda`);
     setOpen(false);
   };
 
@@ -1313,23 +1292,28 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
         <DialogHeader>
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
-            {projetos.length === 0
-              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Aprovado."
-              : "Selecione quais projetos devem ir para a Engenharia agora. Os não marcados ficam pendentes e podem ser liberados depois."}
+            Selecione os projetos a liberar para a Engenharia. A soma de valor e módulos não pode exceder o contrato. O financeiro de cada projeto é configurado em <b>Pedidos de venda</b>.
           </DialogDescription>
         </DialogHeader>
+        <div className={`rounded-md border p-2 text-xs ${(excedeValor || excedeMod) ? "border-destructive/50 bg-destructive/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <span>Valor: <b className="font-mono">{fmtBRL(somaValor)}</b> / {fmtBRL(valorContrato)}</span>
+            <span>Módulos: <b className="font-mono">{somaMod}</b> / {modulosContrato}</span>
+            {(excedeValor || excedeMod) && <span className="text-destructive font-semibold">Excede o contrato</span>}
+          </div>
+        </div>
         {projetos.length > 0 && (
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {projetos.map((p) => (
-              <label key={p.id} className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${sel[p.id] ? "border-primary bg-primary/5" : "border-border"}`}>
-                <input type="checkbox" className="mt-1" checked={!!sel[p.id]} disabled={p.enviadoEngenharia} onChange={(e) => setSel({ ...sel, [p.id]: e.target.checked })} />
+              <label key={p.id} className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${sel[p.id] || p.enviadoEngenharia ? "border-primary bg-primary/5" : "border-border"}`}>
+                <input type="checkbox" className="mt-1" checked={!!sel[p.id] || !!p.enviadoEngenharia} disabled={p.enviadoEngenharia} onChange={(e) => setSel({ ...sel, [p.id]: e.target.checked })} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <span className="font-mono text-primary">{p.id}</span>
                     <span>{p.tipo || "Projeto"}</span>
                     {p.enviadoEngenharia && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">JÁ LIBERADO</span>}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">{p.endereco}{p.numero ? `, ${p.numero}` : ""} · {p.cidade}/{p.uf} · {p.modulos} mód · {p.kwp.toFixed(2)} kWp</div>
+                  <div className="text-xs text-muted-foreground truncate">{p.endereco}{p.numero ? `, ${p.numero}` : ""} · {p.cidade}/{p.uf} · {p.modulos} mód · {p.kwp.toFixed(2)} kWp · <b>{fmtBRL(Number(p.valor) || 0)}</b></div>
                 </div>
               </label>
             ))}
@@ -1337,7 +1321,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button className="bg-success text-success-foreground" onClick={aprovar}>Aprovar e enviar</Button>
+          <Button className="bg-success text-success-foreground" onClick={aprovar} disabled={excedeValor || excedeMod || !algumLiberado}>Aprovar e enviar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

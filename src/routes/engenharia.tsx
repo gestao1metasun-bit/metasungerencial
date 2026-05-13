@@ -27,6 +27,7 @@ import {
   produtividadeEquipe, diasPrevistos,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { addCliente, useClientesAll } from "@/lib/clientes-store";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),

@@ -1051,9 +1051,15 @@ function CadastrarContratoTab({
                     <FileText className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold">Identificação</span>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-1.5"><Label>Nº contrato (auto)</Label>
                       <Input value={proximo} readOnly className="bg-muted font-mono" />
+                    </div>
+                    <div className="space-y-1.5"><Label>Vendedor</Label>
+                      <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar vendedor da base" /></SelectTrigger>
+                        <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1.5"><Label>Data cadastro</Label>
                       <Input type="date" value={form.dataCadastro} onChange={(e) => setForm({ ...form, dataCadastro: e.target.value })} />

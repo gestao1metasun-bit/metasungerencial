@@ -1724,7 +1724,17 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {!p.enviadoEngenharia && contrato.status === "Aprovado" && (
-                    <Button size="sm" variant="outline" onClick={() => { updateProjeto(contrato.id, p.id, { enviadoEngenharia: true }); toast.success("Projeto liberado para Engenharia"); }}>Liberar p/ Engenharia</Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const faltam: string[] = [];
+                      if (!(Number(p.valor) > 0)) faltam.push("valor");
+                      if (!(Number(p.modulos) > 0)) faltam.push("módulos");
+                      if (!(Number(p.kwp) > 0)) faltam.push("potência (kWp)");
+                      if (!p.endereco?.trim()) faltam.push("endereço");
+                      if (!p.status?.trim()) faltam.push("status");
+                      if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
+                      updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+                      toast.success("Projeto liberado para Engenharia");
+                    }}>Liberar p/ Engenharia</Button>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>

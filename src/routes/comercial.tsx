@@ -1054,7 +1054,7 @@ function CadastrarContratoTab({
 /* ---------------- VALIDAR / APROVAR CONTRATO ---------------- */
 
 function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
-  if (contrato.status === "Contrato aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
+  if (contrato.status === "Aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
   const validar = () => {
     const r = validateContratoCompleto(contrato);
     if (r.ok) {
@@ -1074,7 +1074,7 @@ function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
 
 function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
   const [open, setOpen] = useState(false);
-  if (contrato.status === "Contrato aprovado" || contrato.status === "Cancelado") return null;
+  if (contrato.status === "Aprovado" || contrato.status === "Cancelado") return null;
   const liberado = contrato.status === "Pronto para aprovação";
   const cli = contrato.clienteFull;
   const aprovar = () => {
@@ -1083,7 +1083,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
       toast.error(`Não pode aprovar. Faltam: ${r.missing.join(", ")}`);
       return;
     }
-    updateContratoAudit(contrato.id, { status: "Contrato aprovado" });
+    updateContratoAudit(contrato.id, { status: "Aprovado" });
     toast.success(`Contrato ${contrato.id} aprovado · libere os projetos na aba Projetos do lápis`);
     setOpen(false);
   };

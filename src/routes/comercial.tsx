@@ -1817,86 +1817,75 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
 }
 
 function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto: ProjetoVinculado }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const addMonthsISO = (iso: string, n: number) => {
-    if (!iso) return iso;
-    const [y, m, d] = iso.split("-").map(Number);
-    const dt = new Date(y, (m - 1) + n, d);
-    return dt.toISOString().slice(0, 10);
-  };
-  const novaParcela = (base?: ParcelaPagto): ParcelaPagto => ({
-    id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    valor: 0,
-    dataEmissao: base?.dataEmissao ?? today,
-    dataVencimento: base ? addMonthsISO(base.dataVencimento, 1) : today,
-    competencia: base ? addMonthsISO(base.dataVencimento, 1).slice(0, 7) : today.slice(0, 7),
-    formaPagamento: base?.formaPagamento ?? "Pix",
-  });
-  const parcelas = projeto.parcelasPagto ?? [];
-  const valorProj = projeto.valor ?? 0;
-  const totalParc = parcelas.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+  // Visualiza/edita os lançamentos gerados por rateio para este projeto.
+  const [tick, setTick] = useState(0);
+  const lancs = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
+  const total = lancs.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+  const valorProj = Number(projeto.valor) || 0;
+  const bate = Math.abs(total - valorProj) <= 0.5;
 
-  const save = (next: ParcelaPagto[]) => updateProjeto(contrato.id, projeto.id, { parcelasPagto: next });
-  const setValor = (v: number) => updateProjeto(contrato.id, projeto.id, { valor: v });
-  const add = () => save([...parcelas, novaParcela(parcelas[parcelas.length - 1])]);
-  const del = (id: string) => save(parcelas.filter((p) => p.id !== id));
-  const setP = (id: string, patch: Partial<ParcelaPagto>) =>
-    save(parcelas.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  const distribuirValor = () => {
-    if (parcelas.length === 0 || valorProj <= 0) return;
-    const each = Math.round((valorProj / parcelas.length) * 100) / 100;
-    const last = Math.round((valorProj - each * (parcelas.length - 1)) * 100) / 100;
-    save(parcelas.map((p, i) => ({ ...p, valor: i === parcelas.length - 1 ? last : each })));
+  const previa = calcularLancamentosProjeto(contrato, projeto);
+  const refresh = () => setTick((t) => t + 1);
+  void tick;
+
+  const regenerar = () => {
+    if (!projeto.aprovado) { toast.error("Aprove o projeto antes."); return; }
+    const comp = composicaoSomaOk(contrato);
+    if (!comp.ok) { toast.error("Composição do contrato não fecha."); return; }
+    if (!window.confirm("Regenerar lançamentos do projeto? Lançamentos existentes serão substituídos.")) return;
+    removeLancamentosDoProjeto(projeto.id);
+    appendLancamentos(previa as any);
+    updateProjeto(contrato.id, projeto.id, {
+      financeiroGerado: true,
+      dataGeracaoFinanceiro: new Date().toISOString(),
+    });
+    toast.success("Lançamentos regenerados");
+    refresh();
   };
-  const vencPlus1 = () => {
-    if (parcelas.length === 0) return;
-    save(parcelas.map((p, i) => {
-      if (i === 0) return p;
-      const venc = addMonthsISO(parcelas[0].dataVencimento, i);
-      return { ...p, dataVencimento: venc, competencia: venc.slice(0, 7) };
-    }));
+
+  const editLanc = (id: string, patch: Partial<Lancamento>) => {
+    updateLancamento(id, patch);
+    refresh();
   };
-  const mesmaComp = () => parcelas.length && save(parcelas.map((p) => ({ ...p, competencia: parcelas[0].competencia })));
-  const mesmaEmiss = () => parcelas.length && save(parcelas.map((p) => ({ ...p, dataEmissao: parcelas[0].dataEmissao })));
 
   return (
-    <div className="mt-4 rounded-md border border-border bg-muted/20 p-3">
+    <div className="rounded-md border border-border bg-muted/20 p-3">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b pb-2">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <DollarSign className="h-4 w-4 text-primary" /> Financeiro do projeto
-          {projeto.financeiroGerado && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO NO FINANCEIRO</span>}
+          <DollarSign className="h-4 w-4 text-primary" /> Financeiro do projeto (rateio do contrato)
+          {projeto.financeiroGerado && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO</span>}
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs">Valor do projeto (R$)</Label>
-          <Input type="number" className="h-8 w-32" value={valorProj} onChange={(e) => setValor(Number(e.target.value) || 0)} />
+          <span className="text-xs">Valor projeto: <b className="font-mono">{fmtBRL(valorProj)}</b></span>
+          <Button size="sm" variant="outline" onClick={regenerar}>Regenerar do contrato</Button>
         </div>
       </div>
-      <div className="mb-2 flex flex-wrap gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={distribuirValor}>Distribuir valor</Button>
-        <Button type="button" size="sm" variant="outline" onClick={vencPlus1}>Vencimentos +1 mês</Button>
-        <Button type="button" size="sm" variant="outline" onClick={mesmaComp}>Mesma competência</Button>
-        <Button type="button" size="sm" variant="outline" onClick={mesmaEmiss}>Mesma emissão</Button>
-        <Button type="button" size="sm" variant="outline" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
-      </div>
-      {parcelas.length === 0 ? (
-        <div className="py-4 text-center text-xs text-muted-foreground">Sem parcelas. Adicione para gerar o financeiro deste projeto.</div>
+
+      {lancs.length === 0 ? (
+        <div className="py-4 text-center text-xs text-muted-foreground">
+          Nenhum lançamento gerado. {projeto.aprovado ? "Clique em \"Gerar financeiro\" acima para criar pelo rateio." : "Aprove o projeto e gere o financeiro pela composição do contrato."}
+          {previa.length > 0 && (
+            <div className="mt-2 text-[11px]">Prévia: {previa.length} lançamento(s) por rateio totalizando <b className="font-mono">{fmtBRL(previa.reduce((s, l) => s + l.valor, 0))}</b></div>
+          )}
+        </div>
       ) : (
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
             <TableHead className="w-10">#</TableHead>
-            <TableHead>Emissão</TableHead><TableHead>Vencimento</TableHead><TableHead>Competência</TableHead>
-            <TableHead>Forma</TableHead><TableHead className="text-right">Valor (R$)</TableHead>
-            <TableHead className="w-10"></TableHead>
+            <TableHead>Vencimento</TableHead>
+            <TableHead>Competência</TableHead>
+            <TableHead>Forma</TableHead>
+            <TableHead>Parcela</TableHead>
+            <TableHead className="text-right">Valor (R$)</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {parcelas.map((p, i) => (
-              <TableRow key={p.id}>
+            {lancs.map((l, i) => (
+              <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setP(p.id, { dataEmissao: e.target.value })} /></TableCell>
-                <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setP(p.id, { dataVencimento: e.target.value })} /></TableCell>
-                <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setP(p.id, { competencia: e.target.value })} /></TableCell>
+                <TableCell><Input type="date" className="h-8" value={l.data} onChange={(e) => editLanc(l.id, { data: e.target.value, competencia: e.target.value.slice(0, 7) })} /></TableCell>
+                <TableCell><Input type="month" className="h-8" value={l.competencia ?? ""} onChange={(e) => editLanc(l.id, { competencia: e.target.value })} /></TableCell>
                 <TableCell>
-                  <Select value={p.formaPagamento} onValueChange={(v) => setP(p.id, { formaPagamento: v as FormaPagamento })}>
+                  <Select value={l.formaPagamento ?? "Pix"} onValueChange={(v) => editLanc(l.id, { formaPagamento: v })}>
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
@@ -1905,22 +1894,21 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
                     </SelectContent>
                   </Select>
                 </TableCell>
+                <TableCell className="text-xs font-mono">{l.parcelaLabel ?? "—"}</TableCell>
                 <TableCell className="text-right">
-                  <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setP(p.id, { valor: Number(e.target.value) || 0 })} />
-                </TableCell>
-                <TableCell>
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <Input type="number" className="h-8 text-right" value={l.valor} onChange={(e) => editLanc(l.id, { valor: Number(e.target.value) || 0 })} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+
       <div className="mt-2 flex justify-end text-xs">
-        <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParc)}</b>
+        <span>Total lançamentos: <b className="font-mono">{fmtBRL(total)}</b>
         {valorProj > 0 && (
-          <span className={`ml-2 font-mono ${Math.abs(totalParc - valorProj) > 0.5 ? "text-destructive" : "text-emerald-600"}`}>
-            {Math.abs(totalParc - valorProj) > 0.5 ? `≠ valor projeto (${fmtBRL(valorProj)})` : "✓ bate com valor do projeto"}
+          <span className={`ml-2 font-mono ${bate ? "text-emerald-600" : "text-destructive"}`}>
+            {bate ? "✓ bate com valor do projeto" : `≠ valor projeto (${fmtBRL(valorProj)})`}
           </span>
         )}
         </span>

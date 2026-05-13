@@ -1107,7 +1107,75 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   );
 }
 
-/* ---------------- PROJETOS VINCULADOS (DESDOBRAMENTO) ---------------- */
+/* ---------------- APROVAR E ENVIAR PROJETOS À ENGENHARIA ---------------- */
+
+function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
+  const [open, setOpen] = useState(false);
+  const projetos = contrato.projetos ?? [];
+  const [sel, setSel] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(projetos.map((p) => [p.id, !p.enviadoEngenharia])),
+  );
+
+  const aprovar = () => {
+    // 1. marca contrato como Assinado
+    if (contrato.status !== "Assinado") {
+      updateContratoAudit(contrato.id, { status: "Assinado" });
+    }
+    // 2. libera projetos selecionados
+    const liberados = Object.entries(sel).filter(([, v]) => v).map(([id]) => id);
+    liberados.forEach((id) => updateProjeto(contrato.id, id, { enviadoEngenharia: true }));
+    if (projetos.length === 0) {
+      toast.success(`Contrato ${contrato.id} aprovado · sem projetos vinculados`);
+    } else {
+      const pend = projetos.length - liberados.length;
+      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}`);
+    }
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="bg-success text-success-foreground hover:opacity-90">
+          <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
+          <DialogDescription>
+            {projetos.length === 0
+              ? "Este contrato ainda não tem projetos vinculados. Será marcado como Assinado."
+              : "Selecione quais projetos devem ir para a Engenharia agora. Os não marcados ficam pendentes e podem ser liberados depois."}
+          </DialogDescription>
+        </DialogHeader>
+        {projetos.length > 0 && (
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {projetos.map((p) => (
+              <label key={p.id} className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${sel[p.id] ? "border-primary bg-primary/5" : "border-border"}`}>
+                <input type="checkbox" className="mt-1" checked={!!sel[p.id]} disabled={p.enviadoEngenharia} onChange={(e) => setSel({ ...sel, [p.id]: e.target.checked })} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="font-mono text-primary">{p.id}</span>
+                    <span>{p.tipo || "Projeto"}</span>
+                    {p.enviadoEngenharia && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">JÁ LIBERADO</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">{p.endereco}{p.numero ? `, ${p.numero}` : ""} · {p.cidade}/{p.uf} · {p.modulos} mód · {p.kwp.toFixed(2)} kWp</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="bg-success text-success-foreground" onClick={aprovar}>Aprovar e enviar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
 type NovoProjForm = Omit<ProjetoVinculado, "id" | "contratoId">;
 

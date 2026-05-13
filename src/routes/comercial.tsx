@@ -1074,6 +1074,16 @@ function CadastrarContratoTab({
                     <div className="space-y-1.5"><Label>Data assinatura</Label>
                       <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
                     </div>
+                    <div className="space-y-1.5 md:col-span-2"><Label>Status do contrato</Label>
+                      <Select value={form.statusContrato} onValueChange={(v) => setForm({ ...form, statusContrato: v as "Assinado" | "Pendente" | "Cancelado" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pendente">Pendente — só salva, não gera financeiro/engenharia</SelectItem>
+                          <SelectItem value="Assinado">Assinado — gera financeiro a receber e card na engenharia</SelectItem>
+                          <SelectItem value="Cancelado">Cancelado — só registro, sem geração</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 

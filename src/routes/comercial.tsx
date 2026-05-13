@@ -704,7 +704,7 @@ function CadastrarContratoTab({
   const potenciaNum = Number(form.potenciaContrato) || 0;
   const kwpEsperado = (modulosNum * potenciaNum) / 1000;
   const parametroNum = kwpEsperado > 0 ? valorNum / kwpEsperado : 0;
-  const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
+  const parametroFmt = parametroNum > 0 ? String(Math.round(parametroNum)) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 

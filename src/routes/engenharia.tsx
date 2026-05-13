@@ -510,14 +510,6 @@ function CronogramaTab({
     setObras(chainSchedule(swapped, target.equipe, target.status));
   };
 
-  const editInicio = (id: string, inicio: string) => {
-    const target = obras.find((o) => o.id === id);
-    if (!target) return;
-    const previsto = recalcPrevisto(inicio, target.equipe, target.modulos);
-    const next = obras.map((o) => o.id === id ? { ...o, inicio, previsto } : o);
-    setObras(chainSchedule(next, target.equipe, target.status));
-  };
-
   return (
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {equipes.map((eq) => {
@@ -535,7 +527,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onEditInicio={editInicio} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
                 </div>
               </div>
             )}
@@ -543,7 +535,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onEditInicio={editInicio} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
                 </div>
               </div>
             )}
@@ -554,7 +546,7 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onEditInicio: (id: string, inicio: string) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
@@ -566,12 +558,12 @@ function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obr
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Input type="date" defaultValue={o.inicio} className="h-6 w-32 text-[11px]" onBlur={(e) => { if (e.target.value && e.target.value !== o.inicio) onEditInicio(o.id, e.target.value); }} />
-            <span>→</span>
-            <span className="font-medium text-foreground">{fmtBR(o.previsto)}</span>
+          <div className="mt-2 flex items-center gap-2 text-[11px]">
+            <span className="text-muted-foreground">{fmtBR(o.inicio)}</span>
+            <span className="text-muted-foreground">→</span>
+            <span className="font-semibold text-foreground">{fmtBR(o.previsto)}</span>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground/70">Início: {fmtBR(o.inicio)} · próximo herda +1d</div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas só editáveis no lápis em Obras ativas</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>

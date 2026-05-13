@@ -1614,44 +1614,45 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
           </TabsContent>
 
           <TabsContent value="cliente" className="mt-4">
+            <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+              <b className="text-primary">Visualização somente.</b> Os dados do cliente vinculado ao contrato não podem ser editados aqui. Para alterar, acesse <b>Cadastros &gt; Clientes</b> — a alteração será refletida em todos os contratos vinculados.
+            </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5 md:col-span-2"><Label>Nome</Label>
-                <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} />
+                <Input value={cli.nome} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} inputMode="numeric" maxLength={18} />
-                {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
+                <Input value={cli.doc} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Telefone</Label>
-                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
-                {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
+                <Input value={cli.telefone} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Telefone 2</Label>
-                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
+                <Input value={cli.telefone2 ?? ""} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>E-mail</Label>
-                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+                <Input type="email" value={cli.email} disabled className="bg-muted" />
               </div>
-              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
-                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
+              <div className="space-y-1.5"><Label>CEP</Label>
+                <Input value={cli.cep} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+                <Input value={cli.rua} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Número</Label>
-                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+                <Input value={cli.numero} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Bairro</Label>
-                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+                <Input value={cli.bairro} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Complemento</Label>
-                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+                <Input value={cli.complemento} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Cidade</Label>
-                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+                <Input value={cli.cidade} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>UF</Label>
-                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+                <Input value={cli.uf} disabled className="bg-muted" />
               </div>
             </div>
           </TabsContent>

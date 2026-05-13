@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
-  Zap, Sun, Filter, Activity, Award, Gauge,
+  Zap, Sun, Filter, Activity, Award, Gauge, Pencil, Layers, History, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

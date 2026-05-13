@@ -33,7 +33,7 @@ import {
   evolucaoMensal, fmtBRL,
 } from "@/lib/mock-data";
 import {
-  useContratos, upsertContrato, updateContratoAudit,
+  useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
 } from "@/lib/contratos-store";

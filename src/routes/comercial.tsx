@@ -32,6 +32,13 @@ import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL,
 } from "@/lib/mock-data";
+import {
+  useContratos, upsertContrato, updateContratoAudit,
+  addProjeto, updateProjeto, removeProjeto, buscarCEP,
+  type ContratoFull, type ClienteFull, type ProjetoVinculado,
+} from "@/lib/contratos-store";
+import { Tabs as TabsX, TabsList as TabsListX, TabsTrigger as TabsTriggerX, TabsContent as TabsContentX } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),

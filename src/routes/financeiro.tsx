@@ -200,29 +200,55 @@ function FinanceiroPage() {
 
 /* ============== Projeção / Gráficos ============== */
 function ProjecaoCaixa({ lancs }: { lancs: Lancamento[] }) {
+  const [dias, setDias] = useState<30 | 60 | 90 | 180 | 365>(30);
   const data = useMemo(() => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const dias: { dia: string; saldo: number }[] = [];
-    let saldo = lancs.filter(l => l.camada === "Realizado").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
-    for (let i = 0; i < 30; i++) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const map = new Map<string, { dia: string; entrada: number; saidaReal: number; saidaOrcada: number }>();
+    for (let i = 0; i < dias; i++) {
       const d = new Date(today); d.setDate(d.getDate() + i);
       const iso = d.toISOString().slice(0, 10);
-      const day = lancs.filter(l => l.data === iso && l.camada !== "Realizado").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
-      saldo += day;
-      dias.push({ dia: `${d.getDate()}/${d.getMonth() + 1}`, saldo });
+      map.set(iso, { dia: `${d.getDate()}/${d.getMonth() + 1}`, entrada: 0, saidaReal: 0, saidaOrcada: 0 });
     }
-    return dias;
-  }, [lancs]);
+    lancs.forEach((l) => {
+      const b = map.get(l.data);
+      if (!b) return;
+      if (l.tipo === "Entrada") {
+        b.entrada += l.valor;
+      } else if (l.camada === "Realizado" || l.camada === "Confirmado") {
+        b.saidaReal += l.valor;
+      } else {
+        b.saidaOrcada += l.valor;
+      }
+    });
+    return Array.from(map.values());
+  }, [lancs, dias]);
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={data}>
-        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-        <XAxis dataKey="dia" stroke="var(--muted-foreground)" fontSize={11} />
-        <YAxis stroke="var(--muted-foreground)" fontSize={11} />
-        <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
-        <Area type="monotone" dataKey="saldo" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.25} strokeWidth={2} />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="space-y-2">
+      <div className="flex items-center justify-end">
+        <Select value={String(dias)} onValueChange={(v) => setDias(Number(v) as any)}>
+          <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="30">Próximos 30 dias</SelectItem>
+            <SelectItem value="60">Próximos 60 dias</SelectItem>
+            <SelectItem value="90">Próximos 90 dias</SelectItem>
+            <SelectItem value="180">Próximos 6 meses</SelectItem>
+            <SelectItem value="365">Próximos 12 meses</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={data}>
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+          <XAxis dataKey="dia" stroke="var(--muted-foreground)" fontSize={11} interval="preserveStartEnd" />
+          <YAxis stroke="var(--muted-foreground)" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+          <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
+          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Line type="monotone" dataKey="entrada" name="Entradas" stroke="oklch(0.65 0.18 145)" strokeWidth={2.5} dot={false} />
+          <Line type="monotone" dataKey="saidaReal" name="Saídas lançadas" stroke="oklch(0.6 0.22 25)" strokeWidth={2.5} dot={false} />
+          <Line type="monotone" dataKey="saidaOrcada" name="Saídas orçadas" stroke="oklch(0.7 0.18 55)" strokeWidth={2.5} strokeDasharray="5 4" dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

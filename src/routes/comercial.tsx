@@ -1022,22 +1022,24 @@ function CadastrarContratoTab({
                 </div>
                 <div className="space-y-1.5">
                   <Label>Orçado da obra (R$)</Label>
-                  <Input
-                    type="number"
-                    value={p.orcado}
-                    onChange={(e) => setProjField(i, "orcado", e.target.value)}
-                    placeholder="Custo previsto"
-                  />
-                  <div className="text-[10px] text-muted-foreground">Vai p/ Financeiro como <b>Orçado futuro</b> vinculado a este projeto.</div>
+                  <div className="flex items-center gap-2">
+                    <Input value={fmtBRL(orcTotal(p))} readOnly className="bg-muted font-mono" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => setOrcOpen(i)}>
+                      <Pencil className="mr-1 h-3.5 w-3.5" /> Cadastrar
+                    </Button>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {p.materiais.length} material(is) · {p.outros.length} outro(s) · vai p/ Financeiro como <b>Orçado futuro</b>.
+                  </div>
                 </div>
               </div>
             ))}
-            {projs.some((p) => Number(p.orcado) > 0) && (
+            {projs.some((p) => orcTotal(p) > 0) && (
               <div className="mt-3 rounded-md border border-border bg-background p-2 text-xs">
-                <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + (Number(p.orcado) || 0), 0))}
+                <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + orcTotal(p), 0))}
                 {valorNum > 0 && (
                   <span className="ml-3 text-muted-foreground">
-                    Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + (Number(p.orcado) || 0), 0))}</b>
+                    Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + orcTotal(p), 0))}</b>
                   </span>
                 )}
               </div>

@@ -1051,6 +1051,78 @@ function CadastrarContratoTab({
   );
 }
 
+/* ---------------- VALIDAR / APROVAR CONTRATO ---------------- */
+
+function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
+  if (contrato.status === "Contrato aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
+  const validar = () => {
+    const r = validateContratoCompleto(contrato);
+    if (r.ok) {
+      updateContratoAudit(contrato.id, { status: "Pronto para aprovação" });
+      toast.success(`Contrato ${contrato.id} validado · pronto para aprovação`);
+    } else {
+      updateContratoAudit(contrato.id, { status: "Pendente de informações" });
+      toast.error(`Faltam: ${r.missing.join(" · ")}`, { duration: 6000 });
+    }
+  };
+  return (
+    <Button variant="ghost" size="sm" className="h-7 text-xs" title="Validar contrato" onClick={validar}>
+      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Validar
+    </Button>
+  );
+}
+
+function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
+  const [open, setOpen] = useState(false);
+  if (contrato.status === "Contrato aprovado" || contrato.status === "Cancelado") return null;
+  const liberado = contrato.status === "Pronto para aprovação";
+  const cli = contrato.clienteFull;
+  const aprovar = () => {
+    const r = validateContratoCompleto(contrato);
+    if (!r.ok) {
+      toast.error(`Não pode aprovar. Faltam: ${r.missing.join(", ")}`);
+      return;
+    }
+    updateContratoAudit(contrato.id, { status: "Contrato aprovado" });
+    toast.success(`Contrato ${contrato.id} aprovado · libere os projetos na aba Projetos do lápis`);
+    setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          className="h-7 px-2 text-xs bg-success text-success-foreground hover:opacity-90"
+          disabled={!liberado}
+          title={liberado ? "Aprovar contrato" : "Use Validar primeiro"}
+        >
+          <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprovar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
+          <DialogDescription>
+            Confirmar aprovação deste contrato? Após aprovado, dados estruturais terão controle de alteração.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 rounded-md border bg-muted/30 p-3 text-sm">
+          <div><b>Cliente:</b> {cli?.nome || contrato.cliente}</div>
+          <div><b>Nº contrato:</b> <span className="font-mono">{contrato.id}</span></div>
+          <div><b>Valor:</b> {fmtBRL(contrato.valor)}</div>
+          <div><b>Potência contratada:</b> {(contrato.kwp ?? 0).toFixed(2)} kWp · {contrato.modulos ?? 0} mód</div>
+          <div><b>Forma de pagamento:</b> {contrato.pagamento || "—"}{contrato.banco ? ` · ${contrato.banco}` : ""}</div>
+          <div><b>Vendedor:</b> {contrato.vendedor}</div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="bg-success text-success-foreground" onClick={aprovar}>Confirmar aprovação</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ---------------- EDITAR CONTRATO + PROJETOS + AUDITORIA ---------------- */
 
 function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {

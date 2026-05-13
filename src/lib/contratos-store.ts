@@ -53,6 +53,18 @@ export type AuditEntry = {
   para: string;
 };
 
+export type FormaPagamento = "Pix" | "Boleto" | "Cartão" | "Transferência" | "Dinheiro" | "Financiamento";
+
+export type ParcelaPagto = {
+  id: string;
+  valor: number;
+  dataEmissao: string;       // YYYY-MM-DD
+  dataVencimento: string;    // YYYY-MM-DD
+  competencia: string;       // YYYY-MM (mês de competência)
+  formaPagamento: FormaPagamento;
+  descricao?: string;
+};
+
 export type ContratoFull = {
   id: string;            // ex. 088/2026
   cliente: string;
@@ -67,6 +79,7 @@ export type ContratoFull = {
   obs?: string;
   potencia?: number;
   inv1?: string; inv2?: string; inv3?: string;
+  inv4?: string; inv5?: string; inv6?: string;
   parametro?: string;
   dataCadastro?: string;
   dataAssinatura?: string;
@@ -78,6 +91,8 @@ export type ContratoFull = {
   projetos?: ProjetoVinculado[];
   // Novo: auditoria de edições
   auditoria?: AuditEntry[];
+  // Novo: parcelas de pagamento detalhadas
+  parcelasPagto?: ParcelaPagto[];
 };
 
 const KEY = "ms.contratos.v2";

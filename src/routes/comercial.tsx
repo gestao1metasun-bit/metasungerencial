@@ -2913,87 +2913,117 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         </div>
       </Card>
 
-      {filtrados.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">
-          Nenhum contrato aprovado com projetos. Aprove um contrato e cadastre projetos.
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filtrados.map((contrato) => {
-            const projs = contrato.projetos ?? [];
-            const valorContrato = Number(contrato.valor) || 0;
-            const soma = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
-            const diff = valorContrato - soma;
-            const bate = Math.abs(diff) <= 0.5;
-            return (
-              <Card key={contrato.id} className="p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-semibold">Contrato {contrato.cliente}</span>
-                    <span className="font-mono text-primary">{contrato.id}</span>
-                    <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                    <span>Valor total: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
-                    <span>Soma projetos: <b className="font-mono">{fmtBRL(soma)}</b></span>
-                    <span className={bate ? "text-emerald-600" : "text-destructive"}>
-                      Diferença: <b className="font-mono">{fmtBRL(Math.abs(diff))}</b> {bate ? "✓" : (diff > 0 ? "(faltam)" : "(excesso — requer aprovação)")}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-3 space-y-3">
-                  {projs.map((projeto) => {
+      <Card className="overflow-hidden">
+        {filtrados.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Nenhum contrato aprovado com projetos. Aprove um contrato e cadastre projetos.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-xs">Nº pedido</TableHead>
+                  <TableHead className="text-xs">Contrato</TableHead>
+                  <TableHead className="text-xs">Cliente</TableHead>
+                  <TableHead className="text-xs">Vendedor</TableHead>
+                  <TableHead className="text-xs">Status pedido</TableHead>
+                  <TableHead className="text-xs">Status financeiro</TableHead>
+                  <TableHead className="text-xs">Forma pgto</TableHead>
+                  <TableHead className="text-xs">Natureza</TableHead>
+                  <TableHead className="text-xs">Centro de custo</TableHead>
+                  <TableHead className="text-xs text-right">Valor total</TableHead>
+                  <TableHead className="text-xs text-right">Faturado</TableHead>
+                  <TableHead className="text-xs text-right">A faturar</TableHead>
+                  <TableHead className="text-xs text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtrados.flatMap((contrato) =>
+                  (contrato.projetos ?? []).map((projeto) => {
                     const open = !!editando[projeto.id];
                     const lancsProj = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
                     const totalLanc = lancsProj.reduce((a, l) => a + (Number(l.valor) || 0), 0);
                     const valorProj = Number(projeto.valor) || 0;
-                    const lancOk = valorProj > 0 && Math.abs(totalLanc - valorProj) <= 0.5;
+                    const aFaturar = Math.max(0, valorProj - totalLanc);
+                    const formaPrincipal = (contrato.composicaoPagto ?? [])[0]?.formaPagamento ?? contrato.pagamento ?? "—";
                     return (
-                      <div key={projeto.id} className="rounded-md border bg-card">
-                        <div className="flex flex-wrap items-center justify-between gap-2 p-3">
-                          <div className="flex flex-wrap items-center gap-2 text-sm min-w-0">
-                            <Layers className="h-4 w-4 text-primary shrink-0" />
-                            <span className="font-mono text-primary font-bold">{projeto.id}</span>
-                            <span className="font-semibold truncate">{projeto.tipo || "Projeto"}</span>
-                            <span className="text-muted-foreground">·</span>
-                            <span>Valor: <b className="font-mono">{fmtBRL(valorProj)}</b></span>
+                      <Fragment key={projeto.id}>
+                        <TableRow>
+                          <TableCell className="font-mono text-[11px] text-primary font-bold">{projeto.id}</TableCell>
+                          <TableCell className="font-mono text-[11px]">{contrato.id}</TableCell>
+                          <TableCell className="text-xs truncate max-w-[180px]">{contrato.cliente}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{contrato.vendedor}</TableCell>
+                          <TableCell>
                             {projeto.aprovado
                               ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
-                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE APROVAÇÃO</span>}
+                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+                          </TableCell>
+                          <TableCell>
                             {projeto.financeiroGerado
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">FIN. GERADO</span>
-                              : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN.</span>}
-                            {lancsProj.length > 0 && (
-                              <span className={`text-[10px] rounded px-2 py-0.5 font-bold ${lancOk ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"}`}>
-                                Lançamentos {fmtBRL(totalLanc)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={() => toggleEdit(projeto.id)}>
-                              <Pencil className="mr-1 h-3.5 w-3.5" /> {open ? "Fechar" : "Editar financeiro"}
-                            </Button>
-                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
-                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar pedido" : (projeto.aprovado ? "Gerar financeiro" : "Aprovar pedido")}
-                            </Button>
-                          </div>
-                        </div>
+                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO</span>
+                              : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN</span>}
+                          </TableCell>
+                          <TableCell className="text-xs">{formaPrincipal}</TableCell>
+                          <TableCell className="text-xs">
+                            <Select
+                              value={projeto.naturezaFinanceira ?? "Recebimento de cliente"}
+                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { naturezaFinanceira: v })}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] w-[180px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Recebimento de cliente">Recebimento de cliente</SelectItem>
+                                <SelectItem value="Receita de venda de sistema fotovoltaico">Receita de venda de sistema FV</SelectItem>
+                                <SelectItem value="Liberação financiamento">Liberação financiamento</SelectItem>
+                                <SelectItem value="Parcelas/Recorrentes">Parcelas/Recorrentes</SelectItem>
+                                <SelectItem value="Outras receitas">Outras receitas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <Select
+                              value={projeto.centroCusto ?? "Comercial"}
+                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { centroCusto: v })}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Comercial">Comercial</SelectItem>
+                                <SelectItem value="Administrativo">Administrativo</SelectItem>
+                                <SelectItem value="Engenharia/Operação">Engenharia/Operação</SelectItem>
+                                <SelectItem value={projeto.id}>Obra {projeto.id}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-mono font-semibold">{fmtBRL(valorProj)}</TableCell>
+                          <TableCell className="text-right text-xs font-mono">{fmtBRL(totalLanc)}</TableCell>
+                          <TableCell className="text-right text-xs font-mono text-warning">{fmtBRL(aFaturar)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => toggleEdit(projeto.id)}>
+                                <Pencil className="mr-1 h-3 w-3" /> {open ? "Fechar" : "Editar"}
+                              </Button>
+                              <Button size="sm" className="h-7 px-2 text-[11px] bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
+                                <DollarSign className="mr-1 h-3 w-3" /> {projeto.financeiroGerado ? "Atualizar" : (projeto.aprovado ? "Gerar" : "Aprovar")}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
                         {open && (
-                          <div className="border-t p-3">
-                            <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
-                          </div>
+                          <TableRow>
+                            <TableCell colSpan={13} className="bg-muted/30 p-3">
+                              <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
+                            </TableCell>
+                          </TableRow>
                         )}
-                      </div>
+                      </Fragment>
                     );
-                  })}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

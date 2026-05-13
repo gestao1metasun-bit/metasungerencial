@@ -15,7 +15,6 @@ const map: Record<string, string> = {
   "Pendente banco": "bg-warning/15 text-warning border-warning/30",
   "Pendente cliente": "bg-warning/15 text-warning border-warning/30",
   "Aguardando liberação": "bg-info/15 text-info border-info/30",
-  "Aprovado": "bg-success/15 text-success border-success/30",
   "Em análise": "bg-info/15 text-info border-info/30",
   "Reprovado": "bg-destructive/15 text-destructive border-destructive/30",
   "Aguardando documentação": "bg-warning/15 text-warning border-warning/30",

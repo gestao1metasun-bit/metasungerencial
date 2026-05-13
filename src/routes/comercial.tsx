@@ -1026,7 +1026,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Gerado", "Pendente", "Assinado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

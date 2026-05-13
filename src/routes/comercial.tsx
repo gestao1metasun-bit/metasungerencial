@@ -2252,3 +2252,113 @@ function KpiSmall({
     </Card>
   );
 }
+
+// ============================================================
+// Pedidos de venda — financeiro de cada projeto liberado
+// ============================================================
+function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
+  const aprovados = contratos.filter((c) => c.status === "Aprovado");
+  const itens = aprovados.flatMap((c) =>
+    (c.projetos ?? []).filter((p) => p.enviadoEngenharia).map((p) => ({ contrato: c, projeto: p })),
+  );
+  const [filtro, setFiltro] = useState("");
+  const filtrados = itens.filter(({ contrato, projeto }) => {
+    const q = filtro.toLowerCase();
+    if (!q) return true;
+    return (
+      contrato.id.toLowerCase().includes(q) ||
+      contrato.cliente.toLowerCase().includes(q) ||
+      projeto.id.toLowerCase().includes(q) ||
+      (projeto.tipo ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const gerarFinanceiro = (contrato: Contrato, projeto: ProjetoVinculado) => {
+    const parc = projeto.parcelasPagto ?? [];
+    if (parc.length === 0) { toast.error("Adicione ao menos 1 parcela antes de gerar."); return; }
+    const totalParc = parc.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+    const valorProj = Number(projeto.valor) || 0;
+    if (valorProj > 0 && Math.abs(totalParc - valorProj) > 0.5) {
+      toast.error(`Soma das parcelas (${fmtBRL(totalParc)}) ≠ valor do projeto (${fmtBRL(valorProj)}).`);
+      return;
+    }
+    // remove lançamentos antigos deste projeto e re-gera
+    try {
+      const cur = readLancamentos();
+      const sem = cur.filter((l) => l.obra !== projeto.id);
+      localStorage.setItem("metasun.fin.lancamentos.v1", JSON.stringify(sem));
+    } catch {}
+    const novos = parc.filter((p) => p.valor > 0).map((pg, pi) => ({
+      id: `L-REC-${Date.now()}-${projeto.id}-${pi}`,
+      data: pg.dataVencimento,
+      descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${projeto.id} · ${contrato.cliente}`,
+      tipo: "Entrada" as const,
+      valor: pg.valor,
+      camada: "A realizar" as const,
+      natureza: "Recebimento de cliente",
+      centroCusto: "Comercial",
+      obra: projeto.id,
+      empresa: "Meta Sun",
+      filial: "Manaus",
+      contrato: contrato.id,
+      cliente: contrato.cliente,
+      formaPagamento: pg.formaPagamento,
+      parcelaLabel: `${pi + 1}/${parc.length}`,
+      competencia: pg.competencia,
+      dataEmissao: pg.dataEmissao,
+    }));
+    appendLancamentos(novos);
+    updateProjeto(contrato.id, projeto.id, { financeiroGerado: true });
+    toast.success(`${novos.length} parcela(s) lançadas no Financeiro · ${projeto.id}`);
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-base font-bold">Pedidos de venda</div>
+            <div className="text-xs text-muted-foreground">Configure forma de pagamento e parcelas de cada projeto liberado. Cada projeto gera seu próprio financeiro, mesmo dentro do mesmo contrato.</div>
+          </div>
+          <Input className="max-w-xs" placeholder="Buscar por contrato, cliente ou projeto…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
+          <Stat icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
+          <Stat icon={Layers} label="Projetos liberados" value={String(itens.length)} />
+          <Stat icon={CheckCircle2} label="Financeiro gerado" value={String(itens.filter((i) => i.projeto.financeiroGerado).length)} positive />
+          <Stat icon={Clock} label="Pendentes de financeiro" value={String(itens.filter((i) => !i.projeto.financeiroGerado).length)} />
+        </div>
+      </Card>
+
+      {filtrados.length === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">
+          Nenhum projeto liberado. Aprove um contrato e libere projetos para configurar aqui.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filtrados.map(({ contrato, projeto }) => (
+            <Card key={projeto.id} className="p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-mono text-primary font-bold">{projeto.id}</span>
+                  <span className="font-semibold">{projeto.tipo || "Projeto"}</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-muted-foreground">Contrato <b className="font-mono text-foreground">{contrato.id}</b></span>
+                  <span className="text-muted-foreground">·</span>
+                  <span>{contrato.cliente}</span>
+                  {projeto.financeiroGerado
+                    ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">FINANCEIRO GERADO</span>
+                    : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+                </div>
+                <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => gerarFinanceiro(contrato, projeto)}>
+                  <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar financeiro" : "Gerar financeiro"}
+                </Button>
+              </div>
+              <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

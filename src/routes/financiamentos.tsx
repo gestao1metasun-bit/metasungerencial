@@ -24,6 +24,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { useFinPendencias } from "@/lib/fin-pendencias";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({
@@ -68,6 +69,7 @@ function FinanciamentosPage() {
       <Tabs defaultValue="dashboard">
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="carteira">Carteira</TabsTrigger>
           <TabsTrigger value="sem">Sem Contrato</TabsTrigger>
           <TabsTrigger value="bancos">Bancos</TabsTrigger>
@@ -79,6 +81,7 @@ function FinanciamentosPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardFin ops={ops} updateOp={updateOp} />
         </TabsContent>
+        <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="carteira" className="mt-5">
           <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
@@ -91,6 +94,58 @@ function FinanciamentosPage() {
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+function PendenciasTab() {
+  const [pend, update, remove] = useFinPendencias();
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-semibold">Pendências de Financiamento</div>
+          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial marcados como financiamento. Defina o banco para encaminhar.</div>
+        </div>
+        <div className="text-xs text-muted-foreground">{pend.length} pendência(s)</div>
+      </div>
+      {pend.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhuma pendência no momento.</div>
+      ) : (
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
+            <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
+            <TableHead>Data</TableHead><TableHead>Banco</TableHead><TableHead>Status</TableHead>
+            <TableHead className="text-right">Ação</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {pend.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+                <TableCell className="font-medium">{p.cliente}</TableCell>
+                <TableCell className="text-muted-foreground">{p.vendedor}</TableCell>
+                <TableCell className="text-right">{p.kwp.toFixed(2)}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(p.valor)}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
+                <TableCell>
+                  <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
+                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecionar banco" /></SelectTrigger>
+                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell><StatusBadge status={p.status} /></TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="outline" disabled={!p.banco} onClick={() => { update(p.id, { status: "Encaminhado" }); toast.success(`Encaminhado para ${p.banco}`); }}>Encaminhar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { remove(p.id); toast.success("Pendência removida"); }}>Remover</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </Card>
   );
 }
 

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { addPendencia } from "@/lib/fin-pendencias";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL,
@@ -636,7 +637,7 @@ function CadastrarContratoTab({
   const [form, setForm] = useState({
     cliente: "", dataAssinatura: "", modulos: "", potencia: "",
     inv1: "", inv2: "", inv3: "",
-    valor: "", vendedor: "",
+    valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
 
   // Cálculos automáticos
@@ -645,6 +646,7 @@ function CadastrarContratoTab({
   const kwpTotal = (modulosNum * potenciaWp) / 1000; // 15 * 620 / 1000 = 9.3
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
+  const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
@@ -654,8 +656,9 @@ function CadastrarContratoTab({
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
 
+    const novoId = nextContratoId(contratos);
     const novo: Contrato = {
-      id: nextContratoId(contratos),
+      id: novoId,
       cliente: form.cliente.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
@@ -668,17 +671,25 @@ function CadastrarContratoTab({
       obs: "",
       potencia: potenciaWp,
       inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
-      parametro: parametroNum.toFixed(4),
+      parametro: parametroFmt,
       dataCadastro: today,
       dataAssinatura: form.dataAssinatura,
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
     };
     setContratos([novo, ...contratos]);
-    toast.success(`Contrato ${novo.id} cadastrado`);
+    if (form.financiamento === "sim") {
+      addPendencia({
+        id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
+        valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
+      });
+      toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
+    } else {
+      toast.success(`Contrato ${novoId} cadastrado`);
+    }
     setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
       inv1: "", inv2: "", inv3: "",
-      valor: "", vendedor: "" });
+      valor: "", vendedor: "", financiamento: "nao" });
   };
 
   return (
@@ -736,16 +747,26 @@ function CadastrarContratoTab({
             <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
           </div>
           <div className="space-y-1.5"><Label>Parâmetro (auto = valor / kWp)</Label>
-            <Input value={parametroNum ? parametroNum.toFixed(4) : ""} readOnly className="bg-muted font-mono" />
+            <Input value={parametroFmt} readOnly className="bg-muted font-mono" />
           </div>
           <div className="space-y-1.5"><Label>Comissão (auto)</Label>
             {aprovacao ? (
               <Input value="APROVAÇÃO DIRETORIA" readOnly className="bg-destructive/10 font-bold text-destructive" />
             ) : (
-              <Input value={comissaoPct != null ? `${comissaoPct}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
+              <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
             )}
           </div>
+          <div className="space-y-1.5"><Label>Financiamento?</Label>
+            <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nao">Não</SelectItem>
+                <SelectItem value="sim">Sim — enviar para Financiamentos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
 
         {parametroNum > 0 && (
           <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
@@ -754,7 +775,7 @@ function CadastrarContratoTab({
         )}
 
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "" })}>Limpar</Button>
+          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
           <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
         </div>
       </Card>

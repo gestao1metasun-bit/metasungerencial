@@ -77,7 +77,6 @@ function ComercialPage() {
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
-          <TabsTrigger value="negociacao">Propostas & Contratos</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -88,9 +87,6 @@ function ComercialPage() {
         </TabsContent>
         <TabsContent value="indicadores" className="mt-5">
           <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
-        </TabsContent>
-        <TabsContent value="negociacao" className="mt-5">
-          <NegociacaoTab contratos={contratos} setContratos={setContratos} propostas={propostas} setPropostas={setPropostas} />
         </TabsContent>
         <TabsContent value="cad-proposta" className="mt-5">
           <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />

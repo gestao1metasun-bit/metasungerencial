@@ -820,13 +820,15 @@ function CadastrarContratoTab({
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                      <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
+                      <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" maxLength={18} />
+                      {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
                     </div>
                     <div className="space-y-1.5"><Label>Telefone</Label>
-                      <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                      <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
+                      {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
                     </div>
                     <div className="space-y-1.5"><Label>Telefone 2</Label>
-                      <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                      <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
                     </div>
                     <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
                       <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />

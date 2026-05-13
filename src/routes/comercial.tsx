@@ -870,6 +870,41 @@ function CadastrarContratoTab({
     });
     if (orcLancs.length > 0) appendLancamentos(orcLancs);
 
+    // 3º criar lançamentos "A receber" — cada parcela rateada por projeto (peso pelo kWp)
+    const recLancs: import("@/lib/financeiro-store").Lancamento[] = [];
+    if (form.financiamento !== "sim" && parcelas.length > 0 && kwpTotal > 0) {
+      parcelas.forEach((parc, pi) => {
+        projs.forEach((p, i) => {
+          const kwpProj = ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000;
+          const peso = kwpProj / kwpTotal;
+          if (peso <= 0) return;
+          const valorRateado = Math.round(parc.valor * peso * 100) / 100;
+          if (valorRateado <= 0) return;
+          const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
+          recLancs.push({
+            id: `L-REC-${Date.now()}-${pi}-${i}`,
+            data: parc.dataVencimento,
+            descricao: `Parc ${pi + 1}/${parcelas.length} · ${parc.formaPagamento} · ${projetoId} · ${cli.nome.trim()}`,
+            tipo: "Entrada",
+            valor: valorRateado,
+            camada: "A realizar",
+            natureza: "Recebimento de cliente",
+            centroCusto: "Comercial",
+            obra: projetoId,
+            empresa: "Meta Sun",
+            filial: "Manaus",
+            contrato: novoId,
+            cliente: cli.nome.trim(),
+            formaPagamento: parc.formaPagamento,
+            parcelaLabel: `${pi + 1}/${parcelas.length}`,
+            competencia: parc.competencia,
+            dataEmissao: parc.dataEmissao,
+          });
+        });
+      });
+    }
+    if (recLancs.length > 0) appendLancamentos(recLancs);
+
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,

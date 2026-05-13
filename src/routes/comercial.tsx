@@ -1940,7 +1940,11 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
   );
 }
 
-function ProjetosManager({ contrato }: { contrato: Contrato }) {
+function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
+  // Sempre puxar a versão MAIS recente do store para evitar valores em cache
+  // (ex.: contrato editado em outra aba, ou após salvar valor/módulos/inversores).
+  const todos = useContratos();
+  const contrato = todos.find((c) => c.id === contratoProp.id) ?? contratoProp;
   const projetos = contrato.projetos ?? [];
   const [activeTab, setActiveTab] = useState<string>(projetos[0]?.id ?? "novo");
   const [draft, setDraft] = useState<NovoProjForm>(() =>

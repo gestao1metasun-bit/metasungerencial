@@ -43,8 +43,13 @@ export type ProjetoVinculado = {
   enviadoEngenharia?: boolean; // true quando liberado para engenharia
   orcado?: number;             // custo orçado da obra (R$)
   valor?: number;              // valor financeiro deste projeto (parte do total do contrato)
-  parcelasPagto?: ParcelaPagto[]; // parcelas/financeiro próprias do projeto
+  parcelasPagto?: ParcelaPagto[]; // (legado) parcelas por projeto — não usar
   financeiroGerado?: boolean;  // true quando lançamentos foram gerados no Financeiro
+  aprovado?: boolean;          // aprovação individual do projeto
+  dataAprovacao?: string;      // ISO
+  usuarioAprovacao?: string;
+  dataGeracaoFinanceiro?: string; // ISO
+  usuarioGeracao?: string;
 };
 
 export type AuditEntry = {

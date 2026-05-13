@@ -776,7 +776,7 @@ function CadastrarContratoTab({
       const mods = Number(p.modulos) || 0;
       const potW = Number(p.potenciaModuloW) || 0;
       const useCli = p.usarEnderecoCliente;
-      const orcadoNum = Number(p.orcado) || 0;
+      const orcadoNum = orcTotal(p);
       const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
       addProjeto(novoId, {
         tipo: p.tipo || `Projeto ${i + 1}`,
@@ -801,21 +801,31 @@ function CadastrarContratoTab({
         enviadoEngenharia: false,
         orcado: orcadoNum,
       });
-      if (orcadoNum > 0) {
+      // 1 lançamento por linha (materiais e outros) — camada "Orçado futuro"
+      p.materiais.forEach((m, mi) => {
+        const item = estoqueItens.find((x) => x.id === m.itemId);
+        const valor = m.qtd * m.unit;
+        if (valor <= 0) return;
         orcLancs.push({
-          id: `L-ORC-${Date.now()}-${i}`,
+          id: `L-ORC-M-${Date.now()}-${i}-${mi}`,
           data: today,
-          descricao: `Orçado obra · ${projetoId} · ${cli.nome.trim()}`,
-          tipo: "Saída",
-          valor: orcadoNum,
-          camada: "Orçado futuro",
-          natureza: "Material",
-          centroCusto: "Engenharia/Operação",
-          obra: projetoId,
-          empresa: "Meta Sun",
-          filial: "Manaus",
+          descricao: `Orçado · ${projetoId} · ${item?.produto ?? "Material"} (${m.qtd}x)`,
+          tipo: "Saída", valor, camada: "Orçado futuro",
+          natureza: "Material", centroCusto: "Engenharia/Operação",
+          obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
         });
-      }
+      });
+      p.outros.forEach((o, oi) => {
+        if (o.valor <= 0) return;
+        orcLancs.push({
+          id: `L-ORC-O-${Date.now()}-${i}-${oi}`,
+          data: today,
+          descricao: `Orçado · ${projetoId} · ${o.descricao || o.natureza}`,
+          tipo: "Saída", valor: o.valor, camada: "Orçado futuro",
+          natureza: o.natureza, centroCusto: "Engenharia/Operação",
+          obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
+        });
+      });
     });
     if (orcLancs.length > 0) appendLancamentos(orcLancs);
 

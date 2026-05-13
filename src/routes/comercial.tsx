@@ -40,7 +40,7 @@ import {
   validateContratoCompleto, solicitarAlteracaoContrato,
   setComposicaoPagto, composicaoSomaOk, aprovarProjeto, calcularLancamentosProjeto,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
-  type ParcelaPagto, type FormaPagamento, type ComposicaoLinha,
+  type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";

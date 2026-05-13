@@ -28,6 +28,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
+import { appendLancamentos } from "@/lib/financeiro-store";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL,
@@ -651,11 +652,12 @@ function CadastrarContratoTab({
     tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
     modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
     usarEnderecoCliente: boolean;
+    orcado: string;
   };
   const emptyProj = (): ProjetoDraft => ({
     tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
     modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
-    usarEnderecoCliente: true,
+    usarEnderecoCliente: true, orcado: "",
   });
   const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
   const [activeProj, setActiveProj] = useState(0);
@@ -763,11 +765,14 @@ function CadastrarContratoTab({
     };
     upsertContrato(novo);
 
-    // 2º criar projetos vinculados
+    // 2º criar projetos vinculados + lançamentos de orçado
+    const orcLancs: import("@/lib/financeiro-store").Lancamento[] = [];
     projs.forEach((p, i) => {
       const mods = Number(p.modulos) || 0;
       const potW = Number(p.potenciaModuloW) || 0;
       const useCli = p.usarEnderecoCliente;
+      const orcadoNum = Number(p.orcado) || 0;
+      const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
       addProjeto(novoId, {
         tipo: p.tipo || `Projeto ${i + 1}`,
         endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
@@ -789,8 +794,25 @@ function CadastrarContratoTab({
         obs: "",
         cronograma: "",
         enviadoEngenharia: false,
+        orcado: orcadoNum,
       });
+      if (orcadoNum > 0) {
+        orcLancs.push({
+          id: `L-ORC-${Date.now()}-${i}`,
+          data: today,
+          descricao: `Orçado obra · ${projetoId} · ${cli.nome.trim()}`,
+          tipo: "Saída",
+          valor: orcadoNum,
+          camada: "Orçado futuro",
+          natureza: "Material",
+          centroCusto: "Engenharia/Operação",
+          obra: projetoId,
+          empresa: "Meta Sun",
+          filial: "Manaus",
+        });
+      }
     });
+    if (orcLancs.length > 0) appendLancamentos(orcLancs);
 
     if (form.financiamento === "sim") {
       addPendencia({
@@ -979,11 +1001,31 @@ function CadastrarContratoTab({
                   <Input value={p.inv3} onChange={(e) => setProjField(i, "inv3", e.target.value)} placeholder="Opcional" />
                 </div>
 
-                <div className="space-y-1.5 md:col-span-3"><Label>Equipe (opcional)</Label>
+                <div className="space-y-1.5 md:col-span-2"><Label>Equipe (opcional)</Label>
                   <Input value={p.equipe} onChange={(e) => setProjField(i, "equipe", e.target.value)} placeholder="Equipe responsável" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Orçado da obra (R$)</Label>
+                  <Input
+                    type="number"
+                    value={p.orcado}
+                    onChange={(e) => setProjField(i, "orcado", e.target.value)}
+                    placeholder="Custo previsto"
+                  />
+                  <div className="text-[10px] text-muted-foreground">Vai p/ Financeiro como <b>Orçado futuro</b> vinculado a este projeto.</div>
                 </div>
               </div>
             ))}
+            {projs.some((p) => Number(p.orcado) > 0) && (
+              <div className="mt-3 rounded-md border border-border bg-background p-2 text-xs">
+                <span className="font-semibold">Total orçado:</span> {fmtBRL(projs.reduce((a, p) => a + (Number(p.orcado) || 0), 0))}
+                {valorNum > 0 && (
+                  <span className="ml-3 text-muted-foreground">
+                    Margem prevista: <b className="text-primary">{fmtBRL(valorNum - projs.reduce((a, p) => a + (Number(p.orcado) || 0), 0))}</b>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
@@ -999,7 +1041,7 @@ function CadastrarContratoTab({
               <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
             )}
           </div>
-          <div className="space-y-1.5"><Label>Financiamento?</Label>
+          <div className="space-y-1.5"><Label>Financiamento? <span className="text-[10px] font-normal text-muted-foreground">(vale p/ todos os projetos)</span></Label>
             <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

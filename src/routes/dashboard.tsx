@@ -225,9 +225,10 @@ function DetailModal({
   open: boolean; onClose: () => void; modal: string | null;
   data: {
     contratos: typeof contratos; assinadosList: typeof contratos; pendentesList: typeof contratos;
-    canceladosList: typeof contratos; obrasAtivasList: typeof obras; financiamentos: typeof financiamentos;
+    canceladosList: typeof contratos; obrasAtivasList: typeof obras; obrasFinalizadasList: typeof obras;
+    financiamentos: typeof financiamentos;
     receitaDespesa: typeof receitaDespesa;
-    valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number;
+    valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number; kwpInstalado: number;
     receitas: number; despesas: number;
   };
 }) {

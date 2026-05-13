@@ -1041,7 +1041,7 @@ function CadastrarContratoTab({
               <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
             )}
           </div>
-          <div className="space-y-1.5"><Label>Financiamento?</Label>
+          <div className="space-y-1.5"><Label>Financiamento? <span className="text-[10px] font-normal text-muted-foreground">(vale p/ todos os projetos)</span></Label>
             <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

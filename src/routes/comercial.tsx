@@ -1471,10 +1471,12 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
     const aprovouAgora = f.status === "Aprovado" && contrato.status !== "Aprovado";
 
     updateContratoAudit(contrato.id, {
-      cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
+      vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
       status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
       dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
-      modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
+      modulos: f.modulos, potencia: f.potencia,
+      inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
+      inv4: (f as any).inv4, inv5: (f as any).inv5, inv6: (f as any).inv6,
       clienteFull: cli,
     });
 

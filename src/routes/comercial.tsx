@@ -764,11 +764,14 @@ function CadastrarContratoTab({
     };
     upsertContrato(novo);
 
-    // 2º criar projetos vinculados
+    // 2º criar projetos vinculados + lançamentos de orçado
+    const orcLancs: import("@/lib/financeiro-store").Lancamento[] = [];
     projs.forEach((p, i) => {
       const mods = Number(p.modulos) || 0;
       const potW = Number(p.potenciaModuloW) || 0;
       const useCli = p.usarEnderecoCliente;
+      const orcadoNum = Number(p.orcado) || 0;
+      const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
       addProjeto(novoId, {
         tipo: p.tipo || `Projeto ${i + 1}`,
         endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
@@ -790,8 +793,25 @@ function CadastrarContratoTab({
         obs: "",
         cronograma: "",
         enviadoEngenharia: false,
+        orcado: orcadoNum,
       });
+      if (orcadoNum > 0) {
+        orcLancs.push({
+          id: `L-ORC-${Date.now()}-${i}`,
+          data: today,
+          descricao: `Orçado obra · ${projetoId} · ${cli.nome.trim()}`,
+          tipo: "Saída",
+          valor: orcadoNum,
+          camada: "Orçado futuro",
+          natureza: "Material",
+          centroCusto: "Engenharia/Operação",
+          obra: projetoId,
+          empresa: "Meta Sun",
+          filial: "Manaus",
+        });
+      }
     });
+    if (orcLancs.length > 0) appendLancamentos(orcLancs);
 
     if (form.financiamento === "sim") {
       addPendencia({

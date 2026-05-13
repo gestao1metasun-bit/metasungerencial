@@ -34,6 +34,9 @@ export type ProjetoVinculado = {
   inversor: string;
   inv2?: string;
   inv3?: string;
+  inv4?: string;
+  inv5?: string;
+  inv6?: string;
   equipe: string;
   status: string;        // "Em projeto/aprovação" | "Aguardando instalação" | ...
   inicio: string;        // YYYY-MM-DD

@@ -635,24 +635,51 @@ function CadastrarContratoTab({
 }: { contratos: Contrato[]; setContratos: (c: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const today = new Date().toISOString().slice(0, 10);
   const proximo = nextContratoId(contratos);
+  const emptyCliente: ClienteFull = {
+    nome: "", doc: "", telefone: "", email: "",
+    cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+  };
   const [form, setForm] = useState({
-    cliente: "", dataAssinatura: "", modulos: "", potencia: "",
+    dataAssinatura: "", modulos: "", potencia: "",
     inv1: "", inv2: "", inv3: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
+  const [cli, setCli] = useState<ClienteFull>(emptyCliente);
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
+
+  const lookupCEP = async (cep: string) => {
+    setCliField("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    setCepLoading(true);
+    const r = await buscarCEP(cep);
+    setCepLoading(false);
+    if (r) {
+      setCli((p) => ({ ...p, ...r } as ClienteFull));
+      toast.success("Endereço preenchido pelo CEP");
+    } else {
+      toast.error("CEP não encontrado");
+    }
+  };
 
   // Cálculos automáticos
   const modulosNum = Number(form.modulos) || 0;
-  const potenciaWp = Number(form.potencia) || 0; // potência por módulo em W (ex.: 620)
-  const kwpTotal = (modulosNum * potenciaWp) / 1000; // 15 * 620 / 1000 = 9.3
+  const potenciaWp = Number(form.potencia) || 0;
+  const kwpTotal = (modulosNum * potenciaWp) / 1000;
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
   const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
+  const limpar = () => {
+    setForm({ dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
+    setCli(emptyCliente);
+  };
+
   const submit = () => {
-    if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    if (!cli.nome.trim()) { toast.error("Informe o nome do cliente"); return; }
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
@@ -660,7 +687,7 @@ function CadastrarContratoTab({
     const novoId = nextContratoId(contratos);
     const novo: Contrato = {
       id: novoId,
-      cliente: form.cliente.trim(),
+      cliente: cli.nome.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpTotal,
@@ -677,8 +704,14 @@ function CadastrarContratoTab({
       dataAssinatura: form.dataAssinatura,
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
+      clienteFull: { ...cli, nome: cli.nome.trim() },
+      projetos: [],
+      auditoria: [{
+        id: `A-${Date.now()}`, data: new Date().toISOString(),
+        usuario: "Operador", campo: "criação", de: "", para: novoId,
+      }],
     };
-    setContratos([novo, ...contratos]);
+    upsertContrato(novo);
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
@@ -686,11 +719,9 @@ function CadastrarContratoTab({
       });
       toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
     } else {
-      toast.success(`Contrato ${novoId} cadastrado`);
+      toast.success(`Contrato ${novoId} cadastrado · cliente registrado`);
     }
-    setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
-      inv1: "", inv2: "", inv3: "",
-      valor: "", vendedor: "", financiamento: "nao" });
+    limpar();
   };
 
   const [openForm, setOpenForm] = useState(false);

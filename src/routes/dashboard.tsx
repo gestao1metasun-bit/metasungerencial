@@ -71,7 +71,7 @@ function DashboardGeral() {
     return Array.from(map.values()).filter((r, i) => i <= 5 || r.gerados > 0 || r.assinados > 0);
   }, []);
 
-  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "receitas" | "despesas" | "resultado" | "kwp";
+  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "receitas" | "despesas" | "resultado" | "kwp" | "kwpInst";
   const [openModal, setOpenModal] = useState<null | ModalKey>(null);
 
   const open = (k: ModalKey) => () => setOpenModal(k);

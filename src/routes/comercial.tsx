@@ -1071,8 +1071,7 @@ function CadastrarContratoTab({
     const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
     toast.success(`Contrato ${novo.id} cadastrado · status Em análise · clique em Validar para liberar a aprovação`);
-    limpar();
-    setOpenForm(false);
+    // Mantém modal aberto. Use Fechar/Cancelar para sair, ou continue editando outras abas.
   };
 
   return (
@@ -1509,7 +1508,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
     }
-    setOpen(false);
+    // Mantém modal aberto — fechar somente via Fechar/X/Cancelar.
   };
 
   return (
@@ -1575,13 +1574,21 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Módulos</Label>
-                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => {
+                  const m = Number(e.target.value) || 0;
+                  const w = Number(f.potencia) || 0;
+                  setF({ ...f, modulos: m, kwp: Number(((m * w) / 1000).toFixed(2)) });
+                }} />
               </div>
               <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => {
+                  const w = Number(e.target.value) || 0;
+                  const m = Number(f.modulos) || 0;
+                  setF({ ...f, potencia: w, kwp: Number(((m * w) / 1000).toFixed(2)) });
+                }} />
               </div>
-              <div className="space-y-1.5"><Label>kWp total</Label>
-                <Input type="number" step="0.01" value={f.kwp} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
+              <div className="space-y-1.5"><Label>kWp total (auto)</Label>
+                <Input type="number" step="0.01" value={f.kwp} readOnly className="bg-muted font-mono" />
               </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />
@@ -1970,7 +1977,7 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const setD = (k: keyof NovoProjForm, v: any) => setDraft((p) => ({ ...p, [k]: v }));
   const kwpAuto = (draft.modulos * draft.potenciaModuloW) / 1000;
 
-  const adicionar = () => {
+  const salvarProjeto = () => {
     if (!draft.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
     if (!(Number(draft.valor) > 0)) { toast.error("Informe o valor do projeto"); return; }
     const somaAtual = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
@@ -1980,9 +1987,14 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
       return;
     }
     addProjeto(contrato.id, { ...draft, kwp: kwpAuto || draft.kwp });
-    toast.success(`Projeto vinculado ao contrato ${contrato.id}`);
-    setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 2}`));
+    toast.success(`Projeto salvo no contrato ${contrato.id} · totais atualizados`);
+    // Mantém o formulário e a navegação atual. Para criar outro, usar "+ Novo projeto".
+  };
+
+  const novoProjetoVazio = () => {
+    setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 1}`));
     setActiveTab("novo");
+    toast.message("Formulário limpo para novo projeto");
   };
 
   const lookupCEP = async (cep: string) => {
@@ -2231,8 +2243,9 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
                 <Textarea value={draft.obs} onChange={(e) => setD("obs", e.target.value)} />
               </div>
             </div>
-            <div className="mt-3 flex justify-end">
-              <Button className="bg-primary text-primary-foreground" onClick={adicionar}><Plus className="mr-2 h-4 w-4" /> Adicionar projeto</Button>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button variant="outline" onClick={novoProjetoVazio}><Plus className="mr-2 h-4 w-4" /> Novo projeto</Button>
+              <Button className="bg-primary text-primary-foreground" onClick={salvarProjeto}>Salvar projeto</Button>
             </div>
           </Card>
         </TabsContent>

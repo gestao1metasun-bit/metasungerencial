@@ -1518,11 +1518,28 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
     if (r) updateProjeto(contrato.id, projId, { endereco: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "" });
   };
 
+  const somaProjetos = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+  const valorContrato = Number(contrato.valor) || 0;
+  const diff = valorContrato - somaProjetos;
+  const bate = Math.abs(diff) <= 0.5;
+
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
         Cada projeto vira uma obra independente (tipo, endereço, módulos, equipe) mas mantém vínculo com o contrato {contrato.id}. Valor de venda, comissão e parâmetro permanecem no contrato.
       </div>
+      {projetos.length > 0 && (
+        <div className={`rounded-md border p-3 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
+            <span>Soma projetos: <b className="font-mono">{fmtBRL(somaProjetos)}</b></span>
+            <span className={bate ? "text-emerald-600" : "text-destructive"}>
+              {bate ? "✓ valores batem" : `Diferença: ${fmtBRL(Math.abs(diff))} ${diff > 0 ? "(faltam)" : "(excesso)"}`}
+            </span>
+          </div>
+          <span className="text-muted-foreground">Para aprovar o contrato, a soma dos valores dos projetos deve bater com o total.</span>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap h-auto">

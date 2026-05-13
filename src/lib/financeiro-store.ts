@@ -178,6 +178,26 @@ export function removeLancamentosDoContrato(contratoId: string) {
   } catch {}
 }
 
+/** Atualiza um lançamento por id (parcial). */
+export function updateLancamento(id: string, patch: Partial<Lancamento>) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = readLancamentos();
+    const next = cur.map((l) => (l.id === id ? { ...l, ...patch } : l));
+    localStorage.setItem(LS_LANC, JSON.stringify(next));
+  } catch {}
+}
+
+/** Remove todos os lançamentos vinculados a um projeto (obra=projetoId). */
+export function removeLancamentosDoProjeto(projetoId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = readLancamentos();
+    const next = cur.filter((l) => l.obra !== projetoId);
+    localStorage.setItem(LS_LANC, JSON.stringify(next));
+  } catch {}
+}
+
 /** Existe lançamento Realizado/Confirmado vinculado ao contrato? */
 export function temLancamentoConcretizado(contratoId: string): boolean {
   return readLancamentos().some((l) =>

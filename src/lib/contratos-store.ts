@@ -43,8 +43,13 @@ export type ProjetoVinculado = {
   enviadoEngenharia?: boolean; // true quando liberado para engenharia
   orcado?: number;             // custo orçado da obra (R$)
   valor?: number;              // valor financeiro deste projeto (parte do total do contrato)
-  parcelasPagto?: ParcelaPagto[]; // parcelas/financeiro próprias do projeto
+  parcelasPagto?: ParcelaPagto[]; // (legado) parcelas por projeto — não usar
   financeiroGerado?: boolean;  // true quando lançamentos foram gerados no Financeiro
+  aprovado?: boolean;          // aprovação individual do projeto
+  dataAprovacao?: string;      // ISO
+  usuarioAprovacao?: string;
+  dataGeracaoFinanceiro?: string; // ISO
+  usuarioGeracao?: string;
 };
 
 export type AuditEntry = {
@@ -68,9 +73,21 @@ export type ParcelaPagto = {
   descricao?: string;
 };
 
+/** Linha da composição de pagamento do CONTRATO. Cada linha é uma forma/parcela do recebimento total. */
+export type ComposicaoLinha = {
+  id: string;
+  formaPagamento: FormaPagamento;
+  valor: number;
+  parcelas: number;          // 1 = à vista; >1 distribui mensalmente
+  dataPrevista: string;      // YYYY-MM-DD
+  competencia: string;       // YYYY-MM
+  observacao?: string;
+};
+
 export type ContratoFull = {
   id: string;            // ex. 088/2026
   cliente: string;
+  clienteId?: string;    // referência ao cadastro de clientes
   vendedor: string;
   valor: number;
   kwp: number;
@@ -88,14 +105,11 @@ export type ContratoFull = {
   dataAssinatura?: string;
   comissaoPct?: number;
   comissaoValor?: number;
-  // Novo: dados completos do cliente
   clienteFull?: ClienteFull;
-  // Novo: projetos vinculados (desdobramento)
   projetos?: ProjetoVinculado[];
-  // Novo: auditoria de edições
   auditoria?: AuditEntry[];
-  // Novo: parcelas de pagamento detalhadas
-  parcelasPagto?: ParcelaPagto[];
+  parcelasPagto?: ParcelaPagto[];       // legado (migrado p/ composicaoPagto)
+  composicaoPagto?: ComposicaoLinha[];  // composição do recebimento do contrato
 };
 
 const KEY = "ms.contratos.v2";
@@ -280,6 +294,16 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
   if (!c.inv1?.trim()) missing.push("Inversor 1");
   if (!c.pagamento?.trim()) missing.push("Forma de pagamento");
   if (c.pagamento === "Financiamento" && !c.banco?.trim()) missing.push("Banco (financiamento)");
+  // Composição de pagamento deve fechar com o valor total
+  const comp = c.composicaoPagto ?? [];
+  if (comp.length === 0) {
+    missing.push("Composição de pagamento (adicione ao menos 1 linha)");
+  } else {
+    const soma = comp.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+    if (Math.abs(soma - Number(c.valor || 0)) > 0.5) {
+      missing.push(`Composição de pagamento (soma ${soma.toFixed(2)} ≠ contrato ${Number(c.valor||0).toFixed(2)})`);
+    }
+  }
   return { ok: missing.length === 0, missing };
 }
 
@@ -316,4 +340,83 @@ export function solicitarAlteracaoContrato(
   const next = [...cur];
   next[idx] = { ...atual, ...patch, auditoria: audit };
   write(next);
+}
+
+/* ============================================================
+ * Composição de pagamento + rateio proporcional por projeto
+ * ============================================================ */
+
+export function setComposicaoPagto(contratoId: string, composicao: ComposicaoLinha[]) {
+  updateContratoAudit(contratoId, { composicaoPagto: composicao });
+}
+
+export function composicaoSomaOk(c: ContratoFull): { ok: boolean; soma: number; diff: number } {
+  const soma = (c.composicaoPagto ?? []).reduce((s, l) => s + (Number(l.valor) || 0), 0);
+  const diff = (Number(c.valor) || 0) - soma;
+  return { ok: Math.abs(diff) <= 0.5 && (c.composicaoPagto ?? []).length > 0, soma, diff };
+}
+
+export function aprovarProjeto(contratoId: string, projetoId: string, usuario = "Operador") {
+  updateProjeto(contratoId, projetoId, {
+    aprovado: true,
+    dataAprovacao: new Date().toISOString(),
+    usuarioAprovacao: usuario,
+    enviadoEngenharia: true,
+  });
+}
+
+const addMonthsISO = (iso: string, n: number): string => {
+  if (!iso) return iso;
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, (m - 1) + n, d);
+  return dt.toISOString().slice(0, 10);
+};
+
+export type LancamentoGerado = {
+  id: string; data: string; descricao: string;
+  tipo: "Entrada"; valor: number; camada: "A realizar";
+  natureza: string; centroCusto: string;
+  obra: string; empresa: string; filial: string;
+  contrato: string; cliente: string;
+  formaPagamento: string; parcelaLabel: string;
+  competencia: string; dataEmissao: string;
+};
+
+/** Calcula (sem persistir) os lançamentos proporcionais para um projeto aprovado. */
+export function calcularLancamentosProjeto(
+  contrato: ContratoFull, projeto: ProjetoVinculado,
+): LancamentoGerado[] {
+  const valorContrato = Number(contrato.valor) || 0;
+  const valorProj = Number(projeto.valor) || 0;
+  if (valorContrato <= 0 || valorProj <= 0) return [];
+  const pct = valorProj / valorContrato;
+  const out: LancamentoGerado[] = [];
+  (contrato.composicaoPagto ?? []).forEach((linha, li) => {
+    const totalLinha = Number(linha.valor) || 0;
+    if (totalLinha <= 0) return;
+    const parcN = Math.max(1, Number(linha.parcelas) || 1);
+    const baseValor = (totalLinha * pct) / parcN;
+    for (let i = 0; i < parcN; i++) {
+      const venc = i === 0 ? linha.dataPrevista : addMonthsISO(linha.dataPrevista, i);
+      const comp = i === 0 ? linha.competencia : addMonthsISO(linha.dataPrevista, i).slice(0, 7);
+      out.push({
+        id: `L-REC-${Date.now()}-${projeto.id}-${li}-${i}`,
+        data: venc,
+        descricao: `${projeto.id} · ${linha.formaPagamento}${parcN > 1 ? ` ${i + 1}/${parcN}` : ""} · ${contrato.cliente}`,
+        tipo: "Entrada",
+        valor: Math.round(baseValor * 100) / 100,
+        camada: "A realizar",
+        natureza: "Recebimento de cliente",
+        centroCusto: "Comercial",
+        obra: projeto.id,
+        empresa: "Meta Sun", filial: "Manaus",
+        contrato: contrato.id, cliente: contrato.cliente,
+        formaPagamento: linha.formaPagamento,
+        parcelaLabel: parcN > 1 ? `${i + 1}/${parcN}` : "1/1",
+        competencia: comp,
+        dataEmissao: linha.dataPrevista,
+      });
+    }
+  });
+  return out;
 }

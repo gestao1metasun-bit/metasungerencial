@@ -921,6 +921,8 @@ function CadastrarContratoTab({
     pagamento: "", banco: "", obs: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
+  const [clienteId, setClienteId] = useState<string>("");
+  const [composicao, setComposicao] = useState<ComposicaoLinha[]>([]);
   const [cepLoading, setCepLoading] = useState(false);
 
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
@@ -936,6 +938,17 @@ function CadastrarContratoTab({
     } else { toast.error("CEP não encontrado"); }
   };
 
+  const pickCliente = (c: ClienteRecord) => {
+    setClienteId(c.id);
+    setCli({
+      nome: c.nome, doc: c.doc ?? "", telefone: c.telefone ?? "", telefone2: "",
+      email: c.email ?? "",
+      cep: c.cep ?? "", rua: c.rua ?? "", numero: c.numero ?? "", bairro: c.bairro ?? "",
+      complemento: c.complemento ?? "", cidade: c.cidade ?? "", uf: c.uf ?? "",
+    });
+    toast.success(`Cliente ${c.nome} selecionado`);
+  };
+
   const valorNum = Number(form.valor) || 0;
   const modulosNum = Number(form.modulosContrato) || 0;
   const potenciaNum = Number(form.potenciaContrato) || 0;
@@ -946,7 +959,7 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const [openForm, setOpenForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"cliente" | "contrato">("cliente");
+  const [activeTab, setActiveTab] = useState<"cliente" | "contrato" | "pagamento">("cliente");
 
   const limpar = () => {
     setForm({
@@ -956,6 +969,8 @@ function CadastrarContratoTab({
       pagamento: "", banco: "", obs: "",
     });
     setCli(emptyCliente);
+    setClienteId("");
+    setComposicao([]);
     setActiveTab("cliente");
   };
 
@@ -964,6 +979,7 @@ function CadastrarContratoTab({
     return {
       id: novoId,
       cliente: cli.nome.trim() || "—",
+      clienteId: clienteId || undefined,
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpEsperado,
@@ -983,7 +999,7 @@ function CadastrarContratoTab({
       comissaoValor,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [],
-      parcelasPagto: [],
+      composicaoPagto: composicao,
       auditoria: [{
         id: `A-${Date.now()}`, data: new Date().toISOString(),
         usuario: "Operador", campo: "criação", de: "", para: novoId,

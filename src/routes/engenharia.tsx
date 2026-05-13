@@ -27,6 +27,7 @@ import {
   produtividadeEquipe, diasPrevistos,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { addCliente, useClientesAll } from "@/lib/clientes-store";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),
@@ -72,6 +73,7 @@ function addDaysISO(iso: string, days: number): string {
 
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
+  inicioReal?: string; fimReal?: string;
 };
 
 function enrichObras(): Obra[] {
@@ -81,6 +83,8 @@ function enrichObras(): Obra[] {
     inv2: "",
     inv3: "",
     telhadoTipo: o.telhado === "Cerâmico" ? "Cerâmica" : o.telhado === "Metálico" ? "Metálico" : o.telhado === "Fibrocimento" ? "Fibrocimento" : "Outro",
+    inicioReal: o.status === "Finalizado" ? o.inicio : undefined,
+    fimReal: o.status === "Finalizado" ? (o.finalizacao ?? undefined) : undefined,
   }));
 }
 
@@ -271,6 +275,8 @@ function ObrasAtivasTab({
   obras, setObras, equipes,
 }: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed }) {
   const [equipe, setEquipe] = useState("todas");
+  const [editing, setEditing] = useState<Obra | null>(null);
+
   const list = obras
     .filter((o) => o.status !== "Finalizado")
     .filter((o) => equipe === "todas" || o.equipe === equipe)
@@ -279,16 +285,12 @@ function ObrasAtivasTab({
       return r !== 0 ? r : a.ordem - b.ordem;
     });
 
-  const update = (id: string, patch: Partial<Obra>) => {
-    const next = obras.map((o) => o.id === id
-      ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao }
-      : o);
+  const save = (id: string, patch: Partial<Obra>) => {
+    const next = obras.map((o) => o.id === id ? { ...o, ...patch } : o);
     const target = next.find((o) => o.id === id)!;
     setObras(chainSchedule(next, target.equipe, target.status));
-  };
-  const remove = (id: string) => {
-    setObras(obras.filter((o) => o.id !== id));
-    toast.success("Obra removida");
+    setEditing(null);
+    toast.success("Obra atualizada");
   };
 
   return (
@@ -311,7 +313,7 @@ function ObrasAtivasTab({
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
-            <TableHead>Início</TableHead><TableHead>Fim</TableHead>
+            <TableHead>Início</TableHead><TableHead>Previsto</TableHead>
             <TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -320,38 +322,20 @@ function ObrasAtivasTab({
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
-                <TableCell className="text-center">
-                  <Input type="number" defaultValue={o.modulos} className="h-7 w-16 text-center" onBlur={(e)=>update(o.id,{ modulos: Number(e.target.value) || 0, previsto: recalcPrevisto(o.inicio, o.equipe, Number(e.target.value) || 0) })} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Input type="number" step="0.1" defaultValue={o.potencia} className="h-7 w-20 text-right" onBlur={(e)=>update(o.id,{ potencia: Number(e.target.value) || 0 })} />
-                </TableCell>
-                <TableCell><Input defaultValue={o.inversor} className="h-7 w-28 text-xs" onBlur={(e)=>update(o.id,{ inversor: e.target.value })} /></TableCell>
-                <TableCell><Input defaultValue={o.inv2} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv2: e.target.value })} /></TableCell>
-                <TableCell><Input defaultValue={o.inv3} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv3: e.target.value })} /></TableCell>
-                <TableCell>
-                  <Select value={o.telhadoTipo} onValueChange={(v) => update(o.id, { telhadoTipo: v })}>
-                    <SelectTrigger className="h-7 w-32"><SelectValue /></SelectTrigger>
-                    <SelectContent>{TELHADOS.map(t=><SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select value={o.equipe} onValueChange={(v) => update(o.id, { equipe: v, previsto: recalcPrevisto(o.inicio, v, o.modulos) })}>
-                    <SelectTrigger className="h-7 w-28"><SelectValue /></SelectTrigger>
-                    <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-36" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
+                <TableCell className="text-center">{o.modulos}</TableCell>
+                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
+                <TableCell className="text-xs">{o.inversor}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
+                <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
+                <TableCell className="text-xs">{o.equipe}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
-                <TableCell>
-                  <Select value={o.status} onValueChange={(v) => update(o.id, { status: v })}>
-                    <SelectTrigger className="h-7 w-44"><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUS.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Finalizar" onClick={() => update(o.id, { status: "Finalizado" })}><CheckCircle2 className="h-3.5 w-3.5 text-success" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <TableCell><StatusBadge status={o.status} /></TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(o)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -360,9 +344,119 @@ function ObrasAtivasTab({
         </Table>
       </div>
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
-        Não editável: <span className="font-semibold">#</span>, <span className="font-semibold">Cliente</span> e <span className="font-semibold">Contrato</span>. Linhas coloridas conforme status.
+        Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <Pencil className="inline h-3 w-3" /> editar.
       </div>
+      <EditObraDialog obra={editing} onClose={() => setEditing(null)} onSave={save} equipes={equipes} />
     </Card>
+  );
+}
+
+function EditObraDialog({
+  obra, onClose, onSave, equipes,
+}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; equipes: typeof equipesSeed }) {
+  const [form, setForm] = useState<Partial<Obra>>({});
+  const [confirming, setConfirming] = useState(false);
+
+  // re-init when obra changes
+  if (obra && form.id !== obra.id) {
+    setTimeout(() => setForm({ ...obra }), 0);
+  }
+  if (!obra) return null;
+
+  const f = { ...obra, ...form };
+  const finalizing = f.status === "Finalizado";
+  const valid = !finalizing || (!!f.inicioReal && !!f.fimReal);
+
+  const trySave = () => {
+    if (finalizing && !valid) {
+      toast.error("Preencha Início real e Fim real para finalizar");
+      return;
+    }
+    setConfirming(true);
+  };
+
+  const confirm = () => {
+    const patch: Partial<Obra> = {
+      modulos: f.modulos, potencia: f.potencia, inversor: f.inversor,
+      inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
+      equipe: f.equipe, inicio: f.inicio, status: f.status, obs: f.obs,
+      inicioReal: f.inicioReal, fimReal: f.fimReal,
+      finalizacao: finalizing ? (f.fimReal ?? null) : null,
+      previsto: recalcPrevisto(f.inicio || obra.inicio, f.equipe || obra.equipe, f.modulos ?? obra.modulos),
+    };
+    onSave(obra.id, patch);
+    setConfirming(false);
+    setForm({});
+  };
+
+  return (
+    <Dialog open={!!obra} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar obra · {obra.cliente}</DialogTitle>
+          <DialogDescription>Contrato {fmtContrato(obra.contrato)} · #{obra.ordem}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Potência (kWp)</Label><Input type="number" step="0.1" value={f.potencia ?? ""} onChange={(e) => setForm({ ...form, potencia: Number(e.target.value) })} /></div>
+          <div><Label>Telhado</Label>
+            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TELHADOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
+          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
+          <div><Label>Equipe</Label>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Início (planejado)</Label><Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {finalizing && (
+            <>
+              <div><Label className="text-success">Início real *</Label><Input type="date" value={f.inicioReal ?? ""} onChange={(e) => setForm({ ...form, inicioReal: e.target.value })} /></div>
+              <div><Label className="text-success">Fim real *</Label><Input type="date" value={f.fimReal ?? ""} onChange={(e) => setForm({ ...form, fimReal: e.target.value })} /></div>
+            </>
+          )}
+          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+        {finalizing && (
+          <div className="rounded-md border border-success/30 bg-success/10 p-3 text-xs">
+            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para a aba <strong>Finalizados</strong>. Início real e Fim real são obrigatórios.
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar alteração</DialogTitle>
+            <DialogDescription>
+              {finalizing
+                ? `Tem certeza que deseja FINALIZAR a obra de ${obra.cliente}? Ela sairá das ativas.`
+                : `Tem certeza que deseja salvar as alterações da obra de ${obra.cliente}?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>Cancelar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={confirm}>Sim, confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Dialog>
   );
 }
 
@@ -417,14 +511,6 @@ function CronogramaTab({
     setObras(chainSchedule(swapped, target.equipe, target.status));
   };
 
-  const editInicio = (id: string, inicio: string) => {
-    const target = obras.find((o) => o.id === id);
-    if (!target) return;
-    const previsto = recalcPrevisto(inicio, target.equipe, target.modulos);
-    const next = obras.map((o) => o.id === id ? { ...o, inicio, previsto } : o);
-    setObras(chainSchedule(next, target.equipe, target.status));
-  };
-
   return (
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {equipes.map((eq) => {
@@ -442,7 +528,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onEditInicio={editInicio} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
                 </div>
               </div>
             )}
@@ -450,7 +536,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onEditInicio={editInicio} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
                 </div>
               </div>
             )}
@@ -461,7 +547,7 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onEditInicio: (id: string, inicio: string) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
@@ -473,12 +559,12 @@ function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obr
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Input type="date" defaultValue={o.inicio} className="h-6 w-32 text-[11px]" onBlur={(e) => { if (e.target.value && e.target.value !== o.inicio) onEditInicio(o.id, e.target.value); }} />
-            <span>→</span>
-            <span className="font-medium text-foreground">{fmtBR(o.previsto)}</span>
+          <div className="mt-2 flex items-center gap-2 text-[11px]">
+            <span className="text-muted-foreground">{fmtBR(o.inicio)}</span>
+            <span className="text-muted-foreground">→</span>
+            <span className="font-semibold text-foreground">{fmtBR(o.previsto)}</span>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground/70">Início: {fmtBR(o.inicio)} · próximo herda +1d</div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas só editáveis no lápis em Obras ativas</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>
@@ -492,22 +578,41 @@ function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obr
 /* ---------------- PENDÊNCIAS ---------------- */
 
 function PendenciasTab({
-  pends, setPends, equipes, obras,
+  pends, setPends, equipes,
 }: { pends: typeof pendenciasSeed; setPends: (v: typeof pendenciasSeed) => void; equipes: typeof equipesSeed; obras: Obra[] }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ equipe: "", cliente: "", obra: "", problema: "", solucao: "" });
-
-  const resolver = (id: string) => {
-    setPends(pends.map((p) => p.id === id ? { ...p, status: "Problema resolvido", resolucao: new Date().toISOString().slice(0,10) } : p));
-    toast.success("Pendência resolvida");
-  };
+  const [editing, setEditing] = useState<(typeof pendenciasSeed)[number] | null>(null);
+  const [novoCli, setNovoCli] = useState("");
+  const clientes = useClientesAll();
+  const [form, setForm] = useState({ equipe: "", cliente: "", problema: "", solucao: "" });
 
   const submit = () => {
-    if (!form.equipe || !form.problema) { toast.error("Preencha equipe e problema"); return; }
-    setPends([{ id: `PD-${String(pends.length+15).padStart(3,"0")}`, ...form, status: "Aguardando resolução", abertura: new Date().toISOString().slice(0,10), resolucao: null }, ...pends]);
+    if (!form.equipe || !form.cliente || !form.problema) { toast.error("Preencha equipe, cliente e problema"); return; }
+    setPends([{
+      id: `PD-${String(pends.length+15).padStart(3,"0")}`,
+      equipe: form.equipe, cliente: form.cliente, obra: "",
+      problema: form.problema, solucao: form.solucao,
+      status: "Aguardando resolução", abertura: new Date().toISOString().slice(0,10), resolucao: null,
+    }, ...pends]);
     toast.success("Pendência criada");
-    setForm({ equipe: "", cliente: "", obra: "", problema: "", solucao: "" });
+    setForm({ equipe: "", cliente: "", problema: "", solucao: "" });
     setOpen(false);
+  };
+
+  const cadastrarCliente = () => {
+    const nome = novoCli.trim();
+    if (!nome) return;
+    const c = addCliente(nome);
+    setForm((f) => ({ ...f, cliente: c.nome }));
+    setNovoCli("");
+    toast.success(`Cliente "${nome}" cadastrado`);
+  };
+
+  const saveEdit = (patch: Partial<(typeof pendenciasSeed)[number]>) => {
+    if (!editing) return;
+    setPends(pends.map((p) => p.id === editing.id ? { ...p, ...patch } : p));
+    setEditing(null);
+    toast.success("Pendência atualizada");
   };
 
   return (
@@ -525,12 +630,15 @@ function PendenciasTab({
                   <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Cliente</Label><Input value={form.cliente} onChange={(e)=>setForm({...form, cliente: e.target.value})} /></div>
-              <div><Label>Obra</Label>
-                <Select value={form.obra} onValueChange={(v)=>setForm({...form, obra: v})}>
-                  <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>{obras.map(o=><SelectItem key={o.id} value={o.id}>{o.id} — {o.cliente}</SelectItem>)}</SelectContent>
+              <div><Label>Cliente</Label>
+                <Select value={form.cliente} onValueChange={(v)=>setForm({...form, cliente: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                  <SelectContent>{clientes.map(c=><SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
                 </Select>
+                <div className="mt-2 flex gap-2">
+                  <Input placeholder="Cadastrar cliente antigo (sem obra)" value={novoCli} onChange={(e)=>setNovoCli(e.target.value)} className="h-8 text-xs" />
+                  <Button type="button" size="sm" variant="outline" onClick={cadastrarCliente}>Cadastrar</Button>
+                </div>
               </div>
               <div><Label>Problema</Label><Textarea rows={3} value={form.problema} onChange={(e)=>setForm({...form, problema: e.target.value})} /></div>
               <div><Label>Solução proposta</Label><Textarea rows={2} value={form.solucao} onChange={(e)=>setForm({...form, solucao: e.target.value})} /></div>
@@ -545,7 +653,7 @@ function PendenciasTab({
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
-          <TableHead>Obra</TableHead><TableHead>Problema</TableHead><TableHead>Solução</TableHead>
+          <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
           <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
@@ -555,32 +663,103 @@ function PendenciasTab({
               <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
               <TableCell>{p.equipe}</TableCell>
               <TableCell className="font-medium">{p.cliente}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">{p.obra}</TableCell>
               <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
               <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
               <TableCell><StatusBadge status={p.status} /></TableCell>
               <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
               <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
               <TableCell className="text-right">
-                {p.status === "Aguardando resolução" && (
-                  <Button variant="ghost" size="sm" onClick={() => resolver(p.id)}><CheckCircle2 className="mr-1 h-4 w-4 text-success" /> Resolver</Button>
-                )}
+                <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(p)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <EditPendenciaDialog pend={editing} onClose={() => setEditing(null)} onSave={saveEdit} />
     </Card>
+  );
+}
+
+function EditPendenciaDialog({
+  pend, onClose, onSave,
+}: { pend: (typeof pendenciasSeed)[number] | null; onClose: () => void; onSave: (patch: Partial<(typeof pendenciasSeed)[number]>) => void }) {
+  const [form, setForm] = useState<Partial<(typeof pendenciasSeed)[number]>>({});
+  const [confirming, setConfirming] = useState(false);
+  if (pend && form.id !== pend.id) setTimeout(() => setForm({ ...pend }), 0);
+  if (!pend) return null;
+  const f = { ...pend, ...form };
+  const finalizing = f.status === "Problema resolvido";
+
+  const trySave = () => setConfirming(true);
+  const confirm = () => {
+    const patch: Partial<(typeof pendenciasSeed)[number]> = {
+      status: f.status, problema: f.problema, solucao: f.solucao,
+      resolucao: finalizing ? (f.resolucao || new Date().toISOString().slice(0,10)) : null,
+    };
+    onSave(patch);
+    setConfirming(false);
+    setForm({});
+  };
+
+  return (
+    <Dialog open={!!pend} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar pendência</DialogTitle>
+          <DialogDescription>{pend.cliente} · {pend.equipe}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aguardando resolução">Aguardando resolução</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
+                <SelectItem value="Problema resolvido">Problema resolvido (finalizar)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Problema</Label><Textarea rows={2} value={f.problema ?? ""} onChange={(e) => setForm({ ...form, problema: e.target.value })} /></div>
+          <div><Label>Solução</Label><Textarea rows={2} value={f.solucao ?? ""} onChange={(e) => setForm({ ...form, solucao: e.target.value })} /></div>
+          {finalizing && (
+            <div><Label>Data resolução</Label>
+              <Input type="date" value={f.resolucao ?? new Date().toISOString().slice(0,10)} onChange={(e) => setForm({ ...form, resolucao: e.target.value })} />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar alteração</DialogTitle>
+            <DialogDescription>Tem certeza que deseja salvar esta alteração?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>Cancelar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={confirm}>Sim, confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Dialog>
   );
 }
 
 /* ---------------- EQUIPES ---------------- */
 
+const FAIXAS = ["0-20", "21-50", "51-100", "101-200", "201-300", "301-500", "500+"] as const;
+
 function EquipesTab({
-  equipes, setEquipes, obras, pends,
+  equipes, obras, pends,
 }: { equipes: typeof equipesSeed; setEquipes: (v: typeof equipesSeed) => void; obras: Obra[]; pends: typeof pendenciasSeed }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2">
       {equipes.map((e) => {
         const exec = obras.filter((o) => o.equipe === e.nome && o.status === "Executando instalação").length;
         const aguard = obras.filter((o) => o.equipe === e.nome && o.status === "Aguardando instalação").length;
@@ -590,16 +769,42 @@ function EquipesTab({
         return (
           <Card key={e.id} className="p-5">
             <div className="flex items-center justify-between">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><Users className="h-5 w-5" /></div>
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><Users className="h-5 w-5" /></div>
+                <div>
+                  <div className="text-lg font-semibold">{e.nome}</div>
+                  <div className="text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
+                </div>
+              </div>
               <StatusBadge status={e.status} />
             </div>
-            <div className="mt-4 text-lg font-semibold">{e.nome}</div>
-            <div className="mt-1 text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-              <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Executando</div><div className="font-bold text-success">{exec}</div></div>
-              <div className="rounded-md bg-warning/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Aguardando</div><div className="font-bold text-warning">{aguard}</div></div>
+            <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+              <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Exec.</div><div className="font-bold text-success">{exec}</div></div>
+              <div className="rounded-md bg-warning/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Aguard.</div><div className="font-bold text-warning">{aguard}</div></div>
               <div className="rounded-md bg-primary/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Módulos</div><div className="font-bold text-primary">{totalMod}</div></div>
               <div className="rounded-md bg-info/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Mód./dia</div><div className="font-bold text-info">{prod?.mediaDia ?? "—"}</div></div>
+            </div>
+            <div className="mt-4">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Faixas de produtividade (dias por módulo)</div>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {FAIXAS.map((fx) => {
+                  const v = prod?.faixas?.[fx];
+                  return (
+                    <div key={fx} className="rounded-md border border-border bg-muted/30 p-1.5">
+                      <div className="text-[9px] font-semibold text-muted-foreground">{fx}</div>
+                      <div className="text-[11px] font-bold text-primary">{v != null ? `${v}d` : "—"}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground/80">
+                Média geral: <span className="font-semibold text-foreground">{prod?.mediaDia ?? "—"} mód/dia</span>
+                {prod && (
+                  <> · Média por faixa: <span className="font-semibold text-foreground">
+                    {(Object.values(prod.faixas).reduce((s, n) => s + n, 0) / Math.max(Object.keys(prod.faixas).length, 1)).toFixed(2)}d
+                  </span></>
+                )}
+              </div>
             </div>
             {pendAb > 0 && (
               <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-1 text-xs font-semibold text-destructive">

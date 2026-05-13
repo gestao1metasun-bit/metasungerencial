@@ -692,16 +692,28 @@ function CadastrarContratoTab({
       valor: "", vendedor: "", financiamento: "nao" });
   };
 
+  const [openForm, setOpenForm] = useState(false);
+
   return (
     <div className="space-y-4">
       <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold">Novo contrato</div>
-            <div className="text-xs text-muted-foreground">Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Cadastro: {today}</div>
+            <div className="text-sm font-semibold">Cadastro de contratos</div>
+            <div className="text-xs text-muted-foreground">Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Hoje: {today}</div>
           </div>
+          <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenForm(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+          </Button>
         </div>
+      </Card>
 
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Novo contrato</DialogTitle>
+            <DialogDescription>Próximo nº: <span className="font-mono text-primary">{proximo}</span> · Cadastro: {today}</DialogDescription>
+          </DialogHeader>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5"><Label>Nº contrato (auto)</Label>
             <Input value={proximo} readOnly className="bg-muted font-mono" />
@@ -774,11 +786,12 @@ function CadastrarContratoTab({
           </div>
         )}
 
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
-          <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
-        </div>
-      </Card>
+          <DialogFooter className="mt-5">
+            <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <div className="border-b border-border p-4 text-sm font-semibold">Últimos contratos cadastrados</div>

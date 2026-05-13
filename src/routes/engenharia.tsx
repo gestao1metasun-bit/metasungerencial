@@ -409,11 +409,20 @@ function CronogramaTab({
     const idx = same.findIndex((o) => o.id === id);
     const swapWith = same[idx + dir];
     if (!swapWith) return;
-    setObras(obras.map((o) => {
+    const swapped = obras.map((o) => {
       if (o.id === target.id) return { ...o, ordem: swapWith.ordem };
       if (o.id === swapWith.id) return { ...o, ordem: target.ordem };
       return o;
-    }));
+    });
+    setObras(chainSchedule(swapped, target.equipe, target.status));
+  };
+
+  const editInicio = (id: string, inicio: string) => {
+    const target = obras.find((o) => o.id === id);
+    if (!target) return;
+    const previsto = recalcPrevisto(inicio, target.equipe, target.modulos);
+    const next = obras.map((o) => o.id === id ? { ...o, inicio, previsto } : o);
+    setObras(chainSchedule(next, target.equipe, target.status));
   };
 
   return (
@@ -433,7 +442,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onEditInicio={editInicio} />)}
                 </div>
               </div>
             )}
@@ -441,7 +450,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onEditInicio={editInicio} />)}
                 </div>
               </div>
             )}

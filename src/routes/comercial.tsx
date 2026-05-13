@@ -757,8 +757,8 @@ function CadastrarContratoTab({
             <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
           </div>
 
-          <div className="space-y-1.5 md:col-span-2"><Label>Cliente</Label>
-            <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} placeholder="Nome do cliente" />
+          <div className="space-y-1.5 md:col-span-2"><Label>Cliente — nome</Label>
+            <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
           </div>
           <div className="space-y-1.5"><Label>Vendedor (do cadastro)</Label>
             <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>

@@ -647,6 +647,7 @@ function CadastrarContratoTab({
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+    statusContrato: "Pendente" as "Assinado" | "Pendente" | "Cancelado",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);

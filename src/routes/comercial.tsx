@@ -1875,7 +1875,7 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
   void tick;
 
   const regenerar = () => {
-    if (!projeto.aprovado) { toast.error("Aprove o projeto antes."); return; }
+    if (contrato.status !== "Aprovado") { toast.error("Contrato precisa estar aprovado."); return; }
     const comp = composicaoSomaOk(contrato);
     if (!comp.ok) { toast.error("Composição do contrato não fecha."); return; }
     if (!window.confirm("Regenerar lançamentos do projeto? Lançamentos existentes serão substituídos.")) return;

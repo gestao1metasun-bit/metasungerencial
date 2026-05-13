@@ -2067,6 +2067,12 @@ function ProjetoEditCard({
           }}><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
       </div>
+      {projeto.aprovado && (
+        <div className="mb-3 rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs text-success">
+          <b>Projeto aprovado · edição bloqueada.</b> Para alterar dados deste projeto, remova primeiro os lançamentos financeiros vinculados (em Pedidos de venda &gt; Financeiro do projeto) e os registros de Engenharia. Apenas Admin Master pode reverter, com auditoria.
+        </div>
+      )}
+      <fieldset disabled={projeto.aprovado} className="contents">
       <div className="grid gap-3 md:grid-cols-3">
         <div className="space-y-1.5"><Label>Tipo do projeto</Label>
           <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} />

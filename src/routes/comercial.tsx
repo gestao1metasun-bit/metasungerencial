@@ -640,12 +640,53 @@ function CadastrarContratoTab({
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   };
   const [form, setForm] = useState({
-    dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "",
-    inv1: "", inv2: "", inv3: "",
+    dataCadastro: today, dataAssinatura: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
+
+  // ---- Projetos vinculados (cadastrados junto com o contrato) ----
+  type ProjetoDraft = {
+    tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
+    modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
+    usarEnderecoCliente: boolean;
+  };
+  const emptyProj = (): ProjetoDraft => ({
+    tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+    modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
+    usarEnderecoCliente: true,
+  });
+  const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
+  const [activeProj, setActiveProj] = useState(0);
+  const [projCepLoading, setProjCepLoading] = useState<number | null>(null);
+
+  const setProjField = (idx: number, k: keyof ProjetoDraft, v: string | boolean) =>
+    setProjs((arr) => arr.map((p, i) => (i === idx ? { ...p, [k]: v } : p)));
+
+  const lookupProjCEP = async (idx: number, cep: string) => {
+    setProjField(idx, "cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    setProjCepLoading(idx);
+    const r = await buscarCEP(cep);
+    setProjCepLoading(null);
+    if (r) {
+      setProjs((arr) => arr.map((p, i) => i === idx
+        ? { ...p, cep: r.cep ?? p.cep, rua: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "", complemento: r.complemento ?? "" }
+        : p));
+      toast.success("Endereço do projeto preenchido pelo CEP");
+    } else { toast.error("CEP não encontrado"); }
+  };
+
+  const addProj = () => {
+    setProjs((arr) => [...arr, { ...emptyProj(), tipo: `Projeto ${arr.length + 1}` }]);
+    setActiveProj(projs.length);
+  };
+  const delProj = (idx: number) => {
+    if (projs.length === 1) { toast.error("É necessário ao menos 1 projeto"); return; }
+    setProjs((arr) => arr.filter((_, i) => i !== idx));
+    setActiveProj(0);
+  };
 
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
 

@@ -241,6 +241,7 @@ function DetailModal({
     receitas: "Receitas por mês", despesas: "Despesas por mês",
     resultado: "Resultado mensal (Receita − Despesa)", kwp: "kWp por contrato",
     kwpInst: "kWp instalado (obras finalizadas)",
+  };
   const list =
     modal === "assinados" ? data.assinadosList :
     modal === "pendentes" ? data.pendentesList :
@@ -248,6 +249,7 @@ function DetailModal({
     modal === "ticket" ? data.assinadosList :
     modal === "valor" ? [...data.assinadosList].sort((a,b)=>b.valor-a.valor) :
     modal === "kwp" ? [...data.contratos].sort((a,b)=>b.kwp-a.kwp) :
+    modal === "kwpInst" ? data.obrasFinalizadasList :
     data.contratos;
 
   return (

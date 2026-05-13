@@ -652,19 +652,31 @@ function CadastrarContratoTab({
   const [cepLoading, setCepLoading] = useState(false);
 
   // ---- Parcelas de pagamento (cada linha tem forma própria) ----
-  const novaParcela = (valor = 0): ParcelaPagto => ({
+  const addMonthsISO = (iso: string, n: number) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(y, (m - 1) + n, d);
+    return dt.toISOString().slice(0, 10);
+  };
+  const novaParcela = (valor = 0, base?: ParcelaPagto): ParcelaPagto => ({
     id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     valor,
-    dataEmissao: today,
-    dataVencimento: today,
-    competencia: today.slice(0, 7),
-    formaPagamento: "Pix",
+    dataEmissao: base?.dataEmissao ?? today,
+    dataVencimento: base ? addMonthsISO(base.dataVencimento, 1) : today,
+    competencia: base ? addMonthsISO(base.dataVencimento, 1).slice(0, 7) : today.slice(0, 7),
+    formaPagamento: base?.formaPagamento ?? "Pix",
   });
   const [parcelas, setParcelas] = useState<ParcelaPagto[]>([novaParcela()]);
   const setParc = (id: string, patch: Partial<ParcelaPagto>) =>
     setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  const addParc = () => setParcelas((arr) => [...arr, novaParcela()]);
+  const addParc = () => setParcelas((arr) => [...arr, novaParcela(0, arr[arr.length - 1])]);
   const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
+  const aplicarMesmaCompetencia = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, competencia: arr[0].competencia })) : arr);
+  const aplicarMesmaEmissao = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, dataEmissao: arr[0].dataEmissao })) : arr);
+  const redistribuirVencimentos = () => setParcelas((arr) => arr.map((p, i) => {
+    if (i === 0) return p;
+    const venc = addMonthsISO(arr[0].dataVencimento, i);
+    return { ...p, dataVencimento: venc, competencia: venc.slice(0, 7) };
+  }));
   const distribuirValor = (totalParam?: number) => {
     setParcelas((arr) => {
       if (arr.length === 0) return arr;

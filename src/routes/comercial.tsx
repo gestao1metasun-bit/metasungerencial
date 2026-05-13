@@ -38,6 +38,7 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
+  type ParcelaPagto, type FormaPagamento,
 } from "@/lib/contratos-store";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -644,9 +645,36 @@ function CadastrarContratoTab({
   const [form, setForm] = useState({
     dataCadastro: today, dataAssinatura: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
+    modulosContrato: "", potenciaContrato: "550",
+    inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
+
+  // ---- Parcelas de pagamento (cada linha tem forma própria) ----
+  const novaParcela = (valor = 0): ParcelaPagto => ({
+    id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    valor,
+    dataEmissao: today,
+    dataVencimento: today,
+    competencia: today.slice(0, 7),
+    formaPagamento: "Pix",
+  });
+  const [parcelas, setParcelas] = useState<ParcelaPagto[]>([novaParcela()]);
+  const setParc = (id: string, patch: Partial<ParcelaPagto>) =>
+    setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const addParc = () => setParcelas((arr) => [...arr, novaParcela()]);
+  const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
+  const distribuirValor = (totalParam?: number) => {
+    setParcelas((arr) => {
+      if (arr.length === 0) return arr;
+      const total = totalParam ?? arr.reduce((a, p) => a + p.valor, 0);
+      if (total <= 0) return arr;
+      const each = Math.round((total / arr.length) * 100) / 100;
+      const last = Math.round((total - each * (arr.length - 1)) * 100) / 100;
+      return arr.map((p, i) => ({ ...p, valor: i === arr.length - 1 ? last : each }));
+    });
+  };
 
   // ---- Projetos vinculados (cadastrados junto com o contrato) ----
   type OrcMaterial = { id: string; itemId: string; qtd: number; unit: number };
@@ -725,10 +753,16 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const limpar = () => {
-    setForm({ dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao" });
+    setForm({
+      dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao",
+      modulosContrato: "", potenciaContrato: "550",
+      inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+    });
     setCli(emptyCliente);
     setProjs([emptyProj()]);
     setActiveProj(0);
+    setParcelas([novaParcela()]);
+    setActiveTab("cliente");
   };
 
   const submit = () => {
@@ -753,12 +787,15 @@ function CadastrarContratoTab({
       kwp: kwpTotal,
       status: "Gerado",
       data: form.dataCadastro || today,
-      pagamento: "À definir",
+      pagamento: parcelas.map((p) => p.formaPagamento).join(" / "),
       banco: "",
       modulos: totalModulos,
       obs: "",
-      potencia: Number(principal.potenciaModuloW) || 0,
-      inv1: principal.inv1, inv2: principal.inv2, inv3: principal.inv3,
+      potencia: Number(form.potenciaContrato) || Number(principal.potenciaModuloW) || 0,
+      inv1: form.inv1 || principal.inv1,
+      inv2: form.inv2 || principal.inv2,
+      inv3: form.inv3 || principal.inv3,
+      inv4: form.inv4, inv5: form.inv5, inv6: form.inv6,
       parametro: parametroFmt,
       dataCadastro: form.dataCadastro || today,
       dataAssinatura: form.dataAssinatura,
@@ -766,6 +803,7 @@ function CadastrarContratoTab({
       comissaoValor,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [],
+      parcelasPagto: parcelas,
       auditoria: [{
         id: `A-${Date.now()}`, data: new Date().toISOString(),
         usuario: "Operador", campo: "criação", de: "", para: novoId,
@@ -832,6 +870,41 @@ function CadastrarContratoTab({
     });
     if (orcLancs.length > 0) appendLancamentos(orcLancs);
 
+    // 3º criar lançamentos "A receber" — cada parcela rateada por projeto (peso pelo kWp)
+    const recLancs: import("@/lib/financeiro-store").Lancamento[] = [];
+    if (form.financiamento !== "sim" && parcelas.length > 0 && kwpTotal > 0) {
+      parcelas.forEach((parc, pi) => {
+        projs.forEach((p, i) => {
+          const kwpProj = ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000;
+          const peso = kwpProj / kwpTotal;
+          if (peso <= 0) return;
+          const valorRateado = Math.round(parc.valor * peso * 100) / 100;
+          if (valorRateado <= 0) return;
+          const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
+          recLancs.push({
+            id: `L-REC-${Date.now()}-${pi}-${i}`,
+            data: parc.dataVencimento,
+            descricao: `Parc ${pi + 1}/${parcelas.length} · ${parc.formaPagamento} · ${projetoId} · ${cli.nome.trim()}`,
+            tipo: "Entrada",
+            valor: valorRateado,
+            camada: "A realizar",
+            natureza: "Recebimento de cliente",
+            centroCusto: "Comercial",
+            obra: projetoId,
+            empresa: "Meta Sun",
+            filial: "Manaus",
+            contrato: novoId,
+            cliente: cli.nome.trim(),
+            formaPagamento: parc.formaPagamento,
+            parcelaLabel: `${pi + 1}/${parcelas.length}`,
+            competencia: parc.competencia,
+            dataEmissao: parc.dataEmissao,
+          });
+        });
+      });
+    }
+    if (recLancs.length > 0) appendLancamentos(recLancs);
+
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
@@ -845,6 +918,20 @@ function CadastrarContratoTab({
   };
 
   const [openForm, setOpenForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"cliente" | "contrato" | "projetos">("cliente");
+
+  // ---- Validações de consistência projetos ↔ contrato ----
+  const totalModulosProjs = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
+  const modulosContratoNum = Number(form.modulosContrato) || 0;
+  const totalParcelas = parcelas.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+  const inversoresContrato = [form.inv1, form.inv2, form.inv3, form.inv4, form.inv5, form.inv6]
+    .map((s) => s.trim()).filter(Boolean);
+  const inversoresProjs = projs.flatMap((p) => [p.inv1, p.inv2, p.inv3]).map((s) => s.trim()).filter(Boolean);
+  const inversoresOrfaos = inversoresProjs.filter((iv) => !inversoresContrato.includes(iv));
+  const erroModulos = modulosContratoNum > 0 && totalModulosProjs !== modulosContratoNum;
+  const erroValor = valorNum > 0 && Math.abs(totalParcelas - valorNum) > 0.5;
+  const semProjeto = projs.length === 0 || projs.every((p) => !Number(p.modulos));
+  const podeCadastrar = !aprovacao && !erroModulos && !erroValor && !semProjeto && inversoresOrfaos.length === 0;
 
   return (
     <div className="space-y-4">
@@ -1070,7 +1157,93 @@ function CadastrarContratoTab({
               </SelectContent>
             </Select>
           </div>
-        </div>
+          </div>
+
+          {/* ===== Dados do contrato — totais técnicos + parcelas ===== */}
+          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3 space-y-4">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Dados do contrato</div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>Qtd módulos (contrato)</Label>
+                <Input type="number" value={form.modulosContrato} onChange={(e) => setForm({ ...form, modulosContrato: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
+                <Input type="number" value={form.potenciaContrato} onChange={(e) => setForm({ ...form, potenciaContrato: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>kWp esperado</Label>
+                <Input value={((Number(form.modulosContrato) || 0) * (Number(form.potenciaContrato) || 0) / 1000).toFixed(2)} readOnly className="bg-muted font-mono" />
+              </div>
+              {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, idx) => (
+                <div key={k} className="space-y-1.5"><Label>Inversor {idx + 1}</Label>
+                  <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={idx === 0 ? "Modelo / potência" : "Opcional"} />
+                </div>
+              ))}
+            </div>
+
+            {/* Parcelas */}
+            <div className="rounded-md border border-border bg-background p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
+                </div>
+              </div>
+              <Table>
+                <TableHeader><TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10">#</TableHead>
+                  <TableHead>Emissão</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Competência</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead className="text-right">Valor (R$)</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {parcelas.map((p, i) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{i + 1}</TableCell>
+                      <TableCell><Input type="date" className="h-8" value={p.dataEmissao} onChange={(e) => setParc(p.id, { dataEmissao: e.target.value })} /></TableCell>
+                      <TableCell><Input type="date" className="h-8" value={p.dataVencimento} onChange={(e) => setParc(p.id, { dataVencimento: e.target.value })} /></TableCell>
+                      <TableCell><Input type="month" className="h-8" value={p.competencia} onChange={(e) => setParc(p.id, { competencia: e.target.value })} /></TableCell>
+                      <TableCell>
+                        <Select value={p.formaPagamento} onValueChange={(v) => setParc(p.id, { formaPagamento: v as FormaPagamento })}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                              <SelectItem key={f} value={f}>{f}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input type="number" className="h-8 text-right" value={p.valor} onChange={(e) => setParc(p.id, { valor: Number(e.target.value) || 0 })} />
+                      </TableCell>
+                      <TableCell>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => delParc(p.id)} disabled={parcelas.length === 1}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="mt-2 flex items-center justify-end gap-3 text-xs">
+                <span>Total parcelas: <b className="font-mono">{fmtBRL(totalParcelas)}</b></span>
+                <span className={`font-mono ${erroValor ? "text-destructive" : "text-muted-foreground"}`}>
+                  {erroValor ? `≠ valor venda (${fmtBRL(valorNum)})` : valorNum > 0 ? "✓ bate com valor da venda" : ""}
+                </span>
+              </div>
+            </div>
+
+            {/* Banner validação */}
+            {(erroModulos || erroValor || semProjeto || inversoresOrfaos.length > 0) && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive space-y-0.5">
+                {semProjeto && <div>• Cadastre ao menos 1 projeto com módulos.</div>}
+                {erroModulos && <div>• Soma de módulos dos projetos ({totalModulosProjs}) ≠ módulos do contrato ({modulosContratoNum}).</div>}
+                {erroValor && <div>• Soma das parcelas ({fmtBRL(totalParcelas)}) ≠ valor da venda ({fmtBRL(valorNum)}).</div>}
+                {inversoresOrfaos.length > 0 && <div>• Inversores nos projetos não constam no contrato: {inversoresOrfaos.join(", ")}.</div>}
+              </div>
+            )}
+          </div>
 
 
         {parametroNum > 0 && (

@@ -7,18 +7,25 @@ export type Recorrencia = "Única" | "Mensal" | "Quinzenal" | "Semanal" | "Anual
 
 export type Lancamento = {
   id: string;
-  data: string;            // YYYY-MM-DD
+  data: string;            // YYYY-MM-DD (vencimento)
   descricao: string;
   tipo: Tipo;
   valor: number;
   camada: Camada;
   natureza: string;        // ex: "Material", "Aluguel", "Folha"
   centroCusto: string;     // ex: "Administrativo", "OB-0231"
-  obra?: string;           // vínculo opcional com obra
-  empresa: string;         // ex: "Meta Sun"
-  filial: string;          // ex: "Manaus"
+  obra?: string;           // vínculo opcional com obra/projeto
+  empresa: string;
+  filial: string;
   responsavel?: string;
   obs?: string;
+  // Novos vínculos para "A receber" detalhado
+  contrato?: string;       // ex. 088/2026
+  cliente?: string;        // nome do cliente
+  formaPagamento?: string; // Pix, Boleto, Cartão, etc.
+  parcelaLabel?: string;   // ex. "1/3"
+  competencia?: string;    // YYYY-MM
+  dataEmissao?: string;    // YYYY-MM-DD
 };
 
 export type DespesaRecorrente = {
@@ -150,6 +157,33 @@ export function appendLancamentos(novos: Lancamento[]) {
     const cur: Lancamento[] = raw ? JSON.parse(raw) : seedLanc;
     localStorage.setItem(LS_LANC, JSON.stringify([...novos, ...cur]));
   } catch {}
+}
+
+/** Lê lançamentos do LocalStorage (sem hook). */
+export function readLancamentos(): Lancamento[] {
+  if (typeof window === "undefined") return seedLanc;
+  try {
+    const raw = localStorage.getItem(LS_LANC);
+    return raw ? JSON.parse(raw) : seedLanc;
+  } catch { return seedLanc; }
+}
+
+/** Remove todos os lançamentos vinculados a um contrato (libera edição). */
+export function removeLancamentosDoContrato(contratoId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = readLancamentos();
+    const next = cur.filter((l) => l.contrato !== contratoId && !(l.obra ?? "").startsWith(`${contratoId}-`));
+    localStorage.setItem(LS_LANC, JSON.stringify(next));
+  } catch {}
+}
+
+/** Existe lançamento Realizado/Confirmado vinculado ao contrato? */
+export function temLancamentoConcretizado(contratoId: string): boolean {
+  return readLancamentos().some((l) =>
+    (l.contrato === contratoId || (l.obra ?? "").startsWith(`${contratoId}-`)) &&
+    (l.camada === "Realizado" || l.camada === "Confirmado")
+  );
 }
 
 export const fmtBRLPrecise = (v: number) =>

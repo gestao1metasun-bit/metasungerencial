@@ -640,12 +640,53 @@ function CadastrarContratoTab({
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   };
   const [form, setForm] = useState({
-    dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "",
-    inv1: "", inv2: "", inv3: "",
+    dataCadastro: today, dataAssinatura: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
+
+  // ---- Projetos vinculados (cadastrados junto com o contrato) ----
+  type ProjetoDraft = {
+    tipo: string; cep: string; rua: string; numero: string; bairro: string; complemento: string; cidade: string; uf: string;
+    modulos: string; potenciaModuloW: string; inv1: string; inv2: string; inv3: string; equipe: string;
+    usarEnderecoCliente: boolean;
+  };
+  const emptyProj = (): ProjetoDraft => ({
+    tipo: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+    modulos: "", potenciaModuloW: "550", inv1: "", inv2: "", inv3: "", equipe: "",
+    usarEnderecoCliente: true,
+  });
+  const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
+  const [activeProj, setActiveProj] = useState(0);
+  const [projCepLoading, setProjCepLoading] = useState<number | null>(null);
+
+  const setProjField = (idx: number, k: keyof ProjetoDraft, v: string | boolean) =>
+    setProjs((arr) => arr.map((p, i) => (i === idx ? { ...p, [k]: v } : p)));
+
+  const lookupProjCEP = async (idx: number, cep: string) => {
+    setProjField(idx, "cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    setProjCepLoading(idx);
+    const r = await buscarCEP(cep);
+    setProjCepLoading(null);
+    if (r) {
+      setProjs((arr) => arr.map((p, i) => i === idx
+        ? { ...p, cep: r.cep ?? p.cep, rua: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "", complemento: r.complemento ?? "" }
+        : p));
+      toast.success("Endereço do projeto preenchido pelo CEP");
+    } else { toast.error("CEP não encontrado"); }
+  };
+
+  const addProj = () => {
+    setProjs((arr) => [...arr, { ...emptyProj(), tipo: `Projeto ${arr.length + 1}` }]);
+    setActiveProj(projs.length);
+  };
+  const delProj = (idx: number) => {
+    if (projs.length === 1) { toast.error("É necessário ao menos 1 projeto"); return; }
+    setProjs((arr) => arr.filter((_, i) => i !== idx));
+    setActiveProj(0);
+  };
 
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
 
@@ -663,10 +704,10 @@ function CadastrarContratoTab({
     }
   };
 
-  // Cálculos automáticos
-  const modulosNum = Number(form.modulos) || 0;
-  const potenciaWp = Number(form.potencia) || 0;
-  const kwpTotal = (modulosNum * potenciaWp) / 1000;
+  // Cálculos automáticos — kWp total = soma dos kWp de todos os projetos
+  const projsKwp = projs.map((p) => ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000);
+  const kwpTotal = projsKwp.reduce((a, b) => a + b, 0);
+  const totalModulos = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
   const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
@@ -674,8 +715,10 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const limpar = () => {
-    setForm({ dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
+    setForm({ dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao" });
     setCli(emptyCliente);
+    setProjs([emptyProj()]);
+    setActiveProj(0);
   };
 
   const submit = () => {
@@ -683,8 +726,15 @@ function CadastrarContratoTab({
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
+    for (let i = 0; i < projs.length; i++) {
+      const p = projs[i];
+      if (!p.tipo.trim()) { toast.error(`Projeto ${i + 1}: informe o tipo`); return; }
+      if (!Number(p.modulos)) { toast.error(`Projeto ${i + 1}: informe a qtd de módulos`); return; }
+    }
 
     const novoId = nextContratoId(contratos);
+    // 1º inversor / módulos do projeto principal ficam também no contrato (compatibilidade)
+    const principal = projs[0];
     const novo: Contrato = {
       id: novoId,
       cliente: cli.nome.trim(),
@@ -695,10 +745,10 @@ function CadastrarContratoTab({
       data: form.dataCadastro || today,
       pagamento: "À definir",
       banco: "",
-      modulos: modulosNum,
+      modulos: totalModulos,
       obs: "",
-      potencia: potenciaWp,
-      inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
+      potencia: Number(principal.potenciaModuloW) || 0,
+      inv1: principal.inv1, inv2: principal.inv2, inv3: principal.inv3,
       parametro: parametroFmt,
       dataCadastro: form.dataCadastro || today,
       dataAssinatura: form.dataAssinatura,
@@ -712,14 +762,44 @@ function CadastrarContratoTab({
       }],
     };
     upsertContrato(novo);
+
+    // 2º criar projetos vinculados
+    projs.forEach((p, i) => {
+      const mods = Number(p.modulos) || 0;
+      const potW = Number(p.potenciaModuloW) || 0;
+      const useCli = p.usarEnderecoCliente;
+      addProjeto(novoId, {
+        tipo: p.tipo || `Projeto ${i + 1}`,
+        endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
+        numero: useCli ? cli.numero : p.numero,
+        bairro: useCli ? cli.bairro : p.bairro,
+        cep: useCli ? cli.cep : p.cep,
+        cidade: useCli ? cli.cidade : p.cidade,
+        uf: useCli ? cli.uf : p.uf,
+        modulos: mods,
+        potenciaModuloW: potW,
+        kwp: (mods * potW) / 1000,
+        inversor: p.inv1,
+        inv2: p.inv2,
+        inv3: p.inv3,
+        equipe: p.equipe,
+        status: "Em projeto/aprovação",
+        inicio: today,
+        previsto: "",
+        obs: "",
+        cronograma: "",
+        enviadoEngenharia: false,
+      });
+    });
+
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
         valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
       });
-      toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
+      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s) · enviado para Pendências de Financiamento`);
     } else {
-      toast.success(`Contrato ${novoId} cadastrado · cliente registrado`);
+      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s)`);
     }
     limpar();
   };
@@ -806,24 +886,104 @@ function CadastrarContratoTab({
             </div>
           </div>
 
-          <div className="space-y-1.5"><Label>Qtd módulos</Label>
-            <Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: e.target.value })} />
-          </div>
-          <div className="space-y-1.5"><Label>Potência por módulo (W)</Label>
-            <Input type="number" step="1" value={form.potencia} onChange={(e) => setForm({ ...form, potencia: e.target.value })} placeholder="Ex.: 620" />
-          </div>
-          <div className="space-y-1.5"><Label>kWp total (auto)</Label>
-            <Input value={kwpTotal ? kwpTotal.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
-          </div>
+          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                <Layers className="h-3.5 w-3.5" /> Projetos do contrato ({projs.length})
+                <span className="ml-2 font-mono text-primary">kWp total: {kwpTotal.toFixed(2)}</span>
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={addProj}>
+                <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar projeto
+              </Button>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {projs.map((p, i) => (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() => setActiveProj(i)}
+                  className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${activeProj === i ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"}`}
+                >
+                  {p.tipo || `Projeto ${i + 1}`}
+                </button>
+              ))}
+            </div>
+            {projs.map((p, i) => i !== activeProj ? null : (
+              <div key={i} className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-1.5 md:col-span-2"><Label>Tipo / Nome do projeto</Label>
+                  <Input value={p.tipo} onChange={(e) => setProjField(i, "tipo", e.target.value)} placeholder={`Projeto ${i + 1} — ex.: Residencial telhado`} />
+                </div>
+                <div className="flex items-end justify-end">
+                  {projs.length > 1 && (
+                    <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => delProj(i)}>
+                      <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
+                    </Button>
+                  )}
+                </div>
 
-          <div className="space-y-1.5"><Label>Inversor 1</Label>
-            <Input value={form.inv1} onChange={(e) => setForm({ ...form, inv1: e.target.value })} placeholder="Modelo / potência" />
-          </div>
-          <div className="space-y-1.5"><Label>Inversor 2</Label>
-            <Input value={form.inv2} onChange={(e) => setForm({ ...form, inv2: e.target.value })} placeholder="Opcional" />
-          </div>
-          <div className="space-y-1.5"><Label>Inversor 3</Label>
-            <Input value={form.inv3} onChange={(e) => setForm({ ...form, inv3: e.target.value })} placeholder="Opcional" />
+                <div className="md:col-span-3 flex items-center gap-2 text-xs">
+                  <input
+                    id={`useCli-${i}`}
+                    type="checkbox"
+                    checked={p.usarEnderecoCliente}
+                    onChange={(e) => setProjField(i, "usarEnderecoCliente", e.target.checked)}
+                  />
+                  <label htmlFor={`useCli-${i}`} className="cursor-pointer text-muted-foreground">
+                    <MapPin className="inline h-3 w-3" /> Usar endereço do cliente para este projeto
+                  </label>
+                </div>
+
+                {!p.usarEnderecoCliente && (
+                  <>
+                    <div className="space-y-1.5"><Label>CEP {projCepLoading === i && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                      <Input value={p.cep} onChange={(e) => lookupProjCEP(i, e.target.value)} placeholder="69000-000" maxLength={10} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                      <Input value={p.rua} onChange={(e) => setProjField(i, "rua", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Número</Label>
+                      <Input value={p.numero} onChange={(e) => setProjField(i, "numero", e.target.value)} maxLength={10} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Bairro</Label>
+                      <Input value={p.bairro} onChange={(e) => setProjField(i, "bairro", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Complemento</Label>
+                      <Input value={p.complemento} onChange={(e) => setProjField(i, "complemento", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Cidade</Label>
+                      <Input value={p.cidade} onChange={(e) => setProjField(i, "cidade", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5"><Label>UF</Label>
+                      <Input value={p.uf} onChange={(e) => setProjField(i, "uf", e.target.value.toUpperCase())} maxLength={2} />
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-1.5"><Label>Qtd módulos</Label>
+                  <Input type="number" value={p.modulos} onChange={(e) => setProjField(i, "modulos", e.target.value)} />
+                </div>
+                <div className="space-y-1.5"><Label>Potência/módulo (W)</Label>
+                  <Input type="number" step="1" value={p.potenciaModuloW} onChange={(e) => setProjField(i, "potenciaModuloW", e.target.value)} placeholder="Ex.: 620" />
+                </div>
+                <div className="space-y-1.5"><Label>kWp do projeto (auto)</Label>
+                  <Input value={projsKwp[i] ? projsKwp[i].toFixed(2) : ""} readOnly className="bg-muted font-mono" />
+                </div>
+
+                <div className="space-y-1.5"><Label>Inversor 1</Label>
+                  <Input value={p.inv1} onChange={(e) => setProjField(i, "inv1", e.target.value)} placeholder="Modelo / potência" />
+                </div>
+                <div className="space-y-1.5"><Label>Inversor 2</Label>
+                  <Input value={p.inv2} onChange={(e) => setProjField(i, "inv2", e.target.value)} placeholder="Opcional" />
+                </div>
+                <div className="space-y-1.5"><Label>Inversor 3</Label>
+                  <Input value={p.inv3} onChange={(e) => setProjField(i, "inv3", e.target.value)} placeholder="Opcional" />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-3"><Label>Equipe (opcional)</Label>
+                  <Input value={p.equipe} onChange={(e) => setProjField(i, "equipe", e.target.value)} placeholder="Equipe responsável" />
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>

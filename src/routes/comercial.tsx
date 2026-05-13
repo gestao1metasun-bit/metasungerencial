@@ -1614,44 +1614,45 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
           </TabsContent>
 
           <TabsContent value="cliente" className="mt-4">
+            <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+              <b className="text-primary">Visualização somente.</b> Os dados do cliente vinculado ao contrato não podem ser editados aqui. Para alterar, acesse <b>Cadastros &gt; Clientes</b> — a alteração será refletida em todos os contratos vinculados.
+            </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5 md:col-span-2"><Label>Nome</Label>
-                <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} />
+                <Input value={cli.nome} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} inputMode="numeric" maxLength={18} />
-                {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
+                <Input value={cli.doc} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Telefone</Label>
-                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
-                {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
+                <Input value={cli.telefone} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Telefone 2</Label>
-                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
+                <Input value={cli.telefone2 ?? ""} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>E-mail</Label>
-                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+                <Input type="email" value={cli.email} disabled className="bg-muted" />
               </div>
-              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
-                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
+              <div className="space-y-1.5"><Label>CEP</Label>
+                <Input value={cli.cep} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+                <Input value={cli.rua} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Número</Label>
-                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+                <Input value={cli.numero} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Bairro</Label>
-                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+                <Input value={cli.bairro} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Complemento</Label>
-                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+                <Input value={cli.complemento} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>Cidade</Label>
-                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+                <Input value={cli.cidade} disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5"><Label>UF</Label>
-                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+                <Input value={cli.uf} disabled className="bg-muted" />
               </div>
             </div>
           </TabsContent>
@@ -1693,7 +1694,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
 
         <DialogFooter className="mt-5">
           <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
-          {(tab === "dados" || tab === "cliente") && (
+          {tab === "dados" && (
             <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar alterações</Button>
           )}
         </DialogFooter>
@@ -1988,6 +1989,10 @@ function ProjetoEditCard({
   };
 
   const salvar = () => {
+    if (projeto.aprovado) {
+      toast.error("Este projeto já foi aprovado e possui vínculos gerados. Para editar, remova primeiro os lançamentos financeiros e registros de Engenharia vinculados.");
+      return;
+    }
     if (!d.endereco?.trim()) { toast.error(`Projeto ${index + 1}: informe o endereço`); return; }
     if (!(Number(d.valor) > 0)) { toast.error(`Projeto ${index + 1}: informe o valor`); return; }
     const valorContrato = Number(contrato.valor) || 0;
@@ -2019,21 +2024,40 @@ function ProjetoEditCard({
           {!projeto.aprovado && contrato.status === "Aprovado" && (
             <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
               const faltam: string[] = [];
-              if (!(Number(projeto.valor) > 0)) faltam.push("valor");
+              if (!(Number(projeto.valor) > 0)) faltam.push("valor do projeto");
               if (!(Number(projeto.modulos) > 0)) faltam.push("módulos");
               if (!(Number(projeto.kwp) > 0)) faltam.push("potência (kWp)");
               if (!projeto.endereco?.trim()) faltam.push("endereço");
               if (!projeto.status?.trim()) faltam.push("status");
-              if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
+              const hasInvP = (x?: string) => { const t=(x??"").trim(); return t!=="" && t!=="0" && Number(t)!==0; };
+              if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP))
+                faltam.push("ao menos 1 inversor");
+              if (faltam.length) { toast.error(`Não é possível aprovar. Faltam: ${faltam.join(", ")}`); return; }
               const comp = composicaoSomaOk(contrato);
-              if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}).`); return; }
-              if (!window.confirm(`Aprovar projeto ${projeto.id}?\nApós aprovado, o financeiro pode ser gerado proporcionalmente em Pedidos de venda.`)) return;
+              if (!comp.ok) {
+                toast.error("Não é possível aprovar. O contrato/projeto ainda não possui orçamento/composição financeira válida.");
+                return;
+              }
+              const valorContrato = Number(contrato.valor) || 0;
+              const somaProjs = (contrato.projetos ?? []).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+              if (valorContrato > 0 && somaProjs - valorContrato > 0.5) {
+                toast.error(`Projetos não conciliados (soma ${fmtBRL(somaProjs)} ≠ contrato ${fmtBRL(valorContrato)}).`);
+                return;
+              }
+              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nSerá gerado automaticamente:\n• Contas a receber proporcionais\n• Card na Engenharia\n\nApós aprovado, a edição será bloqueada — exigindo remoção dos vínculos para alterar.`)) return;
               aprovarProjeto(contrato.id, projeto.id);
-              toast.success(`Projeto ${projeto.id} aprovado · pronto para gerar financeiro`);
+              const novos = calcularLancamentosProjeto(contrato, projeto);
+              if (novos.length > 0) appendLancamentos(novos as any);
+              updateProjeto(contrato.id, projeto.id, {
+                financeiroGerado: true,
+                dataGeracaoFinanceiro: new Date().toISOString(),
+                usuarioGeracao: "Operador",
+              });
+              toast.success(`Projeto ${projeto.id} aprovado · ${novos.length} lançamento(s) no Financeiro · enviado à Engenharia`);
             }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
           )}
           {projeto.aprovado && (
-            <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
+            <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO · EDIÇÃO BLOQUEADA</span>
           )}
           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
             if (!window.confirm(`Remover ${projeto.id}?`)) return;
@@ -2043,6 +2067,12 @@ function ProjetoEditCard({
           }}><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
       </div>
+      {projeto.aprovado && (
+        <div className="mb-3 rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs text-success">
+          <b>Projeto aprovado · edição bloqueada.</b> Para alterar dados deste projeto, remova primeiro os lançamentos financeiros vinculados (em Pedidos de venda &gt; Financeiro do projeto) e os registros de Engenharia. Apenas Admin Master pode reverter, com auditoria.
+        </div>
+      )}
+      <fieldset disabled={projeto.aprovado} className="contents">
       <div className="grid gap-3 md:grid-cols-3">
         <div className="space-y-1.5"><Label>Tipo do projeto</Label>
           <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} />
@@ -2110,11 +2140,12 @@ function ProjetoEditCard({
           <Textarea value={d.obs} onChange={(e) => set("obs", e.target.value)} />
         </div>
       </div>
+      </fieldset>
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto é configurado em <b>Pedidos de venda</b> (após aprovação).
+          <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto é gerado automaticamente ao aprovar (rateio proporcional pela composição do contrato).
         </div>
-        <Button className="bg-primary text-primary-foreground" onClick={salvar} disabled={!dirty}>
+        <Button className="bg-primary text-primary-foreground" onClick={salvar} disabled={!dirty || projeto.aprovado}>
           Salvar Projeto {index + 1}
         </Button>
       </div>
@@ -2158,10 +2189,14 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const totalKwpCt = Number(contrato.kwp) || 0;
   const bateKwp = totalKwpCt === 0 || Math.abs(somaKwp - totalKwpCt) <= 0.05;
 
+  const hasInv = (x?: string) => {
+    const t = (x ?? "").trim();
+    return t !== "" && t !== "0" && Number(t) !== 0;
+  };
   const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3, contrato.inv4, contrato.inv5, contrato.inv6]
-    .filter((x) => x?.trim()).length;
+    .filter(hasInv).length;
   const invsProjetos = projetos.reduce(
-    (s, p) => s + [p.inversor, p.inv2, p.inv3, p.inv4, p.inv5, p.inv6].filter((x) => x?.trim()).length, 0,
+    (s, p) => s + [p.inversor, p.inv2, p.inv3, p.inv4, p.inv5, p.inv6].filter(hasInv).length, 0,
   );
   const bateInversores = invsContrato === 0 || invsProjetos >= invsContrato;
 

@@ -66,8 +66,7 @@ function ComercialPage() {
   const contratos = useContratos();
   const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
     const v = typeof next === "function" ? (next as any)(contratos) : next;
-    // grava a lista inteira via store
-    import("@/lib/contratos-store").then((m) => m.setContratos(v));
+    storeSetContratos(v);
   };
   const [propostas, setPropostas] = useState<Proposta[]>(propostasSeed);
   const [vendedoresList, setVendedoresList] = useState<Vendedor[]>(vendedoresSeed);

@@ -1168,18 +1168,47 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
   );
 
   const aprovar = () => {
-    // 1. marca contrato como Assinado
-    if (contrato.status !== "Assinado") {
-      updateContratoAudit(contrato.id, { status: "Assinado" });
+    // 1. marca contrato como Aprovado
+    if (contrato.status !== "Aprovado") {
+      updateContratoAudit(contrato.id, { status: "Aprovado" });
     }
-    // 2. libera projetos selecionados
+    // 2. libera projetos selecionados + gera financeiro de cada projeto a partir das suas parcelas
     const liberados = Object.entries(sel).filter(([, v]) => v).map(([id]) => id);
-    liberados.forEach((id) => updateProjeto(contrato.id, id, { enviadoEngenharia: true }));
+    const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
+    liberados.forEach((id) => {
+      const p = projetos.find((x) => x.id === id);
+      if (!p) return;
+      updateProjeto(contrato.id, id, { enviadoEngenharia: true, financeiroGerado: true });
+      const parc = p.parcelasPagto ?? [];
+      parc.forEach((pg, pi) => {
+        if (pg.valor <= 0) return;
+        novosLanc.push({
+          id: `L-REC-${Date.now()}-${id}-${pi}`,
+          data: pg.dataVencimento,
+          descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${id} · ${contrato.cliente}`,
+          tipo: "Entrada",
+          valor: pg.valor,
+          camada: "A realizar",
+          natureza: "Recebimento de cliente",
+          centroCusto: "Comercial",
+          obra: id,
+          empresa: "Meta Sun",
+          filial: "Manaus",
+          contrato: contrato.id,
+          cliente: contrato.cliente,
+          formaPagamento: pg.formaPagamento,
+          parcelaLabel: `${pi + 1}/${parc.length}`,
+          competencia: pg.competencia,
+          dataEmissao: pg.dataEmissao,
+        });
+      });
+    });
+    if (novosLanc.length > 0) appendLancamentos(novosLanc);
     if (projetos.length === 0) {
       toast.success(`Contrato ${contrato.id} aprovado · sem projetos vinculados`);
     } else {
       const pend = projetos.length - liberados.length;
-      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}`);
+      toast.success(`Contrato aprovado · ${liberados.length} projeto(s) à Engenharia${pend ? ` · ${pend} pendente(s)` : ""}${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
     }
     setOpen(false);
   };

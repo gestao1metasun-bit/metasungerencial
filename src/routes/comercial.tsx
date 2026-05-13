@@ -88,9 +88,6 @@ function ComercialPage() {
         <TabsContent value="indicadores" className="mt-5">
           <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
         </TabsContent>
-        <TabsContent value="negociacao" className="mt-5">
-          <NegociacaoTab contratos={contratos} setContratos={setContratos} propostas={propostas} setPropostas={setPropostas} />
-        </TabsContent>
         <TabsContent value="cad-proposta" className="mt-5">
           <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />
         </TabsContent>

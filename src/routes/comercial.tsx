@@ -2454,21 +2454,30 @@ function KpiSmall({
 // Pedidos de venda — financeiro de cada projeto liberado
 // ============================================================
 function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
-  const aprovados = contratos.filter((c) => c.status === "Aprovado");
-  const itens = aprovados.flatMap((c) =>
-    (c.projetos ?? []).filter((p) => p.enviadoEngenharia).map((p) => ({ contrato: c, projeto: p })),
-  );
+  const aprovados = contratos.filter((c) => c.status === "Aprovado" && (c.projetos ?? []).length > 0);
   const [filtro, setFiltro] = useState("");
-  const filtrados = itens.filter(({ contrato, projeto }) => {
+  const [editando, setEditando] = useState<Record<string, boolean>>({});
+  const toggleEdit = (id: string) => setEditando((s) => ({ ...s, [id]: !s[id] }));
+
+  const filtrados = aprovados.filter((c) => {
     const q = filtro.toLowerCase();
     if (!q) return true;
     return (
-      contrato.id.toLowerCase().includes(q) ||
-      contrato.cliente.toLowerCase().includes(q) ||
-      projeto.id.toLowerCase().includes(q) ||
-      (projeto.tipo ?? "").toLowerCase().includes(q)
+      c.id.toLowerCase().includes(q) ||
+      c.cliente.toLowerCase().includes(q) ||
+      (c.projetos ?? []).some((p) => p.id.toLowerCase().includes(q) || (p.tipo ?? "").toLowerCase().includes(q))
     );
   });
+
+  const totalProjetosLiberados = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => p.enviadoEngenharia).length, 0,
+  );
+  const totalFinGerado = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => p.financeiroGerado).length, 0,
+  );
+  const totalPendente = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => !p.financeiroGerado).length, 0,
+  );
 
   const gerarFinanceiro = (contrato: Contrato, projeto: ProjetoVinculado) => {
     const parc = projeto.parcelasPagto ?? [];
@@ -2479,7 +2488,6 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
       toast.error(`Soma das parcelas (${fmtBRL(totalParc)}) ≠ valor do projeto (${fmtBRL(valorProj)}).`);
       return;
     }
-    // remove lançamentos antigos deste projeto e re-gera
     try {
       const cur = readLancamentos();
       const sem = cur.filter((l) => l.obra !== projeto.id);
@@ -2515,45 +2523,96 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-base font-bold">Pedidos de venda</div>
-            <div className="text-xs text-muted-foreground">Configure forma de pagamento e parcelas de cada projeto liberado. Cada projeto gera seu próprio financeiro, mesmo dentro do mesmo contrato.</div>
+            <div className="text-xs text-muted-foreground">Cada contrato aprovado lista seus projetos. Cada projeto tem financeiro próprio (forma de pagamento, parcelas, emissão, vencimento, competência).</div>
           </div>
           <Input className="max-w-xs" placeholder="Buscar por contrato, cliente ou projeto…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
           <KpiSmall icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
-          <KpiSmall icon={Layers} label="Projetos liberados" value={String(itens.length)} />
-          <KpiSmall icon={CheckCircle2} label="Financeiro gerado" value={String(itens.filter((i) => i.projeto.financeiroGerado).length)} positive />
-          <KpiSmall icon={Clock} label="Pendentes de financeiro" value={String(itens.filter((i) => !i.projeto.financeiroGerado).length)} />
+          <KpiSmall icon={Layers} label="Projetos liberados" value={String(totalProjetosLiberados)} />
+          <KpiSmall icon={CheckCircle2} label="Financeiro gerado" value={String(totalFinGerado)} positive />
+          <KpiSmall icon={Clock} label="Pendentes de financeiro" value={String(totalPendente)} />
         </div>
       </Card>
 
       {filtrados.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Nenhum projeto liberado. Aprove um contrato e libere projetos para configurar aqui.
+          Nenhum contrato aprovado com projetos. Aprove um contrato e cadastre projetos.
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filtrados.map(({ contrato, projeto }) => (
-            <Card key={projeto.id} className="p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-mono text-primary font-bold">{projeto.id}</span>
-                  <span className="font-semibold">{projeto.tipo || "Projeto"}</span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">Contrato <b className="font-mono text-foreground">{contrato.id}</b></span>
-                  <span className="text-muted-foreground">·</span>
-                  <span>{contrato.cliente}</span>
-                  {projeto.financeiroGerado
-                    ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">FINANCEIRO GERADO</span>
-                    : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+        <div className="space-y-4">
+          {filtrados.map((contrato) => {
+            const projs = contrato.projetos ?? [];
+            const valorContrato = Number(contrato.valor) || 0;
+            const soma = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+            const diff = valorContrato - soma;
+            const bate = Math.abs(diff) <= 0.5;
+            return (
+              <Card key={contrato.id} className="p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Contrato {contrato.cliente}</span>
+                    <span className="font-mono text-primary">{contrato.id}</span>
+                    <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <span>Valor total: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
+                    <span>Soma projetos: <b className="font-mono">{fmtBRL(soma)}</b></span>
+                    <span className={bate ? "text-emerald-600" : "text-destructive"}>
+                      Diferença: <b className="font-mono">{fmtBRL(Math.abs(diff))}</b> {bate ? "✓" : (diff > 0 ? "(faltam)" : "(excesso — requer aprovação)")}
+                    </span>
+                  </div>
                 </div>
-                <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => gerarFinanceiro(contrato, projeto)}>
-                  <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar financeiro" : "Gerar financeiro"}
-                </Button>
-              </div>
-              <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
-            </Card>
-          ))}
+
+                <div className="mt-3 space-y-3">
+                  {projs.map((projeto) => {
+                    const open = !!editando[projeto.id];
+                    const totalParc = (projeto.parcelasPagto ?? []).reduce((a, p) => a + (Number(p.valor) || 0), 0);
+                    const valorProj = Number(projeto.valor) || 0;
+                    const parcOk = valorProj > 0 && Math.abs(totalParc - valorProj) <= 0.5;
+                    return (
+                      <div key={projeto.id} className="rounded-md border bg-card">
+                        <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+                          <div className="flex flex-wrap items-center gap-2 text-sm min-w-0">
+                            <Layers className="h-4 w-4 text-primary shrink-0" />
+                            <span className="font-mono text-primary font-bold">{projeto.id}</span>
+                            <span className="font-semibold truncate">{projeto.tipo || "Projeto"}</span>
+                            <span className="text-muted-foreground">·</span>
+                            <span>Valor: <b className="font-mono">{fmtBRL(valorProj)}</b></span>
+                            {projeto.enviadoEngenharia
+                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">LIBERADO</span>
+                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">NÃO LIBERADO</span>}
+                            {projeto.financeiroGerado
+                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">FIN. GERADO</span>
+                              : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN.</span>}
+                            {(projeto.parcelasPagto?.length ?? 0) > 0 && (
+                              <span className={`text-[10px] rounded px-2 py-0.5 font-bold ${parcOk ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"}`}>
+                                Parcelas {fmtBRL(totalParc)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => toggleEdit(projeto.id)}>
+                              <Pencil className="mr-1 h-3.5 w-3.5" /> {open ? "Fechar" : "Editar financeiro"}
+                            </Button>
+                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => gerarFinanceiro(contrato, projeto)}>
+                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar" : "Gerar"} financeiro
+                            </Button>
+                          </div>
+                        </div>
+                        {open && (
+                          <div className="border-t p-3">
+                            <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

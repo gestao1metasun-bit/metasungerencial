@@ -1319,7 +1319,20 @@ function CadastrarContratoTab({
                     {c.projetos?.length ?? 0}
                   </span>
                 </TableCell>
-                <TableCell><StatusBadge status={c.status} /></TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <StatusBadge status={c.status} />
+                    {c.status === "Aprovado" && (() => {
+                      const pend = (c.projetos ?? []).filter((p) => !p.aprovado || !p.financeiroGerado);
+                      if (pend.length === 0) return null;
+                      return (
+                        <span className="inline-flex w-fit items-center gap-1 rounded bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning" title="Aprove os pedidos na aba Pedidos de venda">
+                          <Clock className="h-3 w-3" /> {pend.length === 1 ? "Projeto pendente" : `${pend.length} projetos pendentes`}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     <ValidarContratoButton contrato={c} />
@@ -1862,7 +1875,7 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
   void tick;
 
   const regenerar = () => {
-    if (!projeto.aprovado) { toast.error("Aprove o projeto antes."); return; }
+    if (contrato.status !== "Aprovado") { toast.error("Contrato precisa estar aprovado."); return; }
     const comp = composicaoSomaOk(contrato);
     if (!comp.ok) { toast.error("Composição do contrato não fecha."); return; }
     if (!window.confirm("Regenerar lançamentos do projeto? Lançamentos existentes serão substituídos.")) return;
@@ -2842,14 +2855,24 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
     (s, c) => s + (c.projetos ?? []).filter((p) => !p.financeiroGerado).length, 0,
   );
 
-  const gerarFinanceiro = (contrato: Contrato, projeto: ProjetoVinculado) => {
-    if (!projeto.aprovado) { toast.error("Aprove o projeto antes de gerar o financeiro."); return; }
+  const aprovarPedido = (contrato: Contrato, projeto: ProjetoVinculado) => {
+    if (contrato.status !== "Aprovado") { toast.error("Contrato não está aprovado."); return; }
     const valorProj = Number(projeto.valor) || 0;
     if (valorProj <= 0) { toast.error("Defina o valor do projeto."); return; }
+    if (!projeto.endereco?.trim() || !projeto.cidade?.trim()) { toast.error("Endereço/cidade do projeto obrigatórios."); return; }
     const comp = composicaoSomaOk(contrato);
     if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}). Edite no contrato.`); return; }
     const novos = calcularLancamentosProjeto(contrato, projeto);
     if (novos.length === 0) { toast.error("Nada a gerar — verifique composição e valor do projeto."); return; }
+    // Aprova o projeto, libera para Engenharia e gera contas a receber
+    if (!projeto.aprovado) {
+      updateProjeto(contrato.id, projeto.id, {
+        aprovado: true,
+        dataAprovacao: new Date().toISOString(),
+        usuarioAprovacao: "Operador",
+        enviadoEngenharia: true,
+      });
+    }
     removeLancamentosDoProjeto(projeto.id);
     appendLancamentos(novos as any);
     updateProjeto(contrato.id, projeto.id, {
@@ -2857,7 +2880,7 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
       dataGeracaoFinanceiro: new Date().toISOString(),
       usuarioGeracao: "Operador",
     });
-    toast.success(`${novos.length} lançamento(s) gerado(s) por rateio · ${projeto.id}`);
+    toast.success(`Pedido aprovado · ${novos.length} lançamento(s) gerado(s) · projeto enviado à Engenharia`);
   };
 
   return (
@@ -2940,8 +2963,8 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                             <Button size="sm" variant="outline" onClick={() => toggleEdit(projeto.id)}>
                               <Pencil className="mr-1 h-3.5 w-3.5" /> {open ? "Fechar" : "Editar financeiro"}
                             </Button>
-                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => gerarFinanceiro(contrato, projeto)}>
-                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar" : "Gerar"} financeiro
+                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
+                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar pedido" : (projeto.aprovado ? "Gerar financeiro" : "Aprovar pedido")}
                             </Button>
                           </div>
                         </div>

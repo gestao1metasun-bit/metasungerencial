@@ -274,10 +274,17 @@ function ObrasAtivasTab({
   const list = obras
     .filter((o) => o.status !== "Finalizado")
     .filter((o) => equipe === "todas" || o.equipe === equipe)
-    .sort((a, b) => a.ordem - b.ordem);
+    .sort((a, b) => {
+      const r = (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99);
+      return r !== 0 ? r : a.ordem - b.ordem;
+    });
 
   const update = (id: string, patch: Partial<Obra>) => {
-    setObras(obras.map((o) => o.id === id ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao } : o));
+    const next = obras.map((o) => o.id === id
+      ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao }
+      : o);
+    const target = next.find((o) => o.id === id)!;
+    setObras(chainSchedule(next, target.equipe, target.status));
   };
   const remove = (id: string) => {
     setObras(obras.filter((o) => o.id !== id));
@@ -300,7 +307,7 @@ function ObrasAtivasTab({
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
             <TableHead className="w-12">#</TableHead>
-            <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
+            <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
@@ -309,16 +316,19 @@ function ObrasAtivasTab({
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => (
-              <TableRow key={o.id}>
+              <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
-                <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{o.contrato}</TableCell>
-                <TableCell className="text-center">{o.modulos}</TableCell>
-                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-                <TableCell className="text-xs">{o.inversor}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
+                <TableCell className="text-center">
+                  <Input type="number" defaultValue={o.modulos} className="h-7 w-16 text-center" onBlur={(e)=>update(o.id,{ modulos: Number(e.target.value) || 0, previsto: recalcPrevisto(o.inicio, o.equipe, Number(e.target.value) || 0) })} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Input type="number" step="0.1" defaultValue={o.potencia} className="h-7 w-20 text-right" onBlur={(e)=>update(o.id,{ potencia: Number(e.target.value) || 0 })} />
+                </TableCell>
+                <TableCell><Input defaultValue={o.inversor} className="h-7 w-28 text-xs" onBlur={(e)=>update(o.id,{ inversor: e.target.value })} /></TableCell>
+                <TableCell><Input defaultValue={o.inv2} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv2: e.target.value })} /></TableCell>
+                <TableCell><Input defaultValue={o.inv3} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv3: e.target.value })} /></TableCell>
                 <TableCell>
                   <Select value={o.telhadoTipo} onValueChange={(v) => update(o.id, { telhadoTipo: v })}>
                     <SelectTrigger className="h-7 w-32"><SelectValue /></SelectTrigger>
@@ -331,8 +341,8 @@ function ObrasAtivasTab({
                     <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-32" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
-                <TableCell className="text-muted-foreground text-xs">{o.previsto}</TableCell>
+                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-36" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
+                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell>
                   <Select value={o.status} onValueChange={(v) => update(o.id, { status: v })}>
                     <SelectTrigger className="h-7 w-44"><SelectValue /></SelectTrigger>
@@ -340,15 +350,17 @@ function ObrasAtivasTab({
                   </Select>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Finalizar" onClick={() => update(o.id, { status: "Finalizado" })}><CheckCircle2 className="h-3.5 w-3.5 text-success" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={15} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
           </TableBody>
         </Table>
+      </div>
+      <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
+        Não editável: <span className="font-semibold">#</span>, <span className="font-semibold">Cliente</span> e <span className="font-semibold">Contrato</span>. Linhas coloridas conforme status.
       </div>
     </Card>
   );

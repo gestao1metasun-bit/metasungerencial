@@ -1036,7 +1036,11 @@ function CadastrarContratoTab({
                 </TableCell>
                 <TableCell><StatusBadge status={c.status} /></TableCell>
                 <TableCell>
-                  <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                  <div className="flex items-center justify-end gap-1">
+                    <ValidarContratoButton contrato={c} />
+                    <AprovarContratoButton contrato={c} />
+                    <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

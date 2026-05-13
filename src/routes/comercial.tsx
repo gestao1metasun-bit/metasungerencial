@@ -38,6 +38,7 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
+  type ParcelaPagto, type FormaPagamento,
 } from "@/lib/contratos-store";
 import { Textarea } from "@/components/ui/textarea";
 

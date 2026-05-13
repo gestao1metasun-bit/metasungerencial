@@ -461,7 +461,7 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove, onEditInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onEditInicio: (id: string, inicio: string) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
@@ -473,7 +473,12 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground">{o.inicio} → <span className="font-medium text-foreground">{o.previsto}</span></div>
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <Input type="date" defaultValue={o.inicio} className="h-6 w-32 text-[11px]" onBlur={(e) => { if (e.target.value && e.target.value !== o.inicio) onEditInicio(o.id, e.target.value); }} />
+            <span>→</span>
+            <span className="font-medium text-foreground">{fmtBR(o.previsto)}</span>
+          </div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Início: {fmtBR(o.inicio)} · próximo herda +1d</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>

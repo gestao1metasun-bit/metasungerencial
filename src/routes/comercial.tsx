@@ -1694,7 +1694,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
 
         <DialogFooter className="mt-5">
           <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
-          {(tab === "dados" || tab === "cliente") && (
+          {tab === "dados" && (
             <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar alterações</Button>
           )}
         </DialogFooter>

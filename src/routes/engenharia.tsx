@@ -357,9 +357,30 @@ function ObrasAtivasTab({
 function recalcPrevisto(inicio: string, equipe: string, modulos: number): string {
   if (!inicio) return "";
   const dias = diasPrevistos(equipe, modulos);
-  const d = new Date(inicio);
+  const d = new Date(inicio + "T00:00:00");
   d.setDate(d.getDate() + dias);
   return d.toISOString().slice(0,10);
+}
+
+/** Recalcula a cadeia de datas para uma equipe+status: cada obra começa 1 dia após a previsão da anterior. */
+function chainSchedule(obras: Obra[], equipe: string, status: string): Obra[] {
+  const same = obras
+    .filter((o) => o.equipe === equipe && o.status === status)
+    .sort((a, b) => a.ordem - b.ordem);
+  if (same.length <= 1) return obras;
+  const patches = new Map<string, Partial<Obra>>();
+  let prevPrev = same[0].previsto;
+  for (let i = 1; i < same.length; i++) {
+    const cur = same[i];
+    const newInicio = prevPrev ? addDaysISO(prevPrev, 1) : cur.inicio;
+    const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
+    if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
+      patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
+    }
+    prevPrev = newPrev;
+  }
+  if (patches.size === 0) return obras;
+  return obras.map((o) => patches.has(o.id) ? { ...o, ...patches.get(o.id)! } : o);
 }
 
 /* ---------------- CRONOGRAMA ---------------- */

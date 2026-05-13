@@ -1071,8 +1071,7 @@ function CadastrarContratoTab({
     const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
     toast.success(`Contrato ${novo.id} cadastrado · status Em análise · clique em Validar para liberar a aprovação`);
-    limpar();
-    setOpenForm(false);
+    // Mantém modal aberto. Use Fechar/Cancelar para sair, ou continue editando outras abas.
   };
 
   return (

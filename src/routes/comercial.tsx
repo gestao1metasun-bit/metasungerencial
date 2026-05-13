@@ -825,68 +825,71 @@ function CadastrarContratoTab({
     };
     upsertContrato(novo);
 
-    // 2º criar projetos vinculados + lançamentos de orçado
+    const isAssinado = form.statusContrato === "Assinado";
+
+    // 2º criar projetos vinculados + lançamentos de orçado — APENAS se Assinado
     const orcLancs: import("@/lib/financeiro-store").Lancamento[] = [];
-    projs.forEach((p, i) => {
-      const mods = Number(p.modulos) || 0;
-      const potW = Number(p.potenciaModuloW) || 0;
-      const useCli = p.usarEnderecoCliente;
-      const orcadoNum = orcTotal(p);
-      const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
-      addProjeto(novoId, {
-        tipo: p.tipo || `Projeto ${i + 1}`,
-        endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
-        numero: useCli ? cli.numero : p.numero,
-        bairro: useCli ? cli.bairro : p.bairro,
-        cep: useCli ? cli.cep : p.cep,
-        cidade: useCli ? cli.cidade : p.cidade,
-        uf: useCli ? cli.uf : p.uf,
-        modulos: mods,
-        potenciaModuloW: potW,
-        kwp: (mods * potW) / 1000,
-        inversor: p.inv1,
-        inv2: p.inv2,
-        inv3: p.inv3,
-        equipe: p.equipe,
-        status: "Em projeto/aprovação",
-        inicio: today,
-        previsto: "",
-        obs: "",
-        cronograma: "",
-        enviadoEngenharia: false,
-        orcado: orcadoNum,
-      });
-      // 1 lançamento por linha (materiais e outros) — camada "Orçado futuro"
-      p.materiais.forEach((m, mi) => {
-        const item = estoqueItens.find((x) => x.id === m.itemId);
-        const valor = m.qtd * m.unit;
-        if (valor <= 0) return;
-        orcLancs.push({
-          id: `L-ORC-M-${Date.now()}-${i}-${mi}`,
-          data: today,
-          descricao: `Orçado · ${projetoId} · ${item?.produto ?? "Material"} (${m.qtd}x)`,
-          tipo: "Saída", valor, camada: "Orçado futuro",
-          natureza: "Material", centroCusto: "Engenharia/Operação",
-          obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
+    if (isAssinado) {
+      projs.forEach((p, i) => {
+        const mods = Number(p.modulos) || 0;
+        const potW = Number(p.potenciaModuloW) || 0;
+        const useCli = p.usarEnderecoCliente;
+        const orcadoNum = orcTotal(p);
+        const projetoId = `${novoId}-${String(i + 1).padStart(2, "0")}`;
+        addProjeto(novoId, {
+          tipo: p.tipo || `Projeto ${i + 1}`,
+          endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
+          numero: useCli ? cli.numero : p.numero,
+          bairro: useCli ? cli.bairro : p.bairro,
+          cep: useCli ? cli.cep : p.cep,
+          cidade: useCli ? cli.cidade : p.cidade,
+          uf: useCli ? cli.uf : p.uf,
+          modulos: mods,
+          potenciaModuloW: potW,
+          kwp: (mods * potW) / 1000,
+          inversor: p.inv1,
+          inv2: p.inv2,
+          inv3: p.inv3,
+          equipe: p.equipe,
+          status: "Em projeto/aprovação",
+          inicio: today,
+          previsto: "",
+          obs: "",
+          cronograma: "",
+          enviadoEngenharia: false,
+          orcado: orcadoNum,
+        });
+        p.materiais.forEach((m, mi) => {
+          const item = estoqueItens.find((x) => x.id === m.itemId);
+          const valor = m.qtd * m.unit;
+          if (valor <= 0) return;
+          orcLancs.push({
+            id: `L-ORC-M-${Date.now()}-${i}-${mi}`,
+            data: today,
+            descricao: `Orçado · ${projetoId} · ${item?.produto ?? "Material"} (${m.qtd}x)`,
+            tipo: "Saída", valor, camada: "Orçado futuro",
+            natureza: "Material", centroCusto: "Engenharia/Operação",
+            obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
+          });
+        });
+        p.outros.forEach((o, oi) => {
+          if (o.valor <= 0) return;
+          orcLancs.push({
+            id: `L-ORC-O-${Date.now()}-${i}-${oi}`,
+            data: today,
+            descricao: `Orçado · ${projetoId} · ${o.descricao || o.natureza}`,
+            tipo: "Saída", valor: o.valor, camada: "Orçado futuro",
+            natureza: o.natureza, centroCusto: "Engenharia/Operação",
+            obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
+          });
         });
       });
-      p.outros.forEach((o, oi) => {
-        if (o.valor <= 0) return;
-        orcLancs.push({
-          id: `L-ORC-O-${Date.now()}-${i}-${oi}`,
-          data: today,
-          descricao: `Orçado · ${projetoId} · ${o.descricao || o.natureza}`,
-          tipo: "Saída", valor: o.valor, camada: "Orçado futuro",
-          natureza: o.natureza, centroCusto: "Engenharia/Operação",
-          obra: projetoId, empresa: "Meta Sun", filial: "Manaus",
-        });
-      });
-    });
+    }
     if (orcLancs.length > 0) appendLancamentos(orcLancs);
 
-    // 3º criar lançamentos "A receber" — cada parcela rateada por projeto (peso pelo kWp)
+    // 3º "A receber" — apenas se Assinado e sem financiamento
     const recLancs: import("@/lib/financeiro-store").Lancamento[] = [];
-    if (form.financiamento !== "sim" && parcelas.length > 0 && kwpTotal > 0) {
+    if (isAssinado && form.financiamento !== "sim" && parcelas.length > 0 && kwpTotal > 0) {
       parcelas.forEach((parc, pi) => {
         projs.forEach((p, i) => {
           const kwpProj = ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000;
@@ -919,14 +922,16 @@ function CadastrarContratoTab({
     }
     if (recLancs.length > 0) appendLancamentos(recLancs);
 
-    if (form.financiamento === "sim") {
+    if (isAssinado && form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
         valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
       });
-      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s) · enviado para Pendências de Financiamento`);
+      toast.success(`Contrato ${novoId} assinado · ${projs.length} projeto(s) · enviado p/ Pendências de Financiamento`);
+    } else if (isAssinado) {
+      toast.success(`Contrato ${novoId} assinado · ${projs.length} projeto(s) · gerado financeiro e engenharia`);
     } else {
-      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s)`);
+      toast.success(`Contrato ${novoId} salvo como ${form.statusContrato} (sem gerar financeiro/engenharia)`);
     }
     limpar();
   };

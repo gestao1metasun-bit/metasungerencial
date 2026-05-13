@@ -1911,7 +1911,7 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
                   <Select value={l.formaPagamento ?? "Pix"} onValueChange={(v) => editLanc(l.id, { formaPagamento: v })}>
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                      {FORMAS_PAGAMENTO.map((f) => (
                         <SelectItem key={f} value={f}>{f}</SelectItem>
                       ))}
                     </SelectContent>

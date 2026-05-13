@@ -265,7 +265,7 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
     const docDig = onlyDigits(cli.doc);
     if (!(docDig.length === 11 || docDig.length === 14)) missing.push("CPF (11) ou CNPJ (14)");
     if (onlyDigits(cli.telefone).length !== 11) missing.push("Telefone (DDD + 9)");
-    if (!cli.email?.trim() || !/^.+@.+\..+$/.test(cli.email)) missing.push("E-mail");
+    if (cli.email?.trim() && !/^.+@.+\..+$/.test(cli.email)) missing.push("E-mail (formato inválido)");
     if (onlyDigits(cli.cep).length !== 8) missing.push("CEP");
     if (!cli.rua?.trim()) missing.push("Rua");
     if (!cli.numero?.trim()) missing.push("Número");

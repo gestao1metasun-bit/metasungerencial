@@ -686,6 +686,7 @@ function CadastrarContratoTab({
     valor: "", vendedor: "",
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+    pagamento: "", banco: "", obs: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
@@ -720,30 +721,26 @@ function CadastrarContratoTab({
       dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "",
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+      pagamento: "", banco: "", obs: "",
     });
     setCli(emptyCliente);
     setActiveTab("cliente");
   };
 
-  const submit = () => {
-    if (!cli.nome.trim()) { toast.error("Informe o nome do cliente"); return; }
-    if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
-    if (!valorNum) { toast.error("Informe o valor da venda"); return; }
-    if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
-
+  const buildContrato = (): Contrato => {
     const novoId = nextContratoId(contratos);
-    const novo: Contrato = {
+    return {
       id: novoId,
-      cliente: cli.nome.trim(),
+      cliente: cli.nome.trim() || "—",
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpEsperado,
-      status: "Pendente",
+      status: "Pendente de informações",
       data: form.dataCadastro || today,
-      pagamento: "",
-      banco: "",
+      pagamento: form.pagamento,
+      banco: form.banco,
       modulos: modulosNum,
-      obs: "",
+      obs: form.obs,
       potencia: potenciaNum,
       inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
       inv4: form.inv4, inv5: form.inv5, inv6: form.inv6,
@@ -760,13 +757,26 @@ function CadastrarContratoTab({
         usuario: "Operador", campo: "criação", de: "", para: novoId,
       }],
     };
+  };
+
+  // Validação ao vivo (para mostrar pendências e travar botão)
+  const previewContrato = buildContrato();
+  const validation = validateContratoCompleto(previewContrato);
+
+  const submit = () => {
+    if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
+    if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF/CNPJ inválido"); return; }
+    if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone inválido"); return; }
+    if (!validation.ok) {
+      toast.error(`Não foi possível salvar. Preencha: ${validation.missing.slice(0, 5).join(", ")}${validation.missing.length > 5 ? "…" : ""}`);
+      return;
+    }
+    const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
-    toast.success(`Contrato ${novoId} cadastrado como Pendente · edite no lápis para adicionar projetos e financeiro`);
+    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · clique em Validar para liberar a aprovação`);
     limpar();
     setOpenForm(false);
   };
-
-  const podeCadastrar = !aprovacao && !!cli.nome.trim() && !!form.vendedor && valorNum > 0;
 
   return (
     <div className="space-y-4">

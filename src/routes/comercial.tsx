@@ -751,7 +751,7 @@ function CadastrarContratoTab({
             <Input value={proximo} readOnly className="bg-muted font-mono" />
           </div>
           <div className="space-y-1.5"><Label>Data cadastro</Label>
-            <Input value={today} readOnly className="bg-muted" />
+            <Input type="date" value={form.dataCadastro} onChange={(e) => setForm({ ...form, dataCadastro: e.target.value })} />
           </div>
           <div className="space-y-1.5"><Label>Data assinatura</Label>
             <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />

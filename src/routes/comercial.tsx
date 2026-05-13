@@ -2832,9 +2832,10 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                 <div className="mt-3 space-y-3">
                   {projs.map((projeto) => {
                     const open = !!editando[projeto.id];
-                    const totalParc = (projeto.parcelasPagto ?? []).reduce((a, p) => a + (Number(p.valor) || 0), 0);
+                    const lancsProj = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
+                    const totalLanc = lancsProj.reduce((a, l) => a + (Number(l.valor) || 0), 0);
                     const valorProj = Number(projeto.valor) || 0;
-                    const parcOk = valorProj > 0 && Math.abs(totalParc - valorProj) <= 0.5;
+                    const lancOk = valorProj > 0 && Math.abs(totalLanc - valorProj) <= 0.5;
                     return (
                       <div key={projeto.id} className="rounded-md border bg-card">
                         <div className="flex flex-wrap items-center justify-between gap-2 p-3">
@@ -2844,15 +2845,15 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                             <span className="font-semibold truncate">{projeto.tipo || "Projeto"}</span>
                             <span className="text-muted-foreground">·</span>
                             <span>Valor: <b className="font-mono">{fmtBRL(valorProj)}</b></span>
-                            {projeto.enviadoEngenharia
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">LIBERADO</span>
-                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">NÃO LIBERADO</span>}
+                            {projeto.aprovado
+                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
+                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE APROVAÇÃO</span>}
                             {projeto.financeiroGerado
                               ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">FIN. GERADO</span>
                               : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN.</span>}
-                            {(projeto.parcelasPagto?.length ?? 0) > 0 && (
-                              <span className={`text-[10px] rounded px-2 py-0.5 font-bold ${parcOk ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"}`}>
-                                Parcelas {fmtBRL(totalParc)}
+                            {lancsProj.length > 0 && (
+                              <span className={`text-[10px] rounded px-2 py-0.5 font-bold ${lancOk ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/15 text-destructive"}`}>
+                                Lançamentos {fmtBRL(totalLanc)}
                               </span>
                             )}
                           </div>

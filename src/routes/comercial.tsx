@@ -1026,8 +1026,6 @@ function CadastrarContratoTab({
                 )}
               </div>
             )}
-              </div>
-            ))}
           </div>
 
           <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>

@@ -1522,6 +1522,7 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     obs: "",
     cronograma: "",
     enviadoEngenharia: false,
+    valor: 0,
   };
 }
 

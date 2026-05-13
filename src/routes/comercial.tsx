@@ -674,7 +674,7 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const limpar = () => {
-    setForm({ dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
+    setForm({ dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
     setCli(emptyCliente);
   };
 

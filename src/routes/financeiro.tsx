@@ -94,7 +94,7 @@ function FinanceiroPage() {
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 text-sm font-semibold">Projeção de caixa (próximos 30 dias)</div>
+              <div className="mb-3 text-sm font-semibold">Projeção de caixa</div>
               <ProjecaoCaixa lancs={lancs} />
             </Card>
             <Card className="p-5 bg-[image:var(--gradient-card)]">

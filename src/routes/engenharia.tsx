@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useContratos } from "@/lib/contratos-store";
 import {
   Plus, HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Trash2,
@@ -105,6 +106,7 @@ function EngenhariaPage() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
+          <TabsTrigger value="vinculados">Projetos de contratos</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
         <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} /></TabsContent>
@@ -113,6 +115,7 @@ function EngenhariaPage() {
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><FinalizadosTab obras={obras} setObras={setObras} /></TabsContent>
+        <TabsContent value="vinculados" className="mt-5"><ProjetosVinculadosTab /></TabsContent>
       </Tabs>
     </>
   );
@@ -953,6 +956,52 @@ function Row({ k, v }: { k: string; v: string }) {
     <div className="flex justify-between border-b border-border pb-2">
       <span className="text-muted-foreground">{k}</span>
       <span className="font-medium">{v}</span>
+    </div>
+  );
+}
+
+/* ---------------- PROJETOS VINCULADOS A CONTRATOS ---------------- */
+function ProjetosVinculadosTab() {
+  const contratos = useContratos();
+  const linhas = contratos.flatMap((c) => (c.projetos ?? []).map((p) => ({ ...p, contratoCliente: c.cliente })));
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="text-sm font-semibold">Projetos vinculados a contratos comerciais</div>
+        <div className="text-xs text-muted-foreground">Quando um contrato é desdobrado em vários projetos, cada um aparece aqui como obra independente, mantendo vínculo com o contrato original.</div>
+      </Card>
+      <Card>
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead>Projeto</TableHead>
+            <TableHead>Contrato</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Endereço</TableHead>
+            <TableHead className="text-right">Módulos</TableHead>
+            <TableHead className="text-right">kWp</TableHead>
+            <TableHead>Equipe</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Orçamento</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {linhas.length === 0 ? (
+              <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhum projeto vinculado. Cadastre projetos dentro do contrato em Comercial → editar contrato → aba Projetos.</TableCell></TableRow>
+            ) : linhas.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+                <TableCell className="font-mono text-xs">{p.contratoId}</TableCell>
+                <TableCell className="text-muted-foreground">{p.contratoCliente}</TableCell>
+                <TableCell className="text-sm">{p.endereco} <span className="text-muted-foreground">· {p.cidade}/{p.uf}</span></TableCell>
+                <TableCell className="text-right">{p.modulos}</TableCell>
+                <TableCell className="text-right">{p.kwp.toFixed(2)}</TableCell>
+                <TableCell>{p.equipe || "—"}</TableCell>
+                <TableCell><StatusBadge status={p.status} /></TableCell>
+                <TableCell className="text-right">{p.orcamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

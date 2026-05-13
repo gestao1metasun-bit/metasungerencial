@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
-  Zap, Sun, Filter, Activity, Award, Gauge,
+  Zap, Sun, Filter, Activity, Award, Gauge, Pencil, Layers, History, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -32,6 +32,12 @@ import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL,
 } from "@/lib/mock-data";
+import {
+  useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
+  addProjeto, updateProjeto, removeProjeto, buscarCEP,
+  type ContratoFull, type ClienteFull, type ProjetoVinculado,
+} from "@/lib/contratos-store";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),
@@ -40,19 +46,10 @@ export const Route = createFileRoute("/comercial")({
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
-type Contrato = (typeof contratosSeed)[number] & {
-  banco?: string; modulos?: number; obs?: string;
-  potencia?: number; inv1?: string; inv2?: string; inv3?: string; parametro?: string;
-  dataCadastro?: string; dataAssinatura?: string;
-  comissaoPct?: number; comissaoValor?: number;
-};
+type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];
 export type VolumeMes = { id: string; mes: string; ano: number; qtd: number; valor: number };
-
-function enrich(c: (typeof contratosSeed)[number]): Contrato {
-  return { ...c, banco: "BASA", modulos: Math.round(c.kwp * 2), obs: "" };
-}
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
@@ -66,7 +63,11 @@ const volumeSeed: VolumeMes[] = [
 
 function ComercialPage() {
   const [tab, setTab] = useState("dashboard");
-  const [contratos, setContratos] = useState<Contrato[]>(() => contratosSeed.map(enrich));
+  const contratos = useContratos();
+  const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
+    const v = typeof next === "function" ? (next as any)(contratos) : next;
+    storeSetContratos(v);
+  };
   const [propostas, setPropostas] = useState<Proposta[]>(propostasSeed);
   const [vendedoresList, setVendedoresList] = useState<Vendedor[]>(vendedoresSeed);
   const [volume, setVolume] = useState<VolumeMes[]>(volumeSeed);
@@ -634,24 +635,51 @@ function CadastrarContratoTab({
 }: { contratos: Contrato[]; setContratos: (c: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const today = new Date().toISOString().slice(0, 10);
   const proximo = nextContratoId(contratos);
+  const emptyCliente: ClienteFull = {
+    nome: "", doc: "", telefone: "", email: "",
+    cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+  };
   const [form, setForm] = useState({
-    cliente: "", dataAssinatura: "", modulos: "", potencia: "",
+    dataAssinatura: "", modulos: "", potencia: "",
     inv1: "", inv2: "", inv3: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
   });
+  const [cli, setCli] = useState<ClienteFull>(emptyCliente);
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
+
+  const lookupCEP = async (cep: string) => {
+    setCliField("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    setCepLoading(true);
+    const r = await buscarCEP(cep);
+    setCepLoading(false);
+    if (r) {
+      setCli((p) => ({ ...p, ...r } as ClienteFull));
+      toast.success("Endereço preenchido pelo CEP");
+    } else {
+      toast.error("CEP não encontrado");
+    }
+  };
 
   // Cálculos automáticos
   const modulosNum = Number(form.modulos) || 0;
-  const potenciaWp = Number(form.potencia) || 0; // potência por módulo em W (ex.: 620)
-  const kwpTotal = (modulosNum * potenciaWp) / 1000; // 15 * 620 / 1000 = 9.3
+  const potenciaWp = Number(form.potencia) || 0;
+  const kwpTotal = (modulosNum * potenciaWp) / 1000;
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
   const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
   const { pct: comissaoPct, aprovacao } = comissaoFromParametro(parametroNum);
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
+  const limpar = () => {
+    setForm({ dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
+    setCli(emptyCliente);
+  };
+
   const submit = () => {
-    if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    if (!cli.nome.trim()) { toast.error("Informe o nome do cliente"); return; }
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
@@ -659,7 +687,7 @@ function CadastrarContratoTab({
     const novoId = nextContratoId(contratos);
     const novo: Contrato = {
       id: novoId,
-      cliente: form.cliente.trim(),
+      cliente: cli.nome.trim(),
       vendedor: form.vendedor,
       valor: valorNum,
       kwp: kwpTotal,
@@ -676,8 +704,14 @@ function CadastrarContratoTab({
       dataAssinatura: form.dataAssinatura,
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
+      clienteFull: { ...cli, nome: cli.nome.trim() },
+      projetos: [],
+      auditoria: [{
+        id: `A-${Date.now()}`, data: new Date().toISOString(),
+        usuario: "Operador", campo: "criação", de: "", para: novoId,
+      }],
     };
-    setContratos([novo, ...contratos]);
+    upsertContrato(novo);
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
@@ -685,11 +719,9 @@ function CadastrarContratoTab({
       });
       toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
     } else {
-      toast.success(`Contrato ${novoId} cadastrado`);
+      toast.success(`Contrato ${novoId} cadastrado · cliente registrado`);
     }
-    setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "",
-      inv1: "", inv2: "", inv3: "",
-      valor: "", vendedor: "", financiamento: "nao" });
+    limpar();
   };
 
   const [openForm, setOpenForm] = useState(false);
@@ -725,14 +757,50 @@ function CadastrarContratoTab({
             <Input type="date" value={form.dataAssinatura} onChange={(e) => setForm({ ...form, dataAssinatura: e.target.value })} />
           </div>
 
-          <div className="space-y-1.5 md:col-span-2"><Label>Cliente</Label>
-            <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} placeholder="Nome do cliente" />
+          <div className="space-y-1.5 md:col-span-2"><Label>Cliente — nome</Label>
+            <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
           </div>
           <div className="space-y-1.5"><Label>Vendedor (do cadastro)</Label>
             <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
               <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
               <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
             </Select>
+          </div>
+
+          <div className="md:col-span-3 mt-2 rounded-md border border-border bg-muted/30 p-3">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Users className="h-3.5 w-3.5" /> Dados do cliente</div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
+                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>Telefone</Label>
+                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>E-mail</Label>
+                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+              </div>
+              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} placeholder="69000-000" maxLength={10} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Número</Label>
+                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+              </div>
+              <div className="space-y-1.5"><Label>Bairro</Label>
+                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Complemento</Label>
+                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Cidade</Label>
+                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>UF</Label>
+                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-1.5"><Label>Qtd módulos</Label>
@@ -787,7 +855,7 @@ function CadastrarContratoTab({
         )}
 
           <DialogFooter className="mt-5">
-            <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
+            <Button variant="outline" onClick={limpar}>Limpar</Button>
             <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
           </DialogFooter>
         </DialogContent>
@@ -803,7 +871,9 @@ function CadastrarContratoTab({
             <TableHead className="text-right">Parâmetro</TableHead>
             <TableHead className="text-right">% Com.</TableHead>
             <TableHead className="text-right">R$ Comissão</TableHead>
+            <TableHead className="text-center">Projetos</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {contratos.slice(0, 12).map((c) => (
@@ -816,11 +886,325 @@ function CadastrarContratoTab({
                 <TableCell className="text-right font-mono text-xs">{c.parametro || "—"}</TableCell>
                 <TableCell className="text-right">{c.comissaoPct ? `${c.comissaoPct}%` : "—"}</TableCell>
                 <TableCell className="text-right text-primary">{c.comissaoValor ? fmtBRL(c.comissaoValor) : "—"}</TableCell>
+                <TableCell className="text-center">
+                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-bold text-primary">
+                    {c.projetos?.length ?? 0}
+                  </span>
+                </TableCell>
                 <TableCell><StatusBadge status={c.status} /></TableCell>
+                <TableCell>
+                  <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </Card>
+    </div>
+  );
+}
+
+/* ---------------- EDITAR CONTRATO + PROJETOS + AUDITORIA ---------------- */
+
+function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("dados");
+  const [f, setF] = useState<Contrato>(contrato);
+  const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
+    nome: contrato.cliente, doc: "", telefone: "", email: "",
+    cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+  });
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
+  const lookupCEP = async (cep: string) => {
+    setCliField("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    setCepLoading(true);
+    const r = await buscarCEP(cep);
+    setCepLoading(false);
+    if (r) setCli((p) => ({ ...p, ...r } as ClienteFull));
+  };
+
+  const salvar = () => {
+    updateContratoAudit(contrato.id, {
+      cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
+      status: f.status, dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
+      modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
+      clienteFull: cli,
+    });
+    toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><Pencil className="h-3.5 w-3.5" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar contrato <span className="font-mono text-primary">{contrato.id}</span></DialogTitle>
+          <DialogDescription>Edite dados, cliente, desdobre em projetos e veja auditoria.</DialogDescription>
+        </DialogHeader>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList>
+            <TabsTrigger value="dados">Dados do contrato</TabsTrigger>
+            <TabsTrigger value="cliente">Cliente</TabsTrigger>
+            <TabsTrigger value="projetos">Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="mt-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>Cliente (nome no contrato)</Label>
+                <Input value={f.cliente} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Vendedor</Label>
+                <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Status</Label>
+                <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Gerado", "Pendente", "Assinado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Data assinatura</Label>
+                <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Banco</Label>
+                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Valor (R$)</Label>
+                <Input type="number" value={f.valor} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-1.5"><Label>Módulos</Label>
+                <Input type="number" value={f.modulos ?? 0} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
+                <Input type="number" value={f.potencia ?? 0} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-1.5"><Label>kWp total</Label>
+                <Input type="number" step="0.01" value={f.kwp} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-1.5"><Label>Inversor 1</Label>
+                <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Inversor 2</Label>
+                <Input value={f.inv2 ?? ""} onChange={(e) => setF({ ...f, inv2: e.target.value })} />
+              </div>
+              <div className="space-y-1.5"><Label>Inversor 3</Label>
+                <Input value={f.inv3 ?? ""} onChange={(e) => setF({ ...f, inv3: e.target.value })} />
+              </div>
+              <div className="space-y-1.5 md:col-span-3"><Label>Observações</Label>
+                <Textarea value={f.obs ?? ""} onChange={(e) => setF({ ...f, obs: e.target.value })} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="cliente" className="mt-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5 md:col-span-2"><Label>Nome</Label>
+                <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
+                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>Telefone</Label>
+                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} maxLength={20} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
+                <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
+              </div>
+              <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>
+                <Input value={cli.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                <Input value={cli.rua} onChange={(e) => setCliField("rua", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Número</Label>
+                <Input value={cli.numero} onChange={(e) => setCliField("numero", e.target.value)} maxLength={10} />
+              </div>
+              <div className="space-y-1.5"><Label>Bairro</Label>
+                <Input value={cli.bairro} onChange={(e) => setCliField("bairro", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Complemento</Label>
+                <Input value={cli.complemento} onChange={(e) => setCliField("complemento", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Cidade</Label>
+                <Input value={cli.cidade} onChange={(e) => setCliField("cidade", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>UF</Label>
+                <Input value={cli.uf} onChange={(e) => setCliField("uf", e.target.value.toUpperCase())} maxLength={2} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="projetos" className="mt-4">
+            <ProjetosManager contrato={contrato} />
+          </TabsContent>
+
+          <TabsContent value="auditoria" className="mt-4">
+            <Card className="p-3">
+              {(contrato.auditoria ?? []).length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">Nenhuma alteração registrada.</div>
+              ) : (
+                <Table>
+                  <TableHeader><TableRow>
+                    <TableHead>Data/hora</TableHead><TableHead>Usuário</TableHead>
+                    <TableHead>Campo</TableHead><TableHead>De</TableHead><TableHead>Para</TableHead>
+                  </TableRow></TableHeader>
+                  <TableBody>
+                    {[...(contrato.auditoria ?? [])].reverse().map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-mono text-xs">{new Date(a.data).toLocaleString("pt-BR")}</TableCell>
+                        <TableCell>{a.usuario}</TableCell>
+                        <TableCell className="font-medium">{a.campo}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-[180px] truncate">{a.de || "—"}</TableCell>
+                        <TableCell className="text-primary max-w-[180px] truncate">{a.para || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter className="mt-5">
+          <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
+          {(tab === "dados" || tab === "cliente") && (
+            <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar alterações</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------------- PROJETOS VINCULADOS (DESDOBRAMENTO) ---------------- */
+
+function ProjetosManager({ contrato }: { contrato: Contrato }) {
+  const projetos = contrato.projetos ?? [];
+  const [novo, setNovo] = useState<Omit<ProjetoVinculado, "id" | "contratoId">>({
+    endereco: "", cidade: contrato.clienteFull?.cidade ?? "", uf: contrato.clienteFull?.uf ?? "",
+    modulos: 0, potenciaModuloW: 620, kwp: 0,
+    inversor: "", equipe: "", status: "Em projeto/aprovação",
+    inicio: "", previsto: "", orcamento: 0, custo: 0, obs: "", cronograma: "",
+  });
+
+  const setN = (k: keyof typeof novo, v: any) => setNovo((p) => ({ ...p, [k]: v }));
+  const kwpAuto = (novo.modulos * novo.potenciaModuloW) / 1000;
+
+  const adicionar = () => {
+    if (!novo.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
+    addProjeto(contrato.id, { ...novo, kwp: kwpAuto || novo.kwp });
+    toast.success(`Projeto vinculado ao contrato ${contrato.id}`);
+    setNovo({ ...novo, endereco: "", modulos: 0, kwp: 0, inversor: "", equipe: "", inicio: "", previsto: "", orcamento: 0, custo: 0, obs: "" });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-3">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4 text-primary" /> Projetos vinculados ({projetos.length})</div>
+        {projetos.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">Nenhum projeto criado. Use o formulário abaixo para desdobrar este contrato em obras separadas.</div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Projeto</TableHead><TableHead>Endereço</TableHead>
+              <TableHead className="text-right">Módulos</TableHead><TableHead className="text-right">kWp</TableHead>
+              <TableHead>Equipe</TableHead><TableHead>Status</TableHead>
+              <TableHead className="text-right">Orçamento</TableHead><TableHead></TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {projetos.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+                  <TableCell className="text-sm"><div className="flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{p.endereco}<span className="text-muted-foreground"> · {p.cidade}/{p.uf}</span></div></TableCell>
+                  <TableCell className="text-right">{p.modulos}</TableCell>
+                  <TableCell className="text-right">{p.kwp.toFixed(2)}</TableCell>
+                  <TableCell>{p.equipe || "—"}</TableCell>
+                  <TableCell>
+                    <Select value={p.status} onValueChange={(v) => updateProjeto(contrato.id, p.id, { status: v })}>
+                      <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="text-right">{fmtBRL(p.orcamento)}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      <Card className="p-3">
+        <div className="mb-2 text-sm font-semibold">Novo projeto vinculado</div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-1.5 md:col-span-2"><Label>Endereço</Label>
+            <Input value={novo.endereco} onChange={(e) => setN("endereco", e.target.value)} placeholder="Rua, nº, bairro" />
+          </div>
+          <div className="space-y-1.5"><Label>Cidade / UF</Label>
+            <div className="flex gap-2">
+              <Input value={novo.cidade} onChange={(e) => setN("cidade", e.target.value)} />
+              <Input value={novo.uf} onChange={(e) => setN("uf", e.target.value.toUpperCase())} className="w-16" maxLength={2} />
+            </div>
+          </div>
+          <div className="space-y-1.5"><Label>Módulos</Label>
+            <Input type="number" value={novo.modulos} onChange={(e) => setN("modulos", Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
+            <Input type="number" value={novo.potenciaModuloW} onChange={(e) => setN("potenciaModuloW", Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1.5"><Label>kWp (auto)</Label>
+            <Input value={kwpAuto ? kwpAuto.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
+          </div>
+          <div className="space-y-1.5"><Label>Inversor</Label>
+            <Input value={novo.inversor} onChange={(e) => setN("inversor", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>Equipe</Label>
+            <Input value={novo.equipe} onChange={(e) => setN("equipe", e.target.value)} placeholder="Equipe A, B, C…" />
+          </div>
+          <div className="space-y-1.5"><Label>Status</Label>
+            <Select value={novo.status} onValueChange={(v) => setN("status", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label>Início previsto</Label>
+            <Input type="date" value={novo.inicio} onChange={(e) => setN("inicio", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>Conclusão prevista</Label>
+            <Input type="date" value={novo.previsto} onChange={(e) => setN("previsto", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>Orçamento (R$)</Label>
+            <Input type="number" value={novo.orcamento} onChange={(e) => setN("orcamento", Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1.5"><Label>Custo estimado (R$)</Label>
+            <Input type="number" value={novo.custo} onChange={(e) => setN("custo", Number(e.target.value) || 0)} />
+          </div>
+          <div className="space-y-1.5 md:col-span-3"><Label>Observação / cronograma</Label>
+            <Textarea value={novo.obs} onChange={(e) => setN("obs", e.target.value)} />
+          </div>
+        </div>
+        <div className="mt-3 flex justify-end">
+          <Button className="bg-primary text-primary-foreground" onClick={adicionar}><Plus className="mr-2 h-4 w-4" /> Adicionar projeto</Button>
+        </div>
+        <div className="mt-2 text-xs text-muted-foreground">Cada projeto vira uma obra independente (endereço, módulos, equipe, cronograma) mas mantém vínculo com o contrato {contrato.id}.</div>
       </Card>
     </div>
   );

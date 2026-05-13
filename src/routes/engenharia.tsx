@@ -36,6 +36,39 @@ export const Route = createFileRoute("/engenharia")({
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const TELHADOS = ["Fibrocimento", "Cerâmica", "Metálico", "Solo", "Laje", "Outro"];
 const STATUS = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby", "Finalizado"];
+const STATUS_RANK: Record<string, number> = {
+  "Executando instalação": 0,
+  "Aguardando instalação": 1,
+  "Em projeto/aprovação": 2,
+  "Standby": 3,
+  "Finalizado": 4,
+};
+const STATUS_ROW_BG: Record<string, string> = {
+  "Executando instalação": "bg-success/5 hover:bg-success/10",
+  "Aguardando instalação": "bg-warning/5 hover:bg-warning/10",
+  "Em projeto/aprovação": "bg-info/5 hover:bg-info/10",
+  "Standby": "bg-muted/40 hover:bg-muted/60",
+  "Finalizado": "",
+};
+
+function fmtBR(iso?: string): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+function fmtContrato(id?: string): string {
+  if (!id) return "";
+  const m = id.match(/(\d{1,4})\s*$/);
+  if (!m) return id;
+  return `${String(parseInt(m[1], 10)).padStart(3, "0")}/2026`;
+}
+function addDaysISO(iso: string, days: number): string {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;

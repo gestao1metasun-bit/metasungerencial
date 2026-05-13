@@ -1248,28 +1248,12 @@ function CadastrarContratoTab({
 
                 <div className="rounded-lg border bg-card p-5 space-y-4">
                   <div className="flex items-center gap-2 border-b pb-3">
-                    <span className="text-sm font-semibold">Forma de pagamento</span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-1.5"><Label>Forma de pagamento</Label>
-                      <Select value={form.pagamento} onValueChange={(v) => setForm({ ...form, pagamento: v })}>
-                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                        <SelectContent>
-                          {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => (
-                            <SelectItem key={p} value={p}>{p}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {form.pagamento === "Financiamento" && (
-                      <div className="space-y-1.5 md:col-span-2"><Label>Banco (financiamento)</Label>
-                        <Input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="BASA, SICREDI, BB…" />
-                      </div>
-                    )}
+                    <span className="text-sm font-semibold">Observações</span>
                   </div>
                   <div className="space-y-1.5"><Label>Observações</Label>
                     <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
                   </div>
+                  <div className="text-[11px] text-muted-foreground">A forma de pagamento é definida na próxima etapa (<b>Pagamento</b>).</div>
                 </div>
 
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">

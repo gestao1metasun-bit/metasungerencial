@@ -240,7 +240,7 @@ function DetailModal({
     obras: "Obras em andamento", ticket: "Análise de ticket médio",
     receitas: "Receitas por mês", despesas: "Despesas por mês",
     resultado: "Resultado mensal (Receita − Despesa)", kwp: "kWp por contrato",
-  };
+    kwpInst: "kWp instalado (obras finalizadas)",
   const list =
     modal === "assinados" ? data.assinadosList :
     modal === "pendentes" ? data.pendentesList :

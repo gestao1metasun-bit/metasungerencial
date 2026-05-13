@@ -1412,7 +1412,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("dados");
+  const [tab, setTab] = useState<"dados" | "cliente" | "composicao" | "projetos" | "auditoria">("dados");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
     nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",

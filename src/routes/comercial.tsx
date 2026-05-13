@@ -751,10 +751,23 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
     if (!f.nome.trim()) { toast.error("Informe o nome"); return; }
     if (f.doc && !isDocValid(f.doc)) { toast.error("CPF/CNPJ inválido"); return; }
     if (f.telefone && !isTelValid(f.telefone)) { toast.error("Telefone inválido"); return; }
-    const c = addClienteFull({ ...f, nome: f.nome.trim() });
-    toast.success(`Cliente cadastrado: ${c.nome}`);
-    onCreated(c);
-    setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
+    if (f.doc) {
+      const dup = findClienteByDoc(f.doc);
+      if (dup) {
+        toast.error(`CPF/CNPJ já cadastrado (${dup.nome}). Selecione o cliente existente ou edite os dados em Cadastros > Clientes.`);
+        return;
+      }
+    }
+    try {
+      const c = addClienteFull({ ...f, nome: f.nome.trim() });
+      toast.success(`Cliente cadastrado: ${c.nome}`);
+      onCreated(c);
+      setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
+    } catch (e) {
+      if (e instanceof DuplicateClienteError) {
+        toast.error(`CPF/CNPJ já cadastrado (${e.existing.nome}). Selecione o cliente existente ou edite em Cadastros > Clientes.`);
+      } else throw e;
+    }
   };
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>

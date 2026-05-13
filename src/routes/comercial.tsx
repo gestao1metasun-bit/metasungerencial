@@ -49,6 +49,41 @@ export const Route = createFileRoute("/comercial")({
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
+/* ---------------- Máscaras / formatadores ---------------- */
+const onlyDigits = (v: string) => v.replace(/\D/g, "");
+function maskDoc(v: string): string {
+  const d = onlyDigits(v).slice(0, 14);
+  if (d.length <= 11) {
+    // CPF 000.000.000-00
+    return d
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+  }
+  // CNPJ 00.000.000/0000-00
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
+}
+function maskTel(v: string): string {
+  const d = onlyDigits(v).slice(0, 11);
+  if (d.length <= 10) {
+    return d
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/^\((\d{2})\) (\d{4})(\d)/, "($1) $2-$3");
+  }
+  return d
+    .replace(/^(\d{2})(\d)/, "($1) $2")
+    .replace(/^\((\d{2})\) (\d{5})(\d)/, "($1) $2-$3");
+}
+const isDocValid = (v: string) => {
+  const d = onlyDigits(v);
+  return d.length === 11 || d.length === 14;
+};
+const isTelValid = (v: string) => onlyDigits(v).length === 11;
+
 type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];

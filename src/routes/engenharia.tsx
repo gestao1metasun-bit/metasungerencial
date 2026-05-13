@@ -577,22 +577,41 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
 /* ---------------- PENDÊNCIAS ---------------- */
 
 function PendenciasTab({
-  pends, setPends, equipes, obras,
+  pends, setPends, equipes,
 }: { pends: typeof pendenciasSeed; setPends: (v: typeof pendenciasSeed) => void; equipes: typeof equipesSeed; obras: Obra[] }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ equipe: "", cliente: "", obra: "", problema: "", solucao: "" });
-
-  const resolver = (id: string) => {
-    setPends(pends.map((p) => p.id === id ? { ...p, status: "Problema resolvido", resolucao: new Date().toISOString().slice(0,10) } : p));
-    toast.success("Pendência resolvida");
-  };
+  const [editing, setEditing] = useState<(typeof pendenciasSeed)[number] | null>(null);
+  const [novoCli, setNovoCli] = useState("");
+  const clientes = useClientesAll();
+  const [form, setForm] = useState({ equipe: "", cliente: "", problema: "", solucao: "" });
 
   const submit = () => {
-    if (!form.equipe || !form.problema) { toast.error("Preencha equipe e problema"); return; }
-    setPends([{ id: `PD-${String(pends.length+15).padStart(3,"0")}`, ...form, status: "Aguardando resolução", abertura: new Date().toISOString().slice(0,10), resolucao: null }, ...pends]);
+    if (!form.equipe || !form.cliente || !form.problema) { toast.error("Preencha equipe, cliente e problema"); return; }
+    setPends([{
+      id: `PD-${String(pends.length+15).padStart(3,"0")}`,
+      equipe: form.equipe, cliente: form.cliente, obra: "",
+      problema: form.problema, solucao: form.solucao,
+      status: "Aguardando resolução", abertura: new Date().toISOString().slice(0,10), resolucao: null,
+    }, ...pends]);
     toast.success("Pendência criada");
-    setForm({ equipe: "", cliente: "", obra: "", problema: "", solucao: "" });
+    setForm({ equipe: "", cliente: "", problema: "", solucao: "" });
     setOpen(false);
+  };
+
+  const cadastrarCliente = () => {
+    const nome = novoCli.trim();
+    if (!nome) return;
+    const c = addCliente(nome);
+    setForm((f) => ({ ...f, cliente: c.nome }));
+    setNovoCli("");
+    toast.success(`Cliente "${nome}" cadastrado`);
+  };
+
+  const saveEdit = (patch: Partial<(typeof pendenciasSeed)[number]>) => {
+    if (!editing) return;
+    setPends(pends.map((p) => p.id === editing.id ? { ...p, ...patch } : p));
+    setEditing(null);
+    toast.success("Pendência atualizada");
   };
 
   return (
@@ -610,12 +629,15 @@ function PendenciasTab({
                   <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Cliente</Label><Input value={form.cliente} onChange={(e)=>setForm({...form, cliente: e.target.value})} /></div>
-              <div><Label>Obra</Label>
-                <Select value={form.obra} onValueChange={(v)=>setForm({...form, obra: v})}>
-                  <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>{obras.map(o=><SelectItem key={o.id} value={o.id}>{o.id} — {o.cliente}</SelectItem>)}</SelectContent>
+              <div><Label>Cliente</Label>
+                <Select value={form.cliente} onValueChange={(v)=>setForm({...form, cliente: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                  <SelectContent>{clientes.map(c=><SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
                 </Select>
+                <div className="mt-2 flex gap-2">
+                  <Input placeholder="Cadastrar cliente antigo (sem obra)" value={novoCli} onChange={(e)=>setNovoCli(e.target.value)} className="h-8 text-xs" />
+                  <Button type="button" size="sm" variant="outline" onClick={cadastrarCliente}>Cadastrar</Button>
+                </div>
               </div>
               <div><Label>Problema</Label><Textarea rows={3} value={form.problema} onChange={(e)=>setForm({...form, problema: e.target.value})} /></div>
               <div><Label>Solução proposta</Label><Textarea rows={2} value={form.solucao} onChange={(e)=>setForm({...form, solucao: e.target.value})} /></div>
@@ -630,7 +652,7 @@ function PendenciasTab({
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
-          <TableHead>Obra</TableHead><TableHead>Problema</TableHead><TableHead>Solução</TableHead>
+          <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
           <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
@@ -640,32 +662,103 @@ function PendenciasTab({
               <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
               <TableCell>{p.equipe}</TableCell>
               <TableCell className="font-medium">{p.cliente}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">{p.obra}</TableCell>
               <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
               <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
               <TableCell><StatusBadge status={p.status} /></TableCell>
               <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
               <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
               <TableCell className="text-right">
-                {p.status === "Aguardando resolução" && (
-                  <Button variant="ghost" size="sm" onClick={() => resolver(p.id)}><CheckCircle2 className="mr-1 h-4 w-4 text-success" /> Resolver</Button>
-                )}
+                <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(p)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <EditPendenciaDialog pend={editing} onClose={() => setEditing(null)} onSave={saveEdit} />
     </Card>
+  );
+}
+
+function EditPendenciaDialog({
+  pend, onClose, onSave,
+}: { pend: (typeof pendenciasSeed)[number] | null; onClose: () => void; onSave: (patch: Partial<(typeof pendenciasSeed)[number]>) => void }) {
+  const [form, setForm] = useState<Partial<(typeof pendenciasSeed)[number]>>({});
+  const [confirming, setConfirming] = useState(false);
+  if (pend && form.id !== pend.id) setTimeout(() => setForm({ ...pend }), 0);
+  if (!pend) return null;
+  const f = { ...pend, ...form };
+  const finalizing = f.status === "Problema resolvido";
+
+  const trySave = () => setConfirming(true);
+  const confirm = () => {
+    const patch: Partial<(typeof pendenciasSeed)[number]> = {
+      status: f.status, problema: f.problema, solucao: f.solucao,
+      resolucao: finalizing ? (f.resolucao || new Date().toISOString().slice(0,10)) : null,
+    };
+    onSave(patch);
+    setConfirming(false);
+    setForm({});
+  };
+
+  return (
+    <Dialog open={!!pend} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar pendência</DialogTitle>
+          <DialogDescription>{pend.cliente} · {pend.equipe}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aguardando resolução">Aguardando resolução</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
+                <SelectItem value="Problema resolvido">Problema resolvido (finalizar)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Problema</Label><Textarea rows={2} value={f.problema ?? ""} onChange={(e) => setForm({ ...form, problema: e.target.value })} /></div>
+          <div><Label>Solução</Label><Textarea rows={2} value={f.solucao ?? ""} onChange={(e) => setForm({ ...form, solucao: e.target.value })} /></div>
+          {finalizing && (
+            <div><Label>Data resolução</Label>
+              <Input type="date" value={f.resolucao ?? new Date().toISOString().slice(0,10)} onChange={(e) => setForm({ ...form, resolucao: e.target.value })} />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar alteração</DialogTitle>
+            <DialogDescription>Tem certeza que deseja salvar esta alteração?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>Cancelar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={confirm}>Sim, confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Dialog>
   );
 }
 
 /* ---------------- EQUIPES ---------------- */
 
+const FAIXAS = ["0-20", "21-50", "51-100", "101-200", "201-300", "301-500", "500+"] as const;
+
 function EquipesTab({
-  equipes, setEquipes, obras, pends,
+  equipes, obras, pends,
 }: { equipes: typeof equipesSeed; setEquipes: (v: typeof equipesSeed) => void; obras: Obra[]; pends: typeof pendenciasSeed }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2">
       {equipes.map((e) => {
         const exec = obras.filter((o) => o.equipe === e.nome && o.status === "Executando instalação").length;
         const aguard = obras.filter((o) => o.equipe === e.nome && o.status === "Aguardando instalação").length;
@@ -675,16 +768,42 @@ function EquipesTab({
         return (
           <Card key={e.id} className="p-5">
             <div className="flex items-center justify-between">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><Users className="h-5 w-5" /></div>
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><Users className="h-5 w-5" /></div>
+                <div>
+                  <div className="text-lg font-semibold">{e.nome}</div>
+                  <div className="text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
+                </div>
+              </div>
               <StatusBadge status={e.status} />
             </div>
-            <div className="mt-4 text-lg font-semibold">{e.nome}</div>
-            <div className="mt-1 text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-              <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Executando</div><div className="font-bold text-success">{exec}</div></div>
-              <div className="rounded-md bg-warning/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Aguardando</div><div className="font-bold text-warning">{aguard}</div></div>
+            <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+              <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Exec.</div><div className="font-bold text-success">{exec}</div></div>
+              <div className="rounded-md bg-warning/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Aguard.</div><div className="font-bold text-warning">{aguard}</div></div>
               <div className="rounded-md bg-primary/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Módulos</div><div className="font-bold text-primary">{totalMod}</div></div>
               <div className="rounded-md bg-info/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Mód./dia</div><div className="font-bold text-info">{prod?.mediaDia ?? "—"}</div></div>
+            </div>
+            <div className="mt-4">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Faixas de produtividade (dias por módulo)</div>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {FAIXAS.map((fx) => {
+                  const v = prod?.faixas?.[fx];
+                  return (
+                    <div key={fx} className="rounded-md border border-border bg-muted/30 p-1.5">
+                      <div className="text-[9px] font-semibold text-muted-foreground">{fx}</div>
+                      <div className="text-[11px] font-bold text-primary">{v != null ? `${v}d` : "—"}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground/80">
+                Média geral: <span className="font-semibold text-foreground">{prod?.mediaDia ?? "—"} mód/dia</span>
+                {prod && (
+                  <> · Média por faixa: <span className="font-semibold text-foreground">
+                    {(Object.values(prod.faixas).reduce((s, n) => s + n, 0) / Math.max(Object.keys(prod.faixas).length, 1)).toFixed(2)}d
+                  </span></>
+                )}
+              </div>
             </div>
             {pendAb > 0 && (
               <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-1 text-xs font-semibold text-destructive">

@@ -932,7 +932,8 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   const salvar = () => {
     updateContratoAudit(contrato.id, {
       cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
-      status: f.status, dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
+      status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
+      dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
       modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
       clienteFull: cli,
     });

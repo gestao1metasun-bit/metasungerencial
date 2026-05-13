@@ -55,6 +55,8 @@ function fmtContrato(id?: string): string {
 
 function FinanciamentosPage() {
   const [ops, setOps] = useState<FinOp[]>(() => finSeed);
+  const [pend] = useFinPendencias();
+  const pendCount = pend.filter((p) => p.status === "Pendente").length;
 
   const updateOp = (id: string, patch: Partial<FinOp>) => {
     setOps((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
@@ -69,19 +71,25 @@ function FinanciamentosPage() {
       <Tabs defaultValue="dashboard">
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="pendencias">Pendências</TabsTrigger>
-          <TabsTrigger value="carteira">Carteira</TabsTrigger>
-          <TabsTrigger value="sem">Sem Contrato</TabsTrigger>
+          <TabsTrigger value="carteira">Contratos Assinados em Financiamento</TabsTrigger>
+          <TabsTrigger value="sem">Sem Contrato em Financiamento</TabsTrigger>
           <TabsTrigger value="bancos">Bancos</TabsTrigger>
           <TabsTrigger value="gerentes">Gerentes</TabsTrigger>
           <TabsTrigger value="previsao">Previsão</TabsTrigger>
+          <TabsTrigger value="pendencias" className="gap-2">
+            Pendências
+            {pendCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                {pendCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-5">
           <DashboardFin ops={ops} updateOp={updateOp} />
         </TabsContent>
-        <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="carteira" className="mt-5">
           <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
@@ -89,6 +97,7 @@ function FinanciamentosPage() {
         <TabsContent value="bancos" className="mt-5"><BancosTab ops={ops} /></TabsContent>
         <TabsContent value="gerentes" className="mt-5"><GerentesTab ops={ops} /></TabsContent>
         <TabsContent value="previsao" className="mt-5"><PrevisaoTab ops={ops} /></TabsContent>
+        <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="finalizados" className="mt-5">
           <Carteira ops={ops} updateOp={updateOp} filterFin />
         </TabsContent>

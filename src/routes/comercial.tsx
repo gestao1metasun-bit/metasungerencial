@@ -1018,6 +1018,13 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   };
 
   const salvar = () => {
+    // valida CPF/CNPJ e telefone se preenchidos
+    if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF deve ter 11 dígitos ou CNPJ 14 dígitos"); return; }
+    if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone deve ter DDD (2) + 9 dígitos"); return; }
+    if (cli.telefone2 && !isTelValid(cli.telefone2)) { toast.error("Telefone 2 inválido"); return; }
+
+    const aprovouAgora = f.status === "Aprovado" && contrato.status !== "Aprovado";
+
     updateContratoAudit(contrato.id, {
       cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
       status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
@@ -1025,7 +1032,37 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
       clienteFull: cli,
     });
-    toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
+
+    // Se aprovou agora, libera projetos para Engenharia e gera financeiro
+    if (aprovouAgora) {
+      const projs = contrato.projetos ?? [];
+      const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
+      projs.forEach((p) => {
+        if (!p.financeiroGerado) {
+          updateProjeto(contrato.id, p.id, { enviadoEngenharia: true, financeiroGerado: true });
+          const parc = p.parcelasPagto ?? [];
+          parc.forEach((pg, pi) => {
+            if (pg.valor <= 0) return;
+            novosLanc.push({
+              id: `L-REC-${Date.now()}-${p.id}-${pi}`,
+              data: pg.dataVencimento,
+              descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${p.id} · ${contrato.cliente}`,
+              tipo: "Entrada", valor: pg.valor, camada: "A realizar",
+              natureza: "Recebimento de cliente", centroCusto: "Comercial",
+              obra: p.id, empresa: "Meta Sun", filial: "Manaus",
+              contrato: contrato.id, cliente: contrato.cliente,
+              formaPagamento: pg.formaPagamento,
+              parcelaLabel: `${pi + 1}/${parc.length}`,
+              competencia: pg.competencia, dataEmissao: pg.dataEmissao,
+            });
+          });
+        }
+      });
+      if (novosLanc.length > 0) appendLancamentos(novosLanc);
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
+    } else {
+      toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
+    }
     setOpen(false);
   };
 

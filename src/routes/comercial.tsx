@@ -1977,7 +1977,7 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const setD = (k: keyof NovoProjForm, v: any) => setDraft((p) => ({ ...p, [k]: v }));
   const kwpAuto = (draft.modulos * draft.potenciaModuloW) / 1000;
 
-  const adicionar = () => {
+  const salvarProjeto = () => {
     if (!draft.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
     if (!(Number(draft.valor) > 0)) { toast.error("Informe o valor do projeto"); return; }
     const somaAtual = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
@@ -1987,9 +1987,14 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
       return;
     }
     addProjeto(contrato.id, { ...draft, kwp: kwpAuto || draft.kwp });
-    toast.success(`Projeto vinculado ao contrato ${contrato.id}`);
-    setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 2}`));
+    toast.success(`Projeto salvo no contrato ${contrato.id} · totais atualizados`);
+    // Mantém o formulário e a navegação atual. Para criar outro, usar "+ Novo projeto".
+  };
+
+  const novoProjetoVazio = () => {
+    setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 1}`));
     setActiveTab("novo");
+    toast.message("Formulário limpo para novo projeto");
   };
 
   const lookupCEP = async (cep: string) => {

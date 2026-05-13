@@ -648,6 +648,14 @@ function EditOpDialog({
               <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          <div><Label>Status Liberação</Label>
+            <Select value={form.statusLib ?? op.statusLib ?? "Sem prazo"} onValueChange={(v) => setForm({ ...form, statusLib: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["Sem prazo","Até 7 dias","8 a 15 dias","16 a 30 dias","31 a 60 dias","61 a 90 dias","Acima de 90 dias","Liberado","Atrasado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Valor financiado</Label>
             <Input type="number" value={form.valorFinanciado ?? op.valorFinanciado} onChange={(e) => setForm({ ...form, valorFinanciado: Number(e.target.value) })} />
           </div>

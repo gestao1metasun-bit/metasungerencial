@@ -45,6 +45,8 @@ function DashboardGeral() {
   const receitas = receitaDespesa.reduce((s, r) => s + r.receita, 0);
   const despesas = receitaDespesa.reduce((s, r) => s + r.despesa, 0);
   const kwpTotal = contratos.reduce((s, c) => s + c.kwp, 0);
+  const obrasFinalizadasList = obras.filter((o) => o.status === "Finalizado");
+  const kwpInstalado = obrasFinalizadasList.reduce((s, o) => s + o.potencia, 0);
 
   const statusData = [
     { name: "Assinado", value: assinados },
@@ -69,7 +71,7 @@ function DashboardGeral() {
     return Array.from(map.values()).filter((r, i) => i <= 5 || r.gerados > 0 || r.assinados > 0);
   }, []);
 
-  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "receitas" | "despesas" | "resultado" | "kwp";
+  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "receitas" | "despesas" | "resultado" | "kwp" | "kwpInst";
   const [openModal, setOpenModal] = useState<null | ModalKey>(null);
 
   const open = (k: ModalKey) => () => setOpenModal(k);
@@ -104,6 +106,7 @@ function DashboardGeral() {
         <StatCard label="Despesas" value={fmtBRL(despesas)} icon={ArrowUpCircle} tone="destructive" onView={open("despesas")} />
         <StatCard label="Resultado" value={fmtBRL(receitas - despesas)} icon={Wallet} tone="success" trend={{ value: "+18%", positive: true }} onView={open("resultado")} />
         <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" onView={open("kwp")} />
+        <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} onView={open("kwpInst")} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -207,8 +210,8 @@ function DashboardGeral() {
         modal={openModal}
         data={{
           contratos, assinadosList, pendentesList, canceladosList,
-          obrasAtivasList, financiamentos, receitaDespesa,
-          valorVendido, valorFinanciado, ticketMedio, kwpTotal,
+          obrasAtivasList, obrasFinalizadasList, financiamentos, receitaDespesa,
+          valorVendido, valorFinanciado, ticketMedio, kwpTotal, kwpInstalado,
           receitas, despesas,
         }}
       />
@@ -222,9 +225,10 @@ function DetailModal({
   open: boolean; onClose: () => void; modal: string | null;
   data: {
     contratos: typeof contratos; assinadosList: typeof contratos; pendentesList: typeof contratos;
-    canceladosList: typeof contratos; obrasAtivasList: typeof obras; financiamentos: typeof financiamentos;
+    canceladosList: typeof contratos; obrasAtivasList: typeof obras; obrasFinalizadasList: typeof obras;
+    financiamentos: typeof financiamentos;
     receitaDespesa: typeof receitaDespesa;
-    valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number;
+    valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number; kwpInstalado: number;
     receitas: number; despesas: number;
   };
 }) {
@@ -236,6 +240,7 @@ function DetailModal({
     obras: "Obras em andamento", ticket: "Análise de ticket médio",
     receitas: "Receitas por mês", despesas: "Despesas por mês",
     resultado: "Resultado mensal (Receita − Despesa)", kwp: "kWp por contrato",
+    kwpInst: "kWp instalado (obras finalizadas)",
   };
   const list =
     modal === "assinados" ? data.assinadosList :
@@ -279,14 +284,14 @@ function DetailModal({
               ))}
             </TableBody>
           </Table>
-        ) : modal === "obras" ? (
+        ) : (modal === "obras" || modal === "kwpInst") ? (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
               <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
               <TableHead className="text-right">Módulos</TableHead><TableHead className="text-right">kWp</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {data.obrasAtivasList.map((o) => (
+              {(modal === "kwpInst" ? data.obrasFinalizadasList : data.obrasAtivasList).map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                   <TableCell>{o.cliente}</TableCell>

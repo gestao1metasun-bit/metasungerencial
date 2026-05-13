@@ -322,8 +322,7 @@ export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
   if (!(Number(c.potencia) > 0)) missing.push("Potência/módulo");
   if (!(Number(c.modulos) > 0)) missing.push("Quantidade de módulos");
   if (!c.inv1?.trim()) missing.push("Inversor 1");
-  if (!c.pagamento?.trim()) missing.push("Forma de pagamento");
-  if (c.pagamento === "Financiamento" && !c.banco?.trim()) missing.push("Banco (financiamento)");
+  // Composição de pagamento substitui o campo "forma de pagamento"
   // Composição de pagamento deve fechar com o valor total
   const comp = c.composicaoPagto ?? [];
   if (comp.length === 0) {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,

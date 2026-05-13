@@ -2159,10 +2159,14 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const totalKwpCt = Number(contrato.kwp) || 0;
   const bateKwp = totalKwpCt === 0 || Math.abs(somaKwp - totalKwpCt) <= 0.05;
 
+  const hasInv = (x?: string) => {
+    const t = (x ?? "").trim();
+    return t !== "" && t !== "0" && Number(t) !== 0;
+  };
   const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3, contrato.inv4, contrato.inv5, contrato.inv6]
-    .filter((x) => x?.trim()).length;
+    .filter(hasInv).length;
   const invsProjetos = projetos.reduce(
-    (s, p) => s + [p.inversor, p.inv2, p.inv3, p.inv4, p.inv5, p.inv6].filter((x) => x?.trim()).length, 0,
+    (s, p) => s + [p.inversor, p.inv2, p.inv3, p.inv4, p.inv5, p.inv6].filter(hasInv).length, 0,
   );
   const bateInversores = invsContrato === 0 || invsProjetos >= invsContrato;
 

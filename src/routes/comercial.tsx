@@ -819,7 +819,7 @@ function CadastrarContratoTab({
         )}
 
           <DialogFooter className="mt-5">
-            <Button variant="outline" onClick={() => setForm({ cliente: "", dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" })}>Limpar</Button>
+            <Button variant="outline" onClick={limpar}>Limpar</Button>
             <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</Button>
           </DialogFooter>
         </DialogContent>

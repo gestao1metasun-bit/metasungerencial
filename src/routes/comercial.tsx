@@ -37,6 +37,7 @@ import {
 import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
+  validateContratoCompleto, solicitarAlteracaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
   type ParcelaPagto, type FormaPagamento,
 } from "@/lib/contratos-store";

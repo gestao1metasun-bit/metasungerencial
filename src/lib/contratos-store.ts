@@ -247,3 +247,73 @@ export async function buscarCEP(cep: string): Promise<Partial<ClienteFull> | nul
     };
   } catch { return null; }
 }
+
+/* ============================================================
+ * Validação de completude do contrato
+ * ============================================================ */
+export type ContratoValidation = { ok: boolean; missing: string[] };
+
+const onlyDigits = (v: string) => (v ?? "").replace(/\D/g, "");
+
+export function validateContratoCompleto(c: ContratoFull): ContratoValidation {
+  const missing: string[] = [];
+  const cli = c.clienteFull;
+  if (!c.cliente?.trim() && !cli?.nome?.trim()) missing.push("Nome do cliente");
+  if (!cli) {
+    missing.push("Dados do cliente (CPF/CNPJ, telefone, e-mail, endereço)");
+  } else {
+    const docDig = onlyDigits(cli.doc);
+    if (!(docDig.length === 11 || docDig.length === 14)) missing.push("CPF (11) ou CNPJ (14)");
+    if (onlyDigits(cli.telefone).length !== 11) missing.push("Telefone (DDD + 9)");
+    if (!cli.email?.trim() || !/^.+@.+\..+$/.test(cli.email)) missing.push("E-mail");
+    if (onlyDigits(cli.cep).length !== 8) missing.push("CEP");
+    if (!cli.rua?.trim()) missing.push("Rua");
+    if (!cli.numero?.trim()) missing.push("Número");
+    if (!cli.bairro?.trim()) missing.push("Bairro");
+    if (!cli.cidade?.trim()) missing.push("Cidade");
+    if (!cli.uf?.trim()) missing.push("UF");
+  }
+  if (!c.vendedor?.trim()) missing.push("Vendedor");
+  if (!(Number(c.valor) > 0)) missing.push("Valor total");
+  if (!(Number(c.potencia) > 0)) missing.push("Potência/módulo");
+  if (!(Number(c.modulos) > 0)) missing.push("Quantidade de módulos");
+  if (!c.inv1?.trim()) missing.push("Inversor 1");
+  if (!c.pagamento?.trim()) missing.push("Forma de pagamento");
+  if (c.pagamento === "Financiamento" && !c.banco?.trim()) missing.push("Banco (financiamento)");
+  return { ok: missing.length === 0, missing };
+}
+
+/** Solicitação formal de alteração após aprovação. */
+export function solicitarAlteracaoContrato(
+  id: string,
+  motivo: string,
+  usuario: string,
+  patch: Partial<ContratoFull>,
+) {
+  const cur = read();
+  const idx = cur.findIndex((c) => c.id === id);
+  if (idx < 0) return;
+  const atual = cur[idx];
+  const audit: AuditEntry[] = [...(atual.auditoria ?? [])];
+  audit.push({
+    id: `A-${Date.now()}-mot`, data: new Date().toISOString(),
+    usuario, campo: "solicitação de alteração",
+    de: atual.status ?? "", para: `motivo: ${motivo}`,
+  });
+  const fields = Object.keys(patch) as (keyof ContratoFull)[];
+  for (const f of fields) {
+    const before = (atual as any)[f];
+    const after = (patch as any)[f];
+    const beforeStr = typeof before === "object" ? JSON.stringify(before ?? "") : String(before ?? "");
+    const afterStr = typeof after === "object" ? JSON.stringify(after ?? "") : String(after ?? "");
+    if (beforeStr !== afterStr) {
+      audit.push({
+        id: `A-${Date.now()}-${String(f)}`, data: new Date().toISOString(),
+        usuario, campo: String(f), de: beforeStr.slice(0, 200), para: afterStr.slice(0, 200),
+      });
+    }
+  }
+  const next = [...cur];
+  next[idx] = { ...atual, ...patch, auditoria: audit };
+  write(next);
+}

@@ -1522,6 +1522,7 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     obs: "",
     cronograma: "",
     enviadoEngenharia: false,
+    valor: 0,
   };
 }
 
@@ -1650,6 +1651,13 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
 
   const adicionar = () => {
     if (!draft.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
+    if (!(Number(draft.valor) > 0)) { toast.error("Informe o valor do projeto"); return; }
+    const somaAtual = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+    const valorContrato = Number(contrato.valor) || 0;
+    if (valorContrato > 0 && somaAtual + Number(draft.valor) - valorContrato > 0.5) {
+      toast.error(`Soma dos projetos (${fmtBRL(somaAtual + Number(draft.valor))}) excede o valor do contrato (${fmtBRL(valorContrato)}).`);
+      return;
+    }
     addProjeto(contrato.id, { ...draft, kwp: kwpAuto || draft.kwp });
     toast.success(`Projeto vinculado ao contrato ${contrato.id}`);
     setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 2}`));
@@ -1716,7 +1724,17 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {!p.enviadoEngenharia && contrato.status === "Aprovado" && (
-                    <Button size="sm" variant="outline" onClick={() => { updateProjeto(contrato.id, p.id, { enviadoEngenharia: true }); toast.success("Projeto liberado para Engenharia"); }}>Liberar p/ Engenharia</Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const faltam: string[] = [];
+                      if (!(Number(p.valor) > 0)) faltam.push("valor");
+                      if (!(Number(p.modulos) > 0)) faltam.push("módulos");
+                      if (!(Number(p.kwp) > 0)) faltam.push("potência (kWp)");
+                      if (!p.endereco?.trim()) faltam.push("endereço");
+                      if (!p.status?.trim()) faltam.push("status");
+                      if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
+                      updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+                      toast.success("Projeto liberado para Engenharia");
+                    }}>Liberar p/ Engenharia</Button>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
@@ -1759,6 +1777,18 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                 </div>
                 <div className="space-y-1.5"><Label>kWp</Label>
                   <Input value={p.kwp.toFixed(2)} readOnly className="bg-muted font-mono" />
+                </div>
+                <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
+                  <Input type="number" step="0.01" value={p.valor ?? 0} onChange={(e) => {
+                    const novo = Number(e.target.value) || 0;
+                    const valorContrato = Number(contrato.valor) || 0;
+                    const somaOutros = projetos.filter((x) => x.id !== p.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+                    if (valorContrato > 0 && somaOutros + novo - valorContrato > 0.5) {
+                      toast.error(`Soma excederia o contrato (${fmtBRL(valorContrato)}).`);
+                      return;
+                    }
+                    updateProjeto(contrato.id, p.id, { valor: novo });
+                  }} />
                 </div>
                 <div className="space-y-1.5"><Label>Inversor 1</Label>
                   <Input value={p.inversor} onChange={(e) => updateProjeto(contrato.id, p.id, { inversor: e.target.value })} />
@@ -1830,6 +1860,9 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
               </div>
               <div className="space-y-1.5"><Label>kWp (auto)</Label>
                 <Input value={kwpAuto ? kwpAuto.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
+                <Input type="number" step="0.01" value={draft.valor ?? 0} onChange={(e) => setD("valor", Number(e.target.value) || 0)} placeholder="Obrigatório" />
               </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={draft.inversor} onChange={(e) => setD("inversor", e.target.value)} />

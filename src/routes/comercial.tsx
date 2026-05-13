@@ -1861,6 +1861,9 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
               <div className="space-y-1.5"><Label>kWp (auto)</Label>
                 <Input value={kwpAuto ? kwpAuto.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
               </div>
+              <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
+                <Input type="number" step="0.01" value={draft.valor ?? 0} onChange={(e) => setD("valor", Number(e.target.value) || 0)} placeholder="Obrigatório" />
+              </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={draft.inversor} onChange={(e) => setD("inversor", e.target.value)} />
               </div>

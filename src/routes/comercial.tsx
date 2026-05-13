@@ -665,15 +665,16 @@ function CadastrarContratoTab({
     setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const addParc = () => setParcelas((arr) => [...arr, novaParcela()]);
   const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
-  const distribuirValor = () => {
-    const total = Number(formValor()) || 0;
-    if (parcelas.length === 0 || total <= 0) return;
-    const each = Math.round((total / parcelas.length) * 100) / 100;
-    const last = Math.round((total - each * (parcelas.length - 1)) * 100) / 100;
-    setParcelas((arr) => arr.map((p, i) => ({ ...p, valor: i === arr.length - 1 ? last : each })));
+  const distribuirValor = (totalParam?: number) => {
+    setParcelas((arr) => {
+      if (arr.length === 0) return arr;
+      const total = totalParam ?? arr.reduce((a, p) => a + p.valor, 0);
+      if (total <= 0) return arr;
+      const each = Math.round((total / arr.length) * 100) / 100;
+      const last = Math.round((total - each * (arr.length - 1)) * 100) / 100;
+      return arr.map((p, i) => ({ ...p, valor: i === arr.length - 1 ? last : each }));
+    });
   };
-  // helper para acessar valor sem dependência circular
-  function formValor() { return (document.getElementById("valor-venda-input") as HTMLInputElement | null)?.value ?? ""; }
 
   // ---- Projetos vinculados (cadastrados junto com o contrato) ----
   type OrcMaterial = { id: string; itemId: string; qtd: number; unit: number };

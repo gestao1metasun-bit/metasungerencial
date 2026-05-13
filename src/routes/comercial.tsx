@@ -1227,6 +1227,13 @@ function CadastrarContratoTab({
                   <b className="text-foreground">Próximos passos:</b> ao salvar com tudo preenchido o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. Projetos só podem ser cadastrados após o contrato ser aprovado.
                 </div>
               </TabsContent>
+
+              <TabsContent value="pagamento" className="mt-0 space-y-4">
+                <ComposicaoEditor valorContrato={valorNum} value={composicao} onChange={setComposicao} />
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
+                  A soma das linhas precisa fechar com o valor do contrato. O financeiro será gerado proporcionalmente para cada projeto aprovado (rateio por % do contrato).
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
 

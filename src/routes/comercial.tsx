@@ -49,6 +49,41 @@ export const Route = createFileRoute("/comercial")({
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
+/* ---------------- Máscaras / formatadores ---------------- */
+const onlyDigits = (v: string) => v.replace(/\D/g, "");
+function maskDoc(v: string): string {
+  const d = onlyDigits(v).slice(0, 14);
+  if (d.length <= 11) {
+    // CPF 000.000.000-00
+    return d
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+  }
+  // CNPJ 00.000.000/0000-00
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4")
+    .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, "$1.$2.$3/$4-$5");
+}
+function maskTel(v: string): string {
+  const d = onlyDigits(v).slice(0, 11);
+  if (d.length <= 10) {
+    return d
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/^\((\d{2})\) (\d{4})(\d)/, "($1) $2-$3");
+  }
+  return d
+    .replace(/^(\d{2})(\d)/, "($1) $2")
+    .replace(/^\((\d{2})\) (\d{5})(\d)/, "($1) $2-$3");
+}
+const isDocValid = (v: string) => {
+  const d = onlyDigits(v);
+  return d.length === 11 || d.length === 14;
+};
+const isTelValid = (v: string) => onlyDigits(v).length === 11;
+
 type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];
@@ -785,13 +820,15 @@ function CadastrarContratoTab({
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                      <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} placeholder="000.000.000-00" maxLength={20} />
+                      <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" maxLength={18} />
+                      {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
                     </div>
                     <div className="space-y-1.5"><Label>Telefone</Label>
-                      <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                      <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
+                      {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
                     </div>
                     <div className="space-y-1.5"><Label>Telefone 2</Label>
-                      <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} placeholder="(00) 00000-0000" maxLength={20} />
+                      <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
                     </div>
                     <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
                       <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
@@ -981,6 +1018,13 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   };
 
   const salvar = () => {
+    // valida CPF/CNPJ e telefone se preenchidos
+    if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF deve ter 11 dígitos ou CNPJ 14 dígitos"); return; }
+    if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone deve ter DDD (2) + 9 dígitos"); return; }
+    if (cli.telefone2 && !isTelValid(cli.telefone2)) { toast.error("Telefone 2 inválido"); return; }
+
+    const aprovouAgora = f.status === "Aprovado" && contrato.status !== "Aprovado";
+
     updateContratoAudit(contrato.id, {
       cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
       status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
@@ -988,7 +1032,37 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
       clienteFull: cli,
     });
-    toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
+
+    // Se aprovou agora, libera projetos para Engenharia e gera financeiro
+    if (aprovouAgora) {
+      const projs = contrato.projetos ?? [];
+      const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
+      projs.forEach((p) => {
+        if (!p.financeiroGerado) {
+          updateProjeto(contrato.id, p.id, { enviadoEngenharia: true, financeiroGerado: true });
+          const parc = p.parcelasPagto ?? [];
+          parc.forEach((pg, pi) => {
+            if (pg.valor <= 0) return;
+            novosLanc.push({
+              id: `L-REC-${Date.now()}-${p.id}-${pi}`,
+              data: pg.dataVencimento,
+              descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${p.id} · ${contrato.cliente}`,
+              tipo: "Entrada", valor: pg.valor, camada: "A realizar",
+              natureza: "Recebimento de cliente", centroCusto: "Comercial",
+              obra: p.id, empresa: "Meta Sun", filial: "Manaus",
+              contrato: contrato.id, cliente: contrato.cliente,
+              formaPagamento: pg.formaPagamento,
+              parcelaLabel: `${pi + 1}/${parc.length}`,
+              competencia: pg.competencia, dataEmissao: pg.dataEmissao,
+            });
+          });
+        }
+      });
+      if (novosLanc.length > 0) appendLancamentos(novosLanc);
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
+    } else {
+      toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
+    }
     setOpen(false);
   };
 
@@ -1023,7 +1097,20 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 </Select>
               </div>
               <div className="space-y-1.5"><Label>Status</Label>
-                <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                <Select value={f.status} onValueChange={(v) => {
+                  if (v === "Aprovado" && f.status !== "Aprovado") {
+                    const projs = contrato.projetos ?? [];
+                    if (projs.length === 0) { toast.error("Cadastre pelo menos 1 projeto na aba Projetos antes de aprovar."); return; }
+                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+                    const valorContr = Number(f.valor) || 0;
+                    if (Math.abs(somaProj - valorContr) > 0.5) {
+                      toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) não bate com o contrato (${fmtBRL(valorContr)}). Ajuste na aba Projetos.`);
+                      return;
+                    }
+                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso envia os projetos para a Engenharia e gera o financeiro de cada projeto.`)) return;
+                  }
+                  setF({ ...f, status: v });
+                }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -1081,13 +1168,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} />
               </div>
               <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} maxLength={20} />
+                <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} inputMode="numeric" maxLength={18} />
+                {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
               </div>
               <div className="space-y-1.5"><Label>Telefone</Label>
-                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} maxLength={20} />
+                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
+                {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
               </div>
               <div className="space-y-1.5"><Label>Telefone 2</Label>
-                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} maxLength={20} />
+                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
               </div>
               <div className="space-y-1.5"><Label>E-mail</Label>
                 <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
@@ -1429,11 +1518,28 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
     if (r) updateProjeto(contrato.id, projId, { endereco: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "" });
   };
 
+  const somaProjetos = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+  const valorContrato = Number(contrato.valor) || 0;
+  const diff = valorContrato - somaProjetos;
+  const bate = Math.abs(diff) <= 0.5;
+
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
         Cada projeto vira uma obra independente (tipo, endereço, módulos, equipe) mas mantém vínculo com o contrato {contrato.id}. Valor de venda, comissão e parâmetro permanecem no contrato.
       </div>
+      {projetos.length > 0 && (
+        <div className={`rounded-md border p-3 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
+            <span>Soma projetos: <b className="font-mono">{fmtBRL(somaProjetos)}</b></span>
+            <span className={bate ? "text-emerald-600" : "text-destructive"}>
+              {bate ? "✓ valores batem" : `Diferença: ${fmtBRL(Math.abs(diff))} ${diff > 0 ? "(faltam)" : "(excesso)"}`}
+            </span>
+          </div>
+          <span className="text-muted-foreground">Para aprovar o contrato, a soma dos valores dos projetos deve bater com o total.</span>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap h-auto">

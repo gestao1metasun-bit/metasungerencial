@@ -704,10 +704,10 @@ function CadastrarContratoTab({
     }
   };
 
-  // Cálculos automáticos
-  const modulosNum = Number(form.modulos) || 0;
-  const potenciaWp = Number(form.potencia) || 0;
-  const kwpTotal = (modulosNum * potenciaWp) / 1000;
+  // Cálculos automáticos — kWp total = soma dos kWp de todos os projetos
+  const projsKwp = projs.map((p) => ((Number(p.modulos) || 0) * (Number(p.potenciaModuloW) || 0)) / 1000);
+  const kwpTotal = projsKwp.reduce((a, b) => a + b, 0);
+  const totalModulos = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
   const valorNum = Number(form.valor) || 0;
   const parametroNum = kwpTotal > 0 ? valorNum / kwpTotal : 0;
   const parametroFmt = parametroNum > 0 ? String(Number(parametroNum.toFixed(4))) : "";
@@ -715,8 +715,10 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const limpar = () => {
-    setForm({ dataCadastro: today, dataAssinatura: "", modulos: "", potencia: "", inv1: "", inv2: "", inv3: "", valor: "", vendedor: "", financiamento: "nao" });
+    setForm({ dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao" });
     setCli(emptyCliente);
+    setProjs([emptyProj()]);
+    setActiveProj(0);
   };
 
   const submit = () => {
@@ -724,8 +726,15 @@ function CadastrarContratoTab({
     if (!form.vendedor) { toast.error("Selecione o vendedor"); return; }
     if (!valorNum) { toast.error("Informe o valor da venda"); return; }
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
+    for (let i = 0; i < projs.length; i++) {
+      const p = projs[i];
+      if (!p.tipo.trim()) { toast.error(`Projeto ${i + 1}: informe o tipo`); return; }
+      if (!Number(p.modulos)) { toast.error(`Projeto ${i + 1}: informe a qtd de módulos`); return; }
+    }
 
     const novoId = nextContratoId(contratos);
+    // 1º inversor / módulos do projeto principal ficam também no contrato (compatibilidade)
+    const principal = projs[0];
     const novo: Contrato = {
       id: novoId,
       cliente: cli.nome.trim(),
@@ -736,10 +745,10 @@ function CadastrarContratoTab({
       data: form.dataCadastro || today,
       pagamento: "À definir",
       banco: "",
-      modulos: modulosNum,
+      modulos: totalModulos,
       obs: "",
-      potencia: potenciaWp,
-      inv1: form.inv1, inv2: form.inv2, inv3: form.inv3,
+      potencia: Number(principal.potenciaModuloW) || 0,
+      inv1: principal.inv1, inv2: principal.inv2, inv3: principal.inv3,
       parametro: parametroFmt,
       dataCadastro: form.dataCadastro || today,
       dataAssinatura: form.dataAssinatura,
@@ -753,14 +762,44 @@ function CadastrarContratoTab({
       }],
     };
     upsertContrato(novo);
+
+    // 2º criar projetos vinculados
+    projs.forEach((p, i) => {
+      const mods = Number(p.modulos) || 0;
+      const potW = Number(p.potenciaModuloW) || 0;
+      const useCli = p.usarEnderecoCliente;
+      addProjeto(novoId, {
+        tipo: p.tipo || `Projeto ${i + 1}`,
+        endereco: useCli ? `${cli.rua}${cli.numero ? `, ${cli.numero}` : ""}` : `${p.rua}${p.numero ? `, ${p.numero}` : ""}`,
+        numero: useCli ? cli.numero : p.numero,
+        bairro: useCli ? cli.bairro : p.bairro,
+        cep: useCli ? cli.cep : p.cep,
+        cidade: useCli ? cli.cidade : p.cidade,
+        uf: useCli ? cli.uf : p.uf,
+        modulos: mods,
+        potenciaModuloW: potW,
+        kwp: (mods * potW) / 1000,
+        inversor: p.inv1,
+        inv2: p.inv2,
+        inv3: p.inv3,
+        equipe: p.equipe,
+        status: "Em projeto/aprovação",
+        inicio: today,
+        previsto: "",
+        obs: "",
+        cronograma: "",
+        enviadoEngenharia: false,
+      });
+    });
+
     if (form.financiamento === "sim") {
       addPendencia({
         id: novoId, cliente: novo.cliente, vendedor: novo.vendedor,
         valor: valorNum, kwp: kwpTotal, dataCadastro: today, status: "Pendente",
       });
-      toast.success(`Contrato ${novoId} cadastrado · enviado para Pendências de Financiamento`);
+      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s) · enviado para Pendências de Financiamento`);
     } else {
-      toast.success(`Contrato ${novoId} cadastrado · cliente registrado`);
+      toast.success(`Contrato ${novoId} cadastrado com ${projs.length} projeto(s)`);
     }
     limpar();
   };

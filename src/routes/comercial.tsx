@@ -652,19 +652,31 @@ function CadastrarContratoTab({
   const [cepLoading, setCepLoading] = useState(false);
 
   // ---- Parcelas de pagamento (cada linha tem forma própria) ----
-  const novaParcela = (valor = 0): ParcelaPagto => ({
+  const addMonthsISO = (iso: string, n: number) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(y, (m - 1) + n, d);
+    return dt.toISOString().slice(0, 10);
+  };
+  const novaParcela = (valor = 0, base?: ParcelaPagto): ParcelaPagto => ({
     id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     valor,
-    dataEmissao: today,
-    dataVencimento: today,
-    competencia: today.slice(0, 7),
-    formaPagamento: "Pix",
+    dataEmissao: base?.dataEmissao ?? today,
+    dataVencimento: base ? addMonthsISO(base.dataVencimento, 1) : today,
+    competencia: base ? addMonthsISO(base.dataVencimento, 1).slice(0, 7) : today.slice(0, 7),
+    formaPagamento: base?.formaPagamento ?? "Pix",
   });
   const [parcelas, setParcelas] = useState<ParcelaPagto[]>([novaParcela()]);
   const setParc = (id: string, patch: Partial<ParcelaPagto>) =>
     setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  const addParc = () => setParcelas((arr) => [...arr, novaParcela()]);
+  const addParc = () => setParcelas((arr) => [...arr, novaParcela(0, arr[arr.length - 1])]);
   const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
+  const aplicarMesmaCompetencia = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, competencia: arr[0].competencia })) : arr);
+  const aplicarMesmaEmissao = () => setParcelas((arr) => arr.length ? arr.map((p) => ({ ...p, dataEmissao: arr[0].dataEmissao })) : arr);
+  const redistribuirVencimentos = () => setParcelas((arr) => arr.map((p, i) => {
+    if (i === 0) return p;
+    const venc = addMonthsISO(arr[0].dataVencimento, i);
+    return { ...p, dataVencimento: venc, competencia: venc.slice(0, 7) };
+  }));
   const distribuirValor = (totalParam?: number) => {
     setParcelas((arr) => {
       if (arr.length === 0) return arr;
@@ -948,7 +960,11 @@ function CadastrarContratoTab({
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0">
+        <DialogContent
+          className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           {/* Header */}
           <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
             <DialogHeader className="space-y-1">
@@ -1118,10 +1134,13 @@ function CadastrarContratoTab({
                 </div>
 
                 <div className="rounded-lg border bg-card p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
                     <span className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={redistribuirVencimentos}>Vencimentos +1 mês</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaCompetencia}>Mesma competência</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaEmissao}>Mesma emissão</Button>
                       <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
                     </div>
                   </div>
@@ -1313,7 +1332,7 @@ function CadastrarContratoTab({
           {/* Footer fixo */}
           <DialogFooter className="border-t bg-muted/30 px-6 py-3">
             <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}>
+            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (podeCadastrar) setOpenForm(false); }} disabled={!podeCadastrar}>
               <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
             </Button>
           </DialogFooter>
@@ -2094,11 +2113,60 @@ function VendedoresTab({
                 <div className="flex justify-between text-xs"><span className="text-muted-foreground">Meta {fmtBRL(v.meta)}</span><span className="font-semibold">{pct.toFixed(0)}%</span></div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(pct, 100)}%` }} /></div>
               </div>
+              <div className="mt-3">
+                <HistoricoVendedorDialog vendedor={v.nome} contratos={meus} />
+              </div>
             </Card>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function HistoricoVendedorDialog({ vendedor, contratos }: { vendedor: string; contratos: Contrato[] }) {
+  const [open, setOpen] = useState(false);
+  const total = contratos.reduce((s, c) => s + c.valor, 0);
+  const totalKwp = contratos.reduce((s, c) => s + c.kwp, 0);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <FileText className="mr-2 h-3.5 w-3.5" /> Histórico de vendas ({contratos.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Histórico de vendas — {vendedor}</DialogTitle>
+          <DialogDescription>
+            {contratos.length} contrato(s) · Total {fmtBRL(total)} · {totalKwp.toFixed(2)} kWp
+          </DialogDescription>
+        </DialogHeader>
+        {contratos.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">Nenhum contrato vinculado a este vendedor.</div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Data</TableHead>
+              <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {[...contratos].sort((a, b) => (b.data ?? "").localeCompare(a.data ?? "")).map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell>{c.cliente}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{c.data}</TableCell>
+                  <TableCell className="text-right font-mono">{c.kwp.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-mono">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell><StatusBadge status={c.status} /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

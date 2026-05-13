@@ -64,8 +64,30 @@ export function useClientesFull(): ClienteRecord[] {
   return list;
 }
 
+/** Normaliza CPF/CNPJ removendo pontuação. */
+const normDoc = (v: string) => (v ?? "").replace(/\D/g, "");
+
+/** Retorna o cliente existente com o mesmo CPF/CNPJ (não conta o próprio id em edição). */
+export function findClienteByDoc(doc: string, ignoreId?: string): ClienteRecord | undefined {
+  const d = normDoc(doc);
+  if (!d) return undefined;
+  return read().find((c) => normDoc(c.doc) === d && c.id !== ignoreId);
+}
+
+export class DuplicateClienteError extends Error {
+  existing: ClienteRecord;
+  constructor(existing: ClienteRecord) {
+    super("CPF/CNPJ já cadastrado");
+    this.existing = existing;
+  }
+}
+
 export function addClienteFull(input: Omit<ClienteRecord, "id" | "atualizado"> & { id?: string }): ClienteRecord {
   const id = input.id ?? `CLI-X-${Date.now()}`;
+  if (input.doc && normDoc(input.doc).length >= 11) {
+    const dup = findClienteByDoc(input.doc, id);
+    if (dup) throw new DuplicateClienteError(dup);
+  }
   const novo: ClienteRecord = {
     ...input, id,
     nome: input.nome.trim(),

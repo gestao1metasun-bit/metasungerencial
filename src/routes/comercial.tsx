@@ -2020,21 +2020,40 @@ function ProjetoEditCard({
           {!projeto.aprovado && contrato.status === "Aprovado" && (
             <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
               const faltam: string[] = [];
-              if (!(Number(projeto.valor) > 0)) faltam.push("valor");
+              if (!(Number(projeto.valor) > 0)) faltam.push("valor do projeto");
               if (!(Number(projeto.modulos) > 0)) faltam.push("módulos");
               if (!(Number(projeto.kwp) > 0)) faltam.push("potência (kWp)");
               if (!projeto.endereco?.trim()) faltam.push("endereço");
               if (!projeto.status?.trim()) faltam.push("status");
-              if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
+              const hasInvP = (x?: string) => { const t=(x??"").trim(); return t!=="" && t!=="0" && Number(t)!==0; };
+              if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP))
+                faltam.push("ao menos 1 inversor");
+              if (faltam.length) { toast.error(`Não é possível aprovar. Faltam: ${faltam.join(", ")}`); return; }
               const comp = composicaoSomaOk(contrato);
-              if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}).`); return; }
-              if (!window.confirm(`Aprovar projeto ${projeto.id}?\nApós aprovado, o financeiro pode ser gerado proporcionalmente em Pedidos de venda.`)) return;
+              if (!comp.ok) {
+                toast.error("Não é possível aprovar. O contrato/projeto ainda não possui orçamento/composição financeira válida.");
+                return;
+              }
+              const valorContrato = Number(contrato.valor) || 0;
+              const somaProjs = (contrato.projetos ?? []).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+              if (valorContrato > 0 && somaProjs - valorContrato > 0.5) {
+                toast.error(`Projetos não conciliados (soma ${fmtBRL(somaProjs)} ≠ contrato ${fmtBRL(valorContrato)}).`);
+                return;
+              }
+              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nSerá gerado automaticamente:\n• Contas a receber proporcionais\n• Card na Engenharia\n\nApós aprovado, a edição será bloqueada — exigindo remoção dos vínculos para alterar.`)) return;
               aprovarProjeto(contrato.id, projeto.id);
-              toast.success(`Projeto ${projeto.id} aprovado · pronto para gerar financeiro`);
+              const novos = calcularLancamentosProjeto(contrato, projeto);
+              if (novos.length > 0) appendLancamentos(novos as any);
+              updateProjeto(contrato.id, projeto.id, {
+                financeiroGerado: true,
+                dataGeracaoFinanceiro: new Date().toISOString(),
+                usuarioGeracao: "Operador",
+              });
+              toast.success(`Projeto ${projeto.id} aprovado · ${novos.length} lançamento(s) no Financeiro · enviado à Engenharia`);
             }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
           )}
           {projeto.aprovado && (
-            <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
+            <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO · EDIÇÃO BLOQUEADA</span>
           )}
           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
             if (!window.confirm(`Remover ${projeto.id}?`)) return;

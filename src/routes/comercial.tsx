@@ -37,7 +37,6 @@ import {
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
 } from "@/lib/contratos-store";
-import { Tabs as TabsX, TabsList as TabsListX, TabsTrigger as TabsTriggerX, TabsContent as TabsContentX } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/comercial")({

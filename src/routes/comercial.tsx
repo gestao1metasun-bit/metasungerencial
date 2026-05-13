@@ -1022,7 +1022,10 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Telefone</Label>
                 <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} maxLength={20} />
               </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
+              <div className="space-y-1.5"><Label>Telefone 2</Label>
+                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} maxLength={20} />
+              </div>
+              <div className="space-y-1.5"><Label>E-mail</Label>
                 <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />
               </div>
               <div className="space-y-1.5"><Label>CEP {cepLoading && <span className="text-xs text-muted-foreground">(buscando…)</span>}</Label>

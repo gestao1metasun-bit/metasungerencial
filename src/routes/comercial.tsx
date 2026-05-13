@@ -958,12 +958,23 @@ function CadastrarContratoTab({
             </Tabs>
           </div>
 
-          <DialogFooter className="border-t bg-muted/30 px-6 py-3">
-            <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={submit} disabled={!podeCadastrar}>
-              <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato (Pendente)
-            </Button>
-          </DialogFooter>
+          <div className="border-t bg-muted/30 px-6 py-3 space-y-2">
+            {!validation.ok && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-[11px] text-destructive">
+                <b>Pendente:</b> {validation.missing.join(" · ")}
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={limpar}>Limpar</Button>
+              <Button
+                className="bg-primary text-primary-foreground"
+                onClick={submit}
+                disabled={aprovacao || !validation.ok}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

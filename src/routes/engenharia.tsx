@@ -274,6 +274,8 @@ function ObrasAtivasTab({
   obras, setObras, equipes,
 }: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed }) {
   const [equipe, setEquipe] = useState("todas");
+  const [editing, setEditing] = useState<Obra | null>(null);
+
   const list = obras
     .filter((o) => o.status !== "Finalizado")
     .filter((o) => equipe === "todas" || o.equipe === equipe)
@@ -282,16 +284,12 @@ function ObrasAtivasTab({
       return r !== 0 ? r : a.ordem - b.ordem;
     });
 
-  const update = (id: string, patch: Partial<Obra>) => {
-    const next = obras.map((o) => o.id === id
-      ? { ...o, ...patch, finalizacao: patch.status === "Finalizado" ? new Date().toISOString().slice(0,10) : o.finalizacao }
-      : o);
+  const save = (id: string, patch: Partial<Obra>) => {
+    const next = obras.map((o) => o.id === id ? { ...o, ...patch } : o);
     const target = next.find((o) => o.id === id)!;
     setObras(chainSchedule(next, target.equipe, target.status));
-  };
-  const remove = (id: string) => {
-    setObras(obras.filter((o) => o.id !== id));
-    toast.success("Obra removida");
+    setEditing(null);
+    toast.success("Obra atualizada");
   };
 
   return (
@@ -314,7 +312,7 @@ function ObrasAtivasTab({
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
-            <TableHead>Início</TableHead><TableHead>Fim</TableHead>
+            <TableHead>Início</TableHead><TableHead>Previsto</TableHead>
             <TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -323,38 +321,20 @@ function ObrasAtivasTab({
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
-                <TableCell className="text-center">
-                  <Input type="number" defaultValue={o.modulos} className="h-7 w-16 text-center" onBlur={(e)=>update(o.id,{ modulos: Number(e.target.value) || 0, previsto: recalcPrevisto(o.inicio, o.equipe, Number(e.target.value) || 0) })} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Input type="number" step="0.1" defaultValue={o.potencia} className="h-7 w-20 text-right" onBlur={(e)=>update(o.id,{ potencia: Number(e.target.value) || 0 })} />
-                </TableCell>
-                <TableCell><Input defaultValue={o.inversor} className="h-7 w-28 text-xs" onBlur={(e)=>update(o.id,{ inversor: e.target.value })} /></TableCell>
-                <TableCell><Input defaultValue={o.inv2} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv2: e.target.value })} /></TableCell>
-                <TableCell><Input defaultValue={o.inv3} placeholder="—" className="h-7 w-24 text-xs" onBlur={(e)=>update(o.id,{ inv3: e.target.value })} /></TableCell>
-                <TableCell>
-                  <Select value={o.telhadoTipo} onValueChange={(v) => update(o.id, { telhadoTipo: v })}>
-                    <SelectTrigger className="h-7 w-32"><SelectValue /></SelectTrigger>
-                    <SelectContent>{TELHADOS.map(t=><SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select value={o.equipe} onValueChange={(v) => update(o.id, { equipe: v, previsto: recalcPrevisto(o.inicio, v, o.modulos) })}>
-                    <SelectTrigger className="h-7 w-28"><SelectValue /></SelectTrigger>
-                    <SelectContent>{equipes.map(e=><SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell><Input type="date" defaultValue={o.inicio} className="h-7 w-36" onBlur={(e)=>update(o.id,{ inicio: e.target.value, previsto: recalcPrevisto(e.target.value, o.equipe, o.modulos) })} /></TableCell>
+                <TableCell className="text-center">{o.modulos}</TableCell>
+                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
+                <TableCell className="text-xs">{o.inversor}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
+                <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
+                <TableCell className="text-xs">{o.equipe}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
-                <TableCell>
-                  <Select value={o.status} onValueChange={(v) => update(o.id, { status: v })}>
-                    <SelectTrigger className="h-7 w-44"><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUS.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Finalizar" onClick={() => update(o.id, { status: "Finalizado" })}><CheckCircle2 className="h-3.5 w-3.5 text-success" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <TableCell><StatusBadge status={o.status} /></TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(o)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -363,9 +343,119 @@ function ObrasAtivasTab({
         </Table>
       </div>
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
-        Não editável: <span className="font-semibold">#</span>, <span className="font-semibold">Cliente</span> e <span className="font-semibold">Contrato</span>. Linhas coloridas conforme status.
+        Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <Pencil className="inline h-3 w-3" /> editar.
       </div>
+      <EditObraDialog obra={editing} onClose={() => setEditing(null)} onSave={save} equipes={equipes} />
     </Card>
+  );
+}
+
+function EditObraDialog({
+  obra, onClose, onSave, equipes,
+}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; equipes: typeof equipesSeed }) {
+  const [form, setForm] = useState<Partial<Obra>>({});
+  const [confirming, setConfirming] = useState(false);
+
+  // re-init when obra changes
+  if (obra && form.id !== obra.id) {
+    setTimeout(() => setForm({ ...obra }), 0);
+  }
+  if (!obra) return null;
+
+  const f = { ...obra, ...form };
+  const finalizing = f.status === "Finalizado";
+  const valid = !finalizing || (!!f.inicioReal && !!f.fimReal);
+
+  const trySave = () => {
+    if (finalizing && !valid) {
+      toast.error("Preencha Início real e Fim real para finalizar");
+      return;
+    }
+    setConfirming(true);
+  };
+
+  const confirm = () => {
+    const patch: Partial<Obra> = {
+      modulos: f.modulos, potencia: f.potencia, inversor: f.inversor,
+      inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
+      equipe: f.equipe, inicio: f.inicio, status: f.status, obs: f.obs,
+      inicioReal: f.inicioReal, fimReal: f.fimReal,
+      finalizacao: finalizing ? (f.fimReal ?? null) : null,
+      previsto: recalcPrevisto(f.inicio || obra.inicio, f.equipe || obra.equipe, f.modulos ?? obra.modulos),
+    };
+    onSave(obra.id, patch);
+    setConfirming(false);
+    setForm({});
+  };
+
+  return (
+    <Dialog open={!!obra} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar obra · {obra.cliente}</DialogTitle>
+          <DialogDescription>Contrato {fmtContrato(obra.contrato)} · #{obra.ordem}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Potência (kWp)</Label><Input type="number" step="0.1" value={f.potencia ?? ""} onChange={(e) => setForm({ ...form, potencia: Number(e.target.value) })} /></div>
+          <div><Label>Telhado</Label>
+            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{TELHADOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
+          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
+          <div><Label>Equipe</Label>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Início (planejado)</Label><Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {finalizing && (
+            <>
+              <div><Label className="text-success">Início real *</Label><Input type="date" value={f.inicioReal ?? ""} onChange={(e) => setForm({ ...form, inicioReal: e.target.value })} /></div>
+              <div><Label className="text-success">Fim real *</Label><Input type="date" value={f.fimReal ?? ""} onChange={(e) => setForm({ ...form, fimReal: e.target.value })} /></div>
+            </>
+          )}
+          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+        {finalizing && (
+          <div className="rounded-md border border-success/30 bg-success/10 p-3 text-xs">
+            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para a aba <strong>Finalizados</strong>. Início real e Fim real são obrigatórios.
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar alteração</DialogTitle>
+            <DialogDescription>
+              {finalizing
+                ? `Tem certeza que deseja FINALIZAR a obra de ${obra.cliente}? Ela sairá das ativas.`
+                : `Tem certeza que deseja salvar as alterações da obra de ${obra.cliente}?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>Cancelar</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={confirm}>Sim, confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Dialog>
   );
 }
 

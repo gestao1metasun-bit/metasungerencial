@@ -5,6 +5,10 @@ const map: Record<string, string> = {
   "Assinado": "bg-success/15 text-success border-success/30",
   "Gerado": "bg-info/15 text-info border-info/30",
   "Pendente": "bg-warning/15 text-warning border-warning/30",
+  "Pendente de informações": "bg-warning/15 text-warning border-warning/30",
+  "Em análise": "bg-info/15 text-info border-info/30",
+  "Pronto para aprovação": "bg-primary/15 text-primary border-primary/30",
+  "Contrato aprovado": "bg-success/15 text-success border-success/30",
   "Cancelado": "bg-destructive/15 text-destructive border-destructive/30",
   // Financiamento
   "Sem contrato": "bg-warning/15 text-warning border-warning/30",

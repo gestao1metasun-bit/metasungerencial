@@ -142,6 +142,16 @@ export const useRecorrentes = () => useLS<DespesaRecorrente[]>(LS_REC, seedRec);
 export const useCentrosCusto = () => useLS<CentroCusto[]>(LS_CC, seedCentros);
 export const useNaturezas = () => useLS<Natureza[]>(LS_NAT, seedNaturezas);
 
+/** Append lançamentos ao LocalStorage (uso fora de componentes React). */
+export function appendLancamentos(novos: Lancamento[]) {
+  if (typeof window === "undefined" || novos.length === 0) return;
+  try {
+    const raw = localStorage.getItem(LS_LANC);
+    const cur: Lancamento[] = raw ? JSON.parse(raw) : seedLanc;
+    localStorage.setItem(LS_LANC, JSON.stringify([...novos, ...cur]));
+  } catch {}
+}
+
 export const fmtBRLPrecise = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

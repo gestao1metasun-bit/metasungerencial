@@ -2950,8 +2950,8 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                             <Button size="sm" variant="outline" onClick={() => toggleEdit(projeto.id)}>
                               <Pencil className="mr-1 h-3.5 w-3.5" /> {open ? "Fechar" : "Editar financeiro"}
                             </Button>
-                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => gerarFinanceiro(contrato, projeto)}>
-                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar" : "Gerar"} financeiro
+                            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
+                              <DollarSign className="mr-1 h-4 w-4" /> {projeto.financeiroGerado ? "Atualizar pedido" : (projeto.aprovado ? "Gerar financeiro" : "Aprovar pedido")}
                             </Button>
                           </div>
                         </div>

@@ -668,6 +668,8 @@ function CadastrarContratoTab({
   const [projs, setProjs] = useState<ProjetoDraft[]>([emptyProj()]);
   const [activeProj, setActiveProj] = useState(0);
   const [projCepLoading, setProjCepLoading] = useState<number | null>(null);
+  const [orcOpen, setOrcOpen] = useState<number | null>(null);
+  const [naturezas] = useNaturezas();
 
   const setProjField = (idx: number, k: keyof ProjetoDraft, v: string | boolean) =>
     setProjs((arr) => arr.map((p, i) => (i === idx ? { ...p, [k]: v } : p)));

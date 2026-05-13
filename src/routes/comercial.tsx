@@ -2124,6 +2124,52 @@ function VendedoresTab({
   );
 }
 
+function HistoricoVendedorDialog({ vendedor, contratos }: { vendedor: string; contratos: Contrato[] }) {
+  const [open, setOpen] = useState(false);
+  const total = contratos.reduce((s, c) => s + c.valor, 0);
+  const totalKwp = contratos.reduce((s, c) => s + c.kwp, 0);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <FileText className="mr-2 h-3.5 w-3.5" /> Histórico de vendas ({contratos.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Histórico de vendas — {vendedor}</DialogTitle>
+          <DialogDescription>
+            {contratos.length} contrato(s) · Total {fmtBRL(total)} · {totalKwp.toFixed(2)} kWp
+          </DialogDescription>
+        </DialogHeader>
+        {contratos.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">Nenhum contrato vinculado a este vendedor.</div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Data</TableHead>
+              <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {[...contratos].sort((a, b) => (b.data ?? "").localeCompare(a.data ?? "")).map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell>{c.cliente}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{c.data}</TableCell>
+                  <TableCell className="text-right font-mono">{c.kwp.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-mono">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell><StatusBadge status={c.status} /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function NovoVendedorDialog({ onSave, nextId }: { onSave: (v: Vendedor) => void; nextId: string }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ nome: "", email: "", meta: "", status: "Ativo" });

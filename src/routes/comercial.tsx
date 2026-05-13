@@ -1155,7 +1155,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Aprovação para Engenharia</div>
-                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Aprovados</b> e projetos <b>liberados</b> aparecem na Engenharia. Aprovar gera o financeiro de cada projeto.</div>
+                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Aprovados</b> e projetos <b>liberados</b> aparecem na Engenharia. Configure o financeiro de cada projeto na aba <b>Pedidos de venda</b>.</div>
                 </div>
                 <AprovarEnviarDialog contrato={contrato} />
               </div>

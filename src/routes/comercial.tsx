@@ -1332,7 +1332,7 @@ function CadastrarContratoTab({
           {/* Footer fixo */}
           <DialogFooter className="border-t bg-muted/30 px-6 py-3">
             <Button variant="outline" onClick={limpar}>Limpar</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (!aprovacao) setOpenForm(false); }} disabled={aprovacao}>
+            <Button className="bg-primary text-primary-foreground" onClick={() => { submit(); if (podeCadastrar) setOpenForm(false); }} disabled={!podeCadastrar}>
               <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
             </Button>
           </DialogFooter>

@@ -645,9 +645,35 @@ function CadastrarContratoTab({
   const [form, setForm] = useState({
     dataCadastro: today, dataAssinatura: "",
     valor: "", vendedor: "", financiamento: "nao" as "sim" | "nao",
+    modulosContrato: "", potenciaContrato: "550",
+    inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [cepLoading, setCepLoading] = useState(false);
+
+  // ---- Parcelas de pagamento (cada linha tem forma própria) ----
+  const novaParcela = (valor = 0): ParcelaPagto => ({
+    id: `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    valor,
+    dataEmissao: today,
+    dataVencimento: today,
+    competencia: today.slice(0, 7),
+    formaPagamento: "Pix",
+  });
+  const [parcelas, setParcelas] = useState<ParcelaPagto[]>([novaParcela()]);
+  const setParc = (id: string, patch: Partial<ParcelaPagto>) =>
+    setParcelas((arr) => arr.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const addParc = () => setParcelas((arr) => [...arr, novaParcela()]);
+  const delParc = (id: string) => setParcelas((arr) => (arr.length === 1 ? arr : arr.filter((p) => p.id !== id)));
+  const distribuirValor = () => {
+    const total = Number(formValor()) || 0;
+    if (parcelas.length === 0 || total <= 0) return;
+    const each = Math.round((total / parcelas.length) * 100) / 100;
+    const last = Math.round((total - each * (parcelas.length - 1)) * 100) / 100;
+    setParcelas((arr) => arr.map((p, i) => ({ ...p, valor: i === arr.length - 1 ? last : each })));
+  };
+  // helper para acessar valor sem dependência circular
+  function formValor() { return (document.getElementById("valor-venda-input") as HTMLInputElement | null)?.value ?? ""; }
 
   // ---- Projetos vinculados (cadastrados junto com o contrato) ----
   type OrcMaterial = { id: string; itemId: string; qtd: number; unit: number };

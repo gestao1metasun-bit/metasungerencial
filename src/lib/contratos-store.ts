@@ -7,6 +7,7 @@ export type ClienteFull = {
   nome: string;
   doc: string;          // CPF ou CNPJ
   telefone: string;
+  telefone2?: string;   // telefone alternativo
   email: string;
   cep: string;
   rua: string;
@@ -20,21 +21,26 @@ export type ClienteFull = {
 export type ProjetoVinculado = {
   id: string;            // ex. 088/2026-01
   contratoId: string;    // ex. 088/2026
+  tipo: string;          // ex. "Projeto 1", "Residencial telhado", etc.
   endereco: string;
+  numero?: string;
+  bairro?: string;
+  cep?: string;
   cidade: string;
   uf: string;
   modulos: number;
   potenciaModuloW: number; // W por módulo
   kwp: number;
   inversor: string;
+  inv2?: string;
+  inv3?: string;
   equipe: string;
   status: string;        // "Em projeto/aprovação" | "Aguardando instalação" | ...
   inicio: string;        // YYYY-MM-DD
   previsto: string;
-  orcamento: number;
-  custo: number;
   obs: string;
   cronograma: string;    // texto livre opcional
+  enviadoEngenharia?: boolean; // true quando liberado para engenharia
 };
 
 export type AuditEntry = {

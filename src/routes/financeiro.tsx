@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import {
   ArrowDownCircle, ArrowUpCircle, Wallet, Clock, AlertCircle, FileSpreadsheet,
-  TrendingUp,
+  TrendingUp, Plus, Pencil, Trash2, Repeat, Building2, Layers, Filter,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  AreaChart, Area, Legend,
+  AreaChart, Area, Legend, LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
@@ -13,78 +14,132 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { receitaDespesa, contasReceber, contasPagar, fmtBRL } from "@/lib/mock-data";
+import { fmtBRL, contasReceber, contasPagar } from "@/lib/mock-data";
+import {
+  useLancamentos, useRecorrentes, useCentrosCusto, useNaturezas,
+  fmtBRLPrecise, type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia,
+} from "@/lib/financeiro-store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
   head: () => ({ meta: [{ title: "Financeiro — Meta Sun Gerencial" }] }),
   component: FinanceiroPage,
 });
 
+const CAMADAS: Camada[] = ["Realizado", "Confirmado", "Previsto", "A realizar", "Orçado futuro"];
+const PERIODOS = ["Diário", "Semanal", "Mensal", "Anual"] as const;
+type Periodo = typeof PERIODOS[number];
+
+function fmtBR(d: string) {
+  const [y, m, dd] = d.split("-");
+  return `${dd}/${m}/${y}`;
+}
+
 function FinanceiroPage() {
-  const receitas = receitaDespesa.reduce((s, r) => s + r.receita, 0);
-  const despesas = receitaDespesa.reduce((s, r) => s + r.despesa, 0);
-  const aReceber = contasReceber.filter((c) => c.status === "A receber").reduce((s, c) => s + c.valor, 0);
-  const aPagar = contasPagar.filter((c) => c.status === "A pagar").reduce((s, c) => s + c.valor, 0);
-  const vencidos = contasPagar.filter((c) => c.status === "Vencido").reduce((s, c) => s + c.valor, 0);
+  const [lancs, setLancs] = useLancamentos();
+  const [recs, setRecs] = useRecorrentes();
+  const [centros] = useCentrosCusto();
+  const [naturezas] = useNaturezas();
+
+  // KPIs gerais
+  const realizadoEntradas = lancs.filter(l => l.camada === "Realizado" && l.tipo === "Entrada").reduce((s, l) => s + l.valor, 0);
+  const realizadoSaidas = lancs.filter(l => l.camada === "Realizado" && l.tipo === "Saída").reduce((s, l) => s + l.valor, 0);
+  const saldo = realizadoEntradas - realizadoSaidas;
+  const confirmadoNet = lancs.filter(l => l.camada === "Confirmado").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
+  const previstoNet = lancs.filter(l => l.camada === "Previsto" || l.camada === "A realizar").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
+  const fixasMensais = recs.filter(r => r.ativa && r.recorrencia === "Mensal").reduce((s, r) => s + r.valor, 0);
+  const obrasSaidas = lancs.filter(l => l.obra && l.tipo === "Saída").reduce((s, l) => s + l.valor, 0);
+  const obrasEntradas = lancs.filter(l => l.obra && l.tipo === "Entrada").reduce((s, l) => s + l.valor, 0);
 
   return (
     <>
       <PageHeader
         title="Financeiro"
-        subtitle="Estrutura inicial — dados fictícios. Pronto para integração futura (Sheets, CSV, APIs)."
-        actions={<Button variant="outline"><FileSpreadsheet className="mr-2 h-4 w-4" /> Importar dados</Button>}
+        subtitle="Fluxo de caixa operacional + estrutura fixa — obras, despesas, receitas e previsões consolidadas."
+        actions={<NovoLancamentoDialog onSave={(l) => setLancs(p => [l, ...p])} centros={centros} naturezas={naturezas} />}
       />
 
       <Tabs defaultValue="dashboard">
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="receitas">Receitas</TabsTrigger>
-          <TabsTrigger value="despesas">Despesas</TabsTrigger>
-          <TabsTrigger value="receber">Contas a receber</TabsTrigger>
-          <TabsTrigger value="pagar">Contas a pagar</TabsTrigger>
-          <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
-          <TabsTrigger value="import">Importações</TabsTrigger>
+          <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
+          <TabsTrigger value="recorrentes">Despesas fixas</TabsTrigger>
+          <TabsTrigger value="gerencial">Visão gerencial</TabsTrigger>
+          <TabsTrigger value="centros">Centros & Naturezas</TabsTrigger>
+          <TabsTrigger value="receber">A receber</TabsTrigger>
+          <TabsTrigger value="pagar">A pagar</TabsTrigger>
+          <TabsTrigger value="dre">DRE</TabsTrigger>
         </TabsList>
 
+        {/* DASHBOARD */}
         <TabsContent value="dashboard" className="mt-5">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
-            <StatCard label="Receita mensal" value={fmtBRL(receitas / 5)} icon={ArrowDownCircle} tone="success" />
-            <StatCard label="Despesa mensal" value={fmtBRL(despesas / 5)} icon={ArrowUpCircle} tone="destructive" />
-            <StatCard label="Resultado" value={fmtBRL((receitas - despesas) / 5)} icon={Wallet} tone="primary" trend={{ value: "+22%", positive: true }} />
-            <StatCard label="Faturamento acumulado" value={fmtBRL(receitas)} icon={TrendingUp} tone="info" />
-            <StatCard label="A receber" value={fmtBRL(aReceber)} icon={Clock} tone="info" />
-            <StatCard label="A pagar" value={fmtBRL(aPagar)} icon={Clock} tone="warning" />
-            <StatCard label="Vencidos" value={fmtBRL(vencidos)} icon={AlertCircle} tone="destructive" />
-            <StatCard label="Projeção mensal" value={fmtBRL(580000)} icon={TrendingUp} tone="primary" />
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="Saldo realizado" value={fmtBRL(saldo)} hint="Entradas − Saídas" icon={Wallet} tone={saldo >= 0 ? "success" : "destructive"} />
+            <StatCard label="Confirmado (líq.)" value={fmtBRL(confirmadoNet)} icon={ArrowDownCircle} tone="info" />
+            <StatCard label="Previsto + A realizar" value={fmtBRL(previstoNet)} icon={TrendingUp} tone="primary" />
+            <StatCard label="Despesas fixas/mês" value={fmtBRL(fixasMensais)} icon={Repeat} tone="warning" />
+            <StatCard label="Saídas obras" value={fmtBRL(obrasSaidas)} icon={ArrowUpCircle} tone="destructive" />
+            <StatCard label="Entradas obras" value={fmtBRL(obrasEntradas)} icon={ArrowDownCircle} tone="success" />
+            <StatCard label="Margem obras" value={fmtBRL(obrasEntradas - obrasSaidas)} icon={Wallet} tone={obrasEntradas - obrasSaidas >= 0 ? "success" : "destructive"} />
+            <StatCard label="Custo empresa (fixo)" value={fmtBRL(fixasMensais)} hint="Sem obras" icon={Building2} tone="muted" />
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 text-sm font-semibold">Receita x Despesa</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={receitaDespesa}>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="receita" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="despesa" fill="var(--chart-5)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="mb-3 text-sm font-semibold">Projeção de caixa (próximos 30 dias)</div>
+              <ProjecaoCaixa lancs={lancs} />
             </Card>
             <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 text-sm font-semibold">Fluxo de caixa</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={receitaDespesa.map((r) => ({ mes: r.mes, saldo: r.receita - r.despesa }))}>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Area type="monotone" dataKey="saldo" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.25} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="mb-3 text-sm font-semibold">Saídas por natureza</div>
+              <PorNatureza lancs={lancs} />
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* FLUXO */}
+        <TabsContent value="fluxo" className="mt-5">
+          <FluxoCaixa lancs={lancs} />
+        </TabsContent>
+
+        {/* LANÇAMENTOS */}
+        <TabsContent value="lancamentos" className="mt-5">
+          <LancamentosTab lancs={lancs} setLancs={setLancs} centros={centros} naturezas={naturezas} />
+        </TabsContent>
+
+        {/* RECORRENTES */}
+        <TabsContent value="recorrentes" className="mt-5">
+          <RecorrentesTab recs={recs} setRecs={setRecs} centros={centros} naturezas={naturezas} />
+        </TabsContent>
+
+        {/* GERENCIAL */}
+        <TabsContent value="gerencial" className="mt-5">
+          <GerencialTab lancs={lancs} fixas={fixasMensais} />
+        </TabsContent>
+
+        {/* CENTROS */}
+        <TabsContent value="centros" className="mt-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4" /> Centros de custo</div>
+              <Table>
+                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
+                <TableBody>{centros.map(c => (<TableRow key={c.id}><TableCell>{c.nome}</TableCell><TableCell className="text-muted-foreground">{c.tipo}</TableCell></TableRow>))}</TableBody>
+              </Table>
+            </Card>
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4" /> Naturezas financeiras</div>
+              <Table>
+                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
+                <TableBody>{naturezas.map(n => (<TableRow key={n.id}><TableCell>{n.nome}</TableCell><TableCell><StatusBadge status={n.tipo} /></TableCell></TableRow>))}</TableBody>
+              </Table>
             </Card>
           </div>
         </TabsContent>
@@ -136,81 +191,442 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="dre" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)] p-6">
-            <h2 className="text-lg font-semibold">DRE Gerencial — Resumido</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Período atual</p>
-            <div className="mt-6 space-y-3">
-              {[
-                { label: "Receita Bruta", valor: receitas, tone: "text-success" },
-                { label: "(–) Impostos sobre vendas", valor: -receitas * 0.12, tone: "text-destructive" },
-                { label: "Receita Líquida", valor: receitas * 0.88, tone: "font-semibold" },
-                { label: "(–) Custos operacionais", valor: -despesas * 0.6, tone: "text-destructive" },
-                { label: "Lucro Bruto", valor: receitas * 0.88 - despesas * 0.6, tone: "font-semibold" },
-                { label: "(–) Despesas administrativas", valor: -despesas * 0.4, tone: "text-destructive" },
-                { label: "Resultado Operacional", valor: receitas * 0.88 - despesas, tone: "text-lg font-bold text-primary" },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between border-b border-border pb-2 text-sm">
-                  <span className="text-muted-foreground">{row.label}</span>
-                  <span className={row.tone}>{fmtBRL(row.valor)}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="receitas" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)] p-5">
-            <div className="mb-3 text-sm font-semibold">Receitas por mês</div>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={receitaDespesa}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                <Bar dataKey="receita" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="despesas" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)] p-5">
-            <div className="mb-3 text-sm font-semibold">Despesas por mês</div>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={receitaDespesa}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                <Bar dataKey="despesa" fill="var(--chart-5)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="import" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)] p-6">
-            <h2 className="text-base font-semibold">Importações futuras</h2>
-            <p className="mt-1 text-sm text-muted-foreground">O módulo financeiro está preparado para receber dados externos.</p>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {[
-                { n: "Google Sheets", d: "Sincronizar planilhas operacionais" },
-                { n: "Arquivo CSV", d: "Upload de extrato bancário" },
-                { n: "Excel (.xlsx)", d: "Lançamentos em lote" },
-                { n: "API Bancária (Open Finance)", d: "Conciliação automática" },
-              ].map((i) => (
-                <div key={i.n} className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-4">
-                  <div>
-                    <div className="font-medium">{i.n}</div>
-                    <div className="text-xs text-muted-foreground">{i.d}</div>
-                  </div>
-                  <Button variant="outline" size="sm"><FileSpreadsheet className="mr-2 h-4 w-4" /> Conectar</Button>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <DRETab lancs={lancs} fixas={fixasMensais} />
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+/* ============== Projeção / Gráficos ============== */
+function ProjecaoCaixa({ lancs }: { lancs: Lancamento[] }) {
+  const data = useMemo(() => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dias: { dia: string; saldo: number }[] = [];
+    let saldo = lancs.filter(l => l.camada === "Realizado").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today); d.setDate(d.getDate() + i);
+      const iso = d.toISOString().slice(0, 10);
+      const day = lancs.filter(l => l.data === iso && l.camada !== "Realizado").reduce((s, l) => s + (l.tipo === "Entrada" ? l.valor : -l.valor), 0);
+      saldo += day;
+      dias.push({ dia: `${d.getDate()}/${d.getMonth() + 1}`, saldo });
+    }
+    return dias;
+  }, [lancs]);
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={data}>
+        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+        <XAxis dataKey="dia" stroke="var(--muted-foreground)" fontSize={11} />
+        <YAxis stroke="var(--muted-foreground)" fontSize={11} />
+        <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
+        <Area type="monotone" dataKey="saldo" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.25} strokeWidth={2} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--primary)", "var(--info)", "var(--warning)"];
+
+function PorNatureza({ lancs }: { lancs: Lancamento[] }) {
+  const data = useMemo(() => {
+    const map = new Map<string, number>();
+    lancs.filter(l => l.tipo === "Saída").forEach(l => map.set(l.natureza, (map.get(l.natureza) || 0) + l.valor));
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8);
+  }, [lancs]);
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <PieChart>
+        <Pie data={data} dataKey="value" nameKey="name" outerRadius={100} label={(e: any) => e.name}>
+          {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+        </Pie>
+        <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+/* ============== Fluxo de Caixa ============== */
+function FluxoCaixa({ lancs }: { lancs: Lancamento[] }) {
+  const [periodo, setPeriodo] = useState<Periodo>("Mensal");
+  const [camadaFiltro, setCamadaFiltro] = useState<"Todas" | Camada>("Todas");
+
+  const data = useMemo(() => {
+    const filtered = lancs.filter(l => camadaFiltro === "Todas" || l.camada === camadaFiltro);
+    const buckets = new Map<string, { periodo: string; entrada: number; saida: number }>();
+    const keyOf = (d: string) => {
+      const date = new Date(d);
+      if (periodo === "Diário") return d;
+      if (periodo === "Semanal") {
+        const x = new Date(date); x.setDate(x.getDate() - x.getDay());
+        return `Sem ${x.toISOString().slice(0, 10)}`;
+      }
+      if (periodo === "Anual") return d.slice(0, 4);
+      return d.slice(0, 7);
+    };
+    filtered.forEach(l => {
+      const k = keyOf(l.data);
+      const b = buckets.get(k) || { periodo: k, entrada: 0, saida: 0 };
+      if (l.tipo === "Entrada") b.entrada += l.valor; else b.saida += l.valor;
+      buckets.set(k, b);
+    });
+    return Array.from(buckets.values()).sort((a, b) => a.periodo.localeCompare(b.periodo));
+  }, [lancs, periodo, camadaFiltro]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-muted-foreground">Período</Label>
+          <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
+            <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>{PERIODOS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-muted-foreground">Camada</Label>
+          <Select value={camadaFiltro} onValueChange={(v) => setCamadaFiltro(v as any)}>
+            <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Todas">Todas</SelectItem>
+              {CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 text-sm font-semibold">Entradas × Saídas — {periodo}</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="periodo" stroke="var(--muted-foreground)" fontSize={11} />
+            <YAxis stroke="var(--muted-foreground)" fontSize={11} />
+            <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Bar dataKey="entrada" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="saida" fill="var(--chart-5)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="bg-[image:var(--gradient-card)]">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Período</TableHead>
+            <TableHead className="text-right">Entradas</TableHead>
+            <TableHead className="text-right">Saídas</TableHead>
+            <TableHead className="text-right">Saldo</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {data.map(d => (
+              <TableRow key={d.periodo}>
+                <TableCell className="font-mono text-xs">{d.periodo}</TableCell>
+                <TableCell className="text-right text-success">{fmtBRL(d.entrada)}</TableCell>
+                <TableCell className="text-right text-destructive">{fmtBRL(d.saida)}</TableCell>
+                <TableCell className={`text-right font-semibold ${d.entrada - d.saida >= 0 ? "text-success" : "text-destructive"}`}>{fmtBRL(d.entrada - d.saida)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+/* ============== Lançamentos ============== */
+function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
+  const [busca, setBusca] = useState("");
+  const [tipoF, setTipoF] = useState<"Todos" | Tipo>("Todos");
+  const [camadaF, setCamadaF] = useState<"Todas" | Camada>("Todas");
+  const filtered = lancs.filter((l: Lancamento) => {
+    if (tipoF !== "Todos" && l.tipo !== tipoF) return false;
+    if (camadaF !== "Todas" && l.camada !== camadaF) return false;
+    if (busca && !`${l.descricao} ${l.natureza} ${l.centroCusto} ${l.obra ?? ""}`.toLowerCase().includes(busca.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Input placeholder="Buscar descrição, natureza, obra…" className="max-w-sm" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <Select value={tipoF} onValueChange={(v) => setTipoF(v as any)}>
+          <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todos">Todos os tipos</SelectItem>
+            <SelectItem value="Entrada">Entrada</SelectItem>
+            <SelectItem value="Saída">Saída</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={camadaF} onValueChange={(v) => setCamadaF(v as any)}>
+          <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todas">Todas as camadas</SelectItem>
+            {CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="ml-auto">
+          <NovoLancamentoDialog onSave={(l) => setLancs((p: Lancamento[]) => [l, ...p])} centros={centros} naturezas={naturezas} />
+        </div>
+      </div>
+
+      <Card className="bg-[image:var(--gradient-card)]">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Natureza</TableHead>
+            <TableHead>Centro</TableHead><TableHead>Obra</TableHead><TableHead>Camada</TableHead>
+            <TableHead>Tipo</TableHead><TableHead className="text-right">Valor</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {filtered.map((l: Lancamento) => (
+              <TableRow key={l.id}>
+                <TableCell className="font-mono text-xs">{fmtBR(l.data)}</TableCell>
+                <TableCell className="font-medium">{l.descricao}</TableCell>
+                <TableCell className="text-muted-foreground">{l.natureza}</TableCell>
+                <TableCell className="text-muted-foreground">{l.centroCusto}</TableCell>
+                <TableCell className="text-muted-foreground">{l.obra ?? "—"}</TableCell>
+                <TableCell><StatusBadge status={l.camada} /></TableCell>
+                <TableCell><StatusBadge status={l.tipo} /></TableCell>
+                <TableCell className={`text-right font-semibold ${l.tipo === "Entrada" ? "text-success" : "text-destructive"}`}>
+                  {l.tipo === "Entrada" ? "+" : "−"} {fmtBRLPrecise(l.valor)}
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" onClick={() => { setLancs((p: Lancamento[]) => p.filter(x => x.id !== l.id)); toast.success("Lançamento removido"); }}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lancamento) => void; centros: any[]; naturezas: any[] }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<Lancamento>({
+    id: "", data: new Date().toISOString().slice(0, 10), descricao: "", tipo: "Saída", valor: 0,
+    camada: "Confirmado", natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
+    obra: "", empresa: "Meta Sun", filial: "Manaus", responsavel: "", obs: "",
+  });
+  const set = (k: keyof Lancamento, v: any) => setForm(p => ({ ...p, [k]: v }));
+  const save = () => {
+    if (!form.descricao || form.valor <= 0) { toast.error("Preencha descrição e valor"); return; }
+    onSave({ ...form, id: `L-${Date.now()}` });
+    toast.success("Lançamento criado");
+    setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Novo lançamento</Button></DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Novo lançamento financeiro</DialogTitle></DialogHeader>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Data"><Input type="date" value={form.data} onChange={(e) => set("data", e.target.value)} /></Field>
+          <Field label="Descrição"><Input value={form.descricao} onChange={(e) => set("descricao", e.target.value)} /></Field>
+          <Field label="Tipo">
+            <Select value={form.tipo} onValueChange={(v) => set("tipo", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Entrada">Entrada</SelectItem><SelectItem value="Saída">Saída</SelectItem></SelectContent>
+            </Select>
+          </Field>
+          <Field label="Valor (R$)"><Input type="number" step="0.01" value={form.valor} onChange={(e) => set("valor", parseFloat(e.target.value) || 0)} /></Field>
+          <Field label="Camada">
+            <Select value={form.camada} onValueChange={(v) => set("camada", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Natureza">
+            <Select value={form.natureza} onValueChange={(v) => set("natureza", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{naturezas.filter((n: any) => n.tipo === form.tipo).map((n: any) => <SelectItem key={n.id} value={n.nome}>{n.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Centro de custo">
+            <Select value={form.centroCusto} onValueChange={(v) => set("centroCusto", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{centros.map((c: any) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Obra (opcional)"><Input placeholder="OB-0231" value={form.obra} onChange={(e) => set("obra", e.target.value)} /></Field>
+          <Field label="Empresa"><Input value={form.empresa} onChange={(e) => set("empresa", e.target.value)} /></Field>
+          <Field label="Filial"><Input value={form.filial} onChange={(e) => set("filial", e.target.value)} /></Field>
+          <Field label="Observação" className="md:col-span-2"><Textarea value={form.obs} onChange={(e) => set("obs", e.target.value)} /></Field>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Salvar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return <div className={`space-y-1 ${className}`}><Label className="text-xs">{label}</Label>{children}</div>;
+}
+
+/* ============== Recorrentes ============== */
+const RECORRENCIAS: Recorrencia[] = ["Mensal", "Quinzenal", "Semanal", "Anual", "Personalizada", "Única"];
+
+function RecorrentesTab({ recs, setRecs, centros, naturezas }: any) {
+  const total = recs.filter((r: DespesaRecorrente) => r.ativa).reduce((s: number, r: DespesaRecorrente) => s + r.valor, 0);
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Total ativo: <span className="font-semibold text-foreground">{fmtBRL(total)}</span></div>
+        <NovaRecorrenteDialog onSave={(r) => setRecs((p: DespesaRecorrente[]) => [r, ...p])} centros={centros} naturezas={naturezas} />
+      </div>
+      <Card className="bg-[image:var(--gradient-card)]">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Descrição</TableHead><TableHead>Natureza</TableHead><TableHead>Centro</TableHead>
+            <TableHead>Recorrência</TableHead><TableHead>Vencto.</TableHead>
+            <TableHead className="text-right">Valor</TableHead><TableHead>Ativa</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {recs.map((r: DespesaRecorrente) => (
+              <TableRow key={r.id}>
+                <TableCell className="font-medium">{r.descricao}</TableCell>
+                <TableCell className="text-muted-foreground">{r.natureza}</TableCell>
+                <TableCell className="text-muted-foreground">{r.centroCusto}</TableCell>
+                <TableCell><StatusBadge status={r.recorrencia} /></TableCell>
+                <TableCell className="text-muted-foreground">Dia {r.diaVencimento}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRLPrecise(r.valor)}</TableCell>
+                <TableCell><Switch checked={r.ativa} onCheckedChange={(c) => setRecs((p: DespesaRecorrente[]) => p.map(x => x.id === r.id ? { ...x, ativa: c } : x))} /></TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" onClick={() => setRecs((p: DespesaRecorrente[]) => p.filter(x => x.id !== r.id))}><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+function NovaRecorrenteDialog({ onSave, centros, naturezas }: { onSave: (r: DespesaRecorrente) => void; centros: any[]; naturezas: any[] }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState<DespesaRecorrente>({
+    id: "", descricao: "", valor: 0, recorrencia: "Mensal", diaVencimento: 5,
+    natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
+    empresa: "Meta Sun", filial: "Manaus", responsavel: "", ativa: true,
+  });
+  const set = (k: keyof DespesaRecorrente, v: any) => setF(p => ({ ...p, [k]: v }));
+  const save = () => {
+    if (!f.descricao || f.valor <= 0) { toast.error("Preencha descrição e valor"); return; }
+    onSave({ ...f, id: `R-${Date.now()}` });
+    toast.success("Recorrente criada");
+    setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button><Repeat className="mr-2 h-4 w-4" /> Nova despesa fixa</Button></DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Despesa fixa / recorrente</DialogTitle></DialogHeader>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Descrição" className="md:col-span-2"><Input value={f.descricao} onChange={(e) => set("descricao", e.target.value)} /></Field>
+          <Field label="Valor (R$)"><Input type="number" step="0.01" value={f.valor} onChange={(e) => set("valor", parseFloat(e.target.value) || 0)} /></Field>
+          <Field label="Recorrência">
+            <Select value={f.recorrencia} onValueChange={(v) => set("recorrencia", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{RECORRENCIAS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Dia do vencimento"><Input type="number" min={1} max={28} value={f.diaVencimento} onChange={(e) => set("diaVencimento", parseInt(e.target.value) || 1)} /></Field>
+          <Field label="Natureza">
+            <Select value={f.natureza} onValueChange={(v) => set("natureza", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{naturezas.filter((n: any) => n.tipo === "Saída").map((n: any) => <SelectItem key={n.id} value={n.nome}>{n.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Centro de custo">
+            <Select value={f.centroCusto} onValueChange={(v) => set("centroCusto", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{centros.map((c: any) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Empresa"><Input value={f.empresa} onChange={(e) => set("empresa", e.target.value)} /></Field>
+          <Field label="Filial"><Input value={f.filial} onChange={(e) => set("filial", e.target.value)} /></Field>
+          <Field label="Responsável"><Input value={f.responsavel} onChange={(e) => set("responsavel", e.target.value)} /></Field>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Salvar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============== Gerencial ============== */
+function GerencialTab({ lancs, fixas }: { lancs: Lancamento[]; fixas: number }) {
+  const obrasSaidas = lancs.filter(l => l.obra && l.tipo === "Saída").reduce((s, l) => s + l.valor, 0);
+  const obrasEntradas = lancs.filter(l => l.obra && l.tipo === "Entrada").reduce((s, l) => s + l.valor, 0);
+  const margemObras = obrasEntradas - obrasSaidas;
+  const custoEmpresaSemObras = fixas;
+  const pontoEquilibrio = custoEmpresaSemObras / Math.max(0.0001, (obrasEntradas > 0 ? margemObras / obrasEntradas : 0.3));
+
+  const porCentro = useMemo(() => {
+    const map = new Map<string, number>();
+    lancs.filter(l => l.tipo === "Saída").forEach(l => map.set(l.centroCusto, (map.get(l.centroCusto) || 0) + l.valor));
+    return Array.from(map.entries()).map(([centro, valor]) => ({ centro, valor })).sort((a, b) => b.valor - a.valor);
+  }, [lancs]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Custo p/ manter empresa" value={fmtBRL(custoEmpresaSemObras)} hint="Despesas fixas mensais" icon={Building2} tone="warning" />
+        <StatCard label="Custo execução obras" value={fmtBRL(obrasSaidas)} icon={ArrowUpCircle} tone="destructive" />
+        <StatCard label="Margem obras" value={fmtBRL(margemObras)} icon={Wallet} tone={margemObras >= 0 ? "success" : "destructive"} />
+        <StatCard label="Ponto equilíbrio" value={fmtBRL(pontoEquilibrio)} hint="Receita p/ cobrir fixos" icon={TrendingUp} tone="info" />
+      </div>
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 text-sm font-semibold">Saídas por centro de custo</div>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={porCentro} layout="vertical">
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} />
+            <YAxis type="category" dataKey="centro" width={140} stroke="var(--muted-foreground)" fontSize={11} />
+            <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} formatter={(v: number) => fmtBRL(v)} />
+            <Bar dataKey="valor" fill="var(--chart-2)" radius={[0, 6, 6, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+    </div>
+  );
+}
+
+/* ============== DRE ============== */
+function DRETab({ lancs, fixas }: { lancs: Lancamento[]; fixas: number }) {
+  const receitas = lancs.filter(l => l.tipo === "Entrada" && (l.camada === "Realizado" || l.camada === "Confirmado")).reduce((s, l) => s + l.valor, 0);
+  const custoObras = lancs.filter(l => l.obra && l.tipo === "Saída").reduce((s, l) => s + l.valor, 0);
+  const despAdmin = lancs.filter(l => !l.obra && l.tipo === "Saída").reduce((s, l) => s + l.valor, 0) + fixas;
+  const impostos = receitas * 0.12;
+  const liquida = receitas - impostos;
+  const bruto = liquida - custoObras;
+  const operacional = bruto - despAdmin;
+
+  const rows = [
+    { label: "Receita Bruta", valor: receitas, tone: "text-success" },
+    { label: "(–) Impostos sobre vendas (12%)", valor: -impostos, tone: "text-destructive" },
+    { label: "Receita Líquida", valor: liquida, tone: "font-semibold" },
+    { label: "(–) Custos de obras", valor: -custoObras, tone: "text-destructive" },
+    { label: "Lucro Bruto", valor: bruto, tone: "font-semibold" },
+    { label: "(–) Despesas administrativas + fixas", valor: -despAdmin, tone: "text-destructive" },
+    { label: "Resultado Operacional", valor: operacional, tone: "text-lg font-bold text-primary" },
+  ];
+
+  return (
+    <Card className="bg-[image:var(--gradient-card)] p-6">
+      <h2 className="text-lg font-semibold">DRE Gerencial</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Calculado a partir dos lançamentos realizados/confirmados + despesas fixas.</p>
+      <div className="mt-6 space-y-3">
+        {rows.map(r => (
+          <div key={r.label} className="flex items-center justify-between border-b border-border pb-2 text-sm">
+            <span className="text-muted-foreground">{r.label}</span>
+            <span className={r.tone}>{fmtBRL(r.valor)}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

@@ -2243,8 +2243,9 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
                 <Textarea value={draft.obs} onChange={(e) => setD("obs", e.target.value)} />
               </div>
             </div>
-            <div className="mt-3 flex justify-end">
-              <Button className="bg-primary text-primary-foreground" onClick={adicionar}><Plus className="mr-2 h-4 w-4" /> Adicionar projeto</Button>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button variant="outline" onClick={novoProjetoVazio}><Plus className="mr-2 h-4 w-4" /> Novo projeto</Button>
+              <Button className="bg-primary text-primary-foreground" onClick={salvarProjeto}>Salvar projeto</Button>
             </div>
           </Card>
         </TabsContent>

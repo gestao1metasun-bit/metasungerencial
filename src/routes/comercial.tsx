@@ -1411,6 +1411,7 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                   <Textarea value={p.obs} onChange={(e) => updateProjeto(contrato.id, p.id, { obs: e.target.value })} />
                 </div>
               </div>
+              <ProjetoFinanceiro contrato={contrato} projeto={p} />
             </Card>
           </TabsContent>
         ))}

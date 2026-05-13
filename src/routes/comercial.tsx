@@ -675,6 +675,235 @@ function comissaoFromParametro(parametro: number): { pct: number | null; aprovac
   return { pct: 6, aprovacao: false };
 }
 
+/* ---------------- CLIENTE PICKER + NOVO CLIENTE ---------------- */
+
+function ClientePicker({ value, onPick }: { value?: string; onPick: (c: ClienteRecord) => void }) {
+  const clientes = useClientesFull();
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(false);
+  const filtrados = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return clientes.slice(0, 10);
+    return clientes.filter((c) =>
+      c.nome.toLowerCase().includes(s) ||
+      (c.doc ?? "").toLowerCase().includes(s) ||
+      (c.cidade ?? "").toLowerCase().includes(s),
+    ).slice(0, 20);
+  }, [q, clientes]);
+  const selecionado = clientes.find((c) => c.id === value);
+
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label>Cliente *</Label>
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Input
+              value={open ? q : (selecionado?.nome ?? q)}
+              placeholder="Buscar cliente por nome, CPF/CNPJ ou cidade…"
+              onFocus={() => setOpen(true)}
+              onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+              onBlur={() => setTimeout(() => setOpen(false), 200)}
+            />
+            {open && filtrados.length > 0 && (
+              <div className="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded-md border bg-popover shadow-lg">
+                {filtrados.map((c) => (
+                  <button
+                    type="button" key={c.id}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { onPick(c); setOpen(false); setQ(""); }}
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                  >
+                    <div className="font-medium">{c.nome}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">
+                      {c.doc || "—"} · {c.cidade}/{c.uf} · {c.telefone || "—"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button type="button" variant="outline" onClick={() => setNovoOpen(true)}>
+            <Plus className="mr-1 h-3.5 w-3.5" /> Novo
+          </Button>
+        </div>
+      </div>
+      <NovoClienteDialog open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={(c) => { onPick(c); setNovoOpen(false); }} />
+    </>
+  );
+}
+
+function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (c: ClienteRecord) => void }) {
+  const [f, setF] = useState({
+    nome: "", doc: "", telefone: "", email: "",
+    cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
+  });
+  const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
+  const lookupCEP = async (cep: string) => {
+    set("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    const r = await buscarCEP(cep);
+    if (r) setF((p) => ({ ...p, rua: r.rua ?? p.rua, bairro: r.bairro ?? p.bairro, cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf }));
+  };
+  const salvar = () => {
+    if (!f.nome.trim()) { toast.error("Informe o nome"); return; }
+    if (f.doc && !isDocValid(f.doc)) { toast.error("CPF/CNPJ inválido"); return; }
+    if (f.telefone && !isTelValid(f.telefone)) { toast.error("Telefone inválido"); return; }
+    const c = addClienteFull({ ...f, nome: f.nome.trim() });
+    toast.success(`Cliente cadastrado: ${c.nome}`);
+    onCreated(c);
+    setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
+  };
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Novo cliente</DialogTitle>
+          <DialogDescription>Cadastro rápido. E-mail é opcional.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
+            <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>CPF / CNPJ *</Label>
+            <Input value={f.doc} onChange={(e) => set("doc", maskDoc(e.target.value))} maxLength={18} />
+          </div>
+          <div className="space-y-1.5"><Label>Telefone *</Label>
+            <Input value={f.telefone} onChange={(e) => set("telefone", maskTel(e.target.value))} maxLength={15} />
+          </div>
+          <div className="space-y-1.5 md:col-span-2"><Label>E-mail (opcional)</Label>
+            <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>CEP</Label>
+            <Input value={f.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
+          </div>
+          <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+            <Input value={f.rua} onChange={(e) => set("rua", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>Número</Label>
+            <Input value={f.numero} onChange={(e) => set("numero", e.target.value)} maxLength={10} />
+          </div>
+          <div className="space-y-1.5"><Label>Bairro</Label>
+            <Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>Cidade</Label>
+            <Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} />
+          </div>
+          <div className="space-y-1.5"><Label>UF</Label>
+            <Input value={f.uf} onChange={(e) => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} className="bg-primary text-primary-foreground">Cadastrar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------------- COMPOSIÇÃO DE PAGAMENTO ---------------- */
+
+function ComposicaoEditor({
+  valorContrato, value, onChange, disabled,
+}: {
+  valorContrato: number;
+  value: ComposicaoLinha[];
+  onChange: (next: ComposicaoLinha[]) => void;
+  disabled?: boolean;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const linhas = value ?? [];
+  const soma = linhas.reduce((s, l) => s + (Number(l.valor) || 0), 0);
+  const diff = valorContrato - soma;
+  const bate = Math.abs(diff) <= 0.5 && linhas.length > 0;
+
+  const addLinha = () => {
+    const nova: ComposicaoLinha = {
+      id: `CP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      formaPagamento: "Pix", valor: 0, parcelas: 1,
+      dataPrevista: today, competencia: today.slice(0, 7),
+    };
+    onChange([...linhas, nova]);
+  };
+  const setL = (id: string, patch: Partial<ComposicaoLinha>) =>
+    onChange(linhas.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  const del = (id: string) => onChange(linhas.filter((l) => l.id !== id));
+  const distribuir = () => {
+    if (linhas.length === 0 || valorContrato <= 0) return;
+    const each = Math.round((valorContrato / linhas.length) * 100) / 100;
+    const last = Math.round((valorContrato - each * (linhas.length - 1)) * 100) / 100;
+    onChange(linhas.map((l, i) => ({ ...l, valor: i === linhas.length - 1 ? last : each })));
+  };
+
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold">Composição de pagamento</span>
+        </div>
+        {!disabled && (
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={distribuir}>Distribuir</Button>
+            <Button type="button" size="sm" onClick={addLinha} className="bg-primary text-primary-foreground"><Plus className="mr-1 h-3.5 w-3.5" /> Linha</Button>
+          </div>
+        )}
+      </div>
+      {linhas.length === 0 ? (
+        <div className="py-4 text-center text-xs text-muted-foreground">Adicione ao menos 1 linha (forma + valor + previsão).</div>
+      ) : (
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead>Forma</TableHead>
+            <TableHead className="text-right">Valor (R$)</TableHead>
+            <TableHead className="text-right">Parcelas</TableHead>
+            <TableHead>Previsão</TableHead>
+            <TableHead>Competência</TableHead>
+            <TableHead>Obs.</TableHead>
+            <TableHead className="w-10"></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {linhas.map((l) => (
+              <TableRow key={l.id}>
+                <TableCell>
+                  <Select value={l.formaPagamento} onValueChange={(v) => setL(l.id, { formaPagamento: v as FormaPagamento })} disabled={disabled}>
+                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(["Pix","Boleto","Cartão","Transferência","Dinheiro","Financiamento"] as FormaPagamento[]).map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell><Input type="number" className="h-8 text-right" value={l.valor} onChange={(e) => setL(l.id, { valor: Number(e.target.value) || 0 })} disabled={disabled} /></TableCell>
+                <TableCell><Input type="number" min={1} className="h-8 text-right w-20" value={l.parcelas} onChange={(e) => setL(l.id, { parcelas: Math.max(1, Number(e.target.value) || 1) })} disabled={disabled} /></TableCell>
+                <TableCell><Input type="date" className="h-8" value={l.dataPrevista} onChange={(e) => setL(l.id, { dataPrevista: e.target.value, competencia: e.target.value.slice(0, 7) })} disabled={disabled} /></TableCell>
+                <TableCell><Input type="month" className="h-8" value={l.competencia} onChange={(e) => setL(l.id, { competencia: e.target.value })} disabled={disabled} /></TableCell>
+                <TableCell><Input className="h-8" value={l.observacao ?? ""} onChange={(e) => setL(l.id, { observacao: e.target.value })} disabled={disabled} /></TableCell>
+                <TableCell>
+                  {!disabled && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      <div className={`rounded-md border p-2 text-xs flex flex-wrap items-center justify-between gap-2 ${bate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span>Contrato: <b className="font-mono">{fmtBRL(valorContrato)}</b></span>
+          <span>Soma composição: <b className="font-mono">{fmtBRL(soma)}</b></span>
+          <span className={bate ? "text-emerald-600 font-semibold" : "text-destructive font-semibold"}>
+            Diferença: <b className="font-mono">{fmtBRL(Math.abs(diff))}</b> {bate ? "✓ OK" : (diff > 0 ? "(falta)" : "(excesso)")}
+          </span>
+        </div>
+        {!bate && <span className="text-destructive">Aprovação financeira bloqueada até bater.</span>}
+      </div>
+    </div>
+  );
+}
+
 function CadastrarContratoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (c: Contrato[]) => void; vendedoresList: Vendedor[] }) {

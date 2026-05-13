@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
@@ -1471,10 +1471,12 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
     const aprovouAgora = f.status === "Aprovado" && contrato.status !== "Aprovado";
 
     updateContratoAudit(contrato.id, {
-      cliente: f.cliente, vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
+      vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
       status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
       dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
-      modulos: f.modulos, potencia: f.potencia, inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
+      modulos: f.modulos, potencia: f.potencia,
+      inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
+      inv4: f.inv4, inv5: f.inv5, inv6: f.inv6,
       clienteFull: cli,
     });
 
@@ -1539,8 +1541,9 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               </div>
             )}
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>Cliente (nome no contrato)</Label>
-                <Input value={f.cliente} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
+              <div className="space-y-1.5"><Label>Cliente (vinculado)</Label>
+                <Input value={f.cliente} readOnly className="bg-muted" />
+                <p className="text-[10px] text-muted-foreground">Para alterar dados do cliente, vá em <b>Cadastros &gt; Clientes</b>.</p>
               </div>
               <div className="space-y-1.5"><Label>Vendedor</Label>
                 <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })} disabled={contrato.status === "Aprovado"}>
@@ -1590,15 +1593,11 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>kWp total (auto)</Label>
                 <Input type="number" step="0.01" value={f.kwp} readOnly className="bg-muted font-mono" />
               </div>
-              <div className="space-y-1.5"><Label>Inversor 1</Label>
-                <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />
-              </div>
-              <div className="space-y-1.5"><Label>Inversor 2</Label>
-                <Input value={f.inv2 ?? ""} onChange={(e) => setF({ ...f, inv2: e.target.value })} />
-              </div>
-              <div className="space-y-1.5"><Label>Inversor 3</Label>
-                <Input value={f.inv3 ?? ""} onChange={(e) => setF({ ...f, inv3: e.target.value })} />
-              </div>
+              {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, i) => (
+                <div key={k} className="space-y-1.5"><Label>Inversor {i + 1}</Label>
+                  <Input value={(f as any)[k] ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value } as any)} />
+                </div>
+              ))}
               <div className="space-y-1.5 md:col-span-3"><Label>Observações</Label>
                 <Textarea value={f.obs ?? ""} onChange={(e) => setF({ ...f, obs: e.target.value })} />
               </div>
@@ -1835,6 +1834,9 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     inversor: contrato.inv1 ?? "",
     inv2: contrato.inv2 ?? "",
     inv3: contrato.inv3 ?? "",
+    inv4: contrato.inv4 ?? "",
+    inv5: contrato.inv5 ?? "",
+    inv6: contrato.inv6 ?? "",
     equipe: "",
     status: "Em projeto/aprovação",
     inicio: "",
@@ -1963,52 +1965,184 @@ function ConciliacaoCell({ label, contrato, soma, ok }: { label: string; contrat
   );
 }
 
+function ProjetoEditCard({
+  contrato, projeto, projetos, index, onAfterRemove,
+}: {
+  contrato: Contrato;
+  projeto: ProjetoVinculado;
+  projetos: ProjetoVinculado[];
+  index: number;
+  onAfterRemove: () => void;
+}) {
+  const [d, setD] = useState<ProjetoVinculado>(projeto);
+  // Sincroniza quando o projeto subjacente mudar (ex: store atualizou após salvar/composição).
+  useEffect(() => { setD(projeto); /* eslint-disable-next-line */ }, [projeto.id, projeto.aprovado, projeto.enviadoEngenharia]);
+  const set = (k: keyof ProjetoVinculado, v: any) => setD((p) => ({ ...p, [k]: v }));
+  const dirty = JSON.stringify(d) !== JSON.stringify(projeto);
+
+  const lookupCEP = async (cep: string) => {
+    set("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    const r = await buscarCEP(cep);
+    if (r) setD((p) => ({ ...p, endereco: r.rua ?? p.endereco, bairro: r.bairro ?? p.bairro, cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf }));
+  };
+
+  const salvar = () => {
+    if (!d.endereco?.trim()) { toast.error(`Projeto ${index + 1}: informe o endereço`); return; }
+    if (!(Number(d.valor) > 0)) { toast.error(`Projeto ${index + 1}: informe o valor`); return; }
+    const valorContrato = Number(contrato.valor) || 0;
+    const somaOutros = projetos.filter((x) => x.id !== projeto.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+    if (valorContrato > 0 && somaOutros + Number(d.valor) - valorContrato > 0.5) {
+      toast.error(`Soma dos projetos excederia o contrato (${fmtBRL(valorContrato)}).`);
+      return;
+    }
+    const m = Number(d.modulos) || 0;
+    const w = Number(d.potenciaModuloW) || 0;
+    updateProjeto(contrato.id, projeto.id, { ...d, kwp: Number(((m * w) / 1000).toFixed(2)) });
+    toast.success(`Projeto ${index + 1} (${projeto.id}) salvo · conciliação atualizada`);
+  };
+
+  const kwpAuto = ((Number(d.modulos) || 0) * (Number(d.potenciaModuloW) || 0)) / 1000;
+
+  return (
+    <Card className="p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-sm font-semibold flex items-center gap-2">
+          <Layers className="h-4 w-4 text-primary" />
+          <span className="font-mono text-primary">{projeto.id}</span>
+          {projeto.enviadoEngenharia
+            ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span>
+            : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+          {dirty && <span className="text-[10px] rounded bg-amber-500/15 px-2 py-0.5 text-amber-700 font-bold">ALTERAÇÕES NÃO SALVAS</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          {!projeto.aprovado && contrato.status === "Aprovado" && (
+            <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
+              const faltam: string[] = [];
+              if (!(Number(projeto.valor) > 0)) faltam.push("valor");
+              if (!(Number(projeto.modulos) > 0)) faltam.push("módulos");
+              if (!(Number(projeto.kwp) > 0)) faltam.push("potência (kWp)");
+              if (!projeto.endereco?.trim()) faltam.push("endereço");
+              if (!projeto.status?.trim()) faltam.push("status");
+              if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
+              const comp = composicaoSomaOk(contrato);
+              if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}).`); return; }
+              if (!window.confirm(`Aprovar projeto ${projeto.id}?\nApós aprovado, o financeiro pode ser gerado proporcionalmente em Pedidos de venda.`)) return;
+              aprovarProjeto(contrato.id, projeto.id);
+              toast.success(`Projeto ${projeto.id} aprovado · pronto para gerar financeiro`);
+            }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
+          )}
+          {projeto.aprovado && (
+            <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
+            if (!window.confirm(`Remover ${projeto.id}?`)) return;
+            removeProjeto(contrato.id, projeto.id);
+            toast.success("Projeto removido");
+            onAfterRemove();
+          }}><Trash2 className="h-3.5 w-3.5" /></Button>
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="space-y-1.5"><Label>Tipo do projeto</Label>
+          <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} />
+        </div>
+        <div className="space-y-1.5"><Label>CEP</Label>
+          <Input value={d.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
+        </div>
+        <div className="space-y-1.5"><Label>Status</Label>
+          <Select value={d.status} onValueChange={(v) => set("status", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 md:col-span-2"><Label>Endereço (rua)</Label>
+          <Input value={d.endereco} onChange={(e) => set("endereco", e.target.value)} />
+        </div>
+        <div className="space-y-1.5"><Label>Número</Label>
+          <Input value={d.numero ?? ""} onChange={(e) => set("numero", e.target.value)} maxLength={10} />
+        </div>
+        <div className="space-y-1.5"><Label>Bairro</Label>
+          <Input value={d.bairro ?? ""} onChange={(e) => set("bairro", e.target.value)} />
+        </div>
+        <div className="space-y-1.5"><Label>Cidade</Label>
+          <Input value={d.cidade} onChange={(e) => set("cidade", e.target.value)} />
+        </div>
+        <div className="space-y-1.5"><Label>UF</Label>
+          <Input value={d.uf} onChange={(e) => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+        </div>
+        <div className="space-y-1.5"><Label>Qtd módulos</Label>
+          <Input type="number" value={d.modulos} onChange={(e) => set("modulos", Number(e.target.value) || 0)} />
+        </div>
+        <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
+          <Input type="number" value={d.potenciaModuloW} onChange={(e) => set("potenciaModuloW", Number(e.target.value) || 0)} />
+        </div>
+        <div className="space-y-1.5"><Label>kWp (auto)</Label>
+          <Input value={kwpAuto.toFixed(2)} readOnly className="bg-muted font-mono" />
+        </div>
+        <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
+          <Input type="number" step="0.01" value={d.valor ?? 0} onChange={(e) => set("valor", Number(e.target.value) || 0)} />
+        </div>
+        {([
+          ["inversor", "Inversor 1"],
+          ["inv2", "Inversor 2"],
+          ["inv3", "Inversor 3"],
+          ["inv4", "Inversor 4"],
+          ["inv5", "Inversor 5"],
+          ["inv6", "Inversor 6"],
+        ] as const).map(([k, label]) => (
+          <div key={k} className="space-y-1.5"><Label>{label}</Label>
+            <Input value={(d as any)[k] ?? ""} onChange={(e) => set(k as any, e.target.value)} />
+          </div>
+        ))}
+        <div className="space-y-1.5"><Label>Equipe</Label>
+          <Input value={d.equipe} onChange={(e) => set("equipe", e.target.value)} placeholder="Equipe A, B…" />
+        </div>
+        <div className="space-y-1.5"><Label>Início previsto</Label>
+          <Input type="date" value={d.inicio} onChange={(e) => set("inicio", e.target.value)} />
+        </div>
+        <div className="space-y-1.5"><Label>Conclusão prevista</Label>
+          <Input type="date" value={d.previsto} onChange={(e) => set("previsto", e.target.value)} />
+        </div>
+        <div className="space-y-1.5 md:col-span-3"><Label>Observações</Label>
+          <Textarea value={d.obs} onChange={(e) => set("obs", e.target.value)} />
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground">
+          <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto é configurado em <b>Pedidos de venda</b> (após aprovação).
+        </div>
+        <Button className="bg-primary text-primary-foreground" onClick={salvar} disabled={!dirty}>
+          Salvar Projeto {index + 1}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
-  // Sempre puxar a versão MAIS recente do store para evitar valores em cache
-  // (ex.: contrato editado em outra aba, ou após salvar valor/módulos/inversores).
+  // Sempre puxar a versão MAIS recente do store.
   const todos = useContratos();
   const contrato = todos.find((c) => c.id === contratoProp.id) ?? contratoProp;
   const projetos = contrato.projetos ?? [];
-  const [activeTab, setActiveTab] = useState<string>(projetos[0]?.id ?? "novo");
-  const [draft, setDraft] = useState<NovoProjForm>(() =>
-    emptyProjeto(contrato, `Projeto ${projetos.length + 1}`),
-  );
+  const [activeTab, setActiveTab] = useState<string>(projetos[0]?.id ?? "");
 
-  const setD = (k: keyof NovoProjForm, v: any) => setDraft((p) => ({ ...p, [k]: v }));
-  const kwpAuto = (draft.modulos * draft.potenciaModuloW) / 1000;
-
-  const salvarProjeto = () => {
-    if (!draft.endereco.trim()) { toast.error("Informe o endereço do projeto"); return; }
-    if (!(Number(draft.valor) > 0)) { toast.error("Informe o valor do projeto"); return; }
-    const somaAtual = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
-    const valorContrato = Number(contrato.valor) || 0;
-    if (valorContrato > 0 && somaAtual + Number(draft.valor) - valorContrato > 0.5) {
-      toast.error(`Soma dos projetos (${fmtBRL(somaAtual + Number(draft.valor))}) excede o valor do contrato (${fmtBRL(valorContrato)}).`);
-      return;
+  useEffect(() => {
+    if (projetos.length > 0 && !projetos.find((p) => p.id === activeTab)) {
+      setActiveTab(projetos[0].id);
     }
-    addProjeto(contrato.id, { ...draft, kwp: kwpAuto || draft.kwp });
-    toast.success(`Projeto salvo no contrato ${contrato.id} · totais atualizados`);
-    // Mantém o formulário e a navegação atual. Para criar outro, usar "+ Novo projeto".
-  };
+    // eslint-disable-next-line
+  }, [projetos.length]);
 
-  const novoProjetoVazio = () => {
-    setDraft(emptyProjeto(contrato, `Projeto ${projetos.length + 1}`));
-    setActiveTab("novo");
-    toast.message("Formulário limpo para novo projeto");
-  };
-
-  const lookupCEP = async (cep: string) => {
-    setD("cep", cep);
-    if (cep.replace(/\D/g, "").length !== 8) return;
-    const r = await buscarCEP(cep);
-    if (r) setDraft((p) => ({ ...p, endereco: r.rua ?? p.endereco, bairro: r.bairro ?? p.bairro, cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf }));
-  };
-
-  const lookupCEPExisting = async (projId: string, cep: string) => {
-    updateProjeto(contrato.id, projId, { cep });
-    if (cep.replace(/\D/g, "").length !== 8) return;
-    const r = await buscarCEP(cep);
-    if (r) updateProjeto(contrato.id, projId, { endereco: r.rua ?? "", bairro: r.bairro ?? "", cidade: r.cidade ?? "", uf: r.uf ?? "" });
+  const adicionarNovoProjeto = () => {
+    const novo = emptyProjeto(contrato, `Projeto ${projetos.length + 1}`);
+    addProjeto(contrato.id, novo);
+    toast.success(`Projeto ${projetos.length + 1} adicionado · preencha e clique em Salvar Projeto ${projetos.length + 1}`);
+    // O novo id segue o padrão `${contrato.id}-XX`; selecionamos após o re-render.
+    const nextNum = String(projetos.length + 1).padStart(2, "0");
+    setActiveTab(`${contrato.id}-${nextNum}`);
   };
 
   const somaProjetos = projetos.reduce((s, p) => s + (Number(p.valor) || 0), 0);
@@ -2024,10 +2158,10 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   const totalKwpCt = Number(contrato.kwp) || 0;
   const bateKwp = totalKwpCt === 0 || Math.abs(somaKwp - totalKwpCt) <= 0.05;
 
-  // Inversores: comparar listas (cada projeto pode ter inv1/2/3)
-  const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3].filter((x) => x?.trim()).length;
+  const invsContrato = [contrato.inv1, contrato.inv2, contrato.inv3, contrato.inv4, contrato.inv5, contrato.inv6]
+    .filter((x) => x?.trim()).length;
   const invsProjetos = projetos.reduce(
-    (s, p) => s + [p.inversor, p.inv2, p.inv3].filter((x) => x?.trim()).length, 0,
+    (s, p) => s + [p.inversor, p.inv2, p.inv3, p.inv4, p.inv5, p.inv6].filter((x) => x?.trim()).length, 0,
   );
   const bateInversores = invsContrato === 0 || invsProjetos >= invsContrato;
 
@@ -2035,8 +2169,13 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
 
   return (
     <div className="space-y-3">
-      <div className="text-xs text-muted-foreground">
-        Cada projeto vira uma obra independente (tipo, endereço, módulos, equipe) mas mantém vínculo com o contrato {contrato.id}. Valor de venda, comissão e parâmetro permanecem no contrato.
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground flex-1">
+          Cada projeto é uma obra independente vinculada ao contrato {contrato.id}. Edite e salve cada projeto individualmente.
+        </div>
+        <Button variant="outline" size="sm" onClick={adicionarNovoProjeto}>
+          <Plus className="mr-1 h-4 w-4" /> Novo projeto
+        </Button>
       </div>
       {projetos.length > 0 && (
         <div className={`rounded-md border p-3 text-xs space-y-2 ${tudoBate ? "border-emerald-500/40 bg-emerald-500/5" : "border-destructive/40 bg-destructive/5"}`}>
@@ -2052,204 +2191,35 @@ function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex-wrap h-auto">
+      {projetos.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Nenhum projeto vinculado ainda. Clique em <b>+ Novo projeto</b> para adicionar.
+        </Card>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="flex-wrap h-auto">
+            {projetos.map((p, i) => (
+              <TabsTrigger key={p.id} value={p.id} className="text-xs">
+                <span className="font-mono mr-1">{p.id.split("-").pop()}</span>
+                {p.tipo || `Projeto ${i + 1}`}
+                {p.enviadoEngenharia && <span className="ml-1 text-success">●</span>}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
           {projetos.map((p, i) => (
-            <TabsTrigger key={p.id} value={p.id} className="text-xs">
-              <span className="font-mono mr-1">{p.id.split("-").pop()}</span>
-              {p.tipo || `Projeto ${i + 1}`}
-              {p.enviadoEngenharia && <span className="ml-1 text-success">●</span>}
-            </TabsTrigger>
+            <TabsContent key={p.id} value={p.id} className="mt-3">
+              <ProjetoEditCard
+                contrato={contrato}
+                projeto={p}
+                projetos={projetos}
+                index={i}
+                onAfterRemove={() => setActiveTab(projetos.find((x) => x.id !== p.id)?.id ?? "")}
+              />
+            </TabsContent>
           ))}
-          <TabsTrigger value="novo" className="text-xs"><Plus className="h-3 w-3 mr-1" />Novo projeto</TabsTrigger>
-        </TabsList>
-
-        {projetos.map((p) => (
-          <TabsContent key={p.id} value={p.id} className="mt-3">
-            <Card className="p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-sm font-semibold flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <span className="font-mono text-primary">{p.id}</span>
-                  {p.enviadoEngenharia ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span> : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  {!p.aprovado && contrato.status === "Aprovado" && (
-                    <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
-                      const faltam: string[] = [];
-                      if (!(Number(p.valor) > 0)) faltam.push("valor");
-                      if (!(Number(p.modulos) > 0)) faltam.push("módulos");
-                      if (!(Number(p.kwp) > 0)) faltam.push("potência (kWp)");
-                      if (!p.endereco?.trim()) faltam.push("endereço");
-                      if (!p.status?.trim()) faltam.push("status");
-                      if (faltam.length) { toast.error(`Faltam: ${faltam.join(", ")}`); return; }
-                      const comp = composicaoSomaOk(contrato);
-                      if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}).`); return; }
-                      if (!window.confirm(`Aprovar projeto ${p.id}?\nApós aprovado, o financeiro pode ser gerado proporcionalmente em Pedidos de venda.`)) return;
-                      aprovarProjeto(contrato.id, p.id);
-                      toast.success(`Projeto ${p.id} aprovado · pronto para gerar financeiro`);
-                    }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
-                  )}
-                  {p.aprovado && (
-                    <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { removeProjeto(contrato.id, p.id); toast.success("Projeto removido"); setActiveTab(projetos[0]?.id !== p.id ? projetos[0]?.id ?? "novo" : "novo"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="space-y-1.5"><Label>Tipo do projeto</Label>
-                  <Input value={p.tipo} onChange={(e) => updateProjeto(contrato.id, p.id, { tipo: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>CEP</Label>
-                  <Input value={p.cep ?? ""} onChange={(e) => lookupCEPExisting(p.id, e.target.value)} maxLength={10} />
-                </div>
-                <div className="space-y-1.5"><Label>Status</Label>
-                  <Select value={p.status} onValueChange={(v) => updateProjeto(contrato.id, p.id, { status: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5 md:col-span-2"><Label>Endereço (rua)</Label>
-                  <Input value={p.endereco} onChange={(e) => updateProjeto(contrato.id, p.id, { endereco: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Número</Label>
-                  <Input value={p.numero ?? ""} onChange={(e) => updateProjeto(contrato.id, p.id, { numero: e.target.value })} maxLength={10} />
-                </div>
-                <div className="space-y-1.5"><Label>Bairro</Label>
-                  <Input value={p.bairro ?? ""} onChange={(e) => updateProjeto(contrato.id, p.id, { bairro: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Cidade</Label>
-                  <Input value={p.cidade} onChange={(e) => updateProjeto(contrato.id, p.id, { cidade: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>UF</Label>
-                  <Input value={p.uf} onChange={(e) => updateProjeto(contrato.id, p.id, { uf: e.target.value.toUpperCase() })} maxLength={2} />
-                </div>
-                <div className="space-y-1.5"><Label>Qtd módulos</Label>
-                  <Input type="number" value={p.modulos} onChange={(e) => { const m = Number(e.target.value) || 0; updateProjeto(contrato.id, p.id, { modulos: m, kwp: (m * p.potenciaModuloW) / 1000 }); }} />
-                </div>
-                <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                  <Input type="number" value={p.potenciaModuloW} onChange={(e) => { const w = Number(e.target.value) || 0; updateProjeto(contrato.id, p.id, { potenciaModuloW: w, kwp: (p.modulos * w) / 1000 }); }} />
-                </div>
-                <div className="space-y-1.5"><Label>kWp</Label>
-                  <Input value={p.kwp.toFixed(2)} readOnly className="bg-muted font-mono" />
-                </div>
-                <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
-                  <Input type="number" step="0.01" value={p.valor ?? 0} onChange={(e) => {
-                    const novo = Number(e.target.value) || 0;
-                    const valorContrato = Number(contrato.valor) || 0;
-                    const somaOutros = projetos.filter((x) => x.id !== p.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
-                    if (valorContrato > 0 && somaOutros + novo - valorContrato > 0.5) {
-                      toast.error(`Soma excederia o contrato (${fmtBRL(valorContrato)}).`);
-                      return;
-                    }
-                    updateProjeto(contrato.id, p.id, { valor: novo });
-                  }} />
-                </div>
-                <div className="space-y-1.5"><Label>Inversor 1</Label>
-                  <Input value={p.inversor} onChange={(e) => updateProjeto(contrato.id, p.id, { inversor: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Inversor 2</Label>
-                  <Input value={p.inv2 ?? ""} onChange={(e) => updateProjeto(contrato.id, p.id, { inv2: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Inversor 3</Label>
-                  <Input value={p.inv3 ?? ""} onChange={(e) => updateProjeto(contrato.id, p.id, { inv3: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Equipe</Label>
-                  <Input value={p.equipe} onChange={(e) => updateProjeto(contrato.id, p.id, { equipe: e.target.value })} placeholder="Equipe A, B…" />
-                </div>
-                <div className="space-y-1.5"><Label>Início previsto</Label>
-                  <Input type="date" value={p.inicio} onChange={(e) => updateProjeto(contrato.id, p.id, { inicio: e.target.value })} />
-                </div>
-                <div className="space-y-1.5"><Label>Conclusão prevista</Label>
-                  <Input type="date" value={p.previsto} onChange={(e) => updateProjeto(contrato.id, p.id, { previsto: e.target.value })} />
-                </div>
-                <div className="space-y-1.5 md:col-span-3"><Label>Observações</Label>
-                  <Textarea value={p.obs} onChange={(e) => updateProjeto(contrato.id, p.id, { obs: e.target.value })} />
-                </div>
-              </div>
-              <div className="mt-3 rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
-                <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto agora é configurado na aba <b>Pedidos de venda</b> (após o contrato estar Aprovado e o projeto liberado).
-              </div>
-            </Card>
-          </TabsContent>
-        ))}
-
-        <TabsContent value="novo" className="mt-3">
-          <Card className="p-3">
-            <div className="mb-2 text-sm font-semibold">Novo projeto vinculado ao contrato {contrato.id}</div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>Tipo do projeto</Label>
-                <Input value={draft.tipo} onChange={(e) => setD("tipo", e.target.value)} placeholder={`Projeto ${projetos.length + 1}`} />
-              </div>
-              <div className="space-y-1.5"><Label>CEP</Label>
-                <Input value={draft.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
-              </div>
-              <div className="space-y-1.5"><Label>Status</Label>
-                <Select value={draft.status} onValueChange={(v) => setD("status", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>Endereço (rua)</Label>
-                <Input value={draft.endereco} onChange={(e) => setD("endereco", e.target.value)} placeholder="Rua, av…" />
-              </div>
-              <div className="space-y-1.5"><Label>Número</Label>
-                <Input value={draft.numero ?? ""} onChange={(e) => setD("numero", e.target.value)} maxLength={10} />
-              </div>
-              <div className="space-y-1.5"><Label>Bairro</Label>
-                <Input value={draft.bairro ?? ""} onChange={(e) => setD("bairro", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Cidade</Label>
-                <Input value={draft.cidade} onChange={(e) => setD("cidade", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>UF</Label>
-                <Input value={draft.uf} onChange={(e) => setD("uf", e.target.value.toUpperCase())} maxLength={2} />
-              </div>
-              <div className="space-y-1.5"><Label>Qtd módulos</Label>
-                <Input type="number" value={draft.modulos} onChange={(e) => setD("modulos", Number(e.target.value) || 0)} />
-              </div>
-              <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                <Input type="number" value={draft.potenciaModuloW} onChange={(e) => setD("potenciaModuloW", Number(e.target.value) || 0)} />
-              </div>
-              <div className="space-y-1.5"><Label>kWp (auto)</Label>
-                <Input value={kwpAuto ? kwpAuto.toFixed(2) : ""} readOnly className="bg-muted font-mono" />
-              </div>
-              <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
-                <Input type="number" step="0.01" value={draft.valor ?? 0} onChange={(e) => setD("valor", Number(e.target.value) || 0)} placeholder="Obrigatório" />
-              </div>
-              <div className="space-y-1.5"><Label>Inversor 1</Label>
-                <Input value={draft.inversor} onChange={(e) => setD("inversor", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Inversor 2</Label>
-                <Input value={draft.inv2 ?? ""} onChange={(e) => setD("inv2", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Inversor 3</Label>
-                <Input value={draft.inv3 ?? ""} onChange={(e) => setD("inv3", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Equipe</Label>
-                <Input value={draft.equipe} onChange={(e) => setD("equipe", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Início previsto</Label>
-                <Input type="date" value={draft.inicio} onChange={(e) => setD("inicio", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Conclusão prevista</Label>
-                <Input type="date" value={draft.previsto} onChange={(e) => setD("previsto", e.target.value)} />
-              </div>
-              <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
-                <Textarea value={draft.obs} onChange={(e) => setD("obs", e.target.value)} />
-              </div>
-            </div>
-            <div className="mt-3 flex justify-end gap-2">
-              <Button variant="outline" onClick={novoProjetoVazio}><Plus className="mr-2 h-4 w-4" /> Novo projeto</Button>
-              <Button className="bg-primary text-primary-foreground" onClick={salvarProjeto}>Salvar projeto</Button>
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </Tabs>
+      )}
     </div>
   );
 }

@@ -1778,6 +1778,18 @@ function ProjetosManager({ contrato }: { contrato: Contrato }) {
                 <div className="space-y-1.5"><Label>kWp</Label>
                   <Input value={p.kwp.toFixed(2)} readOnly className="bg-muted font-mono" />
                 </div>
+                <div className="space-y-1.5"><Label>Valor do projeto (R$) *</Label>
+                  <Input type="number" step="0.01" value={p.valor ?? 0} onChange={(e) => {
+                    const novo = Number(e.target.value) || 0;
+                    const valorContrato = Number(contrato.valor) || 0;
+                    const somaOutros = projetos.filter((x) => x.id !== p.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+                    if (valorContrato > 0 && somaOutros + novo - valorContrato > 0.5) {
+                      toast.error(`Soma excederia o contrato (${fmtBRL(valorContrato)}).`);
+                      return;
+                    }
+                    updateProjeto(contrato.id, p.id, { valor: novo });
+                  }} />
+                </div>
                 <div className="space-y-1.5"><Label>Inversor 1</Label>
                   <Input value={p.inversor} onChange={(e) => updateProjeto(contrato.id, p.id, { inversor: e.target.value })} />
                 </div>

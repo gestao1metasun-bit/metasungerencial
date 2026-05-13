@@ -753,10 +753,16 @@ function CadastrarContratoTab({
   const comissaoValor = comissaoPct != null ? (valorNum * comissaoPct) / 100 : 0;
 
   const limpar = () => {
-    setForm({ dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao" });
+    setForm({
+      dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao",
+      modulosContrato: "", potenciaContrato: "550",
+      inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+    });
     setCli(emptyCliente);
     setProjs([emptyProj()]);
     setActiveProj(0);
+    setParcelas([novaParcela()]);
+    setActiveTab("cliente");
   };
 
   const submit = () => {

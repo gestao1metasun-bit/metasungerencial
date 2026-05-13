@@ -29,9 +29,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
 import { appendLancamentos } from "@/lib/financeiro-store";
+import { useNaturezas } from "@/lib/financeiro-store";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
-  evolucaoMensal, fmtBRL,
+  evolucaoMensal, fmtBRL, estoqueItens,
 } from "@/lib/mock-data";
 import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,

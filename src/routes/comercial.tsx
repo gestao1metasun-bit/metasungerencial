@@ -879,6 +879,20 @@ function CadastrarContratoTab({
   };
 
   const [openForm, setOpenForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"cliente" | "contrato" | "projetos">("cliente");
+
+  // ---- Validações de consistência projetos ↔ contrato ----
+  const totalModulosProjs = projs.reduce((a, p) => a + (Number(p.modulos) || 0), 0);
+  const modulosContratoNum = Number(form.modulosContrato) || 0;
+  const totalParcelas = parcelas.reduce((a, p) => a + (Number(p.valor) || 0), 0);
+  const inversoresContrato = [form.inv1, form.inv2, form.inv3, form.inv4, form.inv5, form.inv6]
+    .map((s) => s.trim()).filter(Boolean);
+  const inversoresProjs = projs.flatMap((p) => [p.inv1, p.inv2, p.inv3]).map((s) => s.trim()).filter(Boolean);
+  const inversoresOrfaos = inversoresProjs.filter((iv) => !inversoresContrato.includes(iv));
+  const erroModulos = modulosContratoNum > 0 && totalModulosProjs !== modulosContratoNum;
+  const erroValor = valorNum > 0 && Math.abs(totalParcelas - valorNum) > 0.5;
+  const semProjeto = projs.length === 0 || projs.every((p) => !Number(p.modulos));
+  const podeCadastrar = !aprovacao && !erroModulos && !erroValor && !semProjeto && inversoresOrfaos.length === 0;
 
   return (
     <div className="space-y-4">

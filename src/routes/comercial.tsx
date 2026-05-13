@@ -1101,13 +1101,13 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                   if (v === "Aprovado" && f.status !== "Aprovado") {
                     const projs = contrato.projetos ?? [];
                     if (projs.length === 0) { toast.error("Cadastre pelo menos 1 projeto na aba Projetos antes de aprovar."); return; }
-                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
                     const valorContr = Number(f.valor) || 0;
-                    if (Math.abs(somaProj - valorContr) > 0.5) {
-                      toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) não bate com o contrato (${fmtBRL(valorContr)}). Ajuste na aba Projetos.`);
-                      return;
-                    }
-                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso envia os projetos para a Engenharia e gera o financeiro de cada projeto.`)) return;
+                    const modContr = Number(f.modulos) || 0;
+                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+                    const somaMod = projs.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
+                    if (valorContr > 0 && somaProj - valorContr > 0.5) { toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) excede o contrato (${fmtBRL(valorContr)}).`); return; }
+                    if (modContr > 0 && somaMod > modContr) { toast.error(`Soma de módulos (${somaMod}) excede o contrato (${modContr}).`); return; }
+                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso libera os projetos para a Engenharia. O financeiro será configurado na aba "Pedidos de venda".`)) return;
                   }
                   setF({ ...f, status: v });
                 }}>

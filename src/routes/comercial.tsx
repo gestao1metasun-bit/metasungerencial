@@ -1060,7 +1060,20 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 </Select>
               </div>
               <div className="space-y-1.5"><Label>Status</Label>
-                <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                <Select value={f.status} onValueChange={(v) => {
+                  if (v === "Aprovado" && f.status !== "Aprovado") {
+                    const projs = contrato.projetos ?? [];
+                    if (projs.length === 0) { toast.error("Cadastre pelo menos 1 projeto na aba Projetos antes de aprovar."); return; }
+                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+                    const valorContr = Number(f.valor) || 0;
+                    if (Math.abs(somaProj - valorContr) > 0.5) {
+                      toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) não bate com o contrato (${fmtBRL(valorContr)}). Ajuste na aba Projetos.`);
+                      return;
+                    }
+                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso envia os projetos para a Engenharia e gera o financeiro de cada projeto.`)) return;
+                  }
+                  setF({ ...f, status: v });
+                }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}

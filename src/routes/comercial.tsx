@@ -1072,6 +1072,38 @@ function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
   );
 }
 
+function SolicitarAlteracaoButton({ contrato }: { contrato: Contrato }) {
+  const [open, setOpen] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const enviar = () => {
+    if (motivo.trim().length < 5) { toast.error("Descreva o motivo (mínimo 5 caracteres)"); return; }
+    solicitarAlteracaoContrato(contrato.id, motivo.trim(), "Operador", {});
+    toast.success("Solicitação registrada na auditoria");
+    setMotivo(""); setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 text-xs"><History className="mr-1 h-3.5 w-3.5" /> Solicitar alteração</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Solicitar alteração — {contrato.id}</DialogTitle>
+          <DialogDescription>O contrato está aprovado. Informe o motivo da alteração; ficará registrado na auditoria com data, hora e usuário.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label>Motivo</Label>
+          <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={4} placeholder="Descreva o motivo da alteração" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={enviar}>Registrar solicitação</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
   const [open, setOpen] = useState(false);
   if (contrato.status === "Aprovado" || contrato.status === "Cancelado") return null;

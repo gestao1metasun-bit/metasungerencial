@@ -995,14 +995,8 @@ function CadastrarContratoTab({
               <TabsContent value="cliente" className="mt-0 space-y-4">
                 <div className="rounded-lg border bg-card p-5 space-y-4">
                   <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-1.5 md:col-span-2"><Label>Cliente — nome</Label>
+                    <div className="space-y-1.5 md:col-span-3"><Label>Cliente — nome</Label>
                       <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} placeholder="Nome do cliente" />
-                    </div>
-                    <div className="space-y-1.5"><Label>Vendedor</Label>
-                      <Select value={form.vendedor} onValueChange={(v) => setForm({ ...form, vendedor: v })}>
-                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                        <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </div>

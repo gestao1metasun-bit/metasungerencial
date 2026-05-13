@@ -1940,6 +1940,22 @@ function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto:
   );
 }
 
+function ConciliacaoCell({ label, contrato, soma, ok }: { label: string; contrato: string; soma: string; ok: boolean }) {
+  return (
+    <div className={`rounded-md border p-2 ${ok ? "border-emerald-500/30 bg-card" : "border-destructive/40 bg-card"}`}>
+      <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">Contrato</span>
+        <span className="font-mono text-xs font-semibold">{contrato}</span>
+      </div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">Projetos</span>
+        <span className={`font-mono text-xs font-semibold ${ok ? "text-emerald-700" : "text-destructive"}`}>{soma}</span>
+      </div>
+    </div>
+  );
+}
+
 function ProjetosManager({ contrato: contratoProp }: { contrato: Contrato }) {
   // Sempre puxar a versão MAIS recente do store para evitar valores em cache
   // (ex.: contrato editado em outra aba, ou após salvar valor/módulos/inversores).

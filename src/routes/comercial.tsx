@@ -1575,13 +1575,21 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Módulos</Label>
-                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => {
+                  const m = Number(e.target.value) || 0;
+                  const w = Number(f.potencia) || 0;
+                  setF({ ...f, modulos: m, kwp: Number(((m * w) / 1000).toFixed(2)) });
+                }} />
               </div>
               <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => {
+                  const w = Number(e.target.value) || 0;
+                  const m = Number(f.modulos) || 0;
+                  setF({ ...f, potencia: w, kwp: Number(((m * w) / 1000).toFixed(2)) });
+                }} />
               </div>
-              <div className="space-y-1.5"><Label>kWp total</Label>
-                <Input type="number" step="0.01" value={f.kwp} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
+              <div className="space-y-1.5"><Label>kWp total (auto)</Label>
+                <Input type="number" step="0.01" value={f.kwp} readOnly className="bg-muted font-mono" />
               </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />

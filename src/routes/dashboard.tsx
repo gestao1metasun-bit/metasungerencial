@@ -285,14 +285,14 @@ function DetailModal({
               ))}
             </TableBody>
           </Table>
-        ) : modal === "obras" ? (
+        ) : (modal === "obras" || modal === "kwpInst") ? (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
               <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
               <TableHead className="text-right">Módulos</TableHead><TableHead className="text-right">kWp</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {data.obrasAtivasList.map((o) => (
+              {(modal === "kwpInst" ? data.obrasFinalizadasList : data.obrasAtivasList).map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                   <TableCell>{o.cliente}</TableCell>

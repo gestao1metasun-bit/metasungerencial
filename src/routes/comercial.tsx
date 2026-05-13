@@ -1214,12 +1214,18 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
+            {contrato.status === "Aprovado" && (
+              <div className="mb-3 flex items-center justify-between rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs">
+                <span className="text-success font-medium">Contrato aprovado · campos estruturais bloqueados.</span>
+                <SolicitarAlteracaoButton contrato={contrato} />
+              </div>
+            )}
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5"><Label>Cliente (nome no contrato)</Label>
-                <Input value={f.cliente} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
+                <Input value={f.cliente} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, cliente: e.target.value })} />
               </div>
               <div className="space-y-1.5"><Label>Vendedor</Label>
-                <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })}>
+                <Select value={f.vendedor} onValueChange={(v) => setF({ ...f, vendedor: v })} disabled={contrato.status === "Aprovado"}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{vendedoresList.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}</SelectContent>
                 </Select>
@@ -1227,21 +1233,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Status</Label>
                 <Select value={f.status} onValueChange={(v) => {
                   if (v === "Aprovado" && f.status !== "Aprovado") {
-                    const projs = contrato.projetos ?? [];
-                    if (projs.length === 0) { toast.error("Cadastre pelo menos 1 projeto na aba Projetos antes de aprovar."); return; }
-                    const valorContr = Number(f.valor) || 0;
-                    const modContr = Number(f.modulos) || 0;
-                    const somaProj = projs.reduce((s, p) => s + (Number(p.valor) || 0), 0);
-                    const somaMod = projs.reduce((s, p) => s + (Number(p.modulos) || 0), 0);
-                    if (valorContr > 0 && somaProj - valorContr > 0.5) { toast.error(`Soma dos projetos (${fmtBRL(somaProj)}) excede o contrato (${fmtBRL(valorContr)}).`); return; }
-                    if (modContr > 0 && somaMod > modContr) { toast.error(`Soma de módulos (${somaMod}) excede o contrato (${modContr}).`); return; }
-                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nIsso libera os projetos para a Engenharia. O financeiro será configurado na aba "Pedidos de venda".`)) return;
+                    const r = validateContratoCompleto(contrato);
+                    if (!r.ok) { toast.error(`Faltam: ${r.missing.join(", ")}`); return; }
+                    if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nApós aprovado, dados estruturais terão controle de alteração.`)) return;
                   }
                   setF({ ...f, status: v });
-                }}>
+                }} disabled={contrato.status === "Aprovado"}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Pendente", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Pendente de informações", "Em análise", "Pronto para aprovação", "Aprovado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1251,20 +1251,28 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Data assinatura</Label>
                 <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
               </div>
+              <div className="space-y-1.5"><Label>Forma de pagamento</Label>
+                <Select value={f.pagamento ?? ""} onValueChange={(v) => setF({ ...f, pagamento: v })} disabled={contrato.status === "Aprovado"}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>
+                    {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label>Banco</Label>
-                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} />
+                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} disabled={contrato.status === "Aprovado"} />
               </div>
               <div className="space-y-1.5"><Label>Valor (R$)</Label>
-                <Input type="number" value={f.valor} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Módulos</Label>
-                <Input type="number" value={f.modulos ?? 0} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.modulos ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, modulos: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Potência módulo (W)</Label>
-                <Input type="number" value={f.potencia ?? 0} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
+                <Input type="number" value={f.potencia ?? 0} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, potencia: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>kWp total</Label>
-                <Input type="number" step="0.01" value={f.kwp} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
+                <Input type="number" step="0.01" value={f.kwp} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, kwp: Number(e.target.value) || 0 })} />
               </div>
               <div className="space-y-1.5"><Label>Inversor 1</Label>
                 <Input value={f.inv1 ?? ""} onChange={(e) => setF({ ...f, inv1: e.target.value })} />

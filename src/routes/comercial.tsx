@@ -747,16 +747,26 @@ function CadastrarContratoTab({
             <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
           </div>
           <div className="space-y-1.5"><Label>Parâmetro (auto = valor / kWp)</Label>
-            <Input value={parametroNum ? parametroNum.toFixed(4) : ""} readOnly className="bg-muted font-mono" />
+            <Input value={parametroFmt} readOnly className="bg-muted font-mono" />
           </div>
           <div className="space-y-1.5"><Label>Comissão (auto)</Label>
             {aprovacao ? (
               <Input value="APROVAÇÃO DIRETORIA" readOnly className="bg-destructive/10 font-bold text-destructive" />
             ) : (
-              <Input value={comissaoPct != null ? `${comissaoPct}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
+              <Input value={comissaoPct != null ? `${comissaoPct.toFixed(2)}% · ${fmtBRL(comissaoValor)}` : ""} readOnly className="bg-muted font-semibold text-primary" />
             )}
           </div>
+          <div className="space-y-1.5"><Label>Financiamento?</Label>
+            <Select value={form.financiamento} onValueChange={(v) => setForm({ ...form, financiamento: v as "sim" | "nao" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nao">Não</SelectItem>
+                <SelectItem value="sim">Sim — enviar para Financiamentos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
 
         {parametroNum > 0 && (
           <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">

@@ -41,6 +41,7 @@ export type ProjetoVinculado = {
   obs: string;
   cronograma: string;    // texto livre opcional
   enviadoEngenharia?: boolean; // true quando liberado para engenharia
+  orcado?: number;             // custo orçado da obra (R$)
 };
 
 export type AuditEntry = {

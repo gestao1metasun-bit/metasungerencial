@@ -72,6 +72,7 @@ function addDaysISO(iso: string, days: number): string {
 
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
+  inicioReal?: string; fimReal?: string;
 };
 
 function enrichObras(): Obra[] {
@@ -81,6 +82,8 @@ function enrichObras(): Obra[] {
     inv2: "",
     inv3: "",
     telhadoTipo: o.telhado === "Cerâmico" ? "Cerâmica" : o.telhado === "Metálico" ? "Metálico" : o.telhado === "Fibrocimento" ? "Fibrocimento" : "Outro",
+    inicioReal: o.status === "Finalizado" ? o.inicio : undefined,
+    fimReal: o.status === "Finalizado" ? (o.finalizacao ?? undefined) : undefined,
   }));
 }
 

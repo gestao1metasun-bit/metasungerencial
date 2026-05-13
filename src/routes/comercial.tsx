@@ -1570,17 +1570,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Data assinatura</Label>
                 <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
               </div>
-              <div className="space-y-1.5"><Label>Forma de pagamento</Label>
-                <Select value={f.pagamento ?? ""} onValueChange={(v) => setF({ ...f, pagamento: v })} disabled={contrato.status === "Aprovado"}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent>
-                    {["À vista","Pix","Boleto","Cartão","Transferência","Financiamento","Misto"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5"><Label>Banco</Label>
-                <Input value={f.banco ?? ""} onChange={(e) => setF({ ...f, banco: e.target.value })} disabled={contrato.status === "Aprovado"} />
-              </div>
+              {/* Forma de pagamento e Banco foram movidos para a aba "Composição". */}
               <div className="space-y-1.5"><Label>Valor (R$)</Label>
                 <Input type="number" value={f.valor} disabled={contrato.status === "Aprovado"} onChange={(e) => setF({ ...f, valor: Number(e.target.value) || 0 })} />
               </div>

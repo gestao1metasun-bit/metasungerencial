@@ -24,6 +24,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { useFinPendencias } from "@/lib/fin-pendencias";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({

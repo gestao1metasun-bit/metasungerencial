@@ -960,7 +960,11 @@ function CadastrarContratoTab({
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0">
+        <DialogContent
+          className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           {/* Header */}
           <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
             <DialogHeader className="space-y-1">

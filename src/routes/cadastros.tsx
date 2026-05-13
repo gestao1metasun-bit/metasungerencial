@@ -1,19 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Pencil, Power } from "lucide-react";
+import { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { bancos, gerentes, equipes, vendedores, usuarios } from "@/lib/mock-data";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { bancos as bancosSeed, gerentes as gerentesSeed, equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastros")({
   head: () => ({ meta: [{ title: "Cadastros — Meta Sun Gerencial" }] }),
   component: CadastrosPage,
 });
 
+type Banco = { id: string; nome: string; operacoes: number; total: number; status: string };
+type Gerente = { id: string; nome: string; banco: string; telefone: string; operacoes: number; status: string };
+type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
+
 function CadastrosPage() {
+  const [bancos, setBancos] = useState<Banco[]>(() => bancosSeed.map((b) => ({ ...b })));
+  const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
+  const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
+
   return (
     <>
       <PageHeader title="Cadastros" subtitle="Mantenha as bases auxiliares do sistema." />
@@ -28,26 +42,15 @@ function CadastrosPage() {
         </TabsList>
 
         <TabsContent value="bancos" className="mt-5">
-          <Listing
-            title="Bancos cadastrados"
-            cols={["Banco", "Operações", "Total", "Status"]}
-            rows={bancos.map((b) => [b.nome, b.operacoes, b.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), <StatusBadge key="s" status={b.status} />])}
-          />
+          <BancosCrud items={bancos} setItems={setBancos} />
         </TabsContent>
         <TabsContent value="gerentes" className="mt-5">
-          <Listing
-            title="Gerentes bancários"
-            cols={["Nome", "Banco", "Telefone", "Operações", "Status"]}
-            rows={gerentes.map((g) => [g.nome, g.banco, g.telefone, g.operacoes, <StatusBadge key="s" status={g.status} />])}
-          />
+          <GerentesCrud items={gerentes} setItems={setGerentes} bancos={bancos} />
         </TabsContent>
         <TabsContent value="equipes" className="mt-5">
-          <Listing
-            title="Equipes de instalação"
-            cols={["Equipe", "Líder", "Membros", "Obras ativas", "Status"]}
-            rows={equipes.map((e) => [e.nome, e.lider, e.membros, e.obrasAtivas, <StatusBadge key="s" status={e.status} />])}
-          />
+          <EquipesCrud items={equipes} setItems={setEquipes} />
         </TabsContent>
+
         <TabsContent value="vendedores" className="mt-5">
           <Listing
             title="Vendedores"
@@ -78,6 +81,241 @@ function CadastrosPage() {
   );
 }
 
+/* ----------------- Bancos ----------------- */
+function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]) => void }) {
+  const [editing, setEditing] = useState<Banco | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const save = (b: Banco) => {
+    if (items.find((x) => x.id === b.id)) setItems(items.map((x) => (x.id === b.id ? b : x)));
+    else setItems([...items, b]);
+    toast.success("Banco salvo");
+  };
+  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Banco removido"); };
+
+  return (
+    <CrudCard title="Bancos cadastrados" onNew={() => setCreating(true)}>
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>Banco</TableHead><TableHead className="text-right">Operações</TableHead>
+          <TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map((b) => (
+            <TableRow key={b.id}>
+              <TableCell className="font-medium">{b.nome}</TableCell>
+              <TableCell className="text-right">{b.operacoes}</TableCell>
+              <TableCell className="text-right">{b.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
+              <TableCell><StatusBadge status={b.status} /></TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(b)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <BancoDialog
+        open={creating || !!editing}
+        initial={editing}
+        onClose={() => { setEditing(null); setCreating(false); }}
+        onSave={(b) => { save(b); setEditing(null); setCreating(false); }}
+      />
+    </CrudCard>
+  );
+}
+
+function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initial: Banco | null; onClose: () => void; onSave: (b: Banco) => void }) {
+  const [form, setForm] = useState<Banco>(() => initial ?? { id: `BCO-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", operacoes: 0, total: 0, status: "Ativo" });
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{initial ? "Editar banco" : "Novo banco"}</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+          <div><Label>Operações</Label><Input type="number" value={form.operacoes} onChange={(e) => setForm({ ...form, operacoes: Number(e.target.value) })} /></div>
+          <div><Label>Total (R$)</Label><Input type="number" value={form.total} onChange={(e) => setForm({ ...form, total: Number(e.target.value) })} /></div>
+          <div className="col-span-2"><Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ----------------- Gerentes ----------------- */
+function GerentesCrud({ items, setItems, bancos }: { items: Gerente[]; setItems: (v: Gerente[]) => void; bancos: Banco[] }) {
+  const [editing, setEditing] = useState<Gerente | null>(null);
+  const [creating, setCreating] = useState(false);
+  const save = (g: Gerente) => {
+    if (items.find((x) => x.id === g.id)) setItems(items.map((x) => (x.id === g.id ? g : x)));
+    else setItems([...items, g]);
+    toast.success("Gerente salvo");
+  };
+  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Gerente removido"); };
+
+  return (
+    <CrudCard title="Gerentes bancários" onNew={() => setCreating(true)}>
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>Nome</TableHead><TableHead>Banco</TableHead><TableHead>Telefone</TableHead>
+          <TableHead className="text-right">Operações</TableHead><TableHead>Status</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map((g) => (
+            <TableRow key={g.id}>
+              <TableCell className="font-medium">{g.nome}</TableCell>
+              <TableCell>{g.banco}</TableCell>
+              <TableCell>{g.telefone}</TableCell>
+              <TableCell className="text-right">{g.operacoes}</TableCell>
+              <TableCell><StatusBadge status={g.status} /></TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(g)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(g.id)}><Trash2 className="h-4 w-4" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <GerenteDialog
+        open={creating || !!editing}
+        initial={editing}
+        bancos={bancos}
+        onClose={() => { setEditing(null); setCreating(false); }}
+        onSave={(g) => { save(g); setEditing(null); setCreating(false); }}
+      />
+    </CrudCard>
+  );
+}
+
+function GerenteDialog({ open, initial, bancos, onClose, onSave }: { open: boolean; initial: Gerente | null; bancos: Banco[]; onClose: () => void; onSave: (g: Gerente) => void }) {
+  const [form, setForm] = useState<Gerente>(() => initial ?? { id: `GER-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", banco: bancos[0]?.nome ?? "", telefone: "", operacoes: 0, status: "Ativo" });
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{initial ? "Editar gerente" : "Novo gerente"}</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+          <div><Label>Banco</Label>
+            <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+          <div><Label>Operações</Label><Input type="number" value={form.operacoes} onChange={(e) => setForm({ ...form, operacoes: Number(e.target.value) })} /></div>
+          <div><Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ----------------- Equipes ----------------- */
+function EquipesCrud({ items, setItems }: { items: Equipe[]; setItems: (v: Equipe[]) => void }) {
+  const [editing, setEditing] = useState<Equipe | null>(null);
+  const [creating, setCreating] = useState(false);
+  const save = (e: Equipe) => {
+    if (items.find((x) => x.id === e.id)) setItems(items.map((x) => (x.id === e.id ? e : x)));
+    else setItems([...items, e]);
+    toast.success("Equipe salva");
+  };
+  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Equipe removida"); };
+
+  return (
+    <CrudCard title="Equipes de instalação" onNew={() => setCreating(true)}>
+      <Table>
+        <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead>Equipe</TableHead><TableHead>Líder</TableHead>
+          <TableHead className="text-right">Membros</TableHead><TableHead className="text-right">Obras ativas</TableHead>
+          <TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map((e) => (
+            <TableRow key={e.id}>
+              <TableCell className="font-medium">{e.nome}</TableCell>
+              <TableCell>{e.lider}</TableCell>
+              <TableCell className="text-right">{e.membros}</TableCell>
+              <TableCell className="text-right">{e.obrasAtivas}</TableCell>
+              <TableCell><StatusBadge status={e.status} /></TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(e)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(e.id)}><Trash2 className="h-4 w-4" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <EquipeDialog
+        open={creating || !!editing}
+        initial={editing}
+        onClose={() => { setEditing(null); setCreating(false); }}
+        onSave={(e) => { save(e); setEditing(null); setCreating(false); }}
+      />
+    </CrudCard>
+  );
+}
+
+function EquipeDialog({ open, initial, onClose, onSave }: { open: boolean; initial: Equipe | null; onClose: () => void; onSave: (e: Equipe) => void }) {
+  const [form, setForm] = useState<Equipe>(() => initial ?? { id: `EQ-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", lider: "", membros: 0, obrasAtivas: 0, status: "Ativo" });
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{initial ? "Editar equipe" : "Nova equipe"}</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+          <div><Label>Líder</Label><Input value={form.lider} onChange={(e) => setForm({ ...form, lider: e.target.value })} /></div>
+          <div><Label>Membros</Label><Input type="number" value={form.membros} onChange={(e) => setForm({ ...form, membros: Number(e.target.value) })} /></div>
+          <div><Label>Obras ativas</Label><Input type="number" value={form.obrasAtivas} onChange={(e) => setForm({ ...form, obrasAtivas: Number(e.target.value) })} /></div>
+          <div className="col-span-2"><Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ----------------- Helpers ----------------- */
+function CrudCard({ title, onNew, children }: { title: string; onNew: () => void; children: React.ReactNode }) {
+  return (
+    <Card className="bg-[image:var(--gradient-card)]">
+      <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="text-sm font-semibold">{title}</div>
+        <Button onClick={onNew} className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90"><Plus className="mr-2 h-4 w-4" /> Novo</Button>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
 function Listing({ title, cols, rows }: { title: string; cols: string[]; rows: any[][] }) {
   return (
     <Card className="bg-[image:var(--gradient-card)]">
@@ -96,7 +334,7 @@ function Listing({ title, cols, rows }: { title: string; cols: string[]; rows: a
               {r.map((cell, j) => <TableCell key={j} className={j === 0 ? "font-medium" : ""}>{cell}</TableCell>)}
               <TableCell className="text-right">
                 <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8"><Power className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
           ))}

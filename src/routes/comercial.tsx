@@ -770,6 +770,7 @@ function CadastrarContratoTab({
       dataCadastro: today, dataAssinatura: "", valor: "", vendedor: "", financiamento: "nao",
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+      statusContrato: "Pendente",
     });
     setCli(emptyCliente);
     setProjs([emptyProj()]);

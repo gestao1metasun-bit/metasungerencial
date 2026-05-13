@@ -1118,13 +1118,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 <Input value={cli.nome} onChange={(e) => setCliField("nome", e.target.value)} />
               </div>
               <div className="space-y-1.5"><Label>CPF / CNPJ</Label>
-                <Input value={cli.doc} onChange={(e) => setCliField("doc", e.target.value)} maxLength={20} />
+                <Input value={cli.doc} onChange={(e) => setCliField("doc", maskDoc(e.target.value))} inputMode="numeric" maxLength={18} />
+                {cli.doc && !isDocValid(cli.doc) && <p className="text-[10px] text-destructive">CPF (11) ou CNPJ (14 dígitos)</p>}
               </div>
               <div className="space-y-1.5"><Label>Telefone</Label>
-                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", e.target.value)} maxLength={20} />
+                <Input value={cli.telefone} onChange={(e) => setCliField("telefone", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
+                {cli.telefone && !isTelValid(cli.telefone) && <p className="text-[10px] text-destructive">DDD (2) + 9 dígitos</p>}
               </div>
               <div className="space-y-1.5"><Label>Telefone 2</Label>
-                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", e.target.value)} maxLength={20} />
+                <Input value={cli.telefone2 ?? ""} onChange={(e) => setCliField("telefone2", maskTel(e.target.value))} inputMode="numeric" maxLength={15} />
               </div>
               <div className="space-y-1.5"><Label>E-mail</Label>
                 <Input type="email" value={cli.email} onChange={(e) => setCliField("email", e.target.value)} maxLength={120} />

@@ -962,7 +962,7 @@ function Row({ k, v }: { k: string; v: string }) {
 
 /* ---------------- PROJETOS VINCULADOS A CONTRATOS ---------------- */
 function ProjetosVinculadosTab() {
-  const contratos = (require("@/lib/contratos-store") as typeof import("@/lib/contratos-store")).useContratos();
+  const contratos = useContratos();
   const linhas = contratos.flatMap((c) => (c.projetos ?? []).map((p) => ({ ...p, contratoCliente: c.cliente })));
   return (
     <div className="space-y-4">

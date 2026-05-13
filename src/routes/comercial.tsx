@@ -1319,7 +1319,20 @@ function CadastrarContratoTab({
                     {c.projetos?.length ?? 0}
                   </span>
                 </TableCell>
-                <TableCell><StatusBadge status={c.status} /></TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <StatusBadge status={c.status} />
+                    {c.status === "Aprovado" && (() => {
+                      const pend = (c.projetos ?? []).filter((p) => !p.aprovado || !p.financeiroGerado);
+                      if (pend.length === 0) return null;
+                      return (
+                        <span className="inline-flex w-fit items-center gap-1 rounded bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning" title="Aprove os pedidos na aba Pedidos de venda">
+                          <Clock className="h-3 w-3" /> {pend.length === 1 ? "Projeto pendente" : `${pend.length} projetos pendentes`}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     <ValidarContratoButton contrato={c} />

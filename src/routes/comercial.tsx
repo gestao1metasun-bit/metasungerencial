@@ -978,6 +978,9 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5"><Label>Data cadastro</Label>
+                <Input type="date" value={f.data ?? ""} onChange={(e) => setF({ ...f, data: e.target.value, dataCadastro: e.target.value })} />
+              </div>
               <div className="space-y-1.5"><Label>Data assinatura</Label>
                 <Input type="date" value={f.dataAssinatura ?? ""} onChange={(e) => setF({ ...f, dataAssinatura: e.target.value })} />
               </div>

@@ -1494,6 +1494,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
           <TabsList>
             <TabsTrigger value="dados">Dados do contrato</TabsTrigger>
             <TabsTrigger value="cliente">Cliente</TabsTrigger>
+            <TabsTrigger value="composicao">Composição</TabsTrigger>
             <TabsTrigger value="projetos">Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
             <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>

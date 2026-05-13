@@ -1130,10 +1130,13 @@ function CadastrarContratoTab({
                 </div>
 
                 <div className="rounded-lg border bg-card p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
                     <span className="text-sm font-semibold">Parcelas de pagamento ({parcelas.length})</span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" onClick={() => distribuirValor(valorNum)}>Distribuir valor da venda</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={redistribuirVencimentos}>Vencimentos +1 mês</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaCompetencia}>Mesma competência</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={aplicarMesmaEmissao}>Mesma emissão</Button>
                       <Button type="button" size="sm" variant="outline" onClick={addParc}><Plus className="mr-1 h-3.5 w-3.5" /> Parcela</Button>
                     </div>
                   </div>

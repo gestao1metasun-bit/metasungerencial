@@ -135,6 +135,9 @@ function ComercialPage() {
         <TabsContent value="cad-contrato" className="mt-5">
           <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
+        <TabsContent value="pedidos" className="mt-5">
+          <PedidosVendaTab contratos={contratos} />
+        </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />
         </TabsContent>

@@ -2323,10 +2323,10 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
           <Input className="max-w-xs" placeholder="Buscar por contrato, cliente ou projeto…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
-          <Stat icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
-          <Stat icon={Layers} label="Projetos liberados" value={String(itens.length)} />
-          <Stat icon={CheckCircle2} label="Financeiro gerado" value={String(itens.filter((i) => i.projeto.financeiroGerado).length)} positive />
-          <Stat icon={Clock} label="Pendentes de financeiro" value={String(itens.filter((i) => !i.projeto.financeiroGerado).length)} />
+          <KpiSmall icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
+          <KpiSmall icon={Layers} label="Projetos liberados" value={String(itens.length)} />
+          <KpiSmall icon={CheckCircle2} label="Financeiro gerado" value={String(itens.filter((i) => i.projeto.financeiroGerado).length)} positive />
+          <KpiSmall icon={Clock} label="Pendentes de financeiro" value={String(itens.filter((i) => !i.projeto.financeiroGerado).length)} />
         </div>
       </Card>
 

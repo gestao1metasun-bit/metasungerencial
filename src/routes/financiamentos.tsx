@@ -217,17 +217,26 @@ function DashboardFin({
 
   const [openModal, setOpenModal] = useState<null | string>(null);
 
+  const semAsOps: FinOp[] = semContrato.map((s) => ({
+    ...(s as object as FinOp),
+    valorFinanciado: s.valor,
+    contrato: "",
+    previsao: "",
+    prazo: 0,
+  }) as FinOp);
+  const cancelados = ops.filter((o) => o.statusOp === "Cancelado");
+
   const modalContent: Record<string, { title: string; ops: FinOp[] }> = {
     total: { title: "Todas as operações", ops },
     operacoes: { title: "Operações ativas", ops: ativos },
     com: { title: "Operações com contrato vinculado", ops: comContrato },
+    sem: { title: "Operações sem contrato", ops: semAsOps },
     analise: { title: "Operações em análise", ops: emAnalise },
     aguardando: { title: "Aguardando liberação", ops: aguardandoLib },
     liberados: { title: "Operações liberadas", ops: liberados },
     finalizados: { title: "Operações finalizadas", ops: finalizados },
-    ticket: { title: "Análise de ticket médio", ops: [...ops].sort((a, b) => b.valorFinanciado - a.valorFinanciado) },
     medio: { title: "Valor médio liberado", ops: liberados },
-    tempo: { title: "Tempo médio de liberação", ops: [...ops].sort((a, b) => b.prazo - a.prazo) },
+    cancelados: { title: "Operações canceladas", ops: cancelados },
   };
 
   // Gráficos

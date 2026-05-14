@@ -25,6 +25,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hash = useRouterState({ select: (s) => s.location.hash });
+  const [isHydrated, setIsHydrated] = useState(false);
   const [currentTab, setCurrentTab] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
     const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
@@ -36,6 +37,10 @@ export function AppLayout() {
     const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
     if (match && ROUTE_TABS[match.to]) setOpenMenu(match.to);
   }, [path]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     setCurrentTab(parseHash(hash));
@@ -85,7 +90,7 @@ export function AppLayout() {
                   {sub && isOpen && (
                     <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
                       {sub.tabs.map((t) => {
-                        const tabActive = active && currentTab === t.value;
+                        const tabActive = active && isHydrated && currentTab === t.value;
                         return (
                           <li key={t.value}>
                             <Link

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { Fragment, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
@@ -28,8 +28,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
-import { appendLancamentos, readLancamentos, updateLancamento, removeLancamentosDoProjeto, type Lancamento } from "@/lib/financeiro-store";
-import { useNaturezas } from "@/lib/financeiro-store";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL, estoqueItens,
@@ -38,10 +36,8 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
-  setComposicaoPagto, composicaoSomaOk, aprovarProjeto, calcularLancamentosProjeto,
-  parcelasFinanceiroReais, FORMAS_PAGAMENTO,
+  aprovarProjeto,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
-  type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";
@@ -817,154 +813,6 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
   );
 }
 
-/* ---------------- COMPOSIÇÃO DE PAGAMENTO ---------------- */
-
-function ComposicaoEditor({
-  valorContrato, value, onChange, disabled,
-}: {
-  valorContrato: number;
-  value: ComposicaoLinha[];
-  onChange: (next: ComposicaoLinha[]) => void;
-  disabled?: boolean;
-}) {
-  const today = new Date().toISOString().slice(0, 10);
-  const linhas = value ?? [];
-  const soma = linhas.reduce((s, l) => s + (Number(l.valor) || 0), 0);
-  const restante = valorContrato - soma;
-  const bate = Math.abs(restante) <= 0.5 && linhas.length > 0;
-  const excede = restante < -0.5;
-
-  const addLinha = () => {
-    const valorSugerido = Math.max(0, Math.round(restante * 100) / 100);
-    const nova: ComposicaoLinha = {
-      id: `CP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      formaPagamento: "Pix", valor: valorSugerido, parcelas: 1,
-      dataPrevista: today, competencia: today.slice(0, 7),
-    };
-    onChange([...linhas, nova]);
-  };
-  const setL = (id: string, patch: Partial<ComposicaoLinha>) => {
-    onChange(linhas.map((l) => {
-      if (l.id !== id) return l;
-      const next = { ...l, ...patch };
-      // Pix força 1 parcela; cartões mantêm parcelas como informativo
-      if (next.formaPagamento === "Pix") next.parcelas = 1;
-      return next;
-    }));
-  };
-  const del = (id: string) => onChange(linhas.filter((l) => l.id !== id));
-  const distribuir = () => {
-    if (linhas.length === 0 || valorContrato <= 0) return;
-    const each = Math.round((valorContrato / linhas.length) * 100) / 100;
-    const last = Math.round((valorContrato - each * (linhas.length - 1)) * 100) / 100;
-    onChange(linhas.map((l, i) => ({ ...l, valor: i === linhas.length - 1 ? last : each })));
-  };
-
-  const helperFor = (l: ComposicaoLinha): string => {
-    if (l.formaPagamento === "Pix") return "Pix gera 1 lançamento (à vista).";
-    if (l.formaPagamento === "Cartão de Débito") return "Cartão de débito: 1 lançamento financeiro.";
-    if (l.formaPagamento === "Cartão de Crédito") return `Cliente parcelou em ${l.parcelas}x · financeiro = 1 lançamento.`;
-    if (l.formaPagamento === "Boleto") return `Boleto em ${l.parcelas}x · gera ${l.parcelas} lançamento(s).`;
-    if (l.formaPagamento.startsWith("Financiamento")) return "Lançamento na liberação do financiamento.";
-    return `Gera ${parcelasFinanceiroReais(l.formaPagamento, l.parcelas)} lançamento(s).`;
-  };
-
-  return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
-      {/* Resumo no topo */}
-      <div className="grid gap-2 md:grid-cols-4">
-        <div className="rounded-md border bg-muted/30 p-3">
-          <div className="text-[10px] uppercase text-muted-foreground">Valor total do contrato</div>
-          <div className="font-mono font-bold text-sm">{fmtBRL(valorContrato)}</div>
-        </div>
-        <div className="rounded-md border bg-muted/30 p-3">
-          <div className="text-[10px] uppercase text-muted-foreground">Valor já composto</div>
-          <div className="font-mono font-bold text-sm">{fmtBRL(soma)}</div>
-        </div>
-        <div className={`rounded-md border p-3 ${restante > 0.5 ? "border-warning/40 bg-warning/5" : excede ? "border-destructive/40 bg-destructive/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
-          <div className="text-[10px] uppercase text-muted-foreground">Valor restante</div>
-          <div className="font-mono font-bold text-sm">{fmtBRL(restante)}</div>
-        </div>
-        <div className="rounded-md border bg-muted/30 p-3">
-          <div className="text-[10px] uppercase text-muted-foreground">Formas de pagamento</div>
-          <div className="font-mono font-bold text-sm">{linhas.length}</div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between border-b pb-2">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold">Formas de pagamento</span>
-        </div>
-        {!disabled && (
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={distribuir}>Distribuir igualmente</Button>
-            <Button type="button" size="sm" onClick={addLinha} className="bg-primary text-primary-foreground"><Plus className="mr-1 h-3.5 w-3.5" /> Forma</Button>
-          </div>
-        )}
-      </div>
-      {linhas.length === 0 ? (
-        <div className="py-4 text-center text-xs text-muted-foreground">Adicione ao menos 1 forma de pagamento.</div>
-      ) : (
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-[200px]">Forma</TableHead>
-            <TableHead className="text-right">Valor (R$)</TableHead>
-            <TableHead className="text-right w-24">Parcelas</TableHead>
-            <TableHead>Previsão</TableHead>
-            <TableHead>Competência</TableHead>
-            <TableHead>Obs.</TableHead>
-            <TableHead className="w-10"></TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {linhas.map((l) => {
-              const pixLike = l.formaPagamento === "Pix";
-              return (
-                <React.Fragment key={l.id}>
-                  <TableRow>
-                    <TableCell>
-                      <Select value={l.formaPagamento} onValueChange={(v) => setL(l.id, { formaPagamento: v as FormaPagamento })} disabled={disabled}>
-                        <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {FORMAS_PAGAMENTO.map((f) => (
-                            <SelectItem key={f} value={f}>{f}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell><Input type="number" step="0.01" className="h-8 text-right" value={l.valor} onChange={(e) => setL(l.id, { valor: Number(e.target.value) || 0 })} disabled={disabled} /></TableCell>
-                    <TableCell>
-                      <Input type="number" min={1} className="h-8 text-right w-20"
-                        value={pixLike ? 1 : l.parcelas}
-                        disabled={disabled || pixLike}
-                        onChange={(e) => setL(l.id, { parcelas: Math.max(1, Number(e.target.value) || 1) })} />
-                    </TableCell>
-                    <TableCell><Input type="date" className="h-8" value={l.dataPrevista} onChange={(e) => setL(l.id, { dataPrevista: e.target.value, competencia: e.target.value.slice(0, 7) })} disabled={disabled} /></TableCell>
-                    <TableCell><Input type="month" className="h-8" value={l.competencia} onChange={(e) => setL(l.id, { competencia: e.target.value })} disabled={disabled} /></TableCell>
-                    <TableCell><Input className="h-8" value={l.observacao ?? ""} onChange={(e) => setL(l.id, { observacao: e.target.value })} disabled={disabled} placeholder={l.formaPagamento.startsWith("Financiamento") ? "Banco / status / liberação" : ""} /></TableCell>
-                    <TableCell>
-                      {!disabled && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => del(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={7} className="py-1 text-[11px] text-muted-foreground italic border-b-0">{helperFor(l)}</TableCell>
-                  </TableRow>
-                </React.Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
-      )}
-      <div className={`rounded-md border p-2 text-xs ${bate ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700" : excede ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-warning/40 bg-warning/5 text-warning-foreground"}`}>
-        {bate
-          ? "✓ Composição conciliada com o contrato."
-          : excede
-            ? `Pendente: composição (${fmtBRL(soma)}) excede o valor do contrato (${fmtBRL(valorContrato)}).`
-            : `Pendente: composição de pagamento não fecha com o valor do contrato. Restam ${fmtBRL(restante)}.`}
-      </div>
-    </div>
-  );
-}
 
 function CadastrarContratoTab({
   contratos, setContratos, vendedoresList,
@@ -984,7 +832,7 @@ function CadastrarContratoTab({
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [clienteId, setClienteId] = useState<string>("");
-  const [composicao, setComposicao] = useState<ComposicaoLinha[]>([]);
+  
   const [cepLoading, setCepLoading] = useState(false);
 
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
@@ -1032,7 +880,7 @@ function CadastrarContratoTab({
     });
     setCli(emptyCliente);
     setClienteId("");
-    setComposicao([]);
+    
     setActiveTab("cliente");
   };
 
@@ -1061,7 +909,7 @@ function CadastrarContratoTab({
       comissaoValor,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [],
-      composicaoPagto: composicao,
+      
       auditoria: [{
         id: `A-${Date.now()}`, data: new Date().toISOString(),
         usuario: "Operador", campo: "criação", de: "", para: novoId,
@@ -1469,7 +1317,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"dados" | "cliente" | "composicao" | "projetos" | "auditoria">("cliente");
+  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("cliente");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
     nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",
@@ -1505,33 +1353,13 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       clienteFull: cli,
     });
 
-    // Se aprovou agora, libera projetos para Engenharia e gera financeiro
+    // Se aprovou agora, libera projetos para Engenharia (sem geração financeira automática)
     if (aprovouAgora) {
       const projs = contrato.projetos ?? [];
-      const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
       projs.forEach((p) => {
-        if (!p.financeiroGerado) {
-          updateProjeto(contrato.id, p.id, { enviadoEngenharia: true, financeiroGerado: true });
-          const parc = p.parcelasPagto ?? [];
-          parc.forEach((pg, pi) => {
-            if (pg.valor <= 0) return;
-            novosLanc.push({
-              id: `L-REC-${Date.now()}-${p.id}-${pi}`,
-              data: pg.dataVencimento,
-              descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${p.id} · ${contrato.cliente}`,
-              tipo: "Entrada", valor: pg.valor, camada: "A realizar",
-              natureza: "Recebimento de cliente", centroCusto: "Comercial",
-              obra: p.id, empresa: "Meta Sun", filial: "Manaus",
-              contrato: contrato.id, cliente: contrato.cliente,
-              formaPagamento: pg.formaPagamento,
-              parcelaLabel: `${pi + 1}/${parc.length}`,
-              competencia: pg.competencia, dataEmissao: pg.dataEmissao,
-            });
-          });
-        }
+        if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
       });
-      if (novosLanc.length > 0) appendLancamentos(novosLanc);
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
     }
@@ -1554,8 +1382,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
-            <TabsTrigger value="composicao">4. Composição</TabsTrigger>
-            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> 5. Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> 4. Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
@@ -1579,7 +1406,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Status</Label>
                 <Select value={f.status} onValueChange={(v) => {
                   if (v === "Aprovado" && f.status !== "Aprovado") {
-                    const r = validateContratoCompleto(contrato);
+                    const r = validateContratoCompleto(contrato, { requireComposicao: false });
                     if (!r.ok) { toast.error(`Faltam: ${r.missing.join(", ")}`); return; }
                     if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nApós aprovado, dados estruturais terão controle de alteração.`)) return;
                   }
@@ -1682,9 +1509,6 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
             </div>
           </TabsContent>
 
-          <TabsContent value="composicao" className="mt-4">
-            <ComposicaoTabPanel contrato={contrato} />
-          </TabsContent>
 
           <TabsContent value="projetos" className="mt-4">
             <ProjetosManager contrato={contrato} />
@@ -1728,38 +1552,6 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   );
 }
 
-/* ---------------- COMPOSIÇÃO DE PAGAMENTO (aba do contrato) ---------------- */
-function ComposicaoTabPanel({ contrato }: { contrato: Contrato }) {
-  const [linhas, setLinhas] = useState<ComposicaoLinha[]>(contrato.composicaoPagto ?? []);
-  const valorContrato = Number(contrato.valor) || 0;
-  const aprovado = contrato.status === "Aprovado";
-  const projAprovados = (contrato.projetos ?? []).filter((p) => p.aprovado).length;
-  const lockEdicao = aprovado && projAprovados > 0;
-
-  const salvar = () => {
-    const soma = linhas.reduce((s, l) => s + (Number(l.valor) || 0), 0);
-    if (linhas.length === 0) { toast.error("Adicione ao menos 1 linha de composição."); return; }
-    if (Math.abs(soma - valorContrato) > 0.5) {
-      toast.error(`Soma (${fmtBRL(soma)}) ≠ valor do contrato (${fmtBRL(valorContrato)}).`);
-      return;
-    }
-    setComposicaoPagto(contrato.id, linhas);
-    toast.success("Composição salva. Já pode aprovar projetos e gerar financeiro proporcional.");
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="text-xs text-muted-foreground">
-        A composição define como o valor total do contrato será recebido. O financeiro de cada projeto é gerado <b>proporcionalmente</b> a partir desta composição (rateio = valor do projeto ÷ valor do contrato).
-        {lockEdicao && <span className="block mt-1 text-warning">Há projeto(s) já aprovado(s). Alterações exigem regeneração do financeiro dos projetos afetados.</span>}
-      </div>
-      <ComposicaoEditor valorContrato={valorContrato} value={linhas} onChange={setLinhas} />
-      <div className="flex justify-end">
-        <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar composição</Button>
-      </div>
-    </div>
-  );
-}
 
 
 function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
@@ -1874,106 +1666,6 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
   };
 }
 
-function ProjetoFinanceiro({ contrato, projeto }: { contrato: Contrato; projeto: ProjetoVinculado }) {
-  // Visualiza/edita os lançamentos gerados por rateio para este projeto.
-  const [tick, setTick] = useState(0);
-  const lancs = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
-  const total = lancs.reduce((s, l) => s + (Number(l.valor) || 0), 0);
-  const valorProj = Number(projeto.valor) || 0;
-  const bate = Math.abs(total - valorProj) <= 0.5;
-
-  const previa = calcularLancamentosProjeto(contrato, projeto);
-  const refresh = () => setTick((t) => t + 1);
-  void tick;
-
-  const regenerar = () => {
-    if (contrato.status !== "Aprovado") { toast.error("Contrato precisa estar aprovado."); return; }
-    const comp = composicaoSomaOk(contrato);
-    if (!comp.ok) { toast.error("Composição do contrato não fecha."); return; }
-    if (!window.confirm("Regenerar lançamentos do projeto? Lançamentos existentes serão substituídos.")) return;
-    removeLancamentosDoProjeto(projeto.id);
-    appendLancamentos(previa as any);
-    updateProjeto(contrato.id, projeto.id, {
-      financeiroGerado: true,
-      dataGeracaoFinanceiro: new Date().toISOString(),
-    });
-    toast.success("Lançamentos regenerados");
-    refresh();
-  };
-
-  const editLanc = (id: string, patch: Partial<Lancamento>) => {
-    updateLancamento(id, patch);
-    refresh();
-  };
-
-  return (
-    <div className="rounded-md border border-border bg-muted/20 p-3">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <DollarSign className="h-4 w-4 text-primary" /> Financeiro do projeto (rateio do contrato)
-          {projeto.financeiroGerado && <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs">Valor projeto: <b className="font-mono">{fmtBRL(valorProj)}</b></span>
-          <Button size="sm" variant="outline" onClick={regenerar}>Regenerar do contrato</Button>
-        </div>
-      </div>
-
-      {lancs.length === 0 ? (
-        <div className="py-4 text-center text-xs text-muted-foreground">
-          Nenhum lançamento gerado. {projeto.aprovado ? "Clique em \"Gerar financeiro\" acima para criar pelo rateio." : "Aprove o projeto e gere o financeiro pela composição do contrato."}
-          {previa.length > 0 && (
-            <div className="mt-2 text-[11px]">Prévia: {previa.length} lançamento(s) por rateio totalizando <b className="font-mono">{fmtBRL(previa.reduce((s, l) => s + l.valor, 0))}</b></div>
-          )}
-        </div>
-      ) : (
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-10">#</TableHead>
-            <TableHead>Vencimento</TableHead>
-            <TableHead>Competência</TableHead>
-            <TableHead>Forma</TableHead>
-            <TableHead>Parcela</TableHead>
-            <TableHead className="text-right">Valor (R$)</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {lancs.map((l, i) => (
-              <TableRow key={l.id}>
-                <TableCell className="font-mono text-xs">{i + 1}</TableCell>
-                <TableCell><Input type="date" className="h-8" value={l.data} onChange={(e) => editLanc(l.id, { data: e.target.value, competencia: e.target.value.slice(0, 7) })} /></TableCell>
-                <TableCell><Input type="month" className="h-8" value={l.competencia ?? ""} onChange={(e) => editLanc(l.id, { competencia: e.target.value })} /></TableCell>
-                <TableCell>
-                  <Select value={l.formaPagamento ?? "Pix"} onValueChange={(v) => editLanc(l.id, { formaPagamento: v })}>
-                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {FORMAS_PAGAMENTO.map((f) => (
-                        <SelectItem key={f} value={f}>{f}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-xs font-mono">{l.parcelaLabel ?? "—"}</TableCell>
-                <TableCell className="text-right">
-                  <Input type="number" className="h-8 text-right" value={l.valor} onChange={(e) => editLanc(l.id, { valor: Number(e.target.value) || 0 })} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-
-      <div className="mt-2 flex justify-end text-xs">
-        <span>Total lançamentos: <b className="font-mono">{fmtBRL(total)}</b>
-        {valorProj > 0 && (
-          <span className={`ml-2 font-mono ${bate ? "text-emerald-600" : "text-destructive"}`}>
-            {bate ? "✓ bate com valor do projeto" : `≠ valor projeto (${fmtBRL(valorProj)})`}
-          </span>
-        )}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function ConciliacaoCell({ label, contrato, soma, ok }: { label: string; contrato: string; soma: string; ok: boolean }) {
   return (
@@ -2058,27 +1750,15 @@ function ProjetoEditCard({
               if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP))
                 faltam.push("ao menos 1 inversor");
               if (faltam.length) { toast.error(`Não é possível aprovar. Faltam: ${faltam.join(", ")}`); return; }
-              const comp = composicaoSomaOk(contrato);
-              if (!comp.ok) {
-                toast.error("Não é possível aprovar. O contrato/projeto ainda não possui orçamento/composição financeira válida.");
-                return;
-              }
               const valorContrato = Number(contrato.valor) || 0;
               const somaProjs = (contrato.projetos ?? []).reduce((s, x) => s + (Number(x.valor) || 0), 0);
               if (valorContrato > 0 && somaProjs - valorContrato > 0.5) {
                 toast.error(`Projetos não conciliados (soma ${fmtBRL(somaProjs)} ≠ contrato ${fmtBRL(valorContrato)}).`);
                 return;
               }
-              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nSerá gerado automaticamente:\n• Contas a receber proporcionais\n• Card na Engenharia\n\nApós aprovado, a edição será bloqueada — exigindo remoção dos vínculos para alterar.`)) return;
+              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nO projeto será liberado para a Engenharia.\nApós aprovado, a edição será bloqueada.`)) return;
               aprovarProjeto(contrato.id, projeto.id);
-              const novos = calcularLancamentosProjeto(contrato, projeto);
-              if (novos.length > 0) appendLancamentos(novos as any);
-              updateProjeto(contrato.id, projeto.id, {
-                financeiroGerado: true,
-                dataGeracaoFinanceiro: new Date().toISOString(),
-                usuarioGeracao: "Operador",
-              });
-              toast.success(`Projeto ${projeto.id} aprovado · ${novos.length} lançamento(s) no Financeiro · enviado à Engenharia`);
+              toast.success(`Projeto ${projeto.id} aprovado · enviado à Engenharia`);
             }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
           )}
           {projeto.aprovado && (
@@ -2168,7 +1848,7 @@ function ProjetoEditCard({
       </fieldset>
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto é gerado automaticamente ao aprovar (rateio proporcional pela composição do contrato).
+          Após aprovado, este projeto é enviado automaticamente para a Engenharia. O controle financeiro é feito separadamente no módulo Financeiro.
         </div>
         <Button className="bg-primary text-primary-foreground" onClick={salvar} disabled={!dirty || projeto.aprovado}>
           Salvar Projeto {index + 1}
@@ -2844,8 +2524,6 @@ function KpiSmall({
 function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
   const aprovados = contratos.filter((c) => c.status === "Aprovado" && (c.projetos ?? []).length > 0);
   const [filtro, setFiltro] = useState("");
-  const [editando, setEditando] = useState<Record<string, boolean>>({});
-  const toggleEdit = (id: string) => setEditando((s) => ({ ...s, [id]: !s[id] }));
 
   const filtrados = aprovados.filter((c) => {
     const q = filtro.toLowerCase();
@@ -2857,26 +2535,24 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
     );
   });
 
-  const totalProjetosLiberados = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => p.enviadoEngenharia).length, 0,
+  const totalProjetos = aprovados.reduce((s, c) => s + (c.projetos ?? []).length, 0);
+  const totalLiberados = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => p.aprovado).length, 0,
   );
-  const totalFinGerado = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => p.financeiroGerado).length, 0,
-  );
-  const totalPendente = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => !p.financeiroGerado).length, 0,
+  const totalPendentes = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => !p.aprovado).length, 0,
   );
 
-  const aprovarPedido = (contrato: Contrato, projeto: ProjetoVinculado) => {
+  const liberarProjeto = (contrato: Contrato, projeto: ProjetoVinculado) => {
     if (contrato.status !== "Aprovado") { toast.error("Contrato não está aprovado."); return; }
     const valorProj = Number(projeto.valor) || 0;
     if (valorProj <= 0) { toast.error("Defina o valor do projeto."); return; }
     if (!projeto.endereco?.trim() || !projeto.cidade?.trim()) { toast.error("Endereço/cidade do projeto obrigatórios."); return; }
-    const comp = composicaoSomaOk(contrato);
-    if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}). Edite no contrato.`); return; }
-    const novos = calcularLancamentosProjeto(contrato, projeto);
-    if (novos.length === 0) { toast.error("Nada a gerar — verifique composição e valor do projeto."); return; }
-    // Aprova o projeto, libera para Engenharia e gera contas a receber
+    if (!(Number(projeto.modulos) > 0)) { toast.error("Informe a quantidade de módulos."); return; }
+    const hasInvP = (x?: string) => { const t=(x??"").trim(); return t!=="" && t!=="0" && Number(t)!==0; };
+    if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP)) {
+      toast.error("Informe ao menos 1 inversor."); return;
+    }
     if (!projeto.aprovado) {
       updateProjeto(contrato.id, projeto.id, {
         aprovado: true,
@@ -2884,15 +2560,11 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         usuarioAprovacao: "Operador",
         enviadoEngenharia: true,
       });
+      toast.success(`Projeto ${projeto.id} liberado · enviado à Engenharia`);
+    } else {
+      updateProjeto(contrato.id, projeto.id, { enviadoEngenharia: true });
+      toast.success(`Projeto ${projeto.id} reenviado à Engenharia`);
     }
-    removeLancamentosDoProjeto(projeto.id);
-    appendLancamentos(novos as any);
-    updateProjeto(contrato.id, projeto.id, {
-      financeiroGerado: true,
-      dataGeracaoFinanceiro: new Date().toISOString(),
-      usuarioGeracao: "Operador",
-    });
-    toast.success(`Pedido aprovado · ${novos.length} lançamento(s) gerado(s) · projeto enviado à Engenharia`);
   };
 
   return (
@@ -2901,15 +2573,15 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-base font-bold">Pedidos de venda</div>
-            <div className="text-xs text-muted-foreground">Cada contrato aprovado lista seus projetos. Cada projeto tem financeiro próprio (forma de pagamento, parcelas, emissão, vencimento, competência).</div>
+            <div className="text-xs text-muted-foreground">Camada operacional/comercial. Aprove/libere projetos e envie para a Engenharia. O controle financeiro (contas a pagar/receber) é feito no módulo Financeiro.</div>
           </div>
           <Input className="max-w-xs" placeholder="Buscar por contrato, cliente ou projeto…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
           <KpiSmall icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
-          <KpiSmall icon={Layers} label="Projetos liberados" value={String(totalProjetosLiberados)} />
-          <KpiSmall icon={CheckCircle2} label="Financeiro gerado" value={String(totalFinGerado)} positive />
-          <KpiSmall icon={Clock} label="Pendentes de financeiro" value={String(totalPendente)} />
+          <KpiSmall icon={Layers} label="Projetos" value={String(totalProjetos)} />
+          <KpiSmall icon={CheckCircle2} label="Liberados/Engenharia" value={String(totalLiberados)} positive />
+          <KpiSmall icon={Clock} label="Pendentes de liberação" value={String(totalPendentes)} />
         </div>
       </Card>
 
@@ -2927,95 +2599,53 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                   <TableHead className="text-xs">Contrato</TableHead>
                   <TableHead className="text-xs">Cliente</TableHead>
                   <TableHead className="text-xs">Vendedor</TableHead>
+                  <TableHead className="text-xs">Endereço</TableHead>
+                  <TableHead className="text-xs text-right">Módulos</TableHead>
+                  <TableHead className="text-xs text-right">kWp</TableHead>
+                  <TableHead className="text-xs text-right">Valor</TableHead>
                   <TableHead className="text-xs">Status pedido</TableHead>
-                  <TableHead className="text-xs">Status financeiro</TableHead>
-                  <TableHead className="text-xs">Forma pgto</TableHead>
-                  <TableHead className="text-xs">Natureza</TableHead>
-                  <TableHead className="text-xs">Centro de custo</TableHead>
-                  <TableHead className="text-xs text-right">Valor total</TableHead>
-                  <TableHead className="text-xs text-right">Faturado</TableHead>
-                  <TableHead className="text-xs text-right">A faturar</TableHead>
+                  <TableHead className="text-xs">Engenharia</TableHead>
                   <TableHead className="text-xs text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtrados.flatMap((contrato) =>
                   (contrato.projetos ?? []).map((projeto) => {
-                    const open = !!editando[projeto.id];
-                    const lancsProj = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
-                    const totalLanc = lancsProj.reduce((a, l) => a + (Number(l.valor) || 0), 0);
                     const valorProj = Number(projeto.valor) || 0;
-                    const aFaturar = Math.max(0, valorProj - totalLanc);
-                    const formaPrincipal = (contrato.composicaoPagto ?? [])[0]?.formaPagamento ?? contrato.pagamento ?? "—";
                     return (
-                      <Fragment key={projeto.id}>
-                        <TableRow>
-                          <TableCell className="font-mono text-[11px] text-primary font-bold">{projeto.id}</TableCell>
-                          <TableCell className="font-mono text-[11px]">{contrato.id}</TableCell>
-                          <TableCell className="text-xs truncate max-w-[180px]">{contrato.cliente}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{contrato.vendedor}</TableCell>
-                          <TableCell>
-                            {projeto.aprovado
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
-                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
-                          </TableCell>
-                          <TableCell>
-                            {projeto.financeiroGerado
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO</span>
-                              : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN</span>}
-                          </TableCell>
-                          <TableCell className="text-xs">{formaPrincipal}</TableCell>
-                          <TableCell className="text-xs">
-                            <Select
-                              value={projeto.naturezaFinanceira ?? "Recebimento de cliente"}
-                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { naturezaFinanceira: v })}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-[180px]"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Recebimento de cliente">Recebimento de cliente</SelectItem>
-                                <SelectItem value="Receita de venda de sistema fotovoltaico">Receita de venda de sistema FV</SelectItem>
-                                <SelectItem value="Liberação financiamento">Liberação financiamento</SelectItem>
-                                <SelectItem value="Parcelas/Recorrentes">Parcelas/Recorrentes</SelectItem>
-                                <SelectItem value="Outras receitas">Outras receitas</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <Select
-                              value={projeto.centroCusto ?? "Comercial"}
-                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { centroCusto: v })}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Comercial">Comercial</SelectItem>
-                                <SelectItem value="Administrativo">Administrativo</SelectItem>
-                                <SelectItem value="Engenharia/Operação">Engenharia/Operação</SelectItem>
-                                <SelectItem value={projeto.id}>Obra {projeto.id}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right text-xs font-mono font-semibold">{fmtBRL(valorProj)}</TableCell>
-                          <TableCell className="text-right text-xs font-mono">{fmtBRL(totalLanc)}</TableCell>
-                          <TableCell className="text-right text-xs font-mono text-warning">{fmtBRL(aFaturar)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => toggleEdit(projeto.id)}>
-                                <Pencil className="mr-1 h-3 w-3" /> {open ? "Fechar" : "Editar"}
-                              </Button>
-                              <Button size="sm" className="h-7 px-2 text-[11px] bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
-                                <DollarSign className="mr-1 h-3 w-3" /> {projeto.financeiroGerado ? "Atualizar" : (projeto.aprovado ? "Gerar" : "Aprovar")}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {open && (
-                          <TableRow>
-                            <TableCell colSpan={13} className="bg-muted/30 p-3">
-                              <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
+                      <TableRow key={projeto.id}>
+                        <TableCell className="font-mono text-[11px] text-primary font-bold">{projeto.id}</TableCell>
+                        <TableCell className="font-mono text-[11px]">{contrato.id}</TableCell>
+                        <TableCell className="text-xs truncate max-w-[180px]">{contrato.cliente}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{contrato.vendedor}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">
+                          {projeto.endereco}{projeto.numero ? `, ${projeto.numero}` : ""} · {projeto.cidade}/{projeto.uf}
+                        </TableCell>
+                        <TableCell className="text-right text-xs font-mono">{projeto.modulos ?? 0}</TableCell>
+                        <TableCell className="text-right text-xs font-mono">{(projeto.kwp ?? 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right text-xs font-mono font-semibold">{fmtBRL(valorProj)}</TableCell>
+                        <TableCell>
+                          {projeto.aprovado
+                            ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">LIBERADO</span>
+                            : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+                        </TableCell>
+                        <TableCell>
+                          {projeto.enviadoEngenharia
+                            ? <span className="text-[10px] rounded bg-primary/15 px-2 py-0.5 text-primary font-bold">ENVIADO</span>
+                            : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">—</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 text-[11px] bg-primary text-primary-foreground"
+                            onClick={() => liberarProjeto(contrato, projeto)}
+                            disabled={projeto.aprovado && projeto.enviadoEngenharia}
+                          >
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            {projeto.aprovado ? (projeto.enviadoEngenharia ? "Liberado" : "Reenviar") : "Aprovar"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     );
                   })
                 )}

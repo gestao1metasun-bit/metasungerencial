@@ -1,12 +1,11 @@
 // Tabela operacional de Financiamentos com colunas arrastáveis (persistidas em localStorage).
-// Usada nas abas "Contratos Assinados em Financiamento" e "Sem Contrato em Financiamento".
+// Visualização é somente leitura — edição acontece pelo botão Editar (lápis) na coluna AÇÕES.
 import { useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { fmtBRL } from "@/lib/mock-data";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Pencil } from "lucide-react";
 
 export type OpRow = {
   id: string;
@@ -23,13 +22,14 @@ export type OpRow = {
   status: string;
   obs: string;
   liberacao: string;
-  dataBaseLiberacao: string;
+  /** Data limite (ISO yyyy-mm-dd) calculada a partir da faixa de previsão escolhida no edit dialog. */
+  previsao: string;
 };
 
 type ColKey =
   | "ordem" | "contratante" | "vendedor" | "valorContrato" | "pfpj" | "envio"
   | "cpfCnpj" | "valorFinanciado" | "statusLiberacao" | "gerente" | "status"
-  | "obs" | "liberacao" | "dataBaseLiberacao" | "diasPrazo";
+  | "obs" | "liberacao" | "previsao" | "acoes";
 
 const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
   { key: "ordem", label: "ORDEM" },
@@ -45,21 +45,18 @@ const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
   { key: "status", label: "STATUS" },
   { key: "obs", label: "OBS" },
   { key: "liberacao", label: "LIBERAÇÃO" },
-  { key: "dataBaseLiberacao", label: "DATA BASE LIBERAÇÃO" },
-  { key: "diasPrazo", label: "DIAS PRAZO", align: "center" },
+  { key: "previsao", label: "PREVISÃO", align: "center" },
+  { key: "acoes", label: "AÇÕES", align: "center" },
 ];
 
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map((c) => c.key);
 
 export function OperacionalFinTable({
-  storageKey, rows, onPatch, gerentes, statuses, liberacaoStatuses,
+  storageKey, rows, onEdit,
 }: {
   storageKey: string;
   rows: OpRow[];
-  onPatch: (id: string, patch: Partial<OpRow>) => void;
-  gerentes: string[];
-  statuses: string[];
-  liberacaoStatuses: string[];
+  onEdit?: (id: string) => void;
 }) {
   const [order, setOrder] = useState<ColKey[]>(DEFAULT_ORDER);
 
@@ -100,7 +97,7 @@ export function OperacionalFinTable({
   };
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diasPrazo = (iso: string): number | null => {
+  const diasRest = (iso: string): number | null => {
     if (!iso) return null;
     const d = new Date(iso + "T00:00:00").getTime();
     return Math.ceil((d - today.getTime()) / 86400000);
@@ -119,48 +116,42 @@ export function OperacionalFinTable({
       case "envio": return <span className="text-muted-foreground text-xs">{r.envio || "—"}</span>;
       case "cpfCnpj": return <span className="text-muted-foreground text-xs">{r.cpfCnpj || "—"}</span>;
       case "valorFinanciado": return <span className="font-mono font-semibold">{fmtBRL(r.valorFinanciado)}</span>;
-      case "statusLiberacao":
-        return (
-          <Select value={r.statusLiberacao || ""} onValueChange={(v) => onPatch(r.id, { statusLiberacao: v })}>
-            <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{liberacaoStatuses.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        );
-      case "gerente":
-        return (
-          <Select value={r.gerente || ""} onValueChange={(v) => onPatch(r.id, { gerente: v })}>
-            <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{gerentes.map((g) => <SelectItem key={g} value={g}>{g.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        );
-      case "status":
-        return (
-          <Select value={r.status || ""} onValueChange={(v) => onPatch(r.id, { status: v })}>
-            <SelectTrigger className="h-7 w-[120px] text-xs">
-              <span className="truncate"><StatusBadge status={r.status || "—"} /></span>
-            </SelectTrigger>
-            <SelectContent>{statuses.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        );
-      case "obs":
-        return <Input className="h-7 w-[140px] text-xs" value={r.obs} onChange={(e) => onPatch(r.id, { obs: e.target.value })} placeholder="—" />;
-      case "liberacao":
-        return <Input className="h-7 w-[110px] text-xs" value={r.liberacao} onChange={(e) => onPatch(r.id, { liberacao: e.target.value })} placeholder="—" />;
-      case "dataBaseLiberacao":
-        return <Input type="date" noUppercase className="h-7 w-[120px] text-xs" value={r.dataBaseLiberacao} onChange={(e) => onPatch(r.id, { dataBaseLiberacao: e.target.value })} />;
-      case "diasPrazo": {
-        const d = diasPrazo(r.dataBaseLiberacao);
+      case "statusLiberacao": return <span className="text-xs">{(r.statusLiberacao || "—").toUpperCase()}</span>;
+      case "gerente": return <span className="text-xs">{(r.gerente || "—").toUpperCase()}</span>;
+      case "status": return <StatusBadge status={r.status || "—"} />;
+      case "obs": return <span className="text-xs text-muted-foreground">{r.obs || "—"}</span>;
+      case "liberacao": return <span className="text-xs">{r.liberacao || "—"}</span>;
+      case "previsao": {
+        const d = diasRest(r.previsao);
         if (d === null) return <span className="text-muted-foreground">—</span>;
-        const cls = d < 0 ? "text-destructive" : d <= 5 ? "text-warning" : d <= 15 ? "text-info" : "text-success";
+        // Faixas: ≤7 destructive, ≤10 warning, ≤15 info, ≤30 success, ≤60 muted-foreground, restante muted
+        const cls =
+          d <= 7 ? "text-destructive" :
+          d <= 10 ? "text-warning" :
+          d <= 15 ? "text-info" :
+          d <= 30 ? "text-success" :
+          "text-muted-foreground";
         return <span className={`font-semibold ${cls}`}>{d}d</span>;
       }
+      case "acoes":
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Editar"
+            onClick={() => onEdit?.(r.id)}
+            disabled={!onEdit}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+        );
     }
   };
 
   return (
     <div className="overflow-x-auto">
       <Table className="text-xs [&_th]:h-8 [&_th]:px-2 [&_td]:py-1 [&_td]:px-2">
-
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {order.map((key) => {
@@ -209,4 +200,15 @@ export function OperacionalFinTable({
       </Table>
     </div>
   );
+}
+
+/** Faixas de previsão disponíveis (em dias). Use para popular selects nos diálogos de edição. */
+export const PREVISAO_FAIXAS = [7, 10, 15, 30, 60, 90] as const;
+
+/** Converte uma faixa em dias para uma data ISO (yyyy-mm-dd) somando à data base (default: hoje). */
+export function previsaoFromDias(dias: number, base: Date = new Date()): string {
+  const d = new Date(base);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().slice(0, 10);
 }

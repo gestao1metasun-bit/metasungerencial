@@ -31,7 +31,7 @@ import { useFinPendencias } from "@/lib/fin-pendencias";
 import { useContratos, updateContratoAudit } from "@/lib/contratos-store";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { OperacionalFinTable, type OpRow } from "@/components/app/OperacionalFinTable";
+import { OperacionalFinTable, type OpRow, PREVISAO_FAIXAS, previsaoFromDias } from "@/components/app/OperacionalFinTable";
 
 export const Route = createFileRoute("/financiamentos")({
   head: () => ({ meta: [{ title: "Financiamentos — Meta Sun Gerencial" }] }),
@@ -719,7 +719,8 @@ type FinAvulso = {
   obs?: string;
   liberacao?: string;
   statusLiberacao?: string;
-  dataBaseLiberacao?: string;
+  /** Data limite (ISO) da previsão de liberação. */
+  previsao?: string;
 };
 
 function SemContratoTab() {
@@ -765,23 +766,10 @@ function SemContratoTab() {
     status: f.statusOp,
     obs: f.obs || "",
     liberacao: f.liberacao || "",
-    dataBaseLiberacao: f.dataBaseLiberacao || "",
+    previsao: f.previsao || "",
   }));
 
-  const handlePatch = (id: string, patch: Partial<OpRow>) => {
-    setLista((prev) => prev.map((f) => {
-      if (f.id !== id) return f;
-      return {
-        ...f,
-        statusLiberacao: patch.statusLiberacao ?? f.statusLiberacao,
-        gerente: patch.gerente ?? f.gerente,
-        statusOp: patch.status ?? f.statusOp,
-        obs: patch.obs ?? f.obs,
-        liberacao: patch.liberacao ?? f.liberacao,
-        dataBaseLiberacao: patch.dataBaseLiberacao ?? f.dataBaseLiberacao,
-      };
-    }));
-  };
+  const [editingAvulso, setEditingAvulso] = useState<FinAvulso | null>(null);
 
   return (
     <Card>
@@ -802,11 +790,25 @@ function SemContratoTab() {
       <OperacionalFinTable
         storageKey="ms.fin.cols.sem.v1"
         rows={rows}
-        onPatch={handlePatch}
-        gerentes={gerentes.map((g) => g.nome)}
-        statuses={STATUS_LIST}
-        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+        onEdit={(id) => {
+          const f = lista.find((x) => x.id === id);
+          if (f) setEditingAvulso(f);
+        }}
       />
+
+      {editingAvulso && (
+        <EditFinAvulsoDialog
+          fin={editingAvulso}
+          bancos={bancos.map((b) => b.nome)}
+          gerentes={gerentes.map((g) => g.nome)}
+          onClose={() => setEditingAvulso(null)}
+          onSave={(patch) => {
+            setLista((prev) => prev.map((x) => x.id === editingAvulso.id ? { ...x, ...patch } : x));
+            setEditingAvulso(null);
+            toast.success("Operação atualizada");
+          }}
+        />
+      )}
 
       {/* Novo financiamento avulso */}
       <Dialog open={openNovo} onOpenChange={(v) => { setOpenNovo(v); if (!v) reset(); }}>
@@ -1130,19 +1132,8 @@ function ContratosComercialFin() {
     status: c.financiamentoStatus || "Em análise",
     obs: c.financiamentoObs || "",
     liberacao: c.financiamentoLiberacao || "",
-    dataBaseLiberacao: c.financiamentoDataBaseLiberacao || "",
+    previsao: c.financiamentoDataBaseLiberacao || "",
   }));
-
-  const handlePatch = (id: string, patch: Partial<OpRow>) => {
-    const map: any = {};
-    if ("statusLiberacao" in patch) map.financiamentoStatusLiberacao = patch.statusLiberacao;
-    if ("gerente" in patch) map.financiamentoGerente = patch.gerente;
-    if ("status" in patch) map.financiamentoStatus = patch.status;
-    if ("obs" in patch) map.financiamentoObs = patch.obs;
-    if ("liberacao" in patch) map.financiamentoLiberacao = patch.liberacao;
-    if ("dataBaseLiberacao" in patch) map.financiamentoDataBaseLiberacao = patch.dataBaseLiberacao;
-    updateContratoAudit(id, map);
-  };
 
   return (
     <Card className="p-5">
@@ -1151,15 +1142,14 @@ function ContratosComercialFin() {
           <div className="text-sm font-semibold">Contratos enviados do Comercial</div>
           <div className="text-xs text-muted-foreground">{lista.length} contrato(s) · {fmtBRL(total)} financiado(s) · arraste o cabeçalho para reordenar colunas</div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => editing /* noop */} className="hidden">edit</Button>
       </div>
       <OperacionalFinTable
         storageKey="ms.fin.cols.carteira.v1"
         rows={rows}
-        onPatch={handlePatch}
-        gerentes={gerentes.map((g) => g.nome)}
-        statuses={STATUS_LIST}
-        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+        onEdit={(id) => {
+          const c = lista.find((x) => x.id === id);
+          if (c) setEditing(c);
+        }}
       />
 
       {editing && (
@@ -1194,8 +1184,17 @@ function EditContratoFinDialog({
     financiamentoStatus: contrato.financiamentoStatus ?? "Em análise",
     financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
     financiamentoObs: contrato.financiamentoObs ?? "",
+    financiamentoDataBaseLiberacao: contrato.financiamentoDataBaseLiberacao ?? "",
     obs: contrato.obs ?? "",
   });
+  const previsaoDias = (() => {
+    if (!form.financiamentoDataBaseLiberacao) return "";
+    const d = new Date(form.financiamentoDataBaseLiberacao + "T00:00:00").getTime();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((d - today.getTime()) / 86400000);
+    const found = PREVISAO_FAIXAS.find((f) => f === dias);
+    return found ? String(found) : "";
+  })();
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl">
@@ -1232,11 +1231,108 @@ function EditContratoFinDialog({
           <div><Label>Valor financiado (R$)</Label>
             <Input type="number" value={form.financiamentoValor} onChange={(e) => setForm({ ...form, financiamentoValor: Number(e.target.value) })} />
           </div>
+          <div><Label>Previsão de liberação</Label>
+            <Select
+              value={previsaoDias}
+              onValueChange={(v) => setForm({ ...form, financiamentoDataBaseLiberacao: previsaoFromDias(Number(v)) })}
+            >
+              <SelectTrigger><SelectValue placeholder={form.financiamentoDataBaseLiberacao ? `Atual: ${form.financiamentoDataBaseLiberacao}` : "Selecione a faixa"} /></SelectTrigger>
+              <SelectContent>
+                {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="col-span-2"><Label>Observações do financiamento</Label>
             <Textarea value={form.financiamentoObs} onChange={(e) => setForm({ ...form, financiamentoObs: e.target.value })} />
           </div>
           <div className="col-span-2"><Label>Observações gerais</Label>
             <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditFinAvulsoDialog({
+  fin, bancos, gerentes, onClose, onSave,
+}: {
+  fin: FinAvulso;
+  bancos: string[];
+  gerentes: string[];
+  onClose: () => void;
+  onSave: (patch: Partial<FinAvulso>) => void;
+}) {
+  const [form, setForm] = useState<FinAvulso>({ ...fin });
+  const previsaoDias = (() => {
+    if (!form.previsao) return "";
+    const d = new Date(form.previsao + "T00:00:00").getTime();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((d - today.getTime()) / 86400000);
+    const found = PREVISAO_FAIXAS.find((f) => f === dias);
+    return found ? String(found) : "";
+  })();
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Editar operação — {fin.id}</DialogTitle>
+          <DialogDescription>{fin.cliente}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2"><Label>Cliente</Label>
+            <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} />
+          </div>
+          <div><Label>CPF/CNPJ</Label>
+            <Input noUppercase value={form.doc} onChange={(e) => setForm({ ...form, doc: e.target.value })} />
+          </div>
+          <div><Label>Banco</Label>
+            <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b} value={b}>{b.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Gerente</Label>
+            <Select value={form.gerente} onValueChange={(v) => setForm({ ...form, gerente: v })}>
+              <SelectTrigger><SelectValue placeholder="SELECIONE" /></SelectTrigger>
+              <SelectContent>{gerentes.map((g) => <SelectItem key={g} value={g}>{g.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Valor financiado (R$)</Label>
+            <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+          </div>
+          <div><Label>Status</Label>
+            <Select value={form.statusOp} onValueChange={(v) => setForm({ ...form, statusOp: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Status liberação</Label>
+            <Select value={form.statusLiberacao || ""} onValueChange={(v) => setForm({ ...form, statusLiberacao: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{LIBERACAO_STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Liberação</Label>
+            <Input value={form.liberacao || ""} onChange={(e) => setForm({ ...form, liberacao: e.target.value })} />
+          </div>
+          <div><Label>Previsão de liberação</Label>
+            <Select
+              value={previsaoDias}
+              onValueChange={(v) => setForm({ ...form, previsao: previsaoFromDias(Number(v)) })}
+            >
+              <SelectTrigger><SelectValue placeholder={form.previsao ? `Atual: ${form.previsao}` : "Selecione a faixa"} /></SelectTrigger>
+              <SelectContent>
+                {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Observações</Label>
+            <Textarea value={form.obs || ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} rows={3} />
           </div>
         </div>
         <DialogFooter>

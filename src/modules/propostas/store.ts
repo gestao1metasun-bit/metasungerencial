@@ -353,6 +353,8 @@ const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTR
 const paramsS  = makeStore<ParametroFV>("ms.fv.params.v1", () => SEED_PARAMETROS);
 const custosS  = makeStore<CustoFV>("ms.fv.custos.v1", () => SEED_CUSTOS);
 const propsS   = makeStore<PropostaFV>("ms.fv.propostas.v1", () => []);
+const tarifasS = makeStore<TarifaEnergia>("ms.fv.tarifas.v1", () => SEED_TARIFAS);
+const histIrrS = makeStore<HistoricoIrradiacao>("ms.fv.hist_irradiacao.v1", () => []);
 
 export const useCidadesFV       = cidadesS.useList;
 export const useConcessionarias = concsS.useList;
@@ -362,6 +364,8 @@ export const useDistribuidoresFV= distsS.useList;
 export const useParametrosFV    = paramsS.useList;
 export const useCustosFV        = custosS.useList;
 export const usePropostas       = propsS.useList;
+export const useTarifasEnergia  = tarifasS.useList;
+export const useHistoricoIrradiacao = histIrrS.useList;
 
 /* CRUD genérico ----------------------------------------------------------- */
 

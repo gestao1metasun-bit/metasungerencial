@@ -1321,6 +1321,19 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   });
   const [cepLoading, setCepLoading] = useState(false);
 
+  // Recálculo automático: parâmetro (R$/kWp) e comissão sempre que valor/módulos/potência/kWp mudam.
+  const _modulos = Number(f.modulos) || 0;
+  const _potW = Number(f.potencia) || 0;
+  const _kwpCalc = (_modulos * _potW) / 1000;
+  const _kwp = _kwpCalc > 0 ? Number(_kwpCalc.toFixed(2)) : (Number(f.kwp) || 0);
+  const _valor = Number(f.valor) || 0;
+  const _parametroNum = _kwp > 0 ? _valor / _kwp : 0;
+  const _parametroFmt = _parametroNum > 0 ? String(Math.round(_parametroNum)) : "";
+  const _comissaoCalc = comissaoFromParametro(_parametroNum);
+  const _comissaoPct = _comissaoCalc.pct ?? 0;
+  const _comissaoValor = _comissaoCalc.pct != null ? (_valor * _comissaoCalc.pct) / 100 : 0;
+  const _valorPorKwp = _kwp > 0 ? _valor / _kwp : 0;
+
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
   const lookupCEP = async (cep: string) => {
     setCliField("cep", cep);
@@ -1340,12 +1353,15 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
     const aprovouAgora = f.status === "Aprovado" && contrato.status !== "Aprovado";
 
     updateContratoAudit(contrato.id, {
-      vendedor: f.vendedor, valor: f.valor, kwp: f.kwp,
+      vendedor: f.vendedor, valor: _valor, kwp: _kwp,
       status: f.status, data: f.data, dataCadastro: f.dataCadastro ?? f.data,
       dataAssinatura: f.dataAssinatura, banco: f.banco, obs: f.obs,
-      modulos: f.modulos, potencia: f.potencia,
+      modulos: _modulos, potencia: _potW,
       inv1: f.inv1, inv2: f.inv2, inv3: f.inv3,
       inv4: f.inv4, inv5: f.inv5, inv6: f.inv6,
+      parametro: _parametroFmt,
+      comissaoPct: _comissaoPct,
+      comissaoValor: _comissaoValor,
       clienteFull: cli,
     });
 
@@ -1439,7 +1455,20 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 }} />
               </div>
               <div className="space-y-1.5"><Label>kWp total (auto)</Label>
-                <Input type="number" step="0.01" value={f.kwp} readOnly className="bg-muted font-mono" />
+                <Input type="number" step="0.01" value={_kwp} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Parâmetro (R$/kWp)</Label>
+                <Input value={_parametroFmt || "—"} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Valor por kWp</Label>
+                <Input value={_valorPorKwp > 0 ? fmtBRL(_valorPorKwp) : "—"} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Comissão</Label>
+                <Input
+                  value={_comissaoCalc.pct != null ? `${_comissaoCalc.pct.toFixed(2)}% · ${fmtBRL(_comissaoValor)}` : (_comissaoCalc.aprovacao ? "Necessita aprovação" : "—")}
+                  readOnly
+                  className="bg-muted font-semibold text-primary"
+                />
               </div>
               {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, i) => (
                 <div key={k} className="space-y-1.5"><Label>Inversor {i + 1}</Label>

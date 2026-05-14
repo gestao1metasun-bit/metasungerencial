@@ -1156,6 +1156,55 @@ function CadastrarContratoTab({
                   <div className="text-[11px] text-muted-foreground">A composição financeira será definida em <b>Pedidos de venda</b> após a aprovação do contrato.</div>
                 </div>
 
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Financiamento bancário</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Possui financiamento?</Label>
+                      <Select value={form.possuiFinanciamento} onValueChange={(v) => setForm({ ...form, possuiFinanciamento: v as "Sim" | "Não" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Não">Não</SelectItem>
+                          <SelectItem value="Sim">Sim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {form.possuiFinanciamento === "Sim" && (
+                      <>
+                        <div className="space-y-1.5"><Label>Banco / Linha</Label>
+                          <Select value={form.finBanco} onValueChange={(v) => setForm({ ...form, finBanco: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
+                          <Input type="number" value={form.finValor} onChange={(e) => setForm({ ...form, finValor: e.target.value })} placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5"><Label>Gerente responsável</Label>
+                          <Input value={form.finGerente} onChange={(e) => setForm({ ...form, finGerente: e.target.value })} placeholder="Nome do gerente" />
+                        </div>
+                        <div className="space-y-1.5"><Label>Status inicial</Label>
+                          <Select value={form.finStatus} onValueChange={(v) => setForm({ ...form, finStatus: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
+                          <Textarea rows={2} value={form.finObs} onChange={(e) => setForm({ ...form, finObs: e.target.value })} />
+                        </div>
+                        <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                          Ao salvar, o contrato será enviado automaticamente ao módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
                   <b className="text-foreground">Próximos passos:</b> ao salvar o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. A composição financeira (forma de pagamento, parcelas) é configurada depois em <b>Pedidos de venda</b>.
                 </div>

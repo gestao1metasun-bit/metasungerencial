@@ -1440,7 +1440,21 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       const projs = contrato.projetos ?? [];
       projs.forEach((p) => {
         if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+    });
+
+    // Se acabou de marcar como financiado, envia para Financiamentos > Pendências
+    if (f.possuiFinanciamento && !contrato.possuiFinanciamento) {
+      addPendencia({
+        id: contrato.id,
+        cliente: cli.nome || contrato.cliente,
+        vendedor: f.vendedor || contrato.vendedor,
+        valor: _valor,
+        kwp: _kwp,
+        dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
+        status: "Pendente",
       });
+      toast.success(`Contrato ${contrato.id} enviado para Financiamentos > Pendências`);
+    }
       toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);

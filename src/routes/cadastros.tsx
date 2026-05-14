@@ -157,15 +157,11 @@ function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initia
 }
 
 /* ----------------- Gerentes ----------------- */
-function GerentesCrud({ items, setItems, bancos }: { items: Gerente[]; setItems: (v: Gerente[]) => void; bancos: Banco[] }) {
+function GerentesCrud({ items, bancos }: { items: Gerente[]; bancos: Banco[] }) {
   const [editing, setEditing] = useState<Gerente | null>(null);
   const [creating, setCreating] = useState(false);
-  const save = (g: Gerente) => {
-    if (items.find((x) => x.id === g.id)) setItems(items.map((x) => (x.id === g.id ? g : x)));
-    else setItems([...items, g]);
-    toast.success("Gerente salvo");
-  };
-  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Gerente removido"); };
+  const save = (g: Gerente) => { upsertGerente(g); toast.success("Gerente salvo"); };
+  const remove = (id: string) => { removeGerente(id); toast.success("Gerente removido"); };
 
   return (
     <CrudCard title="Gerentes bancários" onNew={() => setCreating(true)}>

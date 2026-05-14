@@ -2,16 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   FileText, CheckCircle2, Clock, XCircle, DollarSign, Banknote,
-  HardHat, TrendingUp, ArrowDownCircle, ArrowUpCircle, Wallet, Activity,
+  HardHat, TrendingUp, Activity,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area, AreaChart,
+  PieChart, Pie, Cell, Legend, ComposedChart, Area, AreaChart,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -19,7 +20,9 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { contratos, evolucaoMensal, receitaDespesa, financiamentos, obras, vendedores, fmtBRL } from "@/lib/mock-data";
+import { contratos, evolucaoMensal, financiamentos, obras, vendedores, propostas, fmtBRL } from "@/lib/mock-data";
+import { useContratos } from "@/lib/contratos-store";
+import { IndicadoresTab } from "@/routes/comercial";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Geral — Meta Sun Gerencial" }] }),

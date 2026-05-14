@@ -354,6 +354,7 @@ function ObrasAtivasTab({
       updateProjeto(link.contratoId, id, {
         modulos: target.modulos,
         kwp: target.potencia,
+        potenciaModuloW: target.painelW,
         inversor: target.inversor,
         inv2: target.inv2,
         inv3: target.inv3,

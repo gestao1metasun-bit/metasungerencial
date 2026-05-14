@@ -733,12 +733,10 @@ function recalcPrevisto(inicio: string, equipe: string, modulos: number): string
 }
 
 /**
- * Recalcula a agenda da equipe:
- * - Obras EXECUTANDO: podem ocorrer simultaneamente, cada uma mantém seu próprio início
- *   (apenas a previsão de finalização é recalculada a partir do início + dias).
- * - Obras AGUARDANDO: a primeira começa em (maior previsto entre EXECUTANDO da equipe) + 1 dia;
- *   as demais encadeiam normalmente (previsto da anterior + 1).
- *   Se não houver EXECUTANDO, a primeira mantém seu início atual.
+ * Recalcula a agenda da equipe em sequência:
+ * - EXECUTANDO: a primeira mantém seu início; as demais começam em (previsto da anterior + 1).
+ * - AGUARDANDO: continua a fila a partir do último previsto de EXECUTANDO (+1),
+ *   ou mantém o próprio início da primeira se não houver EXECUTANDO.
  */
 function chainSchedule(obras: Obra[], equipe: string, _status?: string): Obra[] {
   if (!equipe) return obras;
@@ -746,30 +744,27 @@ function chainSchedule(obras: Obra[], equipe: string, _status?: string): Obra[] 
   const queue = (st: string) =>
     obras.filter((o) => o.equipe === equipe && o.status === st).sort((a, b) => a.ordem - b.ordem);
 
-  const execList = queue("Executando instalação");
-  let maxExecPrev = "";
-  for (const cur of execList) {
-    const newPrev = recalcPrevisto(cur.inicio, cur.equipe, cur.modulos);
-    if (newPrev !== cur.previsto) patches.set(cur.id, { previsto: newPrev });
-    if (newPrev && (!maxExecPrev || newPrev > maxExecPrev)) maxExecPrev = newPrev;
-  }
+  const chain = (list: Obra[], startPrev: string): string => {
+    let prevPrev = startPrev;
+    for (let i = 0; i < list.length; i++) {
+      const cur = list[i];
+      let newInicio = cur.inicio;
+      if (i === 0) {
+        if (startPrev) newInicio = addDaysISO(startPrev, 1);
+      } else if (prevPrev) {
+        newInicio = addDaysISO(prevPrev, 1);
+      }
+      const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
+      if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
+        patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
+      }
+      prevPrev = newPrev;
+    }
+    return prevPrev;
+  };
 
-  const aguardList = queue("Aguardando instalação");
-  let prevPrev = maxExecPrev || "";
-  for (let i = 0; i < aguardList.length; i++) {
-    const cur = aguardList[i];
-    let newInicio = cur.inicio;
-    if (i === 0) {
-      if (maxExecPrev) newInicio = addDaysISO(maxExecPrev, 1);
-    } else if (prevPrev) {
-      newInicio = addDaysISO(prevPrev, 1);
-    }
-    const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
-    if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
-      patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
-    }
-    prevPrev = newPrev;
-  }
+  const lastExecPrev = chain(queue("Executando instalação"), "");
+  chain(queue("Aguardando instalação"), lastExecPrev);
 
   if (patches.size === 0) return obras;
   return obras.map((o) => patches.has(o.id) ? { ...o, ...patches.get(o.id)! } : o);

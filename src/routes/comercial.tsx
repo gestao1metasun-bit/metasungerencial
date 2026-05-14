@@ -969,7 +969,20 @@ function CadastrarContratoTab({
     }
     const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
-    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · configure a composição financeira em Pedidos de venda`);
+    if (novo.possuiFinanciamento) {
+      addPendencia({
+        id: novo.id,
+        cliente: novo.cliente,
+        vendedor: novo.vendedor,
+        valor: novo.valor,
+        kwp: novo.kwp,
+        dataCadastro: novo.dataCadastro || today,
+        status: "Pendente",
+      });
+      toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
+    } else {
+      toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+    }
   };
 
   return (

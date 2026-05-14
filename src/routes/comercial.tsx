@@ -1178,7 +1178,7 @@ function CadastrarContratoTab({
                     </div>
                     {form.possuiFinanciamento === "Sim" && (
                       <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
-                        Ao salvar, o contrato será enviado automaticamente para <b>Financiamentos &gt; Pendências</b>. O setor responsável definirá banco, gerente, valor, status e demais informações.
+                        Marcado como financiado. O contrato só será enviado para <b>Financiamentos &gt; Pendências</b> após a <b>aprovação</b>.
                       </div>
                     )}
                   </div>

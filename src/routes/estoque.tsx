@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { estoqueItens, movimentacoesEstoque, fmtBRL } from "@/lib/mock-data";
+import { estoqueItens, movimentacoesEstoque, fmtBRL, obras as obrasSeed } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),

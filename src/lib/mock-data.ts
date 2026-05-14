@@ -231,4 +231,4 @@ export function diasPrevistos(equipeNome: string, modulos: number): number {
 }
 
 export const fmtBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -1432,11 +1432,6 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       comissaoPct: _comissaoPct,
       comissaoValor: _comissaoValor,
       possuiFinanciamento: !!f.possuiFinanciamento,
-      financiamentoBanco: f.possuiFinanciamento ? f.financiamentoBanco : undefined,
-      financiamentoValor: f.possuiFinanciamento ? f.financiamentoValor : undefined,
-      financiamentoGerente: f.possuiFinanciamento ? f.financiamentoGerente : undefined,
-      financiamentoStatus: f.possuiFinanciamento ? f.financiamentoStatus : undefined,
-      financiamentoObs: f.possuiFinanciamento ? f.financiamentoObs : undefined,
       clienteFull: cli,
     });
 

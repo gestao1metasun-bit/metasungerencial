@@ -478,6 +478,8 @@ function EditObraDialog({
 
   const finalizing = f.status === "Finalizado";
   const isExecutando = f.status === "Executando instalação";
+  const isAguardando = f.status === "Aguardando instalação";
+  const equipeAllowed = isExecutando || isAguardando;
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
   const realDatesEditable = adminMode;

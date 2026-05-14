@@ -102,7 +102,6 @@ const volumeSeed: VolumeMes[] = [
 
 function ComercialPage() {
   const [tab, setTab] = useTabFromHash("/comercial");
-  const [tab, setTab] = useState("dashboard");
   const contratos = useContratos();
   const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
     const v = typeof next === "function" ? (next as any)(contratos) : next;

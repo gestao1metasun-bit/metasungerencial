@@ -31,6 +31,7 @@ function CadastrosPage() {
   const bancos = useBancos();
   const gerentes = useGerentes();
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
+  const consultores = useConsultores();
 
   return (
     <>

@@ -461,18 +461,26 @@ function EditObraDialog({
   const [form, setForm] = useState<Partial<Obra>>({});
   const [confirming, setConfirming] = useState(false);
   const [confirmRet, setConfirmRet] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
-    setTimeout(() => setForm({ ...obra }), 0);
+    setTimeout(() => { setForm({ ...obra }); setAdminMode(false); }, 0);
   }
   if (!obra) return null;
 
   const f = { ...obra, ...form };
+  const modulos = Number(f.modulos ?? 0);
+  const painelW = Number(f.painelW ?? PAINEL_W_DEFAULT);
+  const kwpAuto = calcKwp(modulos, painelW);
+  const previsaoInicio = f.inicio || "";
+  const previsaoFim = recalcPrevisto(previsaoInicio, f.equipe || "", modulos);
+
   const finalizing = f.status === "Finalizado";
   const isExecutando = f.status === "Executando instalação";
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
+  const realDatesEditable = adminMode;
   const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {
@@ -481,7 +489,7 @@ function EditObraDialog({
       return;
     }
     if (finalizing && !valid) {
-      toast.error("Preencha Início real e Fim real para finalizar");
+      toast.error("Preencha Início real e Fim real para finalizar (modo ADMIN MASTER)");
       return;
     }
     setConfirming(true);
@@ -489,13 +497,20 @@ function EditObraDialog({
 
   const confirm = () => {
     const patch: Partial<Obra> = {
-      modulos: f.modulos, potencia: f.potencia, inversor: f.inversor,
-      inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
+      modulos, painelW, potencia: kwpAuto,
+      inversor: f.inversor, inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
       equipe: f.equipe, inicio: f.inicio, status: f.status, obs: f.obs,
       inicioReal: f.inicioReal, fimReal: f.fimReal,
       finalizacao: finalizing ? (f.fimReal ?? null) : null,
-      previsto: recalcPrevisto(f.inicio || obra.inicio, f.equipe || obra.equipe, f.modulos ?? obra.modulos),
+      previsto: previsaoFim,
     };
+    // Alimenta histórico de produtividade quando há datas reais completas
+    if (f.inicioReal && f.fimReal && f.equipe && modulos > 0) {
+      const ini = new Date(f.inicioReal + "T00:00:00");
+      const fim = new Date(f.fimReal + "T00:00:00");
+      const dias = Math.max(1, Math.round((fim.getTime() - ini.getTime()) / 86400000) + 1);
+      registrarHistoricoExec(f.equipe, { fimReal: f.fimReal, modulos, dias });
+    }
     onSave(obra.id, patch);
     setConfirming(false);
     setForm({});
@@ -510,7 +525,20 @@ function EditObraDialog({
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
-          <div><Label>Potência (kWp)</Label><Input type="number" step="0.1" value={f.potencia ?? ""} onChange={(e) => setForm({ ...form, potencia: Number(e.target.value) })} /></div>
+          <div>
+            <Label>Potência do painel (W)</Label>
+            <Select value={String(painelW)} onValueChange={(v) => setForm({ ...form, painelW: Number(v) })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAINEIS_W_OPCOES.map((w) => <SelectItem key={w} value={String(w)}>{w}W</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="flex items-center gap-1">Potência (kWp) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
+            <Input type="number" value={kwpAuto} disabled readOnly className="bg-muted/40" />
+            <div className="mt-1 text-[10px] text-muted-foreground">{modulos} × {painelW}W ÷ 1000</div>
+          </div>
           <div><Label>Telhado</Label>
             <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -530,24 +558,58 @@ function EditObraDialog({
               Em projeto/aprovação: opcional · Aguardando: opcional · Executando: obrigatória · Finalizado: travada
             </div>
           </div>
-          <div><Label>Início (planejado)</Label><Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
           <div><Label>Status</Label>
             <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          {finalizing && (
-            <>
-              <div><Label className="text-success">Início real *</Label><Input type="date" value={f.inicioReal ?? ""} onChange={(e) => setForm({ ...form, inicioReal: e.target.value })} /></div>
-              <div><Label className="text-success">Fim real *</Label><Input type="date" value={f.fimReal ?? ""} onChange={(e) => setForm({ ...form, fimReal: e.target.value })} /></div>
-            </>
-          )}
+
+          {/* Previsões automáticas (cronograma) */}
+          <div>
+            <Label>Previsão de início <span className="text-[10px] text-muted-foreground">(cronograma)</span></Label>
+            <Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} />
+          </div>
+          <div>
+            <Label className="flex items-center gap-1">Previsão de finalização <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
+            <Input type="date" value={previsaoFim} disabled readOnly className="bg-muted/40" />
+            <div className="mt-1 text-[10px] text-muted-foreground">Calculada por equipe + faixa de módulos</div>
+          </div>
+          <div className="hidden md:block" />
+
+          {/* Datas reais — somente ADMIN MASTER */}
+          <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
+              <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+                <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
+                Modo ADMIN MASTER
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-success">Início real {finalizing && <span className="text-destructive">*</span>}</Label>
+                <Input type="date" value={f.inicioReal ?? ""} disabled={!realDatesEditable}
+                  onChange={(e) => setForm({ ...form, inicioReal: e.target.value })}
+                  className={!realDatesEditable ? "bg-muted/40" : ""} />
+              </div>
+              <div>
+                <Label className="text-success">Finalização real {finalizing && <span className="text-destructive">*</span>}</Label>
+                <Input type="date" value={f.fimReal ?? ""} disabled={!realDatesEditable}
+                  onChange={(e) => setForm({ ...form, fimReal: e.target.value })}
+                  className={!realDatesEditable ? "bg-muted/40" : ""} />
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] text-muted-foreground">
+              Editáveis somente pelo ADMIN MASTER. Alimentam produtividade, histórico, KPIs e cronograma.
+            </div>
+          </div>
+
           <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
         </div>
         {finalizing && (
           <div className="rounded-md border border-success/30 bg-success/10 p-3 text-xs">
-            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para a aba <strong>Finalizados</strong>. Início real e Fim real são obrigatórios.
+            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para <strong>Finalizados</strong>. Início real e Finalização real são obrigatórios (ative o modo ADMIN MASTER para preenchê-los).
           </div>
         )}
         <DialogFooter className="flex-wrap gap-2">

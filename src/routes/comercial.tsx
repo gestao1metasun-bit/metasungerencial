@@ -825,6 +825,12 @@ function CadastrarContratoTab({
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
     pagamento: "", banco: "", obs: "",
+    possuiFinanciamento: "Não" as "Sim" | "Não",
+    finBanco: "BASA" as string,
+    finValor: "",
+    finGerente: "",
+    finStatus: "Em análise",
+    finObs: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [clienteId, setClienteId] = useState<string>("");

@@ -1,11 +1,12 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package,
-  Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw,
+  Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
+import { ROUTE_TABS } from "@/lib/route-tabs";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },

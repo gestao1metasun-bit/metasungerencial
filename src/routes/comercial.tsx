@@ -363,7 +363,6 @@ function DetailContratosModal({
             <TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
             <TableHead className="text-right">Valor</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>Banco</TableHead><TableHead>Status</TableHead><TableHead>Data</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {contratos.map((c) => (
@@ -376,20 +375,9 @@ function DetailContratosModal({
                 <TableCell className="text-muted-foreground">{c.banco}</TableCell>
                 <TableCell><StatusBadge status={c.status} /></TableCell>
                 <TableCell className="text-muted-foreground">{c.data}</TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  <Select value={c.status} onValueChange={(v) => onUpdateStatus(c.id, v)}>
-                    <SelectTrigger className="h-8 w-36 inline-flex"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Gerado">Gerado</SelectItem>
-                      <SelectItem value="Assinado">Assinado</SelectItem>
-                      <SelectItem value="Pendente">Pendente</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
               </TableRow>
             ))}
-            {total===0 && <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhum contrato</TableCell></TableRow>}
+            {total===0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Nenhum contrato</TableCell></TableRow>}
           </TableBody>
         </Table>
       </DialogContent>

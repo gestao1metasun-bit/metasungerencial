@@ -29,29 +29,17 @@ export function AppLayout() {
     const m = /(?:^|&)tab=([^&]+)/.exec(clean);
     return m ? decodeURIComponent(m[1]) : "";
   })();
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const navRef = useRef<HTMLElement | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | null>(() => {
+    const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
+    return match?.to ?? null;
+  });
 
-  // Fecha o flyout ao clicar fora ou pressionar Esc
+  // Mantém o menu da rota atual aberto ao navegar
   useEffect(() => {
-    if (!openMenu) return;
-    const onDown = (e: MouseEvent) => {
-      if (!navRef.current) return;
-      const target = e.target as Node;
-      // permite cliques dentro do flyout (que está dentro de navRef)
-      if (!navRef.current.contains(target)) setOpenMenu(null);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenMenu(null); };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [openMenu]);
+    const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
+    if (match && ROUTE_TABS[match.to]) setOpenMenu(match.to);
+  }, [path]);
 
-  // Fecha o flyout sempre que a rota ou o hash mudar (após selecionar uma aba)
-  useEffect(() => { setOpenMenu(null); }, [path, hash]);
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -64,7 +52,7 @@ export function AppLayout() {
           <img src={logoMetaSun} alt="META SUN — Energia Solar" className="h-10 w-auto object-contain" />
         </div>
 
-        <nav ref={navRef} className="flex-1 overflow-visible px-3 py-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Menu
           </div>
@@ -75,56 +63,45 @@ export function AppLayout() {
               const sub = ROUTE_TABS[item.to];
               const isOpen = openMenu === item.to;
               return (
-                <li
-                  key={item.to}
-                  className="relative"
-                  onMouseEnter={() => sub && setOpenMenu(item.to)}
-                  onMouseLeave={() => sub && setOpenMenu((cur) => (cur === item.to ? null : cur))}
-                >
-                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition hover:bg-[oklch(0.22_0.12_262)] hover:text-primary-foreground ${isOpen ? "bg-[oklch(0.22_0.12_262)] text-primary-foreground" : "text-sidebar-foreground"}`}>
-                    {sub ? (
-                      <Link
-                        to={item.to}
-                        onClick={() => setOpenMenu(null)}
-                        className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0"
+                <li key={item.to}>
+                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition hover:bg-[oklch(0.22_0.12_262)] hover:text-primary-foreground ${active ? "bg-[oklch(0.22_0.12_262)] text-primary-foreground" : "text-sidebar-foreground"}`}>
+                    <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
+                      <Icon className={`h-4 w-4 group-hover:text-primary-foreground ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                    </Link>
+                    {sub && (
+                      <button
+                        type="button"
+                        aria-label={isOpen ? "Recolher" : "Expandir"}
+                        onClick={() => setOpenMenu((cur) => (cur === item.to ? null : item.to))}
+                        className="flex h-7 w-7 items-center justify-center rounded hover:bg-black/10"
                       >
-                        <Icon className={`h-4 w-4 group-hover:text-primary-foreground ${isOpen ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                        <span className="flex-1 truncate">{item.label}</span>
-                        <ChevronRight className={`h-3.5 w-3.5 transition-transform group-hover:text-primary-foreground ${isOpen ? "rotate-90 text-primary-foreground" : "text-muted-foreground"}`} />
-                      </Link>
-                    ) : (
-                      <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
-                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
-                        <span className="flex-1 truncate">{item.label}</span>
-                      </Link>
+                        <ChevronRight className={`h-3.5 w-3.5 transition-transform group-hover:text-primary-foreground ${isOpen ? "rotate-90" : ""} ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                      </button>
                     )}
                   </div>
 
-                  {/* Flyout lateral (abre para a direita ao passar o mouse) */}
                   {sub && isOpen && (
-                    <div className="absolute left-full top-0 z-50 ml-0 w-56 rounded-r-md border border-sidebar-border bg-sidebar text-sidebar-foreground p-1 shadow-[var(--shadow-elegant)]">
-                      <ul>
-                        {sub.tabs.map((t) => {
-                          const tabActive = active && currentTab === t.value;
-                          return (
-                            <li key={t.value}>
-                              <Link
-                                to={item.to}
-                                hash={`tab=${t.value}`}
-                                onClick={() => setOpenMenu(null)}
-                                className={`block px-4 py-2 text-sm transition ${
-                                  tabActive
-                                    ? "bg-primary text-primary-foreground font-medium"
-                                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                                }`}
-                              >
-                                {t.label}
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
+                    <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
+                      {sub.tabs.map((t) => {
+                        const tabActive = active && currentTab === t.value;
+                        return (
+                          <li key={t.value}>
+                            <Link
+                              to={item.to}
+                              hash={`tab=${t.value}`}
+                              className={`block rounded-md px-3 py-1.5 text-sm transition ${
+                                tabActive
+                                  ? "bg-primary text-primary-foreground font-medium"
+                                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                              }`}
+                            >
+                              {t.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </li>
               );

@@ -596,6 +596,7 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 function EditOpDialog({
   op, onClose, onSave,
 }: { op: FinOp | null; onClose: () => void; onSave: (patch: Partial<FinOp>) => void }) {
+  const bancos = useBancosAtivos();
   const [form, setForm] = useState<Partial<FinOp>>({});
   useEffect(() => { setForm(op ?? {}); }, [op]);
   if (!op) return null;

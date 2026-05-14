@@ -424,6 +424,7 @@ function PropostaSheet({
               <Field label="Telefone"><Input value={p.clienteTelefone ?? ""} onChange={(e) => update("clienteTelefone", e.target.value)} /></Field>
               <Field label="E-mail"><Input type="email" value={p.clienteEmail ?? ""} onChange={(e) => update("clienteEmail", e.target.value)} /></Field>
               <Field label="Endereço"><Input value={p.clienteEndereco ?? ""} onChange={(e) => update("clienteEndereco", e.target.value)} /></Field>
+              <Field label="Consultor de venda"><Input value={p.consultor ?? ""} onChange={(e) => update("consultor", e.target.value.toUpperCase())} /></Field>
             </div>
           </Bloco>
 

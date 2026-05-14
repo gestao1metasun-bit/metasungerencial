@@ -1091,7 +1091,7 @@ function ContratosComercialFin() {
   if (lista.length === 0) return null;
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
 
-  const rows: import("@/components/app/OperacionalFinTable").OpRow[] = lista.map((c) => ({
+  const rows: OpRow[] = lista.map((c) => ({
     id: c.id,
     ordem: c.id,
     contratante: c.cliente,
@@ -1109,7 +1109,7 @@ function ContratosComercialFin() {
     dataBaseLiberacao: c.financiamentoDataBaseLiberacao || "",
   }));
 
-  const handlePatch = (id: string, patch: Partial<import("@/components/app/OperacionalFinTable").OpRow>) => {
+  const handlePatch = (id: string, patch: Partial<OpRow>) => {
     const map: any = {};
     if ("statusLiberacao" in patch) map.financiamentoStatusLiberacao = patch.statusLiberacao;
     if ("gerente" in patch) map.financiamentoGerente = patch.gerente;
@@ -1129,7 +1129,7 @@ function ContratosComercialFin() {
         </div>
         <Button variant="outline" size="sm" onClick={() => editing /* noop */} className="hidden">edit</Button>
       </div>
-      <OperacionalFinTableLazy
+      <OperacionalFinTable
         storageKey="ms.fin.cols.carteira.v1"
         rows={rows}
         onPatch={handlePatch}

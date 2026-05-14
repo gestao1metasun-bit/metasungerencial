@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search,
-  Boxes, TrendingDown, RefreshCw,
+  Boxes, TrendingDown, RefreshCw, Truck, ChevronDown, ChevronRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

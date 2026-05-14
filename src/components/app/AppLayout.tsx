@@ -22,6 +22,13 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const hash = useRouterState({ select: (s) => s.location.hash });
+  const currentTab = (() => {
+    const clean = hash?.startsWith("#") ? hash.slice(1) : hash ?? "";
+    const m = /(?:^|&)tab=([^&]+)/.exec(clean);
+    return m ? decodeURIComponent(m[1]) : "";
+  })();
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();

@@ -131,6 +131,7 @@ export type PropostaFV = {
   clienteTelefone?: string;
   clienteEmail?: string;
   clienteEndereco?: string;
+  consultor?: string;
 
   // 2. Localização
   cidadeId?: string;

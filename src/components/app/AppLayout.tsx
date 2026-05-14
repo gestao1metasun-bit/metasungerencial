@@ -1,8 +1,9 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package,
-  Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
+  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
 } from "lucide-react";
+import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

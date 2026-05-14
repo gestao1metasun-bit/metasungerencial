@@ -42,6 +42,7 @@ import {
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
 } from "@/modules/propostas/store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
+import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
 
 import { PropostaList, statusVariant } from "./components/PropostaList";

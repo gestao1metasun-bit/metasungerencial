@@ -42,6 +42,7 @@ import {
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
 } from "@/modules/propostas/store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
+import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
 
 import { PropostaList, statusVariant } from "./components/PropostaList";
@@ -173,22 +174,29 @@ function LeadModal({
   onCancel: () => void;
   onContinuar: (p: PropostaFV) => void;
 }) {
+  const consultores = useConsultoresAtivos();
   const [nome, setNome] = useState(proposta.clienteNome ?? "");
-  const [telefone, setTelefone] = useState(proposta.clienteTelefone ?? "");
+  const [telefone, setTelefone] = useState(formatTelefoneBR(proposta.clienteTelefone ?? ""));
   const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
+  const [novoOpen, setNovoOpen] = useState(false);
 
   const upper = (v: string) => v.toUpperCase();
 
   function continuar() {
     if (!nome.trim() || !telefone.trim() || !consultor.trim()) {
-      toast.error("Preencha Nome, Telefone e Consultor.");
+      toast.error("Preencha Nome, Telefone e selecione um Consultor.");
+      return;
+    }
+    const tel = telefone.replace(/\D/g, "");
+    if (tel.length < 10 || tel.length > 11) {
+      toast.error("Telefone inválido. Use DDD + número (10 ou 11 dígitos).");
       return;
     }
     onContinuar({
       ...proposta,
       clienteNome: upper(nome.trim()),
-      clienteTelefone: telefone.trim(),
+      clienteTelefone: formatTelefoneBR(telefone),
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
       criadoPor: upper(consultor.trim()),
@@ -208,11 +216,34 @@ function LeadModal({
           </div>
           <div>
             <Label className="text-xs">Telefone *</Label>
-            <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+            <Input
+              value={telefone}
+              onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))}
+              placeholder="(00) 9 0000-0000"
+              inputMode="numeric"
+              maxLength={20}
+            />
           </div>
           <div>
             <Label className="text-xs">Consultor de venda *</Label>
-            <Input value={consultor} onChange={(e) => setConsultor(upper(e.target.value))} placeholder="NOME DO CONSULTOR" />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select value={consultor} onValueChange={setConsultor}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
+                  <SelectContent>
+                    {consultores.length === 0 && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum consultor cadastrado.</div>
+                    )}
+                    {consultores.map((c) => (
+                      <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Cadastrar
+              </Button>
+            </div>
           </div>
           <div>
             <Label className="text-xs">Endereço (opcional)</Label>
@@ -222,6 +253,62 @@ function LeadModal({
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>Voltar</Button>
           <Button onClick={continuar}>Continuar</Button>
+        </DialogFooter>
+      </DialogContent>
+
+      <ConsultorRapidoModal
+        open={novoOpen}
+        onClose={() => setNovoOpen(false)}
+        onCreated={(c: { nome: string }) => { setConsultor(c.nome); setNovoOpen(false); toast.success("Consultor cadastrado."); }}
+      />
+    </Dialog>
+  );
+}
+
+function ConsultorRapidoModal({
+  open, onClose, onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (c: { nome: string }) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
+
+  function salvar() {
+    const n = nome.trim().toUpperCase();
+    if (!n) { toast.error("Informe o nome do consultor."); return; }
+    const novo = novoConsultorVazio();
+    novo.nome = n;
+    novo.telefone = telefone ? formatTelefoneBR(telefone) : "";
+    novo.email = email.trim().toLowerCase();
+    upsertConsultor(novo);
+    setNome(""); setTelefone(""); setEmail("");
+    onCreated({ nome: n });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader><DialogTitle>Cadastrar Consultor</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div>
+            <Label className="text-xs">Nome *</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} placeholder="NOME COMPLETO" />
+          </div>
+          <div>
+            <Label className="text-xs">Telefone</Label>
+            <Input value={telefone} onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))} placeholder="(00) 9 0000-0000" inputMode="numeric" />
+          </div>
+          <div>
+            <Label className="text-xs">E-mail</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar}>Salvar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

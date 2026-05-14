@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { equipes as equipesSeed, usuarios } from "@/lib/mock-data";
+import { useConsultores } from "@/lib/consultores-store";
 import { useBancos, upsertBanco, removeBanco, toggleBancoAtivo, type Banco } from "@/lib/bancos-store";
 import { useGerentes, upsertGerente, removeGerente, type Gerente } from "@/lib/gerentes-store";
 import { Switch } from "@/components/ui/switch";
@@ -30,6 +31,7 @@ function CadastrosPage() {
   const bancos = useBancos();
   const gerentes = useGerentes();
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
+  const consultores = useConsultores();
 
   return (
     <>
@@ -56,9 +58,9 @@ function CadastrosPage() {
 
         <TabsContent value="vendedores" className="mt-5">
           <Listing
-            title="Vendedores"
-            cols={["Nome", "E-mail", "Contratos", "Status"]}
-            rows={vendedores.map((v) => [v.nome, v.email, v.contratos, <StatusBadge key="s" status={v.status} />])}
+            title="Consultores"
+            cols={["Nome", "E-mail", "Telefone", "Status"]}
+            rows={consultores.map((c) => [c.nome, c.email ?? "—", c.telefone ?? "—", <StatusBadge key="s" status={c.ativo ? "Ativo" : "Inativo"} />])}
           />
         </TabsContent>
         <TabsContent value="usuarios" className="mt-5">

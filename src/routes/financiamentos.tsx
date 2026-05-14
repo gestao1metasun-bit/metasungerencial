@@ -719,7 +719,8 @@ type FinAvulso = {
   obs?: string;
   liberacao?: string;
   statusLiberacao?: string;
-  dataBaseLiberacao?: string;
+  /** Data limite (ISO) da previsão de liberação. */
+  previsao?: string;
 };
 
 function SemContratoTab() {

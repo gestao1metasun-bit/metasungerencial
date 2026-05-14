@@ -89,7 +89,7 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
   const cfg = ROUTE_TABS[routePath];
   const fallback = cfg?.default ?? "";
   const hash = useRouterState({ select: (s) => s.location.hash });
-  const [val, setVal] = useState<string>(() => parseHash(hash) || fallback);
+  const [val, setVal] = useState<string>(fallback);
 
   useEffect(() => {
     setVal(parseHash(hash) || fallback);
@@ -97,6 +97,7 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
 
   const update = (v: string) => {
     setVal(v);
+    if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     url.hash = `tab=${v}`;
     window.history.replaceState(null, "", url.toString());
@@ -105,7 +106,7 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
   return [val, update];
 }
 
-function parseHash(h: string): string {
+export function parseHash(h: string): string {
   if (!h) return "";
   const clean = h.startsWith("#") ? h.slice(1) : h;
   const m = /(?:^|&)tab=([^&]+)/.exec(clean);

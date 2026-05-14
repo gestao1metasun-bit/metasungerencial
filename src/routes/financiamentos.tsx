@@ -766,23 +766,10 @@ function SemContratoTab() {
     status: f.statusOp,
     obs: f.obs || "",
     liberacao: f.liberacao || "",
-    dataBaseLiberacao: f.dataBaseLiberacao || "",
+    previsao: f.previsao || "",
   }));
 
-  const handlePatch = (id: string, patch: Partial<OpRow>) => {
-    setLista((prev) => prev.map((f) => {
-      if (f.id !== id) return f;
-      return {
-        ...f,
-        statusLiberacao: patch.statusLiberacao ?? f.statusLiberacao,
-        gerente: patch.gerente ?? f.gerente,
-        statusOp: patch.status ?? f.statusOp,
-        obs: patch.obs ?? f.obs,
-        liberacao: patch.liberacao ?? f.liberacao,
-        dataBaseLiberacao: patch.dataBaseLiberacao ?? f.dataBaseLiberacao,
-      };
-    }));
-  };
+  const [editingAvulso, setEditingAvulso] = useState<FinAvulso | null>(null);
 
   return (
     <Card>
@@ -803,11 +790,25 @@ function SemContratoTab() {
       <OperacionalFinTable
         storageKey="ms.fin.cols.sem.v1"
         rows={rows}
-        onPatch={handlePatch}
-        gerentes={gerentes.map((g) => g.nome)}
-        statuses={STATUS_LIST}
-        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+        onEdit={(id) => {
+          const f = lista.find((x) => x.id === id);
+          if (f) setEditingAvulso(f);
+        }}
       />
+
+      {editingAvulso && (
+        <EditFinAvulsoDialog
+          fin={editingAvulso}
+          bancos={bancos.map((b) => b.nome)}
+          gerentes={gerentes.map((g) => g.nome)}
+          onClose={() => setEditingAvulso(null)}
+          onSave={(patch) => {
+            setLista((prev) => prev.map((x) => x.id === editingAvulso.id ? { ...x, ...patch } : x));
+            setEditingAvulso(null);
+            toast.success("Operação atualizada");
+          }}
+        />
+      )}
 
       {/* Novo financiamento avulso */}
       <Dialog open={openNovo} onOpenChange={(v) => { setOpenNovo(v); if (!v) reset(); }}>

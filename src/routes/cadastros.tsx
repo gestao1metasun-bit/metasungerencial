@@ -23,13 +23,12 @@ export const Route = createFileRoute("/cadastros")({
   component: CadastrosPage,
 });
 
-type Gerente = { id: string; nome: string; banco: string; telefone: string; operacoes: number; status: string };
 type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
 
 function CadastrosPage() {
   const [tab, setTab] = useTabFromHash("/cadastros");
   const bancos = useBancos();
-  const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
+  const gerentes = useGerentes();
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
 
   return (

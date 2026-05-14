@@ -149,8 +149,8 @@ function PendenciasTab() {
                 <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
                 <TableCell>
                   <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
-                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="BASA ou SICREDI" /></SelectTrigger>
-                    <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecione o banco" /></SelectTrigger>
+                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
                 <TableCell className="text-right">

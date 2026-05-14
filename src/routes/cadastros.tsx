@@ -48,7 +48,7 @@ function CadastrosPage() {
           <BancosCrud items={bancos} />
         </TabsContent>
         <TabsContent value="gerentes" className="mt-5">
-          <GerentesCrud items={gerentes} setItems={setGerentes} bancos={bancos} />
+          <GerentesCrud items={gerentes} bancos={bancos} />
         </TabsContent>
         <TabsContent value="equipes" className="mt-5">
           <EquipesCrud items={equipes} setItems={setEquipes} />

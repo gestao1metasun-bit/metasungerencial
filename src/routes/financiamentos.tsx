@@ -217,17 +217,26 @@ function DashboardFin({
 
   const [openModal, setOpenModal] = useState<null | string>(null);
 
+  const semAsOps: FinOp[] = semContrato.map((s) => ({
+    ...(s as object as FinOp),
+    valorFinanciado: s.valor,
+    contrato: "",
+    previsao: "",
+    prazo: 0,
+  }) as FinOp);
+  const cancelados = ops.filter((o) => o.statusOp === "Cancelado");
+
   const modalContent: Record<string, { title: string; ops: FinOp[] }> = {
     total: { title: "Todas as operações", ops },
     operacoes: { title: "Operações ativas", ops: ativos },
     com: { title: "Operações com contrato vinculado", ops: comContrato },
+    sem: { title: "Operações sem contrato", ops: semAsOps },
     analise: { title: "Operações em análise", ops: emAnalise },
     aguardando: { title: "Aguardando liberação", ops: aguardandoLib },
     liberados: { title: "Operações liberadas", ops: liberados },
     finalizados: { title: "Operações finalizadas", ops: finalizados },
-    ticket: { title: "Análise de ticket médio", ops: [...ops].sort((a, b) => b.valorFinanciado - a.valorFinanciado) },
     medio: { title: "Valor médio liberado", ops: liberados },
-    tempo: { title: "Tempo médio de liberação", ops: [...ops].sort((a, b) => b.prazo - a.prazo) },
+    cancelados: { title: "Operações canceladas", ops: cancelados },
   };
 
   // Gráficos
@@ -255,15 +264,15 @@ function DashboardFin({
         <StatCard label="Total Financiado" value={fmtBRL(valorTotal)} hint={`${total} operações`} icon={Banknote} tone="primary" trend={{ value: "12.4%", positive: true }} onView={() => setOpenModal("total")} />
         <StatCard label="Operações" value={`${ativos.length} (${pct(ativos.length, total)})`} hint={fmtBRL(ativos.reduce((s, o) => s + o.valorFinanciado, 0))} icon={FileText} tone="info" onView={() => setOpenModal("operacoes")} />
         <StatCard label="Com Contrato" value={`${comContrato.length} (${pct(comContrato.length, total)})`} hint={fmtBRL(comContrato.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("com")} />
-        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valor, 0))} icon={AlertCircle} tone="warning" />
+        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valor, 0))} icon={AlertCircle} tone="warning" onView={() => setOpenModal("sem")} />
         <StatCard label="Em Análise" value={`${emAnalise.length} (${pct(emAnalise.length, total)})`} hint={fmtBRL(emAnalise.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Hourglass} tone="info" onView={() => setOpenModal("analise")} />
         <StatCard label="Aguardando Liberação" value={`${aguardandoLib.length} (${pct(aguardandoLib.length, total)})`} hint={fmtBRL(aguardandoLib.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Clock} tone="warning" onView={() => setOpenModal("aguardando")} />
         <StatCard label="Liberados" value={`${liberados.length} (${pct(liberados.length, total)})`} hint={fmtBRL(liberados.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("liberados")} />
         <StatCard label="Finalizados" value={`${finalizados.length} (${pct(finalizados.length, total)})`} hint={fmtBRL(finalizados.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="muted" onView={() => setOpenModal("finalizados")} />
-        <StatCard label="Ticket Médio" value={fmtBRL(ticket)} hint={`${total} operações`} icon={TrendingUp} tone="info" onView={() => setOpenModal("ticket")} />
+        <StatCard label="Ticket Médio" value={fmtBRL(ticket)} hint={`${total} operações`} icon={TrendingUp} tone="info" />
         <StatCard label="Valor Médio Liberado" value={fmtBRL(valorMedioLib)} hint={`${liberados.length} liberados`} icon={DollarSign} tone="success" onView={() => setOpenModal("medio")} />
-        <StatCard label="Tempo Médio Liberação" value={`${tempoMedio} dias`} hint="média carteira" icon={Calendar} tone="warning" onView={() => setOpenModal("tempo")} />
-        <StatCard label="Cancelados" value={ops.filter((o) => o.statusOp === "Cancelado").length} hint="período" icon={XCircle} tone="destructive" />
+        <StatCard label="Tempo Médio Liberação" value={`${tempoMedio} dias`} hint="média carteira" icon={Calendar} tone="warning" />
+        <StatCard label="Cancelados" value={cancelados.length} hint="período" icon={XCircle} tone="destructive" onView={() => setOpenModal("cancelados")} />
       </div>
 
       <DetailFinModal
@@ -271,7 +280,6 @@ function DashboardFin({
         onClose={() => setOpenModal(null)}
         title={openModal ? modalContent[openModal].title : ""}
         ops={openModal ? modalContent[openModal].ops : []}
-        onUpdateStatus={(id, status) => { updateOp(id, { statusOp: status }); toast.success(`${id} → ${status}`); }}
       />
 
       {/* Performance por Gerente + Banco */}
@@ -406,10 +414,9 @@ function DashboardFin({
 /* ---------------- Modal Detalhes ---------------- */
 
 function DetailFinModal({
-  open, onClose, title, ops, onUpdateStatus,
+  open, onClose, title, ops,
 }: {
   open: boolean; onClose: () => void; title: string; ops: FinOp[];
-  onUpdateStatus: (id: string, status: string) => void;
 }) {
   const [q, setQ] = useState("");
   useEffect(() => { if (!open) setQ(""); }, [open]);
@@ -441,7 +448,6 @@ function DetailFinModal({
             <TableHead className="text-right">Financiado</TableHead>
             <TableHead>Status</TableHead><TableHead>Previsão</TableHead>
             <TableHead className="text-center">Restantes</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => {
@@ -454,22 +460,14 @@ function DetailFinModal({
                   <TableCell className="text-muted-foreground">{o.gerente}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(o.valorFinanciado)}</TableCell>
                   <TableCell><StatusBadge status={o.statusOp} /></TableCell>
-                  <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
+                  <TableCell className="text-muted-foreground">{o.previsao || "—"}</TableCell>
                   <TableCell className="text-center">
                     {dias > 0 ? <span className={dias <= 5 ? "font-semibold text-warning" : ""}>{dias}d</span> : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Select value={o.statusOp} onValueChange={(v) => onUpdateStatus(o.id, v)}>
-                      <SelectTrigger className="h-8 w-44 inline-flex"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
                   </TableCell>
                 </TableRow>
               );
             })}
-            {total === 0 && <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhuma operação</TableCell></TableRow>}
+            {total === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Nenhuma operação</TableCell></TableRow>}
           </TableBody>
         </Table>
       </DialogContent>

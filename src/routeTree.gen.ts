@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as PropostasRouteImport } from './routes/propostas'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
@@ -24,6 +25,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropostasRoute = PropostasRouteImport.update({
+  id: '/propostas',
+  path: '/propostas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesById {
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/propostas'
     | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/propostas'
     | '/relatorios'
   id:
     | '__root__'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/propostas'
     | '/relatorios'
   fileRoutesById: FileRoutesById
 }
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRoute
   FinanciamentosRoute: typeof FinanciamentosRoute
   LoginRoute: typeof LoginRoute
+  PropostasRoute: typeof PropostasRoute
   RelatoriosRoute: typeof RelatoriosRoute
 }
 
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/propostas': {
+      id: '/propostas'
+      path: '/propostas'
+      fullPath: '/propostas'
+      preLoaderRoute: typeof PropostasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -266,6 +286,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRoute,
   FinanciamentosRoute: FinanciamentosRoute,
   LoginRoute: LoginRoute,
+  PropostasRoute: PropostasRoute,
   RelatoriosRoute: RelatoriosRoute,
 }
 export const routeTree = rootRouteImport

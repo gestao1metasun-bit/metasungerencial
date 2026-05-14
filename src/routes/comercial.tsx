@@ -1295,7 +1295,7 @@ function CadastrarContratoTab({
 function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
   if (contrato.status === "Aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
   const validar = () => {
-    const r = validateContratoCompleto(contrato);
+    const r = validateContratoCompleto(contrato, { requireComposicao: false });
     if (r.ok) {
       updateContratoAudit(contrato.id, { status: "Pronto para aprovação" });
       toast.success(`Contrato ${contrato.id} validado · pronto para aprovação`);
@@ -1349,7 +1349,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
   const liberado = contrato.status === "Pronto para aprovação";
   const cli = contrato.clienteFull;
   const aprovar = () => {
-    const r = validateContratoCompleto(contrato);
+    const r = validateContratoCompleto(contrato, { requireComposicao: false });
     if (!r.ok) {
       toast.error(`Não pode aprovar. Faltam: ${r.missing.join(", ")}`);
       return;

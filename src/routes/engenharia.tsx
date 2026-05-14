@@ -732,23 +732,45 @@ function recalcPrevisto(inicio: string, equipe: string, modulos: number): string
   return d.toISOString().slice(0,10);
 }
 
-/** Recalcula a cadeia de datas para uma equipe+status: cada obra começa 1 dia após a previsão da anterior. */
-function chainSchedule(obras: Obra[], equipe: string, status: string): Obra[] {
-  const same = obras
-    .filter((o) => o.equipe === equipe && o.status === status)
-    .sort((a, b) => a.ordem - b.ordem);
-  if (same.length <= 1) return obras;
+/**
+ * Recalcula a agenda da equipe:
+ * - Obras EXECUTANDO: podem ocorrer simultaneamente, cada uma mantém seu próprio início
+ *   (apenas a previsão de finalização é recalculada a partir do início + dias).
+ * - Obras AGUARDANDO: a primeira começa em (maior previsto entre EXECUTANDO da equipe) + 1 dia;
+ *   as demais encadeiam normalmente (previsto da anterior + 1).
+ *   Se não houver EXECUTANDO, a primeira mantém seu início atual.
+ */
+function chainSchedule(obras: Obra[], equipe: string, _status?: string): Obra[] {
+  if (!equipe) return obras;
   const patches = new Map<string, Partial<Obra>>();
-  let prevPrev = same[0].previsto;
-  for (let i = 1; i < same.length; i++) {
-    const cur = same[i];
-    const newInicio = prevPrev ? addDaysISO(prevPrev, 1) : cur.inicio;
+  const queue = (st: string) =>
+    obras.filter((o) => o.equipe === equipe && o.status === st).sort((a, b) => a.ordem - b.ordem);
+
+  const execList = queue("Executando instalação");
+  let maxExecPrev = "";
+  for (const cur of execList) {
+    const newPrev = recalcPrevisto(cur.inicio, cur.equipe, cur.modulos);
+    if (newPrev !== cur.previsto) patches.set(cur.id, { previsto: newPrev });
+    if (newPrev && (!maxExecPrev || newPrev > maxExecPrev)) maxExecPrev = newPrev;
+  }
+
+  const aguardList = queue("Aguardando instalação");
+  let prevPrev = maxExecPrev || "";
+  for (let i = 0; i < aguardList.length; i++) {
+    const cur = aguardList[i];
+    let newInicio = cur.inicio;
+    if (i === 0) {
+      if (maxExecPrev) newInicio = addDaysISO(maxExecPrev, 1);
+    } else if (prevPrev) {
+      newInicio = addDaysISO(prevPrev, 1);
+    }
     const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
     if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
       patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
     }
     prevPrev = newPrev;
   }
+
   if (patches.size === 0) return obras;
   return obras.map((o) => patches.has(o.id) ? { ...o, ...patches.get(o.id)! } : o);
 }

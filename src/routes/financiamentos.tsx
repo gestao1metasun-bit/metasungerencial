@@ -24,10 +24,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { financiamentos as finSeed, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { financiamentos as finSeed, finsSemContrato, fmtBRL } from "@/lib/mock-data";
 import { useBancosAtivos } from "@/lib/bancos-store";
+import { useGerentesAtivos } from "@/lib/gerentes-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
-import { useContratos } from "@/lib/contratos-store";
+import { useContratos, updateContratoAudit } from "@/lib/contratos-store";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({
@@ -77,8 +79,6 @@ function FinanciamentosPage() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="carteira">Contratos Assinados em Financiamento</TabsTrigger>
           <TabsTrigger value="sem">Sem Contrato em Financiamento</TabsTrigger>
-          <TabsTrigger value="bancos">Bancos</TabsTrigger>
-          <TabsTrigger value="gerentes">Gerentes</TabsTrigger>
           <TabsTrigger value="previsao">Previsão</TabsTrigger>
           <TabsTrigger value="pendencias" className="gap-2">
             Pendências
@@ -98,8 +98,6 @@ function FinanciamentosPage() {
           <ContratosComercialFin />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
-        <TabsContent value="bancos" className="mt-5"><BancosTab ops={ops} /></TabsContent>
-        <TabsContent value="gerentes" className="mt-5"><GerentesTab ops={ops} /></TabsContent>
         <TabsContent value="previsao" className="mt-5"><PrevisaoTab ops={ops} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="finalizados" className="mt-5">
@@ -198,6 +196,7 @@ function DashboardFin({
   ops, updateOp,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void }) {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const total = ops.length;
   const valorTotal = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const comContrato = ops.filter((o) => !!o.contrato);
@@ -598,6 +597,7 @@ function EditOpDialog({
   op, onClose, onSave,
 }: { op: FinOp | null; onClose: () => void; onSave: (patch: Partial<FinOp>) => void }) {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const [form, setForm] = useState<Partial<FinOp>>({});
   useEffect(() => { setForm(op ?? {}); }, [op]);
   if (!op) return null;
@@ -717,6 +717,7 @@ type FinAvulso = {
 
 function SemContratoTab() {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const [lista, setLista] = useState<FinAvulso[]>(() =>
     finsSemContrato.map((f) => ({
       id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
@@ -734,6 +735,7 @@ function SemContratoTab() {
 
   const salvar = () => {
     if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    if (!form.gerente.trim()) { toast.error("Selecione o gerente"); return; }
     const id = `FIN-AV-${Date.now().toString().slice(-5)}`;
     setLista((prev) => [{ ...form, id, cliente: form.cliente.toUpperCase(), gerente: form.gerente.toUpperCase(), banco: form.banco.toUpperCase() }, ...prev]);
     toast.success("Financiamento avulso cadastrado");
@@ -754,15 +756,17 @@ function SemContratoTab() {
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>ID</TableHead><TableHead>Cliente</TableHead><TableHead>CPF/CNPJ</TableHead>
-          <TableHead>Banco</TableHead><TableHead>Gerente</TableHead>
-          <TableHead className="text-right">Valor</TableHead><TableHead>Status</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+          <TableHead>CONTRATO</TableHead><TableHead>CLIENTE</TableHead><TableHead>CPF/CNPJ</TableHead>
+          <TableHead>BANCO</TableHead><TableHead>GERENTE</TableHead>
+          <TableHead className="text-right">VALOR</TableHead><TableHead>STATUS</TableHead>
+          <TableHead className="text-right">AÇÕES</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {lista.map((f) => (
             <TableRow key={f.id}>
-              <TableCell className="font-mono text-xs text-primary">{f.id}</TableCell>
+              <TableCell>
+                <span className="rounded bg-warning/15 px-2 py-0.5 text-[11px] font-semibold uppercase text-warning">SEM CONTRATO</span>
+              </TableCell>
               <TableCell className="font-medium">{f.cliente}</TableCell>
               <TableCell className="text-muted-foreground">{f.doc}</TableCell>
               <TableCell>{f.banco}</TableCell>
@@ -796,19 +800,29 @@ function SemContratoTab() {
             <div><Label>Banco (simulação)</Label>
               <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome.toUpperCase()}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Gerente</Label>
-              <Input value={form.gerente} onChange={(e) => setForm({ ...form, gerente: e.target.value })} />
+              {gerentes.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs">
+                  <div className="text-muted-foreground">NENHUM GERENTE CADASTRADO.</div>
+                  <Link to="/cadastros" hash="tab=gerentes" className="mt-1 inline-block text-primary underline">Cadastrar gerente →</Link>
+                </div>
+              ) : (
+                <Select value={form.gerente} onValueChange={(v) => setForm({ ...form, gerente: v })}>
+                  <SelectTrigger><SelectValue placeholder="SELECIONE O GERENTE" /></SelectTrigger>
+                  <SelectContent>{gerentes.map((g) => <SelectItem key={g.id} value={g.nome}>{g.nome.toUpperCase()} — {g.banco.toUpperCase()}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </div>
-            <div><Label>Valor financiado</Label>
-              <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+            <div><Label>Valor financiado (R$)</Label>
+              <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} placeholder="R$ 0,00" />
             </div>
             <div className="col-span-2"><Label>Status</Label>
               <Select value={form.statusOp} onValueChange={(v) => setForm({ ...form, statusOp: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
@@ -939,6 +953,7 @@ function BancosTab({ ops }: { ops: FinOp[] }) {
 /* ---------------- Gerentes ---------------- */
 
 function GerentesTab({ ops }: { ops: FinOp[] }) {
+  const gerentes = useGerentesAtivos();
   const data = gerentes.map((g) => {
     const lista = ops.filter((o) => o.gerente === g.nome);
     const valor = lista.reduce((s, o) => s + o.valorFinanciado, 0);
@@ -1056,7 +1071,10 @@ function PrevisaoTab({ ops }: { ops: FinOp[] }) {
 /* ---------------- Contratos vindos do Comercial com flag de Financiamento ---------------- */
 function ContratosComercialFin() {
   const contratos = useContratos();
+  const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const lista = contratos.filter((c) => c.possuiFinanciamento);
+  const [editing, setEditing] = useState<typeof lista[number] | null>(null);
   if (lista.length === 0) return null;
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
   return (
@@ -1070,13 +1088,14 @@ function ContratosComercialFin() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Contrato</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Banco</TableHead>
-            <TableHead className="text-right">Valor financiado</TableHead>
-            <TableHead>Gerente</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Vendedor</TableHead>
+            <TableHead>CONTRATO</TableHead>
+            <TableHead>CLIENTE</TableHead>
+            <TableHead>BANCO</TableHead>
+            <TableHead className="text-right">VALOR FINANCIADO</TableHead>
+            <TableHead>GERENTE</TableHead>
+            <TableHead>STATUS</TableHead>
+            <TableHead>VENDEDOR</TableHead>
+            <TableHead className="text-right">AÇÕES</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1089,10 +1108,98 @@ function ContratosComercialFin() {
               <TableCell>{c.financiamentoGerente || "—"}</TableCell>
               <TableCell><StatusBadge status={c.financiamentoStatus || "Em análise"} /></TableCell>
               <TableCell>{c.vendedor}</TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(c)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {editing && (
+        <EditContratoFinDialog
+          contrato={editing}
+          bancos={bancos.map((b) => b.nome)}
+          gerentes={gerentes.map((g) => g.nome)}
+          onClose={() => setEditing(null)}
+          onSave={(patch) => {
+            updateContratoAudit(editing.id, patch);
+            setEditing(null);
+            toast.success("Operação atualizada");
+          }}
+        />
+      )}
     </Card>
+  );
+}
+
+function EditContratoFinDialog({
+  contrato, bancos, gerentes, onClose, onSave,
+}: {
+  contrato: any;
+  bancos: string[];
+  gerentes: string[];
+  onClose: () => void;
+  onSave: (patch: any) => void;
+}) {
+  const [form, setForm] = useState({
+    financiamentoBanco: contrato.financiamentoBanco ?? "",
+    financiamentoGerente: contrato.financiamentoGerente ?? "",
+    financiamentoStatus: contrato.financiamentoStatus ?? "Em análise",
+    financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
+    financiamentoObs: contrato.financiamentoObs ?? "",
+    obs: contrato.obs ?? "",
+  });
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Editar operação — {contrato.id}</DialogTitle>
+          <DialogDescription>{contrato.cliente}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Banco</Label>
+            <Select value={form.financiamentoBanco} onValueChange={(v) => setForm({ ...form, financiamentoBanco: v })}>
+              <SelectTrigger><SelectValue placeholder="SELECIONE" /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b} value={b}>{b.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Gerente</Label>
+            {gerentes.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-3 text-xs">
+                <div className="text-muted-foreground">NENHUM GERENTE CADASTRADO.</div>
+                <Link to="/cadastros" hash="tab=gerentes" className="mt-1 inline-block text-primary underline">Cadastrar gerente →</Link>
+              </div>
+            ) : (
+              <Select value={form.financiamentoGerente} onValueChange={(v) => setForm({ ...form, financiamentoGerente: v })}>
+                <SelectTrigger><SelectValue placeholder="SELECIONE" /></SelectTrigger>
+                <SelectContent>{gerentes.map((g) => <SelectItem key={g} value={g}>{g.toUpperCase()}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+          </div>
+          <div><Label>Status</Label>
+            <Select value={form.financiamentoStatus} onValueChange={(v) => setForm({ ...form, financiamentoStatus: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Valor financiado (R$)</Label>
+            <Input type="number" value={form.financiamentoValor} onChange={(e) => setForm({ ...form, financiamentoValor: Number(e.target.value) })} />
+          </div>
+          <div className="col-span-2"><Label>Observações do financiamento</Label>
+            <Textarea value={form.financiamentoObs} onChange={(e) => setForm({ ...form, financiamentoObs: e.target.value })} />
+          </div>
+          <div className="col-span-2"><Label>Observações gerais</Label>
+            <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

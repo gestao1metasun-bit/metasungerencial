@@ -27,8 +27,6 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "dashboard", label: "Dashboard" },
       { value: "carteira", label: "Contratos Assinados em Financiamento" },
       { value: "sem", label: "Sem Contrato em Financiamento" },
-      { value: "bancos", label: "Bancos" },
-      { value: "gerentes", label: "Gerentes" },
       { value: "previsao", label: "Previsão" },
       { value: "pendencias", label: "Pendências" },
       { value: "finalizados", label: "Finalizados" },

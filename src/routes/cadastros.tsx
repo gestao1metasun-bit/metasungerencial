@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { gerentes as gerentesSeed, equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
 import { useBancos, upsertBanco, removeBanco, toggleBancoAtivo, type Banco } from "@/lib/bancos-store";
+import { useGerentes, upsertGerente, removeGerente, type Gerente } from "@/lib/gerentes-store";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
@@ -22,13 +23,12 @@ export const Route = createFileRoute("/cadastros")({
   component: CadastrosPage,
 });
 
-type Gerente = { id: string; nome: string; banco: string; telefone: string; operacoes: number; status: string };
 type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
 
 function CadastrosPage() {
   const [tab, setTab] = useTabFromHash("/cadastros");
   const bancos = useBancos();
-  const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
+  const gerentes = useGerentes();
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
 
   return (
@@ -48,7 +48,7 @@ function CadastrosPage() {
           <BancosCrud items={bancos} />
         </TabsContent>
         <TabsContent value="gerentes" className="mt-5">
-          <GerentesCrud items={gerentes} setItems={setGerentes} bancos={bancos} />
+          <GerentesCrud items={gerentes} bancos={bancos} />
         </TabsContent>
         <TabsContent value="equipes" className="mt-5">
           <EquipesCrud items={equipes} setItems={setEquipes} />
@@ -157,15 +157,11 @@ function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initia
 }
 
 /* ----------------- Gerentes ----------------- */
-function GerentesCrud({ items, setItems, bancos }: { items: Gerente[]; setItems: (v: Gerente[]) => void; bancos: Banco[] }) {
+function GerentesCrud({ items, bancos }: { items: Gerente[]; bancos: Banco[] }) {
   const [editing, setEditing] = useState<Gerente | null>(null);
   const [creating, setCreating] = useState(false);
-  const save = (g: Gerente) => {
-    if (items.find((x) => x.id === g.id)) setItems(items.map((x) => (x.id === g.id ? g : x)));
-    else setItems([...items, g]);
-    toast.success("Gerente salvo");
-  };
-  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Gerente removido"); };
+  const save = (g: Gerente) => { upsertGerente(g); toast.success("Gerente salvo"); };
+  const remove = (id: string) => { removeGerente(id); toast.success("Gerente removido"); };
 
   return (
     <CrudCard title="Gerentes bancários" onNew={() => setCreating(true)}>

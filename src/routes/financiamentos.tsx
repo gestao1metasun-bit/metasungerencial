@@ -1069,6 +1069,18 @@ function PrevisaoTab({ ops }: { ops: FinOp[] }) {
 }
 
 /* ---------------- Contratos vindos do Comercial com flag de Financiamento ---------------- */
+const LIBERACAO_STATUS_LIST = [
+  "Aguardando", "Em conferência", "Documentação", "Liberada parcial", "Liberada total", "Bloqueada",
+];
+
+function pfPjFromDoc(doc?: string): "PF" | "PJ" | "" {
+  if (!doc) return "";
+  const d = doc.replace(/\D/g, "");
+  if (d.length === 11) return "PF";
+  if (d.length === 14) return "PJ";
+  return "";
+}
+
 function ContratosComercialFin() {
   const contratos = useContratos();
   const bancos = useBancosAtivos();
@@ -1077,46 +1089,53 @@ function ContratosComercialFin() {
   const [editing, setEditing] = useState<typeof lista[number] | null>(null);
   if (lista.length === 0) return null;
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
+
+  const rows: import("@/components/app/OperacionalFinTable").OpRow[] = lista.map((c) => ({
+    id: c.id,
+    ordem: c.id,
+    contratante: c.cliente,
+    vendedor: c.vendedor,
+    valorContrato: Number(c.valor) || 0,
+    pfpj: pfPjFromDoc(c.clienteFull?.doc),
+    envio: c.financiamentoEnvio || c.dataAssinatura || c.dataCadastro || "",
+    cpfCnpj: c.clienteFull?.doc || "",
+    valorFinanciado: Number(c.financiamentoValor) || Number(c.valor) || 0,
+    statusLiberacao: c.financiamentoStatusLiberacao || "",
+    gerente: c.financiamentoGerente || "",
+    status: c.financiamentoStatus || "Em análise",
+    obs: c.financiamentoObs || "",
+    liberacao: c.financiamentoLiberacao || "",
+    dataBaseLiberacao: c.financiamentoDataBaseLiberacao || "",
+  }));
+
+  const handlePatch = (id: string, patch: Partial<import("@/components/app/OperacionalFinTable").OpRow>) => {
+    const map: any = {};
+    if ("statusLiberacao" in patch) map.financiamentoStatusLiberacao = patch.statusLiberacao;
+    if ("gerente" in patch) map.financiamentoGerente = patch.gerente;
+    if ("status" in patch) map.financiamentoStatus = patch.status;
+    if ("obs" in patch) map.financiamentoObs = patch.obs;
+    if ("liberacao" in patch) map.financiamentoLiberacao = patch.liberacao;
+    if ("dataBaseLiberacao" in patch) map.financiamentoDataBaseLiberacao = patch.dataBaseLiberacao;
+    updateContratoAudit(id, map);
+  };
+
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <div className="text-sm font-semibold">Contratos enviados do Comercial</div>
-          <div className="text-xs text-muted-foreground">{lista.length} contrato(s) · {fmtBRL(total)} financiado(s)</div>
+          <div className="text-xs text-muted-foreground">{lista.length} contrato(s) · {fmtBRL(total)} financiado(s) · arraste o cabeçalho para reordenar colunas</div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => editing /* noop */} className="hidden">edit</Button>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>CONTRATO</TableHead>
-            <TableHead>CLIENTE</TableHead>
-            <TableHead>BANCO</TableHead>
-            <TableHead className="text-right">VALOR FINANCIADO</TableHead>
-            <TableHead>GERENTE</TableHead>
-            <TableHead>STATUS</TableHead>
-            <TableHead>VENDEDOR</TableHead>
-            <TableHead className="text-right">AÇÕES</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {lista.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell className="font-mono text-xs">{c.id}</TableCell>
-              <TableCell>{c.cliente}</TableCell>
-              <TableCell>{c.financiamentoBanco ?? "—"}</TableCell>
-              <TableCell className="text-right font-mono">{fmtBRL(Number(c.financiamentoValor) || Number(c.valor) || 0)}</TableCell>
-              <TableCell>{c.financiamentoGerente || "—"}</TableCell>
-              <TableCell><StatusBadge status={c.financiamentoStatus || "Em análise"} /></TableCell>
-              <TableCell>{c.vendedor}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(c)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <OperacionalFinTableLazy
+        storageKey="ms.fin.cols.carteira.v1"
+        rows={rows}
+        onPatch={handlePatch}
+        gerentes={gerentes.map((g) => g.nome)}
+        statuses={STATUS_LIST}
+        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+      />
 
       {editing && (
         <EditContratoFinDialog

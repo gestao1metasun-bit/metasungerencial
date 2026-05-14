@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search, Pencil,
+  Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search,
   Boxes, TrendingDown, RefreshCw,
 } from "lucide-react";
 import {

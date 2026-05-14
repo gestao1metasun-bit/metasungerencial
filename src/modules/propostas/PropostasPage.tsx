@@ -189,11 +189,12 @@ function LeadModal({
 /* =========================== SHEET DE EDIÇÃO =========================== */
 
 function PropostaSheet({
-  proposta, onClose, onVisualizar,
+  proposta, onClose, onVisualizar, onGerada,
 }: {
   proposta: PropostaFV;
   onClose: () => void;
   onVisualizar: (id: string) => void;
+  onGerada?: () => void;
 }) {
   const [p, setP] = useState<PropostaFV>(proposta);
   const cidades = useCidadesFV();

@@ -1866,6 +1866,29 @@ function ProjetoEditCard({
     const w = Number(d.potenciaModuloW) || 0;
     updateProjeto(contrato.id, projeto.id, { ...d, kwp: Number(((m * w) / 1000).toFixed(2)) });
     toast.success(`Projeto ${index + 1} (${projeto.id}) salvo · conciliação atualizada`);
+
+    // Residual automático: se este é o último projeto e ainda sobra valor/módulos do contrato,
+    // cria automaticamente o próximo projeto com o residual.
+    const isUltimo = projetos[projetos.length - 1]?.id === projeto.id;
+    if (isUltimo) {
+      const residualValor = valorContrato - (somaOutros + Number(d.valor));
+      const totalModC = Number(contrato.modulos) || 0;
+      const somaModOutros = projetos.filter((x) => x.id !== projeto.id).reduce((s, x) => s + (Number(x.modulos) || 0), 0);
+      const residualMod = totalModC - (somaModOutros + m);
+      if (residualValor > 0.5) {
+        const novo: NovoProjForm = {
+          ...emptyProjeto(contrato, `Projeto ${projetos.length + 1}`),
+          valor: Math.round(residualValor * 100) / 100,
+          modulos: residualMod > 0 ? residualMod : 0,
+          kwp: residualMod > 0 ? Number(((residualMod * w) / 1000).toFixed(2)) : 0,
+          // Inversores em branco — usuário escolhe qual cobre o residual
+          inversor: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
+          endereco: "", numero: "", bairro: "", cep: "", cidade: contrato.clienteFull?.cidade ?? "", uf: contrato.clienteFull?.uf ?? "",
+        };
+        addProjeto(contrato.id, novo);
+        toast.info(`Residual de ${fmtBRL(residualValor)} → criado Projeto ${projetos.length + 1} automaticamente`, { duration: 5000 });
+      }
+    }
   };
 
   const kwpAuto = ((Number(d.modulos) || 0) * (Number(d.potenciaModuloW) || 0)) / 1000;

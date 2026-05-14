@@ -911,11 +911,7 @@ function CadastrarContratoTab({
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
       possuiFinanciamento: form.possuiFinanciamento === "Sim",
-      financiamentoBanco: form.possuiFinanciamento === "Sim" ? form.finBanco : undefined,
-      financiamentoValor: form.possuiFinanciamento === "Sim" ? (Number(form.finValor) || 0) : undefined,
-      financiamentoGerente: form.possuiFinanciamento === "Sim" ? form.finGerente : undefined,
-      financiamentoStatus: form.possuiFinanciamento === "Sim" ? form.finStatus : undefined,
-      financiamentoObs: form.possuiFinanciamento === "Sim" ? form.finObs : undefined,
+
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [{
         id: `${novoId}-01`,

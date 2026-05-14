@@ -717,6 +717,7 @@ type FinAvulso = {
 
 function SemContratoTab() {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const [lista, setLista] = useState<FinAvulso[]>(() =>
     finsSemContrato.map((f) => ({
       id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
@@ -734,6 +735,7 @@ function SemContratoTab() {
 
   const salvar = () => {
     if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    if (!form.gerente.trim()) { toast.error("Selecione o gerente"); return; }
     const id = `FIN-AV-${Date.now().toString().slice(-5)}`;
     setLista((prev) => [{ ...form, id, cliente: form.cliente.toUpperCase(), gerente: form.gerente.toUpperCase(), banco: form.banco.toUpperCase() }, ...prev]);
     toast.success("Financiamento avulso cadastrado");
@@ -754,15 +756,17 @@ function SemContratoTab() {
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>ID</TableHead><TableHead>Cliente</TableHead><TableHead>CPF/CNPJ</TableHead>
-          <TableHead>Banco</TableHead><TableHead>Gerente</TableHead>
-          <TableHead className="text-right">Valor</TableHead><TableHead>Status</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+          <TableHead>CONTRATO</TableHead><TableHead>CLIENTE</TableHead><TableHead>CPF/CNPJ</TableHead>
+          <TableHead>BANCO</TableHead><TableHead>GERENTE</TableHead>
+          <TableHead className="text-right">VALOR</TableHead><TableHead>STATUS</TableHead>
+          <TableHead className="text-right">AÇÕES</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {lista.map((f) => (
             <TableRow key={f.id}>
-              <TableCell className="font-mono text-xs text-primary">{f.id}</TableCell>
+              <TableCell>
+                <span className="rounded bg-warning/15 px-2 py-0.5 text-[11px] font-semibold uppercase text-warning">SEM CONTRATO</span>
+              </TableCell>
               <TableCell className="font-medium">{f.cliente}</TableCell>
               <TableCell className="text-muted-foreground">{f.doc}</TableCell>
               <TableCell>{f.banco}</TableCell>
@@ -796,19 +800,29 @@ function SemContratoTab() {
             <div><Label>Banco (simulação)</Label>
               <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome.toUpperCase()}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Gerente</Label>
-              <Input value={form.gerente} onChange={(e) => setForm({ ...form, gerente: e.target.value })} />
+              {gerentes.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border p-3 text-xs">
+                  <div className="text-muted-foreground">NENHUM GERENTE CADASTRADO.</div>
+                  <Link to="/cadastros" hash="tab=gerentes" className="mt-1 inline-block text-primary underline">Cadastrar gerente →</Link>
+                </div>
+              ) : (
+                <Select value={form.gerente} onValueChange={(v) => setForm({ ...form, gerente: v })}>
+                  <SelectTrigger><SelectValue placeholder="SELECIONE O GERENTE" /></SelectTrigger>
+                  <SelectContent>{gerentes.map((g) => <SelectItem key={g.id} value={g.nome}>{g.nome.toUpperCase()} — {g.banco.toUpperCase()}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </div>
-            <div><Label>Valor financiado</Label>
-              <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+            <div><Label>Valor financiado (R$)</Label>
+              <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} placeholder="R$ 0,00" />
             </div>
             <div className="col-span-2"><Label>Status</Label>
               <Select value={form.statusOp} onValueChange={(v) => setForm({ ...form, statusOp: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>

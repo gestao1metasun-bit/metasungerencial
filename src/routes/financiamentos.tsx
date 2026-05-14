@@ -90,7 +90,8 @@ function FinanciamentosPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardFin ops={ops} updateOp={updateOp} />
         </TabsContent>
-        <TabsContent value="carteira" className="mt-5">
+        <TabsContent value="carteira" className="mt-5 space-y-5">
+          <ContratosComercialFin />
           <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>

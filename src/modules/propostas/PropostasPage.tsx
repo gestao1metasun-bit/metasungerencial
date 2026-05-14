@@ -259,7 +259,7 @@ function LeadModal({
       <ConsultorRapidoModal
         open={novoOpen}
         onClose={() => setNovoOpen(false)}
-        onCreated={(c) => { setConsultor(c.nome); setNovoOpen(false); toast.success("Consultor cadastrado."); }}
+        onCreated={(c: { nome: string }) => { setConsultor(c.nome); setNovoOpen(false); toast.success("Consultor cadastrado."); }}
       />
     </Dialog>
   );

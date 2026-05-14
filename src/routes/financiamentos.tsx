@@ -866,6 +866,7 @@ function VincularContratoDialog({
 /* ---------------- Bancos ---------------- */
 
 function BancosTab({ ops }: { ops: FinOp[] }) {
+  const bancos = useBancosAtivos();
   const totalGeral = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const data = bancos.map((b) => {
     const lista = ops.filter((o) => o.banco === b.nome);

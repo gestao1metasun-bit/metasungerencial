@@ -481,6 +481,7 @@ function DetailFinModal({
 function Carteira({
   ops, updateOp, filterFin = false,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void; filterFin?: boolean }) {
+  const bancos = useBancosAtivos();
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("todos");
   const [status, setStatus] = useState("todos");

@@ -707,6 +707,17 @@ function CronogramaTab({
     setObras(chainSchedule(swapped, target.equipe, target.status));
   };
 
+  const updateInicio = (id: string, novoInicio: string) => {
+    const next = obras.map((o) => {
+      if (o.id !== id) return o;
+      const previsto = recalcPrevisto(novoInicio, o.equipe || "", o.modulos);
+      return { ...o, inicio: novoInicio, previsto };
+    });
+    const target = next.find((o) => o.id === id);
+    if (!target) { setObras(next); return; }
+    setObras(chainSchedule(next, target.equipe, target.status));
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {equipes.map((eq) => {
@@ -724,7 +735,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onChangeInicio={updateInicio} />)}
                 </div>
               </div>
             )}
@@ -732,7 +743,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onChangeInicio={updateInicio} />)}
                 </div>
               </div>
             )}
@@ -743,10 +754,9 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove, onChangeInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onChangeInicio: (id: string, novoInicio: string) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   const prazo = diasPrevistos(o.equipe || "", o.modulos);
-  const faixa = faixaDe(o.modulos);
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
       <div className="flex items-start justify-between gap-2">
@@ -758,19 +768,15 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
 
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px]">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px] items-center">
             <div className="text-muted-foreground">Previsão início</div>
-            <div className="text-right font-medium">{fmtBR(o.inicio)}</div>
+            <Input type="date" value={o.inicio || ""} onChange={(e) => onChangeInicio(o.id, e.target.value)} className="h-7 text-[11px] py-0" />
             <div className="text-muted-foreground">Previsão finalização</div>
             <div className="text-right font-semibold text-foreground">{fmtBR(o.previsto)}</div>
             <div className="text-muted-foreground">Prazo estimado</div>
             <div className="text-right">{prazo} {prazo === 1 ? "dia" : "dias"}</div>
-            <div className="text-muted-foreground">Equipe / instalador</div>
-            <div className="text-right truncate">{o.equipe || "—"}</div>
-            <div className="text-muted-foreground">Faixa de módulos</div>
-            <div className="text-right">{faixa.label}</div>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas de previsão são gerenciadas aqui no Cronograma.</div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Início conta como dia 1. Finalização calculada automaticamente.</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>

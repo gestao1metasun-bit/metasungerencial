@@ -79,8 +79,6 @@ function FinanciamentosPage() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="carteira">Contratos Assinados em Financiamento</TabsTrigger>
           <TabsTrigger value="sem">Sem Contrato em Financiamento</TabsTrigger>
-          <TabsTrigger value="bancos">Bancos</TabsTrigger>
-          <TabsTrigger value="gerentes">Gerentes</TabsTrigger>
           <TabsTrigger value="previsao">Previsão</TabsTrigger>
           <TabsTrigger value="pendencias" className="gap-2">
             Pendências
@@ -100,8 +98,6 @@ function FinanciamentosPage() {
           <ContratosComercialFin />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
-        <TabsContent value="bancos" className="mt-5"><BancosTab ops={ops} /></TabsContent>
-        <TabsContent value="gerentes" className="mt-5"><GerentesTab ops={ops} /></TabsContent>
         <TabsContent value="previsao" className="mt-5"><PrevisaoTab ops={ops} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab /></TabsContent>
         <TabsContent value="finalizados" className="mt-5">

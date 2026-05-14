@@ -106,10 +106,8 @@ function DashboardEst() {
   );
 }
 
-function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState("todas");
 type ItemEstoque = { id: string; produto: string; categoria: string; quantidade: number; minimo: number };
+
 
 const seedItens: ItemEstoque[] = estoqueItens.map((i) => ({
   id: i.id, produto: i.produto, categoria: i.categoria, quantidade: i.quantidade, minimo: i.minimo,

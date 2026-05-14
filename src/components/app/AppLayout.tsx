@@ -24,6 +24,8 @@ export function AppLayout() {
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const [pend] = useFinPendencias();
+  const finPendCount = pend.filter((p) => p.status === "Pendente").length;
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">

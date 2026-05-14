@@ -200,6 +200,7 @@ function DashboardFin({
   ops, updateOp,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void }) {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const total = ops.length;
   const valorTotal = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const comContrato = ops.filter((o) => !!o.contrato);

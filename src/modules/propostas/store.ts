@@ -402,6 +402,48 @@ export const upsertCustoFV          = upsertOf(custosS);
 export const removeCustoFV          = removeOf(custosS);
 export const upsertProposta         = upsertOf(propsS);
 export const removeProposta         = removeOf(propsS);
+export const upsertTarifaEnergia    = upsertOf(tarifasS);
+export const removeTarifaEnergia    = removeOf(tarifasS);
+export const addHistoricoIrradiacao = (h: HistoricoIrradiacao) => upsertOf(histIrrS)(h);
+
+/* =============== Última cidade selecionada (preferência local) =============== */
+
+const LAST_CIDADE_KEY = "ms.fv.lastCidadeId.v1";
+export function getLastCidadeId(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return localStorage.getItem(LAST_CIDADE_KEY); } catch { return null; }
+}
+export function setLastCidadeId(id: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) localStorage.setItem(LAST_CIDADE_KEY, id);
+    else localStorage.removeItem(LAST_CIDADE_KEY);
+  } catch {}
+}
+
+/* =============== Lookup de tarifa =============== */
+
+/** Procura tarifa oficial mais específica para uma combinação concessionária/uf/grupo/cidade. */
+export function buscarTarifa(
+  lista: TarifaEnergia[],
+  filtro: { concessionaria?: string; uf?: string; cidade?: string; grupo?: string; modalidade?: string },
+): TarifaEnergia | undefined {
+  const ativos = lista.filter((t) => t.ativo);
+  const score = (t: TarifaEnergia) => {
+    let s = 0;
+    if (filtro.concessionaria && t.concessionaria?.toUpperCase() === filtro.concessionaria.toUpperCase()) s += 8;
+    if (filtro.uf && t.uf?.toUpperCase() === filtro.uf.toUpperCase()) s += 4;
+    if (filtro.cidade && t.cidade?.toUpperCase() === filtro.cidade.toUpperCase()) s += 4;
+    if (filtro.grupo && t.grupoTarifario === filtro.grupo) s += 2;
+    if (filtro.modalidade && t.modalidadeTarifaria === filtro.modalidade) s += 1;
+    return s;
+  };
+  const ranked = ativos
+    .map((t) => ({ t, s: score(t) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s);
+  return ranked[0]?.t;
+}
 
 /* =============== Helpers de cálculo =============== */
 

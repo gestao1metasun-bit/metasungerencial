@@ -81,7 +81,7 @@ export function AppLayout() {
                   onMouseEnter={() => sub && setOpenMenu(item.to)}
                   onMouseLeave={() => sub && setOpenMenu((cur) => (cur === item.to ? null : cur))}
                 >
-                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition hover:bg-primary hover:text-primary-foreground ${isOpen ? "bg-primary text-primary-foreground" : "text-sidebar-foreground"}`}>
+                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition hover:bg-[oklch(0.22_0.12_262)] hover:text-primary-foreground ${isOpen ? "bg-[oklch(0.22_0.12_262)] text-primary-foreground" : "text-sidebar-foreground"}`}>
                     {sub ? (
                       <Link
                         to={item.to}

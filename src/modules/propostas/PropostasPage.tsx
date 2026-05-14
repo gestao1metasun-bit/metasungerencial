@@ -891,6 +891,7 @@ function CadastrosFV() {
       <TabsList className="flex flex-wrap">
         <TabsTrigger value="cidades">Cidades</TabsTrigger>
         <TabsTrigger value="concs">Concessionárias</TabsTrigger>
+        <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
         <TabsTrigger value="modulos">Módulos</TabsTrigger>
         <TabsTrigger value="inversores">Inversores</TabsTrigger>
         <TabsTrigger value="dist">Distribuidores</TabsTrigger>
@@ -899,6 +900,7 @@ function CadastrosFV() {
       </TabsList>
       <TabsContent value="cidades" className="mt-4"><CrudCidades /></TabsContent>
       <TabsContent value="concs" className="mt-4"><CrudConcessionarias /></TabsContent>
+      <TabsContent value="tarifas" className="mt-4"><CrudTarifas /></TabsContent>
       <TabsContent value="modulos" className="mt-4"><CrudModulos /></TabsContent>
       <TabsContent value="inversores" className="mt-4"><CrudInversores /></TabsContent>
       <TabsContent value="dist" className="mt-4"><CrudDistribuidores /></TabsContent>

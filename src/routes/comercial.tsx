@@ -2565,6 +2565,11 @@ export function IndicadoresTab({
           <KpiSmall icon={TrendingUp} label="Crescimento anual" value={`${cresAnual>=0?"+":""}${cresAnual.toFixed(1)}%`} positive={cresAnual>=0} />
           <KpiSmall icon={Activity} label="Vendido 2026 (real)" value={fmtBRL(ult2026Real)} />
           <KpiSmall icon={Clock} label="Tempo médio fechamento" value={`${tempoMedioGeral.toFixed(0)} dias`} />
+          <KpiSmall icon={Sun} label="kWh médio (mensal)" value={`${kwhMedio.toFixed(0)} kWh`} />
+          <KpiSmall icon={Gauge} label="Parâmetro médio (R$/kWp)" value={fmtBRL(parametroMedio)} />
+          <KpiSmall icon={DollarSign} label="Valor médio de venda" value={fmtBRL(valorMedioVenda)} />
+          <KpiSmall icon={Clock} label="Tempo médio p/ assinatura" value={`${tempoMedioAssinatura.toFixed(1)} dias`} />
+          <KpiSmall icon={Clock} label="Tempo médio pendente" value={`${tempoMedioPendente.toFixed(1)} dias`} />
         </div>
       </div>
 

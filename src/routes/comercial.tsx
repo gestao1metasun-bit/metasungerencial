@@ -1476,11 +1476,11 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="hidden">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
-            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> 4. Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">

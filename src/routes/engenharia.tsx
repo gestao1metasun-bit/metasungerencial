@@ -563,7 +563,10 @@ function EditObraDialog({
             </div>
           </div>
           <div><Label>Status</Label>
-            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+            <Select value={f.status} onValueChange={(v) => {
+              const allowed = v === "Executando instalação" || v === "Aguardando instalação";
+              setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>

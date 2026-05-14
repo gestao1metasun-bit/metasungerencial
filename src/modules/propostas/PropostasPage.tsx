@@ -495,12 +495,28 @@ function PropostaSheet({
             <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <Label>Cidade cadastrada</Label>
-                <Select value={p.cidadeId ?? ""} onValueChange={selecionarCidade}>
-                  <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
-                  <SelectContent>
-                    {cidades.map((c) => <SelectItem key={c.id} value={c.id}>{c.cidade}/{c.estado}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {p.cidadeId ? (
+                  <div className="flex h-9 items-center justify-between rounded-md border border-input bg-muted/50 px-3 text-sm text-muted-foreground">
+                    <span className="truncate">
+                      {(cidades.find((c) => c.id === p.cidadeId)?.cidade ?? p.cidade)}/{p.estado}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={limparCidade}
+                      className="ml-2 rounded p-1 hover:bg-background"
+                      title="Limpar cidade"
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <Select value="" onValueChange={selecionarCidade}>
+                    <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
+                    <SelectContent>
+                      {cidades.map((c) => <SelectItem key={c.id} value={c.id}>{c.cidade}/{c.estado}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <Field label="Cidade"><Input value={p.cidade} onChange={(e) => update("cidade", e.target.value)} /></Field>
               <Field label="Estado"><Input value={p.estado} onChange={(e) => update("estado", e.target.value)} /></Field>

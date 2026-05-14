@@ -442,10 +442,11 @@ function findProjetoLink(obraId: string, contratos: ContratoFull[]): { contratoI
 }
 
 function EditObraDialog({
-  obra, onClose, onSave, equipes,
-}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; equipes: typeof equipesSeed }) {
+  obra, onClose, onSave, onRetornar, equipes, fromComercial,
+}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; onRetornar?: (id: string) => void; equipes: typeof equipesSeed; fromComercial?: boolean }) {
   const [form, setForm] = useState<Partial<Obra>>({});
   const [confirming, setConfirming] = useState(false);
+  const [confirmRet, setConfirmRet] = useState(false);
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
@@ -455,9 +456,16 @@ function EditObraDialog({
 
   const f = { ...obra, ...form };
   const finalizing = f.status === "Finalizado";
-  const valid = !finalizing || (!!f.inicioReal && !!f.fimReal);
+  const isExecutando = f.status === "Executando instalação";
+  const equipeRequired = isExecutando;
+  const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
+  const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {
+    if (equipeMissing) {
+      toast.error("Equipe é obrigatória quando o status é Executando instalação");
+      return;
+    }
     if (finalizing && !valid) {
       toast.error("Preencha Início real e Fim real para finalizar");
       return;

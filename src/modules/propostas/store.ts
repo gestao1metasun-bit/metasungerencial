@@ -14,11 +14,60 @@ export type CidadeFV = {
   cidade: string;
   estado: string;
   concessionariaPadrao?: string;
-  irradiacaoMedia: number;        // kWh/m².dia
+  irradiacaoMedia: number;        // kWh/m².dia (média anual)
   mesMaiorIrradiacao?: string;
   mesMenorIrradiacao?: string;
-  grupoTarifarioPadrao?: string;  // B1/B2/B3/A4...
-  tarifaPadrao?: number;          // R$/kWh
+  grupoTarifarioPadrao?: string;
+  tarifaPadrao?: number;
+  // Base local de irradiação solar (cidades_irradiacao)
+  codigoIbge?: string;
+  latitude?: number;
+  longitude?: number;
+  irradiacaoJaneiro?: number;
+  irradiacaoFevereiro?: number;
+  irradiacaoMarco?: number;
+  irradiacaoAbril?: number;
+  irradiacaoMaio?: number;
+  irradiacaoJunho?: number;
+  irradiacaoJulho?: number;
+  irradiacaoAgosto?: number;
+  irradiacaoSetembro?: number;
+  irradiacaoOutubro?: number;
+  irradiacaoNovembro?: number;
+  irradiacaoDezembro?: number;
+  irradiacaoMaxima?: number;
+  irradiacaoMinima?: number;
+  fonteDados?: string;
+  dataUltimaAtualizacao?: string;
+  ativo?: boolean;
+};
+
+/** Tarifa de energia oficial (tarifas_energia). */
+export type TarifaEnergia = {
+  id: string;
+  concessionaria: string;
+  uf: string;
+  cidade?: string;
+  grupoTarifario?: string;       // B1/B2/B3/A4...
+  modalidadeTarifaria?: string;  // Convencional/Branca/Verde/Azul
+  subgrupo?: string;
+  tarifaKwh: number;
+  dataUltimaAtualizacao?: string;
+  ativo: boolean;
+};
+
+/** Histórico de atualizações da base de irradiação (historico_irradiacao). */
+export type HistoricoIrradiacao = {
+  id: string;
+  cidade: string;
+  uf: string;
+  dataAtualizacao: string;
+  fonteUsada?: string;
+  valorAnterior?: number;
+  valorNovo?: number;
+  variacaoEncontrada?: number;
+  usuarioResponsavel?: string;
+  observacao?: string;
 };
 
 export type ConcessionariaFV = {

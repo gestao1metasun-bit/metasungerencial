@@ -211,7 +211,6 @@ function GerenteDialog({ open, initial, bancos, onClose, onSave }: { open: boole
             </Select>
           </div>
           <div><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
-          <div><Label>Operações</Label><Input type="number" value={form.operacoes} onChange={(e) => setForm({ ...form, operacoes: Number(e.target.value) })} /></div>
           <div><Label>Status</Label>
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>

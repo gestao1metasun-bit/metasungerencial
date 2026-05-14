@@ -28,6 +28,7 @@ import {
   produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 
 export const Route = createFileRoute("/engenharia")({

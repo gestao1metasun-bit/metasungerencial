@@ -950,6 +950,7 @@ function CadastrarContratoTab({
   const validation = validateContratoCompleto(previewContrato, { requireComposicao: false });
 
   const submit = () => {
+    if (submitting) return; // bloqueio anti-duplo-clique
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
     if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF/CNPJ inválido"); return; }
     if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone inválido"); return; }
@@ -965,21 +966,33 @@ function CadastrarContratoTab({
       toast.error(`Não foi possível salvar. Preencha: ${validation.missing.slice(0, 5).join(", ")}${validation.missing.length > 5 ? "…" : ""}`);
       return;
     }
-    const novo = { ...previewContrato, status: "Em análise" };
-    upsertContrato(novo);
-    if (novo.possuiFinanciamento) {
-      addPendencia({
-        id: novo.id,
-        cliente: novo.cliente,
-        vendedor: novo.vendedor,
-        valor: novo.valor,
-        kwp: novo.kwp,
-        dataCadastro: novo.dataCadastro || today,
-        status: "Pendente",
-      });
-      toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
-    } else {
-      toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+    setSubmitting(true);
+    try {
+      const novoId = nextContratoId(contratos);
+      // Backend-guard: se já existir um contrato com este ID (corrida de duplo clique), aborta.
+      if (contratos.some((c) => c.id === novoId)) {
+        toast.error("Contrato já cadastrado. Aguarde antes de tentar novamente.");
+        return;
+      }
+      const novo = { ...previewContrato, id: novoId, status: "Em análise" };
+      upsertContrato(novo);
+      if (novo.possuiFinanciamento) {
+        addPendencia({
+          id: novo.id,
+          cliente: novo.cliente,
+          vendedor: novo.vendedor,
+          valor: novo.valor,
+          kwp: novo.kwp,
+          dataCadastro: novo.dataCadastro || today,
+          status: "Pendente",
+        });
+        toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
+      } else {
+        toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+      }
+    } finally {
+      // Libera após pequeno atraso para evitar duplo clique acidental; modal segue aberto até "Fechar".
+      setTimeout(() => setSubmitting(false), 800);
     }
   };
 

@@ -1934,12 +1934,31 @@ function ProjetoEditCard({
           {projeto.aprovado && (
             <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO · EDIÇÃO BLOQUEADA</span>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-            if (!window.confirm(`Remover ${projeto.id}?`)) return;
-            removeProjeto(contrato.id, projeto.id);
-            toast.success("Projeto removido");
-            onAfterRemove();
-          }}><Trash2 className="h-3.5 w-3.5" /></Button>
+          {(() => {
+            const isUltimo = projetos.length <= 1;
+            const bloqueado = projeto.aprovado || isUltimo;
+            const titulo = projeto.aprovado
+              ? "Projeto aprovado: remova primeiro de Financiamento, Estoque e Engenharia"
+              : isUltimo
+                ? "É necessário manter ao menos 1 projeto no contrato"
+                : "Remover projeto";
+            return (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive disabled:opacity-40"
+                disabled={bloqueado}
+                title={titulo}
+                onClick={() => {
+                  if (bloqueado) return;
+                  if (!window.confirm(`Remover ${projeto.id}?`)) return;
+                  removeProjeto(contrato.id, projeto.id);
+                  toast.success("Projeto removido");
+                  onAfterRemove();
+                }}
+              ><Trash2 className="h-3.5 w-3.5" /></Button>
+            );
+          })()}
         </div>
       </div>
       {projeto.aprovado && (

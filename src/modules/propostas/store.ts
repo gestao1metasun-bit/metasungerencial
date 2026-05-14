@@ -271,6 +271,8 @@ const SEED_TARIFAS: TarifaEnergia[] = [
   { id: "TAR-EQGO-B1", concessionaria: "EQUATORIAL GOIÁS", uf: "GO", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.92, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },
   { id: "TAR-NEDF-B1", concessionaria: "NEOENERGIA DF",    uf: "DF", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.95, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },
 ];
+
+const SEED_MODULOS: ModuloFV[] = [
   { id: "MOD-CS-620", marca: "CANADIAN", modelo: "TOPCON 620W", potenciaWp: 620, larguraM: 1.134, alturaM: 2.382, garantiaProduto: 12, garantiaPerformance: 30, ativo: true },
   { id: "MOD-JA-580", marca: "JA SOLAR", modelo: "DEEP BLUE 580W", potenciaWp: 580, larguraM: 1.134, alturaM: 2.278, garantiaProduto: 12, garantiaPerformance: 25, ativo: true },
   { id: "MOD-TR-555", marca: "TRINA", modelo: "VERTEX S+ 555W", potenciaWp: 555, larguraM: 1.096, alturaM: 2.279, garantiaProduto: 12, garantiaPerformance: 25, ativo: true },

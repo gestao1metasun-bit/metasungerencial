@@ -659,7 +659,8 @@ function recalcPrevisto(inicio: string, equipe: string, modulos: number): string
   if (!inicio) return "";
   const dias = diasPrevistos(equipe, modulos);
   const d = new Date(inicio + "T00:00:00");
-  d.setDate(d.getDate() + dias);
+  // Início conta como dia 1: finalização = início + (dias - 1)
+  d.setDate(d.getDate() + Math.max(0, dias - 1));
   return d.toISOString().slice(0,10);
 }
 

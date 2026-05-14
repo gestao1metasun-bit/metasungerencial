@@ -23,7 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { financiamentos as finSeed, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { useBancosAtivos } from "@/lib/bancos-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";

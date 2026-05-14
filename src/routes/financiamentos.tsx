@@ -93,7 +93,6 @@ function FinanciamentosPage() {
         </TabsContent>
         <TabsContent value="carteira" className="mt-5 space-y-5">
           <ContratosComercialFin />
-          <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
         <TabsContent value="bancos" className="mt-5"><BancosTab ops={ops} /></TabsContent>
@@ -108,14 +107,24 @@ function FinanciamentosPage() {
   );
 }
 
+const BANCOS_SIMULACAO = ["BASA", "SICREDI"];
+
 function PendenciasTab() {
-  const [pend, update, remove] = useFinPendencias();
+  const [pendAll, update, remove] = useFinPendencias();
+  const pend = pendAll.filter((p) => p.status === "Pendente");
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold">Pendências de Financiamento</div>
-          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial marcados como financiamento. Defina o banco para encaminhar.</div>
+          <div className="text-sm font-semibold flex items-center gap-2">
+            Pendências de Financiamento
+            {pend.length > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                {pend.length}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial aguardando encaminhamento. Ao encaminhar para BASA ou SICREDI, sai automaticamente desta aba.</div>
         </div>
         <div className="text-xs text-muted-foreground">{pend.length} pendência(s)</div>
       </div>
@@ -126,7 +135,7 @@ function PendenciasTab() {
           <TableHeader><TableRow className="hover:bg-transparent">
             <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
             <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
-            <TableHead>Data</TableHead><TableHead>Banco</TableHead><TableHead>Status</TableHead>
+            <TableHead>Data</TableHead><TableHead>Banco (simulação)</TableHead>
             <TableHead className="text-right">Ação</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -140,11 +149,10 @@ function PendenciasTab() {
                 <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
                 <TableCell>
                   <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
-                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecionar banco" /></SelectTrigger>
-                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="BASA ou SICREDI" /></SelectTrigger>
+                    <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell><StatusBadge status={p.status} /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="outline" disabled={!p.banco} onClick={() => { update(p.id, { status: "Encaminhado" }); toast.success(`Encaminhado para ${p.banco}`); }}>Encaminhar</Button>
@@ -697,15 +705,44 @@ function EditOpDialog({
 
 /* ---------------- Sem Contrato ---------------- */
 
+type FinAvulso = {
+  id: string; cliente: string; doc: string; banco: string;
+  gerente: string; valor: number; statusOp: string;
+};
+
 function SemContratoTab() {
+  const [lista, setLista] = useState<FinAvulso[]>(() =>
+    finsSemContrato.map((f) => ({
+      id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
+      gerente: f.gerente, valor: f.valor, statusOp: f.statusOp,
+    }))
+  );
+  const [openNovo, setOpenNovo] = useState(false);
+  const [vincularId, setVincularId] = useState<string | null>(null);
+
+  const [form, setForm] = useState<FinAvulso>({
+    id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise",
+  });
+
+  const reset = () => setForm({ id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise" });
+
+  const salvar = () => {
+    if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
+    const id = `FIN-AV-${Date.now().toString().slice(-5)}`;
+    setLista((prev) => [{ ...form, id, cliente: form.cliente.toUpperCase(), gerente: form.gerente.toUpperCase(), banco: form.banco.toUpperCase() }, ...prev]);
+    toast.success("Financiamento avulso cadastrado");
+    setOpenNovo(false);
+    reset();
+  };
+
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-border p-4">
         <div>
           <div className="text-sm font-semibold">Operações sem contrato vinculado</div>
-          <div className="text-xs text-muted-foreground">{finsSemContrato.length} operações · {fmtBRL(finsSemContrato.reduce((s, f) => s + f.valor, 0))}</div>
+          <div className="text-xs text-muted-foreground">{lista.length} operações · {fmtBRL(lista.reduce((s, f) => s + f.valor, 0))}</div>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:opacity-90">
+        <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenNovo(true)}>
           <Plus className="mr-2 h-4 w-4" /> Novo financiamento avulso
         </Button>
       </div>
@@ -717,7 +754,7 @@ function SemContratoTab() {
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {finsSemContrato.map((f) => (
+          {lista.map((f) => (
             <TableRow key={f.id}>
               <TableCell className="font-mono text-xs text-primary">{f.id}</TableCell>
               <TableCell className="font-medium">{f.cliente}</TableCell>
@@ -727,7 +764,7 @@ function SemContratoTab() {
               <TableCell className="text-right font-medium">{fmtBRL(f.valor)}</TableCell>
               <TableCell><StatusBadge status={f.statusOp} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => toast.success("Contrato vinculado")}>
+                <Button variant="ghost" size="sm" onClick={() => setVincularId(f.id)}>
                   <ArrowRight className="mr-1 h-3 w-3" /> Vincular contrato
                 </Button>
               </TableCell>
@@ -735,7 +772,90 @@ function SemContratoTab() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Novo financiamento avulso */}
+      <Dialog open={openNovo} onOpenChange={(v) => { setOpenNovo(v); if (!v) reset(); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Novo financiamento avulso</DialogTitle>
+            <DialogDescription>Cadastre uma operação sem contrato vinculado. Você poderá vincular a um contrato existente depois.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2"><Label>Cliente</Label>
+              <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} placeholder="Nome do cliente" />
+            </div>
+            <div><Label>CPF/CNPJ</Label>
+              <Input noUppercase value={form.doc} onChange={(e) => setForm({ ...form, doc: e.target.value })} placeholder="000.000.000-00" />
+            </div>
+            <div><Label>Banco (simulação)</Label>
+              <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Gerente</Label>
+              <Input value={form.gerente} onChange={(e) => setForm({ ...form, gerente: e.target.value })} />
+            </div>
+            <div><Label>Valor financiado</Label>
+              <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+            </div>
+            <div className="col-span-2"><Label>Status</Label>
+              <Select value={form.statusOp} onValueChange={(v) => setForm({ ...form, statusOp: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setOpenNovo(false); reset(); }}>Cancelar</Button>
+            <Button onClick={salvar}>Cadastrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vincular a contrato existente */}
+      <VincularContratoDialog
+        open={vincularId !== null}
+        onClose={() => setVincularId(null)}
+        onConfirm={(contratoId) => {
+          if (vincularId) {
+            setLista((prev) => prev.filter((x) => x.id !== vincularId));
+            toast.success(`Operação vinculada ao contrato ${contratoId}`);
+          }
+          setVincularId(null);
+        }}
+      />
     </Card>
+  );
+}
+
+function VincularContratoDialog({
+  open, onClose, onConfirm,
+}: { open: boolean; onClose: () => void; onConfirm: (id: string) => void }) {
+  const contratos = useContratos();
+  const [sel, setSel] = useState<string>("");
+  useEffect(() => { if (!open) setSel(""); }, [open]);
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Vincular a contrato existente</DialogTitle>
+          <DialogDescription>Selecione um contrato do Comercial.</DialogDescription>
+        </DialogHeader>
+        <Select value={sel} onValueChange={setSel}>
+          <SelectTrigger><SelectValue placeholder="Selecione um contrato" /></SelectTrigger>
+          <SelectContent>
+            {contratos.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.id} — {c.cliente}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button disabled={!sel} onClick={() => onConfirm(sel)}>Vincular</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

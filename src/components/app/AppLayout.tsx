@@ -6,7 +6,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
-import { useFinPendencias } from "@/lib/fin-pendencias";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
@@ -24,8 +23,6 @@ export function AppLayout() {
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-  const [pend] = useFinPendencias();
-  const finPendCount = pend.filter((p) => p.status === "Pendente").length;
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -61,11 +58,6 @@ export function AppLayout() {
                   >
                     <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
                     <span className="flex-1">{item.label}</span>
-                    {item.key === "financiamentos" && finPendCount > 0 && (
-                      <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"}`}>
-                        {finPendCount}
-                      </span>
-                    )}
                   </Link>
                 </li>
               );

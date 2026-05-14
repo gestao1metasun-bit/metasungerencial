@@ -1576,32 +1576,9 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                   </Select>
                 </div>
                 {f.possuiFinanciamento && (
-                  <>
-                    <div className="space-y-1.5"><Label>Banco / Linha</Label>
-                      <Select value={f.financiamentoBanco ?? "BASA"} onValueChange={(v) => setF({ ...f, financiamentoBanco: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
-                      <Input type="number" value={f.financiamentoValor ?? 0} onChange={(e) => setF({ ...f, financiamentoValor: Number(e.target.value) || 0 })} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Gerente responsável</Label>
-                      <Input value={f.financiamentoGerente ?? ""} onChange={(e) => setF({ ...f, financiamentoGerente: e.target.value })} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Status</Label>
-                      <Select value={f.financiamentoStatus ?? "Em análise"} onValueChange={(v) => setF({ ...f, financiamentoStatus: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado", "Finalizado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
-                      <Textarea rows={2} value={f.financiamentoObs ?? ""} onChange={(e) => setF({ ...f, financiamentoObs: e.target.value })} />
-                    </div>
-                    <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
-                      Contrato listado no módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
-                    </div>
-                  </>
+                  <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                    Contrato encaminhado para <b>Financiamentos &gt; Pendências</b>. Banco, gerente, valor e status são definidos pelo setor de Financiamentos.
+                  </div>
                 )}
               </div>
             </div>

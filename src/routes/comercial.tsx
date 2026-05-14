@@ -913,7 +913,7 @@ function CadastrarContratoTab({
       comissaoValor,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [],
-      composicaoPagto: composicao,
+      
       auditoria: [{
         id: `A-${Date.now()}`, data: new Date().toISOString(),
         usuario: "Operador", campo: "criação", de: "", para: novoId,

@@ -2428,6 +2428,20 @@ export function IndicadoresTab({
   const valorPorModulo = valorAss / Math.max(modulosTotal, 1);
   const valorPorInversor = valorAss / Math.max(Math.ceil(inversoresMedia * assinados.length), 1);
 
+  // === Indicadores adicionais (inspirados na planilha geral) ===
+  const kwhMedio = potenciaMedia * 106.7136512; // kWh médio (kWp médio × fator)
+  const parametroMedio = ticketKwp; // R$/kWp — parâmetro de venda
+  const valorMedioVenda = assinados.length > 0 ? valorAss / assinados.length : 0;
+  // Tempo médio (dias) — usa data do contrato como base
+  const hoje = new Date();
+  const diasDesde = (d: string) => Math.max(0, Math.round((hoje.getTime() - new Date(d).getTime()) / 86400000));
+  const tempoMedioAssinatura = assinados.length > 0
+    ? assinados.reduce((s, c) => s + Math.min(diasDesde(c.data), 30), 0) / assinados.length
+    : 0;
+  const tempoMedioPendente = pendentes.length > 0
+    ? pendentes.reduce((s, c) => s + diasDesde(c.data), 0) / pendentes.length
+    : 0;
+
   // Crescimento mensal/anual (com base em SERIE_ANOS)
   const ult2025 = SERIE_ANOS.reduce((s, m) => s + m["2025"], 0);
   const ult2024 = SERIE_ANOS.reduce((s, m) => s + m["2024"], 0);
@@ -2551,6 +2565,11 @@ export function IndicadoresTab({
           <KpiSmall icon={TrendingUp} label="Crescimento anual" value={`${cresAnual>=0?"+":""}${cresAnual.toFixed(1)}%`} positive={cresAnual>=0} />
           <KpiSmall icon={Activity} label="Vendido 2026 (real)" value={fmtBRL(ult2026Real)} />
           <KpiSmall icon={Clock} label="Tempo médio fechamento" value={`${tempoMedioGeral.toFixed(0)} dias`} />
+          <KpiSmall icon={Sun} label="kWh médio (mensal)" value={`${kwhMedio.toFixed(0)} kWh`} />
+          <KpiSmall icon={Gauge} label="Parâmetro médio (R$/kWp)" value={fmtBRL(parametroMedio)} />
+          <KpiSmall icon={DollarSign} label="Valor médio de venda" value={fmtBRL(valorMedioVenda)} />
+          <KpiSmall icon={Clock} label="Tempo médio p/ assinatura" value={`${tempoMedioAssinatura.toFixed(1)} dias`} />
+          <KpiSmall icon={Clock} label="Tempo médio pendente" value={`${tempoMedioPendente.toFixed(1)} dias`} />
         </div>
       </div>
 

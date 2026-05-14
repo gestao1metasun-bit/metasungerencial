@@ -122,32 +122,32 @@ export function OperacionalFinTable({
       case "statusLiberacao":
         return (
           <Select value={r.statusLiberacao || ""} onValueChange={(v) => onPatch(r.id, { statusLiberacao: v })}>
-            <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{liberacaoStatuses.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
           </Select>
         );
       case "gerente":
         return (
           <Select value={r.gerente || ""} onValueChange={(v) => onPatch(r.id, { gerente: v })}>
-            <SelectTrigger className="h-8 w-[150px]"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{gerentes.map((g) => <SelectItem key={g} value={g}>{g.toUpperCase()}</SelectItem>)}</SelectContent>
           </Select>
         );
       case "status":
         return (
           <Select value={r.status || ""} onValueChange={(v) => onPatch(r.id, { status: v })}>
-            <SelectTrigger className="h-8 w-[150px]">
+            <SelectTrigger className="h-7 w-[120px] text-xs">
               <span className="truncate"><StatusBadge status={r.status || "—"} /></span>
             </SelectTrigger>
             <SelectContent>{statuses.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
           </Select>
         );
       case "obs":
-        return <Input className="h-8 w-[200px]" value={r.obs} onChange={(e) => onPatch(r.id, { obs: e.target.value })} placeholder="—" />;
+        return <Input className="h-7 w-[140px] text-xs" value={r.obs} onChange={(e) => onPatch(r.id, { obs: e.target.value })} placeholder="—" />;
       case "liberacao":
-        return <Input className="h-8 w-[150px]" value={r.liberacao} onChange={(e) => onPatch(r.id, { liberacao: e.target.value })} placeholder="—" />;
+        return <Input className="h-7 w-[110px] text-xs" value={r.liberacao} onChange={(e) => onPatch(r.id, { liberacao: e.target.value })} placeholder="—" />;
       case "dataBaseLiberacao":
-        return <Input type="date" noUppercase className="h-8 w-[150px]" value={r.dataBaseLiberacao} onChange={(e) => onPatch(r.id, { dataBaseLiberacao: e.target.value })} />;
+        return <Input type="date" noUppercase className="h-7 w-[120px] text-xs" value={r.dataBaseLiberacao} onChange={(e) => onPatch(r.id, { dataBaseLiberacao: e.target.value })} />;
       case "diasPrazo": {
         const d = diasPrazo(r.dataBaseLiberacao);
         if (d === null) return <span className="text-muted-foreground">—</span>;
@@ -159,7 +159,8 @@ export function OperacionalFinTable({
 
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="text-xs [&_th]:h-8 [&_th]:px-2 [&_td]:py-1 [&_td]:px-2">
+
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {order.map((key) => {

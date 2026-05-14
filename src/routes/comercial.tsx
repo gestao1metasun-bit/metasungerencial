@@ -1212,13 +1212,18 @@ function CadastrarContratoTab({
               </div>
             )}
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={limpar}>Limpar</Button>
+              <Button variant="outline" onClick={() => setOpenForm(false)}>Fechar</Button>
+              <Button variant="outline" onClick={limpar} disabled={submitting}>Limpar</Button>
               <Button
                 className="bg-primary text-primary-foreground"
                 onClick={submit}
-                disabled={aprovacao || !validation.ok}
+                disabled={aprovacao || !validation.ok || submitting}
               >
-                <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+                {submitting ? (
+                  <><span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> Cadastrando…</>
+                ) : (
+                  <><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</>
+                )}
               </Button>
             </DialogFooter>
           </div>

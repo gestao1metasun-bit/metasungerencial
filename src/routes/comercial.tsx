@@ -2362,9 +2362,9 @@ const SERIE_ANOS: { mes: string; "2024": number; "2025": number; "2026": number;
   { mes: "Dez", "2024": 1580000, "2025": 2040000, "2026": 0, projecao: 2890000 },
 ];
 
-function IndicadoresTab({
+export function IndicadoresTab({
   contratos, vendedoresList, propostas, volume,
-}: { contratos: Contrato[]; vendedoresList: Vendedor[]; propostas: Proposta[]; volume: VolumeMes[] }) {
+}: { contratos: Contrato[]; vendedoresList: any[]; propostas: any[]; volume: VolumeMes[] }) {
   // === KPIs PRINCIPAIS ===
   const gerados = contratos;
   const assinados = contratos.filter((c) => c.status === "Assinado");

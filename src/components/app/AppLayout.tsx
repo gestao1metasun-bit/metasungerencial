@@ -58,11 +58,6 @@ export function AppLayout() {
                   >
                     <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
                     <span className="flex-1">{item.label}</span>
-                    {item.key === "financiamentos" && finPendCount > 0 && (
-                      <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"}`}>
-                        {finPendCount}
-                      </span>
-                    )}
                   </Link>
                 </li>
               );

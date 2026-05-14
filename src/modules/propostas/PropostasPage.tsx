@@ -372,23 +372,27 @@ function PropostaSheet({
             <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
           </SheetTitle>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => salvar()}>
-              <Save className="h-4 w-4" /> Salvar rascunho
+            <Button
+              size="sm"
+              className="gap-1 bg-success text-success-foreground hover:bg-success/90"
+              onClick={() => {
+                const errs = validarParaGeracao(p);
+                if (errs.length) { toast.error("Preencha: " + errs.join(", ")); return; }
+                const final: PropostaFV = {
+                  ...p,
+                  status: "GERADA",
+                  atualizadoEm: new Date().toISOString().slice(0, 10),
+                  custos: p.custos.length ? p.custos : gerarCustosSugeridos(p, custos),
+                };
+                upsertProposta(final);
+                toast.success(`${final.numero} gerada com sucesso.`);
+                onGerada?.();
+              }}
+              disabled={erros.length > 0}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
             </Button>
-            <Button size="sm" variant="outline" className="gap-1" onClick={regenerarCustos}>
-              <Calculator className="h-4 w-4" /> Recalcular custos
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => { upsertProposta(p); onVisualizar(p.id); }}>
-              <FileSearch className="h-4 w-4" /> Visualizar
-            </Button>
-            <Button size="sm" className="gap-1" onClick={() => salvar("ENVIADA")} disabled={erros.length > 0}>
-              <Send className="h-4 w-4" /> Enviar
-            </Button>
-            <Button size="sm" className="gap-1 bg-success text-success-foreground hover:bg-success/90"
-              onClick={aprovarEGerarContrato} disabled={erros.length > 0 || p.status === "APROVADA"}>
-              <CheckCircle2 className="h-4 w-4" /> Aprovar → contrato
-            </Button>
-            <Button size="sm" variant="ghost" className="gap-1 text-destructive" onClick={() => salvar("CANCELADA")}>
+            <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>
               <XCircle className="h-4 w-4" /> Cancelar
             </Button>
           </div>

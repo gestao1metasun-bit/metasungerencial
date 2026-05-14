@@ -16,6 +16,7 @@ import {
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
     case "APROVADA": return "default";
+    case "GERADA":
     case "ENVIADA": return "secondary";
     case "RECUSADA":
     case "VENCIDA":

@@ -112,7 +112,7 @@ export type LinhaCusto = {
 };
 
 export type StatusProposta =
-  | "RASCUNHO" | "ENVIADA" | "APROVADA"
+  | "RASCUNHO" | "GERADA" | "ENVIADA" | "APROVADA"
   | "RECUSADA" | "VENCIDA" | "CANCELADA";
 
 export type PropostaFV = {
@@ -131,6 +131,7 @@ export type PropostaFV = {
   clienteTelefone?: string;
   clienteEmail?: string;
   clienteEndereco?: string;
+  consultor?: string;
 
   // 2. Localização
   cidadeId?: string;
@@ -482,16 +483,21 @@ export function calcResultado(p: PropostaFV) {
   return { valorFinal, custoTotal, lucroBruto, margemPct, custoPorKwp, resultadoPorKwp };
 }
 
-/** Gera próximo número de proposta no padrão PR-AAAA-#### */
+/** Gera próximo número de proposta no padrão "PROPOSTA NNN/YYYY". */
 export function proximoNumeroProposta(lista: PropostaFV[]): string {
   const ano = new Date().getFullYear();
+  const reNovo = new RegExp(`^PROPOSTA\\s+(\\d+)\\/${ano}$`, "i");
+  const reAntigo = new RegExp(`^PR-${ano}-(\\d+)$`);
   const seqs = lista
-    .map((p) => p.numero)
-    .filter((n) => n?.startsWith(`PR-${ano}-`))
-    .map((n) => parseInt(n.split("-")[2] || "0", 10))
+    .map((p) => {
+      const n = (p.numero || "").trim();
+      const m1 = n.match(reNovo); if (m1) return parseInt(m1[1], 10);
+      const m2 = n.match(reAntigo); if (m2) return parseInt(m2[1], 10);
+      return NaN;
+    })
     .filter((n) => !isNaN(n));
   const next = (seqs.length ? Math.max(...seqs) : 0) + 1;
-  return `PR-${ano}-${String(next).padStart(4, "0")}`;
+  return `PROPOSTA ${String(next).padStart(3, "0")}/${ano}`;
 }
 
 /** Cria objeto de proposta vazio com defaults sensatos. */

@@ -569,17 +569,7 @@ function EditObraDialog({
             </Select>
           </div>
 
-          {/* Previsões automáticas (cronograma) */}
-          <div>
-            <Label>Previsão de início <span className="text-[10px] text-muted-foreground">(cronograma)</span></Label>
-            <Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} />
-          </div>
-          <div>
-            <Label className="flex items-center gap-1">Previsão de finalização <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
-            <Input type="date" value={previsaoFim} disabled readOnly className="bg-muted/40" />
-            <div className="mt-1 text-[10px] text-muted-foreground">Calculada por equipe + faixa de módulos</div>
-          </div>
-          <div className="hidden md:block" />
+          {/* Datas de previsão removidas — ver no Cronograma */}
 
           {/* Datas reais — somente ADMIN MASTER */}
           <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">

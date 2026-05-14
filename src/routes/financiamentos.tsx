@@ -1184,8 +1184,17 @@ function EditContratoFinDialog({
     financiamentoStatus: contrato.financiamentoStatus ?? "Em análise",
     financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
     financiamentoObs: contrato.financiamentoObs ?? "",
+    financiamentoDataBaseLiberacao: contrato.financiamentoDataBaseLiberacao ?? "",
     obs: contrato.obs ?? "",
   });
+  const previsaoDias = (() => {
+    if (!form.financiamentoDataBaseLiberacao) return "";
+    const d = new Date(form.financiamentoDataBaseLiberacao + "T00:00:00").getTime();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((d - today.getTime()) / 86400000);
+    const found = PREVISAO_FAIXAS.find((f) => f === dias);
+    return found ? String(found) : "";
+  })();
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl">

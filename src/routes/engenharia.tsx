@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   obras as obrasSeed, pendencias as pendenciasSeed, equipes as equipesSeed,
-  produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
+  produtividadeEquipe, diasPrevistos, registrarHistoricoExec, faixaDe,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";

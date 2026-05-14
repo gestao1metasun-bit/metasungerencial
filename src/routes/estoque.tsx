@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search, Pencil,
-  Boxes, TrendingDown,
+  Boxes, TrendingDown, RefreshCw,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -15,8 +15,11 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { estoqueItens, movimentacoesEstoque, fmtBRL } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/estoque")({
@@ -103,21 +106,63 @@ function DashboardEst() {
   );
 }
 
+type ItemEstoque = { id: string; produto: string; categoria: string; quantidade: number; minimo: number };
+
+
+const seedItens: ItemEstoque[] = estoqueItens.map((i) => ({
+  id: i.id, produto: i.produto, categoria: i.categoria, quantidade: i.quantidade, minimo: i.minimo,
+}));
+
 function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
+  const [items, setItems] = useState<ItemEstoque[]>(seedItens);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("todas");
-  const cats = Array.from(new Set(estoqueItens.map((i) => i.categoria)));
-  const list = estoqueItens
-    .filter((i) => !onlyAlerts || i.status !== "OK")
+  const [openNovo, setOpenNovo] = useState(false);
+  const [openAtt, setOpenAtt] = useState(false);
+  const [novo, setNovo] = useState({ produto: "", categoria: "", quantidade: "" });
+  const [att, setAtt] = useState({ id: "", quantidade: "" });
+
+  const cats = Array.from(new Set(items.map((i) => i.categoria)));
+  const list = items
+    .filter((i) => !onlyAlerts || i.quantidade <= i.minimo)
     .filter((i) => cat === "todas" || i.categoria === cat)
-    .filter((i) => [i.produto, i.marca, i.id].some((v) => v.toLowerCase().includes(q.toLowerCase())));
+    .filter((i) => [i.produto, i.id].some((v) => v.toLowerCase().includes(q.toLowerCase())));
+
+  const addItem = () => {
+    if (!novo.produto.trim() || !novo.categoria.trim()) {
+      toast.error("Informe nome e categoria");
+      return;
+    }
+    const id = `IT-${String(items.length + 1).padStart(3, "0")}`;
+    setItems([
+      { id, produto: novo.produto.toUpperCase(), categoria: novo.categoria.toUpperCase(), quantidade: Number(novo.quantidade) || 0, minimo: 0 },
+      ...items,
+    ]);
+    setNovo({ produto: "", categoria: "", quantidade: "" });
+    setOpenNovo(false);
+    toast.success("Item cadastrado");
+  };
+
+  const updateQtd = () => {
+    if (!att.id) { toast.error("Selecione o item"); return; }
+    setItems(items.map((i) => i.id === att.id ? { ...i, quantidade: Number(att.quantidade) || 0 } : i));
+    setAtt({ id: "", quantidade: "" });
+    setOpenAtt(false);
+    toast.success("Estoque atualizado");
+  };
+
+  const openAttFor = (id: string) => {
+    const it = items.find((x) => x.id === id);
+    setAtt({ id, quantidade: String(it?.quantidade ?? 0) });
+    setOpenAtt(true);
+  };
 
   return (
     <Card className="bg-[image:var(--gradient-card)]">
       <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
         <div className="relative flex-1 min-w-64">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar produto, marca ou ID" className="pl-9 bg-input/60" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item" className="pl-9 bg-input/60" />
         </div>
         <Select value={cat} onValueChange={setCat}>
           <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
@@ -126,43 +171,87 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
             {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
+        <Button variant="outline" onClick={() => setOpenAtt(true)}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Atualizar estoque
+        </Button>
+        <Button onClick={() => setOpenNovo(true)} className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
           <Plus className="mr-2 h-4 w-4" /> Novo item
         </Button>
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>ID</TableHead><TableHead>Produto</TableHead><TableHead>Categoria</TableHead>
-          <TableHead>Marca</TableHead>
-          <TableHead className="text-right">Qtd</TableHead>
-          <TableHead className="text-right">Mínimo</TableHead>
-          <TableHead className="text-right">Custo unit.</TableHead>
-          <TableHead className="text-right">Valor total</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Nome do item</TableHead>
+          <TableHead>Categoria</TableHead>
+          <TableHead className="text-right">Quantidade atual</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {list.map((i) => (
             <TableRow key={i.id}>
-              <TableCell className="font-mono text-xs text-primary">{i.id}</TableCell>
               <TableCell className="font-medium">{i.produto}</TableCell>
               <TableCell className="text-muted-foreground">{i.categoria}</TableCell>
-              <TableCell>{i.marca}</TableCell>
               <TableCell className="text-right font-medium">{i.quantidade}</TableCell>
-              <TableCell className="text-right text-muted-foreground">{i.minimo}</TableCell>
-              <TableCell className="text-right">{fmtBRL(i.custo)}</TableCell>
-              <TableCell className="text-right font-medium">{fmtBRL(i.quantidade * i.custo)}</TableCell>
-              <TableCell><StatusBadge status={i.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openAttFor(i.id)} title="Atualizar quantidade">
+                  <Pencil className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
           {list.length === 0 && (
-            <TableRow><TableCell colSpan={10} className="py-10 text-center text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+            <TableRow><TableCell colSpan={4} className="py-10 text-center text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
           )}
         </TableBody>
       </Table>
+
+      <Dialog open={openNovo} onOpenChange={setOpenNovo}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Novo item</DialogTitle></DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1">
+              <Label>Nome do item</Label>
+              <Input value={novo.produto} onChange={(e) => setNovo({ ...novo, produto: e.target.value })} placeholder="Ex.: PAINEL 550W" />
+            </div>
+            <div className="grid gap-1">
+              <Label>Categoria</Label>
+              <Input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} placeholder="Ex.: PAINÉIS" />
+            </div>
+            <div className="grid gap-1">
+              <Label>Quantidade</Label>
+              <Input type="number" min={0} value={novo.quantidade} onChange={(e) => setNovo({ ...novo, quantidade: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
+            <Button onClick={addItem}>Cadastrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openAtt} onOpenChange={setOpenAtt}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Atualizar estoque</DialogTitle></DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1">
+              <Label>Item</Label>
+              <Select value={att.id} onValueChange={(v) => { const it = items.find((x) => x.id === v); setAtt({ id: v, quantidade: String(it?.quantidade ?? 0) }); }}>
+                <SelectTrigger><SelectValue placeholder="Selecione o item" /></SelectTrigger>
+                <SelectContent>
+                  {items.map((i) => <SelectItem key={i.id} value={i.id}>{i.produto}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1">
+              <Label>Nova quantidade</Label>
+              <Input type="number" min={0} value={att.quantidade} onChange={(e) => setAtt({ ...att, quantidade: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenAtt(false)}>Cancelar</Button>
+            <Button onClick={updateQtd}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

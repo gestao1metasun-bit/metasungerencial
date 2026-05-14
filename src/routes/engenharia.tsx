@@ -318,8 +318,8 @@ function ObrasModal({
 /* ---------------- OBRAS ATIVAS ---------------- */
 
 function ObrasAtivasTab({
-  obras, setObras, equipes,
-}: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed }) {
+  obras, setObras, equipes, contratos,
+}: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed; contratos: ContratoFull[] }) {
   const [equipe, setEquipe] = useState("todas");
   const [editing, setEditing] = useState<Obra | null>(null);
 
@@ -335,8 +335,36 @@ function ObrasAtivasTab({
     const next = obras.map((o) => o.id === id ? { ...o, ...patch } : o);
     const target = next.find((o) => o.id === id)!;
     setObras(chainSchedule(next, target.equipe, target.status));
+    // Sincroniza com o projeto do Comercial (se aplicável)
+    const link = findProjetoLink(id, contratos);
+    if (link) {
+      updateProjeto(link.contratoId, id, {
+        modulos: target.modulos,
+        kwp: target.potencia,
+        inversor: target.inversor,
+        inv2: target.inv2,
+        inv3: target.inv3,
+        equipe: target.equipe,
+        inicio: target.inicio,
+        previsto: target.previsto,
+        status: target.status,
+        obs: target.obs,
+      });
+    }
     setEditing(null);
     toast.success("Obra atualizada");
+  };
+
+  const retornar = (id: string) => {
+    const link = findProjetoLink(id, contratos);
+    if (!link) {
+      toast.error("Esta obra não está vinculada a um projeto do Comercial");
+      return;
+    }
+    retornarProjetoComercial(link.contratoId, id);
+    setObras(obras.filter((o) => o.id !== id));
+    setEditing(null);
+    toast.success("Obra retornada ao Comercial para edição");
   };
 
   return (
@@ -349,7 +377,9 @@ function ObrasAtivasTab({
             {equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button className="ml-auto bg-primary text-primary-foreground hover:opacity-90"><Plus className="mr-2 h-4 w-4" /> Nova obra</Button>
+        <div className="ml-auto text-xs text-muted-foreground">
+          Toda obra é gerada automaticamente pelo Comercial após aprovação.
+        </div>
       </div>
       <div className="overflow-auto">
         <Table>
@@ -374,7 +404,7 @@ function ObrasAtivasTab({
                 <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
-                <TableCell className="text-xs">{o.equipe}</TableCell>
+                <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
                 <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
@@ -392,9 +422,23 @@ function ObrasAtivasTab({
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
         Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <Pencil className="inline h-3 w-3" /> editar.
       </div>
-      <EditObraDialog obra={editing} onClose={() => setEditing(null)} onSave={save} equipes={equipes} />
+      <EditObraDialog
+        obra={editing}
+        onClose={() => setEditing(null)}
+        onSave={save}
+        onRetornar={retornar}
+        equipes={equipes}
+        fromComercial={!!editing && !!findProjetoLink(editing.id, contratos)}
+      />
     </Card>
   );
+}
+
+function findProjetoLink(obraId: string, contratos: ContratoFull[]): { contratoId: string } | null {
+  for (const c of contratos) {
+    if ((c.projetos ?? []).some((p) => p.id === obraId)) return { contratoId: c.id };
+  }
+  return null;
 }
 
 function EditObraDialog({

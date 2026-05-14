@@ -536,11 +536,31 @@ function EditObraDialog({
             Ao salvar com status <strong>Finalizado</strong>, a obra será movida para a aba <strong>Finalizados</strong>. Início real e Fim real são obrigatórios.
           </div>
         )}
-        <DialogFooter>
+        <DialogFooter className="flex-wrap gap-2">
+          {fromComercial && onRetornar && (
+            <Button variant="outline" className="mr-auto border-warning/50 text-warning hover:bg-warning/10" onClick={() => setConfirmRet(true)}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Retornar para Comercial
+            </Button>
+          )}
           <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
           <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
+
+      <Dialog open={confirmRet} onOpenChange={setConfirmRet}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Retornar obra para o Comercial</DialogTitle>
+            <DialogDescription>
+              A obra de <strong>{obra.cliente}</strong> será removida da Engenharia e o projeto reabrirá no Comercial para edição.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRet(false)}>Cancelar</Button>
+            <Button className="bg-warning text-warning-foreground" onClick={() => { setConfirmRet(false); onRetornar?.(obra.id); }}>Sim, retornar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="max-w-md">

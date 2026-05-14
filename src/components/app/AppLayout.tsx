@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
-import { ROUTE_TABS } from "@/lib/route-tabs";
+import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
@@ -25,11 +25,8 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hash = useRouterState({ select: (s) => s.location.hash });
-  const currentTab = (() => {
-    const clean = hash?.startsWith("#") ? hash.slice(1) : hash ?? "";
-    const m = /(?:^|&)tab=([^&]+)/.exec(clean);
-    return m ? decodeURIComponent(m[1]) : "";
-  })();
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [currentTab, setCurrentTab] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
     const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
     return match?.to ?? null;
@@ -40,6 +37,14 @@ export function AppLayout() {
     const match = nav.find((n) => path === n.to || path.startsWith(n.to + "/"));
     if (match && ROUTE_TABS[match.to]) setOpenMenu(match.to);
   }, [path]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    setCurrentTab(parseHash(hash));
+  }, [hash]);
 
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
@@ -85,7 +90,7 @@ export function AppLayout() {
                   {sub && isOpen && (
                     <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
                       {sub.tabs.map((t) => {
-                        const tabActive = active && currentTab === t.value;
+                        const tabActive = active && isHydrated && currentTab === t.value;
                         return (
                           <li key={t.value}>
                             <Link

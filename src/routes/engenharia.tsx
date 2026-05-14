@@ -74,19 +74,31 @@ function addDaysISO(iso: string, days: number): string {
 
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
+  painelW: number;
   inicioReal?: string; fimReal?: string;
 };
 
+const PAINEL_W_DEFAULT = 550;
+const PAINEIS_W_OPCOES = [450, 500, 540, 550, 565, 575, 585, 600, 610, 620, 630, 650, 665, 700];
+
+function calcKwp(modulos: number, painelW: number): number {
+  return Math.round(((modulos || 0) * (painelW || 0)) / 1000 * 100) / 100;
+}
+
 function enrichObras(): Obra[] {
-  return obrasSeed.map((o, i) => ({
-    ...o,
-    ordem: i + 1,
-    inv2: "",
-    inv3: "",
-    telhadoTipo: o.telhado === "Cerâmico" ? "Cerâmica" : o.telhado === "Metálico" ? "Metálico" : o.telhado === "Fibrocimento" ? "Fibrocimento" : "Outro",
-    inicioReal: o.status === "Finalizado" ? o.inicio : undefined,
-    fimReal: o.status === "Finalizado" ? (o.finalizacao ?? undefined) : undefined,
-  }));
+  return obrasSeed.map((o, i) => {
+    const painelW = o.modulos > 0 ? Math.round((o.potencia * 1000) / o.modulos / 5) * 5 : PAINEL_W_DEFAULT;
+    return {
+      ...o,
+      ordem: i + 1,
+      inv2: "",
+      inv3: "",
+      painelW: painelW || PAINEL_W_DEFAULT,
+      telhadoTipo: o.telhado === "Cerâmico" ? "Cerâmica" : o.telhado === "Metálico" ? "Metálico" : o.telhado === "Fibrocimento" ? "Fibrocimento" : "Outro",
+      inicioReal: o.status === "Finalizado" ? o.inicio : undefined,
+      fimReal: o.status === "Finalizado" ? (o.finalizacao ?? undefined) : undefined,
+    };
+  });
 }
 
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
@@ -108,6 +120,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     ordem,
     inv2: p.inv2 || "",
     inv3: p.inv3 || "",
+    painelW: p.potenciaModuloW || PAINEL_W_DEFAULT,
     telhadoTipo: "Outro",
   };
 }

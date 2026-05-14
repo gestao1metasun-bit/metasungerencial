@@ -2034,27 +2034,15 @@ function ProjetoEditCard({
               if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP))
                 faltam.push("ao menos 1 inversor");
               if (faltam.length) { toast.error(`Não é possível aprovar. Faltam: ${faltam.join(", ")}`); return; }
-              const comp = composicaoSomaOk(contrato);
-              if (!comp.ok) {
-                toast.error("Não é possível aprovar. O contrato/projeto ainda não possui orçamento/composição financeira válida.");
-                return;
-              }
               const valorContrato = Number(contrato.valor) || 0;
               const somaProjs = (contrato.projetos ?? []).reduce((s, x) => s + (Number(x.valor) || 0), 0);
               if (valorContrato > 0 && somaProjs - valorContrato > 0.5) {
                 toast.error(`Projetos não conciliados (soma ${fmtBRL(somaProjs)} ≠ contrato ${fmtBRL(valorContrato)}).`);
                 return;
               }
-              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nSerá gerado automaticamente:\n• Contas a receber proporcionais\n• Card na Engenharia\n\nApós aprovado, a edição será bloqueada — exigindo remoção dos vínculos para alterar.`)) return;
+              if (!window.confirm(`Aprovar projeto ${projeto.id}?\n\nO projeto será liberado para a Engenharia.\nApós aprovado, a edição será bloqueada.`)) return;
               aprovarProjeto(contrato.id, projeto.id);
-              const novos = calcularLancamentosProjeto(contrato, projeto);
-              if (novos.length > 0) appendLancamentos(novos as any);
-              updateProjeto(contrato.id, projeto.id, {
-                financeiroGerado: true,
-                dataGeracaoFinanceiro: new Date().toISOString(),
-                usuarioGeracao: "Operador",
-              });
-              toast.success(`Projeto ${projeto.id} aprovado · ${novos.length} lançamento(s) no Financeiro · enviado à Engenharia`);
+              toast.success(`Projeto ${projeto.id} aprovado · enviado à Engenharia`);
             }}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Aprovar projeto</Button>
           )}
           {projeto.aprovado && (

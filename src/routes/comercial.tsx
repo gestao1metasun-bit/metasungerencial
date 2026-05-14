@@ -1505,33 +1505,13 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       clienteFull: cli,
     });
 
-    // Se aprovou agora, libera projetos para Engenharia e gera financeiro
+    // Se aprovou agora, libera projetos para Engenharia (sem geração financeira automática)
     if (aprovouAgora) {
       const projs = contrato.projetos ?? [];
-      const novosLanc: import("@/lib/financeiro-store").Lancamento[] = [];
       projs.forEach((p) => {
-        if (!p.financeiroGerado) {
-          updateProjeto(contrato.id, p.id, { enviadoEngenharia: true, financeiroGerado: true });
-          const parc = p.parcelasPagto ?? [];
-          parc.forEach((pg, pi) => {
-            if (pg.valor <= 0) return;
-            novosLanc.push({
-              id: `L-REC-${Date.now()}-${p.id}-${pi}`,
-              data: pg.dataVencimento,
-              descricao: `Parc ${pi + 1}/${parc.length} · ${pg.formaPagamento} · ${p.id} · ${contrato.cliente}`,
-              tipo: "Entrada", valor: pg.valor, camada: "A realizar",
-              natureza: "Recebimento de cliente", centroCusto: "Comercial",
-              obra: p.id, empresa: "Meta Sun", filial: "Manaus",
-              contrato: contrato.id, cliente: contrato.cliente,
-              formaPagamento: pg.formaPagamento,
-              parcelaLabel: `${pi + 1}/${parc.length}`,
-              competencia: pg.competencia, dataEmissao: pg.dataEmissao,
-            });
-          });
-        }
+        if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
       });
-      if (novosLanc.length > 0) appendLancamentos(novosLanc);
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia${novosLanc.length ? ` · ${novosLanc.length} parcela(s) no Financeiro` : ""}`);
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
     }

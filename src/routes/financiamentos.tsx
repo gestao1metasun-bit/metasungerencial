@@ -108,9 +108,8 @@ function FinanciamentosPage() {
   );
 }
 
-const BANCOS_SIMULACAO = ["BASA", "SICREDI"];
-
 function PendenciasTab() {
+  const bancos = useBancosAtivos();
   const [pendAll, update, remove] = useFinPendencias();
   const pend = pendAll.filter((p) => p.status === "Pendente");
   return (

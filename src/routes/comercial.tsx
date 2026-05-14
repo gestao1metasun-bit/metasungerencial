@@ -2435,9 +2435,15 @@ export function IndicadoresTab({
   // Tempo médio (dias) — usa data do contrato como base
   const hoje = new Date();
   const diasDesde = (d: string) => Math.max(0, Math.round((hoje.getTime() - new Date(d).getTime()) / 86400000));
-  const tempoMedioAssinatura = assinados.length > 0
-    ? assinados.reduce((s, c) => s + Math.min(diasDesde(c.data), 30), 0) / assinados.length
-    : 0;
+  const assComData = assinados.filter((c: any) => c.dataAssinatura);
+  const tempoMedioAssinatura = assComData.length > 0
+    ? assComData.reduce((s, c: any) => {
+        const dias = Math.max(0, Math.round((new Date(c.dataAssinatura).getTime() - new Date(c.data).getTime()) / 86400000));
+        return s + dias;
+      }, 0) / assComData.length
+    : (assinados.length > 0
+        ? assinados.reduce((s, c) => s + Math.min(diasDesde(c.data), 30), 0) / assinados.length
+        : 0);
   const tempoMedioPendente = pendentes.length > 0
     ? pendentes.reduce((s, c) => s + diasDesde(c.data), 0) / pendentes.length
     : 0;

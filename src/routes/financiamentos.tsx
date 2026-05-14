@@ -714,6 +714,7 @@ type FinAvulso = {
 };
 
 function SemContratoTab() {
+  const bancos = useBancosAtivos();
   const [lista, setLista] = useState<FinAvulso[]>(() =>
     finsSemContrato.map((f) => ({
       id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,

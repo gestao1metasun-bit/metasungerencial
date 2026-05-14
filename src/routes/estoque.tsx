@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search,
-  Boxes, TrendingDown, RefreshCw,
+  Boxes, TrendingDown, RefreshCw, Truck, ChevronDown, ChevronRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { estoqueItens, movimentacoesEstoque, fmtBRL } from "@/lib/mock-data";
+import { estoqueItens, movimentacoesEstoque, fmtBRL, obras as obrasSeed } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),
@@ -37,13 +37,11 @@ function EstoquePage() {
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="itens">Itens</TabsTrigger>
-          <TabsTrigger value="mov">Movimentações</TabsTrigger>
-          <TabsTrigger value="alertas">Alertas</TabsTrigger>
+          <TabsTrigger value="entregas">Entregas Realizadas</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEst /></TabsContent>
         <TabsContent value="itens" className="mt-5"><ItensTab /></TabsContent>
-        <TabsContent value="mov" className="mt-5"><MovTab /></TabsContent>
-        <TabsContent value="alertas" className="mt-5"><ItensTab onlyAlerts /></TabsContent>
+        <TabsContent value="entregas" className="mt-5"><EntregasTab /></TabsContent>
       </Tabs>
     </>
   );
@@ -309,6 +307,160 @@ function MovTab() {
           ))}
         </TableBody>
       </Table>
+    </Card>
+  );
+}
+
+// ===================== Entregas Realizadas =====================
+const STATUS_PRIO: Record<string, number> = {
+  "Executando instalação": 1,
+  "Aguardando instalação": 2,
+  "Em projeto/aprovação": 3,
+  "Standby": 4,
+  "Finalizado": 5,
+};
+
+const MATERIAIS = [
+  { key: "hook", label: "Hook", calc: (m: number) => m * 2 },
+  { key: "trilho", label: "Trilho", calc: (m: number) => m },
+  { key: "minitrilho", label: "Minitrilho", calc: (m: number) => Math.round(m * 2.2) },
+  { key: "solo", label: "Solo", calc: (m: number) => Math.round(m / 4) },
+  { key: "intermediario", label: "Intermediário", calc: (m: number) => m * 2 },
+  { key: "final", label: "Final", calc: (m: number) => m },
+  { key: "cabo", label: "Cabo (m)", calc: (m: number) => Math.round(m * 3.5) },
+  { key: "mc4", label: "MC4", calc: (m: number) => Math.ceil(m / 8) },
+] as const;
+
+function fmtDateBR(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const [y, mo, d] = iso.split("-");
+  return d && mo && y ? `${d}/${mo}/${y}` : iso;
+}
+
+function EntregasTab() {
+  const [realizado, setRealizado] = useState<Record<string, Record<string, string>>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const rows = [...obrasSeed].sort((a, b) => {
+    const pa = STATUS_PRIO[a.status] ?? 99;
+    const pb = STATUS_PRIO[b.status] ?? 99;
+    if (pa !== pb) return pa - pb;
+    if (!a.inicio && !b.inicio) return 0;
+    if (!a.inicio) return 1;
+    if (!b.inicio) return -1;
+    return a.inicio.localeCompare(b.inicio);
+  });
+
+  const setReal = (obraId: string, key: string, v: string) =>
+    setRealizado((s) => ({ ...s, [obraId]: { ...(s[obraId] ?? {}), [key]: v } }));
+
+  const toggle = (id: string) => setExpanded((s) => ({ ...s, [id]: !s[id] }));
+
+  const totalSugerido = (mods: number) => MATERIAIS.reduce((s, m) => s + m.calc(mods), 0);
+  const totalRealizado = (id: string) =>
+    MATERIAIS.reduce((s, m) => s + (Number(realizado[id]?.[m.key]) || 0), 0);
+
+  return (
+    <Card className="bg-[image:var(--gradient-card)]">
+      <div className="flex items-center gap-2 border-b border-border p-4">
+        <Truck className="h-4 w-4 text-primary" />
+        <div className="text-sm font-semibold">Entregas Realizadas</div>
+        <div className="ml-auto text-xs text-muted-foreground">
+          Fonte: Engenharia &gt; Obras Ativas · {rows.length} obra(s)
+        </div>
+      </div>
+      <div className="overflow-auto">
+        <Table>
+          <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead className="w-8" />
+            <TableHead>Status</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead className="text-right">Módulos</TableHead>
+            <TableHead className="text-right">kWp</TableHead>
+            <TableHead>INV1</TableHead>
+            <TableHead>INV2</TableHead>
+            <TableHead>INV3</TableHead>
+            <TableHead>Telhado</TableHead>
+            <TableHead>Equipe</TableHead>
+            <TableHead>Previsão inicial</TableHead>
+            <TableHead className="text-right">A entregar</TableHead>
+            <TableHead className="text-right">Entregue/Realizado</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {rows.map((o) => {
+              const isOpen = !!expanded[o.id];
+              const sug = totalSugerido(o.modulos);
+              const real = totalRealizado(o.id);
+              return (
+                <Fragment key={o.id}>
+                  <TableRow key={o.id} className="cursor-pointer" onClick={() => toggle(o.id)}>
+                    <TableCell>
+                      {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </TableCell>
+                    <TableCell><StatusBadge status={o.status} /></TableCell>
+                    <TableCell className="font-medium">{o.cliente}</TableCell>
+                    <TableCell className="text-right">{o.modulos}</TableCell>
+                    <TableCell className="text-right">{o.potencia.toFixed(2)}</TableCell>
+                    <TableCell className="text-muted-foreground">{o.inversor || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">—</TableCell>
+                    <TableCell className="text-muted-foreground">—</TableCell>
+                    <TableCell className="text-muted-foreground">{o.telhado}</TableCell>
+                    <TableCell className="text-muted-foreground">{o.equipe || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{fmtDateBR(o.inicio)}</TableCell>
+                    <TableCell className="text-right font-medium">{sug}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      <span className={real >= sug ? "text-success" : real > 0 ? "text-warning" : "text-muted-foreground"}>
+                        {real}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                  {isOpen && (
+                    <TableRow key={`${o.id}-det`} className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell />
+                      <TableCell colSpan={12} className="py-3">
+                        <div className="rounded-md border border-border bg-background/50 p-3">
+                          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                            Materiais — {o.cliente} · {o.modulos} módulos
+                          </div>
+                          <Table>
+                            <TableHeader><TableRow className="hover:bg-transparent">
+                              <TableHead>Material</TableHead>
+                              <TableHead className="text-right">Sugerido</TableHead>
+                              <TableHead className="text-right w-40">Realizado</TableHead>
+                            </TableRow></TableHeader>
+                            <TableBody>
+                              {MATERIAIS.map((m) => {
+                                const s = m.calc(o.modulos);
+                                return (
+                                  <TableRow key={m.key}>
+                                    <TableCell className="font-medium">{m.label}</TableCell>
+                                    <TableCell className="text-right">{s}</TableCell>
+                                    <TableCell className="text-right">
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        value={realizado[o.id]?.[m.key] ?? ""}
+                                        placeholder={String(s)}
+                                        onChange={(e) => setReal(o.id, m.key, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-8 text-right"
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </Card>
   );
 }

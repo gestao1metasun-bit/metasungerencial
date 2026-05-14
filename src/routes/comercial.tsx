@@ -879,6 +879,7 @@ function CadastrarContratoTab({
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
       pagamento: "", banco: "", obs: "",
+      possuiFinanciamento: "Não", finBanco: "BASA", finValor: "", finGerente: "", finStatus: "Em análise", finObs: "",
     });
     setCli(emptyCliente);
     setClienteId("");

@@ -69,7 +69,7 @@ export function AppLayout() {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav ref={navRef} className="flex-1 overflow-y-auto px-3 py-4">
           <div className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Menu
           </div>
@@ -78,9 +78,9 @@ export function AppLayout() {
               const active = path === item.to || path.startsWith(item.to + "/");
               const Icon = item.icon;
               const sub = ROUTE_TABS[item.to];
-              const isOpen = expanded[item.to] ?? active;
+              const isOpen = openMenu === item.to;
               return (
-                <li key={item.to} className="group/item relative">
+                <li key={item.to} className="relative">
                   <div
                     className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition ${
                       active
@@ -88,63 +88,54 @@ export function AppLayout() {
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     }`}
                   >
-                    <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
-                      <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
-                      <span className="flex-1 truncate">{item.label}</span>
-                    </Link>
-                    {sub && (
+                    {sub ? (
                       <button
                         type="button"
-                        aria-label={isOpen ? "Recolher" : "Expandir"}
                         onClick={(e) => {
                           e.preventDefault();
-                          e.stopPropagation();
-                          setExpanded((s) => ({ ...s, [item.to]: !isOpen }));
+                          setOpenMenu((cur) => (cur === item.to ? null : item.to));
                         }}
-                        className={`grid h-7 w-7 place-items-center rounded hover:bg-black/10 ${active ? "text-primary-foreground" : "text-muted-foreground"}`}
+                        className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0 text-left"
                       >
-                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
                       </button>
+                    ) : (
+                      <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
+                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
+                        <span className="flex-1 truncate">{item.label}</span>
+                      </Link>
                     )}
                   </div>
 
-                  {/* Inline expanded list (click chevron) */}
+                  {/* Flyout lateral (abre para a direita ao clicar no item) */}
                   {sub && isOpen && (
-                    <ul className="mt-1 ml-7 space-y-0.5 border-l border-sidebar-border pl-2">
-                      {sub.tabs.map((t) => {
-                        const tabActive = active && currentTab === t.value;
-                        return (
-                          <li key={t.value}>
-                            <Link
-                              to={item.to}
-                              hash={`tab=${t.value}`}
-                              className={`block rounded px-2 py-1.5 text-xs transition ${
-                                tabActive
-                                  ? "bg-primary/15 text-primary font-medium"
-                                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                              }`}
-                            >
-                              {t.label}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-
-                  {/* Hover flyout (keeps quick access) */}
-                  {sub && (
-                    <div className="invisible opacity-0 group-hover/item:visible group-hover/item:opacity-100 transition-opacity absolute left-full top-0 z-50 ml-1 min-w-[240px] rounded-md border border-border bg-popover p-1 shadow-lg">
-                      {sub.tabs.map((t) => (
-                        <Link
-                          key={t.value}
-                          to={item.to}
-                          hash={`tab=${t.value}`}
-                          className="block rounded px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                        >
-                          {t.label}
-                        </Link>
-                      ))}
+                    <div className="absolute left-full top-0 z-50 ml-2 w-64 rounded-md border border-border bg-popover p-2 shadow-[var(--shadow-elegant)]">
+                      <div className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        {item.label}
+                      </div>
+                      <ul className="space-y-0.5">
+                        {sub.tabs.map((t) => {
+                          const tabActive = active && currentTab === t.value;
+                          return (
+                            <li key={t.value}>
+                              <Link
+                                to={item.to}
+                                hash={`tab=${t.value}`}
+                                onClick={() => setOpenMenu(null)}
+                                className={`block rounded px-3 py-2 text-sm transition ${
+                                  tabActive
+                                    ? "bg-primary/15 text-primary font-medium"
+                                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                                }`}
+                              >
+                                {t.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     </div>
                   )}
                 </li>

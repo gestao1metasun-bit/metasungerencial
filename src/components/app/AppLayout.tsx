@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package,
   Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
 } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";

@@ -392,7 +392,7 @@ function EntregasTab() {
               const sug = totalSugerido(o.modulos);
               const real = totalRealizado(o.id);
               return (
-                <>
+                <Fragment key={o.id}>
                   <TableRow key={o.id} className="cursor-pointer" onClick={() => toggle(o.id)}>
                     <TableCell>
                       {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}

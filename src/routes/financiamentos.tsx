@@ -107,14 +107,24 @@ function FinanciamentosPage() {
   );
 }
 
+const BANCOS_SIMULACAO = ["BASA", "SICREDI"];
+
 function PendenciasTab() {
-  const [pend, update, remove] = useFinPendencias();
+  const [pendAll, update, remove] = useFinPendencias();
+  const pend = pendAll.filter((p) => p.status === "Pendente");
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold">Pendências de Financiamento</div>
-          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial marcados como financiamento. Defina o banco para encaminhar.</div>
+          <div className="text-sm font-semibold flex items-center gap-2">
+            Pendências de Financiamento
+            {pend.length > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                {pend.length}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial aguardando encaminhamento. Ao encaminhar para BASA ou SICREDI, sai automaticamente desta aba.</div>
         </div>
         <div className="text-xs text-muted-foreground">{pend.length} pendência(s)</div>
       </div>
@@ -125,7 +135,7 @@ function PendenciasTab() {
           <TableHeader><TableRow className="hover:bg-transparent">
             <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
             <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
-            <TableHead>Data</TableHead><TableHead>Banco</TableHead><TableHead>Status</TableHead>
+            <TableHead>Data</TableHead><TableHead>Banco (simulação)</TableHead>
             <TableHead className="text-right">Ação</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -139,11 +149,10 @@ function PendenciasTab() {
                 <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
                 <TableCell>
                   <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
-                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecionar banco" /></SelectTrigger>
-                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="BASA ou SICREDI" /></SelectTrigger>
+                    <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell><StatusBadge status={p.status} /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="outline" disabled={!p.banco} onClick={() => { update(p.id, { status: "Encaminhado" }); toast.success(`Encaminhado para ${p.banco}`); }}>Encaminhar</Button>

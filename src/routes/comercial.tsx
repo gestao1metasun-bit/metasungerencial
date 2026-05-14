@@ -836,7 +836,7 @@ function CadastrarContratoTab({
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [clienteId, setClienteId] = useState<string>("");
-  const [composicao, setComposicao] = useState<ComposicaoLinha[]>([]);
+  
   const [cepLoading, setCepLoading] = useState(false);
 
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));

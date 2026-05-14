@@ -92,7 +92,8 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
   const [val, setVal] = useState<string>(fallback);
 
   useEffect(() => {
-    setVal(parseHash(hash) || fallback);
+    const browserHash = typeof window !== "undefined" ? window.location.hash : "";
+    setVal(parseHash(browserHash || hash) || fallback);
   }, [hash, fallback]);
 
   const update = (v: string) => {

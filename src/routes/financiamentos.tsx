@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Search, Pencil, CheckCircle2, Copy, Banknote, Building2,
+  Plus, Search, SquarePen, CheckCircle2, Copy, Banknote, Building2,
   TrendingUp, Clock, AlertCircle, FileText, Hourglass, XCircle,
   DollarSign, Users, Target, Calendar, ArrowRight,
 } from "lucide-react";
@@ -555,7 +555,7 @@ function Carteira({
                 </TableCell>
                 <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><SquarePen className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => toast.success("Operação replicada")}><Copy className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Finalizar" onClick={() => { updateOp(o.id, { statusOp: "Finalizado" }); toast.success("Operação finalizada"); }}><CheckCircle2 className="h-4 w-4" /></Button>
                 </TableCell>

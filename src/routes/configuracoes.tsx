@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Users, Plus, Trash2, Pencil } from "lucide-react";
+import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Users, Plus, Trash2, SquarePen } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -160,7 +160,7 @@ function PerfisTab() {
                   <TableCell><span className="font-mono text-xs">{p.isAdminMaster ? "todos" : `${totalMods}/${MODULES.length}`}</span></TableCell>
                   <TableCell>{p.ativo ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</TableCell>
                   <TableCell className="text-right">
-                    <PerfilEditor perfil={p} trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>} />
+                    <PerfilEditor perfil={p} trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><SquarePen className="h-3.5 w-3.5" /></Button>} />
                     {!p.isAdminMaster && (
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
                         onClick={() => { if (window.confirm(`Remover perfil ${p.nome}?`)) { removePerfil(p.id); toast.success("Perfil removido"); } }}>
@@ -327,7 +327,7 @@ function UsuariosTab() {
                       : <Button size="sm" variant="outline" onClick={() => { setUsuarioAtual(u.id); toast.success(`Sessão alterada para ${u.nome}`); }}>Entrar como</Button>}
                   </TableCell>
                   <TableCell className="text-right">
-                    <UsuarioEditor usuario={u} trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>} />
+                    <UsuarioEditor usuario={u} trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><SquarePen className="h-3.5 w-3.5" /></Button>} />
                     <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
                       onClick={() => { if (window.confirm(`Remover usuário ${u.nome}?`)) { removeUsuario(u.id); toast.success("Usuário removido"); } }}>
                       <Trash2 className="h-3.5 w-3.5" />

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useContratos, retornarProjetoComercial, updateProjeto, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
-  HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
+  HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
 } from "lucide-react";
 import {
@@ -494,7 +494,7 @@ function ObrasAtivasTab({
                 <TableCell><StatusBadge status={o.status} /></TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(o)}>
-                    <Pencil className="h-3.5 w-3.5" />
+                    <SquarePen className="h-3.5 w-3.5" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -504,7 +504,7 @@ function ObrasAtivasTab({
         </Table>
       </div>
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
-        Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <Pencil className="inline h-3 w-3" /> editar.
+        Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <SquarePen className="inline h-3 w-3" /> editar.
       </div>
       <EditObraDialog
         obra={editing}
@@ -1008,7 +1008,7 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
             <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
             <TableCell className="text-right">
               <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => onEdit(p)}>
-                <Pencil className="h-3.5 w-3.5" />
+                <SquarePen className="h-3.5 w-3.5" />
               </Button>
             </TableCell>
           </TableRow>

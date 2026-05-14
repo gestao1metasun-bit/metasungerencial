@@ -871,7 +871,7 @@ function CronogramaCard({ o, tone, first, last, onMove, onChangeInicio }: { o: O
             <div className="text-muted-foreground">Previsão início</div>
             <Input type="date" value={o.inicio || ""} onChange={(e) => onChangeInicio(o.id, e.target.value)} className="h-7 text-[11px] py-0" />
             <div className="text-muted-foreground">Previsão finalização</div>
-            <div className="text-right font-semibold text-foreground">{fmtBR(o.previsto)}</div>
+            <Input type="date" value={o.previsto || ""} readOnly disabled className="h-7 text-[11px] py-0 disabled:opacity-100 disabled:cursor-not-allowed font-semibold" title="Calculada automaticamente a partir do início e do prazo estimado" />
             <div className="text-muted-foreground">Prazo estimado</div>
             <div className="text-right">{prazo} {prazo === 1 ? "dia" : "dias"}</div>
           </div>

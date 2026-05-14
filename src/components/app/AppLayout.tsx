@@ -5,17 +5,18 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
-  { to: "/comercial", label: "Comercial", icon: Briefcase },
-  { to: "/financiamentos", label: "Financiamentos", icon: Banknote },
-  { to: "/engenharia", label: "Engenharia", icon: HardHat },
-  { to: "/estoque", label: "Estoque", icon: Package },
-  { to: "/cadastros", label: "Cadastros", icon: Database },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
-] as const;
+const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
+  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
+  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
+  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
+  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
+  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
+  { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes" },
+];
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });

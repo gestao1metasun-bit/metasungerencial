@@ -714,6 +714,12 @@ function EditOpDialog({
 type FinAvulso = {
   id: string; cliente: string; doc: string; banco: string;
   gerente: string; valor: number; statusOp: string;
+  vendedor?: string;
+  envio?: string;
+  obs?: string;
+  liberacao?: string;
+  statusLiberacao?: string;
+  dataBaseLiberacao?: string;
 };
 
 function SemContratoTab() {
@@ -744,45 +750,63 @@ function SemContratoTab() {
     reset();
   };
 
+  const rows: OpRow[] = lista.map((f) => ({
+    id: f.id,
+    ordem: f.id,
+    contratante: f.cliente,
+    vendedor: f.vendedor || "",
+    valorContrato: f.valor,
+    pfpj: pfPjFromDoc(f.doc),
+    envio: f.envio || "",
+    cpfCnpj: f.doc,
+    valorFinanciado: f.valor,
+    statusLiberacao: f.statusLiberacao || "",
+    gerente: f.gerente,
+    status: f.statusOp,
+    obs: f.obs || "",
+    liberacao: f.liberacao || "",
+    dataBaseLiberacao: f.dataBaseLiberacao || "",
+  }));
+
+  const handlePatch = (id: string, patch: Partial<OpRow>) => {
+    setLista((prev) => prev.map((f) => {
+      if (f.id !== id) return f;
+      return {
+        ...f,
+        statusLiberacao: patch.statusLiberacao ?? f.statusLiberacao,
+        gerente: patch.gerente ?? f.gerente,
+        statusOp: patch.status ?? f.statusOp,
+        obs: patch.obs ?? f.obs,
+        liberacao: patch.liberacao ?? f.liberacao,
+        dataBaseLiberacao: patch.dataBaseLiberacao ?? f.dataBaseLiberacao,
+      };
+    }));
+  };
+
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-border p-4">
         <div>
           <div className="text-sm font-semibold">Operações sem contrato vinculado</div>
-          <div className="text-xs text-muted-foreground">{lista.length} operações · {fmtBRL(lista.reduce((s, f) => s + f.valor, 0))}</div>
+          <div className="text-xs text-muted-foreground">{lista.length} operações · {fmtBRL(lista.reduce((s, f) => s + f.valor, 0))} · arraste o cabeçalho para reordenar colunas</div>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenNovo(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo financiamento avulso
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { if (vincularId === null && lista[0]) setVincularId(lista[0].id); }}>
+            <ArrowRight className="mr-2 h-4 w-4" /> Vincular contrato
+          </Button>
+          <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenNovo(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Novo financiamento avulso
+          </Button>
+        </div>
       </div>
-      <Table>
-        <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>CONTRATO</TableHead><TableHead>CLIENTE</TableHead><TableHead>CPF/CNPJ</TableHead>
-          <TableHead>BANCO</TableHead><TableHead>GERENTE</TableHead>
-          <TableHead className="text-right">VALOR</TableHead><TableHead>STATUS</TableHead>
-          <TableHead className="text-right">AÇÕES</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {lista.map((f) => (
-            <TableRow key={f.id}>
-              <TableCell>
-                <span className="rounded bg-warning/15 px-2 py-0.5 text-[11px] font-semibold uppercase text-warning">SEM CONTRATO</span>
-              </TableCell>
-              <TableCell className="font-medium">{f.cliente}</TableCell>
-              <TableCell className="text-muted-foreground">{f.doc}</TableCell>
-              <TableCell>{f.banco}</TableCell>
-              <TableCell className="text-muted-foreground">{f.gerente}</TableCell>
-              <TableCell className="text-right font-medium">{fmtBRL(f.valor)}</TableCell>
-              <TableCell><StatusBadge status={f.statusOp} /></TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => setVincularId(f.id)}>
-                  <ArrowRight className="mr-1 h-3 w-3" /> Vincular contrato
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <OperacionalFinTable
+        storageKey="ms.fin.cols.sem.v1"
+        rows={rows}
+        onPatch={handlePatch}
+        gerentes={gerentes.map((g) => g.nome)}
+        statuses={STATUS_LIST}
+        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+      />
 
       {/* Novo financiamento avulso */}
       <Dialog open={openNovo} onOpenChange={(v) => { setOpenNovo(v); if (!v) reset(); }}>

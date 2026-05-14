@@ -153,6 +153,11 @@ export type ContratoFull = {
   financiamentoGerente?: string;
   financiamentoStatus?: string;
   financiamentoObs?: string;
+  // Campos operacionais (visualização gerencial em Financiamentos)
+  financiamentoStatusLiberacao?: string;
+  financiamentoLiberacao?: string;
+  financiamentoDataBaseLiberacao?: string; // YYYY-MM-DD
+  financiamentoEnvio?: string;             // YYYY-MM-DD
 };
 
 const KEY = "ms.contratos.v2";

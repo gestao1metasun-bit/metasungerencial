@@ -93,7 +93,6 @@ function FinanciamentosPage() {
         </TabsContent>
         <TabsContent value="carteira" className="mt-5 space-y-5">
           <ContratosComercialFin />
-          <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
         <TabsContent value="bancos" className="mt-5"><BancosTab ops={ops} /></TabsContent>

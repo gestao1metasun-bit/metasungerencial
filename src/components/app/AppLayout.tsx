@@ -1,6 +1,6 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Briefcase, Banknote, HardHat, Wallet, Package,
+  LayoutDashboard, Briefcase, Banknote, HardHat, Package,
   Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ const nav = [
   { to: "/comercial", label: "Comercial", icon: Briefcase },
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote },
   { to: "/engenharia", label: "Engenharia", icon: HardHat },
-  { to: "/financeiro", label: "Financeiro", icon: Wallet },
   { to: "/estoque", label: "Estoque", icon: Package },
   { to: "/cadastros", label: "Cadastros", icon: Database },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },

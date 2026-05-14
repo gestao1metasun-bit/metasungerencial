@@ -116,7 +116,6 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card border border-border flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -125,9 +124,7 @@ function ComercialPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
         </TabsContent>
-        <TabsContent value="indicadores" className="mt-5">
-          <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
-        </TabsContent>
+        {/* Aba Indicadores removida do Comercial — visão estratégica fica no Dashboard Geral. */}
         <TabsContent value="cad-proposta" className="mt-5">
           <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />
         </TabsContent>
@@ -872,6 +869,7 @@ function CadastrarContratoTab({
 
   const [openForm, setOpenForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"cliente" | "contrato">("cliente");
+  const [submitting, setSubmitting] = useState(false);
 
   const limpar = () => {
     setForm({
@@ -952,6 +950,7 @@ function CadastrarContratoTab({
   const validation = validateContratoCompleto(previewContrato, { requireComposicao: false });
 
   const submit = () => {
+    if (submitting) return; // bloqueio anti-duplo-clique
     if (aprovacao) { toast.error("Parâmetro abaixo de 2000 — necessária aprovação da diretoria"); return; }
     if (cli.doc && !isDocValid(cli.doc)) { toast.error("CPF/CNPJ inválido"); return; }
     if (cli.telefone && !isTelValid(cli.telefone)) { toast.error("Telefone inválido"); return; }
@@ -967,21 +966,33 @@ function CadastrarContratoTab({
       toast.error(`Não foi possível salvar. Preencha: ${validation.missing.slice(0, 5).join(", ")}${validation.missing.length > 5 ? "…" : ""}`);
       return;
     }
-    const novo = { ...previewContrato, status: "Em análise" };
-    upsertContrato(novo);
-    if (novo.possuiFinanciamento) {
-      addPendencia({
-        id: novo.id,
-        cliente: novo.cliente,
-        vendedor: novo.vendedor,
-        valor: novo.valor,
-        kwp: novo.kwp,
-        dataCadastro: novo.dataCadastro || today,
-        status: "Pendente",
-      });
-      toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
-    } else {
-      toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+    setSubmitting(true);
+    try {
+      const novoId = nextContratoId(contratos);
+      // Backend-guard: se já existir um contrato com este ID (corrida de duplo clique), aborta.
+      if (contratos.some((c) => c.id === novoId)) {
+        toast.error("Contrato já cadastrado. Aguarde antes de tentar novamente.");
+        return;
+      }
+      const novo = { ...previewContrato, id: novoId, status: "Em análise" };
+      upsertContrato(novo);
+      if (novo.possuiFinanciamento) {
+        addPendencia({
+          id: novo.id,
+          cliente: novo.cliente,
+          vendedor: novo.vendedor,
+          valor: novo.valor,
+          kwp: novo.kwp,
+          dataCadastro: novo.dataCadastro || today,
+          status: "Pendente",
+        });
+        toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
+      } else {
+        toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+      }
+    } finally {
+      // Libera após pequeno atraso para evitar duplo clique acidental; modal segue aberto até "Fechar".
+      setTimeout(() => setSubmitting(false), 800);
     }
   };
 
@@ -1201,13 +1212,18 @@ function CadastrarContratoTab({
               </div>
             )}
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={limpar}>Limpar</Button>
+              <Button variant="outline" onClick={() => setOpenForm(false)}>Fechar</Button>
+              <Button variant="outline" onClick={limpar} disabled={submitting}>Limpar</Button>
               <Button
                 className="bg-primary text-primary-foreground"
                 onClick={submit}
-                disabled={aprovacao || !validation.ok}
+                disabled={aprovacao || !validation.ok || submitting}
               >
-                <Plus className="mr-2 h-4 w-4" /> Cadastrar contrato
+                {submitting ? (
+                  <><span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> Cadastrando…</>
+                ) : (
+                  <><Plus className="mr-2 h-4 w-4" /> Cadastrar contrato</>
+                )}
               </Button>
             </DialogFooter>
           </div>

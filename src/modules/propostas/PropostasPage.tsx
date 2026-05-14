@@ -258,17 +258,34 @@ function PropostaSheet({
   function selecionarCidade(id: string) {
     const c = cidades.find((x) => x.id === id);
     if (!c) return;
+    setLastCidadeId(c.id);
+    setP((cur) => {
+      const nova = aplicarCidadeNaProposta(cur, c, false);
+      // Lookup de tarifa oficial
+      const tarifa = buscarTarifa(tarifasEnergia, {
+        concessionaria: nova.concessionaria,
+        uf: nova.estado,
+        cidade: nova.cidade,
+        grupo: nova.grupoTarifario,
+        modalidade: nova.modalidadeTarifaria,
+      });
+      if (tarifa) nova.tarifa = tarifa.tarifaKwh;
+      return nova;
+    });
+  }
+
+  function limparCidade() {
+    setLastCidadeId(null);
     setP((cur) => ({
       ...cur,
-      cidadeId: c.id,
-      cidade: c.cidade,
-      estado: c.estado,
-      concessionaria: c.concessionariaPadrao ?? cur.concessionaria,
-      irradiacaoMedia: c.irradiacaoMedia ?? cur.irradiacaoMedia,
-      mesMaior: c.mesMaiorIrradiacao ?? cur.mesMaior,
-      mesMenor: c.mesMenorIrradiacao ?? cur.mesMenor,
-      grupoTarifario: c.grupoTarifarioPadrao ?? cur.grupoTarifario,
-      tarifa: c.tarifaPadrao ?? cur.tarifa,
+      cidadeId: undefined,
+      cidade: "",
+      estado: "",
+      mesMaior: undefined,
+      mesMenor: undefined,
+      irradiacaoMaxima: undefined,
+      irradiacaoMinima: undefined,
+      fonteIrradiacao: undefined,
     }));
   }
 

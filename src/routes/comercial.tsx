@@ -884,7 +884,7 @@ function CadastrarContratoTab({
     });
     setCli(emptyCliente);
     setClienteId("");
-    setComposicao([]);
+    
     setActiveTab("cliente");
   };
 

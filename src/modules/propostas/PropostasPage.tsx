@@ -250,6 +250,8 @@ function PropostaSheet({
   const custos = useCustosFV();
   const tarifasEnergia = useTarifasEnergia();
   const clientes = useClientesFull();
+  const { perfil } = useUsuarioAtual();
+  const ehAdmin = !!perfil?.isAdminMaster;
 
   const dim = calcDimensionamento(p);
   const pre = calcPrecificacao(p);

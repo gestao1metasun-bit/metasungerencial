@@ -69,7 +69,7 @@ export function AppLayout() {
           </div>
         </div>
 
-        <nav ref={navRef} className="flex-1 overflow-y-auto px-3 py-4">
+        <nav ref={navRef} className="flex-1 overflow-visible px-3 py-4">
           <div className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Menu
           </div>

@@ -4,6 +4,7 @@ import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Use
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,11 +28,12 @@ export const Route = createFileRoute("/configuracoes")({
 });
 
 function ConfigPage() {
+  const [tab, setTab] = useTabFromHash("/configuracoes");
   return (
     <>
       <PageHeader title="Configurações" subtitle="Parâmetros do sistema, perfis, usuários e integrações." />
-      <Tabs defaultValue="perfis">
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="empresa"><Building2 className="mr-2 h-4 w-4" /> Empresa</TabsTrigger>
           <TabsTrigger value="parametros"><SettingsIcon className="mr-2 h-4 w-4" /> Parâmetros</TabsTrigger>
           <TabsTrigger value="perfis"><ShieldCheck className="mr-2 h-4 w-4" /> Perfis de Acesso</TabsTrigger>

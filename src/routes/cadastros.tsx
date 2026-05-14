@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ type Gerente = { id: string; nome: string; banco: string; telefone: string; oper
 type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
 
 function CadastrosPage() {
+  const [tab, setTab] = useTabFromHash("/cadastros");
   const bancos = useBancos();
   const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
@@ -32,8 +34,8 @@ function CadastrosPage() {
   return (
     <>
       <PageHeader title="Cadastros" subtitle="Mantenha as bases auxiliares do sistema." />
-      <Tabs defaultValue="bancos">
-        <TabsList className="bg-card border border-border">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="bancos">Bancos</TabsTrigger>
           <TabsTrigger value="gerentes">Gerentes</TabsTrigger>
           <TabsTrigger value="equipes">Equipes</TabsTrigger>

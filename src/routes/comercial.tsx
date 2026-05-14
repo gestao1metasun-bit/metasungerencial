@@ -16,6 +16,7 @@ import { EyeButton } from "@/components/app/EyeButton";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,6 +101,7 @@ const volumeSeed: VolumeMes[] = [
 ];
 
 function ComercialPage() {
+  const [tab, setTab] = useTabFromHash("/comercial");
   const [tab, setTab] = useState("dashboard");
   const contratos = useContratos();
   const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
@@ -114,7 +116,7 @@ function ComercialPage() {
     <>
       <PageHeader title="Comercial" subtitle="Propostas, contratos, vendedores e volume mensal." />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
@@ -1490,7 +1492,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList>
+          <TabsList className="hidden">
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>

@@ -40,6 +40,8 @@ import {
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
 } from "@/modules/propostas/store";
 
+import { PropostaList, statusVariant } from "./components/PropostaList";
+
 export { PropostasPage };
 
 /* =========================== PÁGINA =========================== */

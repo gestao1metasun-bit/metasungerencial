@@ -965,22 +965,10 @@ function CadastrarContratoTab({
       }
       const novo = { ...previewContrato, id: novoId, status: "Em análise" };
       upsertContrato(novo);
-      if (novo.possuiFinanciamento) {
-        addPendencia({
-          id: novo.id,
-          cliente: novo.cliente,
-          vendedor: novo.vendedor,
-          valor: novo.valor,
-          kwp: novo.kwp,
-          dataCadastro: novo.dataCadastro || today,
-          status: "Pendente",
-        });
-        toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
-      } else {
-        toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
-      }
+      toast.success(`Contrato ${novo.id} cadastrado · status Em análise. Defina os projetos no lápis e aprove para enviar à Engenharia${novo.possuiFinanciamento ? " e Financiamentos" : ""}.`);
+      limpar();
+      setOpenForm(false);
     } finally {
-      // Libera após pequeno atraso para evitar duplo clique acidental; modal segue aberto até "Fechar".
       setTimeout(() => setSubmitting(false), 800);
     }
   };

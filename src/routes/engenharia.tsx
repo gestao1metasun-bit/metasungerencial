@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   obras as obrasSeed, pendencias as pendenciasSeed, equipes as equipesSeed,
-  produtividadeEquipe, diasPrevistos, registrarHistoricoExec, faixaDe,
+  produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
@@ -107,7 +107,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     id: p.id,
     contrato: c.id,
     cliente: c.cliente,
-    equipe: p.equipe || "",
+    equipe: "",
     modulos: p.modulos,
     potencia: p.kwp,
     inversor: p.inversor || "",
@@ -563,7 +563,10 @@ function EditObraDialog({
             </div>
           </div>
           <div><Label>Status</Label>
-            <Select value={f.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+            <Select value={f.status} onValueChange={(v) => {
+              const allowed = v === "Executando instalação" || v === "Aguardando instalação";
+              setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
@@ -656,7 +659,8 @@ function recalcPrevisto(inicio: string, equipe: string, modulos: number): string
   if (!inicio) return "";
   const dias = diasPrevistos(equipe, modulos);
   const d = new Date(inicio + "T00:00:00");
-  d.setDate(d.getDate() + dias);
+  // Início conta como dia 1: finalização = início + (dias - 1)
+  d.setDate(d.getDate() + Math.max(0, dias - 1));
   return d.toISOString().slice(0,10);
 }
 
@@ -703,6 +707,17 @@ function CronogramaTab({
     setObras(chainSchedule(swapped, target.equipe, target.status));
   };
 
+  const updateInicio = (id: string, novoInicio: string) => {
+    const next = obras.map((o) => {
+      if (o.id !== id) return o;
+      const previsto = recalcPrevisto(novoInicio, o.equipe || "", o.modulos);
+      return { ...o, inicio: novoInicio, previsto };
+    });
+    const target = next.find((o) => o.id === id);
+    if (!target) { setObras(next); return; }
+    setObras(chainSchedule(next, target.equipe, target.status));
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {equipes.map((eq) => {
@@ -720,7 +735,7 @@ function CronogramaTab({
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
                 <div className="space-y-2">
-                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} />)}
+                  {exec.map((o, i) => <CronogramaCard key={o.id} o={o} tone="success" first={i===0} last={i===exec.length-1} onMove={move} onChangeInicio={updateInicio} />)}
                 </div>
               </div>
             )}
@@ -728,7 +743,7 @@ function CronogramaTab({
               <div>
                 <div className="mb-2 text-[10px] font-semibold uppercase text-warning">Aguardando</div>
                 <div className="space-y-2">
-                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} />)}
+                  {aguard.map((o, i) => <CronogramaCard key={o.id} o={o} tone="warning" first={i===0} last={i===aguard.length-1} onMove={move} onChangeInicio={updateInicio} />)}
                 </div>
               </div>
             )}
@@ -739,10 +754,9 @@ function CronogramaTab({
   );
 }
 
-function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
+function CronogramaCard({ o, tone, first, last, onMove, onChangeInicio }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void; onChangeInicio: (id: string, novoInicio: string) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
   const prazo = diasPrevistos(o.equipe || "", o.modulos);
-  const faixa = faixaDe(o.modulos);
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
       <div className="flex items-start justify-between gap-2">
@@ -754,19 +768,15 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
 
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px]">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px] items-center">
             <div className="text-muted-foreground">Previsão início</div>
-            <div className="text-right font-medium">{fmtBR(o.inicio)}</div>
+            <Input type="date" value={o.inicio || ""} onChange={(e) => onChangeInicio(o.id, e.target.value)} className="h-7 text-[11px] py-0" />
             <div className="text-muted-foreground">Previsão finalização</div>
             <div className="text-right font-semibold text-foreground">{fmtBR(o.previsto)}</div>
             <div className="text-muted-foreground">Prazo estimado</div>
             <div className="text-right">{prazo} {prazo === 1 ? "dia" : "dias"}</div>
-            <div className="text-muted-foreground">Equipe / instalador</div>
-            <div className="text-right truncate">{o.equipe || "—"}</div>
-            <div className="text-muted-foreground">Faixa de módulos</div>
-            <div className="text-right">{faixa.label}</div>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas de previsão são gerenciadas aqui no Cronograma.</div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Início conta como dia 1. Finalização calculada automaticamente.</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>
@@ -817,6 +827,9 @@ function PendenciasTab({
     toast.success("Pendência atualizada");
   };
 
+  const abertas = pends.filter((p) => p.status !== "Problema resolvido");
+  const resolvidas = pends.filter((p) => p.status === "Problema resolvido");
+
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-border p-4">
@@ -852,36 +865,57 @@ function PendenciasTab({
           </DialogContent>
         </Dialog>
       </div>
-      <Table>
-        <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
-          <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
-          <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {pends.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
-              <TableCell>{p.equipe}</TableCell>
-              <TableCell className="font-medium">{p.cliente}</TableCell>
-              <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
-              <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
-              <TableCell><StatusBadge status={p.status} /></TableCell>
-              <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
-              <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(p)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+
+      <Tabs defaultValue="abertas" className="p-4">
+        <TabsList className="bg-muted/40">
+          <TabsTrigger value="abertas">Em aberto ({abertas.length})</TabsTrigger>
+          <TabsTrigger value="resolvidas">Pendências Resolvidas ({resolvidas.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="abertas" className="mt-3">
+          <PendTable rows={abertas} onEdit={setEditing} />
+        </TabsContent>
+        <TabsContent value="resolvidas" className="mt-3">
+          <PendTable rows={resolvidas} onEdit={setEditing} />
+        </TabsContent>
+      </Tabs>
 
       <EditPendenciaDialog pend={editing} onClose={() => setEditing(null)} onSave={saveEdit} />
     </Card>
+  );
+}
+
+function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: (typeof pendenciasSeed)[number]) => void }) {
+  if (rows.length === 0) {
+    return <div className="rounded border border-dashed border-border p-8 text-center text-xs text-muted-foreground">Nenhuma pendência nesta lista.</div>;
+  }
+  return (
+    <Table>
+      <TableHeader><TableRow className="hover:bg-transparent">
+        <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
+        <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
+        <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
+        <TableHead className="text-right">Ações</TableHead>
+      </TableRow></TableHeader>
+      <TableBody>
+        {rows.map((p) => (
+          <TableRow key={p.id}>
+            <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+            <TableCell>{p.equipe}</TableCell>
+            <TableCell className="font-medium">{p.cliente}</TableCell>
+            <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
+            <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
+            <TableCell><StatusBadge status={p.status} /></TableCell>
+            <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
+            <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
+            <TableCell className="text-right">
+              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => onEdit(p)}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 

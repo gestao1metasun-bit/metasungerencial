@@ -601,6 +601,7 @@ function EditOpDialog({
   op, onClose, onSave,
 }: { op: FinOp | null; onClose: () => void; onSave: (patch: Partial<FinOp>) => void }) {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const [form, setForm] = useState<Partial<FinOp>>({});
   useEffect(() => { setForm(op ?? {}); }, [op]);
   if (!op) return null;

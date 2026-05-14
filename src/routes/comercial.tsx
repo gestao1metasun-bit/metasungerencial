@@ -2808,8 +2808,6 @@ function KpiSmall({
 function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
   const aprovados = contratos.filter((c) => c.status === "Aprovado" && (c.projetos ?? []).length > 0);
   const [filtro, setFiltro] = useState("");
-  const [editando, setEditando] = useState<Record<string, boolean>>({});
-  const toggleEdit = (id: string) => setEditando((s) => ({ ...s, [id]: !s[id] }));
 
   const filtrados = aprovados.filter((c) => {
     const q = filtro.toLowerCase();
@@ -2821,26 +2819,24 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
     );
   });
 
-  const totalProjetosLiberados = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => p.enviadoEngenharia).length, 0,
+  const totalProjetos = aprovados.reduce((s, c) => s + (c.projetos ?? []).length, 0);
+  const totalLiberados = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => p.aprovado).length, 0,
   );
-  const totalFinGerado = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => p.financeiroGerado).length, 0,
-  );
-  const totalPendente = aprovados.reduce(
-    (s, c) => s + (c.projetos ?? []).filter((p) => !p.financeiroGerado).length, 0,
+  const totalPendentes = aprovados.reduce(
+    (s, c) => s + (c.projetos ?? []).filter((p) => !p.aprovado).length, 0,
   );
 
-  const aprovarPedido = (contrato: Contrato, projeto: ProjetoVinculado) => {
+  const liberarProjeto = (contrato: Contrato, projeto: ProjetoVinculado) => {
     if (contrato.status !== "Aprovado") { toast.error("Contrato não está aprovado."); return; }
     const valorProj = Number(projeto.valor) || 0;
     if (valorProj <= 0) { toast.error("Defina o valor do projeto."); return; }
     if (!projeto.endereco?.trim() || !projeto.cidade?.trim()) { toast.error("Endereço/cidade do projeto obrigatórios."); return; }
-    const comp = composicaoSomaOk(contrato);
-    if (!comp.ok) { toast.error(`Composição do contrato não fecha (diff ${fmtBRL(Math.abs(comp.diff))}). Edite no contrato.`); return; }
-    const novos = calcularLancamentosProjeto(contrato, projeto);
-    if (novos.length === 0) { toast.error("Nada a gerar — verifique composição e valor do projeto."); return; }
-    // Aprova o projeto, libera para Engenharia e gera contas a receber
+    if (!(Number(projeto.modulos) > 0)) { toast.error("Informe a quantidade de módulos."); return; }
+    const hasInvP = (x?: string) => { const t=(x??"").trim(); return t!=="" && t!=="0" && Number(t)!==0; };
+    if (![projeto.inversor, projeto.inv2, projeto.inv3, projeto.inv4, projeto.inv5, projeto.inv6].some(hasInvP)) {
+      toast.error("Informe ao menos 1 inversor."); return;
+    }
     if (!projeto.aprovado) {
       updateProjeto(contrato.id, projeto.id, {
         aprovado: true,
@@ -2848,15 +2844,11 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         usuarioAprovacao: "Operador",
         enviadoEngenharia: true,
       });
+      toast.success(`Projeto ${projeto.id} liberado · enviado à Engenharia`);
+    } else {
+      updateProjeto(contrato.id, projeto.id, { enviadoEngenharia: true });
+      toast.success(`Projeto ${projeto.id} reenviado à Engenharia`);
     }
-    removeLancamentosDoProjeto(projeto.id);
-    appendLancamentos(novos as any);
-    updateProjeto(contrato.id, projeto.id, {
-      financeiroGerado: true,
-      dataGeracaoFinanceiro: new Date().toISOString(),
-      usuarioGeracao: "Operador",
-    });
-    toast.success(`Pedido aprovado · ${novos.length} lançamento(s) gerado(s) · projeto enviado à Engenharia`);
   };
 
   return (
@@ -2865,15 +2857,15 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-base font-bold">Pedidos de venda</div>
-            <div className="text-xs text-muted-foreground">Cada contrato aprovado lista seus projetos. Cada projeto tem financeiro próprio (forma de pagamento, parcelas, emissão, vencimento, competência).</div>
+            <div className="text-xs text-muted-foreground">Camada operacional/comercial. Aprove/libere projetos e envie para a Engenharia. O controle financeiro (contas a pagar/receber) é feito no módulo Financeiro.</div>
           </div>
           <Input className="max-w-xs" placeholder="Buscar por contrato, cliente ou projeto…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
           <KpiSmall icon={FileText} label="Contratos aprovados" value={String(aprovados.length)} />
-          <KpiSmall icon={Layers} label="Projetos liberados" value={String(totalProjetosLiberados)} />
-          <KpiSmall icon={CheckCircle2} label="Financeiro gerado" value={String(totalFinGerado)} positive />
-          <KpiSmall icon={Clock} label="Pendentes de financeiro" value={String(totalPendente)} />
+          <KpiSmall icon={Layers} label="Projetos" value={String(totalProjetos)} />
+          <KpiSmall icon={CheckCircle2} label="Liberados/Engenharia" value={String(totalLiberados)} positive />
+          <KpiSmall icon={Clock} label="Pendentes de liberação" value={String(totalPendentes)} />
         </div>
       </Card>
 
@@ -2891,95 +2883,53 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
                   <TableHead className="text-xs">Contrato</TableHead>
                   <TableHead className="text-xs">Cliente</TableHead>
                   <TableHead className="text-xs">Vendedor</TableHead>
+                  <TableHead className="text-xs">Endereço</TableHead>
+                  <TableHead className="text-xs text-right">Módulos</TableHead>
+                  <TableHead className="text-xs text-right">kWp</TableHead>
+                  <TableHead className="text-xs text-right">Valor</TableHead>
                   <TableHead className="text-xs">Status pedido</TableHead>
-                  <TableHead className="text-xs">Status financeiro</TableHead>
-                  <TableHead className="text-xs">Forma pgto</TableHead>
-                  <TableHead className="text-xs">Natureza</TableHead>
-                  <TableHead className="text-xs">Centro de custo</TableHead>
-                  <TableHead className="text-xs text-right">Valor total</TableHead>
-                  <TableHead className="text-xs text-right">Faturado</TableHead>
-                  <TableHead className="text-xs text-right">A faturar</TableHead>
+                  <TableHead className="text-xs">Engenharia</TableHead>
                   <TableHead className="text-xs text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtrados.flatMap((contrato) =>
                   (contrato.projetos ?? []).map((projeto) => {
-                    const open = !!editando[projeto.id];
-                    const lancsProj = readLancamentos().filter((l) => l.obra === projeto.id && l.contrato === contrato.id);
-                    const totalLanc = lancsProj.reduce((a, l) => a + (Number(l.valor) || 0), 0);
                     const valorProj = Number(projeto.valor) || 0;
-                    const aFaturar = Math.max(0, valorProj - totalLanc);
-                    const formaPrincipal = (contrato.composicaoPagto ?? [])[0]?.formaPagamento ?? contrato.pagamento ?? "—";
                     return (
-                      <Fragment key={projeto.id}>
-                        <TableRow>
-                          <TableCell className="font-mono text-[11px] text-primary font-bold">{projeto.id}</TableCell>
-                          <TableCell className="font-mono text-[11px]">{contrato.id}</TableCell>
-                          <TableCell className="text-xs truncate max-w-[180px]">{contrato.cliente}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{contrato.vendedor}</TableCell>
-                          <TableCell>
-                            {projeto.aprovado
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">APROVADO</span>
-                              : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
-                          </TableCell>
-                          <TableCell>
-                            {projeto.financeiroGerado
-                              ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">GERADO</span>
-                              : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">SEM FIN</span>}
-                          </TableCell>
-                          <TableCell className="text-xs">{formaPrincipal}</TableCell>
-                          <TableCell className="text-xs">
-                            <Select
-                              value={projeto.naturezaFinanceira ?? "Recebimento de cliente"}
-                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { naturezaFinanceira: v })}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-[180px]"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Recebimento de cliente">Recebimento de cliente</SelectItem>
-                                <SelectItem value="Receita de venda de sistema fotovoltaico">Receita de venda de sistema FV</SelectItem>
-                                <SelectItem value="Liberação financiamento">Liberação financiamento</SelectItem>
-                                <SelectItem value="Parcelas/Recorrentes">Parcelas/Recorrentes</SelectItem>
-                                <SelectItem value="Outras receitas">Outras receitas</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <Select
-                              value={projeto.centroCusto ?? "Comercial"}
-                              onValueChange={(v) => updateProjeto(contrato.id, projeto.id, { centroCusto: v })}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Comercial">Comercial</SelectItem>
-                                <SelectItem value="Administrativo">Administrativo</SelectItem>
-                                <SelectItem value="Engenharia/Operação">Engenharia/Operação</SelectItem>
-                                <SelectItem value={projeto.id}>Obra {projeto.id}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right text-xs font-mono font-semibold">{fmtBRL(valorProj)}</TableCell>
-                          <TableCell className="text-right text-xs font-mono">{fmtBRL(totalLanc)}</TableCell>
-                          <TableCell className="text-right text-xs font-mono text-warning">{fmtBRL(aFaturar)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => toggleEdit(projeto.id)}>
-                                <Pencil className="mr-1 h-3 w-3" /> {open ? "Fechar" : "Editar"}
-                              </Button>
-                              <Button size="sm" className="h-7 px-2 text-[11px] bg-primary text-primary-foreground" onClick={() => aprovarPedido(contrato, projeto)}>
-                                <DollarSign className="mr-1 h-3 w-3" /> {projeto.financeiroGerado ? "Atualizar" : (projeto.aprovado ? "Gerar" : "Aprovar")}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {open && (
-                          <TableRow>
-                            <TableCell colSpan={13} className="bg-muted/30 p-3">
-                              <ProjetoFinanceiro contrato={contrato} projeto={projeto} />
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
+                      <TableRow key={projeto.id}>
+                        <TableCell className="font-mono text-[11px] text-primary font-bold">{projeto.id}</TableCell>
+                        <TableCell className="font-mono text-[11px]">{contrato.id}</TableCell>
+                        <TableCell className="text-xs truncate max-w-[180px]">{contrato.cliente}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{contrato.vendedor}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">
+                          {projeto.endereco}{projeto.numero ? `, ${projeto.numero}` : ""} · {projeto.cidade}/{projeto.uf}
+                        </TableCell>
+                        <TableCell className="text-right text-xs font-mono">{projeto.modulos ?? 0}</TableCell>
+                        <TableCell className="text-right text-xs font-mono">{(projeto.kwp ?? 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right text-xs font-mono font-semibold">{fmtBRL(valorProj)}</TableCell>
+                        <TableCell>
+                          {projeto.aprovado
+                            ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">LIBERADO</span>
+                            : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+                        </TableCell>
+                        <TableCell>
+                          {projeto.enviadoEngenharia
+                            ? <span className="text-[10px] rounded bg-primary/15 px-2 py-0.5 text-primary font-bold">ENVIADO</span>
+                            : <span className="text-[10px] rounded bg-muted px-2 py-0.5 text-muted-foreground font-bold">—</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 text-[11px] bg-primary text-primary-foreground"
+                            onClick={() => liberarProjeto(contrato, projeto)}
+                            disabled={projeto.aprovado && projeto.enviadoEngenharia}
+                          >
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            {projeto.aprovado ? (projeto.enviadoEngenharia ? "Liberado" : "Reenviar") : "Aprovar"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     );
                   })
                 )}

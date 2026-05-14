@@ -1558,7 +1558,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="space-y-1.5"><Label>Status</Label>
                 <Select value={f.status} onValueChange={(v) => {
                   if (v === "Aprovado" && f.status !== "Aprovado") {
-                    const r = validateContratoCompleto(contrato);
+                    const r = validateContratoCompleto(contrato, { requireComposicao: false });
                     if (!r.ok) { toast.error(`Faltam: ${r.missing.join(", ")}`); return; }
                     if (!window.confirm(`Aprovar contrato ${contrato.id}?\n\nApós aprovado, dados estruturais terão controle de alteração.`)) return;
                   }

@@ -20,6 +20,9 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user, perfil } = useUsuarioAtual();
+  const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
+  const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">

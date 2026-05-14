@@ -56,20 +56,61 @@ export function AppLayout() {
               const active = path === item.to || path.startsWith(item.to + "/");
               const Icon = item.icon;
               const sub = ROUTE_TABS[item.to];
+              const isOpen = expanded[item.to] ?? active;
               return (
                 <li key={item.to} className="group/item relative">
-                  <Link
-                    to={item.to}
-                    className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  <div
+                    className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition ${
                       active
                         ? "bg-primary text-primary-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
-                    <span className="flex-1">{item.label}</span>
-                    {sub && <ChevronRight className={`h-3.5 w-3.5 opacity-60`} />}
-                  </Link>
+                    <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
+                      <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                    </Link>
+                    {sub && (
+                      <button
+                        type="button"
+                        aria-label={isOpen ? "Recolher" : "Expandir"}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setExpanded((s) => ({ ...s, [item.to]: !isOpen }));
+                        }}
+                        className={`grid h-7 w-7 place-items-center rounded hover:bg-black/10 ${active ? "text-primary-foreground" : "text-muted-foreground"}`}
+                      >
+                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Inline expanded list (click chevron) */}
+                  {sub && isOpen && (
+                    <ul className="mt-1 ml-7 space-y-0.5 border-l border-sidebar-border pl-2">
+                      {sub.tabs.map((t) => {
+                        const tabActive = active && currentTab === t.value;
+                        return (
+                          <li key={t.value}>
+                            <Link
+                              to={item.to}
+                              hash={`tab=${t.value}`}
+                              className={`block rounded px-2 py-1.5 text-xs transition ${
+                                tabActive
+                                  ? "bg-primary/15 text-primary font-medium"
+                                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                              }`}
+                            >
+                              {t.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+
+                  {/* Hover flyout (keeps quick access) */}
                   {sub && (
                     <div className="invisible opacity-0 group-hover/item:visible group-hover/item:opacity-100 transition-opacity absolute left-full top-0 z-50 ml-1 min-w-[240px] rounded-md border border-border bg-popover p-1 shadow-lg">
                       {sub.tabs.map((t) => (

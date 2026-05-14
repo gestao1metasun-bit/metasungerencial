@@ -213,6 +213,7 @@ function PropostaSheet({
   const distribuidores = useDistribuidoresFV();
   const parametros = useParametrosFV();
   const custos = useCustosFV();
+  const tarifasEnergia = useTarifasEnergia();
   const clientes = useClientesFull();
 
   const dim = calcDimensionamento(p);

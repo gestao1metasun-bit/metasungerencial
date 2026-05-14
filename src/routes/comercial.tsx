@@ -1848,7 +1848,7 @@ function ProjetoEditCard({
       </fieldset>
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          <DollarSign className="inline h-3.5 w-3.5 mr-1" /> Financeiro deste projeto é gerado automaticamente ao aprovar (rateio proporcional pela composição do contrato).
+          Após aprovado, este projeto é enviado automaticamente para a Engenharia. O controle financeiro é feito separadamente no módulo Financeiro.
         </div>
         <Button className="bg-primary text-primary-foreground" onClick={salvar} disabled={!dirty || projeto.aprovado}>
           Salvar Projeto {index + 1}

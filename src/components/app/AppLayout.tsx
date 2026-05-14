@@ -86,16 +86,16 @@ export function AppLayout() {
                   onMouseEnter={() => sub && setOpenMenu(item.to)}
                   onMouseLeave={() => sub && setOpenMenu((cur) => (cur === item.to ? null : cur))}
                 >
-                  <div className="group flex items-center gap-2 rounded-md pr-1 text-sm font-medium text-sidebar-foreground transition hover:bg-primary hover:text-primary-foreground">
+                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition hover:bg-primary hover:text-primary-foreground ${isOpen ? "bg-primary text-primary-foreground" : "text-sidebar-foreground"}`}>
                     {sub ? (
                       <Link
                         to={item.to}
                         onClick={() => setOpenMenu(null)}
                         className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0"
                       >
-                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground" />
+                        <Icon className={`h-4 w-4 group-hover:text-primary-foreground ${isOpen ? "text-primary-foreground" : "text-muted-foreground"}`} />
                         <span className="flex-1 truncate">{item.label}</span>
-                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} text-muted-foreground group-hover:text-primary-foreground`} />
+                        <ChevronRight className={`h-3.5 w-3.5 transition-transform group-hover:text-primary-foreground ${isOpen ? "rotate-90 text-primary-foreground" : "text-muted-foreground"}`} />
                       </Link>
                     ) : (
                       <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">

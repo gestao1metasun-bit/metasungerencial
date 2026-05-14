@@ -1132,19 +1132,8 @@ function ContratosComercialFin() {
     status: c.financiamentoStatus || "Em análise",
     obs: c.financiamentoObs || "",
     liberacao: c.financiamentoLiberacao || "",
-    dataBaseLiberacao: c.financiamentoDataBaseLiberacao || "",
+    previsao: c.financiamentoDataBaseLiberacao || "",
   }));
-
-  const handlePatch = (id: string, patch: Partial<OpRow>) => {
-    const map: any = {};
-    if ("statusLiberacao" in patch) map.financiamentoStatusLiberacao = patch.statusLiberacao;
-    if ("gerente" in patch) map.financiamentoGerente = patch.gerente;
-    if ("status" in patch) map.financiamentoStatus = patch.status;
-    if ("obs" in patch) map.financiamentoObs = patch.obs;
-    if ("liberacao" in patch) map.financiamentoLiberacao = patch.liberacao;
-    if ("dataBaseLiberacao" in patch) map.financiamentoDataBaseLiberacao = patch.dataBaseLiberacao;
-    updateContratoAudit(id, map);
-  };
 
   return (
     <Card className="p-5">
@@ -1153,15 +1142,14 @@ function ContratosComercialFin() {
           <div className="text-sm font-semibold">Contratos enviados do Comercial</div>
           <div className="text-xs text-muted-foreground">{lista.length} contrato(s) · {fmtBRL(total)} financiado(s) · arraste o cabeçalho para reordenar colunas</div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => editing /* noop */} className="hidden">edit</Button>
       </div>
       <OperacionalFinTable
         storageKey="ms.fin.cols.carteira.v1"
         rows={rows}
-        onPatch={handlePatch}
-        gerentes={gerentes.map((g) => g.nome)}
-        statuses={STATUS_LIST}
-        liberacaoStatuses={LIBERACAO_STATUS_LIST}
+        onEdit={(id) => {
+          const c = lista.find((x) => x.id === id);
+          if (c) setEditing(c);
+        }}
       />
 
       {editing && (

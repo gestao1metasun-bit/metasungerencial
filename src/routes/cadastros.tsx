@@ -83,16 +83,12 @@ function CadastrosPage() {
 }
 
 /* ----------------- Bancos ----------------- */
-function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]) => void }) {
+function BancosCrud({ items }: { items: Banco[] }) {
   const [editing, setEditing] = useState<Banco | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const save = (b: Banco) => {
-    if (items.find((x) => x.id === b.id)) setItems(items.map((x) => (x.id === b.id ? b : x)));
-    else setItems([...items, b]);
-    toast.success("Banco salvo");
-  };
-  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Banco removido"); };
+  const save = (b: Banco) => { upsertBanco(b); toast.success("Banco salvo"); };
+  const remove = (id: string) => { removeBanco(id); toast.success("Banco removido"); };
 
   return (
     <CrudCard title="Bancos cadastrados" onNew={() => setCreating(true)}>
@@ -100,6 +96,7 @@ function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead>Banco</TableHead><TableHead className="text-right">Operações</TableHead>
           <TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead>
+          <TableHead className="text-center">Ativo</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
@@ -109,6 +106,9 @@ function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]
               <TableCell className="text-right">{b.operacoes}</TableCell>
               <TableCell className="text-right">{b.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
               <TableCell><StatusBadge status={b.status} /></TableCell>
+              <TableCell className="text-center">
+                <Switch checked={b.status === "Ativo"} onCheckedChange={() => toggleBancoAtivo(b.id)} />
+              </TableCell>
               <TableCell className="text-right">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(b)}><Pencil className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>

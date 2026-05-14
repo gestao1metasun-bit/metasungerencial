@@ -31,7 +31,7 @@ import { useFinPendencias } from "@/lib/fin-pendencias";
 import { useContratos, updateContratoAudit } from "@/lib/contratos-store";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { OperacionalFinTable, type OpRow } from "@/components/app/OperacionalFinTable";
+import { OperacionalFinTable, type OpRow, PREVISAO_FAIXAS, previsaoFromDias } from "@/components/app/OperacionalFinTable";
 
 export const Route = createFileRoute("/financiamentos")({
   head: () => ({ meta: [{ title: "Financiamentos — Meta Sun Gerencial" }] }),

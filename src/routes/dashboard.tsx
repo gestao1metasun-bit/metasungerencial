@@ -86,11 +86,21 @@ function DashboardGeral() {
         subtitle="Visão consolidada de todos os módulos."
         actions={
           <Select defaultValue="mes">
-            <SelectTrigger className="w-40 bg-card"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-52 bg-card"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="hoje">Hoje</SelectItem>
+              <SelectItem value="ontem">Ontem</SelectItem>
+              <SelectItem value="7d">Últimos 7 dias</SelectItem>
+              <SelectItem value="15d">Últimos 15 dias</SelectItem>
+              <SelectItem value="30d">Últimos 30 dias</SelectItem>
               <SelectItem value="mes">Este mês</SelectItem>
+              <SelectItem value="mesAnt">Mês anterior</SelectItem>
               <SelectItem value="trim">Trimestre</SelectItem>
-              <SelectItem value="ano">Ano</SelectItem>
+              <SelectItem value="semestre">Semestre</SelectItem>
+              <SelectItem value="ano">Este ano</SelectItem>
+              <SelectItem value="anoAnt">Ano anterior</SelectItem>
+              <SelectItem value="tudo">Todo o período</SelectItem>
+              <SelectItem value="custom">Personalizado…</SelectItem>
             </SelectContent>
           </Select>
         }
@@ -111,9 +121,9 @@ function DashboardGeral() {
             <StatCard label="Valor vendido" value={fmtBRL(valorVendido)} icon={DollarSign} tone="primary" onView={open("valor")} />
             <StatCard label="Total financiado" value={fmtBRL(valorFinanciado)} icon={Banknote} tone="info" onView={open("fin")} />
             <StatCard label="Obras em andamento" value={obrasAtivas} icon={HardHat} tone="info" onView={open("obras")} />
-            <StatCard label="Ticket médio" value={fmtBRL(ticketMedio)} icon={TrendingUp} tone="primary" onView={open("ticket")} />
-            <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" onView={open("kwp")} />
-            <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} onView={open("kwpInst")} />
+            <StatCard label="Ticket médio" value={fmtBRL(ticketMedio)} icon={TrendingUp} tone="primary" />
+            <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" />
+            <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} />
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">

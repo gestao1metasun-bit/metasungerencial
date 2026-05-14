@@ -943,6 +943,7 @@ function BancosTab({ ops }: { ops: FinOp[] }) {
 /* ---------------- Gerentes ---------------- */
 
 function GerentesTab({ ops }: { ops: FinOp[] }) {
+  const gerentes = useGerentesAtivos();
   const data = gerentes.map((g) => {
     const lista = ops.filter((o) => o.gerente === g.nome);
     const valor = lista.reduce((s, o) => s + o.valorFinanciado, 0);

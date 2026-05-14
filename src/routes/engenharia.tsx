@@ -89,10 +89,55 @@ function enrichObras(): Obra[] {
   }));
 }
 
+/** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
+function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
+  return {
+    id: p.id,
+    contrato: c.id,
+    cliente: c.cliente,
+    equipe: p.equipe || "",
+    modulos: p.modulos,
+    potencia: p.kwp,
+    inversor: p.inversor || "",
+    inicio: p.inicio || "",
+    previsto: p.previsto || "",
+    finalizacao: null,
+    status: p.status || "Em projeto/aprovação",
+    telhado: "Outro",
+    obs: p.obs || "",
+    ordem,
+    inv2: p.inv2 || "",
+    inv3: p.inv3 || "",
+    telhadoTipo: "Outro",
+  };
+}
+
 function EngenhariaPage() {
+  const contratos = useContratos();
   const [obras, setObras] = useState<Obra[]>(() => enrichObras());
   const [pends, setPends] = useState(pendenciasSeed);
   const [equipes, setEquipes] = useState(equipesSeed);
+
+  // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
+  useEffect(() => {
+    const aprovados: { p: ProjetoVinculado; c: ContratoFull }[] = [];
+    contratos.forEach((c) => (c.projetos ?? []).forEach((p) => {
+      if (p.aprovado && p.enviadoEngenharia) aprovados.push({ p, c });
+    }));
+    setObras((cur) => {
+      const ids = new Set(cur.map((o) => o.id));
+      const news = aprovados.filter(({ p }) => !ids.has(p.id))
+        .map(({ p, c }, i) => projetoToObra(p, c, cur.length + i + 1));
+      // Remove obras cujo projeto foi retornado ao Comercial
+      const validIds = new Set(aprovados.map(({ p }) => p.id));
+      const filtered = cur.filter((o) => {
+        // mantém obras que vieram do seed (sem projeto associado)
+        const fromComercial = contratos.some((c) => (c.projetos ?? []).some((p) => p.id === o.id));
+        return !fromComercial || validIds.has(o.id);
+      });
+      return news.length === 0 && filtered.length === cur.length ? cur : [...filtered, ...news];
+    });
+  }, [contratos]);
 
   return (
     <>
@@ -106,16 +151,14 @@ function EngenhariaPage() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
-          <TabsTrigger value="vinculados">Projetos de contratos</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
-        <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} /></TabsContent>
+        <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
         <TabsContent value="cronograma" className="mt-5"><CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><FinalizadosTab obras={obras} setObras={setObras} /></TabsContent>
-        <TabsContent value="vinculados" className="mt-5"><ProjetosVinculadosTab /></TabsContent>
       </Tabs>
     </>
   );

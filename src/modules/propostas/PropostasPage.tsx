@@ -579,17 +579,15 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)">
-                <Input type="number" step="0.01" value={p.tarifa} onChange={(e) => update("tarifa", +e.target.value)} />
-              </Field>
-              <Field label="Conta mínima (kWh)" hint="Consumo mínimo cobrado pela concessionária mesmo com geração própria.">
-                <Input type="number" value={p.contaMinimaKwh} onChange={(e) => update("contaMinimaKwh", +e.target.value)} />
-              </Field>
-              <Field label="Iluminação pública (R$)">
-                <Input type="number" step="0.01" value={p.taxaIluminacao} onChange={(e) => update("taxaIluminacao", +e.target.value)} />
-              </Field>
-              <Field label="Conta média atual (R$)">
-                <Input type="number" step="0.01" value={p.contaMediaAtual} onChange={(e) => update("contaMediaAtual", +e.target.value)} />
+              <Field label="Tarifa de energia (R$/kWh)" hint="Vem da base interna ao escolher cidade/concessionária. Ajuste manual apenas se autorizado.">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={p.tarifa}
+                  onChange={(e) => update("tarifa", +e.target.value)}
+                  disabled={!ehAdmin && !!p.cidadeId}
+                  className={!ehAdmin && !!p.cidadeId ? "bg-muted/50" : ""}
+                />
               </Field>
             </div>
           </Bloco>

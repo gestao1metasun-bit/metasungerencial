@@ -2,16 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   FileText, CheckCircle2, Clock, XCircle, DollarSign, Banknote,
-  HardHat, TrendingUp, ArrowDownCircle, ArrowUpCircle, Wallet, Activity,
+  HardHat, TrendingUp, Activity,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area, AreaChart,
+  PieChart, Pie, Cell, Line, Legend, ComposedChart, Area, AreaChart,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -19,7 +20,9 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { contratos, evolucaoMensal, receitaDespesa, financiamentos, obras, vendedores, fmtBRL } from "@/lib/mock-data";
+import { contratos, evolucaoMensal, financiamentos, obras, vendedores, propostas, fmtBRL } from "@/lib/mock-data";
+import { useContratos } from "@/lib/contratos-store";
+import { IndicadoresTab } from "@/routes/comercial";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Geral — Meta Sun Gerencial" }] }),
@@ -29,6 +32,8 @@ export const Route = createFileRoute("/dashboard")({
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 function DashboardGeral() {
+  const liveContratos = useContratos();
+
   const total = contratos.length;
   const assinadosList = contratos.filter((c) => c.status === "Assinado");
   const pendentesList = contratos.filter((c) => c.status === "Pendente");
@@ -42,8 +47,6 @@ function DashboardGeral() {
   const obrasAtivasList = obras.filter((o) => o.status !== "Finalizado");
   const obrasAtivas = obrasAtivasList.length;
   const ticketMedio = valorVendido / Math.max(assinados, 1);
-  const receitas = receitaDespesa.reduce((s, r) => s + r.receita, 0);
-  const despesas = receitaDespesa.reduce((s, r) => s + r.despesa, 0);
   const kwpTotal = contratos.reduce((s, c) => s + c.kwp, 0);
   const obrasFinalizadasList = obras.filter((o) => o.status === "Finalizado");
   const kwpInstalado = obrasFinalizadasList.reduce((s, o) => s + o.potencia, 0);
@@ -57,7 +60,6 @@ function DashboardGeral() {
 
   const vendedoresData = vendedores.map((v) => ({ nome: v.nome.split(" ")[0], vendido: v.vendido }));
 
-  // Evolução de gerados x assinados (mês a mês baseada nos contratos)
   const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   const evolGerAss = useMemo(() => {
     const map = new Map<string, { mes: string; gerados: number; assinados: number; valorAssinado: number }>();
@@ -71,9 +73,8 @@ function DashboardGeral() {
     return Array.from(map.values()).filter((r, i) => i <= 5 || r.gerados > 0 || r.assinados > 0);
   }, []);
 
-  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "receitas" | "despesas" | "resultado" | "kwp" | "kwpInst";
+  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "kwp" | "kwpInst";
   const [openModal, setOpenModal] = useState<null | ModalKey>(null);
-
   const open = (k: ModalKey) => () => setOpenModal(k);
 
   return (
@@ -93,116 +94,114 @@ function DashboardGeral() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-        <StatCard label="Contratos" value={total} icon={FileText} tone="primary" hint={`${assinados} assinados`} onView={open("contratos")} />
-        <StatCard label="Assinados" value={assinados} icon={CheckCircle2} tone="success" trend={{ value: "+12% mês", positive: true }} onView={open("assinados")} />
-        <StatCard label="Pendentes" value={pendentes} icon={Clock} tone="warning" onView={open("pendentes")} />
-        <StatCard label="Cancelados" value={cancelados} icon={XCircle} tone="destructive" onView={open("cancelados")} />
-        <StatCard label="Valor vendido" value={fmtBRL(valorVendido)} icon={DollarSign} tone="primary" onView={open("valor")} />
-        <StatCard label="Total financiado" value={fmtBRL(valorFinanciado)} icon={Banknote} tone="info" onView={open("fin")} />
-        <StatCard label="Obras em andamento" value={obrasAtivas} icon={HardHat} tone="info" onView={open("obras")} />
-        <StatCard label="Ticket médio" value={fmtBRL(ticketMedio)} icon={TrendingUp} tone="primary" onView={open("ticket")} />
-        <StatCard label="Receitas" value={fmtBRL(receitas)} icon={ArrowDownCircle} tone="success" onView={open("receitas")} />
-        <StatCard label="Despesas" value={fmtBRL(despesas)} icon={ArrowUpCircle} tone="destructive" onView={open("despesas")} />
-        <StatCard label="Resultado" value={fmtBRL(receitas - despesas)} icon={Wallet} tone="success" trend={{ value: "+18%", positive: true }} onView={open("resultado")} />
-        <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" onView={open("kwp")} />
-        <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} onView={open("kwpInst")} />
-      </div>
+      <Tabs defaultValue="visao">
+        <TabsList className="bg-card border border-border">
+          <TabsTrigger value="visao">Visão Geral</TabsTrigger>
+          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
+        </TabsList>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        {/* NOVO: Evolução de Gerados x Assinados */}
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Evolução: Gerados × Assinados</div>
-              <div className="text-xs text-muted-foreground">Quantidade mensal de contratos gerados e assinados</div>
-            </div>
+        <TabsContent value="visao" className="mt-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+            <StatCard label="Contratos" value={total} icon={FileText} tone="primary" hint={`${assinados} assinados`} onView={open("contratos")} />
+            <StatCard label="Assinados" value={assinados} icon={CheckCircle2} tone="success" trend={{ value: "+12% mês", positive: true }} onView={open("assinados")} />
+            <StatCard label="Pendentes" value={pendentes} icon={Clock} tone="warning" onView={open("pendentes")} />
+            <StatCard label="Cancelados" value={cancelados} icon={XCircle} tone="destructive" onView={open("cancelados")} />
+            <StatCard label="Valor vendido" value={fmtBRL(valorVendido)} icon={DollarSign} tone="primary" onView={open("valor")} />
+            <StatCard label="Total financiado" value={fmtBRL(valorFinanciado)} icon={Banknote} tone="info" onView={open("fin")} />
+            <StatCard label="Obras em andamento" value={obrasAtivas} icon={HardHat} tone="info" onView={open("obras")} />
+            <StatCard label="Ticket médio" value={fmtBRL(ticketMedio)} icon={TrendingUp} tone="primary" onView={open("ticket")} />
+            <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" onView={open("kwp")} />
+            <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} onView={open("kwpInst")} />
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <ComposedChart data={evolGerAss}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="gerados" fill="var(--chart-1)" radius={[4,4,0,0]} name="Gerados" />
-              <Bar dataKey="assinados" fill="var(--chart-2)" radius={[4,4,0,0]} name="Assinados" />
-              <Line type="monotone" dataKey="assinados" stroke="var(--chart-4)" strokeWidth={2.5} dot={{ r: 3 }} name="Tendência assinados" />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </Card>
 
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold">Evolução mensal financeira</div>
-              <div className="text-xs text-muted-foreground">Vendido × Financiado</div>
-            </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Evolução: Gerados × Assinados</div>
+                  <div className="text-xs text-muted-foreground">Quantidade mensal de contratos gerados e assinados</div>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={evolGerAss}>
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="gerados" fill="var(--chart-1)" radius={[4,4,0,0]} name="Gerados" />
+                  <Bar dataKey="assinados" fill="var(--chart-2)" radius={[4,4,0,0]} name="Assinados" />
+                  <Line type="monotone" dataKey="assinados" stroke="var(--chart-4)" strokeWidth={2.5} dot={{ r: 3 }} name="Tendência assinados" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold">Evolução mensal — Vendido × Financiado</div>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={evolucaoMensal}>
+                  <defs>
+                    <linearGradient id="gV" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gF" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Area type="monotone" dataKey="vendido" stroke="var(--chart-1)" fill="url(#gV)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="financiado" stroke="var(--chart-2)" fill="url(#gF)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-4 text-sm font-semibold">Contratos por status</div>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
+                    {statusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-5 bg-[image:var(--gradient-card)]">
+              <div className="mb-4 text-sm font-semibold">Vendido por vendedor</div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={vendedoresData} layout="vertical">
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} width={80} />
+                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Bar dataKey="vendido" fill="var(--chart-1)" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={evolucaoMensal}>
-              <defs>
-                <linearGradient id="gV" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gF" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="vendido" stroke="var(--chart-1)" fill="url(#gV)" strokeWidth={2} />
-              <Area type="monotone" dataKey="financiado" stroke="var(--chart-2)" fill="url(#gF)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
+        </TabsContent>
 
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-4 text-sm font-semibold">Receita x Despesa</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={receitaDespesa}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="receita" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="despesa" fill="var(--chart-5)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-4 text-sm font-semibold">Contratos por status</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
-                {statusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-5 bg-[image:var(--gradient-card)] lg:col-span-2">
-          <div className="mb-4 text-sm font-semibold">Vendido por vendedor</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={vendedoresData} layout="vertical">
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
-              <YAxis type="category" dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} width={80} />
-              <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Bar dataKey="vendido" fill="var(--chart-1)" radius={[0, 6, 6, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+        <TabsContent value="indicadores" className="mt-5">
+          <IndicadoresTab
+            contratos={liveContratos as any}
+            vendedoresList={vendedores as any}
+            propostas={propostas as any}
+            volume={[]}
+          />
+        </TabsContent>
+      </Tabs>
 
       <DetailModal
         open={openModal !== null}
@@ -210,9 +209,8 @@ function DashboardGeral() {
         modal={openModal}
         data={{
           contratos, assinadosList, pendentesList, canceladosList,
-          obrasAtivasList, obrasFinalizadasList, financiamentos, receitaDespesa,
+          obrasAtivasList, obrasFinalizadasList, financiamentos,
           valorVendido, valorFinanciado, ticketMedio, kwpTotal, kwpInstalado,
-          receitas, despesas,
         }}
       />
     </>
@@ -227,9 +225,7 @@ function DetailModal({
     contratos: typeof contratos; assinadosList: typeof contratos; pendentesList: typeof contratos;
     canceladosList: typeof contratos; obrasAtivasList: typeof obras; obrasFinalizadasList: typeof obras;
     financiamentos: typeof financiamentos;
-    receitaDespesa: typeof receitaDespesa;
     valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number; kwpInstalado: number;
-    receitas: number; despesas: number;
   };
 }) {
   if (!modal) return null;
@@ -238,9 +234,7 @@ function DetailModal({
     pendentes: "Contratos pendentes", cancelados: "Contratos cancelados",
     valor: "Detalhamento — Valor vendido", fin: "Financiamentos ativos",
     obras: "Obras em andamento", ticket: "Análise de ticket médio",
-    receitas: "Receitas por mês", despesas: "Despesas por mês",
-    resultado: "Resultado mensal (Receita − Despesa)", kwp: "kWp por contrato",
-    kwpInst: "kWp instalado (obras finalizadas)",
+    kwp: "kWp por contrato", kwpInst: "kWp instalado (obras finalizadas)",
   };
   const list =
     modal === "assinados" ? data.assinadosList :
@@ -259,10 +253,7 @@ function DetailModal({
           <DialogDescription>
             {modal === "fin" && `${data.financiamentos.length} financiamentos · ${fmtBRL(data.valorFinanciado)}`}
             {modal === "obras" && `${data.obrasAtivasList.length} obras em andamento`}
-            {modal === "receitas" && `Total ${fmtBRL(data.receitas)}`}
-            {modal === "despesas" && `Total ${fmtBRL(data.despesas)}`}
-            {modal === "resultado" && `Saldo ${fmtBRL(data.receitas - data.despesas)}`}
-            {!["fin","obras","receitas","despesas","resultado"].includes(modal) && `${list.length} registros · Ticket médio ${fmtBRL(data.ticketMedio)}`}
+            {!["fin","obras"].includes(modal) && `${list.length} registros · Ticket médio ${fmtBRL(data.ticketMedio)}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -299,25 +290,6 @@ function DetailModal({
                   <TableCell className="text-right">{o.modulos}</TableCell>
                   <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
                   <TableCell><StatusBadge status={o.status} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : ["receitas","despesas","resultado"].includes(modal) ? (
-          <Table>
-            <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead>Mês</TableHead>
-              <TableHead className="text-right">Receita</TableHead>
-              <TableHead className="text-right">Despesa</TableHead>
-              <TableHead className="text-right">Resultado</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {data.receitaDespesa.map((r) => (
-                <TableRow key={r.mes}>
-                  <TableCell className="font-medium">{r.mes}</TableCell>
-                  <TableCell className="text-right text-success">{fmtBRL(r.receita)}</TableCell>
-                  <TableCell className="text-right text-destructive">{fmtBRL(r.despesa)}</TableCell>
-                  <TableCell className={`text-right font-semibold ${r.receita-r.despesa>=0?"text-success":"text-destructive"}`}>{fmtBRL(r.receita - r.despesa)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

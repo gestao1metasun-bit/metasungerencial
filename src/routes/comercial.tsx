@@ -911,11 +911,7 @@ function CadastrarContratoTab({
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
       possuiFinanciamento: form.possuiFinanciamento === "Sim",
-      financiamentoBanco: form.possuiFinanciamento === "Sim" ? form.finBanco : undefined,
-      financiamentoValor: form.possuiFinanciamento === "Sim" ? (Number(form.finValor) || 0) : undefined,
-      financiamentoGerente: form.possuiFinanciamento === "Sim" ? form.finGerente : undefined,
-      financiamentoStatus: form.possuiFinanciamento === "Sim" ? form.finStatus : undefined,
-      financiamentoObs: form.possuiFinanciamento === "Sim" ? form.finObs : undefined,
+
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [{
         id: `${novoId}-01`,
@@ -973,7 +969,20 @@ function CadastrarContratoTab({
     }
     const novo = { ...previewContrato, status: "Em análise" };
     upsertContrato(novo);
-    toast.success(`Contrato ${novo.id} cadastrado · status Em análise · configure a composição financeira em Pedidos de venda`);
+    if (novo.possuiFinanciamento) {
+      addPendencia({
+        id: novo.id,
+        cliente: novo.cliente,
+        vendedor: novo.vendedor,
+        valor: novo.valor,
+        kwp: novo.kwp,
+        dataCadastro: novo.dataCadastro || today,
+        status: "Pendente",
+      });
+      toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
+    } else {
+      toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
+    }
   };
 
   return (
@@ -1171,36 +1180,9 @@ function CadastrarContratoTab({
                       </Select>
                     </div>
                     {form.possuiFinanciamento === "Sim" && (
-                      <>
-                        <div className="space-y-1.5"><Label>Banco / Linha</Label>
-                          <Select value={form.finBanco} onValueChange={(v) => setForm({ ...form, finBanco: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
-                          <Input type="number" value={form.finValor} onChange={(e) => setForm({ ...form, finValor: e.target.value })} placeholder="0" />
-                        </div>
-                        <div className="space-y-1.5"><Label>Gerente responsável</Label>
-                          <Input value={form.finGerente} onChange={(e) => setForm({ ...form, finGerente: e.target.value })} placeholder="Nome do gerente" />
-                        </div>
-                        <div className="space-y-1.5"><Label>Status inicial</Label>
-                          <Select value={form.finStatus} onValueChange={(v) => setForm({ ...form, finStatus: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
-                          <Textarea rows={2} value={form.finObs} onChange={(e) => setForm({ ...form, finObs: e.target.value })} />
-                        </div>
-                        <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
-                          Ao salvar, o contrato será enviado automaticamente ao módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
-                        </div>
-                      </>
+                      <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                        Ao salvar, o contrato será enviado automaticamente para <b>Financiamentos &gt; Pendências</b>. O setor responsável definirá banco, gerente, valor, status e demais informações.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1450,11 +1432,6 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       comissaoPct: _comissaoPct,
       comissaoValor: _comissaoValor,
       possuiFinanciamento: !!f.possuiFinanciamento,
-      financiamentoBanco: f.possuiFinanciamento ? f.financiamentoBanco : undefined,
-      financiamentoValor: f.possuiFinanciamento ? f.financiamentoValor : undefined,
-      financiamentoGerente: f.possuiFinanciamento ? f.financiamentoGerente : undefined,
-      financiamentoStatus: f.possuiFinanciamento ? f.financiamentoStatus : undefined,
-      financiamentoObs: f.possuiFinanciamento ? f.financiamentoObs : undefined,
       clienteFull: cli,
     });
 
@@ -1463,7 +1440,21 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       const projs = contrato.projetos ?? [];
       projs.forEach((p) => {
         if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+    });
+
+    // Se acabou de marcar como financiado, envia para Financiamentos > Pendências
+    if (f.possuiFinanciamento && !contrato.possuiFinanciamento) {
+      addPendencia({
+        id: contrato.id,
+        cliente: cli.nome || contrato.cliente,
+        vendedor: f.vendedor || contrato.vendedor,
+        valor: _valor,
+        kwp: _kwp,
+        dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
+        status: "Pendente",
       });
+      toast.success(`Contrato ${contrato.id} enviado para Financiamentos > Pendências`);
+    }
       toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
@@ -1585,32 +1576,9 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                   </Select>
                 </div>
                 {f.possuiFinanciamento && (
-                  <>
-                    <div className="space-y-1.5"><Label>Banco / Linha</Label>
-                      <Select value={f.financiamentoBanco ?? "BASA"} onValueChange={(v) => setF({ ...f, financiamentoBanco: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
-                      <Input type="number" value={f.financiamentoValor ?? 0} onChange={(e) => setF({ ...f, financiamentoValor: Number(e.target.value) || 0 })} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Gerente responsável</Label>
-                      <Input value={f.financiamentoGerente ?? ""} onChange={(e) => setF({ ...f, financiamentoGerente: e.target.value })} />
-                    </div>
-                    <div className="space-y-1.5"><Label>Status</Label>
-                      <Select value={f.financiamentoStatus ?? "Em análise"} onValueChange={(v) => setF({ ...f, financiamentoStatus: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado", "Finalizado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
-                      <Textarea rows={2} value={f.financiamentoObs ?? ""} onChange={(e) => setF({ ...f, financiamentoObs: e.target.value })} />
-                    </div>
-                    <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
-                      Contrato listado no módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
-                    </div>
-                  </>
+                  <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                    Contrato encaminhado para <b>Financiamentos &gt; Pendências</b>. Banco, gerente, valor e status são definidos pelo setor de Financiamentos.
+                  </div>
                 )}
               </div>
             </div>
@@ -2362,9 +2330,9 @@ const SERIE_ANOS: { mes: string; "2024": number; "2025": number; "2026": number;
   { mes: "Dez", "2024": 1580000, "2025": 2040000, "2026": 0, projecao: 2890000 },
 ];
 
-function IndicadoresTab({
+export function IndicadoresTab({
   contratos, vendedoresList, propostas, volume,
-}: { contratos: Contrato[]; vendedoresList: Vendedor[]; propostas: Proposta[]; volume: VolumeMes[] }) {
+}: { contratos: Contrato[]; vendedoresList: any[]; propostas: any[]; volume: VolumeMes[] }) {
   // === KPIs PRINCIPAIS ===
   const gerados = contratos;
   const assinados = contratos.filter((c) => c.status === "Assinado");

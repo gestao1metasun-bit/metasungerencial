@@ -1108,7 +1108,16 @@ function CadastrarContratoTab({
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
-                      <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+                      <Input
+                        inputMode="numeric"
+                        value={valorNum > 0 ? fmtBRL(valorNum) : ""}
+                        placeholder="R$ 0,00"
+                        onChange={(e) => {
+                          const cents = e.target.value.replace(/\D/g, "");
+                          const reais = cents ? (Number(cents) / 100).toString() : "";
+                          setForm({ ...form, valor: reais });
+                        }}
+                      />
                     </div>
                     <div className="space-y-1.5"><Label>Parâmetro</Label>
                       <Input value={parametroFmt} readOnly className="bg-muted font-mono" />

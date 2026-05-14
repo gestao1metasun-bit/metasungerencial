@@ -28,7 +28,29 @@ export function AppLayout() {
     const m = /(?:^|&)tab=([^&]+)/.exec(clean);
     return m ? decodeURIComponent(m[1]) : "";
   })();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+
+  // Fecha o flyout ao clicar fora ou pressionar Esc
+  useEffect(() => {
+    if (!openMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (!navRef.current) return;
+      const target = e.target as Node;
+      // permite cliques dentro do flyout (que está dentro de navRef)
+      if (!navRef.current.contains(target)) setOpenMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenMenu(null); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openMenu]);
+
+  // Fecha o flyout sempre que a rota ou o hash mudar (após selecionar uma aba)
+  useEffect(() => { setOpenMenu(null); }, [path, hash]);
   const { user, perfil } = useUsuarioAtual();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();

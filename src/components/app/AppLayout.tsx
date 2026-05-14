@@ -43,7 +43,7 @@ export function AppLayout() {
             Menu
           </div>
           <ul className="space-y-0.5">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const active = path === item.to || path.startsWith(item.to + "/");
               const Icon = item.icon;
               return (

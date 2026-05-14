@@ -1321,6 +1321,19 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   });
   const [cepLoading, setCepLoading] = useState(false);
 
+  // Recálculo automático: parâmetro (R$/kWp) e comissão sempre que valor/módulos/potência/kWp mudam.
+  const _modulos = Number(f.modulos) || 0;
+  const _potW = Number(f.potencia) || 0;
+  const _kwpCalc = (_modulos * _potW) / 1000;
+  const _kwp = _kwpCalc > 0 ? Number(_kwpCalc.toFixed(2)) : (Number(f.kwp) || 0);
+  const _valor = Number(f.valor) || 0;
+  const _parametroNum = _kwp > 0 ? _valor / _kwp : 0;
+  const _parametroFmt = _parametroNum > 0 ? String(Math.round(_parametroNum)) : "";
+  const _comissaoCalc = comissaoFromParametro(_parametroNum);
+  const _comissaoPct = _comissaoCalc.pct ?? 0;
+  const _comissaoValor = _comissaoCalc.pct != null ? (_valor * _comissaoCalc.pct) / 100 : 0;
+  const _valorPorKwp = _kwp > 0 ? _valor / _kwp : 0;
+
   const setCliField = (k: keyof ClienteFull, v: string) => setCli((p) => ({ ...p, [k]: v }));
   const lookupCEP = async (cep: string) => {
     setCliField("cep", cep);

@@ -37,13 +37,11 @@ function EstoquePage() {
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="itens">Itens</TabsTrigger>
-          <TabsTrigger value="mov">Movimentações</TabsTrigger>
-          <TabsTrigger value="alertas">Alertas</TabsTrigger>
+          <TabsTrigger value="entregas">Entregas Realizadas</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEst /></TabsContent>
         <TabsContent value="itens" className="mt-5"><ItensTab /></TabsContent>
-        <TabsContent value="mov" className="mt-5"><MovTab /></TabsContent>
-        <TabsContent value="alertas" className="mt-5"><ItensTab onlyAlerts /></TabsContent>
+        <TabsContent value="entregas" className="mt-5"><EntregasTab /></TabsContent>
       </Tabs>
     </>
   );

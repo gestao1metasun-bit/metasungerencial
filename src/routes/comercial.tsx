@@ -1455,7 +1455,20 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
                 }} />
               </div>
               <div className="space-y-1.5"><Label>kWp total (auto)</Label>
-                <Input type="number" step="0.01" value={f.kwp} readOnly className="bg-muted font-mono" />
+                <Input type="number" step="0.01" value={_kwp} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Parâmetro (R$/kWp)</Label>
+                <Input value={_parametroFmt || "—"} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Valor por kWp</Label>
+                <Input value={_valorPorKwp > 0 ? fmtBRL(_valorPorKwp) : "—"} readOnly className="bg-muted font-mono" />
+              </div>
+              <div className="space-y-1.5"><Label>Comissão</Label>
+                <Input
+                  value={_comissaoCalc.pct != null ? `${_comissaoCalc.pct.toFixed(2)}% · ${fmtBRL(_comissaoValor)}` : (_comissaoCalc.aprovacao ? "Necessita aprovação" : "—")}
+                  readOnly
+                  className="bg-muted font-semibold text-primary"
+                />
               </div>
               {(["inv1","inv2","inv3","inv4","inv5","inv6"] as const).map((k, i) => (
                 <div key={k} className="space-y-1.5"><Label>Inversor {i + 1}</Label>

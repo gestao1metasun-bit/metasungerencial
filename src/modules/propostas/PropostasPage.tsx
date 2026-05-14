@@ -53,13 +53,14 @@ function PropostasPage() {
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
+  const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
   function novaProposta() {
     const numero = proximoNumeroProposta(propostas);
     const p = novaPropostaVazia(numero);
-    setEditando(p);
+    setLeadDraft(p);
   }
 
   return (
@@ -95,17 +96,90 @@ function PropostasPage() {
         </TabsContent>
       </Tabs>
 
+      {leadDraft && (
+        <LeadModal
+          proposta={leadDraft}
+          onCancel={() => setLeadDraft(null)}
+          onContinuar={(p) => { setLeadDraft(null); setEditando(p); }}
+        />
+      )}
+
       {editando && (
         <PropostaSheet
           proposta={editando}
           onClose={() => setEditando(null)}
           onVisualizar={(id) => { setVendoId(id); setEditando(null); }}
+          onGerada={() => setEditando(null)}
         />
       )}
       {propostaVisualizada && (
         <PropostaImpressao proposta={propostaVisualizada} onClose={() => setVendoId(null)} />
       )}
     </>
+  );
+}
+
+/* =========================== LEAD MODAL =========================== */
+
+function LeadModal({
+  proposta, onCancel, onContinuar,
+}: {
+  proposta: PropostaFV;
+  onCancel: () => void;
+  onContinuar: (p: PropostaFV) => void;
+}) {
+  const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [telefone, setTelefone] = useState(proposta.clienteTelefone ?? "");
+  const [consultor, setConsultor] = useState(proposta.consultor ?? "");
+  const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
+
+  const upper = (v: string) => v.toUpperCase();
+
+  function continuar() {
+    if (!nome.trim() || !telefone.trim() || !consultor.trim()) {
+      toast.error("Preencha Nome, Telefone e Consultor.");
+      return;
+    }
+    onContinuar({
+      ...proposta,
+      clienteNome: upper(nome.trim()),
+      clienteTelefone: telefone.trim(),
+      consultor: upper(consultor.trim()),
+      clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
+      criadoPor: upper(consultor.trim()),
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onCancel(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cadastrar Lead — {proposta.numero}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div>
+            <Label className="text-xs">Nome do lead *</Label>
+            <Input value={nome} onChange={(e) => setNome(upper(e.target.value))} placeholder="NOME COMPLETO" />
+          </div>
+          <div>
+            <Label className="text-xs">Telefone *</Label>
+            <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+          </div>
+          <div>
+            <Label className="text-xs">Consultor de venda *</Label>
+            <Input value={consultor} onChange={(e) => setConsultor(upper(e.target.value))} placeholder="NOME DO CONSULTOR" />
+          </div>
+          <div>
+            <Label className="text-xs">Endereço (opcional)</Label>
+            <Input value={endereco} onChange={(e) => setEndereco(upper(e.target.value))} placeholder="RUA, NÚMERO, BAIRRO, CIDADE" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>Voltar</Button>
+          <Button onClick={continuar}>Continuar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

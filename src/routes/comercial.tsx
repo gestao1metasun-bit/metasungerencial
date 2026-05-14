@@ -965,22 +965,10 @@ function CadastrarContratoTab({
       }
       const novo = { ...previewContrato, id: novoId, status: "Em análise" };
       upsertContrato(novo);
-      if (novo.possuiFinanciamento) {
-        addPendencia({
-          id: novo.id,
-          cliente: novo.cliente,
-          vendedor: novo.vendedor,
-          valor: novo.valor,
-          kwp: novo.kwp,
-          dataCadastro: novo.dataCadastro || today,
-          status: "Pendente",
-        });
-        toast.success(`Contrato ${novo.id} cadastrado · enviado para Financiamentos > Pendências`);
-      } else {
-        toast.success(`Contrato ${novo.id} cadastrado · status Em análise`);
-      }
+      toast.success(`Contrato ${novo.id} cadastrado · status Em análise. Defina os projetos no lápis e aprove para enviar à Engenharia${novo.possuiFinanciamento ? " e Financiamentos" : ""}.`);
+      limpar();
+      setOpenForm(false);
     } finally {
-      // Libera após pequeno atraso para evitar duplo clique acidental; modal segue aberto até "Fechar".
       setTimeout(() => setSubmitting(false), 800);
     }
   };
@@ -1108,7 +1096,16 @@ function CadastrarContratoTab({
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-1.5"><Label>Valor da venda (R$)</Label>
-                      <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+                      <Input
+                        inputMode="numeric"
+                        value={valorNum > 0 ? fmtBRL(valorNum) : ""}
+                        placeholder="R$ 0,00"
+                        onChange={(e) => {
+                          const cents = e.target.value.replace(/\D/g, "");
+                          const reais = cents ? (Number(cents) / 100).toString() : "";
+                          setForm({ ...form, valor: reais });
+                        }}
+                      />
                     </div>
                     <div className="space-y-1.5"><Label>Parâmetro</Label>
                       <Input value={parametroFmt} readOnly className="bg-muted font-mono" />
@@ -1181,7 +1178,7 @@ function CadastrarContratoTab({
                     </div>
                     {form.possuiFinanciamento === "Sim" && (
                       <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
-                        Ao salvar, o contrato será enviado automaticamente para <b>Financiamentos &gt; Pendências</b>. O setor responsável definirá banco, gerente, valor, status e demais informações.
+                        Marcado como financiado. O contrato só será enviado para <b>Financiamentos &gt; Pendências</b> após a <b>aprovação</b>.
                       </div>
                     )}
                   </div>
@@ -1344,7 +1341,24 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
       return;
     }
     updateContratoAudit(contrato.id, { status: "Aprovado" });
-    toast.success(`Contrato ${contrato.id} aprovado · libere os projetos na aba Projetos do lápis`);
+    const projs = contrato.projetos ?? [];
+    projs.forEach((p) => {
+      if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+    });
+    if (contrato.possuiFinanciamento) {
+      addPendencia({
+        id: contrato.id,
+        cliente: contrato.clienteFull?.nome || contrato.cliente,
+        vendedor: contrato.vendedor,
+        valor: contrato.valor,
+        kwp: contrato.kwp,
+        dataCadastro: contrato.dataCadastro || contrato.data,
+        status: "Pendente",
+      });
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+    } else {
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+    }
     setOpen(false);
   };
   return (
@@ -1440,27 +1454,27 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       clienteFull: cli,
     });
 
-    // Se aprovou agora, libera projetos para Engenharia (sem geração financeira automática)
+    // Se aprovou agora, libera projetos para Engenharia
     if (aprovouAgora) {
       const projs = contrato.projetos ?? [];
       projs.forEach((p) => {
         if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-    });
-
-    // Se acabou de marcar como financiado, envia para Financiamentos > Pendências
-    if (f.possuiFinanciamento && !contrato.possuiFinanciamento) {
-      addPendencia({
-        id: contrato.id,
-        cliente: cli.nome || contrato.cliente,
-        vendedor: f.vendedor || contrato.vendedor,
-        valor: _valor,
-        kwp: _kwp,
-        dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
-        status: "Pendente",
       });
-      toast.success(`Contrato ${contrato.id} enviado para Financiamentos > Pendências`);
-    }
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+      // E, se possui financiamento, envia para Financiamentos > Pendências
+      if (f.possuiFinanciamento) {
+        addPendencia({
+          id: contrato.id,
+          cliente: cli.nome || contrato.cliente,
+          vendedor: f.vendedor || contrato.vendedor,
+          valor: _valor,
+          kwp: _kwp,
+          dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
+          status: "Pendente",
+        });
+        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+      } else {
+        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+      }
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
     }
@@ -1479,11 +1493,11 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="hidden">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
-            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> 4. Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">

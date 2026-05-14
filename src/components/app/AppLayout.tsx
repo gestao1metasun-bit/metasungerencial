@@ -60,14 +60,8 @@ export function AppLayout() {
     <div className="flex min-h-screen w-full bg-background text-foreground">
       {/* Sidebar */}
       <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-        <div className="flex h-16 items-center gap-2 px-5 border-b border-sidebar-border">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary">
-            <Sun className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sm font-bold tracking-wide text-primary">META SUN</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Gerencial</div>
-          </div>
+        <div className="flex h-16 items-center justify-center px-3 border-b border-sidebar-border bg-white">
+          <img src={logoMetaSun} alt="META SUN — Energia Solar" className="h-10 w-auto object-contain" />
         </div>
 
         <nav ref={navRef} className="flex-1 overflow-visible px-3 py-4">

@@ -13,6 +13,7 @@ import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,11 +31,12 @@ export const Route = createFileRoute("/estoque")({
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 function EstoquePage() {
+  const [tab, setTab] = useTabFromHash("/estoque");
   return (
     <>
       <PageHeader title="Estoque" subtitle="Controle de produtos, movimentações e níveis mínimos." />
-      <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="itens">Itens</TabsTrigger>
           <TabsTrigger value="entregas">Entregas Realizadas</TabsTrigger>

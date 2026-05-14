@@ -14,6 +14,7 @@ import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ function fmtContrato(id?: string): string {
 /* ---------------- Página ---------------- */
 
 function FinanciamentosPage() {
+  const [tab, setTab] = useTabFromHash("/financiamentos");
   const [ops, setOps] = useState<FinOp[]>(() => finSeed);
   const [pend] = useFinPendencias();
   const pendCount = pend.filter((p) => p.status === "Pendente").length;
@@ -70,8 +72,8 @@ function FinanciamentosPage() {
         title="Financiamentos"
         subtitle="Painel executivo de operações bancárias, prazos, liberações e recebimentos."
       />
-      <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="carteira">Contratos Assinados em Financiamento</TabsTrigger>
           <TabsTrigger value="sem">Sem Contrato em Financiamento</TabsTrigger>

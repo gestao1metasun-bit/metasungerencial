@@ -28,6 +28,7 @@ import {
   produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 
 export const Route = createFileRoute("/engenharia")({
@@ -130,6 +131,7 @@ function EngenhariaPage() {
   const [obras, setObras] = useState<Obra[]>(() => enrichObras());
   const [pends, setPends] = useState(pendenciasSeed);
   const [equipes, setEquipes] = useState(equipesSeed);
+  const [tab, setTab] = useTabFromHash("/engenharia");
 
   // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
   useEffect(() => {
@@ -155,8 +157,8 @@ function EngenhariaPage() {
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
-      <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>

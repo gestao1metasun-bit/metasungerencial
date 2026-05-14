@@ -13,6 +13,7 @@ import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/dashboard")({
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 function DashboardGeral() {
+  const [tab, setTab] = useTabFromHash("/dashboard");
   const liveContratos = useContratos();
 
   const total = contratos.length;
@@ -94,8 +96,8 @@ function DashboardGeral() {
         }
       />
 
-      <Tabs defaultValue="visao">
-        <TabsList className="bg-card border border-border">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="visao">Visão Geral</TabsTrigger>
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
         </TabsList>

@@ -13,6 +13,7 @@ import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ function fmtBR(d: string) {
 }
 
 function FinanceiroPage() {
+  const [tab, setTab] = useTabFromHash("/financeiro");
   const [lancs, setLancs] = useLancamentos();
   const [recs, setRecs] = useRecorrentes();
   const [centros] = useCentrosCusto();
@@ -66,8 +68,8 @@ function FinanceiroPage() {
         actions={<NovoLancamentoDialog onSave={(l) => setLancs(p => [l, ...p])} centros={centros} naturezas={naturezas} />}
       />
 
-      <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>

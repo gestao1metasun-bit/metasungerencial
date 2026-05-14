@@ -1,11 +1,12 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package,
-  Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw,
+  Database, FileBarChart, Settings, Sun, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
+import { ROUTE_TABS } from "@/lib/route-tabs";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
@@ -46,8 +47,9 @@ export function AppLayout() {
             {visibleNav.map((item) => {
               const active = path === item.to || path.startsWith(item.to + "/");
               const Icon = item.icon;
+              const sub = ROUTE_TABS[item.to];
               return (
-                <li key={item.to}>
+                <li key={item.to} className="group/item relative">
                   <Link
                     to={item.to}
                     className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
@@ -58,7 +60,22 @@ export function AppLayout() {
                   >
                     <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
                     <span className="flex-1">{item.label}</span>
+                    {sub && <ChevronRight className={`h-3.5 w-3.5 opacity-60`} />}
                   </Link>
+                  {sub && (
+                    <div className="invisible opacity-0 group-hover/item:visible group-hover/item:opacity-100 transition-opacity absolute left-full top-0 z-50 ml-1 min-w-[240px] rounded-md border border-border bg-popover p-1 shadow-lg">
+                      {sub.tabs.map((t) => (
+                        <Link
+                          key={t.value}
+                          to={item.to}
+                          hash={`tab=${t.value}`}
+                          className="block rounded px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                        >
+                          {t.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </li>
               );
             })}

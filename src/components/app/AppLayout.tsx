@@ -5,20 +5,24 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
-  { to: "/comercial", label: "Comercial", icon: Briefcase },
-  { to: "/financiamentos", label: "Financiamentos", icon: Banknote },
-  { to: "/engenharia", label: "Engenharia", icon: HardHat },
-  { to: "/estoque", label: "Estoque", icon: Package },
-  { to: "/cadastros", label: "Cadastros", icon: Database },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
-] as const;
+const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
+  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
+  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
+  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
+  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
+  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
+  { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes" },
+];
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user, perfil } = useUsuarioAtual();
+  const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
+  const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -39,7 +43,7 @@ export function AppLayout() {
             Menu
           </div>
           <ul className="space-y-0.5">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const active = path === item.to || path.startsWith(item.to + "/");
               const Icon = item.icon;
               return (
@@ -88,14 +92,14 @@ export function AppLayout() {
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
               <Bell className="h-4 w-4" />
             </Button>
-            <div className="hidden md:flex items-center gap-3 rounded-md border border-border bg-card px-3 py-1.5">
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">AM</div>
-              <div className="leading-tight">
-                <div className="text-sm font-medium">Admin Master</div>
-                <div className="text-[11px] text-muted-foreground">Administrador</div>
+            <Link to="/configuracoes" className="hidden md:flex items-center gap-3 rounded-md border border-border bg-card px-3 py-1.5 hover:bg-accent">
+              <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{initials}</div>
+              <div className="leading-tight text-left">
+                <div className="text-sm font-medium">{user?.nome ?? "—"}</div>
+                <div className="text-[11px] text-muted-foreground">{perfil?.nome ?? "Sem perfil"}</div>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
+            </Link>
             <Link to="/login">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
                 <LogOut className="h-4 w-4" />

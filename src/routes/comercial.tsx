@@ -119,7 +119,6 @@ function ComercialPage() {
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
-          <TabsTrigger value="pedidos">Pedidos de venda</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
@@ -134,9 +133,6 @@ function ComercialPage() {
         </TabsContent>
         <TabsContent value="cad-contrato" className="mt-5">
           <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
-        </TabsContent>
-        <TabsContent value="pedidos" className="mt-5">
-          <PedidosVendaTab contratos={contratos} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />

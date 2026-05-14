@@ -1341,7 +1341,24 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
       return;
     }
     updateContratoAudit(contrato.id, { status: "Aprovado" });
-    toast.success(`Contrato ${contrato.id} aprovado · libere os projetos na aba Projetos do lápis`);
+    const projs = contrato.projetos ?? [];
+    projs.forEach((p) => {
+      if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
+    });
+    if (contrato.possuiFinanciamento) {
+      addPendencia({
+        id: contrato.id,
+        cliente: contrato.clienteFull?.nome || contrato.cliente,
+        vendedor: contrato.vendedor,
+        valor: contrato.valor,
+        kwp: contrato.kwp,
+        dataCadastro: contrato.dataCadastro || contrato.data,
+        status: "Pendente",
+      });
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+    } else {
+      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+    }
     setOpen(false);
   };
   return (

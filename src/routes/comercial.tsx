@@ -1173,7 +1173,7 @@ function CadastrarContratoTab({
                   <div className="space-y-1.5"><Label>Observações</Label>
                     <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
                   </div>
-                  <div className="text-[11px] text-muted-foreground">A composição financeira será definida em <b>Pedidos de venda</b> após a aprovação do contrato.</div>
+                  <div className="text-[11px] text-muted-foreground">A composição financeira é tratada no módulo <b>Financeiro</b>, separadamente do Comercial.</div>
                 </div>
 
                 <div className="rounded-lg border bg-card p-5 space-y-4">
@@ -1199,7 +1199,7 @@ function CadastrarContratoTab({
                 </div>
 
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
-                  <b className="text-foreground">Próximos passos:</b> ao salvar o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> na lista para liberar a aprovação. A composição financeira (forma de pagamento, parcelas) é configurada depois em <b>Pedidos de venda</b>.
+                  <b className="text-foreground">Próximos passos:</b> ao salvar o contrato vai para <b>Em análise</b>. Use o botão <b>Validar</b> e depois <b>Aprovar</b> — após aprovado, os projetos seguem direto para a <b>Engenharia</b>. O Financeiro é tratado separadamente.
                 </div>
               </TabsContent>
             </Tabs>
@@ -1267,7 +1267,7 @@ function CadastrarContratoTab({
                       const pend = (c.projetos ?? []).filter((p) => !p.aprovado);
                       if (pend.length === 0) return null;
                       return (
-                        <span className="inline-flex w-fit items-center gap-1 rounded bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning" title="Aprove os pedidos na aba Pedidos de venda">
+                        <span className="inline-flex w-fit items-center gap-1 rounded bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning" title="Aprove os projetos no lápis > aba Projetos">
                           <Clock className="h-3 w-3" /> {pend.length === 1 ? "Projeto pendente" : `${pend.length} projetos pendentes`}
                         </span>
                       );
@@ -1295,7 +1295,7 @@ function CadastrarContratoTab({
 function ValidarContratoButton({ contrato }: { contrato: Contrato }) {
   if (contrato.status === "Aprovado" || contrato.status === "Pronto para aprovação" || contrato.status === "Cancelado") return null;
   const validar = () => {
-    const r = validateContratoCompleto(contrato);
+    const r = validateContratoCompleto(contrato, { requireComposicao: false });
     if (r.ok) {
       updateContratoAudit(contrato.id, { status: "Pronto para aprovação" });
       toast.success(`Contrato ${contrato.id} validado · pronto para aprovação`);
@@ -1349,7 +1349,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
   const liberado = contrato.status === "Pronto para aprovação";
   const cli = contrato.clienteFull;
   const aprovar = () => {
-    const r = validateContratoCompleto(contrato);
+    const r = validateContratoCompleto(contrato, { requireComposicao: false });
     if (!r.ok) {
       toast.error(`Não pode aprovar. Faltam: ${r.missing.join(", ")}`);
       return;
@@ -1602,7 +1602,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Aprovação para Engenharia</div>
-                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Aprovados</b> e projetos <b>liberados</b> aparecem na Engenharia. Configure o financeiro de cada projeto na aba <b>Pedidos de venda</b>.</div>
+                  <div className="text-xs text-muted-foreground">Apenas contratos <b>Aprovados</b> e projetos <b>liberados</b> aparecem na Engenharia. O <b>Financeiro</b> é tratado separadamente, sem vínculo automático no Comercial.</div>
                 </div>
                 <AprovarEnviarDialog contrato={contrato} />
               </div>
@@ -1726,7 +1726,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
     liberados.forEach((id) => {
       updateProjeto(contrato.id, id, { enviadoEngenharia: true });
     });
-    toast.success(`Contrato aprovado · ${liberados.length} projeto(s) liberado(s) · configure o financeiro na aba Pedidos de venda`);
+    toast.success(`Contrato aprovado · ${liberados.length} projeto(s) liberado(s) para a Engenharia`);
     setOpen(false);
   };
 
@@ -1741,7 +1741,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
         <DialogHeader>
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
-            Selecione os projetos a liberar para a Engenharia. A soma de valor e módulos não pode exceder o contrato. O financeiro de cada projeto é configurado em <b>Pedidos de venda</b>.
+            Selecione os projetos a liberar para a Engenharia. A soma de valor e módulos não pode exceder o contrato. O Financeiro é tratado separadamente, sem vínculo automático aqui.
           </DialogDescription>
         </DialogHeader>
         <div className={`rounded-md border p-2 text-xs ${(excedeValor || excedeMod) ? "border-destructive/50 bg-destructive/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
@@ -1941,7 +1941,7 @@ function ProjetoEditCard({
       </div>
       {projeto.aprovado && (
         <div className="mb-3 rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs text-success">
-          <b>Projeto aprovado · edição bloqueada.</b> Para alterar dados deste projeto, remova primeiro os lançamentos financeiros vinculados (em Pedidos de venda &gt; Financeiro do projeto) e os registros de Engenharia. Apenas Admin Master pode reverter, com auditoria.
+          <b>Projeto aprovado · edição bloqueada.</b> Para alterar dados deste projeto, remova primeiro os registros de Engenharia vinculados. Apenas Admin Master pode reverter, com auditoria.
         </div>
       )}
       <fieldset disabled={projeto.aprovado} className="contents">

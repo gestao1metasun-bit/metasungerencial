@@ -136,11 +136,9 @@ function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initia
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>{initial ? "Editar banco" : "Novo banco"}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2"><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-          <div><Label>Operações</Label><Input type="number" value={form.operacoes} onChange={(e) => setForm({ ...form, operacoes: Number(e.target.value) })} /></div>
-          <div><Label>Total (R$)</Label><Input type="number" value={form.total} onChange={(e) => setForm({ ...form, total: Number(e.target.value) })} /></div>
-          <div className="col-span-2"><Label>Status</Label>
+        <div className="grid grid-cols-1 gap-3">
+          <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+          <div><Label>Status</Label>
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>

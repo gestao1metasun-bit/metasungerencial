@@ -162,10 +162,72 @@ export const produtividadeEquipe = [
   { equipe: "Equipe C", mediaDia: 14, faixas: { "0-20": 1, "21-50": 1.3, "51-100": 1.9, "101-200": 2.8, "201-300": 4, "301-500": 6.5, "500+": 9 } },
 ];
 
-export function diasPrevistos(equipeNome: string, modulos: number): number {
+// Faixas oficiais de módulos com produtividade global (módulos/dia)
+export const FAIXAS_PRODUTIVIDADE: { label: string; max: number; mediaDiaGlobal: number }[] = [
+  { label: "até 20",   max: 20,       mediaDiaGlobal: 8 },
+  { label: "21–50",    max: 50,       mediaDiaGlobal: 12 },
+  { label: "51–75",    max: 75,       mediaDiaGlobal: 14 },
+  { label: "76–100",   max: 100,      mediaDiaGlobal: 16 },
+  { label: "101–150",  max: 150,      mediaDiaGlobal: 18 },
+  { label: "151–250",  max: 250,      mediaDiaGlobal: 22 },
+  { label: "251–500",  max: 500,      mediaDiaGlobal: 28 },
+  { label: "501+",     max: Infinity, mediaDiaGlobal: 35 },
+];
+
+export function faixaDe(modulos: number) {
+  return FAIXAS_PRODUTIVIDADE.find((f) => modulos <= f.max) ?? FAIXAS_PRODUTIVIDADE[FAIXAS_PRODUTIVIDADE.length - 1];
+}
+
+/**
+ * Histórico opcional de execuções por equipe (preenchido em runtime
+ * quando ADMIN MASTER lança datas reais). Estrutura: equipe → [{fimReal, modulos, dias}]
+ */
+export type HistoricoExec = { fimReal: string; modulos: number; dias: number };
+const historicoExec: Record<string, HistoricoExec[]> = {};
+
+export function registrarHistoricoExec(equipe: string, exec: HistoricoExec) {
+  if (!equipe) return;
+  (historicoExec[equipe] ||= []).push(exec);
+}
+
+export function getHistoricoExec(equipe: string): HistoricoExec[] {
+  return historicoExec[equipe] ?? [];
+}
+
+/**
+ * Cálculo de produtividade (módulos/dia) com fallback em camadas:
+ *  1) média dos últimos 3 meses da equipe (na faixa)
+ *  2) média histórica da equipe (geral)
+ *  3) média global da faixa
+ */
+export function produtividadeEstimada(equipeNome: string, modulos: number): number {
+  const faixa = faixaDe(modulos);
+  const hist = getHistoricoExec(equipeNome);
+  const tresMesesAtras = new Date();
+  tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+
+  const recentesFaixa = hist.filter((h) => {
+    const d = new Date(h.fimReal);
+    return d >= tresMesesAtras && h.modulos <= faixa.max && (faixaDe(h.modulos).label === faixa.label);
+  });
+  if (recentesFaixa.length > 0) {
+    const total = recentesFaixa.reduce((s, h) => s + h.modulos, 0);
+    const dias = recentesFaixa.reduce((s, h) => s + h.dias, 0) || 1;
+    return total / dias;
+  }
+  if (hist.length > 0) {
+    const total = hist.reduce((s, h) => s + h.modulos, 0);
+    const dias = hist.reduce((s, h) => s + h.dias, 0) || 1;
+    return total / dias;
+  }
   const eq = produtividadeEquipe.find((e) => e.equipe === equipeNome);
-  const media = eq?.mediaDia ?? 10;
-  return Math.max(1, Math.ceil(modulos / media));
+  return eq?.mediaDia ?? faixa.mediaDiaGlobal;
+}
+
+export function diasPrevistos(equipeNome: string, modulos: number): number {
+  if (!modulos || modulos <= 0) return 1;
+  const media = produtividadeEstimada(equipeNome, modulos);
+  return Math.max(1, Math.ceil(modulos / Math.max(0.1, media)));
 }
 
 export const fmtBRL = (v: number) =>

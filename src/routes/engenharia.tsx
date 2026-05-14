@@ -157,8 +157,8 @@ function EngenhariaPage() {
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
-      <Tabs defaultValue="dashboard">
-        <TabsList className="bg-card border border-border flex-wrap h-auto">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>

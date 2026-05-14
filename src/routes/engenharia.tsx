@@ -107,7 +107,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     id: p.id,
     contrato: c.id,
     cliente: c.cliente,
-    equipe: p.equipe || "",
+    equipe: "",
     modulos: p.modulos,
     potencia: p.kwp,
     inversor: p.inversor || "",

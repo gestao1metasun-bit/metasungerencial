@@ -90,7 +90,7 @@ export function AppLayout() {
                     className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition ${
                       active
                         ? "bg-primary text-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-primary hover:text-primary-foreground"
                     }`}
                   >
                     {sub ? (
@@ -99,13 +99,13 @@ export function AppLayout() {
                         onClick={() => setOpenMenu(null)}
                         className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0"
                       >
-                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
+                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary-foreground"}`} />
                         <span className="flex-1 truncate">{item.label}</span>
-                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary-foreground"}`} />
                       </Link>
                     ) : (
                       <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
-                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
+                        <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary-foreground"}`} />
                         <span className="flex-1 truncate">{item.label}</span>
                       </Link>
                     )}

@@ -50,6 +50,41 @@ import { AjudaTab } from "./components/AjudaTab";
 
 export { PropostasPage };
 
+/** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.
+ *  Quando `markDefault` é true, mantém o flag `cidadeIsDefault` para a UI mostrar o chip cinza. */
+function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boolean): PropostaFV {
+  const meses = [
+    ["JAN", c.irradiacaoJaneiro], ["FEV", c.irradiacaoFevereiro], ["MAR", c.irradiacaoMarco],
+    ["ABR", c.irradiacaoAbril], ["MAI", c.irradiacaoMaio], ["JUN", c.irradiacaoJunho],
+    ["JUL", c.irradiacaoJulho], ["AGO", c.irradiacaoAgosto], ["SET", c.irradiacaoSetembro],
+    ["OUT", c.irradiacaoOutubro], ["NOV", c.irradiacaoNovembro], ["DEZ", c.irradiacaoDezembro],
+  ] as const;
+  const validos = meses.filter(([, v]) => typeof v === "number") as [string, number][];
+  let mesMaior = c.mesMaiorIrradiacao;
+  let mesMenor = c.mesMenorIrradiacao;
+  let irrMax: number | undefined;
+  let irrMin: number | undefined;
+  if (validos.length) {
+    const sorted = [...validos].sort((a, b) => a[1] - b[1]);
+    irrMin = sorted[0][1]; mesMenor = mesMenor ?? sorted[0][0];
+    irrMax = sorted[sorted.length - 1][1]; mesMaior = mesMaior ?? sorted[sorted.length - 1][0];
+  }
+  return {
+    ...p,
+    cidadeId: c.id,
+    cidade: c.cidade,
+    estado: c.estado,
+    concessionaria: c.concessionariaPadrao ?? p.concessionaria,
+    irradiacaoMedia: c.irradiacaoMedia ?? p.irradiacaoMedia,
+    mesMaior, mesMenor,
+    irradiacaoMaxima: irrMax ?? p.irradiacaoMaxima,
+    irradiacaoMinima: irrMin ?? p.irradiacaoMinima,
+    fonteIrradiacao: c.fonteDados ?? "BASE INTERNA",
+    grupoTarifario: c.grupoTarifarioPadrao ?? p.grupoTarifario,
+    tarifa: c.tarifaPadrao ?? p.tarifa,
+  };
+}
+
 /* =========================== PÁGINA =========================== */
 
 function PropostasPage() {

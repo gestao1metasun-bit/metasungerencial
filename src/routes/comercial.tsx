@@ -124,9 +124,7 @@ function ComercialPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
         </TabsContent>
-        <TabsContent value="indicadores" className="mt-5">
-          <IndicadoresTab contratos={contratos} vendedoresList={vendedoresList} propostas={propostas} volume={volume} />
-        </TabsContent>
+        {/* Aba Indicadores removida do Comercial — visão estratégica fica no Dashboard Geral. */}
         <TabsContent value="cad-proposta" className="mt-5">
           <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />
         </TabsContent>

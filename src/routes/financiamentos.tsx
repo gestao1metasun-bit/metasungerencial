@@ -1257,3 +1257,89 @@ function EditContratoFinDialog({
     </Dialog>
   );
 }
+
+function EditFinAvulsoDialog({
+  fin, bancos, gerentes, onClose, onSave,
+}: {
+  fin: FinAvulso;
+  bancos: string[];
+  gerentes: string[];
+  onClose: () => void;
+  onSave: (patch: Partial<FinAvulso>) => void;
+}) {
+  const [form, setForm] = useState<FinAvulso>({ ...fin });
+  const previsaoDias = (() => {
+    if (!form.previsao) return "";
+    const d = new Date(form.previsao + "T00:00:00").getTime();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((d - today.getTime()) / 86400000);
+    const found = PREVISAO_FAIXAS.find((f) => f === dias);
+    return found ? String(found) : "";
+  })();
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Editar operação — {fin.id}</DialogTitle>
+          <DialogDescription>{fin.cliente}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2"><Label>Cliente</Label>
+            <Input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} />
+          </div>
+          <div><Label>CPF/CNPJ</Label>
+            <Input noUppercase value={form.doc} onChange={(e) => setForm({ ...form, doc: e.target.value })} />
+          </div>
+          <div><Label>Banco</Label>
+            <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b} value={b}>{b.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Gerente</Label>
+            <Select value={form.gerente} onValueChange={(v) => setForm({ ...form, gerente: v })}>
+              <SelectTrigger><SelectValue placeholder="SELECIONE" /></SelectTrigger>
+              <SelectContent>{gerentes.map((g) => <SelectItem key={g} value={g}>{g.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Valor financiado (R$)</Label>
+            <Input type="number" value={form.valor || ""} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+          </div>
+          <div><Label>Status</Label>
+            <Select value={form.statusOp} onValueChange={(v) => setForm({ ...form, statusOp: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Status liberação</Label>
+            <Select value={form.statusLiberacao || ""} onValueChange={(v) => setForm({ ...form, statusLiberacao: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{LIBERACAO_STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Liberação</Label>
+            <Input value={form.liberacao || ""} onChange={(e) => setForm({ ...form, liberacao: e.target.value })} />
+          </div>
+          <div><Label>Previsão de liberação</Label>
+            <Select
+              value={previsaoDias}
+              onValueChange={(v) => setForm({ ...form, previsao: previsaoFromDias(Number(v)) })}
+            >
+              <SelectTrigger><SelectValue placeholder={form.previsao ? `Atual: ${form.previsao}` : "Selecione a faixa"} /></SelectTrigger>
+              <SelectContent>
+                {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Observações</Label>
+            <Textarea value={form.obs || ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => onSave(form)}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

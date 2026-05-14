@@ -28,9 +28,10 @@ import { upsertContrato } from "@/lib/contratos-store";
 import {
   type PropostaFV, type StatusProposta, type LinhaCusto, type CidadeFV,
   type ConcessionariaFV, type ModuloFV, type InversorFV, type DistribuidorFV,
-  type ParametroFV, type CustoFV,
+  type ParametroFV, type CustoFV, type TarifaEnergia,
   useCidadesFV, useConcessionarias, useModulosFV, useInversoresFV,
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
+  useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
@@ -38,13 +39,51 @@ import {
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
+  buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
 } from "@/modules/propostas/store";
+import { useUsuarioAtual } from "@/lib/perfis-store";
+import { X as XIcon } from "lucide-react";
 
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { AjudaTab } from "./components/AjudaTab";
 
 export { PropostasPage };
+
+/** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.
+ *  Quando `markDefault` é true, mantém o flag `cidadeIsDefault` para a UI mostrar o chip cinza. */
+function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boolean): PropostaFV {
+  const meses = [
+    ["JAN", c.irradiacaoJaneiro], ["FEV", c.irradiacaoFevereiro], ["MAR", c.irradiacaoMarco],
+    ["ABR", c.irradiacaoAbril], ["MAI", c.irradiacaoMaio], ["JUN", c.irradiacaoJunho],
+    ["JUL", c.irradiacaoJulho], ["AGO", c.irradiacaoAgosto], ["SET", c.irradiacaoSetembro],
+    ["OUT", c.irradiacaoOutubro], ["NOV", c.irradiacaoNovembro], ["DEZ", c.irradiacaoDezembro],
+  ] as const;
+  const validos = meses.filter(([, v]) => typeof v === "number") as [string, number][];
+  let mesMaior = c.mesMaiorIrradiacao;
+  let mesMenor = c.mesMenorIrradiacao;
+  let irrMax: number | undefined;
+  let irrMin: number | undefined;
+  if (validos.length) {
+    const sorted = [...validos].sort((a, b) => a[1] - b[1]);
+    irrMin = sorted[0][1]; mesMenor = mesMenor ?? sorted[0][0];
+    irrMax = sorted[sorted.length - 1][1]; mesMaior = mesMaior ?? sorted[sorted.length - 1][0];
+  }
+  return {
+    ...p,
+    cidadeId: c.id,
+    cidade: c.cidade,
+    estado: c.estado,
+    concessionaria: c.concessionariaPadrao ?? p.concessionaria,
+    irradiacaoMedia: c.irradiacaoMedia ?? p.irradiacaoMedia,
+    mesMaior, mesMenor,
+    irradiacaoMaxima: irrMax ?? p.irradiacaoMaxima,
+    irradiacaoMinima: irrMin ?? p.irradiacaoMinima,
+    fonteIrradiacao: c.fonteDados ?? "BASE INTERNA",
+    grupoTarifario: c.grupoTarifarioPadrao ?? p.grupoTarifario,
+    tarifa: c.tarifaPadrao ?? p.tarifa,
+  };
+}
 
 /* =========================== PÁGINA =========================== */
 
@@ -57,9 +96,14 @@ function PropostasPage() {
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
+  const cidadesAll = useCidadesFV();
   function novaProposta() {
     const numero = proximoNumeroProposta(propostas);
-    const p = novaPropostaVazia(numero);
+    let p = novaPropostaVazia(numero);
+    // Aplica última cidade selecionada como padrão (vem cinza, com X para limpar)
+    const lastId = getLastCidadeId();
+    const cidadeDefault = lastId ? cidadesAll.find((c) => c.id === lastId) : undefined;
+    if (cidadeDefault) p = aplicarCidadeNaProposta(p, cidadeDefault, true);
     setLeadDraft(p);
   }
 
@@ -204,7 +248,10 @@ function PropostaSheet({
   const distribuidores = useDistribuidoresFV();
   const parametros = useParametrosFV();
   const custos = useCustosFV();
+  const tarifasEnergia = useTarifasEnergia();
   const clientes = useClientesFull();
+  const { perfil } = useUsuarioAtual();
+  const ehAdmin = !!perfil?.isAdminMaster;
 
   const dim = calcDimensionamento(p);
   const pre = calcPrecificacao(p);
@@ -249,17 +296,34 @@ function PropostaSheet({
   function selecionarCidade(id: string) {
     const c = cidades.find((x) => x.id === id);
     if (!c) return;
+    setLastCidadeId(c.id);
+    setP((cur) => {
+      const nova = aplicarCidadeNaProposta(cur, c, false);
+      // Lookup de tarifa oficial
+      const tarifa = buscarTarifa(tarifasEnergia, {
+        concessionaria: nova.concessionaria,
+        uf: nova.estado,
+        cidade: nova.cidade,
+        grupo: nova.grupoTarifario,
+        modalidade: nova.modalidadeTarifaria,
+      });
+      if (tarifa) nova.tarifa = tarifa.tarifaKwh;
+      return nova;
+    });
+  }
+
+  function limparCidade() {
+    setLastCidadeId(null);
     setP((cur) => ({
       ...cur,
-      cidadeId: c.id,
-      cidade: c.cidade,
-      estado: c.estado,
-      concessionaria: c.concessionariaPadrao ?? cur.concessionaria,
-      irradiacaoMedia: c.irradiacaoMedia ?? cur.irradiacaoMedia,
-      mesMaior: c.mesMaiorIrradiacao ?? cur.mesMaior,
-      mesMenor: c.mesMenorIrradiacao ?? cur.mesMenor,
-      grupoTarifario: c.grupoTarifarioPadrao ?? cur.grupoTarifario,
-      tarifa: c.tarifaPadrao ?? cur.tarifa,
+      cidadeId: undefined,
+      cidade: "",
+      estado: "",
+      mesMaior: undefined,
+      mesMenor: undefined,
+      irradiacaoMaxima: undefined,
+      irradiacaoMinima: undefined,
+      fonteIrradiacao: undefined,
     }));
   }
 
@@ -433,12 +497,28 @@ function PropostaSheet({
             <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <Label>Cidade cadastrada</Label>
-                <Select value={p.cidadeId ?? ""} onValueChange={selecionarCidade}>
-                  <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
-                  <SelectContent>
-                    {cidades.map((c) => <SelectItem key={c.id} value={c.id}>{c.cidade}/{c.estado}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {p.cidadeId ? (
+                  <div className="flex h-9 items-center justify-between rounded-md border border-input bg-muted/50 px-3 text-sm text-muted-foreground">
+                    <span className="truncate">
+                      {(cidades.find((c) => c.id === p.cidadeId)?.cidade ?? p.cidade)}/{p.estado}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={limparCidade}
+                      className="ml-2 rounded p-1 hover:bg-background"
+                      title="Limpar cidade"
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <Select value="" onValueChange={selecionarCidade}>
+                    <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
+                    <SelectContent>
+                      {cidades.map((c) => <SelectItem key={c.id} value={c.id}>{c.cidade}/{c.estado}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <Field label="Cidade"><Input value={p.cidade} onChange={(e) => update("cidade", e.target.value)} /></Field>
               <Field label="Estado"><Input value={p.estado} onChange={(e) => update("estado", e.target.value)} /></Field>
@@ -501,17 +581,15 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)">
-                <Input type="number" step="0.01" value={p.tarifa} onChange={(e) => update("tarifa", +e.target.value)} />
-              </Field>
-              <Field label="Conta mínima (kWh)" hint="Consumo mínimo cobrado pela concessionária mesmo com geração própria.">
-                <Input type="number" value={p.contaMinimaKwh} onChange={(e) => update("contaMinimaKwh", +e.target.value)} />
-              </Field>
-              <Field label="Iluminação pública (R$)">
-                <Input type="number" step="0.01" value={p.taxaIluminacao} onChange={(e) => update("taxaIluminacao", +e.target.value)} />
-              </Field>
-              <Field label="Conta média atual (R$)">
-                <Input type="number" step="0.01" value={p.contaMediaAtual} onChange={(e) => update("contaMediaAtual", +e.target.value)} />
+              <Field label="Tarifa de energia (R$/kWh)" hint="Vem da base interna ao escolher cidade/concessionária. Ajuste manual apenas se autorizado.">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={p.tarifa}
+                  onChange={(e) => update("tarifa", +e.target.value)}
+                  disabled={!ehAdmin && !!p.cidadeId}
+                  className={!ehAdmin && !!p.cidadeId ? "bg-muted/50" : ""}
+                />
               </Field>
             </div>
           </Bloco>

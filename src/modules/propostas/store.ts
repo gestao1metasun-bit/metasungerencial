@@ -14,11 +14,60 @@ export type CidadeFV = {
   cidade: string;
   estado: string;
   concessionariaPadrao?: string;
-  irradiacaoMedia: number;        // kWh/m².dia
+  irradiacaoMedia: number;        // kWh/m².dia (média anual)
   mesMaiorIrradiacao?: string;
   mesMenorIrradiacao?: string;
-  grupoTarifarioPadrao?: string;  // B1/B2/B3/A4...
-  tarifaPadrao?: number;          // R$/kWh
+  grupoTarifarioPadrao?: string;
+  tarifaPadrao?: number;
+  // Base local de irradiação solar (cidades_irradiacao)
+  codigoIbge?: string;
+  latitude?: number;
+  longitude?: number;
+  irradiacaoJaneiro?: number;
+  irradiacaoFevereiro?: number;
+  irradiacaoMarco?: number;
+  irradiacaoAbril?: number;
+  irradiacaoMaio?: number;
+  irradiacaoJunho?: number;
+  irradiacaoJulho?: number;
+  irradiacaoAgosto?: number;
+  irradiacaoSetembro?: number;
+  irradiacaoOutubro?: number;
+  irradiacaoNovembro?: number;
+  irradiacaoDezembro?: number;
+  irradiacaoMaxima?: number;
+  irradiacaoMinima?: number;
+  fonteDados?: string;
+  dataUltimaAtualizacao?: string;
+  ativo?: boolean;
+};
+
+/** Tarifa de energia oficial (tarifas_energia). */
+export type TarifaEnergia = {
+  id: string;
+  concessionaria: string;
+  uf: string;
+  cidade?: string;
+  grupoTarifario?: string;       // B1/B2/B3/A4...
+  modalidadeTarifaria?: string;  // Convencional/Branca/Verde/Azul
+  subgrupo?: string;
+  tarifaKwh: number;
+  dataUltimaAtualizacao?: string;
+  ativo: boolean;
+};
+
+/** Histórico de atualizações da base de irradiação (historico_irradiacao). */
+export type HistoricoIrradiacao = {
+  id: string;
+  cidade: string;
+  uf: string;
+  dataAtualizacao: string;
+  fonteUsada?: string;
+  valorAnterior?: number;
+  valorNovo?: number;
+  variacaoEncontrada?: number;
+  usuarioResponsavel?: string;
+  observacao?: string;
 };
 
 export type ConcessionariaFV = {
@@ -144,6 +193,9 @@ export type PropostaFV = {
   irradiacaoMedia: number;
   mesMaior?: string;
   mesMenor?: string;
+  irradiacaoMaxima?: number;     // snapshot — congelado na proposta
+  irradiacaoMinima?: number;     // snapshot — congelado na proposta
+  fonteIrradiacao?: string;      // ex.: "BASE INTERNA / NASA POWER"
 
   // 3. Fatura
   tipoInstalacao: "RESIDENCIAL" | "COMERCIAL" | "INDUSTRIAL" | "RURAL";
@@ -213,6 +265,11 @@ const SEED_CIDADES: CidadeFV[] = [
 const SEED_CONCESSIONARIAS: ConcessionariaFV[] = [
   { id: "CON-EQGO", nome: "EQUATORIAL GOIÁS", estado: "GO", tarifaPadrao: 0.92, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
   { id: "CON-NEDF", nome: "NEOENERGIA DF", estado: "DF", tarifaPadrao: 0.95, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
+];
+
+const SEED_TARIFAS: TarifaEnergia[] = [
+  { id: "TAR-EQGO-B1", concessionaria: "EQUATORIAL GOIÁS", uf: "GO", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.92, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },
+  { id: "TAR-NEDF-B1", concessionaria: "NEOENERGIA DF",    uf: "DF", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.95, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },
 ];
 
 const SEED_MODULOS: ModuloFV[] = [
@@ -301,6 +358,8 @@ const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTR
 const paramsS  = makeStore<ParametroFV>("ms.fv.params.v1", () => SEED_PARAMETROS);
 const custosS  = makeStore<CustoFV>("ms.fv.custos.v1", () => SEED_CUSTOS);
 const propsS   = makeStore<PropostaFV>("ms.fv.propostas.v1", () => []);
+const tarifasS = makeStore<TarifaEnergia>("ms.fv.tarifas.v1", () => SEED_TARIFAS);
+const histIrrS = makeStore<HistoricoIrradiacao>("ms.fv.hist_irradiacao.v1", () => []);
 
 export const useCidadesFV       = cidadesS.useList;
 export const useConcessionarias = concsS.useList;
@@ -310,6 +369,8 @@ export const useDistribuidoresFV= distsS.useList;
 export const useParametrosFV    = paramsS.useList;
 export const useCustosFV        = custosS.useList;
 export const usePropostas       = propsS.useList;
+export const useTarifasEnergia  = tarifasS.useList;
+export const useHistoricoIrradiacao = histIrrS.useList;
 
 /* CRUD genérico ----------------------------------------------------------- */
 
@@ -341,6 +402,48 @@ export const upsertCustoFV          = upsertOf(custosS);
 export const removeCustoFV          = removeOf(custosS);
 export const upsertProposta         = upsertOf(propsS);
 export const removeProposta         = removeOf(propsS);
+export const upsertTarifaEnergia    = upsertOf(tarifasS);
+export const removeTarifaEnergia    = removeOf(tarifasS);
+export const addHistoricoIrradiacao = (h: HistoricoIrradiacao) => upsertOf(histIrrS)(h);
+
+/* =============== Última cidade selecionada (preferência local) =============== */
+
+const LAST_CIDADE_KEY = "ms.fv.lastCidadeId.v1";
+export function getLastCidadeId(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return localStorage.getItem(LAST_CIDADE_KEY); } catch { return null; }
+}
+export function setLastCidadeId(id: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) localStorage.setItem(LAST_CIDADE_KEY, id);
+    else localStorage.removeItem(LAST_CIDADE_KEY);
+  } catch {}
+}
+
+/* =============== Lookup de tarifa =============== */
+
+/** Procura tarifa oficial mais específica para uma combinação concessionária/uf/grupo/cidade. */
+export function buscarTarifa(
+  lista: TarifaEnergia[],
+  filtro: { concessionaria?: string; uf?: string; cidade?: string; grupo?: string; modalidade?: string },
+): TarifaEnergia | undefined {
+  const ativos = lista.filter((t) => t.ativo);
+  const score = (t: TarifaEnergia) => {
+    let s = 0;
+    if (filtro.concessionaria && t.concessionaria?.toUpperCase() === filtro.concessionaria.toUpperCase()) s += 8;
+    if (filtro.uf && t.uf?.toUpperCase() === filtro.uf.toUpperCase()) s += 4;
+    if (filtro.cidade && t.cidade?.toUpperCase() === filtro.cidade.toUpperCase()) s += 4;
+    if (filtro.grupo && t.grupoTarifario === filtro.grupo) s += 2;
+    if (filtro.modalidade && t.modalidadeTarifaria === filtro.modalidade) s += 1;
+    return s;
+  };
+  const ranked = ativos
+    .map((t) => ({ t, s: score(t) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s);
+  return ranked[0]?.t;
+}
 
 /* =============== Helpers de cálculo =============== */
 

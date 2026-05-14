@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   obras as obrasSeed, pendencias as pendenciasSeed, equipes as equipesSeed,
-  produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
+  produtividadeEquipe, diasPrevistos, registrarHistoricoExec, faixaDe,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
@@ -478,6 +478,8 @@ function EditObraDialog({
 
   const finalizing = f.status === "Finalizado";
   const isExecutando = f.status === "Executando instalação";
+  const isAguardando = f.status === "Aguardando instalação";
+  const equipeAllowed = isExecutando || isAguardando;
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
   const realDatesEditable = adminMode;
@@ -549,13 +551,15 @@ function EditObraDialog({
           <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
           <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
           <div>
-            <Label>Equipe {equipeRequired && <span className="text-destructive">*</span>}</Label>
-            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={f.status === "Finalizado"}>
-              <SelectTrigger className={equipeMissing ? "border-destructive" : ""}><SelectValue placeholder={equipeRequired ? "Obrigatória" : "Opcional"} /></SelectTrigger>
+            <Label>Equipe / Instalador {equipeRequired && <span className="text-destructive">*</span>}</Label>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed}>
+              <SelectTrigger className={equipeMissing ? "border-destructive" : ""}>
+                <SelectValue placeholder={equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status"} />
+              </SelectTrigger>
               <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
             </Select>
             <div className="mt-1 text-[10px] text-muted-foreground">
-              Em projeto/aprovação: opcional · Aguardando: opcional · Executando: obrigatória · Finalizado: travada
+              Liberado apenas em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.
             </div>
           </div>
           <div><Label>Status</Label>
@@ -565,17 +569,7 @@ function EditObraDialog({
             </Select>
           </div>
 
-          {/* Previsões automáticas (cronograma) */}
-          <div>
-            <Label>Previsão de início <span className="text-[10px] text-muted-foreground">(cronograma)</span></Label>
-            <Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} />
-          </div>
-          <div>
-            <Label className="flex items-center gap-1">Previsão de finalização <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
-            <Input type="date" value={previsaoFim} disabled readOnly className="bg-muted/40" />
-            <div className="mt-1 text-[10px] text-muted-foreground">Calculada por equipe + faixa de módulos</div>
-          </div>
-          <div className="hidden md:block" />
+          {/* Datas de previsão removidas — ver no Cronograma */}
 
           {/* Datas reais — somente ADMIN MASTER */}
           <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
@@ -747,6 +741,8 @@ function CronogramaTab({
 
 function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "success" | "warning"; first: boolean; last: boolean; onMove: (id: string, dir: -1 | 1) => void }) {
   const bg = tone === "success" ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30";
+  const prazo = diasPrevistos(o.equipe || "", o.modulos);
+  const faixa = faixaDe(o.modulos);
   return (
     <div className={`rounded-lg border ${bg} p-3`}>
       <div className="flex items-start justify-between gap-2">
@@ -757,12 +753,20 @@ function CronogramaCard({ o, tone, first, last, onMove }: { o: Obra; tone: "succ
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
           <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
-          <div className="mt-2 flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground">{fmtBR(o.inicio)}</span>
-            <span className="text-muted-foreground">→</span>
-            <span className="font-semibold text-foreground">{fmtBR(o.previsto)}</span>
+
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px]">
+            <div className="text-muted-foreground">Previsão início</div>
+            <div className="text-right font-medium">{fmtBR(o.inicio)}</div>
+            <div className="text-muted-foreground">Previsão finalização</div>
+            <div className="text-right font-semibold text-foreground">{fmtBR(o.previsto)}</div>
+            <div className="text-muted-foreground">Prazo estimado</div>
+            <div className="text-right">{prazo} {prazo === 1 ? "dia" : "dias"}</div>
+            <div className="text-muted-foreground">Equipe / instalador</div>
+            <div className="text-right truncate">{o.equipe || "—"}</div>
+            <div className="text-muted-foreground">Faixa de módulos</div>
+            <div className="text-right">{faixa.label}</div>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas só editáveis no lápis em Obras ativas</div>
+          <div className="mt-1 text-[10px] text-muted-foreground/70">Datas de previsão são gerenciadas aqui no Cronograma.</div>
         </div>
         <div className="flex flex-col gap-1">
           <Button variant="outline" size="icon" className="h-6 w-6" disabled={first} onClick={() => onMove(o.id, -1)}><ChevronUp className="h-3 w-3" /></Button>

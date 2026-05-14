@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
 import { useFinPendencias } from "@/lib/fin-pendencias";
+import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({
@@ -90,7 +91,8 @@ function FinanciamentosPage() {
         <TabsContent value="dashboard" className="mt-5">
           <DashboardFin ops={ops} updateOp={updateOp} />
         </TabsContent>
-        <TabsContent value="carteira" className="mt-5">
+        <TabsContent value="carteira" className="mt-5 space-y-5">
+          <ContratosComercialFin />
           <Carteira ops={ops} updateOp={updateOp} />
         </TabsContent>
         <TabsContent value="sem" className="mt-5"><SemContratoTab /></TabsContent>
@@ -921,5 +923,49 @@ function PrevisaoTab({ ops }: { ops: FinOp[] }) {
         );
       })}
     </div>
+  );
+}
+
+/* ---------------- Contratos vindos do Comercial com flag de Financiamento ---------------- */
+function ContratosComercialFin() {
+  const contratos = useContratos();
+  const lista = contratos.filter((c) => c.possuiFinanciamento);
+  if (lista.length === 0) return null;
+  const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-semibold">Contratos enviados do Comercial</div>
+          <div className="text-xs text-muted-foreground">{lista.length} contrato(s) · {fmtBRL(total)} financiado(s)</div>
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Contrato</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Banco</TableHead>
+            <TableHead className="text-right">Valor financiado</TableHead>
+            <TableHead>Gerente</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Vendedor</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {lista.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell className="font-mono text-xs">{c.id}</TableCell>
+              <TableCell>{c.cliente}</TableCell>
+              <TableCell>{c.financiamentoBanco ?? "—"}</TableCell>
+              <TableCell className="text-right font-mono">{fmtBRL(Number(c.financiamentoValor) || Number(c.valor) || 0)}</TableCell>
+              <TableCell>{c.financiamentoGerente || "—"}</TableCell>
+              <TableCell><StatusBadge status={c.financiamentoStatus || "Em análise"} /></TableCell>
+              <TableCell>{c.vendedor}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
   );
 }

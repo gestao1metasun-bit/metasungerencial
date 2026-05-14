@@ -146,6 +146,13 @@ export type ContratoFull = {
   auditoria?: AuditEntry[];
   parcelasPagto?: ParcelaPagto[];       // legado (migrado p/ composicaoPagto)
   composicaoPagto?: ComposicaoLinha[];  // composição do recebimento do contrato
+  // Financiamento bancário (envia para o módulo Financiamentos quando true)
+  possuiFinanciamento?: boolean;
+  financiamentoBanco?: "BASA" | "SICREDI" | "BB" | "Outro" | string;
+  financiamentoValor?: number;
+  financiamentoGerente?: string;
+  financiamentoStatus?: string;
+  financiamentoObs?: string;
 };
 
 const KEY = "ms.contratos.v2";

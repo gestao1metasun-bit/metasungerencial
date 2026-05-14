@@ -825,6 +825,12 @@ function CadastrarContratoTab({
     modulosContrato: "", potenciaContrato: "550",
     inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
     pagamento: "", banco: "", obs: "",
+    possuiFinanciamento: "Não" as "Sim" | "Não",
+    finBanco: "BASA" as string,
+    finValor: "",
+    finGerente: "",
+    finStatus: "Em análise",
+    finObs: "",
   });
   const [cli, setCli] = useState<ClienteFull>(emptyCliente);
   const [clienteId, setClienteId] = useState<string>("");
@@ -873,6 +879,7 @@ function CadastrarContratoTab({
       modulosContrato: "", potenciaContrato: "550",
       inv1: "", inv2: "", inv3: "", inv4: "", inv5: "", inv6: "",
       pagamento: "", banco: "", obs: "",
+      possuiFinanciamento: "Não", finBanco: "BASA", finValor: "", finGerente: "", finStatus: "Em análise", finObs: "",
     });
     setCli(emptyCliente);
     setClienteId("");
@@ -903,6 +910,12 @@ function CadastrarContratoTab({
       dataAssinatura: form.dataAssinatura,
       comissaoPct: comissaoPct ?? 0,
       comissaoValor,
+      possuiFinanciamento: form.possuiFinanciamento === "Sim",
+      financiamentoBanco: form.possuiFinanciamento === "Sim" ? form.finBanco : undefined,
+      financiamentoValor: form.possuiFinanciamento === "Sim" ? (Number(form.finValor) || 0) : undefined,
+      financiamentoGerente: form.possuiFinanciamento === "Sim" ? form.finGerente : undefined,
+      financiamentoStatus: form.possuiFinanciamento === "Sim" ? form.finStatus : undefined,
+      financiamentoObs: form.possuiFinanciamento === "Sim" ? form.finObs : undefined,
       clienteFull: { ...cli, nome: cli.nome.trim() },
       projetos: [{
         id: `${novoId}-01`,
@@ -1141,6 +1154,55 @@ function CadastrarContratoTab({
                     <Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} placeholder="Observações do contrato" rows={3} />
                   </div>
                   <div className="text-[11px] text-muted-foreground">A composição financeira será definida em <b>Pedidos de venda</b> após a aprovação do contrato.</div>
+                </div>
+
+                <div className="rounded-lg border bg-card p-5 space-y-4">
+                  <div className="flex items-center gap-2 border-b pb-3">
+                    <span className="text-sm font-semibold">Financiamento bancário</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="space-y-1.5"><Label>Possui financiamento?</Label>
+                      <Select value={form.possuiFinanciamento} onValueChange={(v) => setForm({ ...form, possuiFinanciamento: v as "Sim" | "Não" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Não">Não</SelectItem>
+                          <SelectItem value="Sim">Sim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {form.possuiFinanciamento === "Sim" && (
+                      <>
+                        <div className="space-y-1.5"><Label>Banco / Linha</Label>
+                          <Select value={form.finBanco} onValueChange={(v) => setForm({ ...form, finBanco: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
+                          <Input type="number" value={form.finValor} onChange={(e) => setForm({ ...form, finValor: e.target.value })} placeholder="0" />
+                        </div>
+                        <div className="space-y-1.5"><Label>Gerente responsável</Label>
+                          <Input value={form.finGerente} onChange={(e) => setForm({ ...form, finGerente: e.target.value })} placeholder="Nome do gerente" />
+                        </div>
+                        <div className="space-y-1.5"><Label>Status inicial</Label>
+                          <Select value={form.finStatus} onValueChange={(v) => setForm({ ...form, finStatus: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
+                          <Textarea rows={2} value={form.finObs} onChange={(e) => setForm({ ...form, finObs: e.target.value })} />
+                        </div>
+                        <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                          Ao salvar, o contrato será enviado automaticamente ao módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
@@ -1387,6 +1449,12 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
       parametro: _parametroFmt,
       comissaoPct: _comissaoPct,
       comissaoValor: _comissaoValor,
+      possuiFinanciamento: !!f.possuiFinanciamento,
+      financiamentoBanco: f.possuiFinanciamento ? f.financiamentoBanco : undefined,
+      financiamentoValor: f.possuiFinanciamento ? f.financiamentoValor : undefined,
+      financiamentoGerente: f.possuiFinanciamento ? f.financiamentoGerente : undefined,
+      financiamentoStatus: f.possuiFinanciamento ? f.financiamentoStatus : undefined,
+      financiamentoObs: f.possuiFinanciamento ? f.financiamentoObs : undefined,
       clienteFull: cli,
     });
 
@@ -1502,6 +1570,48 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
               ))}
               <div className="space-y-1.5 md:col-span-3"><Label>Observações</Label>
                 <Textarea value={f.obs ?? ""} onChange={(e) => setF({ ...f, obs: e.target.value })} />
+              </div>
+            </div>
+            <div className="mt-4 rounded-md border border-border bg-card p-3 space-y-3">
+              <div className="text-xs font-semibold uppercase text-muted-foreground">Financiamento bancário</div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-1.5"><Label>Possui financiamento?</Label>
+                  <Select value={f.possuiFinanciamento ? "Sim" : "Não"} onValueChange={(v) => setF({ ...f, possuiFinanciamento: v === "Sim" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Não">Não</SelectItem>
+                      <SelectItem value="Sim">Sim</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {f.possuiFinanciamento && (
+                  <>
+                    <div className="space-y-1.5"><Label>Banco / Linha</Label>
+                      <Select value={f.financiamentoBanco ?? "BASA"} onValueChange={(v) => setF({ ...f, financiamentoBanco: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{["BASA", "SICREDI", "BB", "Outro"].map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5"><Label>Valor financiado (R$)</Label>
+                      <Input type="number" value={f.financiamentoValor ?? 0} onChange={(e) => setF({ ...f, financiamentoValor: Number(e.target.value) || 0 })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Gerente responsável</Label>
+                      <Input value={f.financiamentoGerente ?? ""} onChange={(e) => setF({ ...f, financiamentoGerente: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5"><Label>Status</Label>
+                      <Select value={f.financiamentoStatus ?? "Em análise"} onValueChange={(v) => setF({ ...f, financiamentoStatus: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{["Em análise", "Pendente banco", "Pendente cliente", "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado", "Finalizado", "Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5 md:col-span-3"><Label>Observação</Label>
+                      <Textarea rows={2} value={f.financiamentoObs ?? ""} onChange={(e) => setF({ ...f, financiamentoObs: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-3 text-[11px] text-muted-foreground rounded border border-primary/30 bg-primary/5 p-2">
+                      Contrato listado no módulo <b>Financiamentos &gt; Contratos em financiamento</b>.
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">

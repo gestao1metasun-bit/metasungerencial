@@ -414,10 +414,9 @@ function DashboardFin({
 /* ---------------- Modal Detalhes ---------------- */
 
 function DetailFinModal({
-  open, onClose, title, ops, onUpdateStatus,
+  open, onClose, title, ops,
 }: {
   open: boolean; onClose: () => void; title: string; ops: FinOp[];
-  onUpdateStatus: (id: string, status: string) => void;
 }) {
   const [q, setQ] = useState("");
   useEffect(() => { if (!open) setQ(""); }, [open]);
@@ -449,7 +448,6 @@ function DetailFinModal({
             <TableHead className="text-right">Financiado</TableHead>
             <TableHead>Status</TableHead><TableHead>Previsão</TableHead>
             <TableHead className="text-center">Restantes</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => {
@@ -462,22 +460,14 @@ function DetailFinModal({
                   <TableCell className="text-muted-foreground">{o.gerente}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(o.valorFinanciado)}</TableCell>
                   <TableCell><StatusBadge status={o.statusOp} /></TableCell>
-                  <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
+                  <TableCell className="text-muted-foreground">{o.previsao || "—"}</TableCell>
                   <TableCell className="text-center">
                     {dias > 0 ? <span className={dias <= 5 ? "font-semibold text-warning" : ""}>{dias}d</span> : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Select value={o.statusOp} onValueChange={(v) => onUpdateStatus(o.id, v)}>
-                      <SelectTrigger className="h-8 w-44 inline-flex"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
                   </TableCell>
                 </TableRow>
               );
             })}
-            {total === 0 && <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhuma operação</TableCell></TableRow>}
+            {total === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Nenhuma operação</TableCell></TableRow>}
           </TableBody>
         </Table>
       </DialogContent>

@@ -112,7 +112,7 @@ export type LinhaCusto = {
 };
 
 export type StatusProposta =
-  | "RASCUNHO" | "ENVIADA" | "APROVADA"
+  | "RASCUNHO" | "GERADA" | "ENVIADA" | "APROVADA"
   | "RECUSADA" | "VENCIDA" | "CANCELADA";
 
 export type PropostaFV = {

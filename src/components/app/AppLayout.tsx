@@ -1,6 +1,6 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Briefcase, Banknote, HardHat, Package,
+  LayoutDashboard, Briefcase, Banknote, HardHat, Package, FileText,
   Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
 } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
@@ -13,6 +13,7 @@ import { ROUTE_TABS } from "@/lib/route-tabs";
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
+  { to: "/propostas", label: "Orçamentos", icon: FileText, key: "propostas" },
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
   { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
   { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },

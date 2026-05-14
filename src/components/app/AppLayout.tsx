@@ -6,7 +6,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
-import { useFinPendencias } from "@/lib/fin-pendencias";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },

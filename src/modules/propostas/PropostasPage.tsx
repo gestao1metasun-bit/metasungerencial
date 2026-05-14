@@ -28,9 +28,10 @@ import { upsertContrato } from "@/lib/contratos-store";
 import {
   type PropostaFV, type StatusProposta, type LinhaCusto, type CidadeFV,
   type ConcessionariaFV, type ModuloFV, type InversorFV, type DistribuidorFV,
-  type ParametroFV, type CustoFV,
+  type ParametroFV, type CustoFV, type TarifaEnergia,
   useCidadesFV, useConcessionarias, useModulosFV, useInversoresFV,
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
+  useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
@@ -38,7 +39,10 @@ import {
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
+  buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
 } from "@/modules/propostas/store";
+import { useUsuarioAtual } from "@/lib/perfis-store";
+import { X as XIcon } from "lucide-react";
 
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";

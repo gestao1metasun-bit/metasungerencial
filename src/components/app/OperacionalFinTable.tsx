@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { fmtBRL } from "@/lib/mock-data";
-import { GripVertical, Pencil } from "lucide-react";
+import { GripVertical, SquarePen } from "lucide-react";
 
 export type OpRow = {
   id: string;
@@ -143,7 +143,7 @@ export function OperacionalFinTable({
             onClick={() => onEdit?.(r.id)}
             disabled={!onEdit}
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <SquarePen className="h-3.5 w-3.5" />
           </Button>
         );
     }

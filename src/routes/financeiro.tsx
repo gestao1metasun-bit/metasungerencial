@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   ArrowDownCircle, ArrowUpCircle, Wallet, Clock, AlertCircle, FileSpreadsheet,
-  TrendingUp, Plus, Pencil, Trash2, Repeat, Building2, Layers, Filter,
+  TrendingUp, Plus, SquarePen, Trash2, Repeat, Building2, Layers, Filter,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

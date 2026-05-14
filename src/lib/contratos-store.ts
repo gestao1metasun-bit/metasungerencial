@@ -39,7 +39,7 @@ export type ProjetoVinculado = {
   inv6?: string;
   equipe: string;
   status: string;        // "Em projeto/aprovação" | "Aguardando instalação" | ...
-  inicio: string;        // YYYY-MM-DD
+  inicio: string;        // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   previsto: string;
   obs: string;
   cronograma: string;    // texto livre opcional
@@ -102,8 +102,8 @@ export function parcelasFinanceiroReais(forma: FormaPagamento, parcelasInformada
 export type ParcelaPagto = {
   id: string;
   valor: number;
-  dataEmissao: string;       // YYYY-MM-DD
-  dataVencimento: string;    // YYYY-MM-DD
+  dataEmissao: string;       // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
+  dataVencimento: string;    // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   competencia: string;       // YYYY-MM (mês de competência)
   formaPagamento: FormaPagamento;
   descricao?: string;
@@ -115,7 +115,7 @@ export type ComposicaoLinha = {
   formaPagamento: FormaPagamento;
   valor: number;
   parcelas: number;          // 1 = à vista; >1 distribui mensalmente
-  dataPrevista: string;      // YYYY-MM-DD
+  dataPrevista: string;      // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   competencia: string;       // YYYY-MM
   observacao?: string;
 };
@@ -156,8 +156,8 @@ export type ContratoFull = {
   // Campos operacionais (visualização gerencial em Financiamentos)
   financiamentoStatusLiberacao?: string;
   financiamentoLiberacao?: string;
-  financiamentoDataBaseLiberacao?: string; // YYYY-MM-DD
-  financiamentoEnvio?: string;             // YYYY-MM-DD
+  financiamentoPrevisao?: string; // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
+  financiamentoEnvio?: string;             // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
 };
 
 const KEY = "ms.contratos.v2";

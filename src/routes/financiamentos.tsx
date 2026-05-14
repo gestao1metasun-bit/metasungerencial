@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Search, Pencil, CheckCircle2, Copy, Banknote, Building2,
+  Plus, Search, SquarePen, CheckCircle2, Copy, Banknote, Building2,
   TrendingUp, Clock, AlertCircle, FileText, Hourglass, XCircle,
   DollarSign, Users, Target, Calendar, ArrowRight,
 } from "lucide-react";
@@ -555,7 +555,7 @@ function Carteira({
                 </TableCell>
                 <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><SquarePen className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => toast.success("Operação replicada")}><Copy className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Finalizar" onClick={() => { updateOp(o.id, { statusOp: "Finalizado" }); toast.success("Operação finalizada"); }}><CheckCircle2 className="h-4 w-4" /></Button>
                 </TableCell>
@@ -1132,7 +1132,7 @@ function ContratosComercialFin() {
     status: c.financiamentoStatus || "Em análise",
     obs: c.financiamentoObs || "",
     liberacao: c.financiamentoLiberacao || "",
-    previsao: c.financiamentoDataBaseLiberacao || "",
+    previsao: c.financiamentoPrevisao || "",
   }));
 
   return (
@@ -1184,12 +1184,12 @@ function EditContratoFinDialog({
     financiamentoStatus: contrato.financiamentoStatus ?? "Em análise",
     financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
     financiamentoObs: contrato.financiamentoObs ?? "",
-    financiamentoDataBaseLiberacao: contrato.financiamentoDataBaseLiberacao ?? "",
+    financiamentoPrevisao: contrato.financiamentoPrevisao ?? "",
     obs: contrato.obs ?? "",
   });
   const previsaoDias = (() => {
-    if (!form.financiamentoDataBaseLiberacao) return "";
-    const d = new Date(form.financiamentoDataBaseLiberacao + "T00:00:00").getTime();
+    if (!form.financiamentoPrevisao) return "";
+    const d = new Date(form.financiamentoPrevisao + "T00:00:00").getTime();
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const dias = Math.ceil((d - today.getTime()) / 86400000);
     const found = PREVISAO_FAIXAS.find((f) => f === dias);
@@ -1234,9 +1234,9 @@ function EditContratoFinDialog({
           <div><Label>Previsão de liberação</Label>
             <Select
               value={previsaoDias}
-              onValueChange={(v) => setForm({ ...form, financiamentoDataBaseLiberacao: previsaoFromDias(Number(v)) })}
+              onValueChange={(v) => setForm({ ...form, financiamentoPrevisao: previsaoFromDias(Number(v)) })}
             >
-              <SelectTrigger><SelectValue placeholder={form.financiamentoDataBaseLiberacao ? `Atual: ${form.financiamentoDataBaseLiberacao}` : "Selecione a faixa"} /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={form.financiamentoPrevisao ? `Atual: ${form.financiamentoPrevisao}` : "Selecione a faixa"} /></SelectTrigger>
               <SelectContent>
                 {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
               </SelectContent>

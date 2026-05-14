@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
-  Zap, Sun, Filter, Activity, Award, Gauge, Pencil, Layers, History, MapPin,
+  Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -1484,7 +1484,7 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><Pencil className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><SquarePen className="h-3.5 w-3.5" /></Button>
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>

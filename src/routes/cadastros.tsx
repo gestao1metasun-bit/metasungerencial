@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, SquarePen, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -112,7 +112,7 @@ function BancosCrud({ items }: { items: Banco[] }) {
                 <Switch checked={b.status === "Ativo"} onCheckedChange={() => toggleBancoAtivo(b.id)} />
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(b)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(b)}><SquarePen className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
@@ -178,7 +178,7 @@ function GerentesCrud({ items, bancos }: { items: Gerente[]; bancos: Banco[] }) 
               <TableCell className="text-right">{g.operacoes}</TableCell>
               <TableCell><StatusBadge status={g.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(g)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(g)}><SquarePen className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(g.id)}><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
@@ -255,7 +255,7 @@ function EquipesCrud({ items, setItems }: { items: Equipe[]; setItems: (v: Equip
               <TableCell className="text-right">{e.obrasAtivas}</TableCell>
               <TableCell><StatusBadge status={e.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(e)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(e)}><SquarePen className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(e.id)}><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
@@ -329,7 +329,7 @@ function Listing({ title, cols, rows }: { title: string; cols: string[]; rows: a
             <TableRow key={i}>
               {r.map((cell, j) => <TableCell key={j} className={j === 0 ? "font-medium" : ""}>{cell}</TableCell>)}
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><SquarePen className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>

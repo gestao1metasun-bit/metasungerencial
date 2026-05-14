@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { gerentes as gerentesSeed, equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
 import { useBancos, upsertBanco, removeBanco, toggleBancoAtivo, type Banco } from "@/lib/bancos-store";
+import { useGerentes, upsertGerente, removeGerente, type Gerente } from "@/lib/gerentes-store";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 

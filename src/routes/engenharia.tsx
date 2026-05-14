@@ -551,13 +551,15 @@ function EditObraDialog({
           <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
           <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
           <div>
-            <Label>Equipe {equipeRequired && <span className="text-destructive">*</span>}</Label>
-            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={f.status === "Finalizado"}>
-              <SelectTrigger className={equipeMissing ? "border-destructive" : ""}><SelectValue placeholder={equipeRequired ? "Obrigatória" : "Opcional"} /></SelectTrigger>
+            <Label>Equipe / Instalador {equipeRequired && <span className="text-destructive">*</span>}</Label>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed}>
+              <SelectTrigger className={equipeMissing ? "border-destructive" : ""}>
+                <SelectValue placeholder={equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status"} />
+              </SelectTrigger>
               <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
             </Select>
             <div className="mt-1 text-[10px] text-muted-foreground">
-              Em projeto/aprovação: opcional · Aguardando: opcional · Executando: obrigatória · Finalizado: travada
+              Liberado apenas em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.
             </div>
           </div>
           <div><Label>Status</Label>

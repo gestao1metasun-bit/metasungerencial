@@ -58,9 +58,9 @@ function CadastrosPage() {
 
         <TabsContent value="vendedores" className="mt-5">
           <Listing
-            title="Vendedores"
-            cols={["Nome", "E-mail", "Contratos", "Status"]}
-            rows={vendedores.map((v) => [v.nome, v.email, v.contratos, <StatusBadge key="s" status={v.status} />])}
+            title="Consultores"
+            cols={["Nome", "E-mail", "Telefone", "Status"]}
+            rows={consultores.map((c) => [c.nome, c.email ?? "—", c.telefone ?? "—", <StatusBadge key="s" status={c.ativo ? "Ativo" : "Inativo"} />])}
           />
         </TabsContent>
         <TabsContent value="usuarios" className="mt-5">

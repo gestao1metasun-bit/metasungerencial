@@ -23,7 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { financiamentos as finSeed, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
+import { useBancosAtivos } from "@/lib/bancos-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
@@ -107,9 +108,8 @@ function FinanciamentosPage() {
   );
 }
 
-const BANCOS_SIMULACAO = ["BASA", "SICREDI"];
-
 function PendenciasTab() {
+  const bancos = useBancosAtivos();
   const [pendAll, update, remove] = useFinPendencias();
   const pend = pendAll.filter((p) => p.status === "Pendente");
   return (
@@ -149,8 +149,8 @@ function PendenciasTab() {
                 <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
                 <TableCell>
                   <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
-                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="BASA ou SICREDI" /></SelectTrigger>
-                    <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecione o banco" /></SelectTrigger>
+                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
                 <TableCell className="text-right">
@@ -195,6 +195,7 @@ function faixaPrevisao(dias: number): string {
 function DashboardFin({
   ops, updateOp,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void }) {
+  const bancos = useBancosAtivos();
   const total = ops.length;
   const valorTotal = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const comContrato = ops.filter((o) => !!o.contrato);
@@ -479,6 +480,7 @@ function DetailFinModal({
 function Carteira({
   ops, updateOp, filterFin = false,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void; filterFin?: boolean }) {
+  const bancos = useBancosAtivos();
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("todos");
   const [status, setStatus] = useState("todos");
@@ -593,6 +595,7 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 function EditOpDialog({
   op, onClose, onSave,
 }: { op: FinOp | null; onClose: () => void; onSave: (patch: Partial<FinOp>) => void }) {
+  const bancos = useBancosAtivos();
   const [form, setForm] = useState<Partial<FinOp>>({});
   useEffect(() => { setForm(op ?? {}); }, [op]);
   if (!op) return null;
@@ -711,6 +714,7 @@ type FinAvulso = {
 };
 
 function SemContratoTab() {
+  const bancos = useBancosAtivos();
   const [lista, setLista] = useState<FinAvulso[]>(() =>
     finsSemContrato.map((f) => ({
       id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
@@ -790,7 +794,7 @@ function SemContratoTab() {
             <div><Label>Banco (simulação)</Label>
               <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Gerente</Label>
@@ -862,6 +866,7 @@ function VincularContratoDialog({
 /* ---------------- Bancos ---------------- */
 
 function BancosTab({ ops }: { ops: FinOp[] }) {
+  const bancos = useBancosAtivos();
   const totalGeral = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const data = bancos.map((b) => {
     const lista = ops.filter((o) => o.banco === b.nome);

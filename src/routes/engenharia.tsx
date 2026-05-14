@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useContratos } from "@/lib/contratos-store";
+import { useEffect, useState } from "react";
+import { useContratos, retornarProjetoComercial, updateProjeto, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
-  Plus, HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
-  ChevronUp, ChevronDown, RotateCcw, Eye, Trash2,
+  HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
+  ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -89,10 +89,55 @@ function enrichObras(): Obra[] {
   }));
 }
 
+/** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
+function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
+  return {
+    id: p.id,
+    contrato: c.id,
+    cliente: c.cliente,
+    equipe: p.equipe || "",
+    modulos: p.modulos,
+    potencia: p.kwp,
+    inversor: p.inversor || "",
+    inicio: p.inicio || "",
+    previsto: p.previsto || "",
+    finalizacao: null,
+    status: p.status || "Em projeto/aprovação",
+    telhado: "Outro",
+    obs: p.obs || "",
+    ordem,
+    inv2: p.inv2 || "",
+    inv3: p.inv3 || "",
+    telhadoTipo: "Outro",
+  };
+}
+
 function EngenhariaPage() {
+  const contratos = useContratos();
   const [obras, setObras] = useState<Obra[]>(() => enrichObras());
   const [pends, setPends] = useState(pendenciasSeed);
   const [equipes, setEquipes] = useState(equipesSeed);
+
+  // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
+  useEffect(() => {
+    const aprovados: { p: ProjetoVinculado; c: ContratoFull }[] = [];
+    contratos.forEach((c) => (c.projetos ?? []).forEach((p) => {
+      if (p.aprovado && p.enviadoEngenharia) aprovados.push({ p, c });
+    }));
+    setObras((cur) => {
+      const ids = new Set(cur.map((o) => o.id));
+      const news = aprovados.filter(({ p }) => !ids.has(p.id))
+        .map(({ p, c }, i) => projetoToObra(p, c, cur.length + i + 1));
+      // Remove obras cujo projeto foi retornado ao Comercial
+      const validIds = new Set(aprovados.map(({ p }) => p.id));
+      const filtered = cur.filter((o) => {
+        // mantém obras que vieram do seed (sem projeto associado)
+        const fromComercial = contratos.some((c) => (c.projetos ?? []).some((p) => p.id === o.id));
+        return !fromComercial || validIds.has(o.id);
+      });
+      return news.length === 0 && filtered.length === cur.length ? cur : [...filtered, ...news];
+    });
+  }, [contratos]);
 
   return (
     <>
@@ -106,16 +151,14 @@ function EngenhariaPage() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
-          <TabsTrigger value="vinculados">Projetos de contratos</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
-        <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} /></TabsContent>
+        <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
         <TabsContent value="cronograma" className="mt-5"><CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><FinalizadosTab obras={obras} setObras={setObras} /></TabsContent>
-        <TabsContent value="vinculados" className="mt-5"><ProjetosVinculadosTab /></TabsContent>
       </Tabs>
     </>
   );
@@ -275,8 +318,8 @@ function ObrasModal({
 /* ---------------- OBRAS ATIVAS ---------------- */
 
 function ObrasAtivasTab({
-  obras, setObras, equipes,
-}: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed }) {
+  obras, setObras, equipes, contratos,
+}: { obras: Obra[]; setObras: (v: Obra[]) => void; equipes: typeof equipesSeed; contratos: ContratoFull[] }) {
   const [equipe, setEquipe] = useState("todas");
   const [editing, setEditing] = useState<Obra | null>(null);
 
@@ -292,8 +335,36 @@ function ObrasAtivasTab({
     const next = obras.map((o) => o.id === id ? { ...o, ...patch } : o);
     const target = next.find((o) => o.id === id)!;
     setObras(chainSchedule(next, target.equipe, target.status));
+    // Sincroniza com o projeto do Comercial (se aplicável)
+    const link = findProjetoLink(id, contratos);
+    if (link) {
+      updateProjeto(link.contratoId, id, {
+        modulos: target.modulos,
+        kwp: target.potencia,
+        inversor: target.inversor,
+        inv2: target.inv2,
+        inv3: target.inv3,
+        equipe: target.equipe,
+        inicio: target.inicio,
+        previsto: target.previsto,
+        status: target.status,
+        obs: target.obs,
+      });
+    }
     setEditing(null);
     toast.success("Obra atualizada");
+  };
+
+  const retornar = (id: string) => {
+    const link = findProjetoLink(id, contratos);
+    if (!link) {
+      toast.error("Esta obra não está vinculada a um projeto do Comercial");
+      return;
+    }
+    retornarProjetoComercial(link.contratoId, id);
+    setObras(obras.filter((o) => o.id !== id));
+    setEditing(null);
+    toast.success("Obra retornada ao Comercial para edição");
   };
 
   return (
@@ -306,7 +377,9 @@ function ObrasAtivasTab({
             {equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button className="ml-auto bg-primary text-primary-foreground hover:opacity-90"><Plus className="mr-2 h-4 w-4" /> Nova obra</Button>
+        <div className="ml-auto text-xs text-muted-foreground">
+          Toda obra é gerada automaticamente pelo Comercial após aprovação.
+        </div>
       </div>
       <div className="overflow-auto">
         <Table>
@@ -331,7 +404,7 @@ function ObrasAtivasTab({
                 <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
-                <TableCell className="text-xs">{o.equipe}</TableCell>
+                <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
                 <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
@@ -349,16 +422,31 @@ function ObrasAtivasTab({
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
         Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <Pencil className="inline h-3 w-3" /> editar.
       </div>
-      <EditObraDialog obra={editing} onClose={() => setEditing(null)} onSave={save} equipes={equipes} />
+      <EditObraDialog
+        obra={editing}
+        onClose={() => setEditing(null)}
+        onSave={save}
+        onRetornar={retornar}
+        equipes={equipes}
+        fromComercial={!!editing && !!findProjetoLink(editing.id, contratos)}
+      />
     </Card>
   );
 }
 
+function findProjetoLink(obraId: string, contratos: ContratoFull[]): { contratoId: string } | null {
+  for (const c of contratos) {
+    if ((c.projetos ?? []).some((p) => p.id === obraId)) return { contratoId: c.id };
+  }
+  return null;
+}
+
 function EditObraDialog({
-  obra, onClose, onSave, equipes,
-}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; equipes: typeof equipesSeed }) {
+  obra, onClose, onSave, onRetornar, equipes, fromComercial,
+}: { obra: Obra | null; onClose: () => void; onSave: (id: string, patch: Partial<Obra>) => void; onRetornar?: (id: string) => void; equipes: typeof equipesSeed; fromComercial?: boolean }) {
   const [form, setForm] = useState<Partial<Obra>>({});
   const [confirming, setConfirming] = useState(false);
+  const [confirmRet, setConfirmRet] = useState(false);
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
@@ -368,9 +456,16 @@ function EditObraDialog({
 
   const f = { ...obra, ...form };
   const finalizing = f.status === "Finalizado";
-  const valid = !finalizing || (!!f.inicioReal && !!f.fimReal);
+  const isExecutando = f.status === "Executando instalação";
+  const equipeRequired = isExecutando;
+  const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
+  const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {
+    if (equipeMissing) {
+      toast.error("Equipe é obrigatória quando o status é Executando instalação");
+      return;
+    }
     if (finalizing && !valid) {
       toast.error("Preencha Início real e Fim real para finalizar");
       return;
@@ -411,11 +506,15 @@ function EditObraDialog({
           <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
           <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
           <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
-          <div><Label>Equipe</Label>
-            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+          <div>
+            <Label>Equipe {equipeRequired && <span className="text-destructive">*</span>}</Label>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={f.status === "Finalizado"}>
+              <SelectTrigger className={equipeMissing ? "border-destructive" : ""}><SelectValue placeholder={equipeRequired ? "Obrigatória" : "Opcional"} /></SelectTrigger>
               <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
             </Select>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              Em projeto/aprovação: opcional · Aguardando: opcional · Executando: obrigatória · Finalizado: travada
+            </div>
           </div>
           <div><Label>Início (planejado)</Label><Input type="date" value={f.inicio ?? ""} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
           <div><Label>Status</Label>
@@ -437,11 +536,31 @@ function EditObraDialog({
             Ao salvar com status <strong>Finalizado</strong>, a obra será movida para a aba <strong>Finalizados</strong>. Início real e Fim real são obrigatórios.
           </div>
         )}
-        <DialogFooter>
+        <DialogFooter className="flex-wrap gap-2">
+          {fromComercial && onRetornar && (
+            <Button variant="outline" className="mr-auto border-warning/50 text-warning hover:bg-warning/10" onClick={() => setConfirmRet(true)}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Retornar para Comercial
+            </Button>
+          )}
           <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
           <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
+
+      <Dialog open={confirmRet} onOpenChange={setConfirmRet}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Retornar obra para o Comercial</DialogTitle>
+            <DialogDescription>
+              A obra de <strong>{obra.cliente}</strong> será removida da Engenharia e o projeto reabrirá no Comercial para edição.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRet(false)}>Cancelar</Button>
+            <Button className="bg-warning text-warning-foreground" onClick={() => { setConfirmRet(false); onRetornar?.(obra.id); }}>Sim, retornar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="max-w-md">
@@ -960,54 +1079,3 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
-/* ---------------- PROJETOS VINCULADOS A CONTRATOS ---------------- */
-function ProjetosVinculadosTab() {
-  const contratos = useContratos();
-  const linhas = contratos
-    .filter((c) => c.status === "Assinado")
-    .flatMap((c) =>
-      (c.projetos ?? [])
-        .filter((p) => p.enviadoEngenharia)
-        .map((p) => ({ ...p, contratoCliente: c.cliente })),
-    );
-  return (
-    <div className="space-y-4">
-      <Card className="p-4">
-        <div className="text-sm font-semibold">Projetos liberados pela área Comercial</div>
-        <div className="text-xs text-muted-foreground">Apenas projetos de contratos <b>assinados</b> e marcados como liberados em Comercial → editar contrato → aba Projetos.</div>
-      </Card>
-      <Card>
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead>Projeto</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Contrato</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Endereço</TableHead>
-            <TableHead className="text-right">Módulos</TableHead>
-            <TableHead className="text-right">kWp</TableHead>
-            <TableHead>Equipe</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {linhas.length === 0 ? (
-              <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhum projeto liberado pelo Comercial até o momento.</TableCell></TableRow>
-            ) : linhas.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
-                <TableCell className="text-xs">{p.tipo || "—"}</TableCell>
-                <TableCell className="font-mono text-xs">{p.contratoId}</TableCell>
-                <TableCell className="text-muted-foreground">{p.contratoCliente}</TableCell>
-                <TableCell className="text-sm">{p.endereco}{p.numero ? `, ${p.numero}` : ""} <span className="text-muted-foreground">· {p.bairro ? `${p.bairro} · ` : ""}{p.cidade}/{p.uf}</span></TableCell>
-                <TableCell className="text-right">{p.modulos}</TableCell>
-                <TableCell className="text-right">{p.kwp.toFixed(2)}</TableCell>
-                <TableCell>{p.equipe || "—"}</TableCell>
-                <TableCell><StatusBadge status={p.status} /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
-  );
-}

@@ -411,6 +411,16 @@ export function aprovarProjeto(contratoId: string, projetoId: string, usuario = 
   });
 }
 
+/** Retorna o projeto para o Comercial (sai da Engenharia, reabre edição). */
+export function retornarProjetoComercial(contratoId: string, projetoId: string, usuario = "Operador") {
+  updateProjeto(contratoId, projetoId, {
+    aprovado: false,
+    enviadoEngenharia: false,
+    dataAprovacao: undefined,
+    usuarioAprovacao: usuario,
+  });
+}
+
 const addMonthsISO = (iso: string, n: number): string => {
   if (!iso) return iso;
   const [y, m, d] = iso.split("-").map(Number);

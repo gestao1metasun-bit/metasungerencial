@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { bancos as bancosSeed, gerentes as gerentesSeed, equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { gerentes as gerentesSeed, equipes as equipesSeed, vendedores, usuarios } from "@/lib/mock-data";
+import { useBancos, upsertBanco, removeBanco, toggleBancoAtivo, type Banco } from "@/lib/bancos-store";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastros")({
@@ -19,12 +21,11 @@ export const Route = createFileRoute("/cadastros")({
   component: CadastrosPage,
 });
 
-type Banco = { id: string; nome: string; operacoes: number; total: number; status: string };
 type Gerente = { id: string; nome: string; banco: string; telefone: string; operacoes: number; status: string };
 type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
 
 function CadastrosPage() {
-  const [bancos, setBancos] = useState<Banco[]>(() => bancosSeed.map((b) => ({ ...b })));
+  const bancos = useBancos();
   const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
 
@@ -42,7 +43,7 @@ function CadastrosPage() {
         </TabsList>
 
         <TabsContent value="bancos" className="mt-5">
-          <BancosCrud items={bancos} setItems={setBancos} />
+          <BancosCrud items={bancos} />
         </TabsContent>
         <TabsContent value="gerentes" className="mt-5">
           <GerentesCrud items={gerentes} setItems={setGerentes} bancos={bancos} />
@@ -82,16 +83,12 @@ function CadastrosPage() {
 }
 
 /* ----------------- Bancos ----------------- */
-function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]) => void }) {
+function BancosCrud({ items }: { items: Banco[] }) {
   const [editing, setEditing] = useState<Banco | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const save = (b: Banco) => {
-    if (items.find((x) => x.id === b.id)) setItems(items.map((x) => (x.id === b.id ? b : x)));
-    else setItems([...items, b]);
-    toast.success("Banco salvo");
-  };
-  const remove = (id: string) => { setItems(items.filter((x) => x.id !== id)); toast.success("Banco removido"); };
+  const save = (b: Banco) => { upsertBanco(b); toast.success("Banco salvo"); };
+  const remove = (id: string) => { removeBanco(id); toast.success("Banco removido"); };
 
   return (
     <CrudCard title="Bancos cadastrados" onNew={() => setCreating(true)}>
@@ -99,6 +96,7 @@ function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead>Banco</TableHead><TableHead className="text-right">Operações</TableHead>
           <TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead>
+          <TableHead className="text-center">Ativo</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
@@ -108,6 +106,9 @@ function BancosCrud({ items, setItems }: { items: Banco[]; setItems: (v: Banco[]
               <TableCell className="text-right">{b.operacoes}</TableCell>
               <TableCell className="text-right">{b.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
               <TableCell><StatusBadge status={b.status} /></TableCell>
+              <TableCell className="text-center">
+                <Switch checked={b.status === "Ativo"} onCheckedChange={() => toggleBancoAtivo(b.id)} />
+              </TableCell>
               <TableCell className="text-right">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(b)}><Pencil className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>

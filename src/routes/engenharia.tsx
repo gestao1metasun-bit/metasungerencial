@@ -556,6 +556,18 @@ function EditObraDialog({
   const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {
+    if (isExecutando || isAguardando) {
+      const faltam: string[] = [];
+      if (!(modulos > 0)) faltam.push("quantidade de módulos");
+      if (!(painelW > 0)) faltam.push("potência do painel");
+      if (!(f.telhadoTipo ?? "").trim() || f.telhadoTipo === "Outro") faltam.push("telhado");
+      const hasInv = [f.inversor, f.inv2, f.inv3].some((x) => (x ?? "").trim() !== "");
+      if (!hasInv) faltam.push("ao menos 1 inversor");
+      if (faltam.length) {
+        toast.error(`Para enviar para "${f.status}" preencha: ${faltam.join(", ")}`);
+        return;
+      }
+    }
     if (equipeMissing) {
       toast.error("Equipe é obrigatória quando o status é Executando instalação");
       return;

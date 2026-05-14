@@ -206,12 +206,32 @@ function DashboardEng({
   };
 
   const porStatus = STATUS.map((s) => ({ name: s, qtd: obras.filter((o) => o.status === s).length }));
-  const porEquipe = equipes.map((e) => ({
-    nome: e.nome,
-    obras: obras.filter((o) => o.equipe === e.nome && o.status !== "Finalizado").length,
-    modulos: obras.filter((o) => o.equipe === e.nome).reduce((s,o)=>s+o.modulos, 0),
-  }));
+  const totalStatus = porStatus.reduce((s, x) => s + x.qtd, 0) || 1;
+  const ATIVOS_STATUS = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby"];
+  const porEquipe = equipes.map((e) => {
+    const obs = obras.filter((o) => o.equipe === e.nome && ATIVOS_STATUS.includes(o.status));
+    return {
+      nome: e.nome,
+      obras: obs.length,
+      modulos: obs.reduce((s,o)=>s+o.modulos, 0),
+      kwp: Math.round(obs.reduce((s,o)=>s+(o.potencia||0), 0) * 10) / 10,
+    };
+  });
+  const finalizadosPorEquipe = equipes.map((e) => {
+    const obs = obras.filter((o) => o.equipe === e.nome && o.status === "Finalizado");
+    return {
+      nome: e.nome,
+      obras: obs.length,
+      modulos: obs.reduce((s,o)=>s+o.modulos, 0),
+      kwp: Math.round(obs.reduce((s,o)=>s+(o.potencia||0), 0) * 10) / 10,
+    };
+  }).sort((a,b)=>b.obras-a.obras);
   const pendPorEquipe = equipes.map((e) => ({ nome: e.nome, qtd: pends.filter((p) => p.equipe === e.nome && p.status === "Aguardando resolução").length }));
+
+  const renderPieLabel = (entry: any) => {
+    const pct = ((entry.qtd / totalStatus) * 100).toFixed(0);
+    return `${entry.qtd} (${pct}%)`;
+  };
 
   return (
     <>
@@ -231,19 +251,23 @@ function DashboardEng({
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <div className="mb-3 text-sm font-semibold">Obras por status</div>
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
-              <Pie data={porStatus} dataKey="qtd" nameKey="name" innerRadius={50} outerRadius={95}>
+              <Pie data={porStatus} dataKey="qtd" nameKey="name" innerRadius={50} outerRadius={95} label={renderPieLabel} labelLine={true}>
                 {porStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+              <Tooltip
+                contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }}
+                formatter={(value: any, name: any) => [`${value} (${((Number(value)/totalStatus)*100).toFixed(0)}%)`, name]}
+              />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
         </Card>
         <Card className="p-5">
-          <div className="mb-3 text-sm font-semibold">Obras × módulos por equipe</div>
-          <ResponsiveContainer width="100%" height={260}>
+          <div className="mb-1 text-sm font-semibold">Obras × módulos × kWp por equipe</div>
+          <div className="mb-3 text-[11px] text-muted-foreground">Operação atual — exclui obras finalizadas</div>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={porEquipe}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
               <XAxis dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} />
@@ -251,10 +275,54 @@ function DashboardEng({
               <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={12} />
               <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar yAxisId="left" dataKey="obras" fill="var(--chart-1)" radius={[4,4,0,0]} />
-              <Bar yAxisId="right" dataKey="modulos" fill="var(--chart-2)" radius={[4,4,0,0]} />
+              <Bar yAxisId="left" dataKey="obras" name="Obras" fill="var(--chart-1)" radius={[4,4,0,0]} />
+              <Bar yAxisId="right" dataKey="modulos" name="Módulos" fill="var(--chart-2)" radius={[4,4,0,0]} />
+              <Bar yAxisId="right" dataKey="kwp" name="kWp" fill="var(--chart-3)" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
+        </Card>
+        <Card className="p-5 lg:col-span-2">
+          <div className="mb-1 flex items-center justify-between">
+            <div className="text-sm font-semibold flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> Histórico de finalizados por equipe</div>
+            <div className="text-[11px] text-muted-foreground">
+              Total: {finalizadosPorEquipe.reduce((s,x)=>s+x.obras,0)} obras · {finalizadosPorEquipe.reduce((s,x)=>s+x.modulos,0)} módulos · {finalizadosPorEquipe.reduce((s,x)=>s+x.kwp,0).toFixed(1)} kWp
+            </div>
+          </div>
+          <div className="mb-3 text-[11px] text-muted-foreground">Capacidade entregue acumulada — base: Engenharia &gt; Finalizados</div>
+          <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={finalizadosPorEquipe}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={12} />
+                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="left" dataKey="obras" name="Obras" fill="var(--chart-4)" radius={[4,4,0,0]} />
+                <Bar yAxisId="right" dataKey="modulos" name="Módulos" fill="var(--chart-2)" radius={[4,4,0,0]} />
+                <Bar yAxisId="right" dataKey="kwp" name="kWp" fill="var(--chart-3)" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="rounded-md border border-border bg-muted/20 p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground">Ranking por equipe</div>
+              <div className="space-y-1.5">
+                {finalizadosPorEquipe.map((e, i) => (
+                  <div key={e.nome} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1.5 text-xs">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{i+1}</span>
+                    <span className="flex-1 truncate font-medium">{e.nome}</span>
+                    <span className="text-muted-foreground">{e.obras} obras</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">{e.modulos} mód</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="font-semibold">{e.kwp.toFixed(1)} kWp</span>
+                  </div>
+                ))}
+                {finalizadosPorEquipe.every(e=>e.obras===0) && (
+                  <div className="py-4 text-center text-[11px] text-muted-foreground">Nenhuma obra finalizada ainda.</div>
+                )}
+              </div>
+            </div>
+          </div>
         </Card>
         <Card className="p-5">
           <div className="mb-3 text-sm font-semibold">Pendências por equipe</div>

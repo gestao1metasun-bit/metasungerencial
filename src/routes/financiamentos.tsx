@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { financiamentos as finSeed, bancos, gerentes, finsSemContrato, fmtBRL } from "@/lib/mock-data";
 import { useFinPendencias } from "@/lib/fin-pendencias";
+import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financiamentos")({

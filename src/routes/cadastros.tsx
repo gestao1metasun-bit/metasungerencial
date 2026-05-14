@@ -21,12 +21,11 @@ export const Route = createFileRoute("/cadastros")({
   component: CadastrosPage,
 });
 
-type Banco = { id: string; nome: string; operacoes: number; total: number; status: string };
 type Gerente = { id: string; nome: string; banco: string; telefone: string; operacoes: number; status: string };
 type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
 
 function CadastrosPage() {
-  const [bancos, setBancos] = useState<Banco[]>(() => bancosSeed.map((b) => ({ ...b })));
+  const bancos = useBancos();
   const [gerentes, setGerentes] = useState<Gerente[]>(() => gerentesSeed.map((g) => ({ ...g })));
   const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
 
@@ -44,7 +43,7 @@ function CadastrosPage() {
         </TabsList>
 
         <TabsContent value="bancos" className="mt-5">
-          <BancosCrud items={bancos} setItems={setBancos} />
+          <BancosCrud items={bancos} />
         </TabsContent>
         <TabsContent value="gerentes" className="mt-5">
           <GerentesCrud items={gerentes} setItems={setGerentes} bancos={bancos} />

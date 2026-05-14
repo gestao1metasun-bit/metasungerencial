@@ -193,6 +193,9 @@ export type PropostaFV = {
   irradiacaoMedia: number;
   mesMaior?: string;
   mesMenor?: string;
+  irradiacaoMaxima?: number;     // snapshot — congelado na proposta
+  irradiacaoMinima?: number;     // snapshot — congelado na proposta
+  fonteIrradiacao?: string;      // ex.: "BASE INTERNA / NASA POWER"
 
   // 3. Fatura
   tipoInstalacao: "RESIDENCIAL" | "COMERCIAL" | "INDUSTRIAL" | "RURAL";

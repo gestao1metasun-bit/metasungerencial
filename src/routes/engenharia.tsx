@@ -131,6 +131,7 @@ function EngenhariaPage() {
   const [obras, setObras] = useState<Obra[]>(() => enrichObras());
   const [pends, setPends] = useState(pendenciasSeed);
   const [equipes, setEquipes] = useState(equipesSeed);
+  const [tab, setTab] = useTabFromHash("/engenharia");
 
   // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
   useEffect(() => {

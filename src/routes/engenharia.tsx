@@ -827,6 +827,9 @@ function PendenciasTab({
     toast.success("Pendência atualizada");
   };
 
+  const abertas = pends.filter((p) => p.status !== "Problema resolvido");
+  const resolvidas = pends.filter((p) => p.status === "Problema resolvido");
+
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-border p-4">
@@ -862,36 +865,57 @@ function PendenciasTab({
           </DialogContent>
         </Dialog>
       </div>
-      <Table>
-        <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
-          <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
-          <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {pends.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
-              <TableCell>{p.equipe}</TableCell>
-              <TableCell className="font-medium">{p.cliente}</TableCell>
-              <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
-              <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
-              <TableCell><StatusBadge status={p.status} /></TableCell>
-              <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
-              <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(p)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+
+      <Tabs defaultValue="abertas" className="p-4">
+        <TabsList className="bg-muted/40">
+          <TabsTrigger value="abertas">Em aberto ({abertas.length})</TabsTrigger>
+          <TabsTrigger value="resolvidas">Pendências Resolvidas ({resolvidas.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="abertas" className="mt-3">
+          <PendTable rows={abertas} onEdit={setEditing} />
+        </TabsContent>
+        <TabsContent value="resolvidas" className="mt-3">
+          <PendTable rows={resolvidas} onEdit={setEditing} />
+        </TabsContent>
+      </Tabs>
 
       <EditPendenciaDialog pend={editing} onClose={() => setEditing(null)} onSave={saveEdit} />
     </Card>
+  );
+}
+
+function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: (typeof pendenciasSeed)[number]) => void }) {
+  if (rows.length === 0) {
+    return <div className="rounded border border-dashed border-border p-8 text-center text-xs text-muted-foreground">Nenhuma pendência nesta lista.</div>;
+  }
+  return (
+    <Table>
+      <TableHeader><TableRow className="hover:bg-transparent">
+        <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
+        <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
+        <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
+        <TableHead className="text-right">Ações</TableHead>
+      </TableRow></TableHeader>
+      <TableBody>
+        {rows.map((p) => (
+          <TableRow key={p.id}>
+            <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
+            <TableCell>{p.equipe}</TableCell>
+            <TableCell className="font-medium">{p.cliente}</TableCell>
+            <TableCell className="max-w-xs truncate">{p.problema}</TableCell>
+            <TableCell className="max-w-xs truncate text-muted-foreground">{p.solucao}</TableCell>
+            <TableCell><StatusBadge status={p.status} /></TableCell>
+            <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
+            <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
+            <TableCell className="text-right">
+              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => onEdit(p)}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 

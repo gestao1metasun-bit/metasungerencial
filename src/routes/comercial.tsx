@@ -869,6 +869,7 @@ function CadastrarContratoTab({
 
   const [openForm, setOpenForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"cliente" | "contrato">("cliente");
+  const [submitting, setSubmitting] = useState(false);
 
   const limpar = () => {
     setForm({

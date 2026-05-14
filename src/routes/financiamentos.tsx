@@ -794,7 +794,7 @@ function SemContratoTab() {
             <div><Label>Banco (simulação)</Label>
               <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BANCOS_SIMULACAO.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Gerente</Label>

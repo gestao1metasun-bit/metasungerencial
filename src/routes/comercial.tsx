@@ -28,8 +28,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
-import { appendLancamentos, readLancamentos, updateLancamento, removeLancamentosDoProjeto, type Lancamento } from "@/lib/financeiro-store";
-import { useNaturezas } from "@/lib/financeiro-store";
 import {
   contratos as contratosSeed, vendedores as vendedoresSeed, propostas as propostasSeed,
   evolucaoMensal, fmtBRL, estoqueItens,
@@ -38,10 +36,8 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
-  setComposicaoPagto, composicaoSomaOk, aprovarProjeto, calcularLancamentosProjeto,
-  parcelasFinanceiroReais, FORMAS_PAGAMENTO,
+  aprovarProjeto,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
-  type FormaPagamento, type ComposicaoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";

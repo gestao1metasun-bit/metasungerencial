@@ -1231,6 +1231,17 @@ function EditContratoFinDialog({
           <div><Label>Valor financiado (R$)</Label>
             <Input type="number" value={form.financiamentoValor} onChange={(e) => setForm({ ...form, financiamentoValor: Number(e.target.value) })} />
           </div>
+          <div><Label>Previsão de liberação</Label>
+            <Select
+              value={previsaoDias}
+              onValueChange={(v) => setForm({ ...form, financiamentoDataBaseLiberacao: previsaoFromDias(Number(v)) })}
+            >
+              <SelectTrigger><SelectValue placeholder={form.financiamentoDataBaseLiberacao ? `Atual: ${form.financiamentoDataBaseLiberacao}` : "Selecione a faixa"} /></SelectTrigger>
+              <SelectContent>
+                {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="col-span-2"><Label>Observações do financiamento</Label>
             <Textarea value={form.financiamentoObs} onChange={(e) => setForm({ ...form, financiamentoObs: e.target.value })} />
           </div>

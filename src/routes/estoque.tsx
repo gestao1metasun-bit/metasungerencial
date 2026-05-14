@@ -106,11 +106,13 @@ function DashboardEst() {
   );
 }
 
-type ItemEstoque = { id: string; produto: string; categoria: string; quantidade: number; minimo: number };
+type ItemEstoque = { id: string; produto: string; categoria: string; unidade: string; quantidade: number; minimo: number };
 
+const UNIDADES = ["UN", "PÇ", "M", "M²", "KG", "L", "PAR", "KIT", "CX"];
+const CATEGORIAS_PADRAO = ["MÓDULO", "INVERSOR", "ESTRUTURA", "CABO", "ACESSÓRIO", "PROTEÇÃO", "FERRAMENTA"];
 
 const seedItens: ItemEstoque[] = estoqueItens.map((i) => ({
-  id: i.id, produto: i.produto, categoria: i.categoria, quantidade: i.quantidade, minimo: i.minimo,
+  id: i.id, produto: i.produto, categoria: i.categoria, unidade: "UN", quantidade: i.quantidade, minimo: i.minimo,
 }));
 
 function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
@@ -119,42 +121,47 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
   const [cat, setCat] = useState("todas");
   const [openNovo, setOpenNovo] = useState(false);
   const [openAtt, setOpenAtt] = useState(false);
-  const [novo, setNovo] = useState({ produto: "", categoria: "", quantidade: "" });
-  const [att, setAtt] = useState({ id: "", quantidade: "" });
+  const [novo, setNovo] = useState({ produto: "", categoria: "", unidade: "UN", quantidade: "" });
+  const [updates, setUpdates] = useState<Record<string, string>>({});
 
-  const cats = Array.from(new Set(items.map((i) => i.categoria)));
+  const cats = Array.from(new Set([...CATEGORIAS_PADRAO, ...items.map((i) => i.categoria.toUpperCase())]));
+  const filterCats = Array.from(new Set(items.map((i) => i.categoria)));
   const list = items
     .filter((i) => !onlyAlerts || i.quantidade <= i.minimo)
     .filter((i) => cat === "todas" || i.categoria === cat)
     .filter((i) => [i.produto, i.id].some((v) => v.toLowerCase().includes(q.toLowerCase())));
 
   const addItem = () => {
-    if (!novo.produto.trim() || !novo.categoria.trim()) {
-      toast.error("Informe nome e categoria");
+    if (!novo.produto.trim() || !novo.categoria.trim() || !novo.unidade.trim()) {
+      toast.error("Preencha nome, categoria e unidade");
       return;
     }
     const id = `IT-${String(items.length + 1).padStart(3, "0")}`;
     setItems([
-      { id, produto: novo.produto.toUpperCase(), categoria: novo.categoria.toUpperCase(), quantidade: Number(novo.quantidade) || 0, minimo: 0 },
+      { id, produto: novo.produto.toUpperCase(), categoria: novo.categoria.toUpperCase(), unidade: novo.unidade.toUpperCase(), quantidade: Number(novo.quantidade) || 0, minimo: 0 },
       ...items,
     ]);
-    setNovo({ produto: "", categoria: "", quantidade: "" });
+    setNovo({ produto: "", categoria: "", unidade: "UN", quantidade: "" });
     setOpenNovo(false);
     toast.success("Item cadastrado");
   };
 
-  const updateQtd = () => {
-    if (!att.id) { toast.error("Selecione o item"); return; }
-    setItems(items.map((i) => i.id === att.id ? { ...i, quantidade: Number(att.quantidade) || 0 } : i));
-    setAtt({ id: "", quantidade: "" });
-    setOpenAtt(false);
-    toast.success("Estoque atualizado");
+  const openAttList = () => {
+    setUpdates({});
+    setOpenAtt(true);
   };
 
-  const openAttFor = (id: string) => {
-    const it = items.find((x) => x.id === id);
-    setAtt({ id, quantidade: String(it?.quantidade ?? 0) });
-    setOpenAtt(true);
+  const salvarUpdates = () => {
+    const changes = Object.entries(updates).filter(([, v]) => v !== "" && !Number.isNaN(Number(v)));
+    if (changes.length === 0) {
+      toast.error("Nenhuma quantidade alterada");
+      return;
+    }
+    const map = new Map(changes.map(([k, v]) => [k, Number(v)]));
+    setItems(items.map((i) => map.has(i.id) ? { ...i, quantidade: map.get(i.id)! } : i));
+    setUpdates({});
+    setOpenAtt(false);
+    toast.success(`${changes.length} item(ns) atualizado(s)`);
   };
 
   return (
@@ -168,10 +175,10 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
           <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Todas as categorias</SelectItem>
-            {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {filterCats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={() => setOpenAtt(true)}>
+        <Button variant="outline" onClick={openAttList}>
           <RefreshCw className="mr-2 h-4 w-4" /> Atualizar estoque
         </Button>
         <Button onClick={() => setOpenNovo(true)} className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
@@ -183,7 +190,6 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
           <TableHead>Nome do item</TableHead>
           <TableHead>Categoria</TableHead>
           <TableHead className="text-right">Quantidade atual</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {list.map((i) => (
@@ -191,15 +197,10 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
               <TableCell className="font-medium">{i.produto}</TableCell>
               <TableCell className="text-muted-foreground">{i.categoria}</TableCell>
               <TableCell className="text-right font-medium">{i.quantidade}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openAttFor(i.id)} title="Atualizar quantidade">
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </TableCell>
             </TableRow>
           ))}
           {list.length === 0 && (
-            <TableRow><TableCell colSpan={4} className="py-10 text-center text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+            <TableRow><TableCell colSpan={3} className="py-10 text-center text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
           )}
         </TableBody>
       </Table>
@@ -214,10 +215,24 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
             </div>
             <div className="grid gap-1">
               <Label>Categoria</Label>
-              <Input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} placeholder="Ex.: PAINÉIS" />
+              <Select value={novo.categoria} onValueChange={(v) => setNovo({ ...novo, categoria: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
+                <SelectContent>
+                  {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1">
-              <Label>Quantidade</Label>
+              <Label>Unidade de medida</Label>
+              <Select value={novo.unidade} onValueChange={(v) => setNovo({ ...novo, unidade: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1">
+              <Label>Quantidade inicial</Label>
               <Input type="number" min={0} value={novo.quantidade} onChange={(e) => setNovo({ ...novo, quantidade: e.target.value })} />
             </div>
           </div>
@@ -229,26 +244,35 @@ function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
       </Dialog>
 
       <Dialog open={openAtt} onOpenChange={setOpenAtt}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Atualizar estoque</DialogTitle></DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="grid gap-1">
-              <Label>Item</Label>
-              <Select value={att.id} onValueChange={(v) => { const it = items.find((x) => x.id === v); setAtt({ id: v, quantidade: String(it?.quantidade ?? 0) }); }}>
-                <SelectTrigger><SelectValue placeholder="Selecione o item" /></SelectTrigger>
-                <SelectContent>
-                  {items.map((i) => <SelectItem key={i.id} value={i.id}>{i.produto}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1">
-              <Label>Nova quantidade</Label>
-              <Input type="number" min={0} value={att.quantidade} onChange={(e) => setAtt({ ...att, quantidade: e.target.value })} />
-            </div>
+          <div className="max-h-[60vh] overflow-auto">
+            <Table>
+              <TableHeader><TableRow className="hover:bg-transparent">
+                <TableHead>Nome do item</TableHead>
+                <TableHead>Unidade</TableHead>
+                <TableHead className="text-right">Quantidade atual</TableHead>
+                <TableHead className="text-right w-40">Quantidade a atualizar</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {items.map((i) => (
+                  <TableRow key={i.id}>
+                    <TableCell className="font-medium">{i.produto}</TableCell>
+                    <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
+                    <TableCell className="text-right">{i.quantidade}</TableCell>
+                    <TableCell className="text-right">
+                      <Input type="number" min={0} value={updates[i.id] ?? ""} placeholder="—"
+                        onChange={(e) => setUpdates({ ...updates, [i.id]: e.target.value })}
+                        className="h-8 text-right" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenAtt(false)}>Cancelar</Button>
-            <Button onClick={updateQtd}>Salvar</Button>
+            <Button onClick={salvarUpdates}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

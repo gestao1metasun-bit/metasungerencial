@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useContratos } from "@/lib/contratos-store";
+import { useEffect, useState } from "react";
+import { useContratos, retornarProjetoComercial, updateProjeto, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
-  Plus, HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
-  ChevronUp, ChevronDown, RotateCcw, Eye, Trash2,
+  HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, Pencil, Users,
+  ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

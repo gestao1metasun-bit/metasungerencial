@@ -80,7 +80,12 @@ export function AppLayout() {
               const sub = ROUTE_TABS[item.to];
               const isOpen = openMenu === item.to;
               return (
-                <li key={item.to} className="relative">
+                <li
+                  key={item.to}
+                  className="relative"
+                  onMouseEnter={() => sub && setOpenMenu(item.to)}
+                  onMouseLeave={() => sub && setOpenMenu((cur) => (cur === item.to ? null : cur))}
+                >
                   <div
                     className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition ${
                       active
@@ -89,18 +94,15 @@ export function AppLayout() {
                     }`}
                   >
                     {sub ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenMenu((cur) => (cur === item.to ? null : item.to));
-                        }}
-                        className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0 text-left"
+                      <Link
+                        to={item.to}
+                        onClick={() => setOpenMenu(null)}
+                        className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0"
                       >
                         <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
                         <span className="flex-1 truncate">{item.label}</span>
                         <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                      </button>
+                      </Link>
                     ) : (
                       <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
                         <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"}`} />
@@ -109,13 +111,10 @@ export function AppLayout() {
                     )}
                   </div>
 
-                  {/* Flyout lateral (abre para a direita ao clicar no item) */}
+                  {/* Flyout lateral (abre para a direita ao passar o mouse) */}
                   {sub && isOpen && (
-                    <div className="absolute left-full top-0 z-50 ml-2 w-64 rounded-md border border-border bg-popover p-2 shadow-[var(--shadow-elegant)]">
-                      <div className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        {item.label}
-                      </div>
-                      <ul className="space-y-0.5">
+                    <div className="absolute left-full top-0 z-50 ml-0 w-56 rounded-r-md border border-sidebar-border bg-sidebar text-sidebar-foreground p-1 shadow-[var(--shadow-elegant)]">
+                      <ul>
                         {sub.tabs.map((t) => {
                           const tabActive = active && currentTab === t.value;
                           return (
@@ -124,10 +123,10 @@ export function AppLayout() {
                                 to={item.to}
                                 hash={`tab=${t.value}`}
                                 onClick={() => setOpenMenu(null)}
-                                className={`block rounded px-3 py-2 text-sm transition ${
+                                className={`block px-4 py-2 text-sm transition ${
                                   tabActive
-                                    ? "bg-primary/15 text-primary font-medium"
-                                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                                    ? "bg-primary text-primary-foreground font-medium"
+                                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                 }`}
                               >
                                 {t.label}

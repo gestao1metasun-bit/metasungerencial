@@ -418,6 +418,9 @@ function LeadDetail({
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="propostas">Propostas ({lead.propostas.length})</TabsTrigger>
+            <TabsTrigger value="aprovar" disabled={lead.bloqueado}>
+              {lead.bloqueado ? "Aprovada ✓" : "Aprovar proposta"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
@@ -437,9 +440,11 @@ function LeadDetail({
               <div className="text-xs text-muted-foreground">
                 {lead.propostas.length} proposta(s) — última: <strong>{lead.ultima.numero}</strong>
               </div>
-              <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
-                <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
-              </Button>
+              {!lead.bloqueado && (
+                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
+                  <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
+                </Button>
+              )}
             </div>
             <div className="rounded-md border">
               <Table>
@@ -455,7 +460,9 @@ function LeadDetail({
                 <TableBody>
                   {lead.propostas.map((p) => {
                     const v = calcPrecificacao(p).valorFinal || 0;
-                    const podeEditar = p.status === "RASCUNHO" && !lead.bloqueado;
+                    const ehRascunho = p.status === "RASCUNHO";
+                    const podeEditar = ehRascunho && !lead.bloqueado;
+                    const podeExcluir = ehRascunho && !lead.bloqueado;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
@@ -475,7 +482,7 @@ function LeadDetail({
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => duplicarProposta(p)}>
                               <Copy className="h-4 w-4" />
                             </Button>
-                            {!lead.bloqueado && (
+                            {podeExcluir && (
                               <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -488,6 +495,62 @@ function LeadDetail({
                 </TableBody>
               </Table>
             </div>
+          </TabsContent>
+
+          <TabsContent value="aprovar" className="mt-4 space-y-3">
+            {lead.bloqueado ? (
+              <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium text-success">
+                  <Lock className="h-4 w-4" /> Card bloqueado — proposta aprovada
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Este lead já foi convertido em contrato e enviado ao comercial. Não é possível aprovar outra proposta.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Selecione <strong>uma</strong> proposta para aprovar. Ela será convertida em contrato,
+                  enviada ao comercial e o card ficará bloqueado para novas alterações.
+                </div>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nº</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">Ação</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lead.propostas.map((p) => {
+                        const v = calcPrecificacao(p).valorFinal || 0;
+                        const podeAprovar = ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+                        return (
+                          <TableRow key={p.id}>
+                            <TableCell className="font-medium">{p.numero}</TableCell>
+                            <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                            <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant={podeAprovar ? "default" : "outline"}
+                                disabled={!podeAprovar}
+                                onClick={() => aprovarProposta(p)}
+                                className="gap-1"
+                              >
+                                <Check className="h-4 w-4" /> Aprovar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
 

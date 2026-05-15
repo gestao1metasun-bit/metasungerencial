@@ -22,6 +22,8 @@ import {
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,
 } from "@/lib/perfis-store";
 import { usePropostaConfig, setPropostaConfig } from "@/modules/propostas/proposta-config-store";
+import { CadastrosFV } from "@/modules/propostas/PropostasPage";
+import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/configuracoes")({

@@ -180,6 +180,14 @@ export type PropostaFV = {
   clienteTelefone?: string;
   clienteEmail?: string;
   clienteEndereco?: string;
+  // Endereço estruturado (CEP + ViaCEP)
+  clienteCep?: string;
+  clienteRua?: string;
+  clienteNumero?: string;
+  clienteComplemento?: string;
+  clienteBairro?: string;
+  clienteCidade?: string;
+  clienteUf?: string;
   consultor?: string;
 
   // 2. Localização

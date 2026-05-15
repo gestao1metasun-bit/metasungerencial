@@ -220,6 +220,9 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
 function presetFromLead(l: Lead): Partial<PropostaFV> {
   const u = l.ultima;
   return {
+    // leadId garante que a nova proposta caia no MESMO card do lead, mesmo
+    // que o nome do cliente seja editado no LeadModal antes de gerar.
+    leadId: u.leadId || l.key,
     clienteId: u.clienteId,
     clienteNome: u.clienteNome,
     clienteDoc: u.clienteDoc,
@@ -234,6 +237,7 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
     clienteCidade: u.clienteCidade,
     clienteUf: u.clienteUf,
     consultor: u.consultor,
+    origemCaptacao: u.origemCaptacao,
   };
 }
 

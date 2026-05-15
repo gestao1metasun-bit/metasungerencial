@@ -504,7 +504,8 @@ export function calcDimensionamento(p: PropostaFV) {
   const potenciaNecKwp = produtividadeReal > 0 ? geracaoDesejada / produtividadeReal : 0;
   const potModW = p.moduloPotenciaWp || 0;
   const potModKw = potModW / 1000;
-  const qtdCalc = potModKw > 0 ? Math.ceil(potenciaNecKwp / potModKw) : 0;
+  // Arredondamento padrão: ,49 p/ baixo · ,50 p/ cima
+  const qtdCalc = potModKw > 0 ? Math.round(potenciaNecKwp / potModKw) : 0;
   const qtdFinal = p.ajusteManualModulos && p.modulosManual ? p.modulosManual : qtdCalc;
   const potenciaFinalKwp = qtdFinal * potModKw;
 

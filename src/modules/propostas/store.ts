@@ -504,7 +504,8 @@ export function calcDimensionamento(p: PropostaFV) {
   const potenciaNecKwp = produtividadeReal > 0 ? geracaoDesejada / produtividadeReal : 0;
   const potModW = p.moduloPotenciaWp || 0;
   const potModKw = potModW / 1000;
-  const qtdCalc = potModKw > 0 ? Math.ceil(potenciaNecKwp / potModKw) : 0;
+  // Arredondamento padrão: ,49 p/ baixo · ,50 p/ cima
+  const qtdCalc = potModKw > 0 ? Math.round(potenciaNecKwp / potModKw) : 0;
   const qtdFinal = p.ajusteManualModulos && p.modulosManual ? p.modulosManual : qtdCalc;
   const potenciaFinalKwp = qtdFinal * potModKw;
 
@@ -559,8 +560,9 @@ export function modulosSuportadosPorInversor(potKw: number, potModuloW: number, 
 }
 
 /** Sugere inversores que comportem `qtdModulos` de `potModuloW`.
- *  Estratégia: prioriza 1 inversor (o menor que comporta); senão usa N (2..5) inversores
- *  de mesmo tamanho (combinação balanceada), preferindo o menor N e o menor tamanho. */
+ *  Estratégia: minimiza a soma de kW dos inversores (incluindo combinações
+ *  de tamanhos diferentes), em até 5 unidades. Em caso de empate, prefere
+ *  menor número de inversores. */
 export function sugerirInversoresAuto(
   qtdModulos: number,
   potModuloW: number,
@@ -569,22 +571,39 @@ export function sugerirInversoresAuto(
 ): { potKw: number; quantidade: number }[] {
   if (!qtdModulos || qtdModulos <= 0 || !potModuloW) return [];
   const sizes = STANDARD_INVERSOR_KW;
-  // 1 inversor — menor que comporta
-  for (const s of sizes) {
-    if (modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
-      return [{ potKw: s, quantidade: 1 }];
+  const sup = (s: number) => modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta);
+
+  let best: { combo: number[]; totalKw: number } | null = null as { combo: number[]; totalKw: number } | null;
+  const consider = (combo: number[]) => {
+    const mods = combo.reduce((a, s) => a + sup(s), 0);
+    if (mods < qtdModulos) return;
+    const totalKw = combo.reduce((a, s) => a + s, 0);
+    if (
+      !best ||
+      totalKw < best.totalKw ||
+      (totalKw === best.totalKw && combo.length < best.combo.length)
+    ) {
+      best = { combo, totalKw };
     }
-  }
-  // N inversores iguais (2..5)
-  for (let N = 2; N <= 5; N++) {
-    for (const s of sizes) {
-      if (N * modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
-        return [{ potKw: s, quantidade: N }];
-      }
+  };
+
+  // Busca combinações não-decrescentes de 1..5 inversores
+  const recurse = (start: number, current: number[]) => {
+    if (current.length > 0) consider(current);
+    if (current.length >= 5) return;
+    for (let i = start; i < sizes.length; i++) {
+      recurse(i, [...current, sizes[i]]);
     }
-  }
-  // Excede capacidade — devolve 5 × 100 kW como fallback máximo
-  return [{ potKw: 100, quantidade: 5 }];
+  };
+  recurse(0, []);
+
+  if (!best) return [{ potKw: 100, quantidade: 5 }];
+  const found: { combo: number[]; totalKw: number } = best;
+  const agg = new Map<number, number>();
+  found.combo.forEach((kw: number) => agg.set(kw, (agg.get(kw) ?? 0) + 1));
+  return Array.from(agg.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([potKw, quantidade]) => ({ potKw, quantidade }));
 }
 
 /** Sugere parâmetro com base na faixa de potência + tipo. */

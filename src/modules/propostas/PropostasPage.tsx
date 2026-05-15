@@ -814,7 +814,7 @@ function PropostaSheet({
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />
-              <ReadOnlyField label="Quantidade calculada (arred. ↑)" value={String(dim.qtdCalc)} />
+              <ReadOnlyField label="Quantidade calculada (arred.)" value={String(dim.qtdCalc)} />
               <Field label="Quantidade final (módulos)" hint="Ative a chave para ajustar manualmente.">
                 <div className="flex items-center gap-2">
                   <Switch checked={!!p.ajusteManualModulos} onCheckedChange={(v) => update("ajusteManualModulos", v)} />
@@ -860,7 +860,7 @@ function PropostaSheet({
                   });
                   return flat[idx] ?? "";
                 })();
-                const inv = inversores.find((i) => i.id === slot);
+                void inversores;
                 return (
                   <Field key={idx} label={`Inversor ${idx + 1}`}>
                     <Select
@@ -883,22 +883,15 @@ function PropostaSheet({
                         <SelectItem value="__none__" disabled>—</SelectItem>
                         {STANDARD_INVERSOR_KW.map((kw) => {
                           const id = inversorIdPadrao(kw);
-                          const sup = modulosSuportadosPorInversor(kw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
-                          const cap = capacidadeKwpInversor(kw, cfg.inversorMultBaixa, cfg.inversorMultAlta);
                           const lbl = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
                           return (
                             <SelectItem key={id} value={id}>
-                              INVERSOR {lbl}KW — {fmtNum(cap,1)} kWp · até {sup} módulos
+                              INVERSOR {lbl}KW
                             </SelectItem>
                           );
                         })}
                       </SelectContent>
                     </Select>
-                    {inv && (
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        Capacidade: {fmtNum(capacidadeKwpInversor(inv.potenciaKw, cfg.inversorMultBaixa, cfg.inversorMultAlta), 1)} kWp · suporta até {modulosSuportadosPorInversor(inv.potenciaKw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta)} módulos
-                      </div>
-                    )}
                   </Field>
                 );
               })}

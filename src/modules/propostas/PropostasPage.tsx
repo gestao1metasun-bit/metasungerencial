@@ -269,10 +269,8 @@ function PropostasPage() {
         }
       />
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList>
+        <TabsList className="hidden">
           <TabsTrigger value="lista">Propostas</TabsTrigger>
-          <TabsTrigger value="cadastros">Cadastros</TabsTrigger>
-          <TabsTrigger value="ajuda">Como funciona</TabsTrigger>
         </TabsList>
         <TabsContent value="lista" className="mt-5">
           <PropostaList
@@ -281,12 +279,6 @@ function PropostasPage() {
             onVisualizar={(id) => setVendoId(id)}
             onNova={novaProposta}
           />
-        </TabsContent>
-        <TabsContent value="cadastros" className="mt-5">
-          <CadastrosFV />
-        </TabsContent>
-        <TabsContent value="ajuda" className="mt-5">
-          <AjudaTab />
         </TabsContent>
       </Tabs>
 

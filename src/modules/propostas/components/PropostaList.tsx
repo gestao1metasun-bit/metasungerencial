@@ -282,46 +282,54 @@ function KanbanView({
               onDrop={() => dropEmColuna(c.id)}
             >
               <div
-                className="flex items-center gap-1 border-b bg-card p-2"
+                className="border-b bg-card"
                 draggable
                 onDragStart={() => { setDragCol(c.id); setDragProp(null); }}
               >
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                {editandoCol === c.id ? (
-                  <>
-                    <Input
-                      autoFocus
-                      value={tituloEdit}
-                      onChange={(e) => setTituloEdit(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
-                      className="h-7"
-                    />
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
-                      <Check className="h-3.5 w-3.5" />
-                    </Button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
-                    className="flex-1 cursor-text truncate px-1 text-left text-sm font-semibold"
-                    title="Clique para renomear · arraste para reordenar"
-                  >
-                    {c.titulo}
-                  </button>
-                )}
-                <Badge variant="outline" className="text-[10px]">{items.length}</Badge>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
-                  <X className="h-3.5 w-3.5 text-destructive" />
-                </Button>
-              </div>
-              <div className="border-b bg-muted/20 px-2 py-1 text-[11px] text-muted-foreground">
-                {fmtBRL(total)}
+                <div className="flex items-center gap-1 px-2 pt-2">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  {editandoCol === c.id ? (
+                    <>
+                      <Input
+                        autoFocus
+                        value={tituloEdit}
+                        onChange={(e) => setTituloEdit(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
+                        className="h-7"
+                      />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
+                      className="flex-1 cursor-text truncate px-1 text-left text-sm font-bold uppercase tracking-wide"
+                      title="Clique para renomear · arraste para reordenar"
+                    >
+                      {c.titulo}
+                    </button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
+                    <X className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+                <div className="flex items-end justify-between gap-2 px-3 pb-2 pt-1">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor total</div>
+                    <div className="truncate text-base font-bold text-primary">{fmtBRL(total)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Contratos</div>
+                    <div className="text-base font-bold tabular-nums">{items.length}</div>
+                  </div>
+                </div>
               </div>
               <div className="flex min-h-[120px] flex-col gap-2 p-2">
                 {items.map((p) => {

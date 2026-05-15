@@ -1,7 +1,7 @@
 // Página principal do módulo Propostas Fotovoltaicas.
 // Movida de src/routes/propostas.tsx durante reorganização modular.
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
   XCircle, Sparkles, Calculator, Users, MapPin, Zap, Sun, Wrench, DollarSign,

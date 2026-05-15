@@ -754,47 +754,80 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
   };
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Novo cliente</DialogTitle>
-          <DialogDescription>Cadastro rápido. E-mail é opcional.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
-            <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden p-0 gap-0">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Novo cliente</DialogTitle>
+                <DialogDescription className="text-xs">Cadastro rápido — E-mail é opcional. Use o CEP para preencher endereço.</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="overflow-y-auto px-6 py-5 space-y-4" style={{ maxHeight: "calc(92vh - 140px)" }}>
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b pb-3">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Identificação</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
+                <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>CPF / CNPJ *</Label>
+                <Input value={f.doc} onChange={(e) => set("doc", maskDoc(e.target.value))} maxLength={18} placeholder="000.000.000-00" />
+              </div>
+              <div className="space-y-1.5"><Label>Telefone *</Label>
+                <Input value={f.telefone} onChange={(e) => set("telefone", maskTel(e.target.value))} maxLength={15} placeholder="(00) 00000-0000" />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>E-mail (opcional)</Label>
+                <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1.5"><Label>CPF / CNPJ *</Label>
-            <Input value={f.doc} onChange={(e) => set("doc", maskDoc(e.target.value))} maxLength={18} />
-          </div>
-          <div className="space-y-1.5"><Label>Telefone *</Label>
-            <Input value={f.telefone} onChange={(e) => set("telefone", maskTel(e.target.value))} maxLength={15} />
-          </div>
-          <div className="space-y-1.5 md:col-span-2"><Label>E-mail (opcional)</Label>
-            <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
-          </div>
-          <div className="space-y-1.5"><Label>CEP</Label>
-            <Input value={f.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
-          </div>
-          <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-            <Input value={f.rua} onChange={(e) => set("rua", e.target.value)} />
-          </div>
-          <div className="space-y-1.5"><Label>Número</Label>
-            <Input value={f.numero} onChange={(e) => set("numero", e.target.value)} maxLength={10} />
-          </div>
-          <div className="space-y-1.5"><Label>Bairro</Label>
-            <Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} />
-          </div>
-          <div className="space-y-1.5"><Label>Cidade</Label>
-            <Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} />
-          </div>
-          <div className="space-y-1.5"><Label>UF</Label>
-            <Input value={f.uf} onChange={(e) => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b pb-3">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Endereço</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-1.5"><Label>CEP</Label>
+                <Input value={f.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} placeholder="69000-000" />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
+                <Input value={f.rua} onChange={(e) => set("rua", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Número</Label>
+                <Input value={f.numero} onChange={(e) => set("numero", e.target.value)} maxLength={10} />
+              </div>
+              <div className="space-y-1.5"><Label>Bairro</Label>
+                <Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Complemento</Label>
+                <Input value={f.complemento} onChange={(e) => set("complemento", e.target.value)} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Cidade</Label>
+                <Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>UF</Label>
+                <Input value={f.uf} onChange={(e) => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+              </div>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={salvar} className="bg-primary text-primary-foreground">Cadastrar</Button>
-        </DialogFooter>
+
+        <div className="border-t bg-muted/30 px-6 py-3">
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={salvar} className="bg-primary text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Cadastrar cliente</Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

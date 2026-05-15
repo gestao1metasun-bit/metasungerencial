@@ -522,6 +522,33 @@ function LeadModal({
               {isLocked("endereco", endereco) && <LockX field="endereco" />}
             </div>
           </div>
+          <div className="rounded-md border bg-muted/30 p-2">
+            <Label className="text-xs">Financiamento *</Label>
+            <div className="mt-1 flex gap-2">
+              <div className="flex-1">
+                <Select value={financiamento} onValueChange={(v) => setFinanciamento(v as "SIM" | "NAO")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SIM">SIM — enviar para Financiamentos ao aprovar</SelectItem>
+                    <SelectItem value="NAO">NÃO</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {financiamento === "SIM" && (
+                <div className="w-36">
+                  <Select value={bancoFin} onValueChange={setBancoFin}>
+                    <SelectTrigger><SelectValue placeholder="Banco" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BASA">BASA</SelectItem>
+                      <SelectItem value="SICREDI">SICREDI</SelectItem>
+                      <SelectItem value="BB">BB</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>Voltar</Button>

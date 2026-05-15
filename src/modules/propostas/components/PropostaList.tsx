@@ -472,7 +472,7 @@ function LeadDetail({
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{lead.clienteNome}</span>
             {lead.bloqueado && (
-              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Aprovado</Badge>
+              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Assinado</Badge>
             )}
           </DialogTitle>
         </DialogHeader>

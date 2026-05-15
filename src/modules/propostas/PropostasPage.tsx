@@ -337,6 +337,15 @@ function LeadModal({
   const [novoOpen, setNovoOpen] = useState(false);
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
 
+  // Quando vem com dados preenchidos (gerar nova proposta a partir de um lead
+  // existente), os campos ficam travados. O usuário clica no X de cada campo
+  // para liberar a edição daquele dado.
+  const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
+  const isLocked = (field: string, value: string) =>
+    !unlocked[field] && !!value;
+  const unlock = (field: string) =>
+    setUnlocked((u) => ({ ...u, [field]: true }));
+
   const upper = (v: string) => v.toUpperCase();
 
   function adicionarOrigem() {
@@ -373,6 +382,18 @@ function LeadModal({
     });
   }
 
+  /** Renderiza o botão X que aparece quando o campo está travado. */
+  const LockX = ({ field }: { field: string }) => (
+    <button
+      type="button"
+      onClick={() => unlock(field)}
+      title="Liberar edição"
+      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+    >
+      <XIcon className="h-3.5 w-3.5" />
+    </button>
+  );
+
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onCancel(); }}>
       <DialogContent className="sm:max-w-md">
@@ -382,76 +403,113 @@ function LeadModal({
         <div className="grid gap-3 py-2">
           <div>
             <Label className="text-xs">Nome do lead *</Label>
-            <Input value={nome} onChange={(e) => setNome(upper(e.target.value))} placeholder="NOME COMPLETO" />
+            <div className="relative">
+              <Input
+                value={nome}
+                onChange={(e) => setNome(upper(e.target.value))}
+                placeholder="NOME COMPLETO"
+                disabled={isLocked("nome", nome)}
+                className={isLocked("nome", nome) ? "pr-8 bg-muted/50" : ""}
+              />
+              {isLocked("nome", nome) && <LockX field="nome" />}
+            </div>
           </div>
           <div>
             <Label className="text-xs">Telefone *</Label>
-            <Input
-              value={telefone}
-              onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))}
-              placeholder="(00) 9 0000-0000"
-              inputMode="numeric"
-              maxLength={20}
-            />
+            <div className="relative">
+              <Input
+                value={telefone}
+                onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))}
+                placeholder="(00) 9 0000-0000"
+                inputMode="numeric"
+                maxLength={20}
+                disabled={isLocked("telefone", telefone)}
+                className={isLocked("telefone", telefone) ? "pr-8 bg-muted/50" : ""}
+              />
+              {isLocked("telefone", telefone) && <LockX field="telefone" />}
+            </div>
           </div>
           <div>
             <Label className="text-xs">Consultor de venda *</Label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Select value={consultor} onValueChange={setConsultor}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
-                  <SelectContent>
-                    {consultores.length === 0 && (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum consultor cadastrado.</div>
-                    )}
-                    {consultores.map((c) => (
-                      <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {isLocked("consultor", consultor) ? (
+              <div className="relative">
+                <Input value={consultor} disabled className="pr-8 bg-muted/50" />
+                <LockX field="consultor" />
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
-                <Plus className="h-3 w-3 mr-1" /> Cadastrar
-              </Button>
-            </div>
+            ) : (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select value={consultor} onValueChange={setConsultor}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
+                    <SelectContent>
+                      {consultores.length === 0 && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum consultor cadastrado.</div>
+                      )}
+                      {consultores.map((c) => (
+                        <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
+                  <Plus className="h-3 w-3 mr-1" /> Cadastrar
+                </Button>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-xs">Forma de captação *</Label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Select value={captacao} onValueChange={setCaptacao}>
-                  <SelectTrigger><SelectValue placeholder="Como conheceu?" /></SelectTrigger>
-                  <SelectContent>
-                    {origens.map((o) => (
-                      <SelectItem key={o} value={o}>{o}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {isLocked("captacao", captacao) ? (
+              <div className="relative">
+                <Input value={captacao} disabled className="pr-8 bg-muted/50" />
+                <LockX field="captacao" />
               </div>
-              <Popover open={novaOrigemOpen} onOpenChange={setNovaOrigemOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" size="sm">
-                    <Plus className="h-3 w-3 mr-1" /> Novo
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3" align="end">
-                  <Label className="text-xs">Nova forma de captação</Label>
-                  <Input
-                    value={novaOrigem}
-                    onChange={(e) => setNovaOrigem(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => e.key === "Enter" && adicionarOrigem()}
-                    placeholder="EX.: WHATSAPP"
-                    className="mt-1 h-8"
-                    autoFocus
-                  />
-                  <Button size="sm" className="mt-2 w-full" onClick={adicionarOrigem}>Adicionar</Button>
-                </PopoverContent>
-              </Popover>
-            </div>
+            ) : (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select value={captacao} onValueChange={setCaptacao}>
+                    <SelectTrigger><SelectValue placeholder="Como conheceu?" /></SelectTrigger>
+                    <SelectContent>
+                      {origens.map((o) => (
+                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Popover open={novaOrigemOpen} onOpenChange={setNovaOrigemOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm">
+                      <Plus className="h-3 w-3 mr-1" /> Novo
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" align="end">
+                    <Label className="text-xs">Nova forma de captação</Label>
+                    <Input
+                      value={novaOrigem}
+                      onChange={(e) => setNovaOrigem(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && adicionarOrigem()}
+                      placeholder="EX.: WHATSAPP"
+                      className="mt-1 h-8"
+                      autoFocus
+                    />
+                    <Button size="sm" className="mt-2 w-full" onClick={adicionarOrigem}>Adicionar</Button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-xs">Endereço (opcional)</Label>
-            <Input value={endereco} onChange={(e) => setEndereco(upper(e.target.value))} placeholder="RUA, NÚMERO, BAIRRO, CIDADE" />
+            <div className="relative">
+              <Input
+                value={endereco}
+                onChange={(e) => setEndereco(upper(e.target.value))}
+                placeholder="RUA, NÚMERO, BAIRRO, CIDADE"
+                disabled={isLocked("endereco", endereco)}
+                className={isLocked("endereco", endereco) ? "pr-8 bg-muted/50" : ""}
+              />
+              {isLocked("endereco", endereco) && <LockX field="endereco" />}
+            </div>
           </div>
         </div>
         <DialogFooter>

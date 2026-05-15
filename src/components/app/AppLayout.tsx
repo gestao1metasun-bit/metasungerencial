@@ -99,6 +99,14 @@ export function AppLayout() {
                     <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
                       <Icon className={`h-4 w-4 group-hover:text-primary-foreground ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
                       <span className="flex-1 truncate">{item.label}</span>
+                      {item.to === "/comercial" && pendentesAssinatura > 0 && (
+                        <span
+                          title={`${pendentesAssinatura} contrato(s) pendente(s) de assinatura`}
+                          className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
+                        >
+                          {pendentesAssinatura}
+                        </span>
+                      )}
                     </Link>
                     {sub && (
                       <button
@@ -116,6 +124,7 @@ export function AppLayout() {
                     <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
                       {sub.tabs.map((t) => {
                         const tabActive = active && isHydrated && currentTab === t.value;
+                        const showRedDot = item.to === "/comercial" && t.value === "contrato-assinado" && pendentesAssinatura > 0;
                         return (
                           <li key={t.value}>
                             <Link

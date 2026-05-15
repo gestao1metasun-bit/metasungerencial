@@ -159,7 +159,12 @@ function MarcaCombobox({
                 <CommandItem
                   value={`__new_${q}`}
                   className="bg-primary/10 text-primary"
-                  onSelect={() => { onChange(q); setQuery(""); setOpen(false); }}
+                  onSelect={() => {
+                    onCreateNew?.(q);
+                    onChange(q);
+                    setQuery("");
+                    setOpen(false);
+                  }}
                 >
                   Novo: {q}
                 </CommandItem>

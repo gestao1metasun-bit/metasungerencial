@@ -537,27 +537,23 @@ function SolicitarPropostaDialog({
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
 
   const confirmar = () => {
-    // Cria registro mínimo de proposta solicitada (aguardando geração).
-    // A proposta detalhada será gerada no módulo de Propostas (Entrega 2).
-    const propostaId = `PROP-${Date.now()}`;
-    pushAudit({
-      entidade: "proposta", entidadeId: propostaId,
-      acao: "SOLICITACAO", usuario,
-      detalhe:
-        `Proposta solicitada para o lead ${lead.numero} (${lead.nome}). ` +
-        `Consumo: ${lead.consumoKwh} kWh. Consultor: ${consultorNome}.` +
-        (tipoSistema ? ` Tipo: ${tipoSistema}.` : "") +
-        (cidade ? ` Cidade: ${cidade}.` : "") +
-        (concessionaria ? ` Concessionária: ${concessionaria}.` : "") +
-        (observacao ? ` Obs.: ${observacao}` : ""),
-    });
-    pushAudit({
-      entidade: "lead", entidadeId: lead.id,
-      acao: "PROPOSTA_SOLICITADA", usuario,
-      detalhe: `Proposta ${propostaId} solicitada.`,
+    const proposta = criarPropostaParaLead({
+      leadId: lead.id,
+      leadNumero: lead.numero,
+      clienteNome: lead.nome,
+      clienteTelefone: lead.telefone,
+      consumoKwh: lead.consumoKwh,
+      consultorNome,
+      cidade: cidade || undefined,
+      concessionaria: concessionaria || undefined,
+      observacao: [tipoSistema && `Tipo: ${tipoSistema}`, observacao]
+        .filter(Boolean).join(" • ") || undefined,
+      usuario,
     });
     setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
-    toast.success("Proposta solicitada — status: " + PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO);
+    toast.success(
+      `Proposta ${proposta.numero} (${proposta.versao}) criada — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}.`,
+    );
     onClose();
   };
 

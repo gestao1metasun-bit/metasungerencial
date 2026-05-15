@@ -538,6 +538,7 @@ export function potenciaInversores(p: PropostaFV, listaInversores: InversorFV[])
   return p.inversores.reduce((s, e) => {
     const inv = listaInversores.find((i) => i.id === e.inversorId);
     return s + (inv ? inv.potenciaKw * (e.quantidade || 0) : 0);
+  }, 0);
 }
 
 /* =============== Sugestão automática de inversores =============== */

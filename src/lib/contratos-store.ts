@@ -490,3 +490,187 @@ export function calcularLancamentosProjeto(
   });
   return out;
 }
+
+/* ============================================================
+ * ENTREGA 3 — Cadeia: Proposta → Contrato → Engenharia
+ * ============================================================ */
+import { pushAudit } from "@/lib/audit-store";
+import { CONTRATO_STATUS, CONTRATO_STATUS_LABEL } from "@/lib/status-catalog";
+
+/** Próximo ID sequencial de contrato no formato NNN/AAAA. */
+export function proximoContratoId(): string {
+  const ano = new Date().getFullYear();
+  const cur = read();
+  const doAno = cur.filter((c) => (c.id || "").endsWith(`/${ano}`));
+  const seq = doAno.length + 1;
+  return `${String(seq).padStart(3, "0")}/${ano}`;
+}
+
+export type GerarContratoInput = {
+  propostaId: string;
+  propostaNumero: string;
+  leadId?: string;
+  leadNumero?: string;
+  cliente: string;
+  clienteId?: string;
+  clienteFull?: ClienteFull;
+  vendedor: string;
+  valor: number;
+  kwp: number;
+  modulos?: number;
+  potencia?: number;
+  inv1?: string;
+  parametro?: string;
+  obs?: string;
+  usuario: string;
+};
+
+/** Valida dados mínimos do cliente para geração de contrato. */
+export function validarClienteParaContrato(c?: ClienteFull): string[] {
+  const miss: string[] = [];
+  if (!c) return ["Dados completos do cliente (CPF/CNPJ, telefone, endereço)"];
+  const docDig = onlyDigits(c.doc);
+  if (!(docDig.length === 11 || docDig.length === 14)) miss.push("CPF (11) ou CNPJ (14)");
+  if (onlyDigits(c.telefone).length !== 11) miss.push("Telefone (DDD + 9 dígitos)");
+  if (c.email && !/^.+@.+\..+$/.test(c.email)) miss.push("E-mail (formato inválido)");
+  if (onlyDigits(c.cep).length !== 8) miss.push("CEP");
+  if (!c.rua?.trim()) miss.push("Rua");
+  if (!c.numero?.trim()) miss.push("Número");
+  if (!c.bairro?.trim()) miss.push("Bairro");
+  if (!c.cidade?.trim()) miss.push("Cidade");
+  if (!c.uf?.trim()) miss.push("UF");
+  return miss;
+}
+
+/**
+ * Gera contrato a partir de uma proposta aprovada. Bloqueia se cliente
+ * estiver incompleto. Cria o contrato com status CONTRATO_GERADO e cria
+ * uma obra inicial vinculada (não envia para engenharia ainda).
+ */
+export function criarContratoDeProposta(input: GerarContratoInput): { ok: true; contratoId: string } | { ok: false; missing: string[] } {
+  const missing = validarClienteParaContrato(input.clienteFull);
+  if (!input.cliente?.trim() && !input.clienteFull?.nome?.trim()) missing.unshift("Nome do cliente");
+  if (!(Number(input.valor) > 0)) missing.push("Valor total da proposta");
+  if (!(Number(input.kwp) > 0)) missing.push("Potência (kWp)");
+  if (missing.length) return { ok: false, missing };
+
+  const id = proximoContratoId();
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const novo: ContratoFull = {
+    id,
+    cliente: input.cliente,
+    clienteId: input.clienteId,
+    clienteFull: input.clienteFull,
+    vendedor: input.vendedor,
+    valor: input.valor,
+    kwp: input.kwp,
+    status: CONTRATO_STATUS_LABEL.CONTRATO_GERADO,
+    data: hoje,
+    dataCadastro: hoje,
+    pagamento: "À combinar",
+    modulos: input.modulos,
+    potencia: input.potencia,
+    inv1: input.inv1,
+    parametro: input.parametro,
+    obs: input.obs,
+    propostaId: input.propostaId,
+    propostaNumero: input.propostaNumero,
+    leadId: input.leadId,
+    leadNumero: input.leadNumero,
+    projetos: [],
+    auditoria: [{
+      id: `A-${Date.now()}`, data: new Date().toISOString(),
+      usuario: input.usuario, campo: "criação",
+      de: "", para: `Contrato ${id} gerado a partir da proposta ${input.propostaNumero}`,
+    }],
+  };
+  upsertContrato(novo);
+  pushAudit({
+    entidade: "contrato", entidadeId: id,
+    acao: "CRIACAO", usuario: input.usuario,
+    valorNovo: CONTRATO_STATUS.CONTRATO_GERADO,
+    detalhe: `Contrato ${id} gerado a partir da proposta ${input.propostaNumero}${input.leadNumero ? ` (lead ${input.leadNumero})` : ""}.`,
+  });
+  return { ok: true, contratoId: id };
+}
+
+/** Anexa contrato assinado e move o status para CONTRATO ASSINADO. */
+export function anexarContratoAssinado(contratoId: string, arquivo: string, usuario: string) {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return;
+  const old = c.status;
+  updateContratoAudit(contratoId, {
+    contratoAssinadoArquivo: arquivo,
+    dataAssinatura: new Date().toISOString().slice(0, 10),
+    status: CONTRATO_STATUS_LABEL.CONTRATO_ASSINADO,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "ASSINATURA", usuario,
+    campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CONTRATO_ASSINADO,
+    detalhe: `Contrato assinado anexado: ${arquivo}.`,
+  });
+}
+
+/** Envia contrato para engenharia (status do contrato + flag nas obras). */
+export function enviarContratoParaEngenharia(contratoId: string, usuario: string) {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  if (!c.contratoAssinadoArquivo) {
+    return { ok: false, motivo: "Anexe o contrato assinado antes de enviar para engenharia." };
+  }
+  const old = c.status;
+  const projetos = (c.projetos ?? []).map((p) => ({ ...p, enviadoEngenharia: true }));
+  updateContratoAudit(contratoId, {
+    status: CONTRATO_STATUS_LABEL.ENVIADO_PARA_ENGENHARIA,
+    projetos,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "ENVIO_ENGENHARIA", usuario,
+    campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.ENVIADO_PARA_ENGENHARIA,
+  });
+  return { ok: true as const };
+}
+
+/** Cancela contrato — bloqueia se houver obra em andamento operacional. */
+export function cancelarContrato(contratoId: string, motivo: string, usuario: string): { ok: boolean; motivo?: string } {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  const emAndamento = (c.projetos ?? []).some(
+    (p) => p.enviadoEngenharia && p.status && !/projeto|aprovação/i.test(p.status),
+  );
+  if (emAndamento) {
+    return { ok: false, motivo: "Existe obra em andamento operacional. Encerre/retorne a obra antes de cancelar o contrato." };
+  }
+  const old = c.status;
+  updateContratoAudit(contratoId, {
+    status: CONTRATO_STATUS_LABEL.CANCELADO,
+    cancelado: true,
+    motivoCancelamento: motivo,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "CANCELAMENTO", usuario, motivo,
+    campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CANCELADO,
+  });
+  return { ok: true };
+}
+
+/* =============== Cadeia de dependência =============== */
+
+/** True se a proposta já gerou contrato (não pode excluir/cancelar livremente). */
+export function propostaTemContratoVinculado(propostaId: string): ContratoFull | undefined {
+  return read().find((c) => c.propostaId === propostaId && !c.cancelado);
+}
+
+/** True se contrato já tem obra enviada para engenharia. */
+export function contratoTemObraEmEngenharia(contratoId: string): boolean {
+  const c = read().find((x) => x.id === contratoId);
+  return !!c?.projetos?.some((p) => p.enviadoEngenharia);
+}
+

@@ -814,7 +814,7 @@ function PropostaSheet({
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />
-              <ReadOnlyField label="Quantidade calculada (arred. ↑)" value={String(dim.qtdCalc)} />
+              <ReadOnlyField label="Quantidade calculada (arred.)" value={String(dim.qtdCalc)} />
               <Field label="Quantidade final (módulos)" hint="Ative a chave para ajustar manualmente.">
                 <div className="flex items-center gap-2">
                   <Switch checked={!!p.ajusteManualModulos} onCheckedChange={(v) => update("ajusteManualModulos", v)} />

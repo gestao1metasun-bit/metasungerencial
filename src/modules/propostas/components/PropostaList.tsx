@@ -26,9 +26,12 @@ import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
-  calcPrecificacao, fmtBRL,
+  calcPrecificacao, calcDimensionamento, fmtBRL,
 } from "@/modules/propostas/store";
-import { useContratos, type ContratoFull } from "@/lib/contratos-store";
+import {
+  useContratos, type ContratoFull,
+  criarContratoDeProposta, anexarContratoAssinado,
+} from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {

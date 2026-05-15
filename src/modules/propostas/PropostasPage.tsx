@@ -700,14 +700,14 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)" hint="Vem da base interna ao escolher cidade/concessionária. Ajuste manual apenas se autorizado.">
+              <Field label="Tarifa de energia (R$/kWh)" hint="Definida no cadastro de Tarifas (Cadastros → Tarifas). Para alterar, edite na base de tarifas.">
                 <Input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   value={p.tarifa}
                   onChange={(e) => update("tarifa", +e.target.value)}
-                  disabled={!ehAdmin && !!p.cidadeId}
-                  className={!ehAdmin && !!p.cidadeId ? "bg-muted/50" : ""}
+                  disabled={!ehAdmin}
+                  className={!ehAdmin ? "bg-muted/50" : ""}
                 />
               </Field>
             </div>
@@ -722,7 +722,13 @@ function PropostaSheet({
             </div>
             {p.modoConsumo === "MEDIA" ? (
               <Field label="Consumo médio mensal (kWh)" hint="Informe a média da conta de energia.">
-                <Input type="number" value={p.consumoMedio} onChange={(e) => update("consumoMedio", +e.target.value)} />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Ex.: 450"
+                  value={p.consumoMedio ? p.consumoMedio : ""}
+                  onChange={(e) => update("consumoMedio", e.target.value === "" ? 0 : +e.target.value)}
+                />
               </Field>
             ) : (
               <>
@@ -730,8 +736,12 @@ function PropostaSheet({
                   {(["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"] as const).map((m) => (
                     <div key={m}>
                       <Label className="text-xs uppercase">{m}</Label>
-                      <Input type="number" value={p.consumoMensal?.[m] ?? ""}
-                        onChange={(e) => update("consumoMensal", { ...(p.consumoMensal ?? {}), [m]: +e.target.value })} />
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        value={p.consumoMensal?.[m] ? p.consumoMensal[m] : ""}
+                        onChange={(e) => update("consumoMensal", { ...(p.consumoMensal ?? {}), [m]: e.target.value === "" ? 0 : +e.target.value })}
+                      />
                     </div>
                   ))}
                 </div>
@@ -745,22 +755,8 @@ function PropostaSheet({
           {/* BLOCO 5 — Dimensionamento */}
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Geração desejada (kWh/mês)" hint="Padrão = consumo médio.">
-                <Input type="number" value={p.geracaoDesejada} onChange={(e) => update("geracaoDesejada", +e.target.value)} />
-              </Field>
-              <Field label="Taxa de simultaneidade (%)">
-                <Input type="number" value={Math.round((p.taxaSimultaneidade || 0) * 100)}
-                  onChange={(e) => update("taxaSimultaneidade", (+e.target.value || 0) / 100)} />
-              </Field>
-              <Field label="Fator de performance">
-                <Input type="number" step="0.01" value={p.fatorPerformance}
-                  onChange={(e) => update("fatorPerformance", +e.target.value)} />
-              </Field>
-              <ReadOnlyField label="Consumo instantâneo (kWh)" value={fmtNum(dim.consumoInstantaneo, 0)} />
-              <ReadOnlyField label="Geração injetada (kWh)" value={fmtNum(dim.geracaoInjetada, 0)} />
-              <ReadOnlyField label="Potência necessária (kWp)" value={fmtNum(dim.potenciaNecKwp, 2)} />
               <ReadOnlyField label="Quantidade calculada" value={String(dim.qtdCalc)} />
-              <Field label="Quantidade final (módulos)">
+              <Field label="Quantidade final (módulos)" hint="Ative a chave para ajustar manualmente.">
                 <div className="flex items-center gap-2">
                   <Switch checked={!!p.ajusteManualModulos} onCheckedChange={(v) => update("ajusteManualModulos", v)} />
                   <Input type="number" disabled={!p.ajusteManualModulos}
@@ -768,7 +764,10 @@ function PropostaSheet({
                     onChange={(e) => update("modulosManual", +e.target.value)} />
                 </div>
               </Field>
-              <ReadOnlyField label="Potência final (kWp)" value={fmtNum(dim.potenciaFinalKwp, 2)} />
+              <ReadOnlyField label="Potência do sistema (kWp)" value={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Cálculo: <strong>{dim.qtdFinal}</strong> módulos × <strong>{fmtNum((p.moduloPotenciaWp || 0)/1000, 3)} kW</strong> = <strong>{fmtNum(dim.potenciaFinalKwp, 2)} kWp</strong>
             </div>
           </Bloco>
 

@@ -587,6 +587,140 @@ function Field({ label, value, className }: { label: string; value?: string; cla
   );
 }
 
+/* ===== Diálogo: editar dados do cliente + aprovar proposta ===== */
+function AprovarDialog({
+  open, lead, proposta, onClose, onConfirmed,
+}: {
+  open: boolean;
+  lead: Lead | null;
+  proposta: PropostaFV | null;
+  onClose: () => void;
+  onConfirmed: () => void;
+}) {
+  const upper = (v: string) => v.toUpperCase();
+  const [nome, setNome] = useState("");
+  const [doc, setDoc] = useState("");
+  const [tel, setTel] = useState("");
+  const [email, setEmail] = useState("");
+  const [cep, setCep] = useState("");
+  const [rua, setRua] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+
+  useEffect(() => {
+    if (!lead) return;
+    const u = lead.ultima;
+    setNome(lead.clienteNome || "");
+    setDoc(u.clienteDoc || "");
+    setTel(u.clienteTelefone || "");
+    setEmail(u.clienteEmail || "");
+    setCep(u.clienteCep || "");
+    setRua(u.clienteRua || "");
+    setNumero(u.clienteNumero || "");
+    setComplemento(u.clienteComplemento || "");
+    setBairro(u.clienteBairro || "");
+    setCidade(u.clienteCidade || lead.cidade || "");
+    setUf(u.clienteUf || lead.estado || "");
+  }, [lead?.key, proposta?.id]);
+
+  if (!lead || !proposta) return null;
+
+  const confirmar = () => {
+    if (!nome.trim()) { toast.error("Informe o nome completo do cliente."); return; }
+    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
+    if (!tel.trim()) { toast.error("Informe o telefone do cliente."); return; }
+    const enderecoLinha = [rua, numero, bairro, cidade && `${cidade}${uf ? "/" + uf : ""}`]
+      .filter(Boolean).join(", ");
+    aprovarComDadosCliente(lead.propostas, proposta, {
+      clienteNome: upper(nome.trim()),
+      clienteDoc: doc.trim(),
+      clienteTelefone: tel.trim(),
+      clienteEmail: email.trim().toLowerCase(),
+      clienteCep: cep.trim(),
+      clienteRua: upper(rua.trim()),
+      clienteNumero: numero.trim(),
+      clienteComplemento: upper(complemento.trim()),
+      clienteBairro: upper(bairro.trim()),
+      clienteCidade: upper(cidade.trim()),
+      clienteUf: upper(uf.trim()),
+      clienteEndereco: upper(enderecoLinha),
+    });
+    onConfirmed();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Check className="h-5 w-5 text-success" />
+            Aprovar proposta {proposta.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+          Confirme/complete os dados do cliente. Ao aprovar, a proposta vira contrato e
+          esses dados serão enviados ao comercial.
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Nome completo *</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">CPF / CNPJ *</Label>
+            <Input value={doc} onChange={(e) => setDoc(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Telefone *</Label>
+            <Input value={tel} onChange={(e) => setTel(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">E-mail</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">CEP</Label>
+            <Input value={cep} onChange={(e) => setCep(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Bairro</Label>
+            <Input value={bairro} onChange={(e) => setBairro(e.target.value.toUpperCase())} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Rua</Label>
+            <Input value={rua} onChange={(e) => setRua(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">Número</Label>
+            <Input value={numero} onChange={(e) => setNumero(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Complemento</Label>
+            <Input value={complemento} onChange={(e) => setComplemento(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">Cidade</Label>
+            <Input value={cidade} onChange={(e) => setCidade(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">UF</Label>
+            <Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={confirmar} className="gap-1">
+            <Check className="h-4 w-4" /> Confirmar e aprovar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ===================== KANBAN VIEW ===================== */
 
 function KanbanView({

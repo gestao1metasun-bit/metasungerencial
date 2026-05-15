@@ -33,8 +33,12 @@ import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
   usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
   marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
-  fmtBRL, calcPrecificacao, type PropostaFV,
+  fmtBRL, calcPrecificacao, calcDimensionamento, type PropostaFV,
 } from "@/modules/propostas/store";
+import {
+  useContratos, criarContratoDeProposta, anexarContratoAssinado,
+  enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
+} from "@/lib/contratos-store";
 
 function fmtDate(iso: string) {
   try {
@@ -620,12 +624,15 @@ function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
 
 function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
   const todas = usePropostas();
+  const contratos = useContratos();
   const propostas = useMemo(
     () => todas.filter((p) => p.leadId === lead.id)
       .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || "")),
     [todas, lead.id],
   );
   const [acao, setAcao] = useState<{ proposta: PropostaFV; tipo: "aprovar" | "recusar" | "cancelar" } | null>(null);
+  const [anexarAlvo, setAnexarAlvo] = useState<string | null>(null);
+  const [cancelarContratoAlvo, setCancelarContratoAlvo] = useState<string | null>(null);
 
   if (propostas.length === 0) {
     return (
@@ -633,6 +640,32 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
         Nenhuma proposta vinculada ainda. Use <span className="font-medium">Solicitar Proposta</span> para gerar a P01.
       </div>
     );
+  }
+
+  function executarAprovacao(p: PropostaFV, motivo: string) {
+    aprovarPropostaDoLead(p.id, usuario, motivo);
+    const dim = calcDimensionamento(p);
+    const r = criarContratoDeProposta({
+      propostaId: p.id,
+      propostaNumero: p.numero,
+      leadId: lead.id,
+      leadNumero: lead.numero,
+      cliente: p.clienteNome,
+      clienteId: p.clienteId,
+      clienteFull: undefined,
+      vendedor: p.consultor ?? p.criadoPor ?? "—",
+      valor: calcPrecificacao(p).valorFinal,
+      kwp: dim.potenciaFinalKwp,
+      modulos: dim.qtdFinal,
+      potencia: dim.potenciaFinalKwp,
+      obs: p.obsCliente,
+      usuario,
+    });
+    if (!r.ok) {
+      toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
+      return;
+    }
+    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
   }
 
   return (
@@ -645,6 +678,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               <TableHead className="w-16">Versão</TableHead>
               <TableHead>Número</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Contrato</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -654,6 +688,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               const canonical = mapStatusLegacyToCanonical(p.status);
               const valor = calcPrecificacao(p).valorFinal;
               const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
+              const contrato = contratos.find((c) => c.propostaId === p.id);
               return (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
@@ -663,9 +698,17 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                       {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {contrato ? (
+                      <div className="flex flex-col">
+                        <span className="font-mono">{contrato.id}</span>
+                        <span className="text-[10px] text-muted-foreground">{contrato.status}</span>
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex flex-wrap justify-end gap-1">
                       <Button size="sm" variant="ghost" disabled={!podeAprovar}
                         onClick={() => setAcao({ proposta: p, tipo: "aprovar" })}>
                         Aprovar
@@ -674,10 +717,34 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                         onClick={() => setAcao({ proposta: p, tipo: "recusar" })}>
                         Não aprovar
                       </Button>
-                      <Button size="sm" variant="ghost" disabled={p.status === "CANCELADA" || p.status === "APROVADA"}
+                      <Button size="sm" variant="ghost"
+                        disabled={p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato}
+                        title={contrato ? "Existe contrato vinculado — cancele o contrato antes." : ""}
                         onClick={() => setAcao({ proposta: p, tipo: "cancelar" })}>
                         Cancelar
                       </Button>
+                      {contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => setAnexarAlvo(contrato.id)}>
+                          Anexar assinado
+                        </Button>
+                      )}
+                      {contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => {
+                            const r = enviarContratoParaEngenharia(contrato.id, usuario);
+                            if (!r.ok) toast.error(r.motivo);
+                            else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
+                          }}>
+                          Enviar p/ engenharia
+                        </Button>
+                      )}
+                      {contrato && !contrato.cancelado && (
+                        <Button size="sm" variant="ghost" className="text-destructive"
+                          onClick={() => setCancelarContratoAlvo(contrato.id)}>
+                          Cancelar contrato
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -702,8 +769,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
           onClose={() => setAcao(null)}
           onConfirm={(motivo) => {
             if (acao.tipo === "aprovar") {
-              aprovarPropostaDoLead(acao.proposta.id, usuario, motivo);
-              toast.success(`Proposta ${acao.proposta.numero} aprovada.`);
+              executarAprovacao(acao.proposta, motivo);
             } else if (acao.tipo === "recusar") {
               marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
               toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
@@ -712,6 +778,32 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               toast.success(`Proposta ${acao.proposta.numero} cancelada.`);
             }
             setAcao(null);
+          }}
+        />
+      )}
+
+      {anexarAlvo && (
+        <AnexarAssinadoDialog
+          contratoId={anexarAlvo}
+          onClose={() => setAnexarAlvo(null)}
+          onConfirm={(arquivo) => {
+            anexarContratoAssinado(anexarAlvo, arquivo, usuario);
+            toast.success(`Contrato ${anexarAlvo} marcado como ASSINADO.`);
+            setAnexarAlvo(null);
+          }}
+        />
+      )}
+
+      {cancelarContratoAlvo && (
+        <MotivoDialog
+          titulo={`Cancelar contrato ${cancelarContratoAlvo}`}
+          descricao="Cancelar o contrato bloqueia novas obras vinculadas. Não é possível cancelar se houver obra em andamento operacional."
+          onClose={() => setCancelarContratoAlvo(null)}
+          onConfirm={(motivo) => {
+            const r = cancelarContrato(cancelarContratoAlvo, motivo, usuario);
+            if (!r.ok) toast.error(r.motivo ?? "Não foi possível cancelar.");
+            else toast.success(`Contrato ${cancelarContratoAlvo} cancelado.`);
+            setCancelarContratoAlvo(null);
           }}
         />
       )}
@@ -739,6 +831,36 @@ function MotivoDialog({
           <Button onClick={() => {
             if (!motivo.trim()) { toast.error("Informe o motivo."); return; }
             onConfirm(motivo.trim());
+          }}>Confirmar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AnexarAssinadoDialog({
+  contratoId, onClose, onConfirm,
+}: { contratoId: string; onClose: () => void; onConfirm: (arquivo: string) => void }) {
+  const [arquivo, setArquivo] = useState("");
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Anexar contrato assinado — {contratoId}</DialogTitle>
+          <DialogDescription>
+            Informe o nome do arquivo (PDF) recebido. Após anexar, o contrato passa para
+            <span className="font-medium"> CONTRATO ASSINADO</span> e libera o envio para engenharia.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
+          <Label>Arquivo / referência <span className="text-destructive">*</span></Label>
+          <Input value={arquivo} onChange={(e) => setArquivo(e.target.value)} placeholder="contrato-assinado-001-2026.pdf" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!arquivo.trim()) { toast.error("Informe a referência do arquivo."); return; }
+            onConfirm(arquivo.trim());
           }}>Confirmar</Button>
         </DialogFooter>
       </DialogContent>

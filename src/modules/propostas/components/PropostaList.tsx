@@ -71,6 +71,16 @@ export function excluirProposta(p: PropostaFV) {
     toast.error("Propostas geradas não podem ser excluídas.");
     return;
   }
+  // Cadeia de dependência (Entrega 3): bloqueia exclusão se houver contrato vinculado.
+  try {
+    // import dinâmico para não quebrar SSR/circular
+    const { propostaTemContratoVinculado } = require("@/lib/contratos-store");
+    const c = propostaTemContratoVinculado(p.id);
+    if (c) {
+      toast.error(`Proposta possui contrato vinculado (${c.id}). Cancele o contrato antes.`);
+      return;
+    }
+  } catch {}
   if (!confirm(`Excluir proposta ${p.numero}? Esta ação não pode ser desfeita.`)) return;
   removeProposta(p.id);
   toast.success("Proposta excluída.");

@@ -1213,7 +1213,8 @@ export function PropostaList({
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
-  const leadsAll = useMemo(() => buildLeads(propostas), [propostas]);
+  const contratosAll = useContratos();
+  const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
   const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
 
   const leadsFiltrados = useMemo(() => {

@@ -365,6 +365,25 @@ function PropostaSheet({
     setP((cur) => ({ ...cur, [k]: v, atualizadoEm: new Date().toISOString().slice(0, 10) }));
   }
 
+  async function buscarCep(cepDigits: string) {
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      if (!r.ok) { toast.error("Falha ao consultar CEP."); return; }
+      const d = await r.json();
+      if (d?.erro) { toast.error("CEP não encontrado."); return; }
+      setP((cur) => ({
+        ...cur,
+        clienteRua: (d.logradouro ?? "").toUpperCase(),
+        clienteBairro: (d.bairro ?? "").toUpperCase(),
+        clienteCidade: (d.localidade ?? "").toUpperCase(),
+        clienteUf: (d.uf ?? "").toUpperCase(),
+        atualizadoEm: new Date().toISOString().slice(0, 10),
+      }));
+    } catch {
+      toast.error("Erro de rede ao consultar CEP.");
+    }
+  }
+
   function selecionarCliente(id: string) {
     const c = clientes.find((x) => x.id === id);
     if (!c) return;

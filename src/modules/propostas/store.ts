@@ -7,6 +7,7 @@
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
 import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
+import { getPropostaConfig } from "./proposta-config-store";
 
 /* =============== Tipos =============== */
 

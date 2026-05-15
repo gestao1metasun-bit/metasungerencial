@@ -82,6 +82,21 @@ export function aprovarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
 }
 
+/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
+function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, dados: Partial<PropostaFV>) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  for (const p of propostas) {
+    const isEscolhida = p.id === escolhida.id;
+    upsertProposta({
+      ...p,
+      ...dados,
+      status: isEscolhida ? "APROVADA" : p.status,
+      atualizadoEm: hoje,
+    });
+  }
+  toast.success(`Proposta ${escolhida.numero} aprovada — enviada ao comercial.`);
+}
+
 function diasDesde(iso?: string): number {
   if (!iso) return 0;
   const d = new Date(iso);

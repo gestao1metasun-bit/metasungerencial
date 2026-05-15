@@ -28,6 +28,7 @@ import {
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, fmtBRL,
 } from "@/modules/propostas/store";
+import { useContratos, type ContratoFull } from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {

@@ -1185,7 +1185,7 @@ function TabelaView({
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>,
   );
   const [hidden, setHidden] = useState<Set<TabelaColKey>>(new Set());
-  const [mgrOpen, setMgrOpen] = useState(false);
+  
 
   useEffect(() => {
     try {

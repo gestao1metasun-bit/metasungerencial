@@ -804,16 +804,6 @@ function PropostaSheet({
           {/* BLOCO 5 — Dimensionamento */}
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
-              <ReadOnlyField label="PVOUT mensal Atlas (kWh/kWp/mês)" value={fmtNum(dim.pvoutMensal, 2)} />
-              <Field label="FRO — Fator de Rendimento Operacional" hint="Corrige o PVOUT do Atlas (perdas por temperatura, sujeira, cabeamento, inversor). Padrão 0,75.">
-                <Input
-                  type="number" step="0.01" min={0.1} max={1}
-                  value={p.fro ?? 0.75}
-                  onChange={(e) => update("fro", +e.target.value)}
-                />
-              </Field>
-              <ReadOnlyField label="Produtividade real corrigida (kWh/kWp/mês)" value={fmtNum(dim.produtividadeReal, 2)} />
-              <ReadOnlyField label="Consumo desejado (kWh/mês)" value={fmtNum(dim.geracaoDesejada, 0)} />
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />
               <ReadOnlyField label="Quantidade calculada (arred. ↑)" value={String(dim.qtdCalc)} />
               <Field label="Quantidade final (módulos)" hint="Ative a chave para ajustar manualmente.">
@@ -825,20 +815,6 @@ function PropostaSheet({
                 </div>
               </Field>
               <ReadOnlyField label="Potência do sistema (kWp)" value={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
-            </div>
-            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              <div>
-                Produtividade: <strong>{fmtNum(dim.pvoutMensal, 2)}</strong> × <strong>{fmtNum(dim.fro, 2)}</strong> = <strong>{fmtNum(dim.produtividadeReal, 2)} kWh/kWp/mês</strong>
-              </div>
-              <div>
-                kWp necessário: <strong>{fmtNum(dim.geracaoDesejada, 0)}</strong> ÷ <strong>{fmtNum(dim.produtividadeReal, 2)}</strong> = <strong>{fmtNum(dim.potenciaNecKwp, 2)} kWp</strong>
-              </div>
-              <div>
-                Módulos: <strong>{fmtNum(dim.potenciaNecKwp, 2)}</strong> ÷ <strong>{fmtNum((p.moduloPotenciaWp || 0)/1000, 3)} kW</strong> = <strong>{dim.qtdCalc} módulos</strong>
-              </div>
-              <div>
-                Sistema final: <strong>{dim.qtdFinal}</strong> × <strong>{fmtNum((p.moduloPotenciaWp || 0)/1000, 3)} kW</strong> = <strong>{fmtNum(dim.potenciaFinalKwp, 2)} kWp</strong>
-              </div>
             </div>
           </Bloco>
 

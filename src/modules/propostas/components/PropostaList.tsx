@@ -238,6 +238,8 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
     clienteUf: u.clienteUf,
     consultor: u.consultor,
     origemCaptacao: u.origemCaptacao,
+    possuiFinanciamento: u.possuiFinanciamento,
+    financiamentoBanco: u.financiamentoBanco,
   };
 }
 

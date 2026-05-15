@@ -166,6 +166,20 @@ export type StatusProposta =
   | "RASCUNHO" | "GERADA" | "ENVIADA" | "APROVADA"
   | "RECUSADA" | "VENCIDA" | "CANCELADA";
 
+/** Registro histórico de endereço — preserva versões anteriores ao atualizar. */
+export type EnderecoHistorico = {
+  data: string;          // ISO datetime
+  usuario?: string;
+  origem?: string;       // ex.: "Aprovação de proposta", "Edição manual"
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+};
+
 export type PropostaFV = {
   id: string;                     // PR-YYYY-####
   numero: string;

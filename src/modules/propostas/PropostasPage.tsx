@@ -521,7 +521,7 @@ function LeadModal({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>Voltar</Button>
-          <Button onClick={continuar}>Continuar</Button>
+          <Button onClick={continuar}>Salvar cliente</Button>
         </DialogFooter>
       </DialogContent>
 

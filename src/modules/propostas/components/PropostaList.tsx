@@ -91,12 +91,10 @@ export function excluirProposta(p: PropostaFV) {
   toast.success("Proposta excluída.");
 }
 
-/** Aprova uma proposta diretamente: muda status para APROVADA, marca outras
- *  versões do mesmo lead como obsoletas e cria um Contrato em status "Pendente"
- *  no módulo Comercial → Cadastrar Contrato, para finalização posterior
- *  (cliente completo, financiamento, assinatura). */
+/** Aprova efetivamente uma proposta após validação de cadastro:
+ *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas
+ *  e cria um Contrato em status "Pendente" no Comercial → Cadastrar Contrato. */
 export function aprovarProposta(p: PropostaFV) {
-  if (!confirm(`Aprovar a proposta ${p.numero}? Será criado um contrato Pendente no Comercial.`)) return;
   const usuario = p.criadoPor || "Operador";
   aprovarPropostaDoLead(p.id, usuario, "Aprovada em Orçamentos");
   const clienteFull = (p.clienteDoc || p.clienteTelefone || p.clienteCidade) ? {
@@ -136,6 +134,233 @@ export function aprovarProposta(p: PropostaFV) {
     res.jaExistia
       ? `Proposta ${p.numero} aprovada — contrato ${res.contratoId} já existia (Pendente).`
       : `Proposta ${p.numero} aprovada — contrato ${res.contratoId} criado como Pendente no Comercial.`,
+  );
+}
+
+/* ============= Diálogo de Aprovação com cadastro completo ============= */
+/** Form de aprovação: exige tipoPessoa + CPF/CNPJ + endereço completo (CEP busca
+ *  ViaCEP, mas usuário pode editar manualmente). Atualiza o cadastro do cliente
+ *  em todas as propostas do lead via `atualizarCadastroCliente` (preserva
+ *  histórico do endereço anterior) antes de aprovar e criar o contrato. */
+export function AprovarPropostaDialog({
+  proposta, open, onOpenChange, onAprovado,
+}: {
+  proposta: PropostaFV | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onAprovado?: () => void;
+}) {
+  const p = proposta;
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">(p?.tipoPessoa ?? "PF");
+  const [nome, setNome] = useState(p?.clienteNome ?? "");
+  const [doc, setDoc] = useState(formatDoc(p?.clienteDoc ?? "", p?.tipoPessoa ?? "PF"));
+  const [telefone, setTelefone] = useState(p?.clienteTelefone ?? "");
+  const [email, setEmail] = useState(p?.clienteEmail ?? "");
+  const [cep, setCep] = useState(formatCEP(p?.clienteCep ?? ""));
+  const [rua, setRua] = useState(p?.clienteRua ?? "");
+  const [numero, setNumero] = useState(p?.clienteNumero ?? "");
+  const [complemento, setComplemento] = useState(p?.clienteComplemento ?? "");
+  const [bairro, setBairro] = useState(p?.clienteBairro ?? "");
+  const [cidade, setCidade] = useState(p?.clienteCidade ?? p?.cidade ?? "");
+  const [uf, setUf] = useState(p?.clienteUf ?? p?.estado ?? "");
+  const [buscando, setBuscando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  // Reset state when proposta changes
+  useEffect(() => {
+    if (!p) return;
+    setTipoPessoa(p.tipoPessoa ?? "PF");
+    setNome(p.clienteNome ?? "");
+    setDoc(formatDoc(p.clienteDoc ?? "", p.tipoPessoa ?? "PF"));
+    setTelefone(p.clienteTelefone ?? "");
+    setEmail(p.clienteEmail ?? "");
+    setCep(formatCEP(p.clienteCep ?? ""));
+    setRua(p.clienteRua ?? "");
+    setNumero(p.clienteNumero ?? "");
+    setComplemento(p.clienteComplemento ?? "");
+    setBairro(p.clienteBairro ?? "");
+    setCidade(p.clienteCidade ?? p.cidade ?? "");
+    setUf(p.clienteUf ?? p.estado ?? "");
+  }, [p?.id]);
+
+  if (!p) return null;
+  const upper = (v: string) => v.toUpperCase();
+
+  async function buscarCEP() {
+    if (cep.replace(/\D/g, "").length !== 8) {
+      toast.error("Informe um CEP de 8 dígitos.");
+      return;
+    }
+    setBuscando(true);
+    const r = await buscarCEPViaCEP(cep);
+    setBuscando(false);
+    if (!r) { toast.error("CEP não encontrado. Preencha manualmente."); return; }
+    setRua(r.rua); setBairro(r.bairro); setCidade(r.cidade); setUf(r.uf);
+    if (r.complemento && !complemento) setComplemento(r.complemento);
+    toast.success("Endereço preenchido — confira e ajuste se necessário.");
+  }
+
+  function aprovar() {
+    if (!nome.trim()) { toast.error("Informe o nome do cliente."); return; }
+    if (!isDocValido(doc, tipoPessoa)) {
+      toast.error(tipoPessoa === "PF" ? "CPF inválido (11 dígitos)." : "CNPJ inválido (14 dígitos)."); return;
+    }
+    if (cep.replace(/\D/g, "").length !== 8) { toast.error("CEP é obrigatório (8 dígitos)."); return; }
+    if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !uf.trim()) {
+      toast.error("Endereço completo é obrigatório (Rua, Nº, Bairro, Cidade, UF).");
+      return;
+    }
+    setSalvando(true);
+    try {
+      atualizarCadastroCliente({
+        leadId: p!.leadId,
+        propostaId: p!.id,
+        tipoPessoa,
+        clienteNome: nome,
+        clienteDoc: doc,
+        clienteTelefone: telefone,
+        clienteEmail: email,
+        endereco: {
+          cep: cep.replace(/\D/g, ""),
+          rua: upper(rua), numero: upper(numero), complemento: upper(complemento),
+          bairro: upper(bairro), cidade: upper(cidade), uf: upper(uf),
+        },
+        origem: `Aprovação da proposta ${p!.numero}`,
+        usuario: p!.criadoPor || "Operador",
+      });
+      // Recarrega a proposta atualizada (com endereço fresco) e aprova
+      const atualizada: PropostaFV = {
+        ...p!, tipoPessoa, clienteNome: upper(nome), clienteDoc: doc,
+        clienteTelefone: telefone, clienteEmail: email,
+        clienteCep: cep.replace(/\D/g, ""),
+        clienteRua: upper(rua), clienteNumero: upper(numero), clienteComplemento: upper(complemento),
+        clienteBairro: upper(bairro), clienteCidade: upper(cidade), clienteUf: upper(uf),
+      };
+      aprovarProposta(atualizada);
+      onOpenChange(false);
+      onAprovado?.();
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Aprovar proposta {p.numero}</DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Confirme o cadastro completo do cliente. O endereço aqui informado é a fonte oficial e
+              será replicado em todas as propostas deste lead. Endereço anterior fica registrado no histórico.
+            </p>
+          </DialogHeader>
+        </div>
+
+        <div className="px-6 py-5 overflow-y-auto space-y-4">
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Identificação</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" size="sm" variant={tipoPessoa === "PF" ? "default" : "outline"}
+                onClick={() => { setTipoPessoa("PF"); setDoc(formatDoc(doc, "PF")); }}>Pessoa Física</Button>
+              <Button type="button" size="sm" variant={tipoPessoa === "PJ" ? "default" : "outline"}
+                onClick={() => { setTipoPessoa("PJ"); setDoc(formatDoc(doc, "PJ")); }}>Pessoa Jurídica</Button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
+                <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+                <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(formatDoc(e.target.value, tipoPessoa))}
+                  placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
+              </div>
+              <div>
+                <Label className="text-xs">Telefone</Label>
+                <Input className="mt-1.5" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">E-mail</Label>
+                <Input className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Endereço (obrigatório)</h3>
+            <div className="grid sm:grid-cols-[160px_1fr] gap-3">
+              <div>
+                <Label className="text-xs">CEP *</Label>
+                <div className="mt-1.5 flex gap-1">
+                  <Input value={cep} onChange={(e) => setCep(formatCEP(e.target.value))}
+                    placeholder="00000-000" inputMode="numeric" maxLength={9} />
+                  <Button type="button" size="sm" variant="outline" onClick={buscarCEP} disabled={buscando}>
+                    {buscando ? "..." : "Buscar"}
+                  </Button>
+                </div>
+              </div>
+              <div className="sm:pt-6 text-[11px] text-muted-foreground self-end">
+                Caso o CEP esteja errado, edite os campos abaixo manualmente.
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-[1fr_120px] gap-3">
+              <div>
+                <Label className="text-xs">Rua / Logradouro *</Label>
+                <Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">Número *</Label>
+                <Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Complemento</Label>
+                <Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">Bairro *</Label>
+                <Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-[1fr_100px] gap-3">
+              <div>
+                <Label className="text-xs">Cidade *</Label>
+                <Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} />
+              </div>
+              <div>
+                <Label className="text-xs">UF *</Label>
+                <Input className="mt-1.5" value={uf} maxLength={2}
+                  onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} />
+              </div>
+            </div>
+            {(p.enderecoHistorico?.length ?? 0) > 0 && (
+              <details className="text-[11px] text-muted-foreground">
+                <summary className="cursor-pointer">Histórico de endereços ({p.enderecoHistorico!.length})</summary>
+                <ul className="mt-1 space-y-1">
+                  {p.enderecoHistorico!.slice().reverse().map((h, i) => (
+                    <li key={i} className="border-l-2 border-muted pl-2">
+                      <span className="text-foreground/70">{new Date(h.data).toLocaleDateString("pt-BR")}</span>
+                      {" — "}{[h.rua, h.numero, h.bairro, h.cidade, h.uf].filter(Boolean).join(", ")}
+                      {h.origem ? <span className="text-muted-foreground"> ({h.origem})</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="border-t bg-muted/30 px-6 py-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvando}>Cancelar</Button>
+          <Button onClick={aprovar} disabled={salvando} className="gap-1">
+            <Check className="h-4 w-4" />
+            {salvando ? "Aprovando..." : "Aprovar e enviar para Comercial"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

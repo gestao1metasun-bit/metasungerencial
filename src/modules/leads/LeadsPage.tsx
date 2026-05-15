@@ -30,7 +30,11 @@ import {
 import { useConsultoresAtivos, formatTelefoneBR } from "@/lib/consultores-store";
 import { useAuth } from "@/lib/auth-store";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
-import { pushAudit } from "@/lib/audit-store";
+import {
+  usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
+  marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
+  fmtBRL, calcPrecificacao, type PropostaFV,
+} from "@/modules/propostas/store";
 
 function fmtDate(iso: string) {
   try {
@@ -349,6 +353,8 @@ function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }
           )}
         </div>
 
+        <PropostasDoLeadPanel lead={lead} usuario={user?.email ?? "—"} />
+
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <HistoryIcon className="h-4 w-4 text-primary" /> Histórico
@@ -531,27 +537,23 @@ function SolicitarPropostaDialog({
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
 
   const confirmar = () => {
-    // Cria registro mínimo de proposta solicitada (aguardando geração).
-    // A proposta detalhada será gerada no módulo de Propostas (Entrega 2).
-    const propostaId = `PROP-${Date.now()}`;
-    pushAudit({
-      entidade: "proposta", entidadeId: propostaId,
-      acao: "SOLICITACAO", usuario,
-      detalhe:
-        `Proposta solicitada para o lead ${lead.numero} (${lead.nome}). ` +
-        `Consumo: ${lead.consumoKwh} kWh. Consultor: ${consultorNome}.` +
-        (tipoSistema ? ` Tipo: ${tipoSistema}.` : "") +
-        (cidade ? ` Cidade: ${cidade}.` : "") +
-        (concessionaria ? ` Concessionária: ${concessionaria}.` : "") +
-        (observacao ? ` Obs.: ${observacao}` : ""),
-    });
-    pushAudit({
-      entidade: "lead", entidadeId: lead.id,
-      acao: "PROPOSTA_SOLICITADA", usuario,
-      detalhe: `Proposta ${propostaId} solicitada.`,
+    const proposta = criarPropostaParaLead({
+      leadId: lead.id,
+      leadNumero: lead.numero,
+      clienteNome: lead.nome,
+      clienteTelefone: lead.telefone,
+      consumoKwh: lead.consumoKwh,
+      consultorNome,
+      cidade: cidade || undefined,
+      concessionaria: concessionaria || undefined,
+      observacao: [tipoSistema && `Tipo: ${tipoSistema}`, observacao]
+        .filter(Boolean).join(" • ") || undefined,
+      usuario,
     });
     setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
-    toast.success("Proposta solicitada — status: " + PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO);
+    toast.success(
+      `Proposta ${proposta.numero} (${proposta.versao}) criada — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}.`,
+    );
     onClose();
   };
 
@@ -595,6 +597,149 @@ function SolicitarPropostaDialog({
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={confirmar}>Confirmar solicitação</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* =================== Propostas vinculadas ao Lead =================== */
+
+function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
+  switch (s) {
+    case "RASCUNHO": return "AGUARDANDO_GERACAO";
+    case "GERADA": return "PROPOSTA_GERADA";
+    case "ENVIADA": return "ENVIADA_AO_CONSULTOR";
+    case "APROVADA": return "APROVADA";
+    case "RECUSADA": return "NAO_APROVADA";
+    case "VENCIDA": return "OBSOLETA";
+    case "CANCELADA": return "CANCELADA";
+    default: return s as string;
+  }
+}
+
+function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
+  const todas = usePropostas();
+  const propostas = useMemo(
+    () => todas.filter((p) => p.leadId === lead.id)
+      .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || "")),
+    [todas, lead.id],
+  );
+  const [acao, setAcao] = useState<{ proposta: PropostaFV; tipo: "aprovar" | "recusar" | "cancelar" } | null>(null);
+
+  if (propostas.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+        Nenhuma proposta vinculada ainda. Use <span className="font-medium">Solicitar Proposta</span> para gerar a P01.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-2 text-sm font-semibold">Propostas deste lead</div>
+      <div className="overflow-hidden rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">Versão</TableHead>
+              <TableHead>Número</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {propostas.map((p) => {
+              const canonical = mapStatusLegacyToCanonical(p.status);
+              const valor = calcPrecificacao(p).valorFinal;
+              const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
+              return (
+                <TableRow key={p.id}>
+                  <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{p.numero}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`${statusClass(canonical)} text-[10px]`}>
+                      {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button size="sm" variant="ghost" disabled={!podeAprovar}
+                        onClick={() => setAcao({ proposta: p, tipo: "aprovar" })}>
+                        Aprovar
+                      </Button>
+                      <Button size="sm" variant="ghost" disabled={!podeAprovar}
+                        onClick={() => setAcao({ proposta: p, tipo: "recusar" })}>
+                        Não aprovar
+                      </Button>
+                      <Button size="sm" variant="ghost" disabled={p.status === "CANCELADA" || p.status === "APROVADA"}
+                        onClick={() => setAcao({ proposta: p, tipo: "cancelar" })}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {acao && (
+        <MotivoDialog
+          titulo={
+            acao.tipo === "aprovar" ? `Aprovar proposta ${acao.proposta.versao ?? ""}` :
+            acao.tipo === "recusar" ? `Marcar proposta ${acao.proposta.versao ?? ""} como NÃO APROVADA` :
+            `Cancelar proposta ${acao.proposta.versao ?? ""}`
+          }
+          descricao={
+            acao.tipo === "aprovar"
+              ? "Ao aprovar esta versão, todas as outras versões deste lead serão marcadas como OBSOLETAS."
+              : "Esta ação fica registrada no histórico com motivo obrigatório."
+          }
+          onClose={() => setAcao(null)}
+          onConfirm={(motivo) => {
+            if (acao.tipo === "aprovar") {
+              aprovarPropostaDoLead(acao.proposta.id, usuario, motivo);
+              toast.success(`Proposta ${acao.proposta.numero} aprovada.`);
+            } else if (acao.tipo === "recusar") {
+              marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
+              toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
+            } else {
+              cancelarPropostaComMotivo(acao.proposta.id, usuario, motivo);
+              toast.success(`Proposta ${acao.proposta.numero} cancelada.`);
+            }
+            setAcao(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function MotivoDialog({
+  titulo, descricao, onClose, onConfirm,
+}: { titulo: string; descricao?: string; onClose: () => void; onConfirm: (motivo: string) => void }) {
+  const [motivo, setMotivo] = useState("");
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{titulo}</DialogTitle>
+          {descricao && <DialogDescription>{descricao}</DialogDescription>}
+        </DialogHeader>
+        <div>
+          <Label>Motivo <span className="text-destructive">*</span></Label>
+          <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!motivo.trim()) { toast.error("Informe o motivo."); return; }
+            onConfirm(motivo.trim());
+          }}>Confirmar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

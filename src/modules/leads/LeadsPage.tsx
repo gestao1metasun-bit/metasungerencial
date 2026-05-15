@@ -534,10 +534,6 @@ function SolicitarPropostaDialog({
 }: { lead: Lead; usuario: string; onClose: () => void }) {
   const consultores = useConsultoresAtivos();
   const [observacao, setObservacao] = useState("");
-  const [tipoSistema, setTipoSistema] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [concessionaria, setConcessionaria] = useState("");
-
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
 
   const confirmar = () => {
@@ -548,10 +544,7 @@ function SolicitarPropostaDialog({
       clienteTelefone: lead.telefone,
       consumoKwh: lead.consumoKwh,
       consultorNome,
-      cidade: cidade || undefined,
-      concessionaria: concessionaria || undefined,
-      observacao: [tipoSistema && `Tipo: ${tipoSistema}`, observacao]
-        .filter(Boolean).join(" • ") || undefined,
+      observacao: observacao.trim() || undefined,
       usuario,
     });
     setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
@@ -567,7 +560,7 @@ function SolicitarPropostaDialog({
         <DialogHeader>
           <DialogTitle>Solicitar proposta</DialogTitle>
           <DialogDescription>
-            Os dados do lead são puxados automaticamente. Complemente o que já souber.
+            Os dados do lead já foram preenchidos no cadastro. Basta confirmar.
           </DialogDescription>
         </DialogHeader>
 
@@ -579,23 +572,9 @@ function SolicitarPropostaDialog({
           <Field label="Origem" value={ORIGEM_LEAD_LABEL[lead.origem] ?? lead.origem} />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <Label>Tipo de sistema</Label>
-            <Input value={tipoSistema} onChange={(e) => setTipoSistema(e.target.value)} placeholder="On-grid, Off-grid…" />
-          </div>
-          <div>
-            <Label>Cidade</Label>
-            <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Concessionária</Label>
-            <Input value={concessionaria} onChange={(e) => setConcessionaria(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Observação para o orçamentista</Label>
-            <Textarea rows={3} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
-          </div>
+        <div>
+          <Label>Observação para o orçamentista (opcional)</Label>
+          <Textarea rows={3} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
         </div>
 
         <DialogFooter>

@@ -22,6 +22,8 @@ import {
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,
 } from "@/lib/perfis-store";
 import { usePropostaConfig, setPropostaConfig } from "@/modules/propostas/proposta-config-store";
+import { CadastrosFV } from "@/modules/propostas/PropostasPage";
+import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/configuracoes")({
@@ -75,9 +77,15 @@ function ConfigPage() {
         </TabsContent>
 
         <TabsContent value="proposta" className="mt-5"><PropostaConfigTab /></TabsContent>
+        <TabsContent value="orcamentos-cad" className="mt-5"><CadastrosFV /></TabsContent>
+        <TabsContent value="cfg-dashboard" className="mt-5"><PlaceholderModuleConfig nome="Dashboard" /></TabsContent>
+        <TabsContent value="cfg-comercial" className="mt-5"><PlaceholderModuleConfig nome="Comercial" /></TabsContent>
+        <TabsContent value="cfg-engenharia" className="mt-5"><PlaceholderModuleConfig nome="Engenharia" /></TabsContent>
+        <TabsContent value="cfg-financeiro" className="mt-5"><PlaceholderModuleConfig nome="Financeiro" /></TabsContent>
 
         <TabsContent value="perfis" className="mt-5"><PerfisTab /></TabsContent>
         <TabsContent value="usuarios" className="mt-5"><UsuariosTab /></TabsContent>
+        <TabsContent value="consultores" className="mt-5"><ConsultoresTab /></TabsContent>
 
         <TabsContent value="integracoes" className="mt-5">
           <Card className="bg-[image:var(--gradient-card)] p-6">
@@ -493,6 +501,115 @@ function PropostaConfigTab() {
           Apenas Admin Master pode alterar estes valores.
         </div>
       )}
+    </Card>
+  );
+}
+
+/* ---------------- PLACEHOLDER POR MÓDULO ---------------- */
+
+function PlaceholderModuleConfig({ nome }: { nome: string }) {
+  return (
+    <Card className="bg-[image:var(--gradient-card)] p-6">
+      <h2 className="text-base font-semibold">Configurações do {nome}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Em breve: parâmetros, regras e personalizações específicas do módulo {nome}.
+      </p>
+      <div className="mt-4 rounded-md border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+        Nenhuma configuração disponível ainda para este módulo.
+      </div>
+    </Card>
+  );
+}
+
+/* ---------------- CONSULTORES ---------------- */
+
+function ConsultoresTab() {
+  const lista = useConsultores();
+  const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<Consultor | null>(null);
+
+  function abrirNovo() { setEdit(novoConsultorVazio()); setOpen(true); }
+  function abrirEditar(c: Consultor) { setEdit({ ...c }); setOpen(true); }
+
+  function salvar() {
+    if (!edit) return;
+    if (!edit.nome.trim()) { toast.error("Informe o nome do consultor."); return; }
+    upsertConsultor({ ...edit, nome: edit.nome.toUpperCase().trim() });
+    toast.success("Consultor salvo.");
+    setOpen(false); setEdit(null);
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold">Consultores</h2>
+          <p className="text-xs text-muted-foreground">Base de consultores usados em propostas e contratos.</p>
+        </div>
+        <Button className="gap-2" onClick={abrirNovo}><Plus className="h-4 w-4" /> Novo consultor</Button>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lista.length === 0 && (
+              <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-6">Nenhum consultor cadastrado.</TableCell></TableRow>
+            )}
+            {lista.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="font-medium">{c.nome}</TableCell>
+                <TableCell className="text-xs">{c.telefone ? formatTelefoneBR(c.telefone) : "—"}</TableCell>
+                <TableCell className="text-xs">{c.email || "—"}</TableCell>
+                <TableCell>{c.ativo ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</TableCell>
+                <TableCell className="text-right">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => abrirEditar(c)}><SquarePen className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                    onClick={() => { if (window.confirm(`Remover consultor ${c.nome}?`)) { removeConsultor(c.id); toast.success("Consultor removido."); } }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{edit && lista.some((x) => x.id === edit.id) ? "Editar consultor" : "Novo consultor"}</DialogTitle>
+          </DialogHeader>
+          {edit && (
+            <div className="grid gap-3 py-2">
+              <div><Label className="text-xs">Nome *</Label>
+                <Input value={edit.nome} onChange={(e) => setEdit({ ...edit, nome: e.target.value.toUpperCase() })} />
+              </div>
+              <div><Label className="text-xs">Telefone</Label>
+                <Input value={edit.telefone ?? ""} onChange={(e) => setEdit({ ...edit, telefone: formatTelefoneBR(e.target.value) })} placeholder="(00) 9 0000-0000" />
+              </div>
+              <div><Label className="text-xs">E-mail</Label>
+                <Input type="email" value={edit.email ?? ""} onChange={(e) => setEdit({ ...edit, email: e.target.value })} />
+              </div>
+              <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
+                <Switch checked={edit.ativo} onCheckedChange={(v) => setEdit({ ...edit, ativo: v })} />
+                <span className="text-sm">{edit.ativo ? "Ativo" : "Inativo"}</span>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={salvar}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -959,6 +959,21 @@ function PropostaSheet({
                 <MarcaCombobox
                   value={p.inversorMarca ?? ""}
                   onChange={(v) => update("inversorMarca", v)}
+                  onCreateNew={(v) => {
+                    const marca = v.trim().toUpperCase();
+                    if (!marca) return;
+                    if (inversores.some((i) => (i.marca || "").trim().toUpperCase() === marca)) return;
+                    upsertInversorFV({
+                      id: `INV-MARCA-${marca.replace(/\s+/g, "_")}-${Date.now().toString(36)}`,
+                      marca,
+                      modelo: "(NOVA MARCA)",
+                      potenciaKw: 0,
+                      tipo: "STRING",
+                      garantia: 10,
+                      ativo: true,
+                    });
+                    toast.success(`Marca de inversor "${marca}" cadastrada.`);
+                  }}
                   options={inversores.map((i) => i.marca)}
                   placeholder="Selecione ou digite..."
                 />

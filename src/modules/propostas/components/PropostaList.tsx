@@ -270,7 +270,7 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "RASCUNHO": return "col-rascunho";
     case "GERADA":
     case "ENVIADA": return "col-enviada";
-    case "APROVADA": return COL_CONTRATO_ID;
+    case "APROVADA": return "col-aprovada";
     case "RECUSADA":
     case "VENCIDA":
     case "CANCELADA": return "col-perdida";

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.tg_handle_new_user() FROM PUBLIC, anon, authenticated;

@@ -915,10 +915,10 @@ type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" 
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
+  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
   { key: "cliente",   label: "Cliente",        defaultWidth: 240 },
   { key: "consultor", label: "Consultor",      defaultWidth: 160 },
   { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
-  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
   { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
   { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
   { key: "status",    label: "Status",         defaultWidth: 130 },

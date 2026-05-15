@@ -14,16 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cidades_irradiacao: {
+        Row: {
+          ativo: boolean
+          cidade: string
+          codigo_ibge: string | null
+          concessionaria_id: string | null
+          concessionaria_nome: string | null
+          created_at: string
+          data_ultima_atualizacao: string
+          fonte_dados: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          mes_pvout_maximo: number | null
+          mes_pvout_minimo: number | null
+          pvout_abril: number | null
+          pvout_agosto: number | null
+          pvout_dezembro: number | null
+          pvout_fevereiro: number | null
+          pvout_janeiro: number | null
+          pvout_julho: number | null
+          pvout_junho: number | null
+          pvout_maio: number | null
+          pvout_marco: number | null
+          pvout_maximo: number | null
+          pvout_medio_mensal: number | null
+          pvout_minimo: number | null
+          pvout_novembro: number | null
+          pvout_outubro: number | null
+          pvout_setembro: number | null
+          uf: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade: string
+          codigo_ibge?: string | null
+          concessionaria_id?: string | null
+          concessionaria_nome?: string | null
+          created_at?: string
+          data_ultima_atualizacao?: string
+          fonte_dados?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mes_pvout_maximo?: number | null
+          mes_pvout_minimo?: number | null
+          pvout_abril?: number | null
+          pvout_agosto?: number | null
+          pvout_dezembro?: number | null
+          pvout_fevereiro?: number | null
+          pvout_janeiro?: number | null
+          pvout_julho?: number | null
+          pvout_junho?: number | null
+          pvout_maio?: number | null
+          pvout_marco?: number | null
+          pvout_maximo?: number | null
+          pvout_medio_mensal?: number | null
+          pvout_minimo?: number | null
+          pvout_novembro?: number | null
+          pvout_outubro?: number | null
+          pvout_setembro?: number | null
+          uf: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string
+          codigo_ibge?: string | null
+          concessionaria_id?: string | null
+          concessionaria_nome?: string | null
+          created_at?: string
+          data_ultima_atualizacao?: string
+          fonte_dados?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mes_pvout_maximo?: number | null
+          mes_pvout_minimo?: number | null
+          pvout_abril?: number | null
+          pvout_agosto?: number | null
+          pvout_dezembro?: number | null
+          pvout_fevereiro?: number | null
+          pvout_janeiro?: number | null
+          pvout_julho?: number | null
+          pvout_junho?: number | null
+          pvout_maio?: number | null
+          pvout_marco?: number | null
+          pvout_maximo?: number | null
+          pvout_medio_mensal?: number | null
+          pvout_minimo?: number | null
+          pvout_novembro?: number | null
+          pvout_outubro?: number | null
+          pvout_setembro?: number | null
+          uf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cidades_irradiacao_concessionaria_id_fkey"
+            columns: ["concessionaria_id"]
+            isOneToOne: false
+            referencedRelation: "concessionarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concessionarias: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_ultima_atualizacao: string
+          id: string
+          nome: string
+          observacao: string | null
+          uf: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_ultima_atualizacao?: string
+          id?: string
+          nome: string
+          observacao?: string | null
+          uf: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_ultima_atualizacao?: string
+          id?: string
+          nome?: string
+          observacao?: string | null
+          uf?: string
+        }
+        Relationships: []
+      }
+      tarifas_energia: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          concessionaria_id: string | null
+          concessionaria_nome: string
+          created_at: string
+          data_ultima_atualizacao: string
+          grupo_tarifario: string
+          id: string
+          modalidade_tarifaria: string
+          subgrupo: string | null
+          tarifa_kwh: number
+          uf: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          concessionaria_id?: string | null
+          concessionaria_nome: string
+          created_at?: string
+          data_ultima_atualizacao?: string
+          grupo_tarifario?: string
+          id?: string
+          modalidade_tarifaria?: string
+          subgrupo?: string | null
+          tarifa_kwh: number
+          uf: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          concessionaria_id?: string | null
+          concessionaria_nome?: string
+          created_at?: string
+          data_ultima_atualizacao?: string
+          grupo_tarifario?: string
+          id?: string
+          modalidade_tarifaria?: string
+          subgrupo?: string | null
+          tarifa_kwh?: number
+          uf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarifas_energia_concessionaria_id_fkey"
+            columns: ["concessionaria_id"]
+            isOneToOne: false
+            referencedRelation: "concessionarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +364,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin_master", "admin_geral", "usuario"],
+    },
   },
 } as const

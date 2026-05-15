@@ -28,6 +28,7 @@ import {
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
   aprovarPropostaDoLead,
+  formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,

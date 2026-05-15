@@ -15,6 +15,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 import {
@@ -534,10 +535,6 @@ function SolicitarPropostaDialog({
 }: { lead: Lead; usuario: string; onClose: () => void }) {
   const consultores = useConsultoresAtivos();
   const [observacao, setObservacao] = useState("");
-  const [tipoSistema, setTipoSistema] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [concessionaria, setConcessionaria] = useState("");
-
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
 
   const confirmar = () => {
@@ -548,10 +545,7 @@ function SolicitarPropostaDialog({
       clienteTelefone: lead.telefone,
       consumoKwh: lead.consumoKwh,
       consultorNome,
-      cidade: cidade || undefined,
-      concessionaria: concessionaria || undefined,
-      observacao: [tipoSistema && `Tipo: ${tipoSistema}`, observacao]
-        .filter(Boolean).join(" • ") || undefined,
+      observacao: observacao.trim() || undefined,
       usuario,
     });
     setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
@@ -567,7 +561,7 @@ function SolicitarPropostaDialog({
         <DialogHeader>
           <DialogTitle>Solicitar proposta</DialogTitle>
           <DialogDescription>
-            Os dados do lead são puxados automaticamente. Complemente o que já souber.
+            Os dados do lead já foram preenchidos no cadastro. Basta confirmar.
           </DialogDescription>
         </DialogHeader>
 
@@ -579,23 +573,9 @@ function SolicitarPropostaDialog({
           <Field label="Origem" value={ORIGEM_LEAD_LABEL[lead.origem] ?? lead.origem} />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <Label>Tipo de sistema</Label>
-            <Input value={tipoSistema} onChange={(e) => setTipoSistema(e.target.value)} placeholder="On-grid, Off-grid…" />
-          </div>
-          <div>
-            <Label>Cidade</Label>
-            <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Concessionária</Label>
-            <Input value={concessionaria} onChange={(e) => setConcessionaria(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Observação para o orçamentista</Label>
-            <Textarea rows={3} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
-          </div>
+        <div>
+          <Label>Observação para o orçamentista (opcional)</Label>
+          <Textarea rows={3} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
         </div>
 
         <DialogFooter>
@@ -642,7 +622,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
     );
   }
 
-  function executarAprovacao(p: PropostaFV, motivo: string) {
+  function executarAprovacao(p: PropostaFV, motivo: string, comFinanciamento: boolean, banco?: string) {
     aprovarPropostaDoLead(p.id, usuario, motivo);
     const dim = calcDimensionamento(p);
     const r = criarContratoDeProposta({
@@ -660,12 +640,19 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
       potencia: dim.potenciaFinalKwp,
       obs: p.obsCliente,
       usuario,
+      possuiFinanciamento: comFinanciamento,
+      financiamentoBanco: banco,
     });
     if (!r.ok) {
       toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
       return;
     }
-    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
+    const aviso = r.missing.length
+      ? ` (complete o cadastro do cliente: ${r.missing.slice(0, 3).join(", ")}${r.missing.length > 3 ? "…" : ""})`
+      : "";
+    toast.success(
+      `Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado e obra enviada para Engenharia (Em projeto/aprovação)${comFinanciamento ? " · Financiamento marcado" : ""}.${aviso}`,
+    );
   }
 
   return (
@@ -754,23 +741,27 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
         </Table>
       </div>
 
-      {acao && (
+      {acao && acao.tipo === "aprovar" && (
+        <AprovarPropostaDialog
+          proposta={acao.proposta}
+          onClose={() => setAcao(null)}
+          onConfirm={(motivo, comFin, banco) => {
+            executarAprovacao(acao.proposta, motivo, comFin, banco);
+            setAcao(null);
+          }}
+        />
+      )}
+
+      {acao && acao.tipo !== "aprovar" && (
         <MotivoDialog
           titulo={
-            acao.tipo === "aprovar" ? `Aprovar proposta ${acao.proposta.versao ?? ""}` :
             acao.tipo === "recusar" ? `Marcar proposta ${acao.proposta.versao ?? ""} como NÃO APROVADA` :
             `Cancelar proposta ${acao.proposta.versao ?? ""}`
           }
-          descricao={
-            acao.tipo === "aprovar"
-              ? "Ao aprovar esta versão, todas as outras versões deste lead serão marcadas como OBSOLETAS."
-              : "Esta ação fica registrada no histórico com motivo obrigatório."
-          }
+          descricao="Esta ação fica registrada no histórico com motivo obrigatório."
           onClose={() => setAcao(null)}
           onConfirm={(motivo) => {
-            if (acao.tipo === "aprovar") {
-              executarAprovacao(acao.proposta, motivo);
-            } else if (acao.tipo === "recusar") {
+            if (acao.tipo === "recusar") {
               marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
               toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
             } else {
@@ -862,6 +853,80 @@ function AnexarAssinadoDialog({
             if (!arquivo.trim()) { toast.error("Informe a referência do arquivo."); return; }
             onConfirm(arquivo.trim());
           }}>Confirmar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const BANCOS_FINANCIAMENTO = ["BASA", "SICREDI", "BB", "Outro"] as const;
+
+function AprovarPropostaDialog({
+  proposta, onClose, onConfirm,
+}: {
+  proposta: PropostaFV;
+  onClose: () => void;
+  onConfirm: (motivo: string, comFinanciamento: boolean, banco?: string) => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [comFinanciamento, setComFinanciamento] = useState(false);
+  const [banco, setBanco] = useState<string>("BASA");
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Aprovar proposta {proposta.versao ?? proposta.numero}</DialogTitle>
+          <DialogDescription>
+            Ao aprovar, todas as outras versões deste lead serão marcadas como OBSOLETAS,
+            o contrato será gerado e a obra será enviada para Engenharia (Em projeto/aprovação).
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <Label>Motivo / observação <span className="text-destructive">*</span></Label>
+            <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+          </div>
+
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <label className="flex items-start gap-2">
+              <Checkbox
+                checked={comFinanciamento}
+                onCheckedChange={(v) => setComFinanciamento(v === true)}
+                className="mt-0.5"
+              />
+              <div className="text-sm">
+                <div className="font-medium">Possui FINANCIAMENTO bancário?</div>
+                <div className="text-xs text-muted-foreground">
+                  Se marcado, o contrato vai automaticamente para o módulo
+                  <span className="font-medium"> Financiamentos</span>.
+                </div>
+              </div>
+            </label>
+
+            {comFinanciamento && (
+              <div className="mt-3">
+                <Label>Banco</Label>
+                <Select value={banco} onValueChange={setBanco}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BANCOS_FINANCIAMENTO.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!motivo.trim()) { toast.error("Informe o motivo da aprovação."); return; }
+            onConfirm(motivo.trim(), comFinanciamento, comFinanciamento ? banco : undefined);
+          }}>Aprovar e gerar contrato</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -523,6 +523,9 @@ export type GerarContratoInput = {
   parametro?: string;
   obs?: string;
   usuario: string;
+  /** Se true, marca o contrato com possuiFinanciamento e envia para o módulo de Financiamentos. */
+  possuiFinanciamento?: boolean;
+  financiamentoBanco?: string;
 };
 
 /** Valida dados mínimos do cliente para geração de contrato. */
@@ -547,15 +550,52 @@ export function validarClienteParaContrato(c?: ClienteFull): string[] {
  * estiver incompleto. Cria o contrato com status CONTRATO_GERADO e cria
  * uma obra inicial vinculada (não envia para engenharia ainda).
  */
-export function criarContratoDeProposta(input: GerarContratoInput): { ok: true; contratoId: string } | { ok: false; missing: string[] } {
+export function criarContratoDeProposta(
+  input: GerarContratoInput,
+): { ok: true; contratoId: string; missing: string[] } | { ok: false; missing: string[] } {
   const missing = validarClienteParaContrato(input.clienteFull);
   if (!input.cliente?.trim() && !input.clienteFull?.nome?.trim()) missing.unshift("Nome do cliente");
   if (!(Number(input.valor) > 0)) missing.push("Valor total da proposta");
   if (!(Number(input.kwp) > 0)) missing.push("Potência (kWp)");
-  if (missing.length) return { ok: false, missing };
+  // Bloqueio mínimo: precisa ao menos do nome do cliente para gerar o contrato.
+  // Demais campos podem ser completados depois — a obra já é criada na engenharia.
+  if (!input.cliente?.trim() && !input.clienteFull?.nome?.trim()) {
+    return { ok: false, missing };
+  }
 
   const id = proximoContratoId();
   const hoje = new Date().toISOString().slice(0, 10);
+
+  // Obra inicial — vai direto para Engenharia com status "Em projeto/aprovação".
+  const obraId = `${id}-01`;
+  const obra: ProjetoVinculado = {
+    id: obraId,
+    contratoId: id,
+    tipo: "Projeto 1",
+    endereco: input.clienteFull
+      ? [input.clienteFull.rua, input.clienteFull.numero, input.clienteFull.bairro]
+          .filter(Boolean).join(", ")
+      : "",
+    bairro: input.clienteFull?.bairro,
+    cep: input.clienteFull?.cep,
+    cidade: input.clienteFull?.cidade ?? "",
+    uf: input.clienteFull?.uf ?? "",
+    modulos: Number(input.modulos) || 0,
+    potenciaModuloW: 0,
+    kwp: Number(input.kwp) || 0,
+    inversor: input.inv1 ?? "",
+    equipe: "",
+    status: "Em projeto/aprovação",
+    inicio: hoje,
+    previsto: hoje,
+    obs: input.obs ?? "",
+    cronograma: "",
+    enviadoEngenharia: true,
+    aprovado: true,
+    dataAprovacao: new Date().toISOString(),
+    usuarioAprovacao: input.usuario,
+    valor: Number(input.valor) || 0,
+  };
 
   const novo: ContratoFull = {
     id,
@@ -568,7 +608,7 @@ export function criarContratoDeProposta(input: GerarContratoInput): { ok: true; 
     status: CONTRATO_STATUS_LABEL.CONTRATO_GERADO,
     data: hoje,
     dataCadastro: hoje,
-    pagamento: "À combinar",
+    pagamento: input.possuiFinanciamento ? (input.financiamentoBanco ? `Financiamento ${input.financiamentoBanco}` : "Financiamento") : "À combinar",
     modulos: input.modulos,
     potencia: input.potencia,
     inv1: input.inv1,
@@ -578,7 +618,11 @@ export function criarContratoDeProposta(input: GerarContratoInput): { ok: true; 
     propostaNumero: input.propostaNumero,
     leadId: input.leadId,
     leadNumero: input.leadNumero,
-    projetos: [],
+    possuiFinanciamento: !!input.possuiFinanciamento,
+    financiamentoBanco: input.financiamentoBanco,
+    financiamentoValor: input.possuiFinanciamento ? input.valor : undefined,
+    financiamentoStatus: input.possuiFinanciamento ? "Em análise" : undefined,
+    projetos: [obra],
     auditoria: [{
       id: `A-${Date.now()}`, data: new Date().toISOString(),
       usuario: input.usuario, campo: "criação",
@@ -590,9 +634,15 @@ export function criarContratoDeProposta(input: GerarContratoInput): { ok: true; 
     entidade: "contrato", entidadeId: id,
     acao: "CRIACAO", usuario: input.usuario,
     valorNovo: CONTRATO_STATUS.CONTRATO_GERADO,
-    detalhe: `Contrato ${id} gerado a partir da proposta ${input.propostaNumero}${input.leadNumero ? ` (lead ${input.leadNumero})` : ""}.`,
+    detalhe: `Contrato ${id} gerado a partir da proposta ${input.propostaNumero}${input.leadNumero ? ` (lead ${input.leadNumero})` : ""}.${input.possuiFinanciamento ? " Marcado para Financiamentos." : ""} Obra ${obraId} criada em Engenharia (Em projeto/aprovação).`,
   });
-  return { ok: true, contratoId: id };
+  pushAudit({
+    entidade: "obra", entidadeId: obraId,
+    acao: "CRIACAO", usuario: input.usuario,
+    valorNovo: "Em projeto/aprovação",
+    detalhe: `Obra ${obraId} aberta automaticamente a partir do contrato ${id}.`,
+  });
+  return { ok: true, contratoId: id, missing };
 }
 
 /** Anexa contrato assinado e move o status para CONTRATO ASSINADO. */

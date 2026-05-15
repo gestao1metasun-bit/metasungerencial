@@ -139,7 +139,7 @@ function ComercialPage() {
           <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
-          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} />
+          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />
@@ -154,8 +154,8 @@ function ComercialPage() {
 
 /* ---------------- CONTRATO ASSINADO ---------------- */
 function ContratoAssinadoTab({
-  contratos, setContratos,
-}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  contratos, setContratos, vendedoresList,
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const [busca, setBusca] = useState("");
   const pendentes = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -215,6 +215,7 @@ function ContratoAssinadoTab({
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-center">Projetos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
@@ -226,11 +227,19 @@ function ContratoAssinadoTab({
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums">
+                      {c.projetos?.length ?? 0}
+                    </span>
+                  </TableCell>
                   <TableCell><StatusBadge status={c.status} /></TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => marcarAssinado(c.id)}>
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Marcar como assinado
-                    </Button>
+                    <div className="inline-flex items-center gap-1.5">
+                      <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                      <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => marcarAssinado(c.id)}>
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Assinado
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

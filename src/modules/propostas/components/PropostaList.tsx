@@ -175,9 +175,18 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
 
 /* ===================== KANBAN: colunas ===================== */
 
-type KCol = { id: string; titulo: string; ativo?: boolean };
-const COLS_KEY = "ms.fv.kanban.cols.v2";
+type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
+const COLS_KEY = "ms.fv.kanban.cols.v3";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
+
+// Coluna final fixa (não pode ser excluída, desativada, renomeada nem reordenada).
+const COL_CONTRATO_ID = "col-contrato-assinado";
+const COL_CONTRATO: KCol = {
+  id: COL_CONTRATO_ID,
+  titulo: "CONTRATO ASSINADO — COMERCIAL",
+  ativo: true,
+  locked: true,
+};
 
 const DEFAULT_COLS: KCol[] = [
   { id: "col-rascunho", titulo: "Rascunho", ativo: true },
@@ -185,14 +194,21 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-negociacao", titulo: "Em negociação", ativo: true },
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
+  COL_CONTRATO,
 ];
+
+// Garante que a coluna fixa exista e seja sempre a última do array.
+function normalizeCols(cols: KCol[]): KCol[] {
+  const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
+  return [...semFixa, { ...COL_CONTRATO }];
+}
 
 function colPadraoPorStatus(s: StatusProposta): string {
   switch (s) {
     case "RASCUNHO": return "col-rascunho";
     case "GERADA":
     case "ENVIADA": return "col-enviada";
-    case "APROVADA": return "col-aprovada";
+    case "APROVADA": return COL_CONTRATO_ID;
     case "RECUSADA":
     case "VENCIDA":
     case "CANCELADA": return "col-perdida";
@@ -201,26 +217,37 @@ function colPadraoPorStatus(s: StatusProposta): string {
 }
 
 function useKanbanState(leads: Lead[]) {
-  const [cols, setCols] = useState<KCol[]>(() => {
+  const [cols, setColsRaw] = useState<KCol[]>(() => {
     const saved = readLS<KCol[]>(COLS_KEY, []);
-    if (!saved.length) return DEFAULT_COLS;
-    return saved.map((c) => ({ ...c, ativo: c.ativo !== false }));
+    const base = saved.length ? saved.map((c) => ({ ...c, ativo: c.ativo !== false })) : DEFAULT_COLS;
+    return normalizeCols(base);
   });
+  const setCols: typeof setColsRaw = (updater) => {
+    setColsRaw((prev) => {
+      const next = typeof updater === "function" ? (updater as (c: KCol[]) => KCol[])(prev) : updater;
+      return normalizeCols(next);
+    });
+  };
   const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
 
   useEffect(() => writeLS(COLS_KEY, cols), [cols]);
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
 
-  // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada
+  // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
+  // Leads aprovados são forçados para a coluna fixa "CONTRATO ASSINADO — COMERCIAL".
   useEffect(() => {
     setAssign((prev) => {
       const next = { ...prev };
       const ativosIds = new Set(cols.filter((c) => c.ativo !== false).map((c) => c.id));
       let mudou = false;
       for (const l of leads) {
-        if (!next[l.key] || !ativosIds.has(next[l.key])) {
+        if (l.bloqueado) {
+          if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
+          continue;
+        }
+        if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false)?.id ?? cols[0]?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && c.id !== COL_CONTRATO_ID)?.id ?? "col-rascunho");
           mudou = true;
         }
       }

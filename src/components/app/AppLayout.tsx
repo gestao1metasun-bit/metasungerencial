@@ -52,7 +52,7 @@ export function AppLayout() {
   const auth = useAuth();
   const navigate = useNavigate();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
-  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || user?.nome || "—";
+  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
   const displayPerfil = auth.role === "admin_master"
     ? "Admin Master"
     : auth.role === "admin_geral"

@@ -897,3 +897,193 @@ export function cancelarPropostaComMotivo(propostaId: string, usuario: string, m
 export function vincularLeadConvertido(leadId: string, usuario: string) {
   _setLeadStatus(leadId, LEAD_STATUS.CONVERTIDO_EM_CONTRATO, usuario);
 }
+
+/* =============== Cadastro do Cliente (CPF/CNPJ + Endereço) =============== */
+
+/** Apenas dígitos. */
+const _onlyDigits = (v: string) => (v ?? "").replace(/\D/g, "");
+
+/** Valida CPF (11) ou CNPJ (14) — apenas comprimento. */
+export function isDocValido(doc: string, tipo?: "PF" | "PJ"): boolean {
+  const d = _onlyDigits(doc);
+  if (tipo === "PF") return d.length === 11;
+  if (tipo === "PJ") return d.length === 14;
+  return d.length === 11 || d.length === 14;
+}
+
+/** Mascara CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00). */
+export function formatDoc(doc: string, tipo?: "PF" | "PJ"): string {
+  const d = _onlyDigits(doc);
+  const isPJ = tipo === "PJ" || d.length > 11;
+  if (isPJ) {
+    return d
+      .slice(0, 14)
+      .replace(/(\d{2})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  return d
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+/** Mascara CEP. */
+export function formatCEP(cep: string): string {
+  const d = _onlyDigits(cep).slice(0, 8);
+  return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+}
+
+/** Busca CEP via ViaCEP — retorna parcial ou null se inválido/falhar. */
+export async function buscarCEPViaCEP(cep: string): Promise<{
+  cep: string; rua: string; bairro: string; cidade: string; uf: string; complemento: string;
+} | null> {
+  const d = _onlyDigits(cep);
+  if (d.length !== 8) return null;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j.erro) return null;
+    return {
+      cep: d,
+      rua: (j.logradouro || "").toUpperCase(),
+      bairro: (j.bairro || "").toUpperCase(),
+      cidade: (j.localidade || "").toUpperCase(),
+      uf: (j.uf || "").toUpperCase(),
+      complemento: (j.complemento || "").toUpperCase(),
+    };
+  } catch { return null; }
+}
+
+/** Snapshot de cliente extraído de uma proposta — usado para reaproveitar cadastro. */
+export type ClienteSnapshot = {
+  tipoPessoa?: "PF" | "PJ";
+  clienteNome: string;
+  clienteDoc?: string;
+  clienteTelefone?: string;
+  clienteEmail?: string;
+  clienteCep?: string;
+  clienteRua?: string;
+  clienteNumero?: string;
+  clienteComplemento?: string;
+  clienteBairro?: string;
+  clienteCidade?: string;
+  clienteUf?: string;
+  origemPropostaNumero?: string;
+  origemPropostaCriadoEm?: string;
+};
+
+/** Procura cadastro existente — primeiro por documento (CPF/CNPJ), depois por nome. */
+export function buscarClienteExistente(args: { doc?: string; nome?: string }): ClienteSnapshot | null {
+  const docDig = _onlyDigits(args.doc || "");
+  const nomeNorm = (args.nome || "").trim().toUpperCase();
+  if (!docDig && !nomeNorm) return null;
+  const lista = propsS.read()
+    .slice()
+    .sort((a, b) => (b.atualizadoEm || "").localeCompare(a.atualizadoEm || ""));
+  let found: PropostaFV | undefined;
+  if (docDig) found = lista.find((p) => _onlyDigits(p.clienteDoc || "") === docDig);
+  if (!found && nomeNorm) {
+    found = lista.find((p) => (p.clienteNome || "").trim().toUpperCase() === nomeNorm);
+  }
+  if (!found) return null;
+  return {
+    tipoPessoa: found.tipoPessoa,
+    clienteNome: found.clienteNome,
+    clienteDoc: found.clienteDoc,
+    clienteTelefone: found.clienteTelefone,
+    clienteEmail: found.clienteEmail,
+    clienteCep: found.clienteCep,
+    clienteRua: found.clienteRua,
+    clienteNumero: found.clienteNumero,
+    clienteComplemento: found.clienteComplemento,
+    clienteBairro: found.clienteBairro,
+    clienteCidade: found.clienteCidade,
+    clienteUf: found.clienteUf,
+    origemPropostaNumero: found.numero,
+    origemPropostaCriadoEm: found.criadoEm,
+  };
+}
+
+/** Compara dois endereços (true se algum campo relevante mudou). */
+function _enderecoDiferente(p: PropostaFV, novo: Partial<EnderecoHistorico>): boolean {
+  const k = ["cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"] as const;
+  return k.some((f) => {
+    const cur = (p as any)[`cliente${f.charAt(0).toUpperCase() + f.slice(1)}`] || "";
+    const next = (novo as any)[f] || "";
+    return String(cur).trim().toUpperCase() !== String(next).trim().toUpperCase();
+  });
+}
+
+/**
+ * Aplica novo endereço/cliente em TODAS as propostas do mesmo lead, preservando
+ * o endereço anterior em `enderecoHistorico` (não apaga registros antigos).
+ */
+export function atualizarCadastroCliente(args: {
+  leadId?: string;
+  propostaId?: string;
+  tipoPessoa: "PF" | "PJ";
+  clienteNome: string;
+  clienteDoc: string;
+  clienteTelefone?: string;
+  clienteEmail?: string;
+  endereco: {
+    cep: string; rua: string; numero: string; complemento?: string;
+    bairro: string; cidade: string; uf: string;
+  };
+  origem?: string;
+  usuario?: string;
+}): void {
+  const lista = propsS.read();
+  const alvos = lista.filter((p) =>
+    (args.leadId && p.leadId === args.leadId) ||
+    (!args.leadId && args.propostaId && p.id === args.propostaId)
+  );
+  if (alvos.length === 0) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const next = lista.map((p) => {
+    if (!alvos.some((a) => a.id === p.id)) return p;
+    const mudou = _enderecoDiferente(p, args.endereco);
+    const hist: EnderecoHistorico[] = [...(p.enderecoHistorico ?? [])];
+    if (mudou && (p.clienteCep || p.clienteRua || p.clienteCidade)) {
+      hist.push({
+        data: new Date().toISOString(),
+        usuario: args.usuario,
+        origem: args.origem || "Atualização de cadastro",
+        cep: p.clienteCep, rua: p.clienteRua, numero: p.clienteNumero,
+        complemento: p.clienteComplemento, bairro: p.clienteBairro,
+        cidade: p.clienteCidade, uf: p.clienteUf,
+      });
+    }
+    return {
+      ...p,
+      tipoPessoa: args.tipoPessoa,
+      clienteNome: args.clienteNome.trim().toUpperCase(),
+      clienteDoc: args.clienteDoc.trim(),
+      clienteTelefone: args.clienteTelefone ?? p.clienteTelefone,
+      clienteEmail: args.clienteEmail ?? p.clienteEmail,
+      clienteCep: args.endereco.cep,
+      clienteRua: args.endereco.rua,
+      clienteNumero: args.endereco.numero,
+      clienteComplemento: args.endereco.complemento || "",
+      clienteBairro: args.endereco.bairro,
+      clienteCidade: args.endereco.cidade,
+      clienteUf: args.endereco.uf,
+      clienteEndereco: [args.endereco.rua, args.endereco.numero, args.endereco.bairro, args.endereco.cidade]
+        .filter(Boolean).join(", ").toUpperCase(),
+      enderecoHistorico: hist,
+      atualizadoEm: hoje,
+    };
+  });
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta",
+    entidadeId: args.propostaId || alvos[0].id,
+    acao: "ALTERACAO",
+    usuario: args.usuario,
+    detalhe: `Cadastro do cliente atualizado (${args.origem || "atualização de cadastro"}). ${alvos.length} proposta(s) afetada(s).`,
+  });
+}

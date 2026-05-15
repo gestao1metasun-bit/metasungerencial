@@ -828,67 +828,14 @@ function PropostaSheet({
             </div>
           </Bloco>
 
-          {/* BLOCO 7 — Inversores */}
-          <Bloco icon={<Wrench className="h-4 w-4" />} title="7. Inversores e Kit" badge={`${fmtNum(potTotalInv, 1)} kW`}>
-            <div className="space-y-2">
-              {p.inversores.map((inv, i) => (
-                <div key={i} className="grid grid-cols-12 items-end gap-2">
-                  <div className="col-span-7">
-                    <Label className="text-xs">Inversor {i + 1}</Label>
-                    <Select value={inv.inversorId} onValueChange={(v) => setInversorId(i, v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {inversores.filter((x) => x.ativo).map((x) => (
-                          <SelectItem key={x.id} value={x.id}>{x.marca} {x.modelo} ({x.potenciaKw}kW)</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-3">
-                    <Label className="text-xs">Quantidade</Label>
-                    <Input type="number" min={1} value={inv.quantidade} onChange={(e) => setInversorQtd(i, +e.target.value)} />
-                  </div>
-                  <div className="col-span-2">
-                    <Button variant="ghost" size="icon" onClick={() => delInversor(i)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => addInversor(inversores[0]?.id || "")} disabled={!inversores.length}>
-                <Plus className="mr-1 h-4 w-4" /> Adicionar inversor
-              </Button>
-              {potTotalInv > 0 && Math.abs(potTotalInv - dim.potenciaFinalKwp) / Math.max(dim.potenciaFinalKwp, 0.1) > 0.3 && (
-                <div className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs">
-                  <AlertTriangle className="mr-1 inline h-3 w-3 text-warning" />
-                  Potência dos inversores ({fmtNum(potTotalInv,1)} kW) muito diferente da potência do sistema ({fmtNum(dim.potenciaFinalKwp,1)} kWp).
-                </div>
-              )}
-            </div>
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <Field label="Distribuidor">
-                <Select value={p.distribuidor ?? ""} onValueChange={(v) => update("distribuidor", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {distribuidores.filter((d) => d.ativo).map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Valor do kit (R$)"><Input type="number" step="0.01" value={p.valorKit} onChange={(e) => update("valorKit", +e.target.value)} /></Field>
-              <Field label="Validade da proposta"><Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} /></Field>
-            </div>
-          </Bloco>
-
-          {/* BLOCO 8 — Precificação */}
-          <Bloco icon={<DollarSign className="h-4 w-4" />} title="8. Precificação" badge={fmtBRL(pre.valorFinal)}>
+          {/* BLOCO 7 — Precificação */}
+          <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Parâmetro (R$/kWp)" hint="Preço de venda por kWp.">
                 <Input type="number" step="0.01" value={p.parametroPorKwp} onChange={(e) => update("parametroPorKwp", +e.target.value)} />
               </Field>
-              <Field label="Desconto (%)"><Input type="number" step="0.01" value={p.descontoPct} onChange={(e) => update("descontoPct", +e.target.value)} /></Field>
               <Field label="Desconto (R$)"><Input type="number" step="0.01" value={p.descontoValor} onChange={(e) => update("descontoValor", +e.target.value)} /></Field>
               <ReadOnlyField label="Valor bruto" value={fmtBRL(pre.valorBruto)} />
-              <Field label="Valor final manual (R$)" hint="Sobrescreve cálculo. Em branco usa o cálculo automático.">
-                <Input type="number" step="0.01" value={p.valorFinalManual ?? ""} onChange={(e) => update("valorFinalManual", e.target.value ? +e.target.value : undefined)} />
-              </Field>
               <ReadOnlyField label="Parâmetro real (R$/kWp)" value={fmtBRL(pre.parametroReal)} />
             </div>
           </Bloco>

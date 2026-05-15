@@ -394,6 +394,7 @@ function PropostaSheet({
   const clientes = useClientesFull();
   const { perfil } = useUsuarioAtual();
   const ehAdmin = !!perfil?.isAdminMaster;
+  const cfg = usePropostaConfig();
 
   const dim = calcDimensionamento(p);
   const pre = calcPrecificacao(p);
@@ -405,6 +406,23 @@ function PropostaSheet({
     if (p.modulosQtd !== dim.qtdFinal) update("modulosQtd", dim.qtdFinal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dim.qtdFinal]);
+
+  // tarifa de energia: sempre travada na config global
+  useEffect(() => {
+    if (p.tarifa !== cfg.tarifaPadraoKwh) update("tarifa", cfg.tarifaPadraoKwh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cfg.tarifaPadraoKwh]);
+
+  // sugere inversores automaticamente quando muda qtd ou potência do módulo
+  useEffect(() => {
+    const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+    const novos = sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade }));
+    const sameLen = novos.length === p.inversores.length;
+    const sameAll = sameLen && novos.every((n, i) =>
+      n.inversorId === p.inversores[i].inversorId && n.quantidade === p.inversores[i].quantidade);
+    if (!sameAll) update("inversores", novos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta]);
 
   // sugere parâmetro automaticamente quando muda potência ou tipo
   useEffect(() => {

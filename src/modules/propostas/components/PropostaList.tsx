@@ -286,6 +286,7 @@ function ColunasManager({
   };
   const toggleAtivo = (id: string) => setCols((c) => c.map((x) => (x.id === id ? { ...x, ativo: x.ativo === false } : x)));
   const excluir = (id: string) => {
+    if (cols.find((x) => x.id === id)?.locked) return toast.error("Esta coluna é fixa do sistema.");
     if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
     if (!confirm("Excluir esta coluna?")) return;
     setCols((c) => c.filter((x) => x.id !== id));
@@ -295,6 +296,8 @@ function ColunasManager({
       const i = c.findIndex((x) => x.id === id);
       const j = i + dir;
       if (i < 0 || j < 0 || j >= c.length) return c;
+      // não pode mover a coluna fixa, nem trocar de posição com ela
+      if (c[i].locked || c[j].locked) return c;
       const cp = [...c]; [cp[i], cp[j]] = [cp[j], cp[i]]; return cp;
     });
   };

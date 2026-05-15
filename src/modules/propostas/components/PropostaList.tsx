@@ -915,10 +915,10 @@ type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" 
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
+  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
   { key: "cliente",   label: "Cliente",        defaultWidth: 240 },
   { key: "consultor", label: "Consultor",      defaultWidth: 160 },
   { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
-  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
   { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
   { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
   { key: "status",    label: "Status",         defaultWidth: 130 },
@@ -926,6 +926,7 @@ const TABELA_COLS: TabelaColDef[] = [
 ];
 const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
 const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
@@ -944,6 +945,8 @@ function TabelaView({
   const [widths, setWidths] = useState<Record<TabelaColKey, number>>(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>,
   );
+  const [hidden, setHidden] = useState<Set<TabelaColKey>>(new Set());
+  const [mgrOpen, setMgrOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -959,11 +962,25 @@ function TabelaView({
         const w = JSON.parse(rawW) as Partial<Record<TabelaColKey, number>>;
         setWidths((prev) => ({ ...prev, ...w }));
       }
+      const rawH = localStorage.getItem(TABELA_HIDDEN_KEY);
+      if (rawH) {
+        const arr = JSON.parse(rawH) as TabelaColKey[];
+        setHidden(new Set(arr.filter((k) => TABELA_DEFAULT_ORDER.includes(k))));
+      }
     } catch {}
   }, []);
 
   useEffect(() => { try { localStorage.setItem(TABELA_ORDER_KEY, JSON.stringify(order)); } catch {} }, [order]);
   useEffect(() => { try { localStorage.setItem(TABELA_WIDTH_KEY, JSON.stringify(widths)); } catch {} }, [widths]);
+  useEffect(() => { try { localStorage.setItem(TABELA_HIDDEN_KEY, JSON.stringify([...hidden])); } catch {} }, [hidden]);
+
+  const visibleOrder = useMemo(() => order.filter((k) => !hidden.has(k)), [order, hidden]);
+  const toggleHidden = (k: TabelaColKey) => setHidden((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  const moveBy = (k: TabelaColKey, delta: -1 | 1) => setOrder((prev) => {
+    const i = prev.indexOf(k); const j = i + delta;
+    if (i < 0 || j < 0 || j >= prev.length) return prev;
+    const next = [...prev]; [next[i], next[j]] = [next[j], next[i]]; return next;
+  });
 
   const [dragKey, setDragKey] = useState<TabelaColKey | null>(null);
   const move = (from: TabelaColKey, to: TabelaColKey) => {
@@ -1029,68 +1046,110 @@ function TabelaView({
   };
 
   return (
-    <Card>
-      <div className="overflow-x-auto">
-        <Table style={{ tableLayout: "fixed", width: "100%" }}>
-          <TableHeader>
-            <TableRow>
-              {order.map((key) => {
-                const col = colsByKey[key]; if (!col) return null;
-                const w = widths[key] ?? col.defaultWidth;
-                return (
-                  <TableHead
-                    key={key}
-                    style={{ width: w, minWidth: 60 }}
-                    draggable
-                    onDragStart={() => setDragKey(key)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => { if (dragKey) move(dragKey, key); setDragKey(null); }}
-                    onDragEnd={() => setDragKey(null)}
-                    className={`relative cursor-move select-none whitespace-nowrap ${alignClass(col.align)} ${dragKey === key ? "opacity-40" : ""}`}
-                    title="Arraste para reordenar"
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      <GripVertical className="h-3 w-3 text-muted-foreground/60" />
-                      {col.label}
-                    </span>
-                    <span
-                      onMouseDown={(e) => startResize(key, e)}
-                      onClick={(e) => e.stopPropagation()}
-                      onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-primary/40 transition-colors"
-                      title="Arraste para redimensionar"
-                    />
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leads.map((l) => (
-              <TableRow
-                key={l.key}
-                className="cursor-pointer hover:bg-accent/40"
-                onClick={() => onAbrirLead(l)}
-              >
-                {order.map((key) => {
+    <>
+      <div className="mb-2 flex justify-end">
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => setMgrOpen(true)}>
+          <Columns3 className="h-4 w-4" /> Colunas da Tabela
+        </Button>
+      </div>
+      <Card>
+        <div className="overflow-x-auto">
+          <Table style={{ tableLayout: "fixed", width: "100%" }}>
+            <TableHeader>
+              <TableRow>
+                {visibleOrder.map((key) => {
                   const col = colsByKey[key]; if (!col) return null;
                   const w = widths[key] ?? col.defaultWidth;
                   return (
-                    <TableCell
+                    <TableHead
                       key={key}
-                      style={{ width: w, maxWidth: w }}
-                      className={`whitespace-nowrap overflow-hidden text-ellipsis ${alignClass(col.align)}`}
+                      style={{ width: w, minWidth: 60 }}
+                      draggable
+                      onDragStart={() => setDragKey(key)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => { if (dragKey) move(dragKey, key); setDragKey(null); }}
+                      onDragEnd={() => setDragKey(null)}
+                      className={`relative cursor-move select-none whitespace-nowrap ${alignClass(col.align)} ${dragKey === key ? "opacity-40" : ""}`}
+                      title="Arraste para reordenar"
                     >
-                      {renderCell(l, key)}
-                    </TableCell>
+                      <span className="inline-flex items-center gap-1">
+                        <GripVertical className="h-3 w-3 text-muted-foreground/60" />
+                        {col.label}
+                      </span>
+                      <span
+                        onMouseDown={(e) => startResize(key, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-primary/40 transition-colors"
+                        title="Arraste para redimensionar"
+                      />
+                    </TableHead>
                   );
                 })}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {leads.map((l) => (
+                <TableRow
+                  key={l.key}
+                  className="cursor-pointer hover:bg-accent/40"
+                  onClick={() => onAbrirLead(l)}
+                >
+                  {visibleOrder.map((key) => {
+                    const col = colsByKey[key]; if (!col) return null;
+                    const w = widths[key] ?? col.defaultWidth;
+                    return (
+                      <TableCell
+                        key={key}
+                        style={{ width: w, maxWidth: w }}
+                        className={`whitespace-nowrap overflow-hidden text-ellipsis ${alignClass(col.align)}`}
+                      >
+                        {renderCell(l, key)}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      <Dialog open={mgrOpen} onOpenChange={setMgrOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Colunas da Tabela</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground mb-2">
+              Mostre/oculte colunas e organize a sequência. Você também pode arrastar o cabeçalho da tabela e redimensionar pela borda.
+            </div>
+            {order.map((k, i) => {
+              const col = colsByKey[k];
+              const visible = !hidden.has(k);
+              return (
+                <div key={k} className="flex items-center gap-2 rounded-md border p-2">
+                  <span className="flex-1 text-sm">{col.label}</span>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === 0} onClick={() => moveBy(k, -1)} title="Subir">
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" disabled={i === order.length - 1} onClick={() => moveBy(k, 1)} title="Descer">
+                    <ArrowDown className="h-3.5 w-3.5" />
+                  </Button>
+                  <Switch checked={visible} onCheckedChange={() => toggleHidden(k)} />
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setOrder(TABELA_DEFAULT_ORDER); setHidden(new Set()); setWidths(Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>); }}>
+              Restaurar padrão
+            </Button>
+            <Button onClick={() => setMgrOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -45,6 +45,7 @@ import {
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
   sugerirInversoresAuto, inversorIdPadrao, modulosSuportadosPorInversor,
   capacidadeKwpInversor, STANDARD_INVERSOR_KW,
+  formatDoc, isDocValido, buscarClienteExistente, type ClienteSnapshot,
 } from "@/modules/propostas/store";
 import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";

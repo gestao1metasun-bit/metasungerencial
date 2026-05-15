@@ -1005,22 +1005,10 @@ function AprovarDialog({
               >
                 NÃO
               </Button>
-              {financiamento === "SIM" && (
-                <select
-                  value={bancoFin}
-                  onChange={(e) => setBancoFin(e.target.value)}
-                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                >
-                  <option value="BASA">BASA</option>
-                  <option value="SICREDI">SICREDI</option>
-                  <option value="BB">BB</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              )}
             </div>
             <div className="mt-1 text-[11px] text-muted-foreground">
               {financiamento === "SIM"
-                ? "Ao aprovar, o contrato vai para Financiamentos e a obra entra em Engenharia (Em projeto)."
+                ? "Ao aprovar, o contrato entra em Financiamentos › Pendências (banco será definido lá) e a obra vai para Engenharia (Em projeto)."
                 : "Ao aprovar, o contrato fica no Comercial e a obra entra em Engenharia (Em projeto)."}
             </div>
           </div>

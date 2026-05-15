@@ -333,8 +333,6 @@ function LeadModal({
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
   const [origens, setOrigens] = useState<string[]>(() => loadOrigens());
   const [captacao, setCaptacao] = useState(proposta.origemCaptacao ?? "");
-  const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">(proposta.possuiFinanciamento ? "SIM" : "NAO");
-  const [bancoFin, setBancoFin] = useState(proposta.financiamentoBanco ?? "BASA");
   const [novaOrigem, setNovaOrigem] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
@@ -387,8 +385,6 @@ function LeadModal({
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
       origemCaptacao: captacao,
-      possuiFinanciamento: financiamento === "SIM",
-      financiamentoBanco: financiamento === "SIM" ? bancoFin : undefined,
       criadoPor: upper(consultor.trim()),
     });
   }
@@ -520,33 +516,6 @@ function LeadModal({
                 className={isLocked("endereco", endereco) ? "pr-8 bg-muted/50" : ""}
               />
               {isLocked("endereco", endereco) && <LockX field="endereco" />}
-            </div>
-          </div>
-          <div className="rounded-md border bg-muted/30 p-2">
-            <Label className="text-xs">Financiamento *</Label>
-            <div className="mt-1 flex gap-2">
-              <div className="flex-1">
-                <Select value={financiamento} onValueChange={(v) => setFinanciamento(v as "SIM" | "NAO")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SIM">SIM — enviar para Financiamentos ao aprovar</SelectItem>
-                    <SelectItem value="NAO">NÃO</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {financiamento === "SIM" && (
-                <div className="w-36">
-                  <Select value={bancoFin} onValueChange={setBancoFin}>
-                    <SelectTrigger><SelectValue placeholder="Banco" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BASA">BASA</SelectItem>
-                      <SelectItem value="SICREDI">SICREDI</SelectItem>
-                      <SelectItem value="BB">BB</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
           </div>
         </div>

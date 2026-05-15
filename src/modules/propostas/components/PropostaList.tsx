@@ -97,25 +97,80 @@ export function aprovarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
 }
 
-/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
+/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead.
+ *  Em seguida cria um contrato a partir da proposta e marca como ASSINADO,
+ *  fazendo o card cair na coluna ASSINADOS (travado para edição). Se o lead foi
+ *  marcado com FINANCIAMENTO=SIM, o contrato vai para o módulo Financiamentos.
+ *  A obra inicial é criada em Engenharia com status "Em projeto/aprovação". */
 function aprovarComDadosCliente(
   propostas: PropostaFV[],
   escolhida: PropostaFV,
   dados: Partial<PropostaFV>,
   dataAssinatura: string,
+  financiamento: { ativo: boolean; banco?: string },
 ) {
   const hoje = new Date().toISOString().slice(0, 10);
+  let propAtualizada: PropostaFV = escolhida;
   for (const p of propostas) {
     const isEscolhida = p.id === escolhida.id;
-    upsertProposta({
+    const merged: PropostaFV = {
       ...p,
       ...dados,
       status: isEscolhida ? "APROVADA" : p.status,
       dataAssinatura: isEscolhida ? dataAssinatura : p.dataAssinatura,
+      possuiFinanciamento: isEscolhida ? financiamento.ativo : p.possuiFinanciamento,
+      financiamentoBanco: isEscolhida ? (financiamento.ativo ? financiamento.banco : undefined) : p.financiamentoBanco,
       atualizadoEm: hoje,
-    });
+    };
+    upsertProposta(merged);
+    if (isEscolhida) propAtualizada = merged;
   }
-  toast.success(`Proposta ${escolhida.numero} aprovada — enviada ao comercial.`);
+
+  // Cria contrato e já o marca como assinado para travar o card na coluna ASSINADOS
+  const dim = calcDimensionamento(propAtualizada);
+  const valor = calcPrecificacao(propAtualizada).valorFinal;
+  const enderecoLinha = propAtualizada.clienteEndereco || "";
+  const r = criarContratoDeProposta({
+    propostaId: propAtualizada.id,
+    propostaNumero: propAtualizada.numero,
+    leadId: propAtualizada.leadId,
+    leadNumero: propAtualizada.leadNumero,
+    cliente: propAtualizada.clienteNome,
+    clienteId: propAtualizada.clienteId,
+    clienteFull: {
+      nome: propAtualizada.clienteNome || "",
+      doc: propAtualizada.clienteDoc || "",
+      telefone: propAtualizada.clienteTelefone || "",
+      email: propAtualizada.clienteEmail || "",
+      cep: propAtualizada.clienteCep || "",
+      rua: propAtualizada.clienteRua || enderecoLinha,
+      numero: propAtualizada.clienteNumero || "",
+      bairro: propAtualizada.clienteBairro || "",
+      complemento: propAtualizada.clienteComplemento || "",
+      cidade: propAtualizada.clienteCidade || propAtualizada.cidade || "",
+      uf: propAtualizada.clienteUf || propAtualizada.estado || "",
+    },
+    vendedor: propAtualizada.consultor || propAtualizada.criadoPor || "—",
+    valor,
+    kwp: dim.potenciaFinalKwp,
+    modulos: dim.qtdFinal,
+    potencia: dim.potenciaFinalKwp,
+    obs: propAtualizada.obsCliente,
+    usuario: propAtualizada.criadoPor || "Operador",
+    possuiFinanciamento: financiamento.ativo,
+    financiamentoBanco: financiamento.banco,
+  });
+
+  if (r.ok) {
+    // Anexa contrato assinado (mock) — isto sinaliza assinados>0 no buildLeads
+    // e move o lead para a coluna ASSINADOS (travada).
+    anexarContratoAssinado(r.contratoId, `contrato-${r.contratoId.replace("/", "-")}.pdf`, propAtualizada.criadoPor || "Operador");
+    toast.success(
+      `Proposta ${escolhida.numero} aprovada · Contrato ${r.contratoId} assinado · Obra em Engenharia${financiamento.ativo ? " · Financiamento marcado" : ""}.`,
+    );
+  } else {
+    toast.warning(`Proposta aprovada, mas faltam dados para o contrato: ${r.missing.join(", ")}.`);
+  }
 }
 
 function diasDesde(iso?: string): number {

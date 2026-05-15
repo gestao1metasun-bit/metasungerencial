@@ -181,6 +181,7 @@ function KanbanView({
     if (!t) return;
     setCols((c) => [...c, { id: `col-${Date.now()}`, titulo: t }]);
     setNovoTitulo("");
+    setPopoverOpen(false);
   };
   const excluirCol = (id: string) => {
     if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");

@@ -455,19 +455,7 @@ function PropostaSheet({
     const c = cidades.find((x) => x.id === id);
     if (!c) return;
     setLastCidadeId(c.id);
-    setP((cur) => {
-      const nova = aplicarCidadeNaProposta(cur, c, false);
-      // Lookup de tarifa oficial
-      const tarifa = buscarTarifa(tarifasEnergia, {
-        concessionaria: nova.concessionaria,
-        uf: nova.estado,
-        cidade: nova.cidade,
-        grupo: nova.grupoTarifario,
-        modalidade: nova.modalidadeTarifaria,
-      });
-      if (tarifa) nova.tarifa = tarifa.tarifaKwh;
-      return nova;
-    });
+    setP((cur) => aplicarCidadeNaProposta(cur, c, false));
   }
 
   function limparCidade() {

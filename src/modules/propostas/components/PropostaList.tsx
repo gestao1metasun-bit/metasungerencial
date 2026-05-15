@@ -467,13 +467,16 @@ function Field({ label, value, className }: { label: string; value?: string; cla
 /* ===================== KANBAN VIEW ===================== */
 
 function KanbanView({
-  leads, onAbrirLead, onNovaPreset,
+  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
   onNovaPreset: (preset?: Partial<PropostaFV>) => void;
+  cols: KCol[];
+  setCols: (fn: (c: KCol[]) => KCol[]) => void;
+  assign: Record<string, string>;
+  setAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }) {
-  const { cols, setCols, assign, setAssign } = useKanbanState(leads);
   const [dragLead, setDragLead] = useState<string | null>(null);
   const [dragCol, setDragCol] = useState<string | null>(null);
 

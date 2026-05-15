@@ -1289,11 +1289,6 @@ function TabelaView({
 
   return (
     <>
-      <div className="mb-2 flex justify-end">
-        <Button size="sm" variant="outline" className="gap-1" onClick={() => setMgrOpen(true)}>
-          <Columns3 className="h-4 w-4" /> Colunas da Tabela
-        </Button>
-      </div>
       <Card>
         <div className="overflow-x-auto">
           <Table style={{ tableLayout: "fixed", width: "100%" }}>

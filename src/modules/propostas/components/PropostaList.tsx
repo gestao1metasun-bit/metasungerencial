@@ -91,13 +91,51 @@ export function excluirProposta(p: PropostaFV) {
 }
 
 /** Aprova uma proposta diretamente: muda status para APROVADA, marca outras
- *  versões do mesmo lead como obsoletas, bloqueia o card e envia para o Comercial.
- *  A geração de contrato, marcação de financiamento e abertura de obra em
- *  Engenharia agora ocorrem somente no módulo Comercial. */
+ *  versões do mesmo lead como obsoletas e cria um Contrato em status "Pendente"
+ *  no módulo Comercial → Cadastrar Contrato, para finalização posterior
+ *  (cliente completo, financiamento, assinatura). */
 export function aprovarProposta(p: PropostaFV) {
-  if (!confirm(`Aprovar a proposta ${p.numero}? Ela será enviada ao Comercial e o card ficará bloqueado.`)) return;
-  aprovarPropostaDoLead(p.id, p.criadoPor || "Operador", "Aprovada em Orçamentos");
-  toast.success(`Proposta ${p.numero} aprovada — enviada ao Comercial.`);
+  if (!confirm(`Aprovar a proposta ${p.numero}? Será criado um contrato Pendente no Comercial.`)) return;
+  const usuario = p.criadoPor || "Operador";
+  aprovarPropostaDoLead(p.id, usuario, "Aprovada em Orçamentos");
+  const clienteFull = (p.clienteDoc || p.clienteTelefone || p.clienteCidade) ? {
+    nome: p.clienteNome,
+    doc: p.clienteDoc ?? "",
+    telefone: p.clienteTelefone ?? "",
+    email: p.clienteEmail ?? "",
+    cep: p.clienteCep ?? "",
+    rua: p.clienteRua ?? "",
+    numero: p.clienteNumero ?? "",
+    bairro: p.clienteBairro ?? "",
+    complemento: p.clienteComplemento ?? "",
+    cidade: p.clienteCidade ?? p.cidade ?? "",
+    uf: p.clienteUf ?? p.estado ?? "",
+  } : undefined;
+  const valor = (p.valorFinalManual ?? 0) > 0 ? (p.valorFinalManual as number) : (p.valorKit ?? 0);
+  const inv1 = p.inversores?.[0]?.modelo ?? p.inversorMarca ?? "";
+  const res = criarContratoPendenteDeProposta({
+    propostaId: p.id,
+    propostaNumero: p.numero,
+    leadId: p.leadId,
+    leadNumero: p.leadNumero,
+    cliente: p.clienteNome,
+    clienteId: p.clienteId,
+    clienteFull,
+    vendedor: p.consultor ?? p.criadoPor ?? "",
+    valor,
+    kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
+    modulos: p.modulosQtd,
+    potencia: p.moduloPotenciaWp,
+    inv1,
+    parametro: String(p.parametroPorKwp ?? ""),
+    obs: p.obsInternas,
+    usuario,
+  });
+  toast.success(
+    res.jaExistia
+      ? `Proposta ${p.numero} aprovada — contrato ${res.contratoId} já existia (Pendente).`
+      : `Proposta ${p.numero} aprovada — contrato ${res.contratoId} criado como Pendente no Comercial.`,
+  );
 }
 
 function diasDesde(iso?: string): number {

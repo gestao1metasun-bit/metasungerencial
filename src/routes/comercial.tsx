@@ -154,8 +154,8 @@ function ComercialPage() {
 
 /* ---------------- CONTRATO ASSINADO ---------------- */
 function ContratoAssinadoTab({
-  contratos, setContratos,
-}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  contratos, setContratos, vendedoresList,
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const [busca, setBusca] = useState("");
   const pendentes = useMemo(() => {
     const q = busca.trim().toLowerCase();

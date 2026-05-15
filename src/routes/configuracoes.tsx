@@ -21,6 +21,8 @@ import {
   usePerfis, useUsuarios, useUsuarioAtual, upsertPerfil, removePerfil, novoPerfilId,
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,
 } from "@/lib/perfis-store";
+import { usePropostaConfig, setPropostaConfig } from "@/modules/propostas/proposta-config-store";
+import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Meta Sun Gerencial" }] }),

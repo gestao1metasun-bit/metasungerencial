@@ -109,12 +109,14 @@ function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: 
 /** Combobox livre estilo "Selecione ou crie": filtra opções existentes e
  *  exibe "Novo: <texto>" quando o digitado não corresponde a nenhuma. */
 function MarcaCombobox({
-  value, onChange, options, placeholder,
+  value, onChange, options, placeholder, onCreateNew,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
   placeholder?: string;
+  /** Disparado quando o usuário escolhe a opção "Novo: <texto>". */
+  onCreateNew?: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");

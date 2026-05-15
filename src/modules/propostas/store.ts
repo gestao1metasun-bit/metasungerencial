@@ -270,6 +270,11 @@ export type PropostaFV = {
   leadNumero?: string;
   versao?: string;        // P01, P02, P03 dentro do mesmo lead
   motivoStatus?: string;  // último motivo registrado em mudanças sensíveis
+
+  // Financiamento (definido na construção da proposta).
+  // Quando true, ao aprovar, o contrato gerado é marcado para o módulo Financiamentos.
+  possuiFinanciamento?: boolean;
+  financiamentoBanco?: string;
 };
 
 /* =============== Seeds =============== */

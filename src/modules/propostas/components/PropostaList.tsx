@@ -1098,11 +1098,9 @@ export function PropostaList({
           </Button>
         )}
 
-        {view === "kanban" && (
-          <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
-            <Columns3 className="h-4 w-4" /> Colunas
-          </Button>
-        )}
+        <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
+          <Columns3 className="h-4 w-4" /> Colunas
+        </Button>
       </Card>
 
       {view === "tabela"

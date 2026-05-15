@@ -523,6 +523,9 @@ export type GerarContratoInput = {
   parametro?: string;
   obs?: string;
   usuario: string;
+  /** Se true, marca o contrato com possuiFinanciamento e envia para o módulo de Financiamentos. */
+  possuiFinanciamento?: boolean;
+  financiamentoBanco?: string;
 };
 
 /** Valida dados mínimos do cliente para geração de contrato. */

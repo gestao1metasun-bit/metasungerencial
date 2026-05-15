@@ -219,20 +219,55 @@ function KanbanView({
 
   return (
     <div className="space-y-3">
-      <Card className="flex flex-wrap items-center gap-2 p-3">
-        <Input
-          value={novoTitulo}
-          onChange={(e) => setNovoTitulo(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
-          placeholder="Nome da nova coluna…"
-          className="h-8 max-w-xs"
-        />
-        <Button size="sm" onClick={adicionarCol} className="gap-1">
-          <Plus className="h-4 w-4" /> Nova coluna
-        </Button>
-        <span className="ml-auto text-xs text-muted-foreground">
-          Arraste cards entre colunas. Arraste o título para reordenar colunas.
+      <Card className="flex flex-wrap items-center gap-2 p-2">
+        <div className="relative min-w-[220px] max-w-md flex-1">
+          <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            placeholder="Filtrar por cliente, consultor ou nº…"
+            className="h-8 pl-7"
+          />
+        </div>
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
+          className="h-8 rounded-md border bg-background px-2 text-xs"
+        >
+          {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
+            <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+          ))}
+        </select>
+        {(filtro || filtroStatus !== "TODOS") && (
+          <Button size="sm" variant="ghost" className="h-8 gap-1" onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); }}>
+            <FilterX className="h-3.5 w-3.5" /> Limpar
+          </Button>
+        )}
+        <span className="ml-auto hidden text-[11px] text-muted-foreground lg:inline">
+          Arraste cards · arraste o título para reordenar
         </span>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" /> Nova coluna
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 p-2">
+            <div className="flex flex-col gap-2">
+              <Input
+                autoFocus
+                value={novoTitulo}
+                onChange={(e) => setNovoTitulo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
+                placeholder="Nome da nova coluna…"
+                className="h-8"
+              />
+              <Button size="sm" onClick={adicionarCol} className="gap-1">
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </Card>
 
       <div className="flex gap-3 overflow-x-auto pb-2">

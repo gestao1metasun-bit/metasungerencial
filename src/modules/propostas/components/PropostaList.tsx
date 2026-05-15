@@ -1167,11 +1167,13 @@ const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead,
+  leads, onAbrirLead, mgrOpen, setMgrOpen,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
   onNovaPreset: (preset?: Partial<PropostaFV>) => void;
+  mgrOpen: boolean;
+  setMgrOpen: (v: boolean) => void;
 }) {
   const colsByKey = useMemo(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c])) as Record<TabelaColKey, TabelaColDef>,

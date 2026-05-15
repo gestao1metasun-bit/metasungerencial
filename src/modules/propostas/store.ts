@@ -598,9 +598,9 @@ export function sugerirInversoresAuto(
   recurse(0, []);
 
   if (!best) return [{ potKw: 100, quantidade: 5 }];
-  // Agrega por tamanho
+  const found: { combo: number[]; totalKw: number } = best;
   const agg = new Map<number, number>();
-  best.combo.forEach((kw) => agg.set(kw, (agg.get(kw) ?? 0) + 1));
+  found.combo.forEach((kw: number) => agg.set(kw, (agg.get(kw) ?? 0) + 1));
   return Array.from(agg.entries())
     .sort((a, b) => a[0] - b[0])
     .map(([potKw, quantidade]) => ({ potKw, quantidade }));

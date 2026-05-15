@@ -554,7 +554,7 @@ function LeadDetail({
                                 size="sm"
                                 variant={podeAprovar ? "default" : "outline"}
                                 disabled={!podeAprovar}
-                                onClick={() => aprovarProposta(p)}
+                                onClick={() => setAprovarAlvo(p)}
                                 className="gap-1"
                               >
                                 <Check className="h-4 w-4" /> Aprovar

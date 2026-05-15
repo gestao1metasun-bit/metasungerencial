@@ -136,21 +136,34 @@ function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initia
   const [form, setForm] = useState<Banco>(() => initial ?? { id: `BCO-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", operacoes: 0, total: 0, status: "Ativo" });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{initial ? "Editar banco" : "Novo banco"}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-1 gap-3">
-          <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-          <div><Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
-            </Select>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Landmark className="h-5 w-5" />
+              </div>
+              <DialogTitle className="text-xl">{initial ? "Editar banco" : "Novo banco"}</DialogTitle>
+            </div>
+          </DialogHeader>
+        </div>
+        <div className="px-6 py-5">
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="mt-1.5" /></div>
+            <div><Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
-        </DialogFooter>
+        <div className="border-t bg-muted/30 px-6 py-3">
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={() => onSave(form)} disabled={!form.nome} className="bg-primary text-primary-foreground">Salvar</Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

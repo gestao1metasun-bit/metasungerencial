@@ -77,9 +77,15 @@ function ConfigPage() {
         </TabsContent>
 
         <TabsContent value="proposta" className="mt-5"><PropostaConfigTab /></TabsContent>
+        <TabsContent value="orcamentos-cad" className="mt-5"><CadastrosFV /></TabsContent>
+        <TabsContent value="cfg-dashboard" className="mt-5"><PlaceholderModuleConfig nome="Dashboard" /></TabsContent>
+        <TabsContent value="cfg-comercial" className="mt-5"><PlaceholderModuleConfig nome="Comercial" /></TabsContent>
+        <TabsContent value="cfg-engenharia" className="mt-5"><PlaceholderModuleConfig nome="Engenharia" /></TabsContent>
+        <TabsContent value="cfg-financeiro" className="mt-5"><PlaceholderModuleConfig nome="Financeiro" /></TabsContent>
 
         <TabsContent value="perfis" className="mt-5"><PerfisTab /></TabsContent>
         <TabsContent value="usuarios" className="mt-5"><UsuariosTab /></TabsContent>
+        <TabsContent value="consultores" className="mt-5"><ConsultoresTab /></TabsContent>
 
         <TabsContent value="integracoes" className="mt-5">
           <Card className="bg-[image:var(--gradient-card)] p-6">

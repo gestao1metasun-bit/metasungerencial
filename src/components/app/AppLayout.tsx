@@ -130,13 +130,18 @@ export function AppLayout() {
                             <Link
                               to={item.to}
                               hash={`tab=${t.value}`}
-                              className={`block rounded-md px-3 py-1.5 text-sm transition ${
+                              className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-sm transition ${
                                 tabActive
                                   ? "bg-primary text-primary-foreground font-medium"
                                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                               }`}
                             >
-                              {t.label}
+                              <span className="truncate">{t.label}</span>
+                              {showRedDot && (
+                                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                  {pendentesAssinatura}
+                                </span>
+                              )}
                             </Link>
                           </li>
                         );

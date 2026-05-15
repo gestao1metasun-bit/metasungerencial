@@ -139,7 +139,7 @@ function ComercialPage() {
           <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
-          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} />
+          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />

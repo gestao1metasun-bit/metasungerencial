@@ -451,7 +451,6 @@ function LeadDetail({
   onNova: (preset?: Partial<PropostaFV>) => void;
   onEditar: (p: PropostaFV) => void;
 }) {
-  const [aprovarAlvo, setAprovarAlvo] = useState<PropostaFV | null>(null);
   if (!lead) return null;
   const enderecoLinha = [
     lead.clienteEndereco,

@@ -411,3 +411,88 @@ function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React
     </Dialog>
   );
 }
+
+/* ---------------- PROPOSTA (campos travados / fórmulas) ---------------- */
+
+function PropostaConfigTab() {
+  const cfg = usePropostaConfig();
+  const { perfil } = useUsuarioAtual();
+  const ehAdmin = !!perfil?.isAdminMaster;
+
+  const [tarifa, setTarifa] = useState(String(cfg.tarifaPadraoKwh));
+  const [mb, setMb] = useState(String(cfg.inversorMultBaixa));
+  const [ma, setMa] = useState(String(cfg.inversorMultAlta));
+
+  const salvar = () => {
+    const t = Number(String(tarifa).replace(",", "."));
+    const b = Number(String(mb).replace(",", "."));
+    const a = Number(String(ma).replace(",", "."));
+    if (!t || t <= 0) { toast.error("Informe uma tarifa válida (R$/kWh)."); return; }
+    if (!b || b <= 0 || !a || a <= 0) { toast.error("Informe multiplicadores válidos."); return; }
+    setPropostaConfig({ tarifaPadraoKwh: t, inversorMultBaixa: b, inversorMultAlta: a });
+    toast.success("Configurações da proposta atualizadas.");
+  };
+
+  return (
+    <Card className="bg-[image:var(--gradient-card)] p-6">
+      <h2 className="text-base font-semibold">Proposta — campos travados e fórmulas</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Estes valores aparecem travados na geração da proposta. Apenas Admin pode alterar.
+      </p>
+
+      <div className="mt-5 space-y-6">
+        <section>
+          <h3 className="text-sm font-medium">3. Dados da Fatura</h3>
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Tarifa de energia (R$/kWh)</Label>
+              <Input
+                type="number"
+                step="0.000001"
+                value={tarifa}
+                onChange={(e) => setTarifa(e.target.value)}
+                disabled={!ehAdmin}
+              />
+              <p className="text-[11px] text-muted-foreground">Travada na proposta. Ex.: 1,151730</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-sm font-medium">6.1 Inversores — fórmula de capacidade</h3>
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Multiplicador (≤ 37,5 kW)</Label>
+              <Input type="number" step="0.01" value={mb} onChange={(e) => setMb(e.target.value)} disabled={!ehAdmin} />
+              <p className="text-[11px] text-muted-foreground">Capacidade kWp = potência kW × multiplicador. Padrão: 1,60</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Multiplicador (≥ 40 kW)</Label>
+              <Input type="number" step="0.01" value={ma} onChange={(e) => setMa(e.target.value)} disabled={!ehAdmin} />
+              <p className="text-[11px] text-muted-foreground">Padrão: 1,80</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-sm font-medium">2. Localização — Parâmetro de irradiação</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            O valor é puxado por cidade (BASE REAL). Para alterar a base, vá em <strong>Propostas → Cadastros → Cidades</strong>.
+          </p>
+        </section>
+      </div>
+
+      {ehAdmin ? (
+        <div className="mt-6 flex justify-end">
+          <Button onClick={salvar} className="bg-[image:var(--gradient-primary)] text-primary-foreground">
+            Salvar configurações da proposta
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs">
+          Apenas Admin Master pode alterar estes valores.
+        </div>
+      )}
+    </Card>
+  );
+}

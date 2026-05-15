@@ -624,12 +624,15 @@ function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
 
 function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
   const todas = usePropostas();
+  const contratos = useContratos();
   const propostas = useMemo(
     () => todas.filter((p) => p.leadId === lead.id)
       .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || "")),
     [todas, lead.id],
   );
   const [acao, setAcao] = useState<{ proposta: PropostaFV; tipo: "aprovar" | "recusar" | "cancelar" } | null>(null);
+  const [anexarAlvo, setAnexarAlvo] = useState<string | null>(null);
+  const [cancelarContratoAlvo, setCancelarContratoAlvo] = useState<string | null>(null);
 
   if (propostas.length === 0) {
     return (
@@ -637,6 +640,32 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
         Nenhuma proposta vinculada ainda. Use <span className="font-medium">Solicitar Proposta</span> para gerar a P01.
       </div>
     );
+  }
+
+  function executarAprovacao(p: PropostaFV, motivo: string) {
+    aprovarPropostaDoLead(p.id, usuario, motivo);
+    // Tenta gerar contrato automaticamente
+    const r = criarContratoDeProposta({
+      propostaId: p.id,
+      propostaNumero: p.numero,
+      leadId: lead.id,
+      leadNumero: lead.numero,
+      cliente: p.clienteNome,
+      clienteId: p.clienteId,
+      clienteFull: undefined, // será preenchido em Contratos antes de seguir
+      vendedor: p.consultor ?? p.criadoPor ?? "—",
+      valor: calcPrecificacao(p).valorFinal,
+      kwp: p.dim?.potenciaFinalKwp ?? 0,
+      modulos: p.modulosQtd,
+      potencia: p.dim?.potenciaFinalKwp,
+      obs: p.obsCliente,
+      usuario,
+    });
+    if (!r.ok) {
+      toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
+      return;
+    }
+    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
   }
 
   return (
@@ -649,6 +678,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               <TableHead className="w-16">Versão</TableHead>
               <TableHead>Número</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Contrato</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -658,6 +688,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               const canonical = mapStatusLegacyToCanonical(p.status);
               const valor = calcPrecificacao(p).valorFinal;
               const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
+              const contrato = contratos.find((c) => c.propostaId === p.id);
               return (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
@@ -667,9 +698,17 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                       {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {contrato ? (
+                      <div className="flex flex-col">
+                        <span className="font-mono">{contrato.id}</span>
+                        <span className="text-[10px] text-muted-foreground">{contrato.status}</span>
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex flex-wrap justify-end gap-1">
                       <Button size="sm" variant="ghost" disabled={!podeAprovar}
                         onClick={() => setAcao({ proposta: p, tipo: "aprovar" })}>
                         Aprovar
@@ -678,10 +717,34 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                         onClick={() => setAcao({ proposta: p, tipo: "recusar" })}>
                         Não aprovar
                       </Button>
-                      <Button size="sm" variant="ghost" disabled={p.status === "CANCELADA" || p.status === "APROVADA"}
+                      <Button size="sm" variant="ghost"
+                        disabled={p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato}
+                        title={contrato ? "Existe contrato vinculado — cancele o contrato antes." : ""}
                         onClick={() => setAcao({ proposta: p, tipo: "cancelar" })}>
                         Cancelar
                       </Button>
+                      {contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => setAnexarAlvo(contrato.id)}>
+                          Anexar assinado
+                        </Button>
+                      )}
+                      {contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => {
+                            const r = enviarContratoParaEngenharia(contrato.id, usuario);
+                            if (!r.ok) toast.error(r.motivo);
+                            else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
+                          }}>
+                          Enviar p/ engenharia
+                        </Button>
+                      )}
+                      {contrato && !contrato.cancelado && (
+                        <Button size="sm" variant="ghost" className="text-destructive"
+                          onClick={() => setCancelarContratoAlvo(contrato.id)}>
+                          Cancelar contrato
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

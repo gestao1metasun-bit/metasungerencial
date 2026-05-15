@@ -840,8 +840,8 @@ function PropostaSheet({
             </div>
           </Bloco>
 
-          {/* BLOCO 9 — Custos */}
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="9. Composição de Custos" badge={fmtBRL(res.custoTotal)}>
+          {/* BLOCO 8 — Custos */}
+          <Bloco icon={<Calculator className="h-4 w-4" />} title="8. Composição de Custos" badge={fmtBRL(res.custoTotal)}>
             <div className="mb-2 flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={regenerarCustos}><Calculator className="mr-1 h-3 w-3" /> Recalcular sugeridos</Button>
               <Button variant="outline" size="sm" onClick={addLinhaCustoVazia}><Plus className="mr-1 h-3 w-3" /> Adicionar linha</Button>

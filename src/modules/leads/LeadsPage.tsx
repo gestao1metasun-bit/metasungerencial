@@ -39,8 +39,6 @@ import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,
   enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
-import { setLeadStatus as _setLeadStatusForContract } from "@/modules/leads/store";
-import { LEAD_STATUS as _LS } from "@/lib/status-catalog";
 
 function fmtDate(iso: string) {
   try {

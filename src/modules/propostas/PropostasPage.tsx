@@ -639,8 +639,6 @@ function PropostaSheet({
                   </Select>
                 )}
               </div>
-              <Field label="Cidade"><Input value={p.cidade} onChange={(e) => update("cidade", e.target.value)} /></Field>
-              <Field label="Estado"><Input value={p.estado} onChange={(e) => update("estado", e.target.value)} /></Field>
               <Field label="Concessionária">
                 <Select value={p.concessionaria ?? ""} onValueChange={(v) => update("concessionaria", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -668,8 +666,6 @@ function PropostaSheet({
               <Field label="Irradiação média (kWh/m²·dia)" hint="Média de sol da cidade. Quanto maior, menor o sistema necessário.">
                 <Input type="number" step="0.1" value={p.irradiacaoMedia} onChange={(e) => update("irradiacaoMedia", +e.target.value)} />
               </Field>
-              <Field label="Mês maior irradiação"><Input value={p.mesMaior ?? ""} onChange={(e) => update("mesMaior", e.target.value)} /></Field>
-              <Field label="Mês menor irradiação"><Input value={p.mesMenor ?? ""} onChange={(e) => update("mesMenor", e.target.value)} /></Field>
             </div>
           </Bloco>
 

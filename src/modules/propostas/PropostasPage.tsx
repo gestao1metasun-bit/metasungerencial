@@ -521,7 +521,6 @@ function LeadModal({
                 </div>
               )}
             </div>
-            </div>
             <div>
               <Label className="text-xs">Telefone *</Label>
               <div className="relative mt-1.5">

@@ -758,14 +758,14 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)" hint="Definida no cadastro de Tarifas (Cadastros → Tarifas). Para alterar, edite na base de tarifas.">
+              <Field label="Tarifa de energia (R$/kWh)" hint="Travada. Edite em Configurações → Proposta.">
                 <Input
                   type="number"
-                  step="0.0001"
-                  value={p.tarifa}
-                  onChange={(e) => update("tarifa", +e.target.value)}
-                  disabled={!ehAdmin}
-                  className={!ehAdmin ? "bg-muted/50" : ""}
+                  step="0.000001"
+                  value={cfg.tarifaPadraoKwh}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
                 />
               </Field>
             </div>

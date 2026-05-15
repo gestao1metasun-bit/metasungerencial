@@ -840,7 +840,6 @@ function AprovarDialog({
   const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [cepLoading, setCepLoading] = useState(false);
   const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">("NAO");
-  const [bancoFin, setBancoFin] = useState<string>("BASA");
 
   useEffect(() => {
     if (!lead) return;
@@ -860,7 +859,6 @@ function AprovarDialog({
     // Herda do que foi marcado na construção da proposta (LeadModal)
     const src = proposta || u;
     setFinanciamento(src?.possuiFinanciamento ? "SIM" : "NAO");
-    setBancoFin(src?.financiamentoBanco || "BASA");
   }, [lead?.key, proposta?.id]);
 
   // ViaCEP — busca endereço ao digitar 8 dígitos
@@ -906,7 +904,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    }, dataAssinatura, { ativo: financiamento === "SIM", banco: financiamento === "SIM" ? bancoFin : undefined });
+    }, dataAssinatura, { ativo: financiamento === "SIM", banco: undefined });
     onConfirmed();
   };
 

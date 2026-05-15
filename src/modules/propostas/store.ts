@@ -264,6 +264,12 @@ export type PropostaFV = {
 
   // Integração
   contratoGeradoId?: string;
+
+  // Vínculo com Lead (Entrega 2 — cadeia comercial)
+  leadId?: string;
+  leadNumero?: string;
+  versao?: string;        // P01, P02, P03 dentro do mesmo lead
+  motivoStatus?: string;  // último motivo registrado em mudanças sensíveis
 };
 
 /* =============== Seeds =============== */

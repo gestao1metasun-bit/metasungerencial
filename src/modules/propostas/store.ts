@@ -177,6 +177,7 @@ export type PropostaFV = {
 
   // 1. Cliente
   clienteId?: string;
+  tipoPessoa?: "PF" | "PJ";
   clienteNome: string;
   clienteDoc?: string;
   clienteTelefone?: string;

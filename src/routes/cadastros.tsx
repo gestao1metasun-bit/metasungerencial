@@ -215,28 +215,43 @@ function GerenteDialog({ open, initial, bancos, onClose, onSave }: { open: boole
   const [form, setForm] = useState<Gerente>(() => initial ?? { id: `GER-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", banco: bancos[0]?.nome ?? "", telefone: "", operacoes: 0, status: "Ativo" });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{initial ? "Editar gerente" : "Novo gerente"}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2"><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-          <div><Label>Banco</Label>
-            <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
-          <div><Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
-            </Select>
+      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserCog className="h-5 w-5" />
+              </div>
+              <DialogTitle className="text-xl">{initial ? "Editar gerente" : "Novo gerente"}</DialogTitle>
+            </div>
+          </DialogHeader>
+        </div>
+        <div className="px-6 py-5">
+          <div className="rounded-lg border bg-card p-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2"><Label>Nome</Label><Input className="mt-1.5" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+              <div><Label>Banco</Label>
+                <Select value={form.banco} onValueChange={(v) => setForm({ ...form, banco: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Telefone</Label><Input className="mt-1.5" value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+              <div className="col-span-2"><Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
-        </DialogFooter>
+        <div className="border-t bg-muted/30 px-6 py-3">
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={() => onSave(form)} disabled={!form.nome} className="bg-primary text-primary-foreground">Salvar</Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

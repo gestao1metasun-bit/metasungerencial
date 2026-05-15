@@ -45,6 +45,7 @@ import {
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
   sugerirInversoresAuto, inversorIdPadrao, modulosSuportadosPorInversor,
   capacidadeKwpInversor, STANDARD_INVERSOR_KW,
+  formatDoc, isDocValido, buscarClienteExistente, type ClienteSnapshot,
 } from "@/modules/propostas/store";
 import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
@@ -327,7 +328,9 @@ function LeadModal({
   onContinuar: (p: PropostaFV) => void;
 }) {
   const consultores = useConsultoresAtivos();
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">(proposta.tipoPessoa ?? "PF");
   const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [doc, setDoc] = useState(formatDoc(proposta.clienteDoc ?? "", proposta.tipoPessoa ?? "PF"));
   const [telefone, setTelefone] = useState(formatTelefoneBR(proposta.clienteTelefone ?? ""));
   const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
@@ -336,12 +339,14 @@ function LeadModal({
   const [novaOrigem, setNovaOrigem] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
+  const [encontrado, setEncontrado] = useState<ClienteSnapshot | null>(null);
 
   // Quando vem com dados preenchidos (gerar nova proposta a partir de um lead
   // existente), os campos ficam travados. O bloqueio é definido pelos valores
   // iniciais — digitar não trava o campo. O usuário clica no X para liberar.
   const initial = useRef({
     nome: !!(proposta.clienteNome ?? "").trim(),
+    doc: !!(proposta.clienteDoc ?? "").trim(),
     telefone: !!(proposta.clienteTelefone ?? "").trim(),
     consultor: !!(proposta.consultor ?? "").trim(),
     captacao: !!(proposta.origemCaptacao ?? "").trim(),
@@ -364,9 +369,34 @@ function LeadModal({
     setNovaOrigem(""); setNovaOrigemOpen(false);
   }
 
+  function buscarExistente() {
+    const snap = buscarClienteExistente({ doc, nome });
+    if (!snap) {
+      toast.message("Nenhum cadastro anterior encontrado.");
+      return;
+    }
+    setEncontrado(snap);
+    if (snap.tipoPessoa) setTipoPessoa(snap.tipoPessoa);
+    if (snap.clienteNome) setNome(snap.clienteNome);
+    if (snap.clienteDoc) setDoc(formatDoc(snap.clienteDoc, snap.tipoPessoa));
+    if (snap.clienteTelefone) setTelefone(formatTelefoneBR(snap.clienteTelefone));
+    const end = [snap.clienteRua, snap.clienteNumero, snap.clienteBairro, snap.clienteCidade]
+      .filter(Boolean).join(", ");
+    if (end) setEndereco(end.toUpperCase());
+    toast.success(`Cadastro reaproveitado da proposta ${snap.origemPropostaNumero}.`);
+  }
+
   function continuar() {
     if (!nome.trim() || !telefone.trim() || !consultor.trim()) {
       toast.error("Preencha Nome, Telefone e selecione um Consultor.");
+      return;
+    }
+    if (!isDocValido(doc, tipoPessoa)) {
+      toast.error(
+        tipoPessoa === "PF"
+          ? "CPF inválido. Informe 11 dígitos."
+          : "CNPJ inválido. Informe 14 dígitos.",
+      );
       return;
     }
     if (!captacao.trim()) {
@@ -380,10 +410,21 @@ function LeadModal({
     }
     onContinuar({
       ...proposta,
+      tipoPessoa,
       clienteNome: upper(nome.trim()),
+      clienteDoc: doc.trim(),
       clienteTelefone: formatTelefoneBR(telefone),
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
+      // se reaproveitou cadastro existente, copia o endereço estruturado
+      clienteCep: encontrado?.clienteCep ?? proposta.clienteCep,
+      clienteRua: encontrado?.clienteRua ?? proposta.clienteRua,
+      clienteNumero: encontrado?.clienteNumero ?? proposta.clienteNumero,
+      clienteComplemento: encontrado?.clienteComplemento ?? proposta.clienteComplemento,
+      clienteBairro: encontrado?.clienteBairro ?? proposta.clienteBairro,
+      clienteCidade: encontrado?.clienteCidade ?? proposta.clienteCidade,
+      clienteUf: encontrado?.clienteUf ?? proposta.clienteUf,
+      clienteEmail: encontrado?.clienteEmail ?? proposta.clienteEmail,
       origemCaptacao: captacao,
       criadoPor: upper(consultor.trim()),
     });
@@ -421,17 +462,64 @@ function LeadModal({
         <div className="px-6 py-5">
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <div>
-              <Label className="text-xs">Nome do lead *</Label>
+              <Label className="text-xs">Tipo de pessoa *</Label>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={tipoPessoa === "PF" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTipoPessoa("PF"); setDoc(formatDoc(doc, "PF")); }}
+                  className="h-9"
+                >
+                  Pessoa Física (CPF)
+                </Button>
+                <Button
+                  type="button"
+                  variant={tipoPessoa === "PJ" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTipoPessoa("PJ"); setDoc(formatDoc(doc, "PJ")); }}
+                  className="h-9"
+                >
+                  Pessoa Jurídica (CNPJ)
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
               <div className="relative mt-1.5">
                 <Input
                   value={nome}
                   onChange={(e) => setNome(upper(e.target.value))}
-                  placeholder="NOME COMPLETO"
+                  placeholder={tipoPessoa === "PF" ? "NOME COMPLETO" : "RAZÃO SOCIAL"}
                   disabled={isLocked("nome", nome)}
                   className={isLocked("nome", nome) ? "pr-8 bg-muted/50" : ""}
                 />
                 {isLocked("nome", nome) && <LockX field="nome" />}
               </div>
+            </div>
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+              <div className="relative mt-1.5 flex gap-2">
+                <Input
+                  value={doc}
+                  onChange={(e) => setDoc(formatDoc(e.target.value, tipoPessoa))}
+                  placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                  inputMode="numeric"
+                  maxLength={tipoPessoa === "PF" ? 14 : 18}
+                  disabled={isLocked("doc", doc)}
+                  className={isLocked("doc", doc) ? "pr-8 bg-muted/50 flex-1" : "flex-1"}
+                />
+                {isLocked("doc", doc) && <LockX field="doc" />}
+                <Button type="button" variant="outline" size="sm" onClick={buscarExistente} title="Buscar cadastro existente por CPF/CNPJ ou Nome">
+                  Buscar cadastro
+                </Button>
+              </div>
+              {encontrado && (
+                <div className="mt-1.5 rounded border border-primary/30 bg-primary/5 p-2 text-[11px] text-primary">
+                  Cadastro reaproveitado da proposta <strong>{encontrado.origemPropostaNumero}</strong>.
+                  Endereço completo poderá ser revisado ao aprovar a proposta.
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-xs">Telefone *</Label>

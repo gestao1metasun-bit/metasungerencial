@@ -333,6 +333,8 @@ function LeadModal({
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
   const [origens, setOrigens] = useState<string[]>(() => loadOrigens());
   const [captacao, setCaptacao] = useState(proposta.origemCaptacao ?? "");
+  const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">(proposta.possuiFinanciamento ? "SIM" : "NAO");
+  const [bancoFin, setBancoFin] = useState(proposta.financiamentoBanco ?? "BASA");
   const [novaOrigem, setNovaOrigem] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);

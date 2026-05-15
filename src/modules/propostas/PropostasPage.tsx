@@ -106,6 +106,71 @@ function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: 
   );
 }
 
+/** Combobox livre estilo "Selecione ou crie": filtra opções existentes e
+ *  exibe "Novo: <texto>" quando o digitado não corresponde a nenhuma. */
+function MarcaCombobox({
+  value, onChange, options, placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const norm = (s: string) => (s || "").trim().toUpperCase();
+  const opts = useMemo(
+    () => Array.from(new Set(options.map(norm).filter(Boolean))).sort(),
+    [options],
+  );
+  const q = norm(query);
+  const filtered = q ? opts.filter((o) => o.includes(q)) : opts;
+  const exists = q ? opts.includes(q) : true;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm hover:bg-accent/30"
+        >
+          <span className={value ? "" : "text-muted-foreground"}>
+            {value || placeholder || "Selecione ou digite..."}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Pesquisar ou digitar novo..." value={query} onValueChange={setQuery} />
+          <CommandList>
+            {filtered.length > 0 && (
+              <CommandGroup>
+                {filtered.map((o) => (
+                  <CommandItem key={o} value={o} onSelect={() => { onChange(o); setQuery(""); setOpen(false); }}>
+                    {o}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {q && !exists && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__new_${q}`}
+                  className="bg-primary/10 text-primary"
+                  onSelect={() => { onChange(q); setQuery(""); setOpen(false); }}
+                >
+                  Novo: {q}
+                </CommandItem>
+              </CommandGroup>
+            )}
+            {filtered.length === 0 && !q && <CommandEmpty>Digite para criar.</CommandEmpty>}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.
  *  Quando `markDefault` é true, mantém o flag `cidadeIsDefault` para a UI mostrar o chip cinza. */
 function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boolean): PropostaFV {

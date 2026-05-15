@@ -156,13 +156,18 @@ type Lead = {
   dias: number;
   bloqueado: boolean;
   status: StatusProposta;
+  emAberto: number;
+  aprovadas: number;
+  assinados: number;
 };
 
 function leadKey(p: PropostaFV): string {
   return (p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id);
 }
 
-function buildLeads(props: PropostaFV[]): Lead[] {
+const STATUS_FINAIS: StatusProposta[] = ["APROVADA", "RECUSADA", "VENCIDA", "CANCELADA"];
+
+function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
   const map = new Map<string, PropostaFV[]>();
   for (const p of props) {
     const k = leadKey(p);
@@ -176,6 +181,14 @@ function buildLeads(props: PropostaFV[]): Lead[] {
     );
     const ultima = sorted[0];
     const primeira = sorted[sorted.length - 1];
+    const propIds = new Set(arr.map((p) => p.id));
+    const contratosLead = contratos.filter(
+      (c) => (c.propostaId && propIds.has(c.propostaId)) ||
+             (c.cliente && c.cliente.toUpperCase() === (ultima.clienteNome || "").toUpperCase())
+    );
+    const assinados = contratosLead.filter((c) => !!c.contratoAssinadoArquivo && !c.cancelado).length;
+    const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
+    const emAberto = arr.filter((p) => !STATUS_FINAIS.includes(p.status)).length;
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -192,8 +205,11 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: arr.some((p) => p.status === "APROVADA"),
+      bloqueado: assinados > 0,
       status: ultima.status,
+      emAberto,
+      aprovadas,
+      assinados,
     });
   }
   return leads;

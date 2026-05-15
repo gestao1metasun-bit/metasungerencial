@@ -221,7 +221,8 @@ export type PropostaFV = {
 
   // 5. Dimensionamento
   taxaSimultaneidade: number;     // 0..1
-  fatorPerformance: number;       // 0..1
+  fatorPerformance: number;       // 0..1 (legado — mantido p/ compat)
+  fro?: number;                   // 0..1 — Fator de Rendimento Operacional (corrige PVOUT do Atlas)
   geracaoDesejada: number;        // kWh/mês
   ajusteManualModulos?: boolean;
   modulosManual?: number;

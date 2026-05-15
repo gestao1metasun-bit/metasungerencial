@@ -938,7 +938,7 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "valor" | "status" | "dias";
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "aberto" | "aprovadas" | "assinados" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
@@ -947,6 +947,9 @@ const TABELA_COLS: TabelaColDef[] = [
   { key: "consultor", label: "Consultor",      defaultWidth: 160 },
   { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
   { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
+  { key: "aberto",    label: "Em aberto",      align: "right", defaultWidth: 110 },
+  { key: "aprovadas", label: "Aprovadas",      align: "right", defaultWidth: 110 },
+  { key: "assinados", label: "Assinados",      align: "right", defaultWidth: 110 },
   { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
   { key: "status",    label: "Status",         defaultWidth: 130 },
   { key: "dias",      label: "Dias",           defaultWidth: 80 },

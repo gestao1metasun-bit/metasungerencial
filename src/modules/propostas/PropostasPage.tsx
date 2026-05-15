@@ -709,8 +709,15 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Parâmetro de irradiação (kWh/kWp·mês)" hint="Base real corrigida da cidade. Usado como produtividade real no cálculo.">
-                <Input type="number" step="0.1" value={p.irradiacaoMedia} onChange={(e) => update("irradiacaoMedia", +e.target.value)} />
+              <Field label="Parâmetro de irradiação (kWh/kWp·mês)" hint="Base real corrigida da cidade. Travado. Apenas Admin pode alterar.">
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={p.irradiacaoMedia}
+                  onChange={(e) => update("irradiacaoMedia", +e.target.value)}
+                  disabled={!ehAdmin}
+                  className={!ehAdmin ? "bg-muted/50" : ""}
+                />
               </Field>
             </div>
           </Bloco>

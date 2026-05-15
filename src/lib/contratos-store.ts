@@ -158,6 +158,15 @@ export type ContratoFull = {
   financiamentoLiberacao?: string;
   financiamentoPrevisao?: string; // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   financiamentoEnvio?: string;             // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
+
+  // Cadeia comercial (Entrega 3)
+  propostaId?: string;                  // proposta de origem
+  propostaNumero?: string;
+  leadId?: string;                      // lead de origem
+  leadNumero?: string;
+  contratoAssinadoArquivo?: string;     // nome do arquivo / URL do contrato assinado
+  motivoCancelamento?: string;
+  cancelado?: boolean;
 };
 
 const KEY = "ms.contratos.v2";

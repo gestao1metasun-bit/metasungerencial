@@ -246,13 +246,14 @@ function PropostasPage() {
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
   const cidadesAll = useCidadesFV();
-  function novaProposta() {
+  function novaProposta(preset?: Partial<PropostaFV>) {
     const numero = proximoNumeroProposta(propostas);
     let p = novaPropostaVazia(numero);
     // Aplica última cidade selecionada como padrão (vem cinza, com X para limpar)
     const lastId = getLastCidadeId();
     const cidadeDefault = lastId ? cidadesAll.find((c) => c.id === lastId) : undefined;
     if (cidadeDefault) p = aplicarCidadeNaProposta(p, cidadeDefault, true);
+    if (preset) p = { ...p, ...preset, id: p.id, numero: p.numero, status: "RASCUNHO", criadoEm: p.criadoEm, atualizadoEm: p.atualizadoEm };
     setLeadDraft(p);
   }
 
@@ -262,7 +263,7 @@ function PropostasPage() {
         title="Propostas Fotovoltaicas"
         subtitle="Crie propostas guiadas com cálculo automático de potência, preço e margem."
         actions={
-          <Button onClick={novaProposta} className="gap-2">
+          <Button onClick={() => novaProposta()} className="gap-2">
             <Plus className="h-4 w-4" /> Nova Proposta
           </Button>
         }

@@ -1,17 +1,23 @@
-// PropostaList — duas visualizações: TABELA e KANBAN.
-// Kanban: colunas configuráveis (criar, renomear, excluir, reordenar) e
-// arrastar propostas entre colunas (HTML5 DnD). Estado persistido em
-// localStorage independente do store de propostas.
+// PropostaList — visualizações Tabela e Kanban agrupadas por LEAD (cliente).
+// - Cada lead = todas as propostas de um cliente (chave = clienteDoc ou nome).
+// - Valor do lead = última proposta (mais recente).
+// - Clicar em qualquer parte do card/linha do lead abre o detalhe.
+// - No detalhe: dados do cliente + abas (Dados / Propostas) + botão "Gerar nova proposta".
+// - Kanban: arrastar o card move o lead inteiro; reordenar colunas = arrastar header.
+// - Botão "Colunas" abre um gerenciador (criar, renomear, ativar/desativar, reordenar).
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Pencil, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
-  ChevronLeft, ChevronRight, X, Check, Lock, Search, FilterX,
+  Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
+  Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
+  X, Check, Pencil, FilePlus2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -19,7 +25,7 @@ import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
-  calcDimensionamento, calcPrecificacao, calcResultado, fmtBRL, fmtNum,
+  calcPrecificacao, fmtBRL,
 } from "@/modules/propostas/store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
@@ -78,18 +84,96 @@ function dotColorFor(dias: number): string {
   return "bg-destructive";
 }
 
-/* ===================== KANBAN ===================== */
+/* ===================== LEADS ===================== */
 
-type KCol = { id: string; titulo: string };
-const COLS_KEY = "ms.fv.kanban.cols.v1";
-const ASSIGN_KEY = "ms.fv.kanban.assign.v1";
+type Lead = {
+  key: string;
+  clienteNome: string;
+  clienteDoc?: string;
+  clienteTelefone?: string;
+  clienteEmail?: string;
+  clienteEndereco?: string;
+  consultor?: string;
+  cidade?: string;
+  estado?: string;
+  propostas: PropostaFV[];
+  ultima: PropostaFV;
+  valor: number;
+  dias: number;
+  bloqueado: boolean;
+  status: StatusProposta;
+};
+
+function leadKey(p: PropostaFV): string {
+  return (p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id);
+}
+
+function buildLeads(props: PropostaFV[]): Lead[] {
+  const map = new Map<string, PropostaFV[]>();
+  for (const p of props) {
+    const k = leadKey(p);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(p);
+  }
+  const leads: Lead[] = [];
+  for (const [key, arr] of map) {
+    const sorted = [...arr].sort((a, b) =>
+      (b.atualizadoEm || b.criadoEm || "").localeCompare(a.atualizadoEm || a.criadoEm || "")
+    );
+    const ultima = sorted[0];
+    leads.push({
+      key,
+      clienteNome: ultima.clienteNome || "—",
+      clienteDoc: ultima.clienteDoc,
+      clienteTelefone: ultima.clienteTelefone,
+      clienteEmail: ultima.clienteEmail,
+      clienteEndereco: ultima.clienteEndereco,
+      consultor: ultima.consultor,
+      cidade: ultima.cidade,
+      estado: ultima.estado,
+      propostas: sorted,
+      ultima,
+      valor: calcPrecificacao(ultima).valorFinal || 0,
+      dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
+      bloqueado: arr.some((p) => p.status === "APROVADA"),
+      status: ultima.status,
+    });
+  }
+  return leads;
+}
+
+function presetFromLead(l: Lead): Partial<PropostaFV> {
+  const u = l.ultima;
+  return {
+    clienteId: u.clienteId,
+    clienteNome: u.clienteNome,
+    clienteDoc: u.clienteDoc,
+    clienteTelefone: u.clienteTelefone,
+    clienteEmail: u.clienteEmail,
+    clienteEndereco: u.clienteEndereco,
+    clienteCep: u.clienteCep,
+    clienteRua: u.clienteRua,
+    clienteNumero: u.clienteNumero,
+    clienteComplemento: u.clienteComplemento,
+    clienteBairro: u.clienteBairro,
+    clienteCidade: u.clienteCidade,
+    clienteUf: u.clienteUf,
+    consultor: u.consultor,
+  };
+}
+
+/* ===================== KANBAN: colunas ===================== */
+
+type KCol = { id: string; titulo: string; ativo?: boolean };
+const COLS_KEY = "ms.fv.kanban.cols.v2";
+const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 
 const DEFAULT_COLS: KCol[] = [
-  { id: "col-rascunho", titulo: "Rascunho" },
-  { id: "col-enviada", titulo: "Enviadas" },
-  { id: "col-negociacao", titulo: "Em negociação" },
-  { id: "col-aprovada", titulo: "Aprovadas" },
-  { id: "col-perdida", titulo: "Perdidas" },
+  { id: "col-rascunho", titulo: "Rascunho", ativo: true },
+  { id: "col-enviada", titulo: "Enviadas", ativo: true },
+  { id: "col-negociacao", titulo: "Em negociação", ativo: true },
+  { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
+  { id: "col-perdida", titulo: "Perdidas", ativo: true },
 ];
 
 function colPadraoPorStatus(s: StatusProposta): string {
@@ -105,96 +189,70 @@ function colPadraoPorStatus(s: StatusProposta): string {
   }
 }
 
-function useKanbanState(propostas: PropostaFV[]) {
+function useKanbanState(leads: Lead[]) {
   const [cols, setCols] = useState<KCol[]>(() => {
     const saved = readLS<KCol[]>(COLS_KEY, []);
-    return saved.length ? saved : DEFAULT_COLS;
+    if (!saved.length) return DEFAULT_COLS;
+    return saved.map((c) => ({ ...c, ativo: c.ativo !== false }));
   });
   const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
 
   useEffect(() => writeLS(COLS_KEY, cols), [cols]);
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
 
-  // Garante alocação padrão para propostas novas / colunas removidas
+  // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada
   useEffect(() => {
     setAssign((prev) => {
       const next = { ...prev };
-      const validIds = new Set(cols.map((c) => c.id));
+      const ativosIds = new Set(cols.filter((c) => c.ativo !== false).map((c) => c.id));
       let mudou = false;
-      for (const p of propostas) {
-        if (!next[p.id] || !validIds.has(next[p.id])) {
-          const padrao = colPadraoPorStatus(p.status);
-          next[p.id] = validIds.has(padrao) ? padrao : cols[0]?.id ?? "col-rascunho";
+      for (const l of leads) {
+        if (!next[l.key] || !ativosIds.has(next[l.key])) {
+          const padrao = colPadraoPorStatus(l.status);
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false)?.id ?? cols[0]?.id ?? "col-rascunho");
           mudou = true;
         }
       }
       return mudou ? next : prev;
     });
-  }, [propostas, cols]);
+  }, [leads, cols]);
 
   return { cols, setCols, assign, setAssign };
 }
 
-function KanbanView({
-  propostas, onEditar, onVisualizar,
+/* ===================== Gerenciador de Colunas ===================== */
+
+function ColunasManager({
+  open, onOpenChange, cols, setCols,
 }: {
-  propostas: PropostaFV[];
-  onEditar: (p: PropostaFV) => void;
-  onVisualizar: (id: string) => void;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  cols: KCol[];
+  setCols: (fn: (c: KCol[]) => KCol[]) => void;
 }) {
-  const { cols, setCols, assign, setAssign } = useKanbanState(propostas);
   const [novoTitulo, setNovoTitulo] = useState("");
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [editandoCol, setEditandoCol] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [tituloEdit, setTituloEdit] = useState("");
-  const [dragProp, setDragProp] = useState<string | null>(null);
-  const [dragCol, setDragCol] = useState<string | null>(null);
-  const [filtro, setFiltro] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
 
-  const propostasFiltradas = useMemo(() => {
-    const q = filtro.trim().toLowerCase();
-    return propostas.filter((p) => {
-      if (filtroStatus !== "TODOS" && p.status !== filtroStatus) return false;
-      if (!q) return true;
-      return (
-        (p.clienteNome || "").toLowerCase().includes(q) ||
-        (p.consultor || "").toLowerCase().includes(q) ||
-        (p.numero || "").toLowerCase().includes(q)
-      );
-    });
-  }, [propostas, filtro, filtroStatus]);
-
-  const porColuna = useMemo(() => {
-    const map: Record<string, PropostaFV[]> = {};
-    cols.forEach((c) => (map[c.id] = []));
-    propostasFiltradas.forEach((p) => {
-      const c = assign[p.id] ?? colPadraoPorStatus(p.status);
-      if (!map[c]) map[c] = [];
-      map[c].push(p);
-    });
-    return map;
-  }, [cols, propostasFiltradas, assign]);
-
-  const adicionarCol = () => {
+  const adicionar = () => {
     const t = novoTitulo.trim();
     if (!t) return;
-    setCols((c) => [...c, { id: `col-${Date.now()}`, titulo: t }]);
+    setCols((c) => [...c, { id: `col-${Date.now()}`, titulo: t, ativo: true }]);
     setNovoTitulo("");
-    setPopoverOpen(false);
-  };
-  const excluirCol = (id: string) => {
-    if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
-    if (!confirm("Excluir esta coluna? Propostas voltam para a primeira.")) return;
-    setCols((c) => c.filter((x) => x.id !== id));
   };
   const renomear = (id: string) => {
     const t = tituloEdit.trim();
     if (!t) return;
     setCols((c) => c.map((x) => (x.id === id ? { ...x, titulo: t } : x)));
-    setEditandoCol(null);
+    setEditId(null);
   };
-  const moverCol = (id: string, dir: -1 | 1) => {
+  const toggleAtivo = (id: string) => setCols((c) => c.map((x) => (x.id === id ? { ...x, ativo: x.ativo === false } : x)));
+  const excluir = (id: string) => {
+    if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
+    if (!confirm("Excluir esta coluna?")) return;
+    setCols((c) => c.filter((x) => x.id !== id));
+  };
+  const mover = (id: string, dir: -1 | 1) => {
     setCols((c) => {
       const i = c.findIndex((x) => x.id === id);
       const j = i + dir;
@@ -202,10 +260,244 @@ function KanbanView({
       const cp = [...c]; [cp[i], cp[j]] = [cp[j], cp[i]]; return cp;
     });
   };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Columns3 className="h-5 w-5" /> Gerenciar colunas do Kanban
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="flex items-end gap-2 rounded-md border bg-muted/30 p-2">
+            <div className="flex-1">
+              <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Nova coluna</label>
+              <Input
+                value={novoTitulo}
+                onChange={(e) => setNovoTitulo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && adicionar()}
+                placeholder="Ex.: Visita técnica"
+                className="h-8"
+              />
+            </div>
+            <Button size="sm" onClick={adicionar} className="gap-1">
+              <Plus className="h-4 w-4" /> Adicionar
+            </Button>
+          </div>
+
+          <div className="space-y-1">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Colunas cadastradas</div>
+            {cols.map((c, idx) => (
+              <div key={c.id} className={`flex items-center gap-2 rounded-md border p-2 ${c.ativo === false ? "bg-muted/40 opacity-60" : "bg-card"}`}>
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                {editId === c.id ? (
+                  <>
+                    <Input
+                      autoFocus
+                      value={tituloEdit}
+                      onChange={(e) => setTituloEdit(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
+                      className="h-7 flex-1"
+                    />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => renomear(c.id)}>
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setEditId(c.id); setTituloEdit(c.titulo); }}
+                    className="flex-1 truncate text-left text-sm font-medium"
+                    title="Clique para renomear"
+                  >
+                    {c.titulo}
+                  </button>
+                )}
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, -1)} disabled={idx === 0} title="Subir">
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, 1)} disabled={idx === cols.length - 1} title="Descer">
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1 px-1">
+                  <span className="text-[10px] uppercase text-muted-foreground">Ativa</span>
+                  <Switch checked={c.ativo !== false} onCheckedChange={() => toggleAtivo(c.id)} />
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => excluir(c.id)} title="Excluir">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Concluir</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ===================== Lead Detail Dialog ===================== */
+
+function LeadDetail({
+  lead, onClose, onVisualizar, onNova, onEditar,
+}: {
+  lead: Lead | null;
+  onClose: () => void;
+  onVisualizar: (id: string) => void;
+  onNova: (preset?: Partial<PropostaFV>) => void;
+  onEditar: (p: PropostaFV) => void;
+}) {
+  if (!lead) return null;
+  const enderecoLinha = [
+    lead.clienteEndereco,
+    lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : "",
+  ].filter(Boolean).join(" — ");
+
+  return (
+    <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="truncate">{lead.clienteNome}</span>
+            {lead.bloqueado && (
+              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Aprovado</Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="dados" className="mt-2">
+          <TabsList>
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="propostas">Propostas ({lead.propostas.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nome" value={lead.clienteNome} />
+              <Field label="CPF / CNPJ" value={lead.clienteDoc} />
+              <Field label="Telefone" value={lead.clienteTelefone} />
+              <Field label="E-mail" value={lead.clienteEmail} />
+              <Field label="Endereço" value={enderecoLinha || "—"} className="sm:col-span-2" />
+              <Field label="Consultor" value={lead.consultor} />
+              <Field label="Valor (última proposta)" value={fmtBRL(lead.valor)} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="propostas" className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                {lead.propostas.length} proposta(s) — última: <strong>{lead.ultima.numero}</strong>
+              </div>
+              <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
+                <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
+              </Button>
+            </div>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nº</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Atualizada</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lead.propostas.map((p) => {
+                    const v = calcPrecificacao(p).valorFinal || 0;
+                    const podeEditar = p.status === "RASCUNHO" && !lead.bloqueado;
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">{p.numero}</TableCell>
+                        <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                        <TableCell>{p.atualizadoEm || p.criadoEm}</TableCell>
+                        <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Visualizar" onClick={() => onVisualizar(p.id)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {podeEditar && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar rascunho" onClick={() => { onEditar(p); onClose(); }}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => duplicarProposta(p)}>
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            {!lead.bloqueado && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, value, className }: { label: string; value?: string; className?: string }) {
+  return (
+    <div className={className}>
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium">{value || "—"}</div>
+    </div>
+  );
+}
+
+/* ===================== KANBAN VIEW ===================== */
+
+function KanbanView({
+  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign,
+}: {
+  leads: Lead[];
+  onAbrirLead: (l: Lead) => void;
+  onNovaPreset: (preset?: Partial<PropostaFV>) => void;
+  cols: KCol[];
+  setCols: (fn: (c: KCol[]) => KCol[]) => void;
+  assign: Record<string, string>;
+  setAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+}) {
+  const [dragLead, setDragLead] = useState<string | null>(null);
+  const [dragCol, setDragCol] = useState<string | null>(null);
+
+  const colsAtivas = cols.filter((c) => c.ativo !== false);
+
+  const porColuna = useMemo(() => {
+    const map: Record<string, Lead[]> = {};
+    colsAtivas.forEach((c) => (map[c.id] = []));
+    leads.forEach((l) => {
+      const c = assign[l.key] ?? colPadraoPorStatus(l.status);
+      if (!map[c]) map[c] = [];
+      map[c].push(l);
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colsAtivas.map((c) => c.id).join("|"), leads, assign]);
+
   const dropEmColuna = (colId: string) => {
-    if (dragProp) {
-      setAssign((a) => ({ ...a, [dragProp]: colId }));
-      setDragProp(null);
+    if (dragLead) {
+      setAssign((a) => ({ ...a, [dragLead]: colId }));
+      setDragLead(null);
     } else if (dragCol && dragCol !== colId) {
       setCols((c) => {
         const from = c.findIndex((x) => x.id === dragCol);
@@ -218,9 +510,271 @@ function KanbanView({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex gap-3 overflow-x-auto pb-2">
+      {colsAtivas.map((c) => {
+        const items = porColuna[c.id] || [];
+        const total = items.reduce((s, l) => s + l.valor, 0);
+        return (
+          <div
+            key={c.id}
+            className="flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => dropEmColuna(c.id)}
+          >
+            <div
+              className="cursor-grab border-b bg-card px-3 py-2 active:cursor-grabbing"
+              draggable
+              onDragStart={() => { setDragCol(c.id); setDragLead(null); }}
+              title="Arraste para reordenar a coluna"
+            >
+              <div className="text-sm font-bold uppercase tracking-wide">{c.titulo}</div>
+              <div className="mt-1 flex items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor total</div>
+                  <div className="truncate text-base font-bold text-primary">{fmtBRL(total)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Contratos</div>
+                  <div className="text-base font-bold tabular-nums">{items.length}</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex min-h-[120px] flex-col gap-2 p-2">
+              {items.map((l) => (
+                <Card
+                  key={l.key}
+                  draggable
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    setDragLead(l.key);
+                    setDragCol(null);
+                  }}
+                  onClick={() => onAbrirLead(l)}
+                  className={`cursor-pointer p-2 transition-colors hover:bg-accent/40 active:cursor-grabbing ${l.bloqueado ? "border-success/40 bg-success/5" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold">{l.clienteNome}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {l.consultor || "sem consultor"} · {l.propostas.length} proposta(s)
+                      </div>
+                    </div>
+                    {l.bloqueado && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="text-sm font-semibold">{fmtBRL(l.valor)}</div>
+                    <div className="flex items-center gap-1" title={`${l.dias} dia(s) no status`}>
+                      <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
+                      <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
+                    </div>
+                  </div>
+                  {!l.bloqueado && (
+                    <div className="mt-2 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-[11px]"
+                        onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
+                        title="Gerar nova proposta para este cliente"
+                      >
+                        <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              ))}
+              {!items.length && (
+                <div className="rounded border border-dashed p-3 text-center text-[11px] text-muted-foreground">
+                  Solte aqui
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ===================== TABELA VIEW ===================== */
+
+function TabelaView({
+  leads, onAbrirLead, onNovaPreset,
+}: {
+  leads: Lead[];
+  onAbrirLead: (l: Lead) => void;
+  onNovaPreset: (preset?: Partial<PropostaFV>) => void;
+}) {
+  return (
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Consultor</TableHead>
+            <TableHead>Cidade</TableHead>
+            <TableHead className="text-right">Propostas</TableHead>
+            <TableHead className="text-right">Valor (última)</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-12">Dias</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leads.map((l) => (
+            <TableRow
+              key={l.key}
+              className="cursor-pointer hover:bg-accent/40"
+              onClick={() => onAbrirLead(l)}
+            >
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {l.clienteNome}
+                  {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
+                </div>
+              </TableCell>
+              <TableCell>{l.consultor || "—"}</TableCell>
+              <TableCell>{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</TableCell>
+              <TableCell className="text-right tabular-nums">{l.propostas.length}</TableCell>
+              <TableCell className="text-right">{fmtBRL(l.valor)}</TableCell>
+              <TableCell><Badge variant={statusVariant(l.status)}>{l.status}</Badge></TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1" title={`${l.dias} dia(s)`}>
+                  <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
+                  <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                {!l.bloqueado && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
+                  >
+                    <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+/* ===================== ROOT ===================== */
+
+const VIEW_KEY = "ms.fv.propostas.view";
+type ViewMode = "tabela" | "kanban";
+
+export function PropostaList({
+  propostas, onEditar, onVisualizar, onNova,
+}: {
+  propostas: PropostaFV[];
+  onEditar: (p: PropostaFV) => void;
+  onVisualizar: (id: string) => void;
+  onNova: (preset?: Partial<PropostaFV>) => void;
+}) {
+  // Auto-vence propostas passadas da validade
+  useEffect(() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    propostas.forEach((p) => {
+      if (p.status === "ENVIADA" && p.validade && p.validade < hoje) {
+        upsertProposta({ ...p, status: "VENCIDA", atualizadoEm: hoje });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propostas.length]);
+
+  const [view, setView] = useState<ViewMode>(() => (readLS<ViewMode>(VIEW_KEY, "tabela")));
+  useEffect(() => writeLS(VIEW_KEY, view), [view]);
+
+  const [filtro, setFiltro] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
+  const [colsOpen, setColsOpen] = useState(false);
+  const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
+
+  // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
+  const leadsAll = useMemo(() => buildLeads(propostas), [propostas]);
+  const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
+
+  const leadsFiltrados = useMemo(() => {
+    const q = filtro.trim().toLowerCase();
+    return leadsAll.filter((l) => {
+      if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
+      if (!q) return true;
+      return (
+        l.clienteNome.toLowerCase().includes(q) ||
+        (l.consultor || "").toLowerCase().includes(q) ||
+        l.propostas.some((p) => (p.numero || "").toLowerCase().includes(q))
+      );
+    });
+  }, [leadsAll, filtro, filtroStatus]);
+
+  const totais = useMemo(() => {
+    const total = propostas.length;
+    const aprovadas = propostas.filter((p) => p.status === "APROVADA").length;
+    const enviadas = propostas.filter((p) => p.status === "ENVIADA").length;
+    const valorTotalAprovado = propostas
+      .filter((p) => p.status === "APROVADA")
+      .reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
+    return { total, aprovadas, enviadas, valorTotalAprovado, leads: leadsAll.length };
+  }, [propostas, leadsAll]);
+
+  if (!propostas.length) {
+    return (
+      <Card className="p-12 text-center">
+        <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
+        <h3 className="text-lg font-semibold">Nenhuma proposta criada ainda</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          Crie sua primeira proposta fotovoltaica em poucos minutos.
+        </p>
+        <Button onClick={() => onNova()} className="mt-4 gap-2">
+          <Plus className="h-4 w-4" /> Criar primeira proposta
+        </Button>
+      </Card>
+    );
+  }
+
+  // Reabrir lead atualizado quando propostas mudam (após gerar nova etc.)
+  useEffect(() => {
+    if (!leadAberto) return;
+    const atual = leadsAll.find((l) => l.key === leadAberto.key);
+    if (atual && atual !== leadAberto) setLeadAberto(atual);
+    if (!atual) setLeadAberto(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadsAll]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Leads</div><div className="text-2xl font-semibold">{totais.leads}</div></Card>
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Enviadas</div><div className="text-2xl font-semibold">{totais.enviadas}</div></Card>
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Aprovadas</div><div className="text-2xl font-semibold text-success">{totais.aprovadas}</div></Card>
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
+      </div>
+
       <Card className="flex flex-wrap items-center gap-2 p-2">
-        <div className="relative min-w-[220px] max-w-md flex-1">
+        <Button
+          size="sm"
+          variant={view === "tabela" ? "default" : "outline"}
+          onClick={() => setView("tabela")}
+          className="gap-1"
+        >
+          <TableIcon className="h-4 w-4" /> Tabela
+        </Button>
+        <Button
+          size="sm"
+          variant={view === "kanban" ? "default" : "outline"}
+          onClick={() => setView("kanban")}
+          className="gap-1"
+        >
+          <LayoutGrid className="h-4 w-4" /> Kanban
+        </Button>
+
+        <div className="relative ml-2 min-w-[220px] max-w-md flex-1">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filtro}
@@ -243,309 +797,27 @@ function KanbanView({
             <FilterX className="h-3.5 w-3.5" /> Limpar
           </Button>
         )}
-        <span className="ml-auto hidden text-[11px] text-muted-foreground lg:inline">
-          Arraste cards · arraste o título para reordenar
-        </span>
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> Nova coluna
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 p-2">
-            <div className="flex flex-col gap-2">
-              <Input
-                autoFocus
-                value={novoTitulo}
-                onChange={(e) => setNovoTitulo(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
-                placeholder="Nome da nova coluna…"
-                className="h-8"
-              />
-              <Button size="sm" onClick={adicionarCol} className="gap-1">
-                <Plus className="h-4 w-4" /> Adicionar
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+
+        {view === "kanban" && (
+          <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
+            <Columns3 className="h-4 w-4" /> Colunas
+          </Button>
+        )}
       </Card>
-
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        {cols.map((c, idx) => {
-          const items = porColuna[c.id] || [];
-          const total = items.reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
-          return (
-            <div
-              key={c.id}
-              className="flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => dropEmColuna(c.id)}
-            >
-              <div
-                className="border-b bg-card"
-                draggable
-                onDragStart={() => { setDragCol(c.id); setDragProp(null); }}
-              >
-                <div className="flex items-center gap-1 px-2 pt-2">
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                  </Button>
-                  {editandoCol === c.id ? (
-                    <>
-                      <Input
-                        autoFocus
-                        value={tituloEdit}
-                        onChange={(e) => setTituloEdit(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
-                        className="h-7"
-                      />
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
-                        <Check className="h-3.5 w-3.5" />
-                      </Button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
-                      className="flex-1 cursor-text truncate px-1 text-left text-sm font-bold uppercase tracking-wide"
-                      title="Clique para renomear · arraste para reordenar"
-                    >
-                      {c.titulo}
-                    </button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
-                    <X className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                </div>
-                <div className="flex items-end justify-between gap-2 px-3 pb-2 pt-1">
-                  <div className="min-w-0">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor total</div>
-                    <div className="truncate text-base font-bold text-primary">{fmtBRL(total)}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Contratos</div>
-                    <div className="text-base font-bold tabular-nums">{items.length}</div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex min-h-[120px] flex-col gap-2 p-2">
-                {items.map((p) => {
-                  const valor = calcPrecificacao(p).valorFinal || 0;
-                  const dias = diasDesde(p.atualizadoEm || p.criadoEm);
-                  const bloq = p.status === "APROVADA";
-                  return (
-                    <Card
-                      key={p.id}
-                      draggable
-                      onDragStart={() => { setDragProp(p.id); setDragCol(null); }}
-                      className={`cursor-grab p-2 active:cursor-grabbing ${bloq ? "border-success/40 bg-success/5" : ""}`}
-                    >
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{p.clienteNome || "—"}</div>
-                          <div className="truncate text-[11px] text-muted-foreground">
-                            {p.numero} · {p.consultor || "sem consultor"}
-                          </div>
-                        </div>
-                        {bloq && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
-                      </div>
-                      <div className="mt-1 flex items-center justify-between">
-                        <div className="text-sm font-semibold">{fmtBRL(valor)}</div>
-                        <div className="flex items-center gap-1" title={`${dias} dia(s) no status`}>
-                          <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(dias)}`} />
-                          <span className="text-[11px] text-muted-foreground">{dias}d</span>
-                        </div>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between gap-1">
-                        <Badge variant={statusVariant(p.status)} className="text-[10px]">{p.status}</Badge>
-                        <div className="flex">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onVisualizar(p.id)} title="Visualizar">
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                          {!bloq && (
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEditar(p)} title="Editar">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-                {!items.length && (
-                  <div className="rounded border border-dashed p-3 text-center text-[11px] text-muted-foreground">
-                    Solte aqui
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ===================== TABELA ===================== */
-
-function TabelaView({
-  propostas, onEditar, onVisualizar,
-}: {
-  propostas: PropostaFV[];
-  onEditar: (p: PropostaFV) => void;
-  onVisualizar: (id: string) => void;
-}) {
-  return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Consultor</TableHead>
-            <TableHead>Cidade</TableHead>
-            <TableHead className="text-right">kWp</TableHead>
-            <TableHead className="text-right">Valor</TableHead>
-            <TableHead className="text-right">Margem</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Validade</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {propostas.map((p) => {
-            const dim = calcDimensionamento(p);
-            const pre = calcPrecificacao(p);
-            const res = calcResultado(p);
-            const bloq = p.status === "APROVADA";
-            return (
-              <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.numero}</TableCell>
-                <TableCell>{p.clienteNome || "—"}</TableCell>
-                <TableCell>{p.consultor || "—"}</TableCell>
-                <TableCell>{p.cidade ? `${p.cidade}/${p.estado}` : "—"}</TableCell>
-                <TableCell className="text-right">{fmtNum(dim.potenciaFinalKwp, 2)}</TableCell>
-                <TableCell className="text-right">{fmtBRL(pre.valorFinal)}</TableCell>
-                <TableCell className={`text-right ${res.margemPct < 0 ? "text-destructive" : res.margemPct < 10 ? "text-warning" : ""}`}>
-                  {fmtNum(res.margemPct, 1)}%
-                </TableCell>
-                <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                <TableCell>{p.validade}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" title="Visualizar" onClick={() => onVisualizar(p.id)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {!bloq && (
-                      <Button variant="ghost" size="icon" title="Editar" onClick={() => onEditar(p)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicarProposta(p)}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    {!bloq && (
-                      <Button variant="ghost" size="icon" title="Excluir" onClick={() => excluirProposta(p)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
-  );
-}
-
-/* ===================== ROOT ===================== */
-
-const VIEW_KEY = "ms.fv.propostas.view";
-type ViewMode = "tabela" | "kanban";
-
-export function PropostaList({
-  propostas, onEditar, onVisualizar, onNova,
-}: {
-  propostas: PropostaFV[];
-  onEditar: (p: PropostaFV) => void;
-  onVisualizar: (id: string) => void;
-  onNova: () => void;
-}) {
-  // Auto-vence propostas passadas da validade
-  useEffect(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
-    propostas.forEach((p) => {
-      if (p.status === "ENVIADA" && p.validade && p.validade < hoje) {
-        upsertProposta({ ...p, status: "VENCIDA", atualizadoEm: hoje });
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propostas.length]);
-
-  const [view, setView] = useState<ViewMode>(() => (readLS<ViewMode>(VIEW_KEY, "tabela")));
-  useEffect(() => writeLS(VIEW_KEY, view), [view]);
-
-  const totais = useMemo(() => {
-    const total = propostas.length;
-    const aprovadas = propostas.filter((p) => p.status === "APROVADA").length;
-    const enviadas = propostas.filter((p) => p.status === "ENVIADA").length;
-    const valorTotalAprovado = propostas
-      .filter((p) => p.status === "APROVADA")
-      .reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
-    return { total, aprovadas, enviadas, valorTotalAprovado };
-  }, [propostas]);
-
-  if (!propostas.length) {
-    return (
-      <Card className="p-12 text-center">
-        <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
-        <h3 className="text-lg font-semibold">Nenhuma proposta criada ainda</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Crie sua primeira proposta fotovoltaica em poucos minutos.
-        </p>
-        <Button onClick={onNova} className="mt-4 gap-2">
-          <Plus className="h-4 w-4" /> Criar primeira proposta
-        </Button>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Total</div><div className="text-2xl font-semibold">{totais.total}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Enviadas</div><div className="text-2xl font-semibold">{totais.enviadas}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Aprovadas</div><div className="text-2xl font-semibold text-success">{totais.aprovadas}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant={view === "tabela" ? "default" : "outline"}
-          onClick={() => setView("tabela")}
-          className="gap-1"
-        >
-          <TableIcon className="h-4 w-4" /> Tabela
-        </Button>
-        <Button
-          size="sm"
-          variant={view === "kanban" ? "default" : "outline"}
-          onClick={() => setView("kanban")}
-          className="gap-1"
-        >
-          <LayoutGrid className="h-4 w-4" /> Kanban
-        </Button>
-      </div>
 
       {view === "tabela"
-        ? <TabelaView propostas={propostas} onEditar={onEditar} onVisualizar={onVisualizar} />
-        : <KanbanView propostas={propostas} onEditar={onEditar} onVisualizar={onVisualizar} />}
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} />
+        : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} />}
+
+      <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />
+
+      <LeadDetail
+        lead={leadAberto}
+        onClose={() => setLeadAberto(null)}
+        onVisualizar={(id) => { onVisualizar(id); setLeadAberto(null); }}
+        onNova={(preset) => { onNova(preset); setLeadAberto(null); }}
+        onEditar={(p) => onEditar(p)}
+      />
     </div>
   );
 }

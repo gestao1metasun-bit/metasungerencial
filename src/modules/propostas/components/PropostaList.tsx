@@ -84,7 +84,12 @@ export function aprovarProposta(p: PropostaFV) {
 }
 
 /** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
-function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, dados: Partial<PropostaFV>) {
+function aprovarComDadosCliente(
+  propostas: PropostaFV[],
+  escolhida: PropostaFV,
+  dados: Partial<PropostaFV>,
+  dataAssinatura: string,
+) {
   const hoje = new Date().toISOString().slice(0, 10);
   for (const p of propostas) {
     const isEscolhida = p.id === escolhida.id;
@@ -92,6 +97,7 @@ function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, 
       ...p,
       ...dados,
       status: isEscolhida ? "APROVADA" : p.status,
+      dataAssinatura: isEscolhida ? dataAssinatura : p.dataAssinatura,
       atualizadoEm: hoje,
     });
   }

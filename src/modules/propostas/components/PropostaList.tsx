@@ -139,6 +139,8 @@ type Lead = {
   estado?: string;
   propostas: PropostaFV[];
   ultima: PropostaFV;
+  primeira: PropostaFV;
+  dataPrimeira: string;
   valor: number;
   dias: number;
   bloqueado: boolean;

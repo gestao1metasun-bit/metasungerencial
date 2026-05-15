@@ -1,7 +1,7 @@
 // Página principal do módulo Propostas Fotovoltaicas.
 // Movida de src/routes/propostas.tsx durante reorganização modular.
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
   XCircle, Sparkles, Calculator, Users, MapPin, Zap, Sun, Wrench, DollarSign,
@@ -338,11 +338,18 @@ function LeadModal({
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
 
   // Quando vem com dados preenchidos (gerar nova proposta a partir de um lead
-  // existente), os campos ficam travados. O usuário clica no X de cada campo
-  // para liberar a edição daquele dado.
+  // existente), os campos ficam travados. O bloqueio é definido pelos valores
+  // iniciais — digitar não trava o campo. O usuário clica no X para liberar.
+  const initial = useRef({
+    nome: !!(proposta.clienteNome ?? "").trim(),
+    telefone: !!(proposta.clienteTelefone ?? "").trim(),
+    consultor: !!(proposta.consultor ?? "").trim(),
+    captacao: !!(proposta.origemCaptacao ?? "").trim(),
+    endereco: !!(proposta.clienteEndereco ?? "").trim(),
+  }).current;
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
-  const isLocked = (field: string, value: string) =>
-    !unlocked[field] && !!value;
+  const isLocked = (field: string, _value?: string) =>
+    !unlocked[field] && !!(initial as Record<string, boolean>)[field];
   const unlock = (field: string) =>
     setUnlocked((u) => ({ ...u, [field]: true }));
 
@@ -514,7 +521,7 @@ function LeadModal({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>Voltar</Button>
-          <Button onClick={continuar}>Continuar</Button>
+          <Button onClick={continuar}>Salvar cliente</Button>
         </DialogFooter>
       </DialogContent>
 

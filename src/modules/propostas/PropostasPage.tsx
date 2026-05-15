@@ -837,6 +837,74 @@ function PropostaSheet({
             </div>
           </Bloco>
 
+          {/* BLOCO 6.1 — Inversores (sugestão automática) */}
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="6.1 Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <div>
+                Calculado a partir de <strong>{dim.qtdFinal}</strong> módulo(s) de <strong>{p.moduloPotenciaWp}W</strong>.
+                Regra: ≤ 37,5 kW × {String(cfg.inversorMultBaixa).replace(".", ",")} · ≥ 40 kW × {String(cfg.inversorMultAlta).replace(".", ",")}.
+              </div>
+              <Button variant="outline" size="sm" onClick={() => {
+                const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                update("inversores", sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade })));
+                toast.success("Inversores sugeridos automaticamente.");
+              }}><Sparkles className="mr-1 h-3 w-3" /> Sugerir novamente</Button>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {[0,1,2,3,4].map((idx) => {
+                const slot = (() => {
+                  // expande pelas quantidades: cada inversor sugerido vira N slots
+                  const flat: string[] = [];
+                  p.inversores.forEach((e) => {
+                    for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
+                  });
+                  return flat[idx] ?? "";
+                })();
+                const inv = inversores.find((i) => i.id === slot);
+                return (
+                  <Field key={idx} label={`Inversor ${idx + 1}`}>
+                    <Select
+                      value={slot}
+                      onValueChange={(v) => {
+                        // reconstrói a lista de inversores a partir dos 5 slots
+                        const flat: string[] = [];
+                        p.inversores.forEach((e) => {
+                          for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
+                        });
+                        while (flat.length < 5) flat.push("");
+                        flat[idx] = v;
+                        const agg = new Map<string, number>();
+                        flat.filter(Boolean).forEach((id) => agg.set(id, (agg.get(id) ?? 0) + 1));
+                        update("inversores", Array.from(agg.entries()).map(([inversorId, quantidade]) => ({ inversorId, quantidade })));
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__" disabled>—</SelectItem>
+                        {STANDARD_INVERSOR_KW.map((kw) => {
+                          const id = inversorIdPadrao(kw);
+                          const sup = modulosSuportadosPorInversor(kw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                          const cap = capacidadeKwpInversor(kw, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                          const lbl = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
+                          return (
+                            <SelectItem key={id} value={id}>
+                              INVERSOR {lbl}KW — {fmtNum(cap,1)} kWp · até {sup} módulos
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {inv && (
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        Capacidade: {fmtNum(capacidadeKwpInversor(inv.potenciaKw, cfg.inversorMultBaixa, cfg.inversorMultAlta), 1)} kWp · suporta até {modulosSuportadosPorInversor(inv.potenciaKw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta)} módulos
+                      </div>
+                    )}
+                  </Field>
+                );
+              })}
+            </div>
+          </Bloco>
+
           {/* BLOCO 7 — Precificação */}
           <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
             <div className="grid gap-3 md:grid-cols-3">

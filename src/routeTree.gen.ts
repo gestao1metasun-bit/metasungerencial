@@ -20,6 +20,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as ComercialRouteImport } from './routes/comercial'
 import { Route as CadastrosRouteImport } from './routes/cadastros'
+import { Route as CadastrarRouteImport } from './routes/cadastrar'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -77,6 +78,11 @@ const CadastrosRoute = CadastrosRouteImport.update({
   path: '/cadastros',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastrarRoute = CadastrarRouteImport.update({
+  id: '/cadastrar',
+  path: '/cadastrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,6 +91,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cadastrar'
     | '/cadastros'
     | '/comercial'
     | '/configuracoes'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cadastrar'
     | '/cadastros'
     | '/comercial'
     | '/configuracoes'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cadastrar'
     | '/cadastros'
     | '/comercial'
     | '/configuracoes'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
   ComercialRoute: typeof ComercialRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastrosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastrar': {
+      id: '/cadastrar'
+      path: '/cadastrar'
+      fullPath: '/cadastrar'
+      preLoaderRoute: typeof CadastrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -277,6 +297,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,
   ComercialRoute: ComercialRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,

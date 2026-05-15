@@ -118,7 +118,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const isAuth = path === "/login";
+  const isAuth = path === "/login" || path === "/cadastrar";
 
   return (
     <QueryClientProvider client={queryClient}>

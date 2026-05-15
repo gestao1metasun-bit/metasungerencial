@@ -1,4 +1,4 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package, FileText,
   Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
+import { useAuth, signOut } from "@/lib/auth-store";
+import { toast } from "sonner";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
@@ -46,9 +48,29 @@ export function AppLayout() {
     setCurrentTab(parseHash(hash));
   }, [hash]);
 
-  const { user, perfil } = useUsuarioAtual();
+  const { perfil } = useUsuarioAtual();
+  const auth = useAuth();
+  const navigate = useNavigate();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
-  const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
+  const displayPerfil = auth.role === "admin_master"
+    ? "Admin Master"
+    : auth.role === "admin_geral"
+    ? "Admin Geral"
+    : auth.role === "usuario"
+    ? "Usuário"
+    : (perfil?.nome ?? "Sem perfil");
+  const initials = String(displayName).split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "??";
+
+  async function handleLogout() {
+    try {
+      await signOut();
+      toast.success("Sessão encerrada.");
+      void navigate({ to: "/login" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao sair.");
+    }
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -145,16 +167,20 @@ export function AppLayout() {
             <Link to="/configuracoes" className="hidden md:flex items-center gap-3 rounded-md border border-border bg-card px-3 py-1.5 hover:bg-accent">
               <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{initials}</div>
               <div className="leading-tight text-left">
-                <div className="text-sm font-medium">{user?.nome ?? "—"}</div>
-                <div className="text-[11px] text-muted-foreground">{perfil?.nome ?? "Sem perfil"}</div>
+                <div className="text-sm font-medium">{displayName}</div>
+                <div className="text-[11px] text-muted-foreground">{displayPerfil}</div>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Link>
-            <Link to="/login">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              title="Sair"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </header>
 

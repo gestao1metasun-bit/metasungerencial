@@ -1,20 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sun, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Sun, Mail, Lock, User as UserIcon, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { signInEmail, useAuth } from "@/lib/auth-store";
+import { signUpEmail, useAuth } from "@/lib/auth-store";
 
-export const Route = createFileRoute("/login")({
-  component: LoginPage,
+export const Route = createFileRoute("/cadastrar")({
+  component: CadastrarPage,
 });
 
-function LoginPage() {
+function CadastrarPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,21 +29,21 @@ function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !senha) {
-      toast.error("Informe e-mail e senha.");
+      toast.error("Preencha e-mail e senha.");
+      return;
+    }
+    if (senha.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     setSubmitting(true);
     try {
-      await signInEmail(email.trim().toLowerCase(), senha);
-      toast.success("Login efetuado.");
-      void navigate({ to: "/dashboard" });
+      await signUpEmail(email.trim().toLowerCase(), senha, nome.trim() || undefined);
+      toast.success("Conta criada! Verifique seu e-mail para confirmar (se exigido) e faça login.");
+      void navigate({ to: "/login" });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao entrar.";
-      toast.error(
-        msg.toLowerCase().includes("invalid login")
-          ? "E-mail ou senha incorretos."
-          : msg
-      );
+      const msg = err instanceof Error ? err.message : "Falha no cadastro.";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -60,14 +61,23 @@ function LoginPage() {
           </div>
           <div>
             <div className="text-lg font-semibold tracking-tight">Meta Sun Gerencial</div>
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Plataforma interna</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Criar conta</div>
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold">Bem-vindo de volta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
+        <h1 className="text-2xl font-semibold">Crie sua conta</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          O <strong>primeiro</strong> usuário cadastrado vira automaticamente <strong>Admin Master</strong>.
+        </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="nome">Nome completo</Label>
+            <div className="relative">
+              <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} className="pl-9 h-11" />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
             <div className="relative">
@@ -76,25 +86,20 @@ function LoginPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="senha">Senha</Label>
-            </div>
+            <Label htmlFor="senha">Senha (mín. 6 caracteres)</Label>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} className="pl-9 h-11" />
+              <Input id="senha" type="password" autoComplete="new-password" value={senha} onChange={(e) => setSenha(e.target.value)} className="pl-9 h-11" />
             </div>
           </div>
           <Button type="submit" disabled={submitting} className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>)}
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Criar conta <ArrowRight className="ml-2 h-4 w-4" /></>)}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">Primeiro acesso? </span>
-          <Link to="/cadastrar" className="text-primary hover:underline">Criar conta</Link>
-        </div>
-        <div className="mt-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Meta Sun Energia Solar
+          <span className="text-muted-foreground">Já tem conta? </span>
+          <Link to="/login" className="text-primary hover:underline">Entrar</Link>
         </div>
       </Card>
     </div>

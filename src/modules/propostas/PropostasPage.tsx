@@ -55,6 +55,54 @@ import { CrudTarifas } from "./components/CrudTarifas";
 
 export { PropostasPage };
 
+function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = q
+      ? cidades.filter((c) => `${c.cidade}/${c.estado}`.toLowerCase().includes(q))
+      : cidades;
+    return list.slice(0, 100);
+  }, [cidades, query]);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm text-muted-foreground shadow-sm hover:bg-accent/30"
+        >
+          <span>Buscar...</span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Pesquisar cidade ou UF..." value={query} onValueChange={setQuery} />
+          <CommandList>
+            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((c) => (
+                <CommandItem
+                  key={c.id}
+                  value={c.id}
+                  onSelect={() => {
+                    onSelect(c.id);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                >
+                  {c.cidade}/{c.estado}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.
  *  Quando `markDefault` é true, mantém o flag `cidadeIsDefault` para a UI mostrar o chip cinza. */
 function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boolean): PropostaFV {

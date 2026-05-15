@@ -263,7 +263,7 @@ function PropostasPage() {
         title="Propostas Fotovoltaicas"
         subtitle="Crie propostas guiadas com cálculo automático de potência, preço e margem."
         actions={
-          <Button onClick={novaProposta} className="gap-2">
+          <Button onClick={() => novaProposta()} className="gap-2">
             <Plus className="h-4 w-4" /> Nova Proposta
           </Button>
         }

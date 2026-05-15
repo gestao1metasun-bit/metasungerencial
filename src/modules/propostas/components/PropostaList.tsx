@@ -1063,6 +1063,9 @@ function TabelaView({
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
       case "propostas": return <span className="tabular-nums">{l.propostas.length}</span>;
+      case "aberto":    return <span className="tabular-nums">{l.emAberto}</span>;
+      case "aprovadas": return <span className={`tabular-nums ${l.aprovadas > 0 ? "font-semibold text-success" : ""}`}>{l.aprovadas}</span>;
+      case "assinados": return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status":    return <Badge variant={statusVariant(l.status)}>{l.status}</Badge>;
       case "dias":

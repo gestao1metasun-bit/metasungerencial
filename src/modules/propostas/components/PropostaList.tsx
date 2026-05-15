@@ -5,12 +5,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Pencil, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
-  ChevronLeft, ChevronRight, X, Check, Lock,
+  ChevronLeft, ChevronRight, X, Check, Lock, Search, FilterX,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -143,27 +144,44 @@ function KanbanView({
 }) {
   const { cols, setCols, assign, setAssign } = useKanbanState(propostas);
   const [novoTitulo, setNovoTitulo] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [editandoCol, setEditandoCol] = useState<string | null>(null);
   const [tituloEdit, setTituloEdit] = useState("");
   const [dragProp, setDragProp] = useState<string | null>(null);
   const [dragCol, setDragCol] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
+
+  const propostasFiltradas = useMemo(() => {
+    const q = filtro.trim().toLowerCase();
+    return propostas.filter((p) => {
+      if (filtroStatus !== "TODOS" && p.status !== filtroStatus) return false;
+      if (!q) return true;
+      return (
+        (p.clienteNome || "").toLowerCase().includes(q) ||
+        (p.consultor || "").toLowerCase().includes(q) ||
+        (p.numero || "").toLowerCase().includes(q)
+      );
+    });
+  }, [propostas, filtro, filtroStatus]);
 
   const porColuna = useMemo(() => {
     const map: Record<string, PropostaFV[]> = {};
     cols.forEach((c) => (map[c.id] = []));
-    propostas.forEach((p) => {
+    propostasFiltradas.forEach((p) => {
       const c = assign[p.id] ?? colPadraoPorStatus(p.status);
       if (!map[c]) map[c] = [];
       map[c].push(p);
     });
     return map;
-  }, [cols, propostas, assign]);
+  }, [cols, propostasFiltradas, assign]);
 
   const adicionarCol = () => {
     const t = novoTitulo.trim();
     if (!t) return;
     setCols((c) => [...c, { id: `col-${Date.now()}`, titulo: t }]);
     setNovoTitulo("");
+    setPopoverOpen(false);
   };
   const excluirCol = (id: string) => {
     if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
@@ -201,20 +219,55 @@ function KanbanView({
 
   return (
     <div className="space-y-3">
-      <Card className="flex flex-wrap items-center gap-2 p-3">
-        <Input
-          value={novoTitulo}
-          onChange={(e) => setNovoTitulo(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
-          placeholder="Nome da nova coluna…"
-          className="h-8 max-w-xs"
-        />
-        <Button size="sm" onClick={adicionarCol} className="gap-1">
-          <Plus className="h-4 w-4" /> Nova coluna
-        </Button>
-        <span className="ml-auto text-xs text-muted-foreground">
-          Arraste cards entre colunas. Arraste o título para reordenar colunas.
+      <Card className="flex flex-wrap items-center gap-2 p-2">
+        <div className="relative min-w-[220px] max-w-md flex-1">
+          <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            placeholder="Filtrar por cliente, consultor ou nº…"
+            className="h-8 pl-7"
+          />
+        </div>
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
+          className="h-8 rounded-md border bg-background px-2 text-xs"
+        >
+          {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
+            <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+          ))}
+        </select>
+        {(filtro || filtroStatus !== "TODOS") && (
+          <Button size="sm" variant="ghost" className="h-8 gap-1" onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); }}>
+            <FilterX className="h-3.5 w-3.5" /> Limpar
+          </Button>
+        )}
+        <span className="ml-auto hidden text-[11px] text-muted-foreground lg:inline">
+          Arraste cards · arraste o título para reordenar
         </span>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" /> Nova coluna
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 p-2">
+            <div className="flex flex-col gap-2">
+              <Input
+                autoFocus
+                value={novoTitulo}
+                onChange={(e) => setNovoTitulo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
+                placeholder="Nome da nova coluna…"
+                className="h-8"
+              />
+              <Button size="sm" onClick={adicionarCol} className="gap-1">
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </Card>
 
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -229,46 +282,54 @@ function KanbanView({
               onDrop={() => dropEmColuna(c.id)}
             >
               <div
-                className="flex items-center gap-1 border-b bg-card p-2"
+                className="border-b bg-card"
                 draggable
                 onDragStart={() => { setDragCol(c.id); setDragProp(null); }}
               >
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                {editandoCol === c.id ? (
-                  <>
-                    <Input
-                      autoFocus
-                      value={tituloEdit}
-                      onChange={(e) => setTituloEdit(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
-                      className="h-7"
-                    />
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
-                      <Check className="h-3.5 w-3.5" />
-                    </Button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
-                    className="flex-1 cursor-text truncate px-1 text-left text-sm font-semibold"
-                    title="Clique para renomear · arraste para reordenar"
-                  >
-                    {c.titulo}
-                  </button>
-                )}
-                <Badge variant="outline" className="text-[10px]">{items.length}</Badge>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
-                  <X className="h-3.5 w-3.5 text-destructive" />
-                </Button>
-              </div>
-              <div className="border-b bg-muted/20 px-2 py-1 text-[11px] text-muted-foreground">
-                {fmtBRL(total)}
+                <div className="flex items-center gap-1 px-2 pt-2">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  {editandoCol === c.id ? (
+                    <>
+                      <Input
+                        autoFocus
+                        value={tituloEdit}
+                        onChange={(e) => setTituloEdit(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
+                        className="h-7"
+                      />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
+                      className="flex-1 cursor-text truncate px-1 text-left text-sm font-bold uppercase tracking-wide"
+                      title="Clique para renomear · arraste para reordenar"
+                    >
+                      {c.titulo}
+                    </button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
+                    <X className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+                <div className="flex items-end justify-between gap-2 px-3 pb-2 pt-1">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor total</div>
+                    <div className="truncate text-base font-bold text-primary">{fmtBRL(total)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Contratos</div>
+                    <div className="text-base font-bold tabular-nums">{items.length}</div>
+                  </div>
+                </div>
               </div>
               <div className="flex min-h-[120px] flex-col gap-2 p-2">
                 {items.map((p) => {

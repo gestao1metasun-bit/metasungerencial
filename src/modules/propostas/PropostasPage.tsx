@@ -886,8 +886,8 @@ function PropostaSheet({
             </div>
           </Bloco>
 
-          {/* BLOCO 10 — Resultado */}
-          <Bloco icon={<DollarSign className="h-4 w-4" />} title="10. Resultado e Margem">
+          {/* BLOCO 9 — Resultado */}
+          <Bloco icon={<DollarSign className="h-4 w-4" />} title="9. Resultado e Margem">
             <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
               <ResultCard label="Valor final" value={fmtBRL(res.valorFinal)} />
               <ResultCard label="Custo total" value={fmtBRL(res.custoTotal)} />

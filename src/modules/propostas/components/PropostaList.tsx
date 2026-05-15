@@ -926,6 +926,7 @@ const TABELA_COLS: TabelaColDef[] = [
 ];
 const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
 const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({

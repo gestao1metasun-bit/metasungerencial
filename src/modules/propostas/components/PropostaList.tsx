@@ -906,7 +906,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    }, dataAssinatura);
+    }, dataAssinatura, { ativo: financiamento === "SIM", banco: financiamento === "SIM" ? bancoFin : undefined });
     onConfirmed();
   };
 

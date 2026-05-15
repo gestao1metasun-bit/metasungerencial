@@ -1285,30 +1285,32 @@ export function PropostaList({
         <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
       </div>
 
-      <Card className="flex flex-wrap items-center gap-2 p-2">
-        <Button
-          size="sm"
-          variant={view === "tabela" ? "default" : "outline"}
-          onClick={() => setView("tabela")}
-          className="gap-1"
-        >
-          <TableIcon className="h-4 w-4" /> Tabela
-        </Button>
-        <Button
-          size="sm"
-          variant={view === "kanban" ? "default" : "outline"}
-          onClick={() => setView("kanban")}
-          className="gap-1"
-        >
-          <LayoutGrid className="h-4 w-4" /> Kanban
-        </Button>
+      <Card className="flex flex-wrap items-center justify-end gap-2 p-2">
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant={view === "tabela" ? "default" : "outline"}
+            onClick={() => setView("tabela")}
+            className="gap-1"
+          >
+            <TableIcon className="h-4 w-4" /> Tabela
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "kanban" ? "default" : "outline"}
+            onClick={() => setView("kanban")}
+            className="gap-1"
+          >
+            <LayoutGrid className="h-4 w-4" /> Kanban
+          </Button>
+        </div>
 
-        <div className="relative ml-2 min-w-[220px] max-w-md flex-1">
+        <div className="relative min-w-[220px] max-w-md flex-1">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            placeholder="Filtrar por cliente, consultor ou nº…"
+            placeholder="FILTRAR POR CLIENTE, CONSULTOR OU Nº…"
             className="h-8 pl-7"
           />
         </div>
@@ -1328,7 +1330,7 @@ export function PropostaList({
         )}
 
         {view === "kanban" && (
-          <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
             <Columns3 className="h-4 w-4" /> Colunas do Kanban
           </Button>
         )}

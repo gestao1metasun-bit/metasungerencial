@@ -488,7 +488,7 @@ function LeadDetail({
                   <TableRow>
                     <TableHead>Nº</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Atualizada</TableHead>
+                    <TableHead>Criada</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -503,7 +503,7 @@ function LeadDetail({
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
                         <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                        <TableCell>{p.atualizadoEm || p.criadoEm}</TableCell>
+                        <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
@@ -515,9 +515,6 @@ function LeadDetail({
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => duplicarProposta(p)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
                             {podeExcluir && (
                               <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -532,7 +529,6 @@ function LeadDetail({
               </Table>
             </div>
           </TabsContent>
-
           <TabsContent value="aprovar" className="mt-4 space-y-3">
             {lead.bloqueado ? (
               <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">

@@ -908,14 +908,23 @@ function PropostaSheet({
             )}
           </Bloco>
 
-          {/* BLOCO 11 — Observações */}
-          <Bloco icon={<FileText className="h-4 w-4" />} title="11. Observações">
+          {/* BLOCO 10 — Observações */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="10. Observações">
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Observações internas (não aparecem na proposta)">
                 <Textarea rows={4} value={p.obsInternas ?? ""} onChange={(e) => update("obsInternas", e.target.value)} />
               </Field>
               <Field label="Observações para o cliente">
                 <Textarea rows={4} value={p.obsCliente ?? ""} onChange={(e) => update("obsCliente", e.target.value)} />
+              </Field>
+            </div>
+          </Bloco>
+
+          {/* BLOCO 11 — Validade */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="11. Validade da Proposta">
+            <div className="grid gap-3 md:grid-cols-3">
+              <Field label="Validade da proposta">
+                <Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} />
               </Field>
             </div>
           </Bloco>

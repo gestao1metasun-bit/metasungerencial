@@ -66,9 +66,20 @@ export function duplicarProposta(p: PropostaFV) {
 }
 
 export function excluirProposta(p: PropostaFV) {
+  if (p.status !== "RASCUNHO") {
+    toast.error("Propostas geradas não podem ser excluídas.");
+    return;
+  }
   if (!confirm(`Excluir proposta ${p.numero}? Esta ação não pode ser desfeita.`)) return;
   removeProposta(p.id);
   toast.success("Proposta excluída.");
+}
+
+export function aprovarProposta(p: PropostaFV) {
+  if (!confirm(`Aprovar a proposta ${p.numero}? Ela será convertida em contrato e o card ficará bloqueado.`)) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  upsertProposta({ ...p, status: "APROVADA", atualizadoEm: hoje });
+  toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
 }
 
 function diasDesde(iso?: string): number {

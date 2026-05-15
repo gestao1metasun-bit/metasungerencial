@@ -858,3 +858,77 @@ function AnexarAssinadoDialog({
     </Dialog>
   );
 }
+
+const BANCOS_FINANCIAMENTO = ["BASA", "SICREDI", "BB", "Outro"] as const;
+
+function AprovarPropostaDialog({
+  proposta, onClose, onConfirm,
+}: {
+  proposta: PropostaFV;
+  onClose: () => void;
+  onConfirm: (motivo: string, comFinanciamento: boolean, banco?: string) => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [comFinanciamento, setComFinanciamento] = useState(false);
+  const [banco, setBanco] = useState<string>("BASA");
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Aprovar proposta {proposta.versao ?? proposta.numero}</DialogTitle>
+          <DialogDescription>
+            Ao aprovar, todas as outras versões deste lead serão marcadas como OBSOLETAS,
+            o contrato será gerado e a obra será enviada para Engenharia (Em projeto/aprovação).
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <Label>Motivo / observação <span className="text-destructive">*</span></Label>
+            <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+          </div>
+
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <label className="flex items-start gap-2">
+              <Checkbox
+                checked={comFinanciamento}
+                onCheckedChange={(v) => setComFinanciamento(v === true)}
+                className="mt-0.5"
+              />
+              <div className="text-sm">
+                <div className="font-medium">Possui FINANCIAMENTO bancário?</div>
+                <div className="text-xs text-muted-foreground">
+                  Se marcado, o contrato vai automaticamente para o módulo
+                  <span className="font-medium"> Financiamentos</span>.
+                </div>
+              </div>
+            </label>
+
+            {comFinanciamento && (
+              <div className="mt-3">
+                <Label>Banco</Label>
+                <Select value={banco} onValueChange={setBanco}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BANCOS_FINANCIAMENTO.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!motivo.trim()) { toast.error("Informe o motivo da aprovação."); return; }
+            onConfirm(motivo.trim(), comFinanciamento, comFinanciamento ? banco : undefined);
+          }}>Aprovar e gerar contrato</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

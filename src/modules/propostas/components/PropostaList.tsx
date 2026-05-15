@@ -245,7 +245,7 @@ const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 const COL_CONTRATO_ID = "col-contrato-assinado";
 const COL_CONTRATO: KCol = {
   id: COL_CONTRATO_ID,
-  titulo: "CONTRATO ASSINADO — COMERCIAL",
+  titulo: "ASSINADOS",
   ativo: true,
   locked: true,
 };

@@ -48,7 +48,7 @@ export function AppLayout() {
     setCurrentTab(parseHash(hash));
   }, [hash]);
 
-  const { user, perfil } = useUsuarioAtual();
+  const { perfil } = useUsuarioAtual();
   const auth = useAuth();
   const navigate = useNavigate();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));

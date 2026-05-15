@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -80,6 +81,21 @@ export function aprovarProposta(p: PropostaFV) {
   const hoje = new Date().toISOString().slice(0, 10);
   upsertProposta({ ...p, status: "APROVADA", atualizadoEm: hoje });
   toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
+}
+
+/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
+function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, dados: Partial<PropostaFV>) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  for (const p of propostas) {
+    const isEscolhida = p.id === escolhida.id;
+    upsertProposta({
+      ...p,
+      ...dados,
+      status: isEscolhida ? "APROVADA" : p.status,
+      atualizadoEm: hoje,
+    });
+  }
+  toast.success(`Proposta ${escolhida.numero} aprovada — enviada ao comercial.`);
 }
 
 function diasDesde(iso?: string): number {
@@ -396,6 +412,7 @@ function LeadDetail({
   onNova: (preset?: Partial<PropostaFV>) => void;
   onEditar: (p: PropostaFV) => void;
 }) {
+  const [aprovarAlvo, setAprovarAlvo] = useState<PropostaFV | null>(null);
   if (!lead) return null;
   const enderecoLinha = [
     lead.clienteEndereco,
@@ -537,7 +554,7 @@ function LeadDetail({
                                 size="sm"
                                 variant={podeAprovar ? "default" : "outline"}
                                 disabled={!podeAprovar}
-                                onClick={() => aprovarProposta(p)}
+                                onClick={() => setAprovarAlvo(p)}
                                 className="gap-1"
                               >
                                 <Check className="h-4 w-4" /> Aprovar
@@ -558,6 +575,14 @@ function LeadDetail({
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AprovarDialog
+        open={!!aprovarAlvo}
+        lead={lead}
+        proposta={aprovarAlvo}
+        onClose={() => setAprovarAlvo(null)}
+        onConfirmed={() => { setAprovarAlvo(null); onClose(); }}
+      />
     </Dialog>
   );
 }
@@ -568,6 +593,140 @@ function Field({ label, value, className }: { label: string; value?: string; cla
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="text-sm font-medium">{value || "—"}</div>
     </div>
+  );
+}
+
+/* ===== Diálogo: editar dados do cliente + aprovar proposta ===== */
+function AprovarDialog({
+  open, lead, proposta, onClose, onConfirmed,
+}: {
+  open: boolean;
+  lead: Lead | null;
+  proposta: PropostaFV | null;
+  onClose: () => void;
+  onConfirmed: () => void;
+}) {
+  const upper = (v: string) => v.toUpperCase();
+  const [nome, setNome] = useState("");
+  const [doc, setDoc] = useState("");
+  const [tel, setTel] = useState("");
+  const [email, setEmail] = useState("");
+  const [cep, setCep] = useState("");
+  const [rua, setRua] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+
+  useEffect(() => {
+    if (!lead) return;
+    const u = lead.ultima;
+    setNome(lead.clienteNome || "");
+    setDoc(u.clienteDoc || "");
+    setTel(u.clienteTelefone || "");
+    setEmail(u.clienteEmail || "");
+    setCep(u.clienteCep || "");
+    setRua(u.clienteRua || "");
+    setNumero(u.clienteNumero || "");
+    setComplemento(u.clienteComplemento || "");
+    setBairro(u.clienteBairro || "");
+    setCidade(u.clienteCidade || lead.cidade || "");
+    setUf(u.clienteUf || lead.estado || "");
+  }, [lead?.key, proposta?.id]);
+
+  if (!lead || !proposta) return null;
+
+  const confirmar = () => {
+    if (!nome.trim()) { toast.error("Informe o nome completo do cliente."); return; }
+    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
+    if (!tel.trim()) { toast.error("Informe o telefone do cliente."); return; }
+    const enderecoLinha = [rua, numero, bairro, cidade && `${cidade}${uf ? "/" + uf : ""}`]
+      .filter(Boolean).join(", ");
+    aprovarComDadosCliente(lead.propostas, proposta, {
+      clienteNome: upper(nome.trim()),
+      clienteDoc: doc.trim(),
+      clienteTelefone: tel.trim(),
+      clienteEmail: email.trim().toLowerCase(),
+      clienteCep: cep.trim(),
+      clienteRua: upper(rua.trim()),
+      clienteNumero: numero.trim(),
+      clienteComplemento: upper(complemento.trim()),
+      clienteBairro: upper(bairro.trim()),
+      clienteCidade: upper(cidade.trim()),
+      clienteUf: upper(uf.trim()),
+      clienteEndereco: upper(enderecoLinha),
+    });
+    onConfirmed();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Check className="h-5 w-5 text-success" />
+            Aprovar proposta {proposta.numero}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+          Confirme/complete os dados do cliente. Ao aprovar, a proposta vira contrato e
+          esses dados serão enviados ao comercial.
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Nome completo *</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">CPF / CNPJ *</Label>
+            <Input value={doc} onChange={(e) => setDoc(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Telefone *</Label>
+            <Input value={tel} onChange={(e) => setTel(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">E-mail</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">CEP</Label>
+            <Input value={cep} onChange={(e) => setCep(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Bairro</Label>
+            <Input value={bairro} onChange={(e) => setBairro(e.target.value.toUpperCase())} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">Rua</Label>
+            <Input value={rua} onChange={(e) => setRua(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">Número</Label>
+            <Input value={numero} onChange={(e) => setNumero(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Complemento</Label>
+            <Input value={complemento} onChange={(e) => setComplemento(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">Cidade</Label>
+            <Input value={cidade} onChange={(e) => setCidade(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <Label className="text-xs">UF</Label>
+            <Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={confirmar} className="gap-1">
+            <Check className="h-4 w-4" /> Confirmar e aprovar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -617,7 +776,7 @@ function KanbanView({
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
+    <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {colsAtivas.map((c) => {
         const items = porColuna[c.id] || [];
         const total = items.reduce((s, l) => s + l.valor, 0);

@@ -315,6 +315,19 @@ function PropostasPage() {
 
 /* =========================== LEAD MODAL =========================== */
 
+const ORIGENS_KEY = "ms.fv.origens-captacao.v1";
+const ORIGENS_DEFAULT = ["INDICAÇÃO", "REDE SOCIAL", "CONHECIDO", "SITE", "ANÚNCIO", "EVENTO"];
+function loadOrigens(): string[] {
+  try {
+    const raw = localStorage.getItem(ORIGENS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return ORIGENS_DEFAULT;
+}
+function saveOrigens(list: string[]) {
+  try { localStorage.setItem(ORIGENS_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+}
+
 function LeadModal({
   proposta, onCancel, onContinuar,
 }: {
@@ -327,13 +340,30 @@ function LeadModal({
   const [telefone, setTelefone] = useState(formatTelefoneBR(proposta.clienteTelefone ?? ""));
   const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
+  const [origens, setOrigens] = useState<string[]>(() => loadOrigens());
+  const [captacao, setCaptacao] = useState(proposta.origemCaptacao ?? "");
+  const [novaOrigem, setNovaOrigem] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
 
   const upper = (v: string) => v.toUpperCase();
+
+  function adicionarOrigem() {
+    const t = upper(novaOrigem.trim());
+    if (!t) return;
+    const next = Array.from(new Set([...origens, t]));
+    setOrigens(next); saveOrigens(next);
+    setCaptacao(t);
+    setNovaOrigem(""); setNovaOrigemOpen(false);
+  }
 
   function continuar() {
     if (!nome.trim() || !telefone.trim() || !consultor.trim()) {
       toast.error("Preencha Nome, Telefone e selecione um Consultor.");
+      return;
+    }
+    if (!captacao.trim()) {
+      toast.error("Selecione a forma de captação do lead.");
       return;
     }
     const tel = telefone.replace(/\D/g, "");
@@ -347,6 +377,7 @@ function LeadModal({
       clienteTelefone: formatTelefoneBR(telefone),
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
+      origemCaptacao: captacao,
       criadoPor: upper(consultor.trim()),
     });
   }
@@ -391,6 +422,40 @@ function LeadModal({
               <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
                 <Plus className="h-3 w-3 mr-1" /> Cadastrar
               </Button>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Forma de captação *</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select value={captacao} onValueChange={setCaptacao}>
+                  <SelectTrigger><SelectValue placeholder="Como conheceu?" /></SelectTrigger>
+                  <SelectContent>
+                    {origens.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Popover open={novaOrigemOpen} onOpenChange={setNovaOrigemOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" size="sm">
+                    <Plus className="h-3 w-3 mr-1" /> Novo
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="end">
+                  <Label className="text-xs">Nova forma de captação</Label>
+                  <Input
+                    value={novaOrigem}
+                    onChange={(e) => setNovaOrigem(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && adicionarOrigem()}
+                    placeholder="EX.: WHATSAPP"
+                    className="mt-1 h-8"
+                    autoFocus
+                  />
+                  <Button size="sm" className="mt-2 w-full" onClick={adicionarOrigem}>Adicionar</Button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <div>

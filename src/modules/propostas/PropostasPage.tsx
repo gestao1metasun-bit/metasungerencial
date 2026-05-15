@@ -365,6 +365,25 @@ function PropostaSheet({
     setP((cur) => ({ ...cur, [k]: v, atualizadoEm: new Date().toISOString().slice(0, 10) }));
   }
 
+  async function buscarCep(cepDigits: string) {
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      if (!r.ok) { toast.error("Falha ao consultar CEP."); return; }
+      const d = await r.json();
+      if (d?.erro) { toast.error("CEP não encontrado."); return; }
+      setP((cur) => ({
+        ...cur,
+        clienteRua: (d.logradouro ?? "").toUpperCase(),
+        clienteBairro: (d.bairro ?? "").toUpperCase(),
+        clienteCidade: (d.localidade ?? "").toUpperCase(),
+        clienteUf: (d.uf ?? "").toUpperCase(),
+        atualizadoEm: new Date().toISOString().slice(0, 10),
+      }));
+    } catch {
+      toast.error("Erro de rede ao consultar CEP.");
+    }
+  }
+
   function selecionarCliente(id: string) {
     const c = clientes.find((x) => x.id === id);
     if (!c) return;
@@ -560,23 +579,35 @@ function PropostaSheet({
           {/* BLOCO 1 — Cliente */}
           <Bloco icon={<Users className="h-4 w-4" />} title="1. Dados do Cliente">
             <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <Label>Cliente cadastrado</Label>
-                <Select value={p.clienteId ?? ""} onValueChange={selecionarCliente}>
-                  <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome} — {c.doc || "sem doc"}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Field label="Nome do cliente"><Input value={p.clienteNome} onChange={(e) => update("clienteNome", e.target.value)} /></Field>
+              <Field label="Nome do cliente" hint="Travado. Edite o cliente em Cadastros para alterar.">
+                <Input value={p.clienteNome} readOnly className="bg-muted/50" />
+              </Field>
               <Field label="CPF/CNPJ"><Input value={p.clienteDoc ?? ""} onChange={(e) => update("clienteDoc", e.target.value)} /></Field>
               <Field label="Telefone"><Input value={p.clienteTelefone ?? ""} onChange={(e) => update("clienteTelefone", e.target.value)} /></Field>
               <Field label="E-mail"><Input type="email" value={p.clienteEmail ?? ""} onChange={(e) => update("clienteEmail", e.target.value)} /></Field>
-              <Field label="Endereço"><Input value={p.clienteEndereco ?? ""} onChange={(e) => update("clienteEndereco", e.target.value)} /></Field>
-              <Field label="Consultor de venda"><Input value={p.consultor ?? ""} onChange={(e) => update("consultor", e.target.value.toUpperCase())} /></Field>
+              <Field label="Consultor de venda">
+                <Input value={p.consultor ?? ""} readOnly className="bg-muted/50" />
+              </Field>
+              <Field label="CEP" hint="Digite os 8 dígitos. O endereço será preenchido automaticamente.">
+                <Input
+                  value={p.clienteCep ?? ""}
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="00000-000"
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    const fmt = raw.length > 5 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
+                    update("clienteCep", fmt);
+                    if (raw.length === 8) buscarCep(raw);
+                  }}
+                />
+              </Field>
+              <Field label="Rua/Logradouro"><Input value={p.clienteRua ?? ""} onChange={(e) => update("clienteRua", e.target.value.toUpperCase())} /></Field>
+              <Field label="Número"><Input value={p.clienteNumero ?? ""} onChange={(e) => update("clienteNumero", e.target.value)} /></Field>
+              <Field label="Complemento"><Input value={p.clienteComplemento ?? ""} onChange={(e) => update("clienteComplemento", e.target.value.toUpperCase())} /></Field>
+              <Field label="Bairro"><Input value={p.clienteBairro ?? ""} onChange={(e) => update("clienteBairro", e.target.value.toUpperCase())} /></Field>
+              <Field label="Cidade do cliente"><Input value={p.clienteCidade ?? ""} onChange={(e) => update("clienteCidade", e.target.value.toUpperCase())} /></Field>
+              <Field label="UF"><Input maxLength={2} value={p.clienteUf ?? ""} onChange={(e) => update("clienteUf", e.target.value.toUpperCase())} /></Field>
             </div>
           </Bloco>
 
@@ -669,14 +700,14 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)" hint="Vem da base interna ao escolher cidade/concessionária. Ajuste manual apenas se autorizado.">
+              <Field label="Tarifa de energia (R$/kWh)" hint="Definida no cadastro de Tarifas (Cadastros → Tarifas). Para alterar, edite na base de tarifas.">
                 <Input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   value={p.tarifa}
                   onChange={(e) => update("tarifa", +e.target.value)}
-                  disabled={!ehAdmin && !!p.cidadeId}
-                  className={!ehAdmin && !!p.cidadeId ? "bg-muted/50" : ""}
+                  disabled={!ehAdmin}
+                  className={!ehAdmin ? "bg-muted/50" : ""}
                 />
               </Field>
             </div>
@@ -691,7 +722,13 @@ function PropostaSheet({
             </div>
             {p.modoConsumo === "MEDIA" ? (
               <Field label="Consumo médio mensal (kWh)" hint="Informe a média da conta de energia.">
-                <Input type="number" value={p.consumoMedio} onChange={(e) => update("consumoMedio", +e.target.value)} />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Ex.: 450"
+                  value={p.consumoMedio ? p.consumoMedio : ""}
+                  onChange={(e) => update("consumoMedio", e.target.value === "" ? 0 : +e.target.value)}
+                />
               </Field>
             ) : (
               <>
@@ -699,8 +736,12 @@ function PropostaSheet({
                   {(["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"] as const).map((m) => (
                     <div key={m}>
                       <Label className="text-xs uppercase">{m}</Label>
-                      <Input type="number" value={p.consumoMensal?.[m] ?? ""}
-                        onChange={(e) => update("consumoMensal", { ...(p.consumoMensal ?? {}), [m]: +e.target.value })} />
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        value={p.consumoMensal?.[m] ? p.consumoMensal[m] : ""}
+                        onChange={(e) => update("consumoMensal", { ...(p.consumoMensal ?? {}), [m]: e.target.value === "" ? 0 : +e.target.value })}
+                      />
                     </div>
                   ))}
                 </div>
@@ -714,22 +755,8 @@ function PropostaSheet({
           {/* BLOCO 5 — Dimensionamento */}
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Geração desejada (kWh/mês)" hint="Padrão = consumo médio.">
-                <Input type="number" value={p.geracaoDesejada} onChange={(e) => update("geracaoDesejada", +e.target.value)} />
-              </Field>
-              <Field label="Taxa de simultaneidade (%)">
-                <Input type="number" value={Math.round((p.taxaSimultaneidade || 0) * 100)}
-                  onChange={(e) => update("taxaSimultaneidade", (+e.target.value || 0) / 100)} />
-              </Field>
-              <Field label="Fator de performance">
-                <Input type="number" step="0.01" value={p.fatorPerformance}
-                  onChange={(e) => update("fatorPerformance", +e.target.value)} />
-              </Field>
-              <ReadOnlyField label="Consumo instantâneo (kWh)" value={fmtNum(dim.consumoInstantaneo, 0)} />
-              <ReadOnlyField label="Geração injetada (kWh)" value={fmtNum(dim.geracaoInjetada, 0)} />
-              <ReadOnlyField label="Potência necessária (kWp)" value={fmtNum(dim.potenciaNecKwp, 2)} />
               <ReadOnlyField label="Quantidade calculada" value={String(dim.qtdCalc)} />
-              <Field label="Quantidade final (módulos)">
+              <Field label="Quantidade final (módulos)" hint="Ative a chave para ajustar manualmente.">
                 <div className="flex items-center gap-2">
                   <Switch checked={!!p.ajusteManualModulos} onCheckedChange={(v) => update("ajusteManualModulos", v)} />
                   <Input type="number" disabled={!p.ajusteManualModulos}
@@ -737,7 +764,10 @@ function PropostaSheet({
                     onChange={(e) => update("modulosManual", +e.target.value)} />
                 </div>
               </Field>
-              <ReadOnlyField label="Potência final (kWp)" value={fmtNum(dim.potenciaFinalKwp, 2)} />
+              <ReadOnlyField label="Potência do sistema (kWp)" value={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Cálculo: <strong>{dim.qtdFinal}</strong> módulos × <strong>{fmtNum((p.moduloPotenciaWp || 0)/1000, 3)} kW</strong> = <strong>{fmtNum(dim.potenciaFinalKwp, 2)} kWp</strong>
             </div>
           </Bloco>
 

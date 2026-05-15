@@ -331,9 +331,9 @@ function ColunasManager({
           <div className="space-y-1">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Colunas cadastradas</div>
             {cols.map((c, idx) => (
-              <div key={c.id} className={`flex items-center gap-2 rounded-md border p-2 ${c.ativo === false ? "bg-muted/40 opacity-60" : "bg-card"}`}>
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                {editId === c.id ? (
+              <div key={c.id} className={`flex items-center gap-2 rounded-md border p-2 ${c.ativo === false ? "bg-muted/40 opacity-60" : "bg-card"} ${c.locked ? "border-success/50" : ""}`}>
+                <GripVertical className={`h-4 w-4 ${c.locked ? "text-success/60" : "text-muted-foreground"}`} />
+                {editId === c.id && !c.locked ? (
                   <>
                     <Input
                       autoFocus
@@ -349,24 +349,27 @@ function ColunasManager({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setEditId(c.id); setTituloEdit(c.titulo); }}
-                    className="flex-1 truncate text-left text-sm font-medium"
-                    title="Clique para renomear"
+                    onClick={() => { if (c.locked) return; setEditId(c.id); setTituloEdit(c.titulo); }}
+                    className={`flex-1 truncate text-left text-sm font-medium ${c.locked ? "cursor-default" : ""}`}
+                    title={c.locked ? "Coluna fixa do sistema" : "Clique para renomear"}
                   >
-                    {c.titulo}
+                    <span className="inline-flex items-center gap-1">
+                      {c.locked && <Lock className="h-3 w-3 text-success" />}
+                      {c.titulo}
+                    </span>
                   </button>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, -1)} disabled={idx === 0} title="Subir">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, -1)} disabled={idx === 0 || c.locked || cols[idx - 1]?.locked} title="Subir">
                   <ArrowUp className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, 1)} disabled={idx === cols.length - 1} title="Descer">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, 1)} disabled={idx === cols.length - 1 || c.locked || cols[idx + 1]?.locked} title="Descer">
                   <ArrowDown className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-1">
                   <span className="text-[10px] uppercase text-muted-foreground">Ativa</span>
-                  <Switch checked={c.ativo !== false} onCheckedChange={() => toggleAtivo(c.id)} />
+                  <Switch checked={c.ativo !== false} onCheckedChange={() => toggleAtivo(c.id)} disabled={c.locked} />
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => excluir(c.id)} title="Excluir">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => excluir(c.id)} title="Excluir" disabled={c.locked}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>

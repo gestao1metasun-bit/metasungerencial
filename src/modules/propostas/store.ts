@@ -671,6 +671,6 @@ export function validarParaGeracao(p: PropostaFV): string[] {
   const { valorFinal } = calcPrecificacao(p);
   if (!valorFinal) e.push("Valor da proposta");
   if (!p.validade) e.push("Validade");
-  if (!p.inversores.length) e.push("Pelo menos 1 inversor");
+  
   return e;
 }

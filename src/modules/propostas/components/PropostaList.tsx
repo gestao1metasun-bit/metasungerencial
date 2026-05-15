@@ -908,58 +908,188 @@ function KanbanView({
 }
 
 /* ===================== TABELA VIEW ===================== */
+// Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
+// Persistência de ordem e larguras em localStorage.
+
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "valor" | "status" | "dias";
+type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
+
+const TABELA_COLS: TabelaColDef[] = [
+  { key: "cliente",   label: "Cliente",        defaultWidth: 240 },
+  { key: "consultor", label: "Consultor",      defaultWidth: 160 },
+  { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
+  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
+  { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
+  { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
+  { key: "status",    label: "Status",         defaultWidth: 130 },
+  { key: "dias",      label: "Dias",           defaultWidth: 80 },
+];
+const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
+const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
+const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead, onNovaPreset,
+  leads, onAbrirLead,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
   onNovaPreset: (preset?: Partial<PropostaFV>) => void;
 }) {
+  const colsByKey = useMemo(
+    () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c])) as Record<TabelaColKey, TabelaColDef>,
+    [],
+  );
+
+  const [order, setOrder] = useState<TabelaColKey[]>(TABELA_DEFAULT_ORDER);
+  const [widths, setWidths] = useState<Record<TabelaColKey, number>>(
+    () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>,
+  );
+
+  useEffect(() => {
+    try {
+      const rawO = localStorage.getItem(TABELA_ORDER_KEY);
+      if (rawO) {
+        const arr = JSON.parse(rawO) as TabelaColKey[];
+        const valid = arr.filter((k) => TABELA_DEFAULT_ORDER.includes(k));
+        const missing = TABELA_DEFAULT_ORDER.filter((k) => !valid.includes(k));
+        setOrder([...valid, ...missing]);
+      }
+      const rawW = localStorage.getItem(TABELA_WIDTH_KEY);
+      if (rawW) {
+        const w = JSON.parse(rawW) as Partial<Record<TabelaColKey, number>>;
+        setWidths((prev) => ({ ...prev, ...w }));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => { try { localStorage.setItem(TABELA_ORDER_KEY, JSON.stringify(order)); } catch {} }, [order]);
+  useEffect(() => { try { localStorage.setItem(TABELA_WIDTH_KEY, JSON.stringify(widths)); } catch {} }, [widths]);
+
+  const [dragKey, setDragKey] = useState<TabelaColKey | null>(null);
+  const move = (from: TabelaColKey, to: TabelaColKey) => {
+    if (from === to) return;
+    setOrder((prev) => {
+      const next = [...prev];
+      const fi = next.indexOf(from);
+      const ti = next.indexOf(to);
+      if (fi < 0 || ti < 0) return prev;
+      next.splice(fi, 1);
+      next.splice(ti, 0, from);
+      return next;
+    });
+  };
+
+  const startResize = (key: TabelaColKey, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = widths[key] ?? colsByKey[key].defaultWidth;
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.max(60, startW + (ev.clientX - startX));
+      setWidths((prev) => ({ ...prev, [key]: w }));
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const alignClass = (a?: "right" | "center") =>
+    a === "right" ? "text-right" : a === "center" ? "text-center" : "";
+
+  const renderCell = (l: Lead, key: TabelaColKey) => {
+    switch (key) {
+      case "cliente":
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-medium truncate">{l.clienteNome}</span>
+            {l.bloqueado && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
+          </div>
+        );
+      case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
+      case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
+      case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
+      case "propostas": return <span className="tabular-nums">{l.propostas.length}</span>;
+      case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
+      case "status":    return <Badge variant={statusVariant(l.status)}>{l.status}</Badge>;
+      case "dias":
+        return (
+          <div className="flex items-center gap-1" title={`${l.dias} dia(s)`}>
+            <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
+            <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
+          </div>
+        );
+    }
+  };
+
   return (
     <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Consultor</TableHead>
-            <TableHead>Cidade</TableHead>
-            <TableHead>Criado em</TableHead>
-            <TableHead className="text-right">Propostas</TableHead>
-            <TableHead className="text-right">Valor (última)</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-12">Dias</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.map((l) => (
-            <TableRow
-              key={l.key}
-              className="cursor-pointer hover:bg-accent/40"
-              onClick={() => onAbrirLead(l)}
-            >
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  {l.clienteNome}
-                  {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
-                </div>
-              </TableCell>
-              <TableCell>{l.consultor || "—"}</TableCell>
-              <TableCell>{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</TableCell>
-              <TableCell className="tabular-nums">{fmtData(l.dataPrimeira)}</TableCell>
-              <TableCell className="text-right tabular-nums">{l.propostas.length}</TableCell>
-              <TableCell className="text-right">{fmtBRL(l.valor)}</TableCell>
-              <TableCell><Badge variant={statusVariant(l.status)}>{l.status}</Badge></TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1" title={`${l.dias} dia(s)`}>
-                  <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
-                  <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
-                </div>
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table style={{ tableLayout: "fixed", width: "100%" }}>
+          <TableHeader>
+            <TableRow>
+              {order.map((key) => {
+                const col = colsByKey[key]; if (!col) return null;
+                const w = widths[key] ?? col.defaultWidth;
+                return (
+                  <TableHead
+                    key={key}
+                    style={{ width: w, minWidth: 60 }}
+                    draggable
+                    onDragStart={() => setDragKey(key)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => { if (dragKey) move(dragKey, key); setDragKey(null); }}
+                    onDragEnd={() => setDragKey(null)}
+                    className={`relative cursor-move select-none whitespace-nowrap ${alignClass(col.align)} ${dragKey === key ? "opacity-40" : ""}`}
+                    title="Arraste para reordenar"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <GripVertical className="h-3 w-3 text-muted-foreground/60" />
+                      {col.label}
+                    </span>
+                    <span
+                      onMouseDown={(e) => startResize(key, e)}
+                      onClick={(e) => e.stopPropagation()}
+                      onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-primary/40 transition-colors"
+                      title="Arraste para redimensionar"
+                    />
+                  </TableHead>
+                );
+              })}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {leads.map((l) => (
+              <TableRow
+                key={l.key}
+                className="cursor-pointer hover:bg-accent/40"
+                onClick={() => onAbrirLead(l)}
+              >
+                {order.map((key) => {
+                  const col = colsByKey[key]; if (!col) return null;
+                  const w = widths[key] ?? col.defaultWidth;
+                  return (
+                    <TableCell
+                      key={key}
+                      style={{ width: w, maxWidth: w }}
+                      className={`whitespace-nowrap overflow-hidden text-ellipsis ${alignClass(col.align)}`}
+                    >
+                      {renderCell(l, key)}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </Card>
   );
 }

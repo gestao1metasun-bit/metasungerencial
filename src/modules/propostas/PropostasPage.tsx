@@ -639,8 +639,6 @@ function PropostaSheet({
                   </Select>
                 )}
               </div>
-              <Field label="Cidade"><Input value={p.cidade} onChange={(e) => update("cidade", e.target.value)} /></Field>
-              <Field label="Estado"><Input value={p.estado} onChange={(e) => update("estado", e.target.value)} /></Field>
               <Field label="Concessionária">
                 <Select value={p.concessionaria ?? ""} onValueChange={(v) => update("concessionaria", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>

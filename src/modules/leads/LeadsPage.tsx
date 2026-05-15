@@ -740,23 +740,27 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
         </Table>
       </div>
 
-      {acao && (
+      {acao && acao.tipo === "aprovar" && (
+        <AprovarPropostaDialog
+          proposta={acao.proposta}
+          onClose={() => setAcao(null)}
+          onConfirm={(motivo, comFin, banco) => {
+            executarAprovacao(acao.proposta, motivo, comFin, banco);
+            setAcao(null);
+          }}
+        />
+      )}
+
+      {acao && acao.tipo !== "aprovar" && (
         <MotivoDialog
           titulo={
-            acao.tipo === "aprovar" ? `Aprovar proposta ${acao.proposta.versao ?? ""}` :
             acao.tipo === "recusar" ? `Marcar proposta ${acao.proposta.versao ?? ""} como NÃO APROVADA` :
             `Cancelar proposta ${acao.proposta.versao ?? ""}`
           }
-          descricao={
-            acao.tipo === "aprovar"
-              ? "Ao aprovar esta versão, todas as outras versões deste lead serão marcadas como OBSOLETAS."
-              : "Esta ação fica registrada no histórico com motivo obrigatório."
-          }
+          descricao="Esta ação fica registrada no histórico com motivo obrigatório."
           onClose={() => setAcao(null)}
           onConfirm={(motivo) => {
-            if (acao.tipo === "aprovar") {
-              executarAprovacao(acao.proposta, motivo);
-            } else if (acao.tipo === "recusar") {
+            if (acao.tipo === "recusar") {
               marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
               toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
             } else {

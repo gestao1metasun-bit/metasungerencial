@@ -924,11 +924,11 @@ function TabelaView({
             <TableHead>Cliente</TableHead>
             <TableHead>Consultor</TableHead>
             <TableHead>Cidade</TableHead>
+            <TableHead>Criado em</TableHead>
             <TableHead className="text-right">Propostas</TableHead>
             <TableHead className="text-right">Valor (última)</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-12">Dias</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -946,6 +946,7 @@ function TabelaView({
               </TableCell>
               <TableCell>{l.consultor || "—"}</TableCell>
               <TableCell>{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</TableCell>
+              <TableCell className="tabular-nums">{fmtData(l.dataPrimeira)}</TableCell>
               <TableCell className="text-right tabular-nums">{l.propostas.length}</TableCell>
               <TableCell className="text-right">{fmtBRL(l.valor)}</TableCell>
               <TableCell><Badge variant={statusVariant(l.status)}>{l.status}</Badge></TableCell>
@@ -954,18 +955,6 @@ function TabelaView({
                   <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
                   <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
                 </div>
-              </TableCell>
-              <TableCell className="text-right">
-                {!l.bloqueado && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 text-xs"
-                    onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
-                  >
-                    <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
-                  </Button>
-                )}
               </TableCell>
             </TableRow>
           ))}

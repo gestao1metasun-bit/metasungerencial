@@ -106,6 +106,92 @@ function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: 
   );
 }
 
+/** Combobox livre estilo "Selecione ou crie": filtra opções existentes e
+ *  exibe "Novo: <texto>" quando o digitado não corresponde a nenhuma. */
+function MarcaCombobox({
+  value, onChange, options, placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const norm = (s: string) => (s || "").trim().toUpperCase();
+  const opts = useMemo(
+    () => Array.from(new Set(options.map(norm).filter(Boolean))).sort(),
+    [options],
+  );
+  const q = norm(query);
+  const filtered = q ? opts.filter((o) => o.includes(q)) : opts;
+  const exists = q ? opts.includes(q) : true;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-sm shadow-sm hover:bg-accent/30"
+        >
+          <span className={value ? "" : "text-muted-foreground"}>
+            {value || placeholder || "Selecione ou digite..."}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Pesquisar ou digitar novo..." value={query} onValueChange={setQuery} />
+          <CommandList>
+            {filtered.length > 0 && (
+              <CommandGroup>
+                {filtered.map((o) => (
+                  <CommandItem key={o} value={o} onSelect={() => { onChange(o); setQuery(""); setOpen(false); }}>
+                    {o}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {q && !exists && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__new_${q}`}
+                  className="bg-primary/10 text-primary"
+                  onSelect={() => { onChange(q); setQuery(""); setOpen(false); }}
+                >
+                  Novo: {q}
+                </CommandItem>
+              </CommandGroup>
+            )}
+            {filtered.length === 0 && !q && <CommandEmpty>Digite para criar.</CommandEmpty>}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** Resolve um label digitado em um inversorId.
+ *  - Reconhece "INVERSOR XKW" como padrão (usa STANDARD_INVERSOR_KW)
+ *  - Reaproveita inversor existente por modelo
+ *  - Caso contrário cria um novo InversorFV personalizado e devolve seu id */
+function ensureInversorByLabel(label: string, marca: string, lista: InversorFV[]): string {
+  const l = label.trim().toUpperCase();
+  if (!l) return "";
+  const stdMatch = l.match(/^INVERSOR\s+([\d.,]+)\s*KW$/);
+  if (stdMatch) {
+    const kw = Number(stdMatch[1].replace(",", "."));
+    if ((STANDARD_INVERSOR_KW as readonly number[]).includes(kw)) return inversorIdPadrao(kw);
+  }
+  const existing = lista.find((i) => i.modelo.toUpperCase() === l);
+  if (existing) return existing.id;
+  const numMatch = l.replace(",", ".").match(/(\d+(\.\d+)?)/);
+  const kw = numMatch ? Number(numMatch[1]) : 0;
+  const id = `INV-CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  upsertInversorFV({ id, marca: marca || "PERSONALIZADO", modelo: l, potenciaKw: kw, tipo: "STRING", garantia: 10, ativo: true });
+  return id;
+}
+
 /** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.
  *  Quando `markDefault` é true, mantém o flag `cidadeIsDefault` para a UI mostrar o chip cinza. */
 function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boolean): PropostaFV {
@@ -831,7 +917,14 @@ function PropostaSheet({
           <Bloco icon={<Sun className="h-4 w-4" />} title="6. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Potência (Wp)"><Input type="number" value={p.moduloPotenciaWp} onChange={(e) => update("moduloPotenciaWp", +e.target.value)} /></Field>
-              <Field label="Marca"><Input value={p.moduloMarca ?? ""} onChange={(e) => update("moduloMarca", e.target.value)} /></Field>
+              <Field label="Marca">
+                <MarcaCombobox
+                  value={p.moduloMarca ?? ""}
+                  onChange={(v) => update("moduloMarca", v)}
+                  options={modulos.map((m) => m.marca)}
+                  placeholder="Selecione ou digite..."
+                />
+              </Field>
               <ReadOnlyField label="Quantidade" value={String(dim.qtdFinal)} />
               <ReadOnlyField label="Área total (m²)" value={fmtNum(dim.areaTotal, 2)} />
             </div>
@@ -839,59 +932,75 @@ function PropostaSheet({
 
           {/* BLOCO 6.1 — Inversores (sugestão automática) */}
           <Bloco icon={<Wrench className="h-4 w-4" />} title="6.1 Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <div>
-                Calculado a partir de <strong>{dim.qtdFinal}</strong> módulo(s) de <strong>{p.moduloPotenciaWp}W</strong>.
-                Regra: ≤ 37,5 kW × {String(cfg.inversorMultBaixa).replace(".", ",")} · ≥ 40 kW × {String(cfg.inversorMultAlta).replace(".", ",")}.
+            <div className="mb-3 grid gap-3 md:grid-cols-2">
+              <Field label="Marca dos inversores">
+                <MarcaCombobox
+                  value={p.inversorMarca ?? ""}
+                  onChange={(v) => update("inversorMarca", v)}
+                  options={inversores.map((i) => i.marca)}
+                  placeholder="Selecione ou digite..."
+                />
+              </Field>
+              <div className="flex items-end justify-end">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                  update("inversores", sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade })));
+                  toast.success("Inversores sugeridos automaticamente.");
+                }}><Sparkles className="mr-1 h-3 w-3" /> Sugerir novamente</Button>
               </div>
-              <Button variant="outline" size="sm" onClick={() => {
-                const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
-                update("inversores", sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade })));
-                toast.success("Inversores sugeridos automaticamente.");
-              }}><Sparkles className="mr-1 h-3 w-3" /> Sugerir novamente</Button>
+            </div>
+            <div className="mb-2 text-xs text-muted-foreground">
+              Sugestão para <strong>{dim.qtdFinal}</strong> módulo(s) de <strong>{p.moduloPotenciaWp}W</strong>. Edite livremente cada linha.
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {[0,1,2,3,4].map((idx) => {
-                const slot = (() => {
-                  // expande pelas quantidades: cada inversor sugerido vira N slots
-                  const flat: string[] = [];
-                  p.inversores.forEach((e) => {
-                    for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
-                  });
-                  return flat[idx] ?? "";
+                // expande pelas quantidades: cada inversor sugerido vira N slots
+                const flat: string[] = [];
+                p.inversores.forEach((e) => {
+                  for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
+                });
+                const slotId = flat[idx] ?? "";
+                const slotLabel = (() => {
+                  if (!slotId) return "";
+                  const inv = inversores.find((i) => i.id === slotId);
+                  return inv?.modelo ?? "";
                 })();
-                void inversores;
+                const setSlot = (newId: string) => {
+                  const arr: string[] = [];
+                  p.inversores.forEach((e) => {
+                    for (let i = 0; i < (e.quantidade || 0) && arr.length < 5; i++) arr.push(e.inversorId);
+                  });
+                  while (arr.length < 5) arr.push("");
+                  arr[idx] = newId;
+                  const agg = new Map<string, number>();
+                  arr.filter(Boolean).forEach((id) => agg.set(id, (agg.get(id) ?? 0) + 1));
+                  update("inversores", Array.from(agg.entries()).map(([inversorId, quantidade]) => ({ inversorId, quantidade })));
+                };
+                const opcoes = [
+                  ...STANDARD_INVERSOR_KW.map((kw) => `INVERSOR ${Number.isInteger(kw) ? kw : String(kw).replace(".", ",")}KW`),
+                  ...inversores.filter((i) => !i.id.startsWith("INV-STD-")).map((i) => i.modelo),
+                ];
                 return (
                   <Field key={idx} label={`Inversor ${idx + 1}`}>
-                    <Select
-                      value={slot}
-                      onValueChange={(v) => {
-                        // reconstrói a lista de inversores a partir dos 5 slots
-                        const flat: string[] = [];
-                        p.inversores.forEach((e) => {
-                          for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
-                        });
-                        while (flat.length < 5) flat.push("");
-                        flat[idx] = v;
-                        const agg = new Map<string, number>();
-                        flat.filter(Boolean).forEach((id) => agg.set(id, (agg.get(id) ?? 0) + 1));
-                        update("inversores", Array.from(agg.entries()).map(([inversorId, quantidade]) => ({ inversorId, quantidade })));
-                      }}
-                    >
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__" disabled>—</SelectItem>
-                        {STANDARD_INVERSOR_KW.map((kw) => {
-                          const id = inversorIdPadrao(kw);
-                          const lbl = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
-                          return (
-                            <SelectItem key={id} value={id}>
-                              INVERSOR {lbl}KW
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <MarcaCombobox
+                          value={slotLabel}
+                          onChange={(v) => {
+                            if (!v.trim()) { setSlot(""); return; }
+                            const id = ensureInversorByLabel(v, p.inversorMarca ?? "", inversores);
+                            setSlot(id);
+                          }}
+                          options={opcoes}
+                          placeholder="—"
+                        />
+                      </div>
+                      {slotId && (
+                        <Button type="button" variant="ghost" size="icon" onClick={() => setSlot("")} title="Limpar">
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </Field>
                 );
               })}

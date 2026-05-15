@@ -238,7 +238,8 @@ export type PropostaFV = {
   moduloAlturaM: number;
   modulosQtd: number;             // qtd final usada
 
-  // 7. Inversores
+  // 6.1 Inversores
+  inversorMarca?: string;
   inversores: InversorEscolhido[];
   distribuidor?: string;
   valorKit: number;
@@ -560,9 +561,10 @@ export function modulosSuportadosPorInversor(potKw: number, potModuloW: number, 
 }
 
 /** Sugere inversores que comportem `qtdModulos` de `potModuloW`.
- *  Estratégia: minimiza a soma de kW dos inversores (incluindo combinações
- *  de tamanhos diferentes), em até 5 unidades. Em caso de empate, prefere
- *  menor número de inversores. */
+ *  Estratégia simples: escolhe o **menor inversor único** (1 unidade) cuja
+ *  capacidade já comporte todos os módulos. Se nenhum tamanho único for
+ *  suficiente, replica o maior (100 kW) na quantidade mínima necessária.
+ *  Não tenta combinações de tamanhos diferentes — é só uma sugestão. */
 export function sugerirInversoresAuto(
   qtdModulos: number,
   potModuloW: number,
@@ -573,37 +575,15 @@ export function sugerirInversoresAuto(
   const sizes = STANDARD_INVERSOR_KW;
   const sup = (s: number) => modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta);
 
-  let best: { combo: number[]; totalKw: number } | null = null as { combo: number[]; totalKw: number } | null;
-  const consider = (combo: number[]) => {
-    const mods = combo.reduce((a, s) => a + sup(s), 0);
-    if (mods < qtdModulos) return;
-    const totalKw = combo.reduce((a, s) => a + s, 0);
-    if (
-      !best ||
-      totalKw < best.totalKw ||
-      (totalKw === best.totalKw && combo.length < best.combo.length)
-    ) {
-      best = { combo, totalKw };
-    }
-  };
-
-  // Busca combinações não-decrescentes de 1..5 inversores
-  const recurse = (start: number, current: number[]) => {
-    if (current.length > 0) consider(current);
-    if (current.length >= 5) return;
-    for (let i = start; i < sizes.length; i++) {
-      recurse(i, [...current, sizes[i]]);
-    }
-  };
-  recurse(0, []);
-
-  if (!best) return [{ potKw: 100, quantidade: 5 }];
-  const found: { combo: number[]; totalKw: number } = best;
-  const agg = new Map<number, number>();
-  found.combo.forEach((kw: number) => agg.set(kw, (agg.get(kw) ?? 0) + 1));
-  return Array.from(agg.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([potKw, quantidade]) => ({ potKw, quantidade }));
+  // 1) menor tamanho único que sozinho já dá conta
+  for (const kw of sizes) {
+    if (sup(kw) >= qtdModulos) return [{ potKw: kw, quantidade: 1 }];
+  }
+  // 2) replicar o maior na quantidade mínima
+  const maior = sizes[sizes.length - 1];
+  const supMaior = sup(maior);
+  const qtd = supMaior > 0 ? Math.ceil(qtdModulos / supMaior) : 1;
+  return [{ potKw: maior, quantidade: qtd }];
 }
 
 /** Sugere parâmetro com base na faixa de potência + tipo. */

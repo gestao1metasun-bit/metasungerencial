@@ -644,7 +644,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
 
   function executarAprovacao(p: PropostaFV, motivo: string) {
     aprovarPropostaDoLead(p.id, usuario, motivo);
-    // Tenta gerar contrato automaticamente
+    const dim = calcDimensionamento(p);
     const r = criarContratoDeProposta({
       propostaId: p.id,
       propostaNumero: p.numero,
@@ -652,15 +652,21 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
       leadNumero: lead.numero,
       cliente: p.clienteNome,
       clienteId: p.clienteId,
-      clienteFull: undefined, // será preenchido em Contratos antes de seguir
+      clienteFull: undefined,
       vendedor: p.consultor ?? p.criadoPor ?? "—",
       valor: calcPrecificacao(p).valorFinal,
-      kwp: p.dim?.potenciaFinalKwp ?? 0,
-      modulos: p.modulosQtd,
-      potencia: p.dim?.potenciaFinalKwp,
+      kwp: dim.potenciaFinalKwp,
+      modulos: dim.qtdFinal,
+      potencia: dim.potenciaFinalKwp,
       obs: p.obsCliente,
       usuario,
     });
+    if (!r.ok) {
+      toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
+      return;
+    }
+    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
+  }
     if (!r.ok) {
       toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
       return;

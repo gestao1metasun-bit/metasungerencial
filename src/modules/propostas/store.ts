@@ -737,3 +737,141 @@ export function validarParaGeracao(p: PropostaFV): string[] {
   
   return e;
 }
+
+/* =============== Vínculo Lead → Propostas (Entrega 2) =============== */
+import { pushAudit as _pushAudit } from "@/lib/audit-store";
+import { setLeadStatus as _setLeadStatus } from "@/modules/leads/store";
+import { LEAD_STATUS, PROPOSTA_STATUS } from "@/lib/status-catalog";
+
+/** Retorna todas as propostas de um lead (mais recentes primeiro). */
+export function getPropostasDoLead(leadId: string): PropostaFV[] {
+  return propsS.read()
+    .filter((p) => p.leadId === leadId)
+    .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
+}
+export function useProximaVersaoLead(leadId: string): string {
+  const all = usePropostas();
+  return calcularProximaVersao(all.filter((p) => p.leadId === leadId));
+}
+function calcularProximaVersao(arr: PropostaFV[]): string {
+  const nums = arr
+    .map((p) => parseInt((p.versao || "").replace(/^P/i, ""), 10))
+    .filter((n) => Number.isFinite(n));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return `P${String(next).padStart(2, "0")}`;
+}
+
+/** Cria uma proposta vinculada ao lead — puxa cliente/cidade/consumo/consultor. */
+export function criarPropostaParaLead(args: {
+  leadId: string;
+  leadNumero: string;
+  clienteNome: string;
+  clienteTelefone?: string;
+  consumoKwh?: number;
+  consultorNome?: string;
+  cidade?: string;
+  estado?: string;
+  concessionaria?: string;
+  observacao?: string;
+  usuario?: string;
+}): PropostaFV {
+  const lista = propsS.read();
+  const numero = proximoNumeroProposta(lista);
+  const versao = calcularProximaVersao(lista.filter((p) => p.leadId === args.leadId));
+  const base = novaPropostaVazia(numero);
+  const proposta: PropostaFV = {
+    ...base,
+    leadId: args.leadId,
+    leadNumero: args.leadNumero,
+    versao,
+    clienteNome: args.clienteNome,
+    clienteTelefone: args.clienteTelefone,
+    consultor: args.consultorNome,
+    cidade: args.cidade ?? base.cidade,
+    estado: args.estado ?? base.estado,
+    concessionaria: args.concessionaria,
+    consumoMedio: Number(args.consumoKwh) || base.consumoMedio,
+    obsInternas: args.observacao,
+    criadoPor: args.usuario,
+  };
+  upsertProposta(proposta);
+  _pushAudit({
+    entidade: "proposta", entidadeId: proposta.id,
+    acao: "CRIACAO", usuario: args.usuario,
+    detalhe: `Proposta ${proposta.numero} (versão ${versao}) criada para o lead ${args.leadNumero} — ${args.clienteNome}.`,
+  });
+  return proposta;
+}
+
+/** Aprova uma proposta e marca todas as outras do mesmo lead como OBSOLETA (status legado: VENCIDA). */
+export function aprovarPropostaDoLead(propostaId: string, usuario: string, motivo: string) {
+  const cur = propsS.read();
+  const alvo = cur.find((p) => p.id === propostaId);
+  if (!alvo) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const next = cur.map((p) => {
+    if (p.id === propostaId) {
+      return { ...p, status: "APROVADA" as StatusProposta, motivoStatus: motivo, atualizadoEm: hoje };
+    }
+    if (alvo.leadId && p.leadId === alvo.leadId && p.status !== "APROVADA") {
+      return { ...p, status: "VENCIDA" as StatusProposta, motivoStatus: "Outra versão deste lead foi aprovada.", atualizadoEm: hoje };
+    }
+    return p;
+  });
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta", entidadeId: propostaId,
+    acao: "APROVACAO", usuario, motivo,
+    valorAnterior: alvo.status, valorNovo: PROPOSTA_STATUS.APROVADA,
+    detalhe: `Proposta ${alvo.numero} aprovada. Demais versões do lead marcadas como OBSOLETA.`,
+  });
+  if (alvo.leadId) {
+    for (const p of cur) {
+      if (p.leadId === alvo.leadId && p.id !== propostaId && p.status !== "APROVADA") {
+        _pushAudit({
+          entidade: "proposta", entidadeId: p.id,
+          acao: "OBSOLETA", usuario,
+          valorAnterior: p.status, valorNovo: PROPOSTA_STATUS.OBSOLETA,
+          motivo: `Versão ${alvo.versao ?? alvo.numero} foi aprovada.`,
+        });
+      }
+    }
+  }
+}
+
+/** Marca proposta como NÃO APROVADA (motivo obrigatório no chamador). */
+export function marcarPropostaNaoAprovada(propostaId: string, usuario: string, motivo: string) {
+  const cur = propsS.read();
+  const idx = cur.findIndex((p) => p.id === propostaId);
+  if (idx < 0) return;
+  const old = cur[idx];
+  const next = [...cur];
+  next[idx] = { ...old, status: "RECUSADA" as StatusProposta, motivoStatus: motivo, atualizadoEm: new Date().toISOString().slice(0,10) };
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta", entidadeId: propostaId,
+    acao: "NAO_APROVADA", usuario, motivo,
+    valorAnterior: old.status, valorNovo: PROPOSTA_STATUS.NAO_APROVADA,
+  });
+}
+
+/** Cancela proposta com motivo. */
+export function cancelarPropostaComMotivo(propostaId: string, usuario: string, motivo: string) {
+  const cur = propsS.read();
+  const idx = cur.findIndex((p) => p.id === propostaId);
+  if (idx < 0) return;
+  const old = cur[idx];
+  const next = [...cur];
+  next[idx] = { ...old, status: "CANCELADA" as StatusProposta, motivoStatus: motivo, atualizadoEm: new Date().toISOString().slice(0,10) };
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta", entidadeId: propostaId,
+    acao: "CANCELAMENTO", usuario, motivo,
+    valorAnterior: old.status, valorNovo: PROPOSTA_STATUS.CANCELADA,
+  });
+}
+
+/** Atalho: aprovar proposta + marcar lead como CONVERTIDO_EM_CONTRATO (chamado quando o contrato for gerado — Entrega 3). */
+export function vincularLeadConvertido(leadId: string, usuario: string) {
+  _setLeadStatus(leadId, LEAD_STATUS.CONVERTIDO_EM_CONTRATO, usuario);
+}

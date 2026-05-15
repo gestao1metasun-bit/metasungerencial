@@ -724,3 +724,70 @@ export function contratoTemObraEmEngenharia(contratoId: string): boolean {
   return !!c?.projetos?.some((p) => p.enviadoEngenharia);
 }
 
+/**
+ * Cria um contrato leve em status "Pendente" a partir de uma proposta aprovada.
+ * Não cria obra em Engenharia, não exige cliente completo, não pede financiamento.
+ * Aparece no Comercial → Cadastrar Contrato para o operador completar/assinar depois.
+ * Idempotente: se já existe contrato vinculado à proposta, retorna o existente.
+ */
+export function criarContratoPendenteDeProposta(input: {
+  propostaId: string;
+  propostaNumero: string;
+  leadId?: string;
+  leadNumero?: string;
+  cliente: string;
+  clienteId?: string;
+  clienteFull?: ClienteFull;
+  vendedor?: string;
+  valor: number;
+  kwp: number;
+  modulos?: number;
+  potencia?: number;
+  inv1?: string;
+  parametro?: string;
+  obs?: string;
+  usuario: string;
+}): { contratoId: string; jaExistia: boolean } {
+  const existente = propostaTemContratoVinculado(input.propostaId);
+  if (existente) return { contratoId: existente.id, jaExistia: true };
+
+  const id = proximoContratoId();
+  const hoje = new Date().toISOString().slice(0, 10);
+  const novo: ContratoFull = {
+    id,
+    cliente: input.cliente,
+    clienteId: input.clienteId,
+    clienteFull: input.clienteFull,
+    vendedor: input.vendedor ?? "",
+    valor: Number(input.valor) || 0,
+    kwp: Number(input.kwp) || 0,
+    status: "Pendente",
+    data: hoje,
+    dataCadastro: hoje,
+    pagamento: "À combinar",
+    modulos: input.modulos,
+    potencia: input.potencia,
+    inv1: input.inv1,
+    parametro: input.parametro,
+    obs: input.obs,
+    propostaId: input.propostaId,
+    propostaNumero: input.propostaNumero,
+    leadId: input.leadId,
+    leadNumero: input.leadNumero,
+    projetos: [],
+    auditoria: [{
+      id: `A-${Date.now()}`, data: new Date().toISOString(),
+      usuario: input.usuario, campo: "criação",
+      de: "", para: `Contrato ${id} criado como Pendente a partir da proposta ${input.propostaNumero}.`,
+    }],
+  };
+  upsertContrato(novo);
+  pushAudit({
+    entidade: "contrato", entidadeId: id,
+    acao: "CRIACAO", usuario: input.usuario,
+    valorNovo: "Pendente",
+    detalhe: `Contrato ${id} criado como Pendente a partir da proposta ${input.propostaNumero}${input.leadNumero ? ` (lead ${input.leadNumero})` : ""}. Aguardando finalização no Comercial.`,
+  });
+  return { contratoId: id, jaExistia: false };
+}
+

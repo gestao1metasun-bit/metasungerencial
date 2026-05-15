@@ -860,7 +860,7 @@ function PropostaSheet({
                   });
                   return flat[idx] ?? "";
                 })();
-                const inv = inversores.find((i) => i.id === slot);
+                void inversores;
                 return (
                   <Field key={idx} label={`Inversor ${idx + 1}`}>
                     <Select

@@ -328,7 +328,9 @@ function LeadModal({
   onContinuar: (p: PropostaFV) => void;
 }) {
   const consultores = useConsultoresAtivos();
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">(proposta.tipoPessoa ?? "PF");
   const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [doc, setDoc] = useState(formatDoc(proposta.clienteDoc ?? "", proposta.tipoPessoa ?? "PF"));
   const [telefone, setTelefone] = useState(formatTelefoneBR(proposta.clienteTelefone ?? ""));
   const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [endereco, setEndereco] = useState(proposta.clienteEndereco ?? "");
@@ -337,12 +339,14 @@ function LeadModal({
   const [novaOrigem, setNovaOrigem] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
   const [novaOrigemOpen, setNovaOrigemOpen] = useState(false);
+  const [encontrado, setEncontrado] = useState<ClienteSnapshot | null>(null);
 
   // Quando vem com dados preenchidos (gerar nova proposta a partir de um lead
   // existente), os campos ficam travados. O bloqueio é definido pelos valores
   // iniciais — digitar não trava o campo. O usuário clica no X para liberar.
   const initial = useRef({
     nome: !!(proposta.clienteNome ?? "").trim(),
+    doc: !!(proposta.clienteDoc ?? "").trim(),
     telefone: !!(proposta.clienteTelefone ?? "").trim(),
     consultor: !!(proposta.consultor ?? "").trim(),
     captacao: !!(proposta.origemCaptacao ?? "").trim(),

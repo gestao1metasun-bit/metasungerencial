@@ -164,6 +164,7 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       (b.atualizadoEm || b.criadoEm || "").localeCompare(a.atualizadoEm || a.criadoEm || "")
     );
     const ultima = sorted[0];
+    const primeira = sorted[sorted.length - 1];
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -176,6 +177,8 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       estado: ultima.estado,
       propostas: sorted,
       ultima,
+      primeira,
+      dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
       bloqueado: arr.some((p) => p.status === "APROVADA"),

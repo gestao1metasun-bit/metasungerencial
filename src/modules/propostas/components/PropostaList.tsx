@@ -1,16 +1,20 @@
-// PropostaList — tabela de propostas + KPIs + empty state.
-// Extraído de PropostasPage.tsx durante reorganização modular.
-import { useEffect, useMemo } from "react";
-import { Plus, Pencil, Eye, Copy, Trash2, Sparkles } from "lucide-react";
+// PropostaList — visão em CARDS por cliente.
+// Cada card mostra: nome do cliente, consultor, valor total e bolinha de
+// "dias no status" (cor varia conforme idade). Dentro do card podem haver
+// várias propostas. Se qualquer proposta do card estiver APROVADA, o card
+// fica bloqueado para edição (apenas visualização/duplicação).
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus, Pencil, Eye, Copy, Trash2, Sparkles, Lock, ChevronDown, ChevronRight,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
-  calcDimensionamento, calcPrecificacao, calcResultado, fmtBRL, fmtNum,
+  calcPrecificacao, fmtBRL,
 } from "@/modules/propostas/store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
@@ -25,7 +29,6 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
   }
 }
 
-// helper síncrono para ler propostas fora de hook (evita warning do React)
 function usePropostasSync(): PropostaFV[] {
   try { return JSON.parse(localStorage.getItem("ms.fv.propostas.v1") || "[]"); }
   catch { return []; }
@@ -53,6 +56,65 @@ export function excluirProposta(p: PropostaFV) {
   toast.success("Proposta excluída.");
 }
 
+function diasDesde(iso?: string): number {
+  if (!iso) return 0;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 0;
+  const ms = Date.now() - d.getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+function dotColorFor(dias: number): string {
+  if (dias <= 3) return "bg-success";
+  if (dias <= 7) return "bg-info";
+  if (dias <= 15) return "bg-warning";
+  return "bg-destructive";
+}
+
+type Grupo = {
+  chave: string;
+  clienteNome: string;
+  consultor: string;
+  propostas: PropostaFV[];
+  valorTotal: number;
+  diasMax: number;
+  bloqueado: boolean;
+  statusResumo: StatusProposta;
+};
+
+function agrupar(propostas: PropostaFV[]): Grupo[] {
+  const map = new Map<string, Grupo>();
+  for (const p of propostas) {
+    const chave = (p.clienteDoc || p.clienteNome || p.id).trim().toUpperCase();
+    const valor = calcPrecificacao(p).valorFinal || 0;
+    const dias = diasDesde(p.atualizadoEm || p.criadoEm);
+    const g = map.get(chave);
+    if (!g) {
+      map.set(chave, {
+        chave,
+        clienteNome: p.clienteNome || "—",
+        consultor: p.consultor || "",
+        propostas: [p],
+        valorTotal: valor,
+        diasMax: dias,
+        bloqueado: p.status === "APROVADA",
+        statusResumo: p.status,
+      });
+    } else {
+      g.propostas.push(p);
+      g.valorTotal += valor;
+      if (dias > g.diasMax) g.diasMax = dias;
+      if (!g.consultor && p.consultor) g.consultor = p.consultor;
+      if (p.status === "APROVADA") { g.bloqueado = true; g.statusResumo = "APROVADA"; }
+    }
+  }
+  // ordena cards: bloqueados ao final, depois por dias desc
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.bloqueado !== b.bloqueado) return a.bloqueado ? 1 : -1;
+    return b.diasMax - a.diasMax;
+  });
+}
+
 export function PropostaList({
   propostas, onEditar, onVisualizar, onNova,
 }: {
@@ -72,6 +134,10 @@ export function PropostaList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propostas.length]);
 
+  const grupos = useMemo(() => agrupar(propostas), [propostas]);
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
+  const toggle = (k: string) => setAbertos((s) => ({ ...s, [k]: !s[k] }));
+
   const totais = useMemo(() => {
     const total = propostas.length;
     const aprovadas = propostas.filter((p) => p.status === "APROVADA").length;
@@ -79,8 +145,8 @@ export function PropostaList({
     const valorTotalAprovado = propostas
       .filter((p) => p.status === "APROVADA")
       .reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
-    return { total, aprovadas, enviadas, valorTotalAprovado };
-  }, [propostas]);
+    return { total, aprovadas, enviadas, valorTotalAprovado, clientes: grupos.length };
+  }, [propostas, grupos.length]);
 
   if (!propostas.length) {
     return (
@@ -101,66 +167,98 @@ export function PropostaList({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Total</div><div className="text-2xl font-semibold">{totais.total}</div></Card>
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Clientes</div><div className="text-2xl font-semibold">{totais.clientes}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Enviadas</div><div className="text-2xl font-semibold">{totais.enviadas}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Aprovadas</div><div className="text-2xl font-semibold text-success">{totais.aprovadas}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nº</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Cidade</TableHead>
-              <TableHead className="text-right">kWp</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Margem</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Validade</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {propostas.map((p) => {
-              const dim = calcDimensionamento(p);
-              const pre = calcPrecificacao(p);
-              const res = calcResultado(p);
-              return (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.numero}</TableCell>
-                  <TableCell>{p.clienteNome || "—"}</TableCell>
-                  <TableCell>{p.cidade ? `${p.cidade}/${p.estado}` : "—"}</TableCell>
-                  <TableCell className="text-right">{fmtNum(dim.potenciaFinalKwp, 2)}</TableCell>
-                  <TableCell className="text-right">{fmtBRL(pre.valorFinal)}</TableCell>
-                  <TableCell className={`text-right ${res.margemPct < 0 ? "text-destructive" : res.margemPct < 10 ? "text-warning" : ""}`}>
-                    {fmtNum(res.margemPct, 1)}%
-                  </TableCell>
-                  <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                  <TableCell>{p.validade}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Editar" onClick={() => onEditar(p)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Visualizar / Imprimir" onClick={() => onVisualizar(p.id)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicarProposta(p)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Excluir" onClick={() => excluirProposta(p)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {grupos.map((g) => {
+          const aberto = !!abertos[g.chave];
+          const dotCls = dotColorFor(g.diasMax);
+          return (
+            <Card
+              key={g.chave}
+              className={`overflow-hidden transition ${g.bloqueado ? "border-success/40 bg-success/5" : "hover:shadow-md"}`}
+            >
+              <button
+                type="button"
+                onClick={() => toggle(g.chave)}
+                className="flex w-full items-start gap-3 p-4 text-left"
+              >
+                <div className="mt-1">
+                  {aberto ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-base font-semibold">{g.clienteNome}</div>
+                    {g.bloqueado && (
+                      <Badge variant="default" className="gap-1">
+                        <Lock className="h-3 w-3" /> Aprovado
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                    Consultor: {g.consultor || "—"}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="text-lg font-semibold">{fmtBRL(g.valorTotal)}</div>
+                    <div className="flex items-center gap-1.5" title={`${g.diasMax} dia(s) no status ${g.statusResumo}`}>
+                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${dotCls}`} />
+                      <span className="text-xs font-medium text-muted-foreground">{g.diasMax}d</span>
                     </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
+                  </div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    {g.propostas.length} proposta{g.propostas.length > 1 ? "s" : ""}
+                  </div>
+                </div>
+              </button>
+
+              {aberto && (
+                <div className="border-t bg-muted/30">
+                  {g.propostas.map((p) => {
+                    const valor = calcPrecificacao(p).valorFinal || 0;
+                    const dias = diasDesde(p.atualizadoEm || p.criadoEm);
+                    return (
+                      <div key={p.id} className="flex items-center gap-2 border-b px-4 py-2 last:border-b-0">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{p.numero}</span>
+                            <Badge variant={statusVariant(p.status)} className="text-[10px]">{p.status}</Badge>
+                            <span className="text-[11px] text-muted-foreground">{dias}d</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {fmtBRL(valor)} · validade {p.validade}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0">
+                          <Button variant="ghost" size="icon" title="Visualizar / Imprimir" onClick={() => onVisualizar(p.id)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {!g.bloqueado && (
+                            <Button variant="ghost" size="icon" title="Editar" onClick={() => onEditar(p)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicarProposta(p)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          {!g.bloqueado && (
+                            <Button variant="ghost" size="icon" title="Excluir" onClick={() => excluirProposta(p)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

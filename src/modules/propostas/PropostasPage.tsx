@@ -462,17 +462,65 @@ function LeadModal({
         <div className="px-6 py-5">
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <div>
-              <Label className="text-xs">Nome do lead *</Label>
+              <Label className="text-xs">Tipo de pessoa *</Label>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={tipoPessoa === "PF" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTipoPessoa("PF"); setDoc(formatDoc(doc, "PF")); }}
+                  className="h-9"
+                >
+                  Pessoa Física (CPF)
+                </Button>
+                <Button
+                  type="button"
+                  variant={tipoPessoa === "PJ" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTipoPessoa("PJ"); setDoc(formatDoc(doc, "PJ")); }}
+                  className="h-9"
+                >
+                  Pessoa Jurídica (CNPJ)
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
               <div className="relative mt-1.5">
                 <Input
                   value={nome}
                   onChange={(e) => setNome(upper(e.target.value))}
-                  placeholder="NOME COMPLETO"
+                  placeholder={tipoPessoa === "PF" ? "NOME COMPLETO" : "RAZÃO SOCIAL"}
                   disabled={isLocked("nome", nome)}
                   className={isLocked("nome", nome) ? "pr-8 bg-muted/50" : ""}
                 />
                 {isLocked("nome", nome) && <LockX field="nome" />}
               </div>
+            </div>
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+              <div className="relative mt-1.5 flex gap-2">
+                <Input
+                  value={doc}
+                  onChange={(e) => setDoc(formatDoc(e.target.value, tipoPessoa))}
+                  placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                  inputMode="numeric"
+                  maxLength={tipoPessoa === "PF" ? 14 : 18}
+                  disabled={isLocked("doc", doc)}
+                  className={isLocked("doc", doc) ? "pr-8 bg-muted/50 flex-1" : "flex-1"}
+                />
+                {isLocked("doc", doc) && <LockX field="doc" />}
+                <Button type="button" variant="outline" size="sm" onClick={buscarExistente} title="Buscar cadastro existente por CPF/CNPJ ou Nome">
+                  Buscar cadastro
+                </Button>
+              </div>
+              {encontrado && (
+                <div className="mt-1.5 rounded border border-primary/30 bg-primary/5 p-2 text-[11px] text-primary">
+                  Cadastro reaproveitado da proposta <strong>{encontrado.origemPropostaNumero}</strong>.
+                  Endereço completo poderá ser revisado ao aprovar a proposta.
+                </div>
+              )}
+            </div>
             </div>
             <div>
               <Label className="text-xs">Telefone *</Label>

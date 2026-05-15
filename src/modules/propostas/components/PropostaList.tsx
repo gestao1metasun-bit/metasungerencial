@@ -144,10 +144,26 @@ function KanbanView({
 }) {
   const { cols, setCols, assign, setAssign } = useKanbanState(propostas);
   const [novoTitulo, setNovoTitulo] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [editandoCol, setEditandoCol] = useState<string | null>(null);
   const [tituloEdit, setTituloEdit] = useState("");
   const [dragProp, setDragProp] = useState<string | null>(null);
   const [dragCol, setDragCol] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
+
+  const propostasFiltradas = useMemo(() => {
+    const q = filtro.trim().toLowerCase();
+    return propostas.filter((p) => {
+      if (filtroStatus !== "TODOS" && p.status !== filtroStatus) return false;
+      if (!q) return true;
+      return (
+        (p.clienteNome || "").toLowerCase().includes(q) ||
+        (p.consultor || "").toLowerCase().includes(q) ||
+        (p.numero || "").toLowerCase().includes(q)
+      );
+    });
+  }, [propostas, filtro, filtroStatus]);
 
   const porColuna = useMemo(() => {
     const map: Record<string, PropostaFV[]> = {};

@@ -634,12 +634,7 @@ function PropostaSheet({
                     </button>
                   </div>
                 ) : (
-                  <Select value="" onValueChange={selecionarCidade}>
-                    <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
-                    <SelectContent>
-                      {cidades.map((c) => <SelectItem key={c.id} value={c.id}>{c.cidade}/{c.estado}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <CidadeCombobox cidades={cidades} onSelect={selecionarCidade} />
                 )}
               </div>
               <Field label="Concessionária">

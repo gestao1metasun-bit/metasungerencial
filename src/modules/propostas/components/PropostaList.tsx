@@ -617,7 +617,7 @@ function KanbanView({
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
+    <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {colsAtivas.map((c) => {
         const items = porColuna[c.id] || [];
         const total = items.reduce((s, l) => s + l.valor, 0);

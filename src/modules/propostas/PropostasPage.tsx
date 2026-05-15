@@ -369,9 +369,34 @@ function LeadModal({
     setNovaOrigem(""); setNovaOrigemOpen(false);
   }
 
+  function buscarExistente() {
+    const snap = buscarClienteExistente({ doc, nome });
+    if (!snap) {
+      toast.message("Nenhum cadastro anterior encontrado.");
+      return;
+    }
+    setEncontrado(snap);
+    if (snap.tipoPessoa) setTipoPessoa(snap.tipoPessoa);
+    if (snap.clienteNome) setNome(snap.clienteNome);
+    if (snap.clienteDoc) setDoc(formatDoc(snap.clienteDoc, snap.tipoPessoa));
+    if (snap.clienteTelefone) setTelefone(formatTelefoneBR(snap.clienteTelefone));
+    const end = [snap.clienteRua, snap.clienteNumero, snap.clienteBairro, snap.clienteCidade]
+      .filter(Boolean).join(", ");
+    if (end) setEndereco(end.toUpperCase());
+    toast.success(`Cadastro reaproveitado da proposta ${snap.origemPropostaNumero}.`);
+  }
+
   function continuar() {
     if (!nome.trim() || !telefone.trim() || !consultor.trim()) {
       toast.error("Preencha Nome, Telefone e selecione um Consultor.");
+      return;
+    }
+    if (!isDocValido(doc, tipoPessoa)) {
+      toast.error(
+        tipoPessoa === "PF"
+          ? "CPF inválido. Informe 11 dígitos."
+          : "CNPJ inválido. Informe 14 dígitos.",
+      );
       return;
     }
     if (!captacao.trim()) {
@@ -385,10 +410,21 @@ function LeadModal({
     }
     onContinuar({
       ...proposta,
+      tipoPessoa,
       clienteNome: upper(nome.trim()),
+      clienteDoc: doc.trim(),
       clienteTelefone: formatTelefoneBR(telefone),
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
+      // se reaproveitou cadastro existente, copia o endereço estruturado
+      clienteCep: encontrado?.clienteCep ?? proposta.clienteCep,
+      clienteRua: encontrado?.clienteRua ?? proposta.clienteRua,
+      clienteNumero: encontrado?.clienteNumero ?? proposta.clienteNumero,
+      clienteComplemento: encontrado?.clienteComplemento ?? proposta.clienteComplemento,
+      clienteBairro: encontrado?.clienteBairro ?? proposta.clienteBairro,
+      clienteCidade: encontrado?.clienteCidade ?? proposta.clienteCidade,
+      clienteUf: encontrado?.clienteUf ?? proposta.clienteUf,
+      clienteEmail: encontrado?.clienteEmail ?? proposta.clienteEmail,
       origemCaptacao: captacao,
       criadoPor: upper(consultor.trim()),
     });

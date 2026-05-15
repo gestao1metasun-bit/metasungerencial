@@ -191,6 +191,8 @@ export type PropostaFV = {
   clienteBairro?: string;
   clienteCidade?: string;
   clienteUf?: string;
+  /** Histórico de alterações de endereço (registro de auditoria, sem apagar valores antigos). */
+  enderecoHistorico?: EnderecoHistorico[];
   consultor?: string;
   origemCaptacao?: string;        // Como o lead foi captado (rede social, indicação, etc.)
   dataAssinatura?: string;        // Data de assinatura do contrato (ISO YYYY-MM-DD)

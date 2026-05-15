@@ -264,18 +264,9 @@ export type PropostaFV = {
 
 /* =============== Seeds =============== */
 
-const SEED_CIDADES: CidadeFV[] = [
-  { id: "CID-GYN", cidade: "GOIÂNIA", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-ANP", cidade: "ANÁPOLIS", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.3, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-BSB", cidade: "BRASÍLIA", estado: "DF", concessionariaPadrao: "NEOENERGIA DF", irradiacaoMedia: 5.5, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.95 },
-  { id: "CID-RVD", cidade: "RIO VERDE", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-APD", cidade: "APARECIDA DE GOIÂNIA", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-];
+const SEED_CIDADES: CidadeFV[] = BASE_CIDADES;
 
-const SEED_CONCESSIONARIAS: ConcessionariaFV[] = [
-  { id: "CON-EQGO", nome: "EQUATORIAL GOIÁS", estado: "GO", tarifaPadrao: 0.92, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
-  { id: "CON-NEDF", nome: "NEOENERGIA DF", estado: "DF", tarifaPadrao: 0.95, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
-];
+const SEED_CONCESSIONARIAS: ConcessionariaFV[] = BASE_CONCESSIONARIAS;
 
 const SEED_TARIFAS: TarifaEnergia[] = [
   { id: "TAR-EQGO-B1", concessionaria: "EQUATORIAL GOIÁS", uf: "GO", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.92, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },

@@ -167,16 +167,20 @@ export function AppLayout() {
             <Link to="/configuracoes" className="hidden md:flex items-center gap-3 rounded-md border border-border bg-card px-3 py-1.5 hover:bg-accent">
               <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{initials}</div>
               <div className="leading-tight text-left">
-                <div className="text-sm font-medium">{user?.nome ?? "—"}</div>
-                <div className="text-[11px] text-muted-foreground">{perfil?.nome ?? "Sem perfil"}</div>
+                <div className="text-sm font-medium">{displayName}</div>
+                <div className="text-[11px] text-muted-foreground">{displayPerfil}</div>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Link>
-            <Link to="/login">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              title="Sair"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </header>
 

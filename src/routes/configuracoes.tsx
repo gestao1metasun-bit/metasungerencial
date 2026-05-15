@@ -74,6 +74,8 @@ function ConfigPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="proposta" className="mt-5"><PropostaConfigTab /></TabsContent>
+
         <TabsContent value="perfis" className="mt-5"><PerfisTab /></TabsContent>
         <TabsContent value="usuarios" className="mt-5"><UsuariosTab /></TabsContent>
 

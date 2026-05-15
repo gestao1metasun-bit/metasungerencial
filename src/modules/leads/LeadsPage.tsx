@@ -667,12 +667,6 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
     }
     toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
   }
-    if (!r.ok) {
-      toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
-      return;
-    }
-    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
-  }
 
   return (
     <div>

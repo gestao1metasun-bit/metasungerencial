@@ -633,6 +633,8 @@ function AprovarDialog({
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [uf, setUf] = useState("");
+  const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [cepLoading, setCepLoading] = useState(false);
 
   useEffect(() => {
     if (!lead) return;
@@ -648,7 +650,29 @@ function AprovarDialog({
     setBairro(u.clienteBairro || "");
     setCidade(u.clienteCidade || lead.cidade || "");
     setUf(u.clienteUf || lead.estado || "");
+    setDataAssinatura(u.dataAssinatura || new Date().toISOString().slice(0, 10));
   }, [lead?.key, proposta?.id]);
+
+  // ViaCEP — busca endereço ao digitar 8 dígitos
+  const buscarCep = async (raw: string) => {
+    const d = raw.replace(/\D/g, "");
+    if (d.length !== 8) return;
+    try {
+      setCepLoading(true);
+      const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+      const j = await r.json();
+      if (j?.erro) { toast.error("CEP não encontrado."); return; }
+      setRua((j.logradouro || "").toUpperCase());
+      setBairro((j.bairro || "").toUpperCase());
+      setCidade((j.localidade || "").toUpperCase());
+      setUf((j.uf || "").toUpperCase());
+      toast.success("Endereço preenchido pelo CEP.");
+    } catch {
+      toast.error("Falha ao consultar o CEP.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
 
   if (!lead || !proposta) return null;
 
@@ -656,6 +680,7 @@ function AprovarDialog({
     if (!nome.trim()) { toast.error("Informe o nome completo do cliente."); return; }
     if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
     if (!tel.trim()) { toast.error("Informe o telefone do cliente."); return; }
+    if (!dataAssinatura) { toast.error("Informe a data de assinatura."); return; }
     const enderecoLinha = [rua, numero, bairro, cidade && `${cidade}${uf ? "/" + uf : ""}`]
       .filter(Boolean).join(", ");
     aprovarComDadosCliente(lead.propostas, proposta, {
@@ -671,7 +696,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    });
+    }, dataAssinatura);
     onConfirmed();
   };
 

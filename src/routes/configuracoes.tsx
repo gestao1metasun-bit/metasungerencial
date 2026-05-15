@@ -38,6 +38,7 @@ function ConfigPage() {
         <TabsList className="hidden">
           <TabsTrigger value="empresa"><Building2 className="mr-2 h-4 w-4" /> Empresa</TabsTrigger>
           <TabsTrigger value="parametros"><SettingsIcon className="mr-2 h-4 w-4" /> Parâmetros</TabsTrigger>
+          <TabsTrigger value="proposta"><FileText className="mr-2 h-4 w-4" /> Proposta</TabsTrigger>
           <TabsTrigger value="perfis"><ShieldCheck className="mr-2 h-4 w-4" /> Perfis de Acesso</TabsTrigger>
           <TabsTrigger value="usuarios"><Users className="mr-2 h-4 w-4" /> Usuários</TabsTrigger>
           <TabsTrigger value="integracoes"><Plug className="mr-2 h-4 w-4" /> Integrações</TabsTrigger>

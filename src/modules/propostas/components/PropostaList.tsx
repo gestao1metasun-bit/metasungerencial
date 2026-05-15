@@ -265,7 +265,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: assinados > 0,
+      bloqueado: aprovadas > 0 || assinados > 0,
       status: ultima.status,
       emAberto,
       aprovadas,

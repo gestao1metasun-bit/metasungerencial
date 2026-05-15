@@ -621,7 +621,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
     );
   }
 
-  function executarAprovacao(p: PropostaFV, motivo: string) {
+  function executarAprovacao(p: PropostaFV, motivo: string, comFinanciamento: boolean, banco?: string) {
     aprovarPropostaDoLead(p.id, usuario, motivo);
     const dim = calcDimensionamento(p);
     const r = criarContratoDeProposta({
@@ -639,12 +639,19 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
       potencia: dim.potenciaFinalKwp,
       obs: p.obsCliente,
       usuario,
+      possuiFinanciamento: comFinanciamento,
+      financiamentoBanco: banco,
     });
     if (!r.ok) {
       toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
       return;
     }
-    toast.success(`Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado.`);
+    const aviso = r.missing.length
+      ? ` (complete o cadastro do cliente: ${r.missing.slice(0, 3).join(", ")}${r.missing.length > 3 ? "…" : ""})`
+      : "";
+    toast.success(
+      `Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado e obra enviada para Engenharia (Em projeto/aprovação)${comFinanciamento ? " · Financiamento marcado" : ""}.${aviso}`,
+    );
   }
 
   return (

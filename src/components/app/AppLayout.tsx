@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { useAuth, signOut } from "@/lib/auth-store";
+import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
@@ -51,6 +52,8 @@ export function AppLayout() {
   const { perfil } = useUsuarioAtual();
   const auth = useAuth();
   const navigate = useNavigate();
+  const contratos = useContratos();
+  const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
   const displayPerfil = auth.role === "admin_master"
@@ -96,6 +99,14 @@ export function AppLayout() {
                     <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
                       <Icon className={`h-4 w-4 group-hover:text-primary-foreground ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
                       <span className="flex-1 truncate">{item.label}</span>
+                      {item.to === "/comercial" && pendentesAssinatura > 0 && (
+                        <span
+                          title={`${pendentesAssinatura} contrato(s) pendente(s) de assinatura`}
+                          className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
+                        >
+                          {pendentesAssinatura}
+                        </span>
+                      )}
                     </Link>
                     {sub && (
                       <button
@@ -113,18 +124,24 @@ export function AppLayout() {
                     <ul className="ml-7 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
                       {sub.tabs.map((t) => {
                         const tabActive = active && isHydrated && currentTab === t.value;
+                        const showRedDot = item.to === "/comercial" && t.value === "contrato-assinado" && pendentesAssinatura > 0;
                         return (
                           <li key={t.value}>
                             <Link
                               to={item.to}
                               hash={`tab=${t.value}`}
-                              className={`block rounded-md px-3 py-1.5 text-sm transition ${
+                              className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-sm transition ${
                                 tabActive
                                   ? "bg-primary text-primary-foreground font-medium"
                                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                               }`}
                             >
-                              {t.label}
+                              <span className="truncate">{t.label}</span>
+                              {showRedDot && (
+                                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                  {pendentesAssinatura}
+                                </span>
+                              )}
                             </Link>
                           </li>
                         );

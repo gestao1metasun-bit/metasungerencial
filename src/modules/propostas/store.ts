@@ -364,7 +364,7 @@ function makeStore<T>(key: string, seed: () => T[]) {
 const cidadesS = makeStore<CidadeFV>("ms.fv.cidades.v3", () => SEED_CIDADES);
 const concsS   = makeStore<ConcessionariaFV>("ms.fv.concs.v3", () => SEED_CONCESSIONARIAS);
 const modsS    = makeStore<ModuloFV>("ms.fv.modulos.v1", () => SEED_MODULOS);
-const invsS    = makeStore<InversorFV>("ms.fv.inversores.v1", () => SEED_INVERSORES);
+const invsS    = makeStore<InversorFV>("ms.fv.inversores.v2", () => SEED_INVERSORES);
 const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTRIBUIDORES);
 const paramsS  = makeStore<ParametroFV>("ms.fv.params.v1", () => SEED_PARAMETROS);
 const custosS  = makeStore<CustoFV>("ms.fv.custos.v1", () => SEED_CUSTOS);

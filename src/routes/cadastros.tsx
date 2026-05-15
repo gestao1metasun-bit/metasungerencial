@@ -306,24 +306,39 @@ function EquipeDialog({ open, initial, onClose, onSave }: { open: boolean; initi
   const [form, setForm] = useState<Equipe>(() => initial ?? { id: `EQ-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", lider: "", membros: 0, obrasAtivas: 0, status: "Ativo" });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{initial ? "Editar equipe" : "Nova equipe"}</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
-          <div><Label>Líder</Label><Input value={form.lider} onChange={(e) => setForm({ ...form, lider: e.target.value })} /></div>
-          <div><Label>Membros</Label><Input type="number" value={form.membros} onChange={(e) => setForm({ ...form, membros: Number(e.target.value) })} /></div>
-          <div><Label>Obras ativas</Label><Input type="number" value={form.obrasAtivas} onChange={(e) => setForm({ ...form, obrasAtivas: Number(e.target.value) })} /></div>
-          <div className="col-span-2"><Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
-            </Select>
+      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UsersIcon className="h-5 w-5" />
+              </div>
+              <DialogTitle className="text-xl">{initial ? "Editar equipe" : "Nova equipe"}</DialogTitle>
+            </div>
+          </DialogHeader>
+        </div>
+        <div className="px-6 py-5">
+          <div className="rounded-lg border bg-card p-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Nome</Label><Input className="mt-1.5" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+              <div><Label>Líder</Label><Input className="mt-1.5" value={form.lider} onChange={(e) => setForm({ ...form, lider: e.target.value })} /></div>
+              <div><Label>Membros</Label><Input className="mt-1.5" type="number" value={form.membros} onChange={(e) => setForm({ ...form, membros: Number(e.target.value) })} /></div>
+              <div><Label>Obras ativas</Label><Input className="mt-1.5" type="number" value={form.obrasAtivas} onChange={(e) => setForm({ ...form, obrasAtivas: Number(e.target.value) })} /></div>
+              <div className="col-span-2"><Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave(form)} disabled={!form.nome}>Salvar</Button>
-        </DialogFooter>
+        <div className="border-t bg-muted/30 px-6 py-3">
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={() => onSave(form)} disabled={!form.nome} className="bg-primary text-primary-foreground">Salvar</Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

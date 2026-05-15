@@ -769,8 +769,7 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
           onClose={() => setAcao(null)}
           onConfirm={(motivo) => {
             if (acao.tipo === "aprovar") {
-              aprovarPropostaDoLead(acao.proposta.id, usuario, motivo);
-              toast.success(`Proposta ${acao.proposta.numero} aprovada.`);
+              executarAprovacao(acao.proposta, motivo);
             } else if (acao.tipo === "recusar") {
               marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
               toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
@@ -779,6 +778,32 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               toast.success(`Proposta ${acao.proposta.numero} cancelada.`);
             }
             setAcao(null);
+          }}
+        />
+      )}
+
+      {anexarAlvo && (
+        <AnexarAssinadoDialog
+          contratoId={anexarAlvo}
+          onClose={() => setAnexarAlvo(null)}
+          onConfirm={(arquivo) => {
+            anexarContratoAssinado(anexarAlvo, arquivo, usuario);
+            toast.success(`Contrato ${anexarAlvo} marcado como ASSINADO.`);
+            setAnexarAlvo(null);
+          }}
+        />
+      )}
+
+      {cancelarContratoAlvo && (
+        <MotivoDialog
+          titulo={`Cancelar contrato ${cancelarContratoAlvo}`}
+          descricao="Cancelar o contrato bloqueia novas obras vinculadas. Não é possível cancelar se houver obra em andamento operacional."
+          onClose={() => setCancelarContratoAlvo(null)}
+          onConfirm={(motivo) => {
+            const r = cancelarContrato(cancelarContratoAlvo, motivo, usuario);
+            if (!r.ok) toast.error(r.motivo ?? "Não foi possível cancelar.");
+            else toast.success(`Contrato ${cancelarContratoAlvo} cancelado.`);
+            setCancelarContratoAlvo(null);
           }}
         />
       )}

@@ -191,6 +191,7 @@ export type PropostaFV = {
   clienteCidade?: string;
   clienteUf?: string;
   consultor?: string;
+  origemCaptacao?: string;        // Como o lead foi captado (rede social, indicação, etc.)
 
   // 2. Localização
   cidadeId?: string;

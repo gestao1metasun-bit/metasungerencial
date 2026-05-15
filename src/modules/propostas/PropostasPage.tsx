@@ -387,6 +387,8 @@ function LeadModal({
       consultor: upper(consultor.trim()),
       clienteEndereco: endereco.trim() ? upper(endereco.trim()) : "",
       origemCaptacao: captacao,
+      possuiFinanciamento: financiamento === "SIM",
+      financiamentoBanco: financiamento === "SIM" ? bancoFin : undefined,
       criadoPor: upper(consultor.trim()),
     });
   }

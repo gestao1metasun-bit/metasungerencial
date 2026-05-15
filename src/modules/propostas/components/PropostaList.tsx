@@ -112,7 +112,7 @@ export function aprovarProposta(p: PropostaFV) {
     uf: p.clienteUf ?? p.estado ?? "",
   } : undefined;
   const valor = (p.valorFinalManual ?? 0) > 0 ? (p.valorFinalManual as number) : (p.valorKit ?? 0);
-  const inv1 = p.inversores?.[0]?.modelo ?? p.inversorMarca ?? "";
+  const inv1 = p.inversores?.[0]?.inversorId ?? p.inversorMarca ?? "";
   const res = criarContratoPendenteDeProposta({
     propostaId: p.id,
     propostaNumero: p.numero,

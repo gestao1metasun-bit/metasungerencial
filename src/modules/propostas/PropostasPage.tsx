@@ -928,6 +928,21 @@ function PropostaSheet({
                 <MarcaCombobox
                   value={p.moduloMarca ?? ""}
                   onChange={(v) => update("moduloMarca", v)}
+                  onCreateNew={(v) => {
+                    const marca = v.trim().toUpperCase();
+                    if (!marca) return;
+                    if (modulos.some((m) => (m.marca || "").trim().toUpperCase() === marca)) return;
+                    upsertModuloFV({
+                      id: `MOD-MARCA-${marca.replace(/\s+/g, "_")}-${Date.now().toString(36)}`,
+                      marca,
+                      modelo: "(NOVA MARCA)",
+                      potenciaWp: 0,
+                      larguraM: 0,
+                      alturaM: 0,
+                      ativo: true,
+                    });
+                    toast.success(`Marca de módulo "${marca}" cadastrada.`);
+                  }}
                   options={modulos.map((m) => m.marca)}
                   placeholder="Selecione ou digite..."
                 />

@@ -43,7 +43,10 @@ import {
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
+  sugerirInversoresAuto, inversorIdPadrao, modulosSuportadosPorInversor,
+  capacidadeKwpInversor, STANDARD_INVERSOR_KW,
 } from "@/modules/propostas/store";
+import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";

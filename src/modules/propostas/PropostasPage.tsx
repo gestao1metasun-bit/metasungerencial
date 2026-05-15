@@ -403,126 +403,146 @@ function LeadModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onCancel(); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Cadastrar Lead — {proposta.numero}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div>
-            <Label className="text-xs">Nome do lead *</Label>
-            <div className="relative">
-              <Input
-                value={nome}
-                onChange={(e) => setNome(upper(e.target.value))}
-                placeholder="NOME COMPLETO"
-                disabled={isLocked("nome", nome)}
-                className={isLocked("nome", nome) ? "pr-8 bg-muted/50" : ""}
-              />
-              {isLocked("nome", nome) && <LockX field="nome" />}
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg">Cadastrar Lead</DialogTitle>
+                <p className="text-xs text-muted-foreground">Proposta <span className="font-mono font-semibold text-primary">{proposta.numero}</span></p>
+              </div>
             </div>
-          </div>
-          <div>
-            <Label className="text-xs">Telefone *</Label>
-            <div className="relative">
-              <Input
-                value={telefone}
-                onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))}
-                placeholder="(00) 9 0000-0000"
-                inputMode="numeric"
-                maxLength={20}
-                disabled={isLocked("telefone", telefone)}
-                className={isLocked("telefone", telefone) ? "pr-8 bg-muted/50" : ""}
-              />
-              {isLocked("telefone", telefone) && <LockX field="telefone" />}
+          </DialogHeader>
+        </div>
+
+        <div className="px-6 py-5">
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <div>
+              <Label className="text-xs">Nome do lead *</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  value={nome}
+                  onChange={(e) => setNome(upper(e.target.value))}
+                  placeholder="NOME COMPLETO"
+                  disabled={isLocked("nome", nome)}
+                  className={isLocked("nome", nome) ? "pr-8 bg-muted/50" : ""}
+                />
+                {isLocked("nome", nome) && <LockX field="nome" />}
+              </div>
             </div>
-          </div>
-          <div>
-            <Label className="text-xs">Consultor de venda *</Label>
-            {isLocked("consultor", consultor) ? (
-              <div className="relative">
-                <Input value={consultor} disabled className="pr-8 bg-muted/50" />
-                <LockX field="consultor" />
+            <div>
+              <Label className="text-xs">Telefone *</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  value={telefone}
+                  onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))}
+                  placeholder="(00) 9 0000-0000"
+                  inputMode="numeric"
+                  maxLength={20}
+                  disabled={isLocked("telefone", telefone)}
+                  className={isLocked("telefone", telefone) ? "pr-8 bg-muted/50" : ""}
+                />
+                {isLocked("telefone", telefone) && <LockX field="telefone" />}
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Select value={consultor} onValueChange={setConsultor}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
-                    <SelectContent>
-                      {consultores.length === 0 && (
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum consultor cadastrado.</div>
-                      )}
-                      {consultores.map((c) => (
-                        <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Consultor de venda *</Label>
+              <div className="mt-1.5">
+              {isLocked("consultor", consultor) ? (
+                <div className="relative">
+                  <Input value={consultor} disabled className="pr-8 bg-muted/50" />
+                  <LockX field="consultor" />
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
-                  <Plus className="h-3 w-3 mr-1" /> Cadastrar
-                </Button>
-              </div>
-            )}
-          </div>
-          <div>
-            <Label className="text-xs">Forma de captação *</Label>
-            {isLocked("captacao", captacao) ? (
-              <div className="relative">
-                <Input value={captacao} disabled className="pr-8 bg-muted/50" />
-                <LockX field="captacao" />
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Select value={captacao} onValueChange={setCaptacao}>
-                    <SelectTrigger><SelectValue placeholder="Como conheceu?" /></SelectTrigger>
-                    <SelectContent>
-                      {origens.map((o) => (
-                        <SelectItem key={o} value={o}>{o}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select value={consultor} onValueChange={setConsultor}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
+                      <SelectContent>
+                        {consultores.length === 0 && (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum consultor cadastrado.</div>
+                        )}
+                        {consultores.map((c) => (
+                          <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setNovoOpen(true)}>
+                    <Plus className="h-3 w-3 mr-1" /> Cadastrar
+                  </Button>
                 </div>
-                <Popover open={novaOrigemOpen} onOpenChange={setNovaOrigemOpen}>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" size="sm">
-                      <Plus className="h-3 w-3 mr-1" /> Novo
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" align="end">
-                    <Label className="text-xs">Nova forma de captação</Label>
-                    <Input
-                      value={novaOrigem}
-                      onChange={(e) => setNovaOrigem(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === "Enter" && adicionarOrigem()}
-                      placeholder="EX.: WHATSAPP"
-                      className="mt-1 h-8"
-                      autoFocus
-                    />
-                    <Button size="sm" className="mt-2 w-full" onClick={adicionarOrigem}>Adicionar</Button>
-                  </PopoverContent>
-                </Popover>
+              )}
               </div>
-            )}
-          </div>
-          <div>
-            <Label className="text-xs">Endereço (opcional)</Label>
-            <div className="relative">
-              <Input
-                value={endereco}
-                onChange={(e) => setEndereco(upper(e.target.value))}
-                placeholder="RUA, NÚMERO, BAIRRO, CIDADE"
-                disabled={isLocked("endereco", endereco)}
-                className={isLocked("endereco", endereco) ? "pr-8 bg-muted/50" : ""}
-              />
-              {isLocked("endereco", endereco) && <LockX field="endereco" />}
+            </div>
+            <div>
+              <Label className="text-xs">Forma de captação *</Label>
+              <div className="mt-1.5">
+              {isLocked("captacao", captacao) ? (
+                <div className="relative">
+                  <Input value={captacao} disabled className="pr-8 bg-muted/50" />
+                  <LockX field="captacao" />
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select value={captacao} onValueChange={setCaptacao}>
+                      <SelectTrigger><SelectValue placeholder="Como conheceu?" /></SelectTrigger>
+                      <SelectContent>
+                        {origens.map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Popover open={novaOrigemOpen} onOpenChange={setNovaOrigemOpen}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" size="sm">
+                        <Plus className="h-3 w-3 mr-1" /> Novo
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3" align="end">
+                      <Label className="text-xs">Nova forma de captação</Label>
+                      <Input
+                        value={novaOrigem}
+                        onChange={(e) => setNovaOrigem(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === "Enter" && adicionarOrigem()}
+                        placeholder="EX.: WHATSAPP"
+                        className="mt-1 h-8"
+                        autoFocus
+                      />
+                      <Button size="sm" className="mt-2 w-full" onClick={adicionarOrigem}>Adicionar</Button>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Endereço (opcional)</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  value={endereco}
+                  onChange={(e) => setEndereco(upper(e.target.value))}
+                  placeholder="RUA, NÚMERO, BAIRRO, CIDADE"
+                  disabled={isLocked("endereco", endereco)}
+                  className={isLocked("endereco", endereco) ? "pr-8 bg-muted/50" : ""}
+                />
+                {isLocked("endereco", endereco) && <LockX field="endereco" />}
+              </div>
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>Voltar</Button>
-          <Button onClick={continuar}>Salvar cliente</Button>
-        </DialogFooter>
+
+        <div className="border-t bg-muted/30 px-6 py-3">
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel}>Voltar</Button>
+            <Button onClick={continuar} className="bg-primary text-primary-foreground">Salvar cliente</Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
 
       <ConsultorRapidoModal

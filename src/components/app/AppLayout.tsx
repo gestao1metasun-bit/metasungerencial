@@ -52,6 +52,8 @@ export function AppLayout() {
   const { perfil } = useUsuarioAtual();
   const auth = useAuth();
   const navigate = useNavigate();
+  const contratos = useContratos();
+  const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
   const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
   const displayPerfil = auth.role === "admin_master"

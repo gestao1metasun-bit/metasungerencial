@@ -883,22 +883,15 @@ function PropostaSheet({
                         <SelectItem value="__none__" disabled>—</SelectItem>
                         {STANDARD_INVERSOR_KW.map((kw) => {
                           const id = inversorIdPadrao(kw);
-                          const sup = modulosSuportadosPorInversor(kw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
-                          const cap = capacidadeKwpInversor(kw, cfg.inversorMultBaixa, cfg.inversorMultAlta);
                           const lbl = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
                           return (
                             <SelectItem key={id} value={id}>
-                              INVERSOR {lbl}KW — {fmtNum(cap,1)} kWp · até {sup} módulos
+                              INVERSOR {lbl}KW
                             </SelectItem>
                           );
                         })}
                       </SelectContent>
                     </Select>
-                    {inv && (
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        Capacidade: {fmtNum(capacidadeKwpInversor(inv.potenciaKw, cfg.inversorMultBaixa, cfg.inversorMultAlta), 1)} kWp · suporta até {modulosSuportadosPorInversor(inv.potenciaKw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta)} módulos
-                      </div>
-                    )}
                   </Field>
                 );
               })}

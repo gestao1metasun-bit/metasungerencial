@@ -109,12 +109,14 @@ function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: 
 /** Combobox livre estilo "Selecione ou crie": filtra opções existentes e
  *  exibe "Novo: <texto>" quando o digitado não corresponde a nenhuma. */
 function MarcaCombobox({
-  value, onChange, options, placeholder,
+  value, onChange, options, placeholder, onCreateNew,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
   placeholder?: string;
+  /** Disparado quando o usuário escolhe a opção "Novo: <texto>". */
+  onCreateNew?: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -157,7 +159,12 @@ function MarcaCombobox({
                 <CommandItem
                   value={`__new_${q}`}
                   className="bg-primary/10 text-primary"
-                  onSelect={() => { onChange(q); setQuery(""); setOpen(false); }}
+                  onSelect={() => {
+                    onCreateNew?.(q);
+                    onChange(q);
+                    setQuery("");
+                    setOpen(false);
+                  }}
                 >
                   Novo: {q}
                 </CommandItem>
@@ -921,6 +928,21 @@ function PropostaSheet({
                 <MarcaCombobox
                   value={p.moduloMarca ?? ""}
                   onChange={(v) => update("moduloMarca", v)}
+                  onCreateNew={(v) => {
+                    const marca = v.trim().toUpperCase();
+                    if (!marca) return;
+                    if (modulos.some((m) => (m.marca || "").trim().toUpperCase() === marca)) return;
+                    upsertModuloFV({
+                      id: `MOD-MARCA-${marca.replace(/\s+/g, "_")}-${Date.now().toString(36)}`,
+                      marca,
+                      modelo: "(NOVA MARCA)",
+                      potenciaWp: 0,
+                      larguraM: 0,
+                      alturaM: 0,
+                      ativo: true,
+                    });
+                    toast.success(`Marca de módulo "${marca}" cadastrada.`);
+                  }}
                   options={modulos.map((m) => m.marca)}
                   placeholder="Selecione ou digite..."
                 />
@@ -937,6 +959,21 @@ function PropostaSheet({
                 <MarcaCombobox
                   value={p.inversorMarca ?? ""}
                   onChange={(v) => update("inversorMarca", v)}
+                  onCreateNew={(v) => {
+                    const marca = v.trim().toUpperCase();
+                    if (!marca) return;
+                    if (inversores.some((i) => (i.marca || "").trim().toUpperCase() === marca)) return;
+                    upsertInversorFV({
+                      id: `INV-MARCA-${marca.replace(/\s+/g, "_")}-${Date.now().toString(36)}`,
+                      marca,
+                      modelo: "(NOVA MARCA)",
+                      potenciaKw: 0,
+                      tipo: "STRING",
+                      garantia: 10,
+                      ativo: true,
+                    });
+                    toast.success(`Marca de inversor "${marca}" cadastrada.`);
+                  }}
                   options={inversores.map((i) => i.marca)}
                   placeholder="Selecione ou digite..."
                 />

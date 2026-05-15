@@ -6,6 +6,7 @@
 // Padrão segue os demais stores do projeto: cache + listeners + write.
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
+import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
 
 /* =============== Tipos =============== */
 

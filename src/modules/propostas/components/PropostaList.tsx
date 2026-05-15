@@ -867,6 +867,12 @@ function LeadDetail({
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
+      <AprovarPropostaDialog
+        proposta={aprovando}
+        open={!!aprovando}
+        onOpenChange={(o) => { if (!o) setAprovando(null); }}
+        onAprovado={() => { setAprovando(null); onClose(); }}
+      />
     </Dialog>
   );
 }

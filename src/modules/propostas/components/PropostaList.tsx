@@ -30,7 +30,7 @@ import {
   aprovarPropostaDoLead,
 } from "@/modules/propostas/store";
 import {
-  useContratos, type ContratoFull,
+  useContratos, type ContratoFull, criarContratoPendenteDeProposta,
 } from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {

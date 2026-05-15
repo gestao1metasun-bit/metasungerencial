@@ -675,19 +675,6 @@ function KanbanView({
                       <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
                     </div>
                   </div>
-                  {!l.bloqueado && (
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1 px-2 text-[11px]"
-                        onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
-                        title="Gerar nova proposta para este cliente"
-                      >
-                        <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
-                      </Button>
-                    </div>
-                  )}
                 </Card>
               ))}
               {!items.length && (

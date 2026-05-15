@@ -168,13 +168,13 @@ function KanbanView({
   const porColuna = useMemo(() => {
     const map: Record<string, PropostaFV[]> = {};
     cols.forEach((c) => (map[c.id] = []));
-    propostas.forEach((p) => {
+    propostasFiltradas.forEach((p) => {
       const c = assign[p.id] ?? colPadraoPorStatus(p.status);
       if (!map[c]) map[c] = [];
       map[c].push(p);
     });
     return map;
-  }, [cols, propostas, assign]);
+  }, [cols, propostasFiltradas, assign]);
 
   const adicionarCol = () => {
     const t = novoTitulo.trim();

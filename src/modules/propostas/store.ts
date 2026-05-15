@@ -279,13 +279,23 @@ const SEED_MODULOS: ModuloFV[] = [
   { id: "MOD-TR-555", marca: "TRINA", modelo: "VERTEX S+ 555W", potenciaWp: 555, larguraM: 1.096, alturaM: 2.279, garantiaProduto: 12, garantiaPerformance: 25, ativo: true },
 ];
 
-const SEED_INVERSORES: InversorFV[] = [
-  { id: "INV-GW-5K",  marca: "GROWATT",  modelo: "MIN 5000TL-X",  potenciaKw: 5,  tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-GW-8K",  marca: "GROWATT",  modelo: "MIN 8000TL-X",  potenciaKw: 8,  tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-GW-10K", marca: "GROWATT",  modelo: "MIN 10000TL-X", potenciaKw: 10, tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-DY-15K", marca: "DEYE",     modelo: "SUN 15K-G",     potenciaKw: 15, tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-SU-50K", marca: "SUNGROW",  modelo: "SG50CX",        potenciaKw: 50, tipo: "STRING", garantia: 10, ativo: true },
-];
+/** Lista padrão de inversores usada na sugestão automática (kW). */
+export const STANDARD_INVERSOR_KW = [5, 6, 7.5, 10, 15, 20, 30, 37.5, 40, 50, 60, 75, 100] as const;
+function rotuloInv(kw: number) {
+  const txt = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
+  return `INVERSOR ${txt}KW`;
+}
+export function inversorIdPadrao(kw: number) { return `INV-STD-${String(kw).replace(".", "_")}`; }
+
+const SEED_INVERSORES: InversorFV[] = STANDARD_INVERSOR_KW.map((kw) => ({
+  id: inversorIdPadrao(kw),
+  marca: "PADRÃO",
+  modelo: rotuloInv(kw),
+  potenciaKw: kw,
+  tipo: "STRING",
+  garantia: 10,
+  ativo: true,
+}));
 
 const SEED_DISTRIBUIDORES: DistribuidorFV[] = [
   { id: "DIS-EDS",  nome: "EDELTEC",     telefone: "(62) 3000-0000", ativo: true },

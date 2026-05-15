@@ -121,6 +121,7 @@ function ComercialPage() {
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
+          <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
@@ -137,6 +138,9 @@ function ComercialPage() {
         <TabsContent value="cad-contrato" className="mt-5">
           <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
+        <TabsContent value="contrato-assinado" className="mt-5">
+          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} />
+        </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />
         </TabsContent>
@@ -145,6 +149,96 @@ function ComercialPage() {
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+/* ---------------- CONTRATO ASSINADO ---------------- */
+function ContratoAssinadoTab({
+  contratos, setContratos,
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  const [busca, setBusca] = useState("");
+  const pendentes = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return contratos
+      .filter((c) => c.status === "Pendente")
+      .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
+  }, [contratos, busca]);
+  const assinados = useMemo(() => contratos.filter((c) => c.status === "Assinado"), [contratos]);
+
+  const marcarAssinado = (id: string) => {
+    if (!confirm(`Marcar contrato ${id} como Assinado?`)) return;
+    setContratos(contratos.map((c) => (c.id === id ? { ...c, status: "Assinado", dataAssinatura: new Date().toISOString().slice(0,10) } : c)));
+    toast.success(`Contrato ${id} marcado como Assinado.`);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pendentes de assinatura</div>
+          <div className="mt-1 flex items-center gap-2">
+            <div className="text-2xl font-bold text-destructive">{pendentes.length}</div>
+            {pendentes.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />}
+          </div>
+          <div className="text-xs text-muted-foreground">{fmtBRL(pendentes.reduce((s, c) => s + c.valor, 0))}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assinados</div>
+          <div className="mt-1 text-2xl font-bold text-success">{assinados.length}</div>
+          <div className="text-xs text-muted-foreground">{fmtBRL(assinados.reduce((s, c) => s + c.valor, 0))}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total no funil</div>
+          <div className="mt-1 text-2xl font-bold text-primary">{contratos.length}</div>
+        </Card>
+      </div>
+
+      <Card className="p-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileText className="h-4 w-4 text-primary" /> Contratos pendentes de assinatura
+          </div>
+          <div className="relative w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato, cliente, proposta…" className="h-9 pl-9" />
+          </div>
+        </div>
+        {pendentes.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhum contrato pendente de assinatura.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Proposta</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {pendentes.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
+                  <TableCell className="font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell><StatusBadge status={c.status} /></TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => marcarAssinado(c.id)}>
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Marcar como assinado
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
   );
 }
 

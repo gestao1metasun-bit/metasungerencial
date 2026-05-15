@@ -575,6 +575,14 @@ function LeadDetail({
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AprovarDialog
+        open={!!aprovarAlvo}
+        lead={lead}
+        proposta={aprovarAlvo}
+        onClose={() => setAprovarAlvo(null)}
+        onConfirmed={() => { setAprovarAlvo(null); onClose(); }}
+      />
     </Dialog>
   );
 }

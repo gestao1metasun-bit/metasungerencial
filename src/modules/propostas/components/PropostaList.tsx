@@ -1,20 +1,24 @@
-// PropostaList — visão em CARDS por cliente.
-// Cada card mostra: nome do cliente, consultor, valor total e bolinha de
-// "dias no status" (cor varia conforme idade). Dentro do card podem haver
-// várias propostas. Se qualquer proposta do card estiver APROVADA, o card
-// fica bloqueado para edição (apenas visualização/duplicação).
+// PropostaList — duas visualizações: TABELA e KANBAN.
+// Kanban: colunas configuráveis (criar, renomear, excluir, reordenar) e
+// arrastar propostas entre colunas (HTML5 DnD). Estado persistido em
+// localStorage independente do store de propostas.
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Pencil, Eye, Copy, Trash2, Sparkles, Lock, ChevronDown, ChevronRight,
+  Plus, Pencil, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
+  ChevronLeft, ChevronRight, X, Check, Lock,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
-  calcPrecificacao, fmtBRL,
+  calcDimensionamento, calcPrecificacao, calcResultado, fmtBRL, fmtNum,
 } from "@/modules/propostas/store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
@@ -29,9 +33,13 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
   }
 }
 
+function readLS<T>(key: string, fb: T): T {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fb; } catch { return fb; }
+}
+function writeLS(key: string, v: unknown) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* ignore */ } }
+
 function usePropostasSync(): PropostaFV[] {
-  try { return JSON.parse(localStorage.getItem("ms.fv.propostas.v1") || "[]"); }
-  catch { return []; }
+  return readLS<PropostaFV[]>("ms.fv.propostas.v1", []);
 }
 
 export function duplicarProposta(p: PropostaFV) {
@@ -60,10 +68,8 @@ function diasDesde(iso?: string): number {
   if (!iso) return 0;
   const d = new Date(iso);
   if (isNaN(d.getTime())) return 0;
-  const ms = Date.now() - d.getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
-
 function dotColorFor(dias: number): string {
   if (dias <= 3) return "bg-success";
   if (dias <= 7) return "bg-info";
@@ -71,49 +77,335 @@ function dotColorFor(dias: number): string {
   return "bg-destructive";
 }
 
-type Grupo = {
-  chave: string;
-  clienteNome: string;
-  consultor: string;
-  propostas: PropostaFV[];
-  valorTotal: number;
-  diasMax: number;
-  bloqueado: boolean;
-  statusResumo: StatusProposta;
-};
+/* ===================== KANBAN ===================== */
 
-function agrupar(propostas: PropostaFV[]): Grupo[] {
-  const map = new Map<string, Grupo>();
-  for (const p of propostas) {
-    const chave = (p.clienteDoc || p.clienteNome || p.id).trim().toUpperCase();
-    const valor = calcPrecificacao(p).valorFinal || 0;
-    const dias = diasDesde(p.atualizadoEm || p.criadoEm);
-    const g = map.get(chave);
-    if (!g) {
-      map.set(chave, {
-        chave,
-        clienteNome: p.clienteNome || "—",
-        consultor: p.consultor || "",
-        propostas: [p],
-        valorTotal: valor,
-        diasMax: dias,
-        bloqueado: p.status === "APROVADA",
-        statusResumo: p.status,
-      });
-    } else {
-      g.propostas.push(p);
-      g.valorTotal += valor;
-      if (dias > g.diasMax) g.diasMax = dias;
-      if (!g.consultor && p.consultor) g.consultor = p.consultor;
-      if (p.status === "APROVADA") { g.bloqueado = true; g.statusResumo = "APROVADA"; }
-    }
+type KCol = { id: string; titulo: string };
+const COLS_KEY = "ms.fv.kanban.cols.v1";
+const ASSIGN_KEY = "ms.fv.kanban.assign.v1";
+
+const DEFAULT_COLS: KCol[] = [
+  { id: "col-rascunho", titulo: "Rascunho" },
+  { id: "col-enviada", titulo: "Enviadas" },
+  { id: "col-negociacao", titulo: "Em negociação" },
+  { id: "col-aprovada", titulo: "Aprovadas" },
+  { id: "col-perdida", titulo: "Perdidas" },
+];
+
+function colPadraoPorStatus(s: StatusProposta): string {
+  switch (s) {
+    case "RASCUNHO": return "col-rascunho";
+    case "GERADA":
+    case "ENVIADA": return "col-enviada";
+    case "APROVADA": return "col-aprovada";
+    case "RECUSADA":
+    case "VENCIDA":
+    case "CANCELADA": return "col-perdida";
+    default: return "col-rascunho";
   }
-  // ordena cards: bloqueados ao final, depois por dias desc
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.bloqueado !== b.bloqueado) return a.bloqueado ? 1 : -1;
-    return b.diasMax - a.diasMax;
-  });
 }
+
+function useKanbanState(propostas: PropostaFV[]) {
+  const [cols, setCols] = useState<KCol[]>(() => {
+    const saved = readLS<KCol[]>(COLS_KEY, []);
+    return saved.length ? saved : DEFAULT_COLS;
+  });
+  const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
+
+  useEffect(() => writeLS(COLS_KEY, cols), [cols]);
+  useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
+
+  // Garante alocação padrão para propostas novas / colunas removidas
+  useEffect(() => {
+    setAssign((prev) => {
+      const next = { ...prev };
+      const validIds = new Set(cols.map((c) => c.id));
+      let mudou = false;
+      for (const p of propostas) {
+        if (!next[p.id] || !validIds.has(next[p.id])) {
+          const padrao = colPadraoPorStatus(p.status);
+          next[p.id] = validIds.has(padrao) ? padrao : cols[0]?.id ?? "col-rascunho";
+          mudou = true;
+        }
+      }
+      return mudou ? next : prev;
+    });
+  }, [propostas, cols]);
+
+  return { cols, setCols, assign, setAssign };
+}
+
+function KanbanView({
+  propostas, onEditar, onVisualizar,
+}: {
+  propostas: PropostaFV[];
+  onEditar: (p: PropostaFV) => void;
+  onVisualizar: (id: string) => void;
+}) {
+  const { cols, setCols, assign, setAssign } = useKanbanState(propostas);
+  const [novoTitulo, setNovoTitulo] = useState("");
+  const [editandoCol, setEditandoCol] = useState<string | null>(null);
+  const [tituloEdit, setTituloEdit] = useState("");
+  const [dragProp, setDragProp] = useState<string | null>(null);
+  const [dragCol, setDragCol] = useState<string | null>(null);
+
+  const porColuna = useMemo(() => {
+    const map: Record<string, PropostaFV[]> = {};
+    cols.forEach((c) => (map[c.id] = []));
+    propostas.forEach((p) => {
+      const c = assign[p.id] ?? colPadraoPorStatus(p.status);
+      if (!map[c]) map[c] = [];
+      map[c].push(p);
+    });
+    return map;
+  }, [cols, propostas, assign]);
+
+  const adicionarCol = () => {
+    const t = novoTitulo.trim();
+    if (!t) return;
+    setCols((c) => [...c, { id: `col-${Date.now()}`, titulo: t }]);
+    setNovoTitulo("");
+  };
+  const excluirCol = (id: string) => {
+    if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
+    if (!confirm("Excluir esta coluna? Propostas voltam para a primeira.")) return;
+    setCols((c) => c.filter((x) => x.id !== id));
+  };
+  const renomear = (id: string) => {
+    const t = tituloEdit.trim();
+    if (!t) return;
+    setCols((c) => c.map((x) => (x.id === id ? { ...x, titulo: t } : x)));
+    setEditandoCol(null);
+  };
+  const moverCol = (id: string, dir: -1 | 1) => {
+    setCols((c) => {
+      const i = c.findIndex((x) => x.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= c.length) return c;
+      const cp = [...c]; [cp[i], cp[j]] = [cp[j], cp[i]]; return cp;
+    });
+  };
+  const dropEmColuna = (colId: string) => {
+    if (dragProp) {
+      setAssign((a) => ({ ...a, [dragProp]: colId }));
+      setDragProp(null);
+    } else if (dragCol && dragCol !== colId) {
+      setCols((c) => {
+        const from = c.findIndex((x) => x.id === dragCol);
+        const to = c.findIndex((x) => x.id === colId);
+        if (from < 0 || to < 0) return c;
+        const cp = [...c]; const [m] = cp.splice(from, 1); cp.splice(to, 0, m); return cp;
+      });
+      setDragCol(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <Card className="flex flex-wrap items-center gap-2 p-3">
+        <Input
+          value={novoTitulo}
+          onChange={(e) => setNovoTitulo(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && adicionarCol()}
+          placeholder="Nome da nova coluna…"
+          className="h-8 max-w-xs"
+        />
+        <Button size="sm" onClick={adicionarCol} className="gap-1">
+          <Plus className="h-4 w-4" /> Nova coluna
+        </Button>
+        <span className="ml-auto text-xs text-muted-foreground">
+          Arraste cards entre colunas. Arraste o título para reordenar colunas.
+        </span>
+      </Card>
+
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {cols.map((c, idx) => {
+          const items = porColuna[c.id] || [];
+          const total = items.reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
+          return (
+            <div
+              key={c.id}
+              className="flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => dropEmColuna(c.id)}
+            >
+              <div
+                className="flex items-center gap-1 border-b bg-card p-2"
+                draggable
+                onDragStart={() => { setDragCol(c.id); setDragProp(null); }}
+              >
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, -1)} disabled={idx === 0}>
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                {editandoCol === c.id ? (
+                  <>
+                    <Input
+                      autoFocus
+                      value={tituloEdit}
+                      onChange={(e) => setTituloEdit(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && renomear(c.id)}
+                      className="h-7"
+                    />
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renomear(c.id)}>
+                      <Check className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setEditandoCol(c.id); setTituloEdit(c.titulo); }}
+                    className="flex-1 cursor-text truncate px-1 text-left text-sm font-semibold"
+                    title="Clique para renomear · arraste para reordenar"
+                  >
+                    {c.titulo}
+                  </button>
+                )}
+                <Badge variant="outline" className="text-[10px]">{items.length}</Badge>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moverCol(c.id, 1)} disabled={idx === cols.length - 1}>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => excluirCol(c.id)} title="Excluir coluna">
+                  <X className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+              <div className="border-b bg-muted/20 px-2 py-1 text-[11px] text-muted-foreground">
+                {fmtBRL(total)}
+              </div>
+              <div className="flex min-h-[120px] flex-col gap-2 p-2">
+                {items.map((p) => {
+                  const valor = calcPrecificacao(p).valorFinal || 0;
+                  const dias = diasDesde(p.atualizadoEm || p.criadoEm);
+                  const bloq = p.status === "APROVADA";
+                  return (
+                    <Card
+                      key={p.id}
+                      draggable
+                      onDragStart={() => { setDragProp(p.id); setDragCol(null); }}
+                      className={`cursor-grab p-2 active:cursor-grabbing ${bloq ? "border-success/40 bg-success/5" : ""}`}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{p.clienteNome || "—"}</div>
+                          <div className="truncate text-[11px] text-muted-foreground">
+                            {p.numero} · {p.consultor || "sem consultor"}
+                          </div>
+                        </div>
+                        {bloq && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <div className="text-sm font-semibold">{fmtBRL(valor)}</div>
+                        <div className="flex items-center gap-1" title={`${dias} dia(s) no status`}>
+                          <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(dias)}`} />
+                          <span className="text-[11px] text-muted-foreground">{dias}d</span>
+                        </div>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-1">
+                        <Badge variant={statusVariant(p.status)} className="text-[10px]">{p.status}</Badge>
+                        <div className="flex">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onVisualizar(p.id)} title="Visualizar">
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          {!bloq && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEditar(p)} title="Editar">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+                {!items.length && (
+                  <div className="rounded border border-dashed p-3 text-center text-[11px] text-muted-foreground">
+                    Solte aqui
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ===================== TABELA ===================== */
+
+function TabelaView({
+  propostas, onEditar, onVisualizar,
+}: {
+  propostas: PropostaFV[];
+  onEditar: (p: PropostaFV) => void;
+  onVisualizar: (id: string) => void;
+}) {
+  return (
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nº</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Consultor</TableHead>
+            <TableHead>Cidade</TableHead>
+            <TableHead className="text-right">kWp</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+            <TableHead className="text-right">Margem</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Validade</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {propostas.map((p) => {
+            const dim = calcDimensionamento(p);
+            const pre = calcPrecificacao(p);
+            const res = calcResultado(p);
+            const bloq = p.status === "APROVADA";
+            return (
+              <TableRow key={p.id}>
+                <TableCell className="font-medium">{p.numero}</TableCell>
+                <TableCell>{p.clienteNome || "—"}</TableCell>
+                <TableCell>{p.consultor || "—"}</TableCell>
+                <TableCell>{p.cidade ? `${p.cidade}/${p.estado}` : "—"}</TableCell>
+                <TableCell className="text-right">{fmtNum(dim.potenciaFinalKwp, 2)}</TableCell>
+                <TableCell className="text-right">{fmtBRL(pre.valorFinal)}</TableCell>
+                <TableCell className={`text-right ${res.margemPct < 0 ? "text-destructive" : res.margemPct < 10 ? "text-warning" : ""}`}>
+                  {fmtNum(res.margemPct, 1)}%
+                </TableCell>
+                <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                <TableCell>{p.validade}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" title="Visualizar" onClick={() => onVisualizar(p.id)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {!bloq && (
+                      <Button variant="ghost" size="icon" title="Editar" onClick={() => onEditar(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicarProposta(p)}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    {!bloq && (
+                      <Button variant="ghost" size="icon" title="Excluir" onClick={() => excluirProposta(p)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+/* ===================== ROOT ===================== */
+
+const VIEW_KEY = "ms.fv.propostas.view";
+type ViewMode = "tabela" | "kanban";
 
 export function PropostaList({
   propostas, onEditar, onVisualizar, onNova,
@@ -134,9 +426,8 @@ export function PropostaList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propostas.length]);
 
-  const grupos = useMemo(() => agrupar(propostas), [propostas]);
-  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
-  const toggle = (k: string) => setAbertos((s) => ({ ...s, [k]: !s[k] }));
+  const [view, setView] = useState<ViewMode>(() => (readLS<ViewMode>(VIEW_KEY, "tabela")));
+  useEffect(() => writeLS(VIEW_KEY, view), [view]);
 
   const totais = useMemo(() => {
     const total = propostas.length;
@@ -145,8 +436,8 @@ export function PropostaList({
     const valorTotalAprovado = propostas
       .filter((p) => p.status === "APROVADA")
       .reduce((s, p) => s + (calcPrecificacao(p).valorFinal || 0), 0);
-    return { total, aprovadas, enviadas, valorTotalAprovado, clientes: grupos.length };
-  }, [propostas, grupos.length]);
+    return { total, aprovadas, enviadas, valorTotalAprovado };
+  }, [propostas]);
 
   if (!propostas.length) {
     return (
@@ -154,8 +445,7 @@ export function PropostaList({
         <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
         <h3 className="text-lg font-semibold">Nenhuma proposta criada ainda</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Crie sua primeira proposta fotovoltaica em poucos minutos. O sistema
-          calcula potência, quantidade de módulos, preço e margem para você.
+          Crie sua primeira proposta fotovoltaica em poucos minutos.
         </p>
         <Button onClick={onNova} className="mt-4 gap-2">
           <Plus className="h-4 w-4" /> Criar primeira proposta
@@ -167,98 +457,34 @@ export function PropostaList({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Clientes</div><div className="text-2xl font-semibold">{totais.clientes}</div></Card>
+        <Card className="p-4"><div className="text-xs text-muted-foreground">Total</div><div className="text-2xl font-semibold">{totais.total}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Enviadas</div><div className="text-2xl font-semibold">{totais.enviadas}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Aprovadas</div><div className="text-2xl font-semibold text-success">{totais.aprovadas}</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {grupos.map((g) => {
-          const aberto = !!abertos[g.chave];
-          const dotCls = dotColorFor(g.diasMax);
-          return (
-            <Card
-              key={g.chave}
-              className={`overflow-hidden transition ${g.bloqueado ? "border-success/40 bg-success/5" : "hover:shadow-md"}`}
-            >
-              <button
-                type="button"
-                onClick={() => toggle(g.chave)}
-                className="flex w-full items-start gap-3 p-4 text-left"
-              >
-                <div className="mt-1">
-                  {aberto ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate text-base font-semibold">{g.clienteNome}</div>
-                    {g.bloqueado && (
-                      <Badge variant="default" className="gap-1">
-                        <Lock className="h-3 w-3" /> Aprovado
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                    Consultor: {g.consultor || "—"}
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="text-lg font-semibold">{fmtBRL(g.valorTotal)}</div>
-                    <div className="flex items-center gap-1.5" title={`${g.diasMax} dia(s) no status ${g.statusResumo}`}>
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${dotCls}`} />
-                      <span className="text-xs font-medium text-muted-foreground">{g.diasMax}d</span>
-                    </div>
-                  </div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">
-                    {g.propostas.length} proposta{g.propostas.length > 1 ? "s" : ""}
-                  </div>
-                </div>
-              </button>
-
-              {aberto && (
-                <div className="border-t bg-muted/30">
-                  {g.propostas.map((p) => {
-                    const valor = calcPrecificacao(p).valorFinal || 0;
-                    const dias = diasDesde(p.atualizadoEm || p.criadoEm);
-                    return (
-                      <div key={p.id} className="flex items-center gap-2 border-b px-4 py-2 last:border-b-0">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{p.numero}</span>
-                            <Badge variant={statusVariant(p.status)} className="text-[10px]">{p.status}</Badge>
-                            <span className="text-[11px] text-muted-foreground">{dias}d</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {fmtBRL(valor)} · validade {p.validade}
-                          </div>
-                        </div>
-                        <div className="flex shrink-0">
-                          <Button variant="ghost" size="icon" title="Visualizar / Imprimir" onClick={() => onVisualizar(p.id)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {!g.bloqueado && (
-                            <Button variant="ghost" size="icon" title="Editar" onClick={() => onEditar(p)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicarProposta(p)}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          {!g.bloqueado && (
-                            <Button variant="ghost" size="icon" title="Excluir" onClick={() => excluirProposta(p)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-          );
-        })}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={view === "tabela" ? "default" : "outline"}
+          onClick={() => setView("tabela")}
+          className="gap-1"
+        >
+          <TableIcon className="h-4 w-4" /> Tabela
+        </Button>
+        <Button
+          size="sm"
+          variant={view === "kanban" ? "default" : "outline"}
+          onClick={() => setView("kanban")}
+          className="gap-1"
+        >
+          <LayoutGrid className="h-4 w-4" /> Kanban
+        </Button>
       </div>
+
+      {view === "tabela"
+        ? <TabelaView propostas={propostas} onEditar={onEditar} onVisualizar={onVisualizar} />
+        : <KanbanView propostas={propostas} onEditar={onEditar} onVisualizar={onVisualizar} />}
     </div>
   );
 }

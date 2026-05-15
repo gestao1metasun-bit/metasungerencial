@@ -560,23 +560,35 @@ function PropostaSheet({
           {/* BLOCO 1 — Cliente */}
           <Bloco icon={<Users className="h-4 w-4" />} title="1. Dados do Cliente">
             <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <Label>Cliente cadastrado</Label>
-                <Select value={p.clienteId ?? ""} onValueChange={selecionarCliente}>
-                  <SelectTrigger><SelectValue placeholder="Buscar..." /></SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome} — {c.doc || "sem doc"}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Field label="Nome do cliente"><Input value={p.clienteNome} onChange={(e) => update("clienteNome", e.target.value)} /></Field>
+              <Field label="Nome do cliente" hint="Travado. Edite o cliente em Cadastros para alterar.">
+                <Input value={p.clienteNome} readOnly className="bg-muted/50" />
+              </Field>
               <Field label="CPF/CNPJ"><Input value={p.clienteDoc ?? ""} onChange={(e) => update("clienteDoc", e.target.value)} /></Field>
               <Field label="Telefone"><Input value={p.clienteTelefone ?? ""} onChange={(e) => update("clienteTelefone", e.target.value)} /></Field>
               <Field label="E-mail"><Input type="email" value={p.clienteEmail ?? ""} onChange={(e) => update("clienteEmail", e.target.value)} /></Field>
-              <Field label="Endereço"><Input value={p.clienteEndereco ?? ""} onChange={(e) => update("clienteEndereco", e.target.value)} /></Field>
-              <Field label="Consultor de venda"><Input value={p.consultor ?? ""} onChange={(e) => update("consultor", e.target.value.toUpperCase())} /></Field>
+              <Field label="Consultor de venda">
+                <Input value={p.consultor ?? ""} readOnly className="bg-muted/50" />
+              </Field>
+              <Field label="CEP" hint="Digite os 8 dígitos. O endereço será preenchido automaticamente.">
+                <Input
+                  value={p.clienteCep ?? ""}
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="00000-000"
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    const fmt = raw.length > 5 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
+                    update("clienteCep", fmt);
+                    if (raw.length === 8) buscarCep(raw);
+                  }}
+                />
+              </Field>
+              <Field label="Rua/Logradouro"><Input value={p.clienteRua ?? ""} onChange={(e) => update("clienteRua", e.target.value.toUpperCase())} /></Field>
+              <Field label="Número"><Input value={p.clienteNumero ?? ""} onChange={(e) => update("clienteNumero", e.target.value)} /></Field>
+              <Field label="Complemento"><Input value={p.clienteComplemento ?? ""} onChange={(e) => update("clienteComplemento", e.target.value.toUpperCase())} /></Field>
+              <Field label="Bairro"><Input value={p.clienteBairro ?? ""} onChange={(e) => update("clienteBairro", e.target.value.toUpperCase())} /></Field>
+              <Field label="Cidade do cliente"><Input value={p.clienteCidade ?? ""} onChange={(e) => update("clienteCidade", e.target.value.toUpperCase())} /></Field>
+              <Field label="UF"><Input maxLength={2} value={p.clienteUf ?? ""} onChange={(e) => update("clienteUf", e.target.value.toUpperCase())} /></Field>
             </div>
           </Bloco>
 

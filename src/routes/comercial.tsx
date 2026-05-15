@@ -42,6 +42,7 @@ import {
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";
+import { LeadsPage } from "@/modules/leads";
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),
@@ -117,6 +118,7 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
           <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
@@ -124,6 +126,9 @@ function ComercialPage() {
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="leads" className="mt-5">
+          <LeadsPage />
         </TabsContent>
         {/* Aba Indicadores removida do Comercial — visão estratégica fica no Dashboard Geral. */}
         <TabsContent value="cad-proposta" className="mt-5">

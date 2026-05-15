@@ -26,9 +26,12 @@ import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
-  calcPrecificacao, fmtBRL,
+  calcPrecificacao, calcDimensionamento, fmtBRL,
 } from "@/modules/propostas/store";
-import { useContratos, type ContratoFull } from "@/lib/contratos-store";
+import {
+  useContratos, type ContratoFull,
+  criarContratoDeProposta, anexarContratoAssinado,
+} from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
@@ -94,25 +97,80 @@ export function aprovarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
 }
 
-/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
+/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead.
+ *  Em seguida cria um contrato a partir da proposta e marca como ASSINADO,
+ *  fazendo o card cair na coluna ASSINADOS (travado para edição). Se o lead foi
+ *  marcado com FINANCIAMENTO=SIM, o contrato vai para o módulo Financiamentos.
+ *  A obra inicial é criada em Engenharia com status "Em projeto/aprovação". */
 function aprovarComDadosCliente(
   propostas: PropostaFV[],
   escolhida: PropostaFV,
   dados: Partial<PropostaFV>,
   dataAssinatura: string,
+  financiamento: { ativo: boolean; banco?: string },
 ) {
   const hoje = new Date().toISOString().slice(0, 10);
+  let propAtualizada: PropostaFV = escolhida;
   for (const p of propostas) {
     const isEscolhida = p.id === escolhida.id;
-    upsertProposta({
+    const merged: PropostaFV = {
       ...p,
       ...dados,
       status: isEscolhida ? "APROVADA" : p.status,
       dataAssinatura: isEscolhida ? dataAssinatura : p.dataAssinatura,
+      possuiFinanciamento: isEscolhida ? financiamento.ativo : p.possuiFinanciamento,
+      financiamentoBanco: isEscolhida ? (financiamento.ativo ? financiamento.banco : undefined) : p.financiamentoBanco,
       atualizadoEm: hoje,
-    });
+    };
+    upsertProposta(merged);
+    if (isEscolhida) propAtualizada = merged;
   }
-  toast.success(`Proposta ${escolhida.numero} aprovada — enviada ao comercial.`);
+
+  // Cria contrato e já o marca como assinado para travar o card na coluna ASSINADOS
+  const dim = calcDimensionamento(propAtualizada);
+  const valor = calcPrecificacao(propAtualizada).valorFinal;
+  const enderecoLinha = propAtualizada.clienteEndereco || "";
+  const r = criarContratoDeProposta({
+    propostaId: propAtualizada.id,
+    propostaNumero: propAtualizada.numero,
+    leadId: propAtualizada.leadId,
+    leadNumero: propAtualizada.leadNumero,
+    cliente: propAtualizada.clienteNome,
+    clienteId: propAtualizada.clienteId,
+    clienteFull: {
+      nome: propAtualizada.clienteNome || "",
+      doc: propAtualizada.clienteDoc || "",
+      telefone: propAtualizada.clienteTelefone || "",
+      email: propAtualizada.clienteEmail || "",
+      cep: propAtualizada.clienteCep || "",
+      rua: propAtualizada.clienteRua || enderecoLinha,
+      numero: propAtualizada.clienteNumero || "",
+      bairro: propAtualizada.clienteBairro || "",
+      complemento: propAtualizada.clienteComplemento || "",
+      cidade: propAtualizada.clienteCidade || propAtualizada.cidade || "",
+      uf: propAtualizada.clienteUf || propAtualizada.estado || "",
+    },
+    vendedor: propAtualizada.consultor || propAtualizada.criadoPor || "—",
+    valor,
+    kwp: dim.potenciaFinalKwp,
+    modulos: dim.qtdFinal,
+    potencia: dim.potenciaFinalKwp,
+    obs: propAtualizada.obsCliente,
+    usuario: propAtualizada.criadoPor || "Operador",
+    possuiFinanciamento: financiamento.ativo,
+    financiamentoBanco: financiamento.banco,
+  });
+
+  if (r.ok) {
+    // Anexa contrato assinado (mock) — isto sinaliza assinados>0 no buildLeads
+    // e move o lead para a coluna ASSINADOS (travada).
+    anexarContratoAssinado(r.contratoId, `contrato-${r.contratoId.replace("/", "-")}.pdf`, propAtualizada.criadoPor || "Operador");
+    toast.success(
+      `Proposta ${escolhida.numero} aprovada · Contrato ${r.contratoId} assinado · Obra em Engenharia${financiamento.ativo ? " · Financiamento marcado" : ""}.`,
+    );
+  } else {
+    toast.warning(`Proposta aprovada, mas faltam dados para o contrato: ${r.missing.join(", ")}.`);
+  }
 }
 
 function diasDesde(iso?: string): number {
@@ -238,6 +296,8 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
     clienteUf: u.clienteUf,
     consultor: u.consultor,
     origemCaptacao: u.origemCaptacao,
+    possuiFinanciamento: u.possuiFinanciamento,
+    financiamentoBanco: u.financiamentoBanco,
   };
 }
 
@@ -779,6 +839,8 @@ function AprovarDialog({
   const [uf, setUf] = useState("");
   const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [cepLoading, setCepLoading] = useState(false);
+  const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">("NAO");
+  const [bancoFin, setBancoFin] = useState<string>("BASA");
 
   useEffect(() => {
     if (!lead) return;
@@ -795,6 +857,10 @@ function AprovarDialog({
     setCidade(u.clienteCidade || lead.cidade || "");
     setUf(u.clienteUf || lead.estado || "");
     setDataAssinatura(u.dataAssinatura || new Date().toISOString().slice(0, 10));
+    // Herda do que foi marcado na construção da proposta (LeadModal)
+    const src = proposta || u;
+    setFinanciamento(src?.possuiFinanciamento ? "SIM" : "NAO");
+    setBancoFin(src?.financiamentoBanco || "BASA");
   }, [lead?.key, proposta?.id]);
 
   // ViaCEP — busca endereço ao digitar 8 dígitos
@@ -840,7 +906,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    }, dataAssinatura);
+    }, dataAssinatura, { ativo: financiamento === "SIM", banco: financiamento === "SIM" ? bancoFin : undefined });
     onConfirmed();
   };
 
@@ -919,6 +985,44 @@ function AprovarDialog({
               onChange={(e) => setDataAssinatura(e.target.value)}
               className="mt-1"
             />
+          </div>
+          <div className="sm:col-span-2 rounded-md border border-primary/30 bg-primary/5 p-2">
+            <Label className="text-xs font-semibold">Financiamento *</Label>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={financiamento === "SIM" ? "default" : "outline"}
+                onClick={() => setFinanciamento("SIM")}
+              >
+                SIM — enviar para Financiamentos
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={financiamento === "NAO" ? "default" : "outline"}
+                onClick={() => setFinanciamento("NAO")}
+              >
+                NÃO
+              </Button>
+              {financiamento === "SIM" && (
+                <select
+                  value={bancoFin}
+                  onChange={(e) => setBancoFin(e.target.value)}
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="BASA">BASA</option>
+                  <option value="SICREDI">SICREDI</option>
+                  <option value="BB">BB</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              )}
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              {financiamento === "SIM"
+                ? "Ao aprovar, o contrato vai para Financiamentos e a obra entra em Engenharia (Em projeto)."
+                : "Ao aprovar, o contrato fica no Comercial e a obra entra em Engenharia (Em projeto)."}
+            </div>
           </div>
         </div>
         <DialogFooter>

@@ -493,15 +493,7 @@ function LeadDetail({
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Nome" value={lead.clienteNome} />
-              <Field label="CPF / CNPJ" value={lead.clienteDoc} />
-              <Field label="Telefone" value={lead.clienteTelefone} />
-              <Field label="E-mail" value={lead.clienteEmail} />
-              <Field label="Endereço" value={enderecoLinha || "—"} className="sm:col-span-2" />
-              <Field label="Consultor" value={lead.consultor} />
-              <Field label="Valor (última proposta)" value={fmtBRL(lead.valor)} />
-            </div>
+            <DadosEditaveis lead={lead} />
           </TabsContent>
 
           <TabsContent value="propostas" className="mt-4 space-y-3">

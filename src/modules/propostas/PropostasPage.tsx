@@ -43,7 +43,10 @@ import {
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
   buscarTarifa, getLastCidadeId, setLastCidadeId, addHistoricoIrradiacao,
+  sugerirInversoresAuto, inversorIdPadrao, modulosSuportadosPorInversor,
+  capacidadeKwpInversor, STANDARD_INVERSOR_KW,
 } from "@/modules/propostas/store";
+import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
@@ -134,7 +137,7 @@ function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boole
     irradiacaoMinima: irrMin ?? p.irradiacaoMinima,
     fonteIrradiacao: c.fonteDados ?? "BASE INTERNA",
     grupoTarifario: c.grupoTarifarioPadrao ?? p.grupoTarifario,
-    tarifa: c.tarifaPadrao ?? p.tarifa,
+    // tarifa permanece travada via config global (Configurações → Proposta)
   };
 }
 
@@ -391,6 +394,7 @@ function PropostaSheet({
   const clientes = useClientesFull();
   const { perfil } = useUsuarioAtual();
   const ehAdmin = !!perfil?.isAdminMaster;
+  const cfg = usePropostaConfig();
 
   const dim = calcDimensionamento(p);
   const pre = calcPrecificacao(p);
@@ -402,6 +406,23 @@ function PropostaSheet({
     if (p.modulosQtd !== dim.qtdFinal) update("modulosQtd", dim.qtdFinal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dim.qtdFinal]);
+
+  // tarifa de energia: sempre travada na config global
+  useEffect(() => {
+    if (p.tarifa !== cfg.tarifaPadraoKwh) update("tarifa", cfg.tarifaPadraoKwh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cfg.tarifaPadraoKwh]);
+
+  // sugere inversores automaticamente quando muda qtd ou potência do módulo
+  useEffect(() => {
+    const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+    const novos = sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade }));
+    const sameLen = novos.length === p.inversores.length;
+    const sameAll = sameLen && novos.every((n, i) =>
+      n.inversorId === p.inversores[i].inversorId && n.quantidade === p.inversores[i].quantidade);
+    if (!sameAll) update("inversores", novos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta]);
 
   // sugere parâmetro automaticamente quando muda potência ou tipo
   useEffect(() => {
@@ -455,19 +476,7 @@ function PropostaSheet({
     const c = cidades.find((x) => x.id === id);
     if (!c) return;
     setLastCidadeId(c.id);
-    setP((cur) => {
-      const nova = aplicarCidadeNaProposta(cur, c, false);
-      // Lookup de tarifa oficial
-      const tarifa = buscarTarifa(tarifasEnergia, {
-        concessionaria: nova.concessionaria,
-        uf: nova.estado,
-        cidade: nova.cidade,
-        grupo: nova.grupoTarifario,
-        modalidade: nova.modalidadeTarifaria,
-      });
-      if (tarifa) nova.tarifa = tarifa.tarifaKwh;
-      return nova;
-    });
+    setP((cur) => aplicarCidadeNaProposta(cur, c, false));
   }
 
   function limparCidade() {
@@ -749,14 +758,14 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Tarifa de energia (R$/kWh)" hint="Definida no cadastro de Tarifas (Cadastros → Tarifas). Para alterar, edite na base de tarifas.">
+              <Field label="Tarifa de energia (R$/kWh)" hint="Travada. Edite em Configurações → Proposta.">
                 <Input
                   type="number"
-                  step="0.0001"
-                  value={p.tarifa}
-                  onChange={(e) => update("tarifa", +e.target.value)}
-                  disabled={!ehAdmin}
-                  className={!ehAdmin ? "bg-muted/50" : ""}
+                  step="0.000001"
+                  value={cfg.tarifaPadraoKwh}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
                 />
               </Field>
             </div>
@@ -825,6 +834,74 @@ function PropostaSheet({
               <Field label="Marca"><Input value={p.moduloMarca ?? ""} onChange={(e) => update("moduloMarca", e.target.value)} /></Field>
               <ReadOnlyField label="Quantidade" value={String(dim.qtdFinal)} />
               <ReadOnlyField label="Área total (m²)" value={fmtNum(dim.areaTotal, 2)} />
+            </div>
+          </Bloco>
+
+          {/* BLOCO 6.1 — Inversores (sugestão automática) */}
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="6.1 Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <div>
+                Calculado a partir de <strong>{dim.qtdFinal}</strong> módulo(s) de <strong>{p.moduloPotenciaWp}W</strong>.
+                Regra: ≤ 37,5 kW × {String(cfg.inversorMultBaixa).replace(".", ",")} · ≥ 40 kW × {String(cfg.inversorMultAlta).replace(".", ",")}.
+              </div>
+              <Button variant="outline" size="sm" onClick={() => {
+                const sug = sugerirInversoresAuto(dim.qtdFinal, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                update("inversores", sug.map((s) => ({ inversorId: inversorIdPadrao(s.potKw), quantidade: s.quantidade })));
+                toast.success("Inversores sugeridos automaticamente.");
+              }}><Sparkles className="mr-1 h-3 w-3" /> Sugerir novamente</Button>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {[0,1,2,3,4].map((idx) => {
+                const slot = (() => {
+                  // expande pelas quantidades: cada inversor sugerido vira N slots
+                  const flat: string[] = [];
+                  p.inversores.forEach((e) => {
+                    for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
+                  });
+                  return flat[idx] ?? "";
+                })();
+                const inv = inversores.find((i) => i.id === slot);
+                return (
+                  <Field key={idx} label={`Inversor ${idx + 1}`}>
+                    <Select
+                      value={slot}
+                      onValueChange={(v) => {
+                        // reconstrói a lista de inversores a partir dos 5 slots
+                        const flat: string[] = [];
+                        p.inversores.forEach((e) => {
+                          for (let i = 0; i < (e.quantidade || 0) && flat.length < 5; i++) flat.push(e.inversorId);
+                        });
+                        while (flat.length < 5) flat.push("");
+                        flat[idx] = v;
+                        const agg = new Map<string, number>();
+                        flat.filter(Boolean).forEach((id) => agg.set(id, (agg.get(id) ?? 0) + 1));
+                        update("inversores", Array.from(agg.entries()).map(([inversorId, quantidade]) => ({ inversorId, quantidade })));
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__" disabled>—</SelectItem>
+                        {STANDARD_INVERSOR_KW.map((kw) => {
+                          const id = inversorIdPadrao(kw);
+                          const sup = modulosSuportadosPorInversor(kw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                          const cap = capacidadeKwpInversor(kw, cfg.inversorMultBaixa, cfg.inversorMultAlta);
+                          const lbl = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
+                          return (
+                            <SelectItem key={id} value={id}>
+                              INVERSOR {lbl}KW — {fmtNum(cap,1)} kWp · até {sup} módulos
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {inv && (
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        Capacidade: {fmtNum(capacidadeKwpInversor(inv.potenciaKw, cfg.inversorMultBaixa, cfg.inversorMultAlta), 1)} kWp · suporta até {modulosSuportadosPorInversor(inv.potenciaKw, p.moduloPotenciaWp, cfg.inversorMultBaixa, cfg.inversorMultAlta)} módulos
+                      </div>
+                    )}
+                  </Field>
+                );
+              })}
             </div>
           </Bloco>
 

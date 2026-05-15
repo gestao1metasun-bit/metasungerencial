@@ -7,6 +7,7 @@
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
 import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
+import { getPropostaConfig } from "./proposta-config-store";
 
 /* =============== Tipos =============== */
 
@@ -279,13 +280,23 @@ const SEED_MODULOS: ModuloFV[] = [
   { id: "MOD-TR-555", marca: "TRINA", modelo: "VERTEX S+ 555W", potenciaWp: 555, larguraM: 1.096, alturaM: 2.279, garantiaProduto: 12, garantiaPerformance: 25, ativo: true },
 ];
 
-const SEED_INVERSORES: InversorFV[] = [
-  { id: "INV-GW-5K",  marca: "GROWATT",  modelo: "MIN 5000TL-X",  potenciaKw: 5,  tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-GW-8K",  marca: "GROWATT",  modelo: "MIN 8000TL-X",  potenciaKw: 8,  tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-GW-10K", marca: "GROWATT",  modelo: "MIN 10000TL-X", potenciaKw: 10, tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-DY-15K", marca: "DEYE",     modelo: "SUN 15K-G",     potenciaKw: 15, tipo: "STRING", garantia: 10, ativo: true },
-  { id: "INV-SU-50K", marca: "SUNGROW",  modelo: "SG50CX",        potenciaKw: 50, tipo: "STRING", garantia: 10, ativo: true },
-];
+/** Lista padrão de inversores usada na sugestão automática (kW). */
+export const STANDARD_INVERSOR_KW = [5, 6, 7.5, 10, 15, 20, 30, 37.5, 40, 50, 60, 75, 100] as const;
+function rotuloInv(kw: number) {
+  const txt = Number.isInteger(kw) ? `${kw}` : String(kw).replace(".", ",");
+  return `INVERSOR ${txt}KW`;
+}
+export function inversorIdPadrao(kw: number) { return `INV-STD-${String(kw).replace(".", "_")}`; }
+
+const SEED_INVERSORES: InversorFV[] = STANDARD_INVERSOR_KW.map((kw) => ({
+  id: inversorIdPadrao(kw),
+  marca: "PADRÃO",
+  modelo: rotuloInv(kw),
+  potenciaKw: kw,
+  tipo: "STRING",
+  garantia: 10,
+  ativo: true,
+}));
 
 const SEED_DISTRIBUIDORES: DistribuidorFV[] = [
   { id: "DIS-EDS",  nome: "EDELTEC",     telefone: "(62) 3000-0000", ativo: true },
@@ -354,7 +365,7 @@ function makeStore<T>(key: string, seed: () => T[]) {
 const cidadesS = makeStore<CidadeFV>("ms.fv.cidades.v3", () => SEED_CIDADES);
 const concsS   = makeStore<ConcessionariaFV>("ms.fv.concs.v3", () => SEED_CONCESSIONARIAS);
 const modsS    = makeStore<ModuloFV>("ms.fv.modulos.v1", () => SEED_MODULOS);
-const invsS    = makeStore<InversorFV>("ms.fv.inversores.v1", () => SEED_INVERSORES);
+const invsS    = makeStore<InversorFV>("ms.fv.inversores.v2", () => SEED_INVERSORES);
 const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTRIBUIDORES);
 const paramsS  = makeStore<ParametroFV>("ms.fv.params.v1", () => SEED_PARAMETROS);
 const custosS  = makeStore<CustoFV>("ms.fv.custos.v1", () => SEED_CUSTOS);
@@ -531,6 +542,51 @@ export function potenciaInversores(p: PropostaFV, listaInversores: InversorFV[])
   }, 0);
 }
 
+/* =============== Sugestão automática de inversores =============== */
+
+/** Capacidade efetiva (kWp) que um inversor de N kW comporta.
+ *  ≤ 37,5 kW → ×1,60   |   ≥ 40 kW → ×1,80 */
+export function capacidadeKwpInversor(potKw: number, multBaixa = 1.6, multAlta = 1.8): number {
+  if (!potKw || potKw <= 0) return 0;
+  return potKw < 40 ? potKw * multBaixa : potKw * multAlta;
+}
+
+/** Quantos módulos de `potModuloW` (W) o inversor `potKw` (kW) suporta — arredonda p/ baixo. */
+export function modulosSuportadosPorInversor(potKw: number, potModuloW: number, multBaixa = 1.6, multAlta = 1.8): number {
+  const potModKw = (potModuloW || 0) / 1000;
+  if (potModKw <= 0) return 0;
+  return Math.floor(capacidadeKwpInversor(potKw, multBaixa, multAlta) / potModKw);
+}
+
+/** Sugere inversores que comportem `qtdModulos` de `potModuloW`.
+ *  Estratégia: prioriza 1 inversor (o menor que comporta); senão usa N (2..5) inversores
+ *  de mesmo tamanho (combinação balanceada), preferindo o menor N e o menor tamanho. */
+export function sugerirInversoresAuto(
+  qtdModulos: number,
+  potModuloW: number,
+  multBaixa = 1.6,
+  multAlta = 1.8,
+): { potKw: number; quantidade: number }[] {
+  if (!qtdModulos || qtdModulos <= 0 || !potModuloW) return [];
+  const sizes = STANDARD_INVERSOR_KW;
+  // 1 inversor — menor que comporta
+  for (const s of sizes) {
+    if (modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
+      return [{ potKw: s, quantidade: 1 }];
+    }
+  }
+  // N inversores iguais (2..5)
+  for (let N = 2; N <= 5; N++) {
+    for (const s of sizes) {
+      if (N * modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
+        return [{ potKw: s, quantidade: N }];
+      }
+    }
+  }
+  // Excede capacidade — devolve 5 × 100 kW como fallback máximo
+  return [{ potKw: 100, quantidade: 5 }];
+}
+
 /** Sugere parâmetro com base na faixa de potência + tipo. */
 export function sugerirParametro(potKwp: number, tipo: string, lista: ParametroFV[]): ParametroFV | undefined {
   return lista
@@ -634,7 +690,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
     tipoInstalacao: "RESIDENCIAL",
     tipoTelhado: "CERÂMICO",
     padraoEntrada: "BIFÁSICO",
-    tarifa: 0.92,
+    tarifa: getPropostaConfig().tarifaPadraoKwh,
     taxaIluminacao: 0,
     contaMinimaKwh: 50,
     contaMediaAtual: 0,

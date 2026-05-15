@@ -6,6 +6,7 @@
 // Padrão segue os demais stores do projeto: cache + listeners + write.
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
+import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
 
 /* =============== Tipos =============== */
 
@@ -263,18 +264,9 @@ export type PropostaFV = {
 
 /* =============== Seeds =============== */
 
-const SEED_CIDADES: CidadeFV[] = [
-  { id: "CID-GYN", cidade: "GOIÂNIA", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-ANP", cidade: "ANÁPOLIS", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.3, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-BSB", cidade: "BRASÍLIA", estado: "DF", concessionariaPadrao: "NEOENERGIA DF", irradiacaoMedia: 5.5, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.95 },
-  { id: "CID-RVD", cidade: "RIO VERDE", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-  { id: "CID-APD", cidade: "APARECIDA DE GOIÂNIA", estado: "GO", concessionariaPadrao: "EQUATORIAL GOIÁS", irradiacaoMedia: 5.4, mesMaiorIrradiacao: "AGO", mesMenorIrradiacao: "DEZ", grupoTarifarioPadrao: "B1", tarifaPadrao: 0.92 },
-];
+const SEED_CIDADES: CidadeFV[] = BASE_CIDADES;
 
-const SEED_CONCESSIONARIAS: ConcessionariaFV[] = [
-  { id: "CON-EQGO", nome: "EQUATORIAL GOIÁS", estado: "GO", tarifaPadrao: 0.92, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
-  { id: "CON-NEDF", nome: "NEOENERGIA DF", estado: "DF", tarifaPadrao: 0.95, taxaMinMonofasico: 30, taxaMinBifasico: 50, taxaMinTrifasico: 100 },
-];
+const SEED_CONCESSIONARIAS: ConcessionariaFV[] = BASE_CONCESSIONARIAS;
 
 const SEED_TARIFAS: TarifaEnergia[] = [
   { id: "TAR-EQGO-B1", concessionaria: "EQUATORIAL GOIÁS", uf: "GO", grupoTarifario: "B1", modalidadeTarifaria: "Convencional", tarifaKwh: 0.92, ativo: true, dataUltimaAtualizacao: new Date().toISOString().slice(0,10) },
@@ -359,8 +351,8 @@ function makeStore<T>(key: string, seed: () => T[]) {
   return { read, write, useList };
 }
 
-const cidadesS = makeStore<CidadeFV>("ms.fv.cidades.v1", () => SEED_CIDADES);
-const concsS   = makeStore<ConcessionariaFV>("ms.fv.concs.v1", () => SEED_CONCESSIONARIAS);
+const cidadesS = makeStore<CidadeFV>("ms.fv.cidades.v2", () => SEED_CIDADES);
+const concsS   = makeStore<ConcessionariaFV>("ms.fv.concs.v2", () => SEED_CONCESSIONARIAS);
 const modsS    = makeStore<ModuloFV>("ms.fv.modulos.v1", () => SEED_MODULOS);
 const invsS    = makeStore<InversorFV>("ms.fv.inversores.v1", () => SEED_INVERSORES);
 const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTRIBUIDORES);
@@ -479,7 +471,7 @@ export function consumoEfetivo(p: Pick<PropostaFV, "modoConsumo" | "consumoMedio
 
 /** Resultado completo do dimensionamento.
  *  Fórmula:
- *    PVOUT mensal Atlas (kWh/kWp/mês) × FRO = produtividade real corrigida
+ *    Parâmetro de irradiação (BASE REAL, kWh/kWp/mês) = produtividade real corrigida
  *    Consumo desejado ÷ produtividade real corrigida = kWp necessário
  *    kWp necessário ÷ potência do módulo (kW) = quantidade de módulos (arredondar p/ cima)
  */
@@ -487,12 +479,11 @@ export function calcDimensionamento(p: PropostaFV) {
   const consumo = consumoEfetivo(p);
   const simult = Math.min(Math.max(p.taxaSimultaneidade || 0, 0), 1);
   const fro = Math.min(Math.max((p.fro ?? p.fatorPerformance ?? 0.75) || 0.75, 0.1), 1);
-  const irr = Math.max(p.irradiacaoMedia || 0, 0.1);
 
-  // PVOUT mensal Atlas (kWh/kWp/mês). Aproximação: irradiação diária × 30 dias.
-  const pvoutMensal = irr * 30;
-  // Produtividade real corrigida pelo FRO.
-  const produtividadeReal = pvoutMensal * fro;
+  // Parâmetro de irradiação vem da BASE REAL (kWh/kWp/mês), já corrigido por FRO da fonte.
+  const produtividadeReal = Math.max(p.irradiacaoMedia || 0, 0.1);
+  // Mantido por compat. com telas legadas; não é mais usado no cálculo principal.
+  const pvoutMensal = produtividadeReal;
 
   const consumoInstantaneo = consumo * simult;
   const geracaoInjetada = Math.max(0, consumo - consumoInstantaneo);

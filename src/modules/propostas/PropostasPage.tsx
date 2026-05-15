@@ -663,7 +663,7 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Irradiação média (kWh/m²·dia)" hint="Média de sol da cidade. Quanto maior, menor o sistema necessário.">
+              <Field label="Parâmetro de irradiação (kWh/kWp·mês)" hint="Base real corrigida da cidade. Usado como produtividade real no cálculo.">
                 <Input type="number" step="0.1" value={p.irradiacaoMedia} onChange={(e) => update("irradiacaoMedia", +e.target.value)} />
               </Field>
             </div>

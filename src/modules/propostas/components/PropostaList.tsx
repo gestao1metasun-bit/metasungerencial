@@ -731,8 +731,17 @@ function AprovarDialog({
             <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <Label className="text-xs">CEP</Label>
-            <Input value={cep} onChange={(e) => setCep(e.target.value)} />
+            <Label className="text-xs">CEP {cepLoading && <span className="text-muted-foreground">(buscando…)</span>}</Label>
+            <Input
+              value={cep}
+              onChange={(e) => {
+                const v = e.target.value;
+                setCep(v);
+                if (v.replace(/\D/g, "").length === 8) buscarCep(v);
+              }}
+              onBlur={(e) => buscarCep(e.target.value)}
+              placeholder="00000-000"
+            />
           </div>
           <div>
             <Label className="text-xs">Bairro</Label>
@@ -757,6 +766,15 @@ function AprovarDialog({
           <div>
             <Label className="text-xs">UF</Label>
             <Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+          </div>
+          <div className="sm:col-span-2 mt-2 rounded-md border bg-muted/20 p-2">
+            <Label className="text-xs">Data de assinatura *</Label>
+            <Input
+              type="date"
+              value={dataAssinatura}
+              onChange={(e) => setDataAssinatura(e.target.value)}
+              className="mt-1"
+            />
           </div>
         </div>
         <DialogFooter>

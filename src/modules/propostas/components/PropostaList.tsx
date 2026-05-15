@@ -1262,7 +1262,23 @@ function TabelaView({
       case "aprovadas": return <span className={`tabular-nums ${l.aprovadas > 0 ? "font-semibold text-success" : ""}`}>{l.aprovadas}</span>;
       case "assinados": return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
-      case "status":    return <Badge variant={statusVariant(l.status)}>{l.status}</Badge>;
+      case "status": {
+        // Espelha o status mostrado no Kanban: se o lead foi atribuído a uma
+        // coluna do Kanban, usa o título dela; caso contrário, fallback para
+        // a coluna padrão calculada a partir do status da última proposta.
+        const colId = l.bloqueado
+          ? COL_CONTRATO_ID
+          : (assign[l.key] || colPadraoPorStatus(l.status));
+        const col = cols.find((c) => c.id === colId);
+        const titulo = (col?.titulo || l.status).toUpperCase();
+        const variant: "default" | "secondary" | "destructive" | "outline" =
+          colId === COL_CONTRATO_ID ? "default"
+          : colId === "col-aprovada" ? "default"
+          : colId === "col-perdida" ? "destructive"
+          : colId === "col-rascunho" ? "outline"
+          : "secondary";
+        return <Badge variant={variant}>{titulo}</Badge>;
+      }
       case "dias":
         return (
           <div className="flex items-center gap-1" title={`${l.dias} dia(s)`}>

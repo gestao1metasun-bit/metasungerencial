@@ -66,9 +66,20 @@ export function duplicarProposta(p: PropostaFV) {
 }
 
 export function excluirProposta(p: PropostaFV) {
+  if (p.status !== "RASCUNHO") {
+    toast.error("Propostas geradas não podem ser excluídas.");
+    return;
+  }
   if (!confirm(`Excluir proposta ${p.numero}? Esta ação não pode ser desfeita.`)) return;
   removeProposta(p.id);
   toast.success("Proposta excluída.");
+}
+
+export function aprovarProposta(p: PropostaFV) {
+  if (!confirm(`Aprovar a proposta ${p.numero}? Ela será convertida em contrato e o card ficará bloqueado.`)) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  upsertProposta({ ...p, status: "APROVADA", atualizadoEm: hoje });
+  toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
 }
 
 function diasDesde(iso?: string): number {
@@ -164,9 +175,18 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
 
 /* ===================== KANBAN: colunas ===================== */
 
-type KCol = { id: string; titulo: string; ativo?: boolean };
-const COLS_KEY = "ms.fv.kanban.cols.v2";
+type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
+const COLS_KEY = "ms.fv.kanban.cols.v3";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
+
+// Coluna final fixa (não pode ser excluída, desativada, renomeada nem reordenada).
+const COL_CONTRATO_ID = "col-contrato-assinado";
+const COL_CONTRATO: KCol = {
+  id: COL_CONTRATO_ID,
+  titulo: "CONTRATO ASSINADO — COMERCIAL",
+  ativo: true,
+  locked: true,
+};
 
 const DEFAULT_COLS: KCol[] = [
   { id: "col-rascunho", titulo: "Rascunho", ativo: true },
@@ -174,14 +194,21 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-negociacao", titulo: "Em negociação", ativo: true },
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
+  COL_CONTRATO,
 ];
+
+// Garante que a coluna fixa exista e seja sempre a última do array.
+function normalizeCols(cols: KCol[]): KCol[] {
+  const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
+  return [...semFixa, { ...COL_CONTRATO }];
+}
 
 function colPadraoPorStatus(s: StatusProposta): string {
   switch (s) {
     case "RASCUNHO": return "col-rascunho";
     case "GERADA":
     case "ENVIADA": return "col-enviada";
-    case "APROVADA": return "col-aprovada";
+    case "APROVADA": return COL_CONTRATO_ID;
     case "RECUSADA":
     case "VENCIDA":
     case "CANCELADA": return "col-perdida";
@@ -190,26 +217,37 @@ function colPadraoPorStatus(s: StatusProposta): string {
 }
 
 function useKanbanState(leads: Lead[]) {
-  const [cols, setCols] = useState<KCol[]>(() => {
+  const [cols, setColsRaw] = useState<KCol[]>(() => {
     const saved = readLS<KCol[]>(COLS_KEY, []);
-    if (!saved.length) return DEFAULT_COLS;
-    return saved.map((c) => ({ ...c, ativo: c.ativo !== false }));
+    const base = saved.length ? saved.map((c) => ({ ...c, ativo: c.ativo !== false })) : DEFAULT_COLS;
+    return normalizeCols(base);
   });
+  const setCols: typeof setColsRaw = (updater) => {
+    setColsRaw((prev) => {
+      const next = typeof updater === "function" ? (updater as (c: KCol[]) => KCol[])(prev) : updater;
+      return normalizeCols(next);
+    });
+  };
   const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
 
   useEffect(() => writeLS(COLS_KEY, cols), [cols]);
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
 
-  // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada
+  // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
+  // Leads aprovados são forçados para a coluna fixa "CONTRATO ASSINADO — COMERCIAL".
   useEffect(() => {
     setAssign((prev) => {
       const next = { ...prev };
       const ativosIds = new Set(cols.filter((c) => c.ativo !== false).map((c) => c.id));
       let mudou = false;
       for (const l of leads) {
-        if (!next[l.key] || !ativosIds.has(next[l.key])) {
+        if (l.bloqueado) {
+          if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
+          continue;
+        }
+        if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false)?.id ?? cols[0]?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && c.id !== COL_CONTRATO_ID)?.id ?? "col-rascunho");
           mudou = true;
         }
       }
@@ -248,6 +286,7 @@ function ColunasManager({
   };
   const toggleAtivo = (id: string) => setCols((c) => c.map((x) => (x.id === id ? { ...x, ativo: x.ativo === false } : x)));
   const excluir = (id: string) => {
+    if (cols.find((x) => x.id === id)?.locked) return toast.error("Esta coluna é fixa do sistema.");
     if (cols.length <= 1) return toast.error("Mantenha pelo menos uma coluna.");
     if (!confirm("Excluir esta coluna?")) return;
     setCols((c) => c.filter((x) => x.id !== id));
@@ -257,6 +296,8 @@ function ColunasManager({
       const i = c.findIndex((x) => x.id === id);
       const j = i + dir;
       if (i < 0 || j < 0 || j >= c.length) return c;
+      // não pode mover a coluna fixa, nem trocar de posição com ela
+      if (c[i].locked || c[j].locked) return c;
       const cp = [...c]; [cp[i], cp[j]] = [cp[j], cp[i]]; return cp;
     });
   };
@@ -290,9 +331,9 @@ function ColunasManager({
           <div className="space-y-1">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Colunas cadastradas</div>
             {cols.map((c, idx) => (
-              <div key={c.id} className={`flex items-center gap-2 rounded-md border p-2 ${c.ativo === false ? "bg-muted/40 opacity-60" : "bg-card"}`}>
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                {editId === c.id ? (
+              <div key={c.id} className={`flex items-center gap-2 rounded-md border p-2 ${c.ativo === false ? "bg-muted/40 opacity-60" : "bg-card"} ${c.locked ? "border-success/50" : ""}`}>
+                <GripVertical className={`h-4 w-4 ${c.locked ? "text-success/60" : "text-muted-foreground"}`} />
+                {editId === c.id && !c.locked ? (
                   <>
                     <Input
                       autoFocus
@@ -308,24 +349,27 @@ function ColunasManager({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setEditId(c.id); setTituloEdit(c.titulo); }}
-                    className="flex-1 truncate text-left text-sm font-medium"
-                    title="Clique para renomear"
+                    onClick={() => { if (c.locked) return; setEditId(c.id); setTituloEdit(c.titulo); }}
+                    className={`flex-1 truncate text-left text-sm font-medium ${c.locked ? "cursor-default" : ""}`}
+                    title={c.locked ? "Coluna fixa do sistema" : "Clique para renomear"}
                   >
-                    {c.titulo}
+                    <span className="inline-flex items-center gap-1">
+                      {c.locked && <Lock className="h-3 w-3 text-success" />}
+                      {c.titulo}
+                    </span>
                   </button>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, -1)} disabled={idx === 0} title="Subir">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, -1)} disabled={idx === 0 || c.locked || cols[idx - 1]?.locked} title="Subir">
                   <ArrowUp className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, 1)} disabled={idx === cols.length - 1} title="Descer">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => mover(c.id, 1)} disabled={idx === cols.length - 1 || c.locked || cols[idx + 1]?.locked} title="Descer">
                   <ArrowDown className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-1">
                   <span className="text-[10px] uppercase text-muted-foreground">Ativa</span>
-                  <Switch checked={c.ativo !== false} onCheckedChange={() => toggleAtivo(c.id)} />
+                  <Switch checked={c.ativo !== false} onCheckedChange={() => toggleAtivo(c.id)} disabled={c.locked} />
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => excluir(c.id)} title="Excluir">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => excluir(c.id)} title="Excluir" disabled={c.locked}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
@@ -374,6 +418,9 @@ function LeadDetail({
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="propostas">Propostas ({lead.propostas.length})</TabsTrigger>
+            <TabsTrigger value="aprovar" disabled={lead.bloqueado}>
+              {lead.bloqueado ? "Aprovada ✓" : "Aprovar proposta"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
@@ -393,9 +440,11 @@ function LeadDetail({
               <div className="text-xs text-muted-foreground">
                 {lead.propostas.length} proposta(s) — última: <strong>{lead.ultima.numero}</strong>
               </div>
-              <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
-                <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
-              </Button>
+              {!lead.bloqueado && (
+                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
+                  <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
+                </Button>
+              )}
             </div>
             <div className="rounded-md border">
               <Table>
@@ -411,7 +460,9 @@ function LeadDetail({
                 <TableBody>
                   {lead.propostas.map((p) => {
                     const v = calcPrecificacao(p).valorFinal || 0;
-                    const podeEditar = p.status === "RASCUNHO" && !lead.bloqueado;
+                    const ehRascunho = p.status === "RASCUNHO";
+                    const podeEditar = ehRascunho && !lead.bloqueado;
+                    const podeExcluir = ehRascunho && !lead.bloqueado;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
@@ -431,7 +482,7 @@ function LeadDetail({
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => duplicarProposta(p)}>
                               <Copy className="h-4 w-4" />
                             </Button>
-                            {!lead.bloqueado && (
+                            {podeExcluir && (
                               <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -444,6 +495,62 @@ function LeadDetail({
                 </TableBody>
               </Table>
             </div>
+          </TabsContent>
+
+          <TabsContent value="aprovar" className="mt-4 space-y-3">
+            {lead.bloqueado ? (
+              <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium text-success">
+                  <Lock className="h-4 w-4" /> Card bloqueado — proposta aprovada
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Este lead já foi convertido em contrato e enviado ao comercial. Não é possível aprovar outra proposta.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Selecione <strong>uma</strong> proposta para aprovar. Ela será convertida em contrato,
+                  enviada ao comercial e o card ficará bloqueado para novas alterações.
+                </div>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nº</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">Ação</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lead.propostas.map((p) => {
+                        const v = calcPrecificacao(p).valorFinal || 0;
+                        const podeAprovar = ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+                        return (
+                          <TableRow key={p.id}>
+                            <TableCell className="font-medium">{p.numero}</TableCell>
+                            <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                            <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant={podeAprovar ? "default" : "outline"}
+                                disabled={!podeAprovar}
+                                onClick={() => aprovarProposta(p)}
+                                className="gap-1"
+                              >
+                                <Check className="h-4 w-4" /> Aprovar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -568,19 +675,6 @@ function KanbanView({
                       <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
                     </div>
                   </div>
-                  {!l.bloqueado && (
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1 px-2 text-[11px]"
-                        onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
-                        title="Gerar nova proposta para este cliente"
-                      >
-                        <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
-                      </Button>
-                    </div>
-                  )}
                 </Card>
               ))}
               {!items.length && (

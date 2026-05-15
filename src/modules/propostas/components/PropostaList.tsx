@@ -27,10 +27,10 @@ import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
+  aprovarPropostaDoLead,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull,
-  criarContratoDeProposta, anexarContratoAssinado,
 } from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
@@ -90,87 +90,14 @@ export function excluirProposta(p: PropostaFV) {
   toast.success("Proposta excluída.");
 }
 
+/** Aprova uma proposta diretamente: muda status para APROVADA, marca outras
+ *  versões do mesmo lead como obsoletas, bloqueia o card e envia para o Comercial.
+ *  A geração de contrato, marcação de financiamento e abertura de obra em
+ *  Engenharia agora ocorrem somente no módulo Comercial. */
 export function aprovarProposta(p: PropostaFV) {
-  if (!confirm(`Aprovar a proposta ${p.numero}? Ela será convertida em contrato e o card ficará bloqueado.`)) return;
-  const hoje = new Date().toISOString().slice(0, 10);
-  upsertProposta({ ...p, status: "APROVADA", atualizadoEm: hoje });
-  toast.success(`Proposta ${p.numero} aprovada — enviada ao comercial.`);
-}
-
-/** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead.
- *  Em seguida cria um contrato a partir da proposta e marca como ASSINADO,
- *  fazendo o card cair na coluna ASSINADOS (travado para edição). Se o lead foi
- *  marcado com FINANCIAMENTO=SIM, o contrato vai para o módulo Financiamentos.
- *  A obra inicial é criada em Engenharia com status "Em projeto/aprovação". */
-function aprovarComDadosCliente(
-  propostas: PropostaFV[],
-  escolhida: PropostaFV,
-  dados: Partial<PropostaFV>,
-  dataAssinatura: string,
-  financiamento: { ativo: boolean; banco?: string },
-) {
-  const hoje = new Date().toISOString().slice(0, 10);
-  let propAtualizada: PropostaFV = escolhida;
-  for (const p of propostas) {
-    const isEscolhida = p.id === escolhida.id;
-    const merged: PropostaFV = {
-      ...p,
-      ...dados,
-      status: isEscolhida ? "APROVADA" : p.status,
-      dataAssinatura: isEscolhida ? dataAssinatura : p.dataAssinatura,
-      possuiFinanciamento: isEscolhida ? financiamento.ativo : p.possuiFinanciamento,
-      financiamentoBanco: isEscolhida ? (financiamento.ativo ? financiamento.banco : undefined) : p.financiamentoBanco,
-      atualizadoEm: hoje,
-    };
-    upsertProposta(merged);
-    if (isEscolhida) propAtualizada = merged;
-  }
-
-  // Cria contrato e já o marca como assinado para travar o card na coluna ASSINADOS
-  const dim = calcDimensionamento(propAtualizada);
-  const valor = calcPrecificacao(propAtualizada).valorFinal;
-  const enderecoLinha = propAtualizada.clienteEndereco || "";
-  const r = criarContratoDeProposta({
-    propostaId: propAtualizada.id,
-    propostaNumero: propAtualizada.numero,
-    leadId: propAtualizada.leadId,
-    leadNumero: propAtualizada.leadNumero,
-    cliente: propAtualizada.clienteNome,
-    clienteId: propAtualizada.clienteId,
-    clienteFull: {
-      nome: propAtualizada.clienteNome || "",
-      doc: propAtualizada.clienteDoc || "",
-      telefone: propAtualizada.clienteTelefone || "",
-      email: propAtualizada.clienteEmail || "",
-      cep: propAtualizada.clienteCep || "",
-      rua: propAtualizada.clienteRua || enderecoLinha,
-      numero: propAtualizada.clienteNumero || "",
-      bairro: propAtualizada.clienteBairro || "",
-      complemento: propAtualizada.clienteComplemento || "",
-      cidade: propAtualizada.clienteCidade || propAtualizada.cidade || "",
-      uf: propAtualizada.clienteUf || propAtualizada.estado || "",
-    },
-    vendedor: propAtualizada.consultor || propAtualizada.criadoPor || "—",
-    valor,
-    kwp: dim.potenciaFinalKwp,
-    modulos: dim.qtdFinal,
-    potencia: dim.potenciaFinalKwp,
-    obs: propAtualizada.obsCliente,
-    usuario: propAtualizada.criadoPor || "Operador",
-    possuiFinanciamento: financiamento.ativo,
-    financiamentoBanco: financiamento.banco,
-  });
-
-  if (r.ok) {
-    // Anexa contrato assinado (mock) — isto sinaliza assinados>0 no buildLeads
-    // e move o lead para a coluna ASSINADOS (travada).
-    anexarContratoAssinado(r.contratoId, `contrato-${r.contratoId.replace("/", "-")}.pdf`, propAtualizada.criadoPor || "Operador");
-    toast.success(
-      `Proposta ${escolhida.numero} aprovada · Contrato ${r.contratoId} assinado · Obra em Engenharia${financiamento.ativo ? " · Financiamento marcado" : ""}.`,
-    );
-  } else {
-    toast.warning(`Proposta aprovada, mas faltam dados para o contrato: ${r.missing.join(", ")}.`);
-  }
+  if (!confirm(`Aprovar a proposta ${p.numero}? Ela será enviada ao Comercial e o card ficará bloqueado.`)) return;
+  aprovarPropostaDoLead(p.id, p.criadoPor || "Operador", "Aprovada em Orçamentos");
+  toast.success(`Proposta ${p.numero} aprovada — enviada ao Comercial.`);
 }
 
 function diasDesde(iso?: string): number {
@@ -265,7 +192,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: assinados > 0,
+      bloqueado: aprovadas > 0 || assinados > 0,
       status: ultima.status,
       emAberto,
       aprovadas,
@@ -524,7 +451,6 @@ function LeadDetail({
   onNova: (preset?: Partial<PropostaFV>) => void;
   onEditar: (p: PropostaFV) => void;
 }) {
-  const [aprovarAlvo, setAprovarAlvo] = useState<PropostaFV | null>(null);
   if (!lead) return null;
   const enderecoLinha = [
     lead.clienteEndereco,
@@ -621,14 +547,15 @@ function LeadDetail({
                   <Lock className="h-4 w-4" /> Card bloqueado — proposta aprovada
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Este lead já foi convertido em contrato e enviado ao comercial. Não é possível aprovar outra proposta.
+                  Este lead já foi enviado ao Comercial. Não é possível aprovar outra proposta.
                 </div>
               </div>
             ) : (
               <>
                 <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Selecione <strong>uma</strong> proposta para aprovar. Ela será convertida em contrato,
-                  enviada ao comercial e o card ficará bloqueado para novas alterações.
+                  Selecione <strong>uma</strong> proposta para aprovar. Ela será
+                  enviada ao <strong>Comercial</strong> e o card ficará bloqueado.
+                  A geração do contrato (e indicação de financiamento) acontece no Comercial.
                 </div>
                 <div className="rounded-md border">
                   <Table>
@@ -654,7 +581,7 @@ function LeadDetail({
                                 size="sm"
                                 variant={podeAprovar ? "default" : "outline"}
                                 disabled={!podeAprovar}
-                                onClick={() => setAprovarAlvo(p)}
+                                onClick={() => { aprovarProposta(p); onClose(); }}
                                 className="gap-1"
                               >
                                 <Check className="h-4 w-4" /> Aprovar
@@ -675,14 +602,6 @@ function LeadDetail({
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
-
-      <AprovarDialog
-        open={!!aprovarAlvo}
-        lead={lead}
-        proposta={aprovarAlvo}
-        onClose={() => setAprovarAlvo(null)}
-        onConfirmed={() => { setAprovarAlvo(null); onClose(); }}
-      />
     </Dialog>
   );
 }
@@ -815,212 +734,6 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
 }
 
 
-/* ===== Diálogo: editar dados do cliente + aprovar proposta ===== */
-function AprovarDialog({
-  open, lead, proposta, onClose, onConfirmed,
-}: {
-  open: boolean;
-  lead: Lead | null;
-  proposta: PropostaFV | null;
-  onClose: () => void;
-  onConfirmed: () => void;
-}) {
-  const upper = (v: string) => v.toUpperCase();
-  const [nome, setNome] = useState("");
-  const [doc, setDoc] = useState("");
-  const [tel, setTel] = useState("");
-  const [email, setEmail] = useState("");
-  const [cep, setCep] = useState("");
-  const [rua, setRua] = useState("");
-  const [numero, setNumero] = useState("");
-  const [complemento, setComplemento] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [uf, setUf] = useState("");
-  const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [cepLoading, setCepLoading] = useState(false);
-  const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">("NAO");
-
-  useEffect(() => {
-    if (!lead) return;
-    const u = lead.ultima;
-    setNome(lead.clienteNome || "");
-    setDoc(u.clienteDoc || "");
-    setTel(u.clienteTelefone || "");
-    setEmail(u.clienteEmail || "");
-    setCep(u.clienteCep || "");
-    setRua(u.clienteRua || "");
-    setNumero(u.clienteNumero || "");
-    setComplemento(u.clienteComplemento || "");
-    setBairro(u.clienteBairro || "");
-    setCidade(u.clienteCidade || lead.cidade || "");
-    setUf(u.clienteUf || lead.estado || "");
-    setDataAssinatura(u.dataAssinatura || new Date().toISOString().slice(0, 10));
-    // Herda do que foi marcado na construção da proposta (LeadModal)
-    const src = proposta || u;
-    setFinanciamento(src?.possuiFinanciamento ? "SIM" : "NAO");
-  }, [lead?.key, proposta?.id]);
-
-  // ViaCEP — busca endereço ao digitar 8 dígitos
-  const buscarCep = async (raw: string) => {
-    const d = raw.replace(/\D/g, "");
-    if (d.length !== 8) return;
-    try {
-      setCepLoading(true);
-      const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
-      const j = await r.json();
-      if (j?.erro) { toast.error("CEP não encontrado."); return; }
-      setRua((j.logradouro || "").toUpperCase());
-      setBairro((j.bairro || "").toUpperCase());
-      setCidade((j.localidade || "").toUpperCase());
-      setUf((j.uf || "").toUpperCase());
-      toast.success("Endereço preenchido pelo CEP.");
-    } catch {
-      toast.error("Falha ao consultar o CEP.");
-    } finally {
-      setCepLoading(false);
-    }
-  };
-
-  if (!lead || !proposta) return null;
-
-  const confirmar = () => {
-    if (!nome.trim()) { toast.error("Informe o nome completo do cliente."); return; }
-    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
-    if (!tel.trim()) { toast.error("Informe o telefone do cliente."); return; }
-    if (!dataAssinatura) { toast.error("Informe a data de assinatura."); return; }
-    const enderecoLinha = [rua, numero, bairro, cidade && `${cidade}${uf ? "/" + uf : ""}`]
-      .filter(Boolean).join(", ");
-    aprovarComDadosCliente(lead.propostas, proposta, {
-      clienteNome: upper(nome.trim()),
-      clienteDoc: doc.trim(),
-      clienteTelefone: tel.trim(),
-      clienteEmail: email.trim().toLowerCase(),
-      clienteCep: cep.trim(),
-      clienteRua: upper(rua.trim()),
-      clienteNumero: numero.trim(),
-      clienteComplemento: upper(complemento.trim()),
-      clienteBairro: upper(bairro.trim()),
-      clienteCidade: upper(cidade.trim()),
-      clienteUf: upper(uf.trim()),
-      clienteEndereco: upper(enderecoLinha),
-    }, dataAssinatura, { ativo: financiamento === "SIM", banco: undefined });
-    onConfirmed();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Check className="h-5 w-5 text-success" />
-            Aprovar proposta {proposta.numero}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
-          Confirme/complete os dados do cliente. Ao aprovar, a proposta vira contrato e
-          esses dados serão enviados ao comercial.
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Label className="text-xs">Nome completo *</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label className="text-xs">CPF / CNPJ *</Label>
-            <Input value={doc} onChange={(e) => setDoc(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Telefone *</Label>
-            <Input value={tel} onChange={(e) => setTel(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label className="text-xs">E-mail</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">CEP {cepLoading && <span className="text-muted-foreground">(buscando…)</span>}</Label>
-            <Input
-              value={cep}
-              onChange={(e) => {
-                const v = e.target.value;
-                setCep(v);
-                if (v.replace(/\D/g, "").length === 8) buscarCep(v);
-              }}
-              onBlur={(e) => buscarCep(e.target.value)}
-              placeholder="00000-000"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Bairro</Label>
-            <Input value={bairro} onChange={(e) => setBairro(e.target.value.toUpperCase())} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label className="text-xs">Rua</Label>
-            <Input value={rua} onChange={(e) => setRua(e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label className="text-xs">Número</Label>
-            <Input value={numero} onChange={(e) => setNumero(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Complemento</Label>
-            <Input value={complemento} onChange={(e) => setComplemento(e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label className="text-xs">Cidade</Label>
-            <Input value={cidade} onChange={(e) => setCidade(e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label className="text-xs">UF</Label>
-            <Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
-          </div>
-          <div className="sm:col-span-2 mt-2 rounded-md border bg-muted/20 p-2">
-            <Label className="text-xs">Data de assinatura *</Label>
-            <Input
-              type="date"
-              value={dataAssinatura}
-              onChange={(e) => setDataAssinatura(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div className="sm:col-span-2 rounded-md border border-primary/30 bg-primary/5 p-2">
-            <Label className="text-xs font-semibold">Financiamento *</Label>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={financiamento === "SIM" ? "default" : "outline"}
-                onClick={() => setFinanciamento("SIM")}
-              >
-                SIM — enviar para Financiamentos
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={financiamento === "NAO" ? "default" : "outline"}
-                onClick={() => setFinanciamento("NAO")}
-              >
-                NÃO
-              </Button>
-            </div>
-            <div className="mt-1 text-[11px] text-muted-foreground">
-              {financiamento === "SIM"
-                ? "Ao aprovar, o contrato entra em Financiamentos › Pendências (banco será definido lá) e a obra vai para Engenharia (Em projeto)."
-                : "Ao aprovar, o contrato fica no Comercial e a obra entra em Engenharia (Em projeto)."}
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={confirmar} className="gap-1">
-            <Check className="h-4 w-4" /> Confirmar e aprovar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* ===================== KANBAN VIEW ===================== */
 

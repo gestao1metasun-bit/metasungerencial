@@ -18,6 +18,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "leads", label: "Leads" },
       { value: "cad-proposta", label: "Cadastrar Proposta" },
       { value: "cad-contrato", label: "Cadastrar Contrato" },
+      { value: "contrato-assinado", label: "Contrato Assinado" },
       { value: "vendedores", label: "Consultores" },
       { value: "analise", label: "Análise Executiva" },
     ],

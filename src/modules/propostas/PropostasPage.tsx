@@ -56,7 +56,7 @@ import { PropostaImpressao } from "./components/PropostaImpressao";
 import { AjudaTab } from "./components/AjudaTab";
 import { CrudTarifas } from "./components/CrudTarifas";
 
-export { PropostasPage };
+export { PropostasPage, CadastrosFV };
 
 function CidadeCombobox({ cidades, onSelect }: { cidades: CidadeFV[]; onSelect: (id: string) => void }) {
   const [open, setOpen] = useState(false);

@@ -945,6 +945,8 @@ function TabelaView({
   const [widths, setWidths] = useState<Record<TabelaColKey, number>>(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>,
   );
+  const [hidden, setHidden] = useState<Set<TabelaColKey>>(new Set());
+  const [mgrOpen, setMgrOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -960,11 +962,25 @@ function TabelaView({
         const w = JSON.parse(rawW) as Partial<Record<TabelaColKey, number>>;
         setWidths((prev) => ({ ...prev, ...w }));
       }
+      const rawH = localStorage.getItem(TABELA_HIDDEN_KEY);
+      if (rawH) {
+        const arr = JSON.parse(rawH) as TabelaColKey[];
+        setHidden(new Set(arr.filter((k) => TABELA_DEFAULT_ORDER.includes(k))));
+      }
     } catch {}
   }, []);
 
   useEffect(() => { try { localStorage.setItem(TABELA_ORDER_KEY, JSON.stringify(order)); } catch {} }, [order]);
   useEffect(() => { try { localStorage.setItem(TABELA_WIDTH_KEY, JSON.stringify(widths)); } catch {} }, [widths]);
+  useEffect(() => { try { localStorage.setItem(TABELA_HIDDEN_KEY, JSON.stringify([...hidden])); } catch {} }, [hidden]);
+
+  const visibleOrder = useMemo(() => order.filter((k) => !hidden.has(k)), [order, hidden]);
+  const toggleHidden = (k: TabelaColKey) => setHidden((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  const moveBy = (k: TabelaColKey, delta: -1 | 1) => setOrder((prev) => {
+    const i = prev.indexOf(k); const j = i + delta;
+    if (i < 0 || j < 0 || j >= prev.length) return prev;
+    const next = [...prev]; [next[i], next[j]] = [next[j], next[i]]; return next;
+  });
 
   const [dragKey, setDragKey] = useState<TabelaColKey | null>(null);
   const move = (from: TabelaColKey, to: TabelaColKey) => {

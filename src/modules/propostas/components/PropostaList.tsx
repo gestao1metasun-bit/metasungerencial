@@ -986,6 +986,44 @@ function AprovarDialog({
               className="mt-1"
             />
           </div>
+          <div className="sm:col-span-2 rounded-md border border-primary/30 bg-primary/5 p-2">
+            <Label className="text-xs font-semibold">Financiamento *</Label>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={financiamento === "SIM" ? "default" : "outline"}
+                onClick={() => setFinanciamento("SIM")}
+              >
+                SIM — enviar para Financiamentos
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={financiamento === "NAO" ? "default" : "outline"}
+                onClick={() => setFinanciamento("NAO")}
+              >
+                NÃO
+              </Button>
+              {financiamento === "SIM" && (
+                <select
+                  value={bancoFin}
+                  onChange={(e) => setBancoFin(e.target.value)}
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="BASA">BASA</option>
+                  <option value="SICREDI">SICREDI</option>
+                  <option value="BB">BB</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              )}
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              {financiamento === "SIM"
+                ? "Ao aprovar, o contrato vai para Financiamentos e a obra entra em Engenharia (Em projeto)."
+                : "Ao aprovar, o contrato fica no Comercial e a obra entra em Engenharia (Em projeto)."}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>

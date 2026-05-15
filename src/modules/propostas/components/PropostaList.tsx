@@ -110,6 +110,14 @@ function dotColorFor(dias: number): string {
   if (dias <= 15) return "bg-warning";
   return "bg-destructive";
 }
+/** Formata YYYY-MM-DD → DD-MM-YYYY. Aceita ISO completos também. */
+function fmtData(iso?: string): string {
+  if (!iso) return "—";
+  const s = iso.length >= 10 ? iso.slice(0, 10) : iso;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return iso;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 /* ===================== LEADS ===================== */
 

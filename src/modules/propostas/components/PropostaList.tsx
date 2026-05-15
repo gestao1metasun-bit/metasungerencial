@@ -636,6 +636,125 @@ function Field({ label, value, className }: { label: string; value?: string; cla
   );
 }
 
+/** Aba "Dados" do lead — campos travados com X para liberar edição.
+ *  Ao salvar, propaga as alterações para TODAS as propostas do lead e
+ *  garante que cada uma fique com um leadId estável (lead.key), evitando
+ *  que mudanças de nome/doc desvinculem o card. */
+function DadosEditaveis({ lead }: { lead: Lead }) {
+  const upper = (v: string) => v.toUpperCase();
+  const [nome, setNome] = useState(lead.clienteNome || "");
+  const [doc, setDoc] = useState(lead.clienteDoc || "");
+  const [tel, setTel] = useState(lead.clienteTelefone || "");
+  const [email, setEmail] = useState(lead.clienteEmail || "");
+  const [endereco, setEndereco] = useState(lead.clienteEndereco || "");
+  const [consultor, setConsultor] = useState(lead.consultor || "");
+  const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
+
+  // Reseta estado local sempre que abrir outro lead
+  useEffect(() => {
+    setNome(lead.clienteNome || "");
+    setDoc(lead.clienteDoc || "");
+    setTel(lead.clienteTelefone || "");
+    setEmail(lead.clienteEmail || "");
+    setEndereco(lead.clienteEndereco || "");
+    setConsultor(lead.consultor || "");
+    setUnlocked({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead.key]);
+
+  const isLocked = (f: string, v: string) => !unlocked[f] && !!v;
+  const unlock = (f: string) => setUnlocked((u) => ({ ...u, [f]: true }));
+  const dirty =
+    nome !== (lead.clienteNome || "") ||
+    doc !== (lead.clienteDoc || "") ||
+    tel !== (lead.clienteTelefone || "") ||
+    email !== (lead.clienteEmail || "") ||
+    endereco !== (lead.clienteEndereco || "") ||
+    consultor !== (lead.consultor || "");
+
+  const salvar = () => {
+    if (!nome.trim()) { toast.error("Nome obrigatório."); return; }
+    const hoje = new Date().toISOString().slice(0, 10);
+    for (const p of lead.propostas) {
+      upsertProposta({
+        ...p,
+        // garante leadId estável em todas as propostas do lead
+        leadId: p.leadId || lead.key,
+        clienteNome: upper(nome.trim()),
+        clienteDoc: doc.trim(),
+        clienteTelefone: tel.trim(),
+        clienteEmail: email.trim().toLowerCase(),
+        clienteEndereco: upper(endereco.trim()),
+        consultor: upper(consultor.trim()),
+        atualizadoEm: hoje,
+      });
+    }
+    setUnlocked({});
+    toast.success("Dados do lead atualizados.");
+  };
+
+  const LockX = ({ field }: { field: string }) => (
+    <button
+      type="button"
+      onClick={() => unlock(field)}
+      title="Liberar edição"
+      className="absolute right-2 top-7 rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+    >
+      <X className="h-3.5 w-3.5" />
+    </button>
+  );
+
+  const EditableField = ({
+    label, field, value, onChange, className, transform,
+  }: {
+    label: string;
+    field: string;
+    value: string;
+    onChange: (v: string) => void;
+    className?: string;
+    transform?: (v: string) => string;
+  }) => {
+    const locked = isLocked(field, value);
+    return (
+      <div className={`relative ${className || ""}`}>
+        <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+        <Input
+          value={value}
+          onChange={(e) => onChange(transform ? transform(e.target.value) : e.target.value)}
+          disabled={locked}
+          className={`mt-1 ${locked ? "pr-8 bg-muted/50" : ""}`}
+        />
+        {locked && <LockX field={field} />}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <EditableField label="Nome" field="nome" value={nome} onChange={setNome} transform={upper} />
+        <EditableField label="CPF / CNPJ" field="doc" value={doc} onChange={setDoc} />
+        <EditableField label="Telefone" field="tel" value={tel} onChange={setTel} />
+        <EditableField label="E-mail" field="email" value={email} onChange={setEmail} />
+        <EditableField label="Endereço" field="endereco" value={endereco} onChange={setEndereco} transform={upper} className="sm:col-span-2" />
+        <EditableField label="Consultor" field="consultor" value={consultor} onChange={setConsultor} transform={upper} />
+        <div>
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Valor (última proposta)</div>
+          <div className="mt-1 text-sm font-medium">{fmtBRL(lead.valor)}</div>
+        </div>
+      </div>
+      {dirty && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={salvar} className="gap-1">
+            <Check className="h-4 w-4" /> Salvar alterações
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 /* ===== Diálogo: editar dados do cliente + aprovar proposta ===== */
 function AprovarDialog({
   open, lead, proposta, onClose, onConfirmed,

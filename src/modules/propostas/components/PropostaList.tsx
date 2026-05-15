@@ -27,10 +27,10 @@ import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
+  aprovarPropostaDoLead,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull,
-  criarContratoDeProposta, anexarContratoAssinado,
 } from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {

@@ -84,7 +84,12 @@ export function aprovarProposta(p: PropostaFV) {
 }
 
 /** Aprova uma proposta atualizando os dados de cliente em todas as propostas do lead. */
-function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, dados: Partial<PropostaFV>) {
+function aprovarComDadosCliente(
+  propostas: PropostaFV[],
+  escolhida: PropostaFV,
+  dados: Partial<PropostaFV>,
+  dataAssinatura: string,
+) {
   const hoje = new Date().toISOString().slice(0, 10);
   for (const p of propostas) {
     const isEscolhida = p.id === escolhida.id;
@@ -92,6 +97,7 @@ function aprovarComDadosCliente(propostas: PropostaFV[], escolhida: PropostaFV, 
       ...p,
       ...dados,
       status: isEscolhida ? "APROVADA" : p.status,
+      dataAssinatura: isEscolhida ? dataAssinatura : p.dataAssinatura,
       atualizadoEm: hoje,
     });
   }
@@ -110,6 +116,14 @@ function dotColorFor(dias: number): string {
   if (dias <= 15) return "bg-warning";
   return "bg-destructive";
 }
+/** Formata YYYY-MM-DD → DD-MM-YYYY. Aceita ISO completos também. */
+function fmtData(iso?: string): string {
+  if (!iso) return "—";
+  const s = iso.length >= 10 ? iso.slice(0, 10) : iso;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return iso;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 /* ===================== LEADS ===================== */
 
@@ -125,6 +139,8 @@ type Lead = {
   estado?: string;
   propostas: PropostaFV[];
   ultima: PropostaFV;
+  primeira: PropostaFV;
+  dataPrimeira: string;
   valor: number;
   dias: number;
   bloqueado: boolean;
@@ -148,6 +164,7 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       (b.atualizadoEm || b.criadoEm || "").localeCompare(a.atualizadoEm || a.criadoEm || "")
     );
     const ultima = sorted[0];
+    const primeira = sorted[sorted.length - 1];
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -160,6 +177,8 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       estado: ultima.estado,
       propostas: sorted,
       ultima,
+      primeira,
+      dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
       bloqueado: arr.some((p) => p.status === "APROVADA"),
@@ -469,7 +488,7 @@ function LeadDetail({
                   <TableRow>
                     <TableHead>Nº</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Atualizada</TableHead>
+                    <TableHead>Criada</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -484,7 +503,7 @@ function LeadDetail({
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
                         <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                        <TableCell>{p.atualizadoEm || p.criadoEm}</TableCell>
+                        <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
@@ -496,9 +515,6 @@ function LeadDetail({
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => duplicarProposta(p)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
                             {podeExcluir && (
                               <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -513,7 +529,6 @@ function LeadDetail({
               </Table>
             </div>
           </TabsContent>
-
           <TabsContent value="aprovar" className="mt-4 space-y-3">
             {lead.bloqueado ? (
               <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
@@ -618,6 +633,8 @@ function AprovarDialog({
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [uf, setUf] = useState("");
+  const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [cepLoading, setCepLoading] = useState(false);
 
   useEffect(() => {
     if (!lead) return;
@@ -633,7 +650,29 @@ function AprovarDialog({
     setBairro(u.clienteBairro || "");
     setCidade(u.clienteCidade || lead.cidade || "");
     setUf(u.clienteUf || lead.estado || "");
+    setDataAssinatura(u.dataAssinatura || new Date().toISOString().slice(0, 10));
   }, [lead?.key, proposta?.id]);
+
+  // ViaCEP — busca endereço ao digitar 8 dígitos
+  const buscarCep = async (raw: string) => {
+    const d = raw.replace(/\D/g, "");
+    if (d.length !== 8) return;
+    try {
+      setCepLoading(true);
+      const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+      const j = await r.json();
+      if (j?.erro) { toast.error("CEP não encontrado."); return; }
+      setRua((j.logradouro || "").toUpperCase());
+      setBairro((j.bairro || "").toUpperCase());
+      setCidade((j.localidade || "").toUpperCase());
+      setUf((j.uf || "").toUpperCase());
+      toast.success("Endereço preenchido pelo CEP.");
+    } catch {
+      toast.error("Falha ao consultar o CEP.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
 
   if (!lead || !proposta) return null;
 
@@ -641,6 +680,7 @@ function AprovarDialog({
     if (!nome.trim()) { toast.error("Informe o nome completo do cliente."); return; }
     if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
     if (!tel.trim()) { toast.error("Informe o telefone do cliente."); return; }
+    if (!dataAssinatura) { toast.error("Informe a data de assinatura."); return; }
     const enderecoLinha = [rua, numero, bairro, cidade && `${cidade}${uf ? "/" + uf : ""}`]
       .filter(Boolean).join(", ");
     aprovarComDadosCliente(lead.propostas, proposta, {
@@ -656,7 +696,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    });
+    }, dataAssinatura);
     onConfirmed();
   };
 
@@ -691,8 +731,17 @@ function AprovarDialog({
             <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <Label className="text-xs">CEP</Label>
-            <Input value={cep} onChange={(e) => setCep(e.target.value)} />
+            <Label className="text-xs">CEP {cepLoading && <span className="text-muted-foreground">(buscando…)</span>}</Label>
+            <Input
+              value={cep}
+              onChange={(e) => {
+                const v = e.target.value;
+                setCep(v);
+                if (v.replace(/\D/g, "").length === 8) buscarCep(v);
+              }}
+              onBlur={(e) => buscarCep(e.target.value)}
+              placeholder="00000-000"
+            />
           </div>
           <div>
             <Label className="text-xs">Bairro</Label>
@@ -717,6 +766,15 @@ function AprovarDialog({
           <div>
             <Label className="text-xs">UF</Label>
             <Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+          </div>
+          <div className="sm:col-span-2 mt-2 rounded-md border bg-muted/20 p-2">
+            <Label className="text-xs">Data de assinatura *</Label>
+            <Input
+              type="date"
+              value={dataAssinatura}
+              onChange={(e) => setDataAssinatura(e.target.value)}
+              className="mt-1"
+            />
           </div>
         </div>
         <DialogFooter>
@@ -866,11 +924,11 @@ function TabelaView({
             <TableHead>Cliente</TableHead>
             <TableHead>Consultor</TableHead>
             <TableHead>Cidade</TableHead>
+            <TableHead>Criado em</TableHead>
             <TableHead className="text-right">Propostas</TableHead>
             <TableHead className="text-right">Valor (última)</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-12">Dias</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -888,6 +946,7 @@ function TabelaView({
               </TableCell>
               <TableCell>{l.consultor || "—"}</TableCell>
               <TableCell>{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</TableCell>
+              <TableCell className="tabular-nums">{fmtData(l.dataPrimeira)}</TableCell>
               <TableCell className="text-right tabular-nums">{l.propostas.length}</TableCell>
               <TableCell className="text-right">{fmtBRL(l.valor)}</TableCell>
               <TableCell><Badge variant={statusVariant(l.status)}>{l.status}</Badge></TableCell>
@@ -896,18 +955,6 @@ function TabelaView({
                   <span className={`inline-block h-2 w-2 rounded-full ${dotColorFor(l.dias)}`} />
                   <span className="text-[11px] text-muted-foreground">{l.dias}d</span>
                 </div>
-              </TableCell>
-              <TableCell className="text-right">
-                {!l.bloqueado && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 text-xs"
-                    onClick={(e) => { e.stopPropagation(); onNovaPreset(presetFromLead(l)); }}
-                  >
-                    <FilePlus2 className="h-3.5 w-3.5" /> Nova proposta
-                  </Button>
-                )}
               </TableCell>
             </TableRow>
           ))}
@@ -1051,11 +1098,9 @@ export function PropostaList({
           </Button>
         )}
 
-        {view === "kanban" && (
-          <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
-            <Columns3 className="h-4 w-4" /> Colunas
-          </Button>
-        )}
+        <Button size="sm" variant="outline" className="ml-auto gap-1" onClick={() => setColsOpen(true)}>
+          <Columns3 className="h-4 w-4" /> Colunas
+        </Button>
       </Card>
 
       {view === "tabela"

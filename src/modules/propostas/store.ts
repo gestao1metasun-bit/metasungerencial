@@ -192,6 +192,7 @@ export type PropostaFV = {
   clienteUf?: string;
   consultor?: string;
   origemCaptacao?: string;        // Como o lead foi captado (rede social, indicação, etc.)
+  dataAssinatura?: string;        // Data de assinatura do contrato (ISO YYYY-MM-DD)
 
   // 2. Localização
   cidadeId?: string;

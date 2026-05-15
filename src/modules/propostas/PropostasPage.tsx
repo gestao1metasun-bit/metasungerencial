@@ -134,7 +134,7 @@ function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boole
     irradiacaoMinima: irrMin ?? p.irradiacaoMinima,
     fonteIrradiacao: c.fonteDados ?? "BASE INTERNA",
     grupoTarifario: c.grupoTarifarioPadrao ?? p.grupoTarifario,
-    tarifa: c.tarifaPadrao ?? p.tarifa,
+    // tarifa permanece travada via config global (Configurações → Proposta)
   };
 }
 

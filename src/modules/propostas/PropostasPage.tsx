@@ -36,7 +36,7 @@ import {
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
   useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
-  upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
+  upsertModuloFV, removeModuloFV, upsertInversorFV as _upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
   upsertCustoFV, removeCustoFV, upsertProposta, removeProposta,
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,

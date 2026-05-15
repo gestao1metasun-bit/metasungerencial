@@ -28,6 +28,7 @@ import {
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, fmtBRL,
 } from "@/modules/propostas/store";
+import { useContratos, type ContratoFull } from "@/lib/contratos-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
@@ -155,13 +156,18 @@ type Lead = {
   dias: number;
   bloqueado: boolean;
   status: StatusProposta;
+  emAberto: number;
+  aprovadas: number;
+  assinados: number;
 };
 
 function leadKey(p: PropostaFV): string {
   return (p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id);
 }
 
-function buildLeads(props: PropostaFV[]): Lead[] {
+const STATUS_FINAIS: StatusProposta[] = ["APROVADA", "RECUSADA", "VENCIDA", "CANCELADA"];
+
+function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
   const map = new Map<string, PropostaFV[]>();
   for (const p of props) {
     const k = leadKey(p);
@@ -175,6 +181,14 @@ function buildLeads(props: PropostaFV[]): Lead[] {
     );
     const ultima = sorted[0];
     const primeira = sorted[sorted.length - 1];
+    const propIds = new Set(arr.map((p) => p.id));
+    const contratosLead = contratos.filter(
+      (c) => (c.propostaId && propIds.has(c.propostaId)) ||
+             (c.cliente && c.cliente.toUpperCase() === (ultima.clienteNome || "").toUpperCase())
+    );
+    const assinados = contratosLead.filter((c) => !!c.contratoAssinadoArquivo && !c.cancelado).length;
+    const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
+    const emAberto = arr.filter((p) => !STATUS_FINAIS.includes(p.status)).length;
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -191,8 +205,11 @@ function buildLeads(props: PropostaFV[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: arr.some((p) => p.status === "APROVADA"),
+      bloqueado: assinados > 0,
       status: ultima.status,
+      emAberto,
+      aprovadas,
+      assinados,
     });
   }
   return leads;
@@ -228,7 +245,7 @@ const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 const COL_CONTRATO_ID = "col-contrato-assinado";
 const COL_CONTRATO: KCol = {
   id: COL_CONTRATO_ID,
-  titulo: "CONTRATO ASSINADO — COMERCIAL",
+  titulo: "ASSINADOS",
   ativo: true,
   locked: true,
 };
@@ -253,7 +270,7 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "RASCUNHO": return "col-rascunho";
     case "GERADA":
     case "ENVIADA": return "col-enviada";
-    case "APROVADA": return COL_CONTRATO_ID;
+    case "APROVADA": return "col-aprovada";
     case "RECUSADA":
     case "VENCIDA":
     case "CANCELADA": return "col-perdida";
@@ -455,7 +472,7 @@ function LeadDetail({
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{lead.clienteNome}</span>
             {lead.bloqueado && (
-              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Aprovado</Badge>
+              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Assinado</Badge>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -921,7 +938,7 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "valor" | "status" | "dias";
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "aberto" | "aprovadas" | "assinados" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
@@ -930,6 +947,9 @@ const TABELA_COLS: TabelaColDef[] = [
   { key: "consultor", label: "Consultor",      defaultWidth: 160 },
   { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
   { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
+  { key: "aberto",    label: "Em aberto",      align: "right", defaultWidth: 110 },
+  { key: "aprovadas", label: "Aprovadas",      align: "right", defaultWidth: 110 },
+  { key: "assinados", label: "Assinados",      align: "right", defaultWidth: 110 },
   { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
   { key: "status",    label: "Status",         defaultWidth: 130 },
   { key: "dias",      label: "Dias",           defaultWidth: 80 },
@@ -1043,6 +1063,9 @@ function TabelaView({
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
       case "propostas": return <span className="tabular-nums">{l.propostas.length}</span>;
+      case "aberto":    return <span className="tabular-nums">{l.emAberto}</span>;
+      case "aprovadas": return <span className={`tabular-nums ${l.aprovadas > 0 ? "font-semibold text-success" : ""}`}>{l.aprovadas}</span>;
+      case "assinados": return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status":    return <Badge variant={statusVariant(l.status)}>{l.status}</Badge>;
       case "dias":
@@ -1196,7 +1219,8 @@ export function PropostaList({
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
-  const leadsAll = useMemo(() => buildLeads(propostas), [propostas]);
+  const contratosAll = useContratos();
+  const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
   const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
 
   const leadsFiltrados = useMemo(() => {

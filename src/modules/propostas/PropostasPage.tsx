@@ -752,31 +752,6 @@ function PropostaSheet({
             <span>Proposta {p.numero}</span>
             <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
           </SheetTitle>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              className="gap-1 bg-success text-success-foreground hover:bg-success/90"
-              onClick={() => {
-                const errs = validarParaGeracao(p);
-                if (errs.length) { toast.error("Preencha: " + errs.join(", ")); return; }
-                const final: PropostaFV = {
-                  ...p,
-                  status: "GERADA",
-                  atualizadoEm: new Date().toISOString().slice(0, 10),
-                  custos: p.custos.length ? p.custos : gerarCustosSugeridos(p, custos),
-                };
-                upsertProposta(final);
-                toast.success(`${final.numero} gerada com sucesso.`);
-                onGerada?.();
-              }}
-              disabled={erros.length > 0}
-            >
-              <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>
-              <XCircle className="h-4 w-4" /> Cancelar
-            </Button>
-          </div>
           {erros.length > 0 && (
             <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
@@ -1201,6 +1176,32 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
+        </div>
+
+        <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-end gap-2 border-t bg-background px-6 py-3">
+          <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>
+            <XCircle className="h-4 w-4" /> Cancelar
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1 bg-success text-success-foreground hover:bg-success/90"
+            onClick={() => {
+              const errs = validarParaGeracao(p);
+              if (errs.length) { toast.error("Preencha: " + errs.join(", ")); return; }
+              const final: PropostaFV = {
+                ...p,
+                status: "GERADA",
+                atualizadoEm: new Date().toISOString().slice(0, 10),
+                custos: p.custos.length ? p.custos : gerarCustosSugeridos(p, custos),
+              };
+              upsertProposta(final);
+              toast.success(`${final.numero} gerada com sucesso.`);
+              onGerada?.();
+            }}
+            disabled={erros.length > 0}
+          >
+            <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

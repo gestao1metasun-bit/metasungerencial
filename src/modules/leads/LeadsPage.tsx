@@ -837,3 +837,33 @@ function MotivoDialog({
     </Dialog>
   );
 }
+
+function AnexarAssinadoDialog({
+  contratoId, onClose, onConfirm,
+}: { contratoId: string; onClose: () => void; onConfirm: (arquivo: string) => void }) {
+  const [arquivo, setArquivo] = useState("");
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Anexar contrato assinado — {contratoId}</DialogTitle>
+          <DialogDescription>
+            Informe o nome do arquivo (PDF) recebido. Após anexar, o contrato passa para
+            <span className="font-medium"> CONTRATO ASSINADO</span> e libera o envio para engenharia.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
+          <Label>Arquivo / referência <span className="text-destructive">*</span></Label>
+          <Input value={arquivo} onChange={(e) => setArquivo(e.target.value)} placeholder="contrato-assinado-001-2026.pdf" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!arquivo.trim()) { toast.error("Informe a referência do arquivo."); return; }
+            onConfirm(arquivo.trim());
+          }}>Confirmar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

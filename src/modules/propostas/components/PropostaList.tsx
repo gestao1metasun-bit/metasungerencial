@@ -162,7 +162,9 @@ type Lead = {
 };
 
 function leadKey(p: PropostaFV): string {
-  return (p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id);
+  // Identidade estável do lead: prefere leadId (não muda se o nome for editado),
+  // depois CPF/CNPJ, depois nome (para registros legados sem leadId).
+  return (p.leadId?.trim() || p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id);
 }
 
 const STATUS_FINAIS: StatusProposta[] = ["APROVADA", "RECUSADA", "VENCIDA", "CANCELADA"];

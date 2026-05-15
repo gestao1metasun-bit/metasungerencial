@@ -36,7 +36,7 @@ import {
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
   useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
-  upsertModuloFV, removeModuloFV, upsertInversorFV as _upsertInversorFV, removeInversorFV,
+  upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
   upsertCustoFV, removeCustoFV, upsertProposta, removeProposta,
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,
@@ -169,6 +169,27 @@ function MarcaCombobox({
       </PopoverContent>
     </Popover>
   );
+}
+
+/** Resolve um label digitado em um inversorId.
+ *  - Reconhece "INVERSOR XKW" como padrão (usa STANDARD_INVERSOR_KW)
+ *  - Reaproveita inversor existente por modelo
+ *  - Caso contrário cria um novo InversorFV personalizado e devolve seu id */
+function ensureInversorByLabel(label: string, marca: string, lista: InversorFV[]): string {
+  const l = label.trim().toUpperCase();
+  if (!l) return "";
+  const stdMatch = l.match(/^INVERSOR\s+([\d.,]+)\s*KW$/);
+  if (stdMatch) {
+    const kw = Number(stdMatch[1].replace(",", "."));
+    if ((STANDARD_INVERSOR_KW as readonly number[]).includes(kw)) return inversorIdPadrao(kw);
+  }
+  const existing = lista.find((i) => i.modelo.toUpperCase() === l);
+  if (existing) return existing.id;
+  const numMatch = l.replace(",", ".").match(/(\d+(\.\d+)?)/);
+  const kw = numMatch ? Number(numMatch[1]) : 0;
+  const id = `INV-CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  upsertInversorFV({ id, marca: marca || "PERSONALIZADO", modelo: l, potenciaKw: kw, tipo: "STRING", garantia: 10, ativo: true });
+  return id;
 }
 
 /** Aplica os dados de uma cidade (irradiação, meses, concessionária etc.) numa proposta.

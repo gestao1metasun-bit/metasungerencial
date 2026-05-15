@@ -353,6 +353,8 @@ function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }
           )}
         </div>
 
+        <PropostasDoLeadPanel lead={lead} usuario={user?.email ?? "—"} />
+
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <HistoryIcon className="h-4 w-4 text-primary" /> Histórico

@@ -53,9 +53,7 @@ import { X as XIcon } from "lucide-react";
 
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
-import { AjudaTab as _AjudaTabUnused } from "./components/AjudaTab";
 import { CrudTarifas } from "./components/CrudTarifas";
-void _AjudaTabUnused;
 
 export { PropostasPage, CadastrosFV };
 

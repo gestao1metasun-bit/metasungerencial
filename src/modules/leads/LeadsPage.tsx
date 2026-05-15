@@ -33,7 +33,7 @@ import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
   usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
   marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
-  fmtBRL, calcPrecificacao, type PropostaFV,
+  fmtBRL, calcPrecificacao, calcDimensionamento, type PropostaFV,
 } from "@/modules/propostas/store";
 import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,

@@ -30,7 +30,11 @@ import {
 import { useConsultoresAtivos, formatTelefoneBR } from "@/lib/consultores-store";
 import { useAuth } from "@/lib/auth-store";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
-import { pushAudit } from "@/lib/audit-store";
+import {
+  usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
+  marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
+  fmtBRL, calcPrecificacao, type PropostaFV,
+} from "@/modules/propostas/store";
 
 function fmtDate(iso: string) {
   try {

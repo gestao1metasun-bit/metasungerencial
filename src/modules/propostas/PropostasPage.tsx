@@ -821,22 +821,8 @@ function PropostaSheet({
           {/* BLOCO 6 — Módulo */}
           <Bloco icon={<Sun className="h-4 w-4" />} title="6. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
             <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Módulo cadastrado">
-                <Select value={p.moduloId ?? ""} onValueChange={selecionarModulo}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {modulos.filter((m) => m.ativo).map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.marca} {m.modelo} ({m.potenciaWp}W)</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
               <Field label="Potência (Wp)"><Input type="number" value={p.moduloPotenciaWp} onChange={(e) => update("moduloPotenciaWp", +e.target.value)} /></Field>
               <Field label="Marca"><Input value={p.moduloMarca ?? ""} onChange={(e) => update("moduloMarca", e.target.value)} /></Field>
-              <Field label="Modelo"><Input value={p.moduloModelo ?? ""} onChange={(e) => update("moduloModelo", e.target.value)} /></Field>
-              <Field label="Largura (m)"><Input type="number" step="0.001" value={p.moduloLarguraM} onChange={(e) => update("moduloLarguraM", +e.target.value)} /></Field>
-              <Field label="Altura (m)"><Input type="number" step="0.001" value={p.moduloAlturaM} onChange={(e) => update("moduloAlturaM", +e.target.value)} /></Field>
-              <ReadOnlyField label="Área por módulo (m²)" value={fmtNum(dim.areaPorModulo, 2)} />
               <ReadOnlyField label="Quantidade" value={String(dim.qtdFinal)} />
               <ReadOnlyField label="Área total (m²)" value={fmtNum(dim.areaTotal, 2)} />
             </div>

@@ -840,7 +840,6 @@ function AprovarDialog({
   const [dataAssinatura, setDataAssinatura] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [cepLoading, setCepLoading] = useState(false);
   const [financiamento, setFinanciamento] = useState<"SIM" | "NAO">("NAO");
-  const [bancoFin, setBancoFin] = useState<string>("BASA");
 
   useEffect(() => {
     if (!lead) return;
@@ -860,7 +859,6 @@ function AprovarDialog({
     // Herda do que foi marcado na construção da proposta (LeadModal)
     const src = proposta || u;
     setFinanciamento(src?.possuiFinanciamento ? "SIM" : "NAO");
-    setBancoFin(src?.financiamentoBanco || "BASA");
   }, [lead?.key, proposta?.id]);
 
   // ViaCEP — busca endereço ao digitar 8 dígitos
@@ -906,7 +904,7 @@ function AprovarDialog({
       clienteCidade: upper(cidade.trim()),
       clienteUf: upper(uf.trim()),
       clienteEndereco: upper(enderecoLinha),
-    }, dataAssinatura, { ativo: financiamento === "SIM", banco: financiamento === "SIM" ? bancoFin : undefined });
+    }, dataAssinatura, { ativo: financiamento === "SIM", banco: undefined });
     onConfirmed();
   };
 
@@ -1005,22 +1003,10 @@ function AprovarDialog({
               >
                 NÃO
               </Button>
-              {financiamento === "SIM" && (
-                <select
-                  value={bancoFin}
-                  onChange={(e) => setBancoFin(e.target.value)}
-                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                >
-                  <option value="BASA">BASA</option>
-                  <option value="SICREDI">SICREDI</option>
-                  <option value="BB">BB</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              )}
             </div>
             <div className="mt-1 text-[11px] text-muted-foreground">
               {financiamento === "SIM"
-                ? "Ao aprovar, o contrato vai para Financiamentos e a obra entra em Engenharia (Em projeto)."
+                ? "Ao aprovar, o contrato entra em Financiamentos › Pendências (banco será definido lá) e a obra vai para Engenharia (Em projeto)."
                 : "Ao aprovar, o contrato fica no Comercial e a obra entra em Engenharia (Em projeto)."}
             </div>
           </div>

@@ -49,8 +49,28 @@ export function AppLayout() {
   }, [hash]);
 
   const { user, perfil } = useUsuarioAtual();
+  const auth = useAuth();
+  const navigate = useNavigate();
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
-  const initials = (user?.nome ?? "??").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || user?.nome || "—";
+  const displayPerfil = auth.role === "admin_master"
+    ? "Admin Master"
+    : auth.role === "admin_geral"
+    ? "Admin Geral"
+    : auth.role === "usuario"
+    ? "Usuário"
+    : (perfil?.nome ?? "Sem perfil");
+  const initials = String(displayName).split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "??";
+
+  async function handleLogout() {
+    try {
+      await signOut();
+      toast.success("Sessão encerrada.");
+      void navigate({ to: "/login" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao sair.");
+    }
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">

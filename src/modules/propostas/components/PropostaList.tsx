@@ -547,14 +547,15 @@ function LeadDetail({
                   <Lock className="h-4 w-4" /> Card bloqueado — proposta aprovada
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Este lead já foi convertido em contrato e enviado ao comercial. Não é possível aprovar outra proposta.
+                  Este lead já foi enviado ao Comercial. Não é possível aprovar outra proposta.
                 </div>
               </div>
             ) : (
               <>
                 <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Selecione <strong>uma</strong> proposta para aprovar. Ela será convertida em contrato,
-                  enviada ao comercial e o card ficará bloqueado para novas alterações.
+                  Selecione <strong>uma</strong> proposta para aprovar. Ela será
+                  enviada ao <strong>Comercial</strong> e o card ficará bloqueado.
+                  A geração do contrato (e indicação de financiamento) acontece no Comercial.
                 </div>
                 <div className="rounded-md border">
                   <Table>
@@ -580,7 +581,7 @@ function LeadDetail({
                                 size="sm"
                                 variant={podeAprovar ? "default" : "outline"}
                                 disabled={!podeAprovar}
-                                onClick={() => setAprovarAlvo(p)}
+                                onClick={() => { aprovarProposta(p); onClose(); }}
                                 className="gap-1"
                               >
                                 <Check className="h-4 w-4" /> Aprovar
@@ -601,14 +602,6 @@ function LeadDetail({
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
-
-      <AprovarDialog
-        open={!!aprovarAlvo}
-        lead={lead}
-        proposta={aprovarAlvo}
-        onClose={() => setAprovarAlvo(null)}
-        onConfirmed={() => { setAprovarAlvo(null); onClose(); }}
-      />
     </Dialog>
   );
 }

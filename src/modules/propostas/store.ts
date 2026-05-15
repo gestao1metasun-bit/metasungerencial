@@ -221,7 +221,8 @@ export type PropostaFV = {
 
   // 5. Dimensionamento
   taxaSimultaneidade: number;     // 0..1
-  fatorPerformance: number;       // 0..1
+  fatorPerformance: number;       // 0..1 (legado — mantido p/ compat)
+  fro?: number;                   // 0..1 — Fator de Rendimento Operacional (corrige PVOUT do Atlas)
   geracaoDesejada: number;        // kWh/mês
   ajusteManualModulos?: boolean;
   modulosManual?: number;
@@ -476,28 +477,40 @@ export function consumoEfetivo(p: Pick<PropostaFV, "modoConsumo" | "consumoMedio
   return p.consumoMedio || 0;
 }
 
-/** Resultado completo do dimensionamento. */
+/** Resultado completo do dimensionamento.
+ *  Fórmula:
+ *    PVOUT mensal Atlas (kWh/kWp/mês) × FRO = produtividade real corrigida
+ *    Consumo desejado ÷ produtividade real corrigida = kWp necessário
+ *    kWp necessário ÷ potência do módulo (kW) = quantidade de módulos (arredondar p/ cima)
+ */
 export function calcDimensionamento(p: PropostaFV) {
   const consumo = consumoEfetivo(p);
   const simult = Math.min(Math.max(p.taxaSimultaneidade || 0, 0), 1);
-  const fp = Math.min(Math.max(p.fatorPerformance || 0.8, 0.1), 1);
+  const fro = Math.min(Math.max((p.fro ?? p.fatorPerformance ?? 0.75) || 0.75, 0.1), 1);
   const irr = Math.max(p.irradiacaoMedia || 0, 0.1);
+
+  // PVOUT mensal Atlas (kWh/kWp/mês). Aproximação: irradiação diária × 30 dias.
+  const pvoutMensal = irr * 30;
+  // Produtividade real corrigida pelo FRO.
+  const produtividadeReal = pvoutMensal * fro;
 
   const consumoInstantaneo = consumo * simult;
   const geracaoInjetada = Math.max(0, consumo - consumoInstantaneo);
   const geracaoDesejada = p.geracaoDesejada > 0 ? p.geracaoDesejada : consumo;
 
-  const potenciaNecKwp = geracaoDesejada / (irr * 30 * fp);
+  // kWp necessário a partir da produtividade real corrigida.
+  const potenciaNecKwp = produtividadeReal > 0 ? geracaoDesejada / produtividadeReal : 0;
   const potModW = p.moduloPotenciaWp || 0;
-  const qtdCalc = potModW > 0 ? Math.ceil((potenciaNecKwp * 1000) / potModW) : 0;
+  const potModKw = potModW / 1000;
+  const qtdCalc = potModKw > 0 ? Math.ceil(potenciaNecKwp / potModKw) : 0;
   const qtdFinal = p.ajusteManualModulos && p.modulosManual ? p.modulosManual : qtdCalc;
-  const potenciaFinalKwp = (qtdFinal * potModW) / 1000;
+  const potenciaFinalKwp = qtdFinal * potModKw;
 
   const areaPorModulo = (p.moduloLarguraM || 0) * (p.moduloAlturaM || 0);
   const areaTotal = areaPorModulo * qtdFinal;
 
-  // geração estimada usando potência final
-  const geracaoMensalKwh = potenciaFinalKwp * irr * 30 * fp;
+  // geração estimada usando potência final × produtividade real corrigida
+  const geracaoMensalKwh = potenciaFinalKwp * produtividadeReal;
   const geracaoAnualKwh = geracaoMensalKwh * 12;
 
   return {
@@ -505,6 +518,9 @@ export function calcDimensionamento(p: PropostaFV) {
     consumoInstantaneo,
     geracaoInjetada,
     geracaoDesejada,
+    pvoutMensal,
+    fro,
+    produtividadeReal,
     potenciaNecKwp,
     qtdCalc,
     qtdFinal,
@@ -634,7 +650,8 @@ export function novaPropostaVazia(numero: string): PropostaFV {
     modoConsumo: "MEDIA",
     consumoMedio: 0,
     taxaSimultaneidade: 0.3,
-    fatorPerformance: 0.8,
+    fatorPerformance: 0.75,
+    fro: 0.75,
     geracaoDesejada: 0,
     moduloPotenciaWp: 620,
     moduloLarguraM: 1.134,

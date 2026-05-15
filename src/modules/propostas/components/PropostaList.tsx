@@ -1420,6 +1420,7 @@ export function PropostaList({
   const [filtro, setFiltro] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
   const [colsOpen, setColsOpen] = useState(false);
+  const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"

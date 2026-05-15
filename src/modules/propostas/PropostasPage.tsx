@@ -348,8 +348,8 @@ function LeadModal({
     endereco: !!(proposta.clienteEndereco ?? "").trim(),
   }).current;
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
-  const isLocked = (field: keyof typeof initial, _value?: string) =>
-    !unlocked[field] && initial[field];
+  const isLocked = (field: string, _value?: string) =>
+    !unlocked[field] && !!(initial as Record<string, boolean>)[field];
   const unlock = (field: string) =>
     setUnlocked((u) => ({ ...u, [field]: true }));
 

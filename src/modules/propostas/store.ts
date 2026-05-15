@@ -690,7 +690,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
     tipoInstalacao: "RESIDENCIAL",
     tipoTelhado: "CERÂMICO",
     padraoEntrada: "BIFÁSICO",
-    tarifa: 0.92,
+    tarifa: getPropostaConfig().tarifaPadraoKwh,
     taxaIluminacao: 0,
     contaMinimaKwh: 50,
     contaMediaAtual: 0,

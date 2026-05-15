@@ -538,7 +538,51 @@ export function potenciaInversores(p: PropostaFV, listaInversores: InversorFV[])
   return p.inversores.reduce((s, e) => {
     const inv = listaInversores.find((i) => i.id === e.inversorId);
     return s + (inv ? inv.potenciaKw * (e.quantidade || 0) : 0);
-  }, 0);
+}
+
+/* =============== Sugestão automática de inversores =============== */
+
+/** Capacidade efetiva (kWp) que um inversor de N kW comporta.
+ *  ≤ 37,5 kW → ×1,60   |   ≥ 40 kW → ×1,80 */
+export function capacidadeKwpInversor(potKw: number, multBaixa = 1.6, multAlta = 1.8): number {
+  if (!potKw || potKw <= 0) return 0;
+  return potKw < 40 ? potKw * multBaixa : potKw * multAlta;
+}
+
+/** Quantos módulos de `potModuloW` (W) o inversor `potKw` (kW) suporta — arredonda p/ baixo. */
+export function modulosSuportadosPorInversor(potKw: number, potModuloW: number, multBaixa = 1.6, multAlta = 1.8): number {
+  const potModKw = (potModuloW || 0) / 1000;
+  if (potModKw <= 0) return 0;
+  return Math.floor(capacidadeKwpInversor(potKw, multBaixa, multAlta) / potModKw);
+}
+
+/** Sugere inversores que comportem `qtdModulos` de `potModuloW`.
+ *  Estratégia: prioriza 1 inversor (o menor que comporta); senão usa N (2..5) inversores
+ *  de mesmo tamanho (combinação balanceada), preferindo o menor N e o menor tamanho. */
+export function sugerirInversoresAuto(
+  qtdModulos: number,
+  potModuloW: number,
+  multBaixa = 1.6,
+  multAlta = 1.8,
+): { potKw: number; quantidade: number }[] {
+  if (!qtdModulos || qtdModulos <= 0 || !potModuloW) return [];
+  const sizes = STANDARD_INVERSOR_KW;
+  // 1 inversor — menor que comporta
+  for (const s of sizes) {
+    if (modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
+      return [{ potKw: s, quantidade: 1 }];
+    }
+  }
+  // N inversores iguais (2..5)
+  for (let N = 2; N <= 5; N++) {
+    for (const s of sizes) {
+      if (N * modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta) >= qtdModulos) {
+        return [{ potKw: s, quantidade: N }];
+      }
+    }
+  }
+  // Excede capacidade — devolve 5 × 100 kW como fallback máximo
+  return [{ potKw: 100, quantidade: 5 }];
 }
 
 /** Sugere parâmetro com base na faixa de potência + tipo. */

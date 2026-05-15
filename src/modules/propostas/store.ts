@@ -573,7 +573,7 @@ export function sugerirInversoresAuto(
   const sizes = STANDARD_INVERSOR_KW;
   const sup = (s: number) => modulosSuportadosPorInversor(s, potModuloW, multBaixa, multAlta);
 
-  let best: { combo: number[]; totalKw: number } | null = null;
+  let best: { combo: number[]; totalKw: number } | null = null as { combo: number[]; totalKw: number } | null;
   const consider = (combo: number[]) => {
     const mods = combo.reduce((a, s) => a + sup(s), 0);
     if (mods < qtdModulos) return;

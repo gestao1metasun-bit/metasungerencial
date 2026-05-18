@@ -172,7 +172,7 @@ export function clausulasBase(c: ContratoFull): ClausulaBase[] {
     titulo: "DO FORO",
     paragrafos: [
       `7.1 Fica eleito o Foro Central da Comarca de ${cidadeForo} como o único competente para dirimir quaisquer controvérsias oriundas da execução deste contrato, com renúncia expressa a qualquer outro foro, por mais privilegiado que seja. As partes concordam que este foro será exclusivo para a solução de eventuais litígios, garantindo celeridade e eficácia na resolução dos conflitos.`,
-      "7.2 E, por estarem justas e contratadas, as partes assinam o presente contrato em uma via digital ou, preferencialmente, em duas vias de igual teor, forma e para um só efeito, na presença de 2 (duas) testemunhas, as quais também firmam este instrumento como forma de ratificação de seu conteúdo e validade jurídica.",
+      "7.2 E, por estarem justas e contratadas, as partes assinam o presente contrato em uma via digital ou, preferencialmente, em duas vias de igual teor, forma e para um só efeito, ratificando integralmente o seu conteúdo e validade jurídica.",
     ],
   });
 
@@ -268,6 +268,7 @@ function descreveLinha(f: import("./contratos-store").PagamentoLinha): string {
   const momentoTxt = {
     "entrada": "como entrada, na assinatura do contrato",
     "ato": "no ato",
+    "entrega-materiais": "na entrega do material",
     "pos-instalacao": "após a conclusão da instalação",
     "conforme-cronograma": "conforme cronograma acordado",
   }[f.momento] ?? "";

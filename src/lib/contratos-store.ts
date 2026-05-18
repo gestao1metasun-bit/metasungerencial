@@ -125,7 +125,7 @@ export type PagamentoLinha = {
   id: string;
   tipo: "PIX" | "Boleto" | "Financiamento" | "Cartão de Crédito" | "Cartão de Débito" | "Dinheiro" | "Transferência" | "Permuta";
   /** Quando esse valor é pago. */
-  momento: "entrada" | "ato" | "pos-instalacao" | "conforme-cronograma";
+  momento: "entrada" | "ato" | "entrega-materiais" | "pos-instalacao" | "conforme-cronograma";
   /** Valor em R$ (à vista / base, sem juros do cliente). */
   valor: number;
   /** 1 = à vista; >1 = parcelado. */

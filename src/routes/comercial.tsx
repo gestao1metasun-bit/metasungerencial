@@ -175,11 +175,15 @@ function ContratoAssinadoTab({
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
-    const motivo = prompt(`Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\nMotivo (obrigatório):`);
+    const motivo = prompt(
+      `Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\n` +
+      `Atenção: ao retornar, os projetos saem da Engenharia e o contrato é removido de Financiamentos.\n\n` +
+      `Motivo (obrigatório):`,
+    );
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
-    updateContratoAudit(c.id, { status: "Pendente", dataAssinatura: undefined }, "Comercial");
-    solicitarAlteracaoContrato(c.id, motivo.trim(), "Comercial", {});
-    toast.success(`Contrato ${c.id} retornado para Contratos Gerados.`);
+    const r = retornarContratoParaGerado(c.id, motivo.trim(), "Comercial");
+    if (!r.ok) { toast.error(r.motivo); return; }
+    toast.success(`Contrato ${c.id} retornado. Engenharia e Financiamentos atualizados.`);
   };
 
   return (

@@ -164,11 +164,14 @@ function ContratoAssinadoTab({
   };
 
   const retornar = (c: Contrato) => {
-    const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
+    const motivo = prompt(`Retornar contrato ${c.id} para Contratos Gerados (refazer redação/dados)?\n\nMotivo (obrigatório):`);
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
-    setContratos(contratos.filter((x) => x.id !== c.id));
-    if (c.propostaId) retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
-    toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+    // Volta uma etapa: sai de "Assinado/pendente assinatura" e retorna para "Contratos Gerados"
+    // (zera contratoRedigido para permitir nova edição de dados do cliente / endereço).
+    updateContratoAudit(c.id, { contratoRedigido: false, status: "Pendente" }, "Comercial");
+    // registra motivo no histórico do contrato
+    solicitarAlteracaoContrato(c.id, motivo.trim(), "Comercial", {});
+    toast.success(`Contrato ${c.id} retornado para Contratos Gerados.`);
   };
 
   return (

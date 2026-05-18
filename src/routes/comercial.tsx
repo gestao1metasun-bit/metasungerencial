@@ -492,6 +492,16 @@ function ContratosTab({
 }
 
 
+function mapTipoTopo(t?: PagamentoLinha["tipo"]): Contrato["pagamentoTipo"] | undefined {
+  if (!t) return undefined;
+  if (t === "PIX") return "PIX";
+  if (t === "Boleto") return "Boleto";
+  if (t === "Financiamento") return "Financiamento";
+  if (t === "Dinheiro") return "Dinheiro";
+  if (t.startsWith("Cartão")) return "Cartão";
+  return "Misto";
+}
+
 function RedigirContratoDialog({
   contrato, onClose, onConfirm,
 }: {

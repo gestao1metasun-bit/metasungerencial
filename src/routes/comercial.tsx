@@ -436,6 +436,9 @@ function ContratosTab({
                       <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setAberto(c)}>
                         <SquarePen className="h-3.5 w-3.5" /> Editar dados
                       </Button>
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => reabrirRedigido(c)}>
+                        <Undo2 className="h-3.5 w-3.5" /> Retornar
+                      </Button>
                       <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
                         <PenLine className="h-3.5 w-3.5" /> Gerar Assinado
                       </Button>

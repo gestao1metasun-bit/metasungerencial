@@ -3,8 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
-  Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin,
+  Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2,
 } from "lucide-react";
+import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,

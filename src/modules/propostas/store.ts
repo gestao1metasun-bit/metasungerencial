@@ -735,7 +735,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
     modulosQtd: 0,
     inversores: [],
     valorKit: 0,
-    parametroPorKwp: 2800,
+    parametroPorKwp: 2500,
     descontoPct: 0,
     descontoValor: 0,
     custos: [],

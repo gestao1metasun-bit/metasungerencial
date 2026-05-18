@@ -163,6 +163,14 @@ function ContratoAssinadoTab({
     toast.success(`Contrato ${id} marcado como Assinado.`);
   };
 
+  const retornar = (c: Contrato) => {
+    const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
+    setContratos(contratos.filter((x) => x.id !== c.id));
+    if (c.propostaId) retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
+    toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+  };
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">

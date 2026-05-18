@@ -120,6 +120,29 @@ export type ComposicaoLinha = {
   observacao?: string;
 };
 
+/** Uma linha da composição de pagamento no template do contrato (cláusula 2). */
+export type PagamentoLinha = {
+  id: string;
+  tipo: "PIX" | "Boleto" | "Financiamento" | "Cartão de Crédito" | "Cartão de Débito" | "Dinheiro" | "Transferência" | "Permuta";
+  /** Quando esse valor é pago. */
+  momento: "entrada" | "ato" | "pos-instalacao" | "conforme-cronograma";
+  /** Valor em R$ (à vista / base, sem juros do cliente). */
+  valor: number;
+  /** 1 = à vista; >1 = parcelado. */
+  parcelas: number;
+  /** Cartão: quem paga os juros. */
+  jurosTipo?: "sem" | "empresa" | "cliente";
+  /** Cartão com juros do cliente: total já com juros (calcula parcela). */
+  valorComJuros?: number;
+  /** Boleto: regras de inadimplência (sobrescreve o default global). */
+  multaPct?: number;
+  jurosMesPct?: number;
+  correcao?: string;
+  /** Financiamento: banco. */
+  banco?: string;
+  obs?: string;
+};
+
 export type ContratoFull = {
   id: string;            // ex. 088/2026
   cliente: string;

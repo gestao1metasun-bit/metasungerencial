@@ -499,7 +499,7 @@ function LeadModal({
               </div>
             </div>
             <div>
-              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground font-normal">(opcional — exigido na aprovação)</span></Label>
               <div className="relative mt-1.5 flex gap-2">
                 <Input
                   value={doc}

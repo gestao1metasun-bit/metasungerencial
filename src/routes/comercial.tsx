@@ -524,14 +524,27 @@ function RedigirContratoDialog({
   // Pagamento
   const [pagamentoTipo, setPagamentoTipo] = useState<NonNullable<Contrato["pagamentoTipo"]>>(contrato.pagamentoTipo ?? "PIX");
   const det0 = contrato.pagamentoDetalhes ?? {};
-  const [parcelas, setParcelas] = useState<number>(det0.parcelas ?? 1);
-  const [entradaPct, setEntradaPct] = useState<number>(det0.entradaPct ?? 50);
   const [marcoInicial, setMarcoInicial] = useState<NonNullable<NonNullable<Contrato["pagamentoDetalhes"]>["marcoInicial"]>>(det0.marcoInicial ?? "assinatura");
-  const [banco, setBanco] = useState(det0.banco ?? "");
-  const [multaPct, setMultaPct] = useState<number>(det0.multaPct ?? 2);
-  const [jurosMesPct, setJurosMesPct] = useState<number>(det0.jurosMesPct ?? 1);
-  const [correcao, setCorrecao] = useState(det0.correcao ?? "IGP-M");
+  const [multaPctDefault, setMultaPctDefault] = useState<number>(det0.multaPct ?? 2);
+  const [jurosMesPctDefault, setJurosMesPctDefault] = useState<number>(det0.jurosMesPct ?? 1);
+  const [correcaoDefault, setCorrecaoDefault] = useState(det0.correcao ?? "IGP-M");
   const [pagObs, setPagObs] = useState(det0.obs ?? "");
+  // Composição de formas (várias linhas — entrada PIX + boletos etc.)
+  const [formas, setFormas] = useState<PagamentoLinha[]>(
+    det0.formas && det0.formas.length > 0
+      ? det0.formas
+      : [{ id: crypto.randomUUID(), tipo: "PIX", momento: "entrada", valor: contrato.valor, parcelas: 1, jurosTipo: "sem" }]
+  );
+  function addForma() {
+    setFormas([...formas, { id: crypto.randomUUID(), tipo: "Boleto", momento: "pos-instalacao", valor: 0, parcelas: 1, jurosTipo: "sem" }]);
+  }
+  function updForma(id: string, patch: Partial<PagamentoLinha>) {
+    setFormas(formas.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  }
+  function rmForma(id: string) { setFormas(formas.filter((f) => f.id !== id)); }
+  const somaFormas = formas.reduce((s, f) => s + (Number(f.valor) || 0), 0);
+  const diffFormas = Number(contrato.valor || 0) - somaFormas;
+
   // Cláusulas custom
   const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(contrato.clausulasCustom ?? []);
   function addClausula() {

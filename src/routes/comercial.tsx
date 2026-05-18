@@ -610,10 +610,20 @@ function RedigirContratoDialog({
       responsavel: tipoPessoa === "PJ" ? upper(responsavel) : undefined,
       responsavelDoc: tipoPessoa === "PJ" ? responsavelDoc : undefined,
       responsavelCargo: tipoPessoa === "PJ" ? responsavelCargo : undefined,
-      pagamentoTipo,
-      pagamentoDetalhes: { parcelas, entradaPct, marcoInicial, banco, multaPct, jurosMesPct, correcao, obs: pagObs },
+      pagamentoTipo: formas.length > 1 ? "Misto" : (mapTipoTopo(formas[0]?.tipo) ?? pagamentoTipo),
+      pagamentoDetalhes: {
+        marcoInicial,
+        multaPct: multaPctDefault, jurosMesPct: jurosMesPctDefault, correcao: correcaoDefault,
+        obs: pagObs,
+        formas,
+        // Compat legado (1ª linha)
+        parcelas: formas[0]?.parcelas ?? 1,
+        banco: formas.find((f) => f.tipo === "Financiamento")?.banco,
+      },
       clausulasCustom: clausulas.filter((c) => c.acao === "remover" || (c.referencia && c.texto)),
-      pagamento: pagamentoTipo === "Financiamento" && banco ? `Financiamento ${banco}` : pagamentoTipo,
+      pagamento: formas.length > 1
+        ? `Misto (${formas.map((f) => f.tipo).join(" + ")})`
+        : (formas[0]?.tipo === "Financiamento" && formas[0]?.banco ? `Financiamento ${formas[0].banco}` : (formas[0]?.tipo ?? pagamentoTipo)),
     });
   }
 

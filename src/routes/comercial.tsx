@@ -40,6 +40,7 @@ import {
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
   aprovarProjeto,
+  retornarContratoParaGerado, retornarContratoParaARedigir,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
@@ -174,11 +175,15 @@ function ContratoAssinadoTab({
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
-    const motivo = prompt(`Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\nMotivo (obrigatório):`);
+    const motivo = prompt(
+      `Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\n` +
+      `Atenção: ao retornar, os projetos saem da Engenharia e o contrato é removido de Financiamentos.\n\n` +
+      `Motivo (obrigatório):`,
+    );
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
-    updateContratoAudit(c.id, { status: "Pendente", dataAssinatura: undefined }, "Comercial");
-    solicitarAlteracaoContrato(c.id, motivo.trim(), "Comercial", {});
-    toast.success(`Contrato ${c.id} retornado para Contratos Gerados.`);
+    const r = retornarContratoParaGerado(c.id, motivo.trim(), "Comercial");
+    if (!r.ok) { toast.error(r.motivo); return; }
+    toast.success(`Contrato ${c.id} retornado. Engenharia e Financiamentos atualizados.`);
   };
 
   return (
@@ -297,6 +302,15 @@ function ContratosTab({
       retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
     }
     toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+  }
+
+
+  function reabrirRedigido(c: Contrato) {
+    const motivo = prompt(`Reabrir cadastro do contrato ${c.id}?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
+    const r = retornarContratoParaARedigir(c.id, motivo.trim(), "Comercial");
+    if (!r.ok) { toast.error(r.motivo); return; }
+    toast.success(`Contrato ${c.id} voltou para "A redigir".`);
   }
 
   function confirmarAssinado() {
@@ -421,6 +435,9 @@ function ContratosTab({
                       </Button>
                       <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setAberto(c)}>
                         <SquarePen className="h-3.5 w-3.5" /> Editar dados
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => reabrirRedigido(c)}>
+                        <Undo2 className="h-3.5 w-3.5" /> Retornar
                       </Button>
                       <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
                         <PenLine className="h-3.5 w-3.5" /> Gerar Assinado

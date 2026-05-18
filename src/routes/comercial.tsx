@@ -304,15 +304,6 @@ function ContratosTab({
     toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
   }
 
-  function retornarParaOrcamento(c: Contrato) {
-    const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
-    if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
-    setContratos(contratos.filter((x) => x.id !== c.id));
-    if (c.propostaId) {
-      retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
-    }
-    toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
-  }
 
   function reabrirRedigido(c: Contrato) {
     const motivo = prompt(`Reabrir cadastro do contrato ${c.id}?\n\nMotivo (obrigatório):`);

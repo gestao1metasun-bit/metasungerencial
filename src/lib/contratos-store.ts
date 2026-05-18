@@ -165,6 +165,7 @@ export type ContratoFull = {
   leadId?: string;                      // lead de origem
   leadNumero?: string;
   contratoAssinadoArquivo?: string;     // nome do arquivo / URL do contrato assinado
+  contratoRedigido?: boolean;           // true após cadastro de endereço + geração do contrato redigido
   motivoCancelamento?: string;
   cancelado?: boolean;
 };

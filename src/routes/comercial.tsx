@@ -118,12 +118,16 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="contratos" className="mt-5">
+          <ContratosTab contratos={contratos} setContratos={setContratos} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
           <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
@@ -147,7 +151,7 @@ function ContratoAssinadoTab({
   const pendentes = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return contratos
-      .filter((c) => c.status === "Pendente")
+      .filter((c) => c.status === "Pendente" && c.contratoRedigido)
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const assinados = useMemo(() => contratos.filter((c) => c.status === "Assinado"), [contratos]);

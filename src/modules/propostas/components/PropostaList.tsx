@@ -379,6 +379,10 @@ type Lead = {
   emAberto: number;
   aprovadas: number;
   assinados: number;
+  modulos: number;
+  potenciaW: number;
+  inversores: string;
+
 };
 
 function leadKey(p: PropostaFV): string {

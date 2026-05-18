@@ -792,6 +792,7 @@ function RedigirContratoDialog({
                             <SelectContent>
                               <SelectItem value="entrada">Entrada (assinatura)</SelectItem>
                               <SelectItem value="ato">No ato</SelectItem>
+                              <SelectItem value="entrega-materiais">Na entrega do material</SelectItem>
                               <SelectItem value="pos-instalacao">Após instalação</SelectItem>
                               <SelectItem value="conforme-cronograma">Conforme cronograma</SelectItem>
                             </SelectContent>

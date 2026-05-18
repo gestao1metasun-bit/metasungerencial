@@ -168,6 +168,28 @@ export type ContratoFull = {
   contratoRedigido?: boolean;           // true após cadastro de endereço + geração do contrato redigido
   motivoCancelamento?: string;
   cancelado?: boolean;
+
+  // Dados do template de contrato (editor de cláusulas)
+  responsavel?: string;                 // Representante legal (PJ)
+  responsavelDoc?: string;              // CPF do representante (PJ)
+  responsavelCargo?: string;
+  pagamentoTipo?: "PIX" | "Boleto" | "Financiamento" | "Cartão" | "Misto" | "Dinheiro";
+  pagamentoDetalhes?: {
+    parcelas?: number;
+    entradaPct?: number;
+    marcoInicial?: "assinatura" | "entrega-materiais" | "pos-instalacao";
+    banco?: string;
+    multaPct?: number;        // boleto
+    jurosMesPct?: number;     // boleto
+    correcao?: string;        // ex. IGP-M
+    obs?: string;
+  };
+  clausulasCustom?: Array<{
+    id: string;
+    acao: "substituir" | "adicionar" | "remover";
+    referencia: string;       // ex. "3.2"
+    texto?: string;           // texto da cláusula (substituir / adicionar)
+  }>;
 };
 
 const KEY = "ms.contratos.v2";

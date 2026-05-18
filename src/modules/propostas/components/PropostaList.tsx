@@ -420,7 +420,12 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
     const emAberto = Math.max(0, arr.length - assinados);
     const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
-    const inversoresStr = invList.length > 0 ? invList.join(" + ") : (ultima.inversorMarca ?? "—");
+    // Agrupa duplicados como "2x INV-15"
+    const invCount = new Map<string, number>();
+    invList.forEach((id: string) => invCount.set(id, (invCount.get(id) ?? 0) + 1));
+    const inversoresStr = invCount.size > 0
+      ? [...invCount.entries()].map(([id, n]) => (n > 1 ? `${n}x ${id}` : id)).join(" + ")
+      : (ultima.inversorMarca ?? "—");
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",

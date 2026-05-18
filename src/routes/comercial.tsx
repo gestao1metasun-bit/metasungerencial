@@ -117,26 +117,16 @@ function ComercialPage() {
       <PageHeader title="Comercial" subtitle="Propostas, contratos, vendedores e volume mensal." />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
-          <TabsTrigger value="cad-proposta">Cadastrar Proposta</TabsTrigger>
-          <TabsTrigger value="cad-contrato">Cadastrar Contrato</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard & Leads</TabsTrigger>
           <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
-          <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
-        </TabsContent>
-        <TabsContent value="leads" className="mt-5">
-          <LeadsPage />
-        </TabsContent>
-        {/* Aba Indicadores removida do Comercial — visão estratégica fica no Dashboard Geral. */}
-        <TabsContent value="cad-proposta" className="mt-5">
-          <VolumeMensalTab volume={volume} setVolume={setVolume} contratos={contratos} />
-        </TabsContent>
-        <TabsContent value="cad-contrato" className="mt-5">
-          <CadastrarContratoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+          <div className="space-y-8">
+            <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+            <LeadsPage />
+          </div>
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
           <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />

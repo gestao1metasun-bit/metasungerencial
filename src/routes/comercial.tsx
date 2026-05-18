@@ -42,7 +42,7 @@ import {
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";
-import { LeadsPage } from "@/modules/leads";
+
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),

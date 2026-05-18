@@ -87,6 +87,15 @@ const isDocValid = (v: string) => {
   return d.length === 11 || d.length === 14;
 };
 const isTelValid = (v: string) => onlyDigits(v).length === 11;
+function fmtDataBR(v?: string | null): string {
+  if (!v) return "—";
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
+  return s;
+}
 
 type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];

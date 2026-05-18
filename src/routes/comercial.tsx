@@ -42,7 +42,7 @@ import {
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { Textarea } from "@/components/ui/textarea";
-import { LeadsPage } from "@/modules/leads";
+
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),
@@ -117,16 +117,13 @@ function ComercialPage() {
       <PageHeader title="Comercial" subtitle="Propostas, contratos, vendedores e volume mensal." />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
-          <TabsTrigger value="dashboard">Dashboard & Leads</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
-          <div className="space-y-8">
-            <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
-            <LeadsPage />
-          </div>
+          <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
           <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
@@ -288,6 +285,29 @@ function DashboardComercial({
     toast.success(`${id} → ${status}`);
   };
 
+  // KPIs adicionais essenciais
+  const kwpTotal = assinados.reduce((s, c) => s + (Number(c.kwp) || 0), 0);
+  const valorPorKwp = kwpTotal > 0 ? valorAssinado / kwpTotal : 0;
+  const taxaCancelamento = total > 0 ? (cancelados.length / total) * 100 : 0;
+  const mesAtual = new Date().getMonth();
+  const anoAtual = new Date().getFullYear();
+  const contratosMes = assinados.filter((c) => {
+    const d = new Date(c.dataAssinatura ?? c.data);
+    return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+  });
+  const valorMes = contratosMes.reduce((s, c) => s + c.valor, 0);
+  const rankConsultor = useMemo(() => {
+    const map = new Map<string, { qtd: number; valor: number }>();
+    assinados.forEach((c) => {
+      const k = c.vendedor || "—";
+      const cur = map.get(k) ?? { qtd: 0, valor: 0 };
+      map.set(k, { qtd: cur.qtd + 1, valor: cur.valor + c.valor });
+    });
+    return [...map.entries()].sort((a, b) => b[1].valor - a[1].valor)[0];
+  }, [assinados]);
+  const topConsultorNome = rankConsultor?.[0] ?? "—";
+  const topConsultorValor = rankConsultor?.[1].valor ?? 0;
+
   return (
     <>
       {/* KPIs comparativos */}
@@ -311,6 +331,41 @@ function DashboardComercial({
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(conversaoValor,100)}%` }} /></div>
         </Card>
       </div>
+
+      {/* KPIs essenciais adicionais */}
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Sun className="h-3.5 w-3.5 text-warning" /> kWp assinado
+          </div>
+          <div className="mt-1 text-2xl font-bold text-warning">{kwpTotal.toFixed(2)}</div>
+          <div className="text-xs text-muted-foreground">{fmtBRL(valorPorKwp)} /kWp médio</div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Activity className="h-3.5 w-3.5 text-primary" /> Vendas no mês
+          </div>
+          <div className="mt-1 flex items-baseline gap-2">
+            <div className="text-2xl font-bold text-primary">{contratosMes.length}</div>
+            <div className="text-xs text-muted-foreground">{fmtBRL(valorMes)}</div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <XCircle className="h-3.5 w-3.5 text-destructive" /> Taxa de cancelamento
+          </div>
+          <div className="mt-1 text-2xl font-bold text-destructive">{taxaCancelamento.toFixed(1)}%</div>
+          <div className="text-xs text-muted-foreground">{cancelados.length} de {total} contratos</div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Award className="h-3.5 w-3.5 text-success" /> Top consultor
+          </div>
+          <div className="mt-1 truncate text-lg font-bold text-success">{topConsultorNome}</div>
+          <div className="text-xs text-muted-foreground">{fmtBRL(topConsultorValor)}</div>
+        </Card>
+      </div>
+
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Contratos Gerados" value={total} hint={fmtBRL(valorTotal)} icon={FileText} tone="primary" trend={{ value: "100%", positive: true }} onView={() => setOpenModal("gerados")} />

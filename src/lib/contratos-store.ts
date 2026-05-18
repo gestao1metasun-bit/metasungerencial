@@ -183,6 +183,8 @@ export type ContratoFull = {
     jurosMesPct?: number;     // boleto
     correcao?: string;        // ex. IGP-M
     obs?: string;
+    /** Composição livre: várias formas (ex.: entrada PIX + boletos pós-instalação). */
+    formas?: PagamentoLinha[];
   };
   clausulasCustom?: Array<{
     id: string;

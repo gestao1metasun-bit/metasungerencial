@@ -87,6 +87,15 @@ const isDocValid = (v: string) => {
   return d.length === 11 || d.length === 14;
 };
 const isTelValid = (v: string) => onlyDigits(v).length === 11;
+function fmtDataBR(v?: string | null): string {
+  if (!v) return "—";
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
+  return s;
+}
 
 type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
@@ -157,7 +166,12 @@ function ContratoAssinadoTab({
       .filter((c) => c.status === "Assinado")
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
-  const valorTotal = assinados.reduce((s, c) => s + c.valor, 0);
+  const valorContrato = (c: Contrato) => {
+    if (Number(c.valor) > 0) return Number(c.valor);
+    const somaProj = (c.projetos ?? []).reduce((s, p) => s + (Number(p.valor) || 0), 0);
+    return somaProj;
+  };
+  const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
     const motivo = prompt(`Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\nMotivo (obrigatório):`);
@@ -218,8 +232,8 @@ function ContratoAssinadoTab({
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                  <TableCell className="text-xs">{c.dataAssinatura ?? "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
+                  <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums">
                       {c.projetos?.length ?? 0}

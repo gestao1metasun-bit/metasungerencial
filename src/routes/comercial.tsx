@@ -236,6 +236,9 @@ function ContratoAssinadoTab({
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-1.5">
                       <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => retornar(c)}>
+                        <Undo2 className="h-3.5 w-3.5" /> Retornar
+                      </Button>
                       <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => marcarAssinado(c.id)}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Assinado
                       </Button>

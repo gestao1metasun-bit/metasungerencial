@@ -909,6 +909,9 @@ export function retornarPropostaParaOrcamento(propostaId: string, usuario: strin
     valorAnterior: old.status, valorNovo: PROPOSTA_STATUS.PROPOSTA_GERADA,
     detalhe: `Proposta ${old.numero} retornada do Comercial para Orçamentos.`,
   });
+}
+
+
 
 /** Atalho: aprovar proposta + marcar lead como CONVERTIDO_EM_CONTRATO (chamado quando o contrato for gerado — Entrega 3). */
 export function vincularLeadConvertido(leadId: string, usuario: string) {

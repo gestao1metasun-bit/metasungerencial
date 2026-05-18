@@ -391,14 +391,6 @@ function LeadModal({
       toast.error("Preencha Nome, Telefone e selecione um Consultor.");
       return;
     }
-    if (!isDocValido(doc, tipoPessoa)) {
-      toast.error(
-        tipoPessoa === "PF"
-          ? "CPF inválido. Informe 11 dígitos."
-          : "CNPJ inválido. Informe 14 dígitos.",
-      );
-      return;
-    }
     if (!captacao.trim()) {
       toast.error("Selecione a forma de captação do lead.");
       return;
@@ -406,6 +398,15 @@ function LeadModal({
     const tel = telefone.replace(/\D/g, "");
     if (tel.length < 10 || tel.length > 11) {
       toast.error("Telefone inválido. Use DDD + número (10 ou 11 dígitos).");
+      return;
+    }
+    // CPF/CNPJ é opcional no cadastro inicial — só valida se foi preenchido.
+    if (doc.trim() && !isDocValido(doc, tipoPessoa)) {
+      toast.error(
+        tipoPessoa === "PF"
+          ? "CPF inválido. Informe 11 dígitos."
+          : "CNPJ inválido. Informe 14 dígitos.",
+      );
       return;
     }
     onContinuar({
@@ -498,7 +499,7 @@ function LeadModal({
               </div>
             </div>
             <div>
-              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground font-normal">(opcional — exigido na aprovação)</span></Label>
               <div className="relative mt-1.5 flex gap-2">
                 <Input
                   value={doc}

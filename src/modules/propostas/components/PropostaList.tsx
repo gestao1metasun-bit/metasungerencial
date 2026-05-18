@@ -1239,10 +1239,11 @@ function TabelaView({
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
-      case "propostas": return <span className="tabular-nums">{l.propostas.length}</span>;
-      case "aberto":    return <span className="tabular-nums">{l.emAberto}</span>;
-      case "aprovadas": return <span className={`tabular-nums ${l.aprovadas > 0 ? "font-semibold text-success" : ""}`}>{l.aprovadas}</span>;
-      case "assinados": return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
+      case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "modulos":    return <span className="tabular-nums">{l.modulos || "—"}</span>;
+      case "potencia":   return <span className="tabular-nums">{l.potenciaW ? `${l.potenciaW} Wp` : "—"}</span>;
+      case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status": {
         // Espelha o status mostrado no Kanban: se o lead foi atribuído a uma

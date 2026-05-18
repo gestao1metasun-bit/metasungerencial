@@ -55,7 +55,7 @@ export function ContratoImpressao({ contrato, onClose }: { contrato: ContratoFul
                 </h2>
               )}
               {c.paragrafos.map((p, i) => (
-                <p key={i} className="mb-2 text-justify">{p}</p>
+                <p key={i} className="mb-2 text-justify whitespace-pre-line">{p}</p>
               ))}
             </section>
           ))}

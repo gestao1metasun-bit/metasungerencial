@@ -202,13 +202,42 @@ function porExtensoInt(n: number): string {
 }
 
 function formaPagamentoTexto(c: ContratoFull): string[] {
-  const tipo = c.pagamentoTipo ?? "PIX";
   const det = c.pagamentoDetalhes ?? {};
+  const formas = det.formas ?? [];
+  const linhas: string[] = [];
+
+  // === Modo COMPOSIÇÃO (múltiplas formas) — preferencial ===
+  if (formas.length > 0) {
+    const letras = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+    const partes = formas.map((f, i) => `${letras[i] ?? String(i + 1)}) ${descreveLinha(f)}`);
+    linhas.push(
+      `2.2 O valor mencionado na Cláusula 2.1 será pago pela CONTRATANTE da seguinte forma:\n${partes.join("\n")}`
+    );
+
+    // Cláusulas auxiliares dependentes do meio
+    let n = 3;
+    if (formas.some((f) => f.tipo === "Boleto")) {
+      const boleto = formas.find((f) => f.tipo === "Boleto")!;
+      const multa = boleto.multaPct ?? det.multaPct ?? 2;
+      const juros = boleto.jurosMesPct ?? det.jurosMesPct ?? 1;
+      const correcao = boleto.correcao ?? det.correcao ?? "IGP-M";
+      linhas.push(`2.${n++} O atraso no pagamento de qualquer parcela via boleto implicará multa de ${multa}% sobre o valor em aberto, juros de mora de ${juros}% ao mês e correção monetária pelo índice ${correcao}.`);
+    }
+    if (formas.some((f) => f.tipo === "Financiamento")) {
+      linhas.push(`2.${n++} Caso o financiamento bancário previsto na composição acima não seja aprovado pela instituição financeira, por qualquer motivo, o presente contrato poderá ser renegociado entre as partes, mediante **aditivo contratual**, ou cancelado sem ônus, multa ou encargo, antes da entrega dos materiais.`);
+    }
+    if (formas.some((f) => f.tipo.startsWith("Cartão") && f.jurosTipo === "cliente")) {
+      linhas.push(`2.${n++} Nas parcelas pagas via cartão de crédito com juros do cliente, os encargos da operadora correrão por conta exclusiva do CONTRATANTE, conforme valor com juros descrito acima.`);
+    }
+    if (det.obs) linhas.push(`2.${n++} Observações: ${det.obs}`);
+    return linhas;
+  }
+
+  // === Modo LEGADO (forma única via pagamentoTipo) ===
+  const tipo = c.pagamentoTipo ?? "PIX";
   const entrada = det.entradaPct ?? 50;
   const parcelas = det.parcelas ?? 1;
-  const valor = c.valor;
-  const valorFmt = extenso(valor);
-  const linhas: string[] = [];
+  const valorFmt = extenso(c.valor);
 
   if (tipo === "Financiamento") {
     const banco = det.banco || "instituição financeira a ser definida";
@@ -233,6 +262,43 @@ function formaPagamentoTexto(c: ContratoFull): string[] {
   }
   if (det.obs && tipo !== "Misto") linhas.push(`2.${linhas.length + 2}. Observações: ${det.obs}`);
   return linhas;
+}
+
+function descreveLinha(f: import("./contratos-store").PagamentoLinha): string {
+  const momentoTxt = {
+    "entrada": "como entrada, na assinatura do contrato",
+    "ato": "no ato",
+    "pos-instalacao": "após a conclusão da instalação",
+    "conforme-cronograma": "conforme cronograma acordado",
+  }[f.momento] ?? "";
+
+  if (f.tipo === "Financiamento") {
+    return `${fmtBRL(f.valor)} via **financiamento junto ao ${f.banco || "banco a definir"}**, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+  }
+  if (f.tipo.startsWith("Cartão")) {
+    if (f.parcelas > 1) {
+      if (f.jurosTipo === "cliente" && f.valorComJuros && f.valorComJuros > 0) {
+        const par = f.valorComJuros / f.parcelas;
+        return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (valor com juros do cliente: ${fmtBRL(f.valorComJuros)}), ${momentoTxt}.`;
+      }
+      // juros empresa ou sem juros: divide o próprio valor
+      const par = f.valor / f.parcelas;
+      return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (sem acréscimo ao CONTRATANTE), ${momentoTxt}.`;
+    }
+    return `${fmtBRL(f.valor)} via ${f.tipo} à vista, ${momentoTxt}.`;
+  }
+  if (f.tipo === "Boleto") {
+    if (f.parcelas > 1) {
+      const par = f.valor / f.parcelas;
+      return `${fmtBRL(f.valor)} via boleto bancário em ${f.parcelas} parcelas de ${fmtBRL(par)}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+    }
+    return `${fmtBRL(f.valor)} via boleto bancário, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+  }
+  if (f.parcelas > 1) {
+    const par = f.valor / f.parcelas;
+    return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+  }
+  return `${fmtBRL(f.valor)} via ${f.tipo}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
 }
 
 /* ============== Aplicar cláusulas personalizadas ============== */

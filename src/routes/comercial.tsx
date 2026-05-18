@@ -262,21 +262,35 @@ function ContratosTab({
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const redigidos = useMemo(
-    () => contratos.filter((c) => c.contratoRedigido && c.status === "Pendente").length,
+    () => contratos.filter((c) => c.contratoRedigido && c.status === "Pendente"),
     [contratos],
   );
+  const redigidosFiltrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return redigidos.filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
+  }, [redigidos, busca]);
 
   const [aberto, setAberto] = useState<Contrato | null>(null);
+  const [imprimir, setImprimir] = useState<Contrato | null>(null);
+  const [gerarAssinado, setGerarAssinado] = useState<Contrato | null>(null);
+  const [dataAssinaturaInput, setDataAssinaturaInput] = useState<string>(() => new Date().toISOString().slice(0, 10));
 
   function retornarParaOrcamento(c: Contrato) {
     const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
-    // Remove o contrato pendente e reabre a proposta no orçamento.
     setContratos(contratos.filter((x) => x.id !== c.id));
     if (c.propostaId) {
       retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
     }
     toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+  }
+
+  function confirmarAssinado() {
+    if (!gerarAssinado) return;
+    if (!dataAssinaturaInput) { toast.error("Informe a data de assinatura."); return; }
+    updateContratoAudit(gerarAssinado.id, { status: "Assinado", dataAssinatura: dataAssinaturaInput }, "Comercial");
+    toast.success(`Contrato ${gerarAssinado.id} assinado em ${dataAssinaturaInput}. Disponível em Contrato Assinado.`);
+    setGerarAssinado(null);
   }
 
   return (
@@ -288,12 +302,12 @@ function ContratosTab({
             <div className="text-2xl font-bold text-warning">{aRedigir.length}</div>
             {aRedigir.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />}
           </div>
-          <div className="text-xs text-muted-foreground">Cadastrar CPF/CNPJ + endereço e gerar contrato</div>
+          <div className="text-xs text-muted-foreground">Cadastrar dados → gerar contrato impresso</div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Redigidos · aguardando assinatura</div>
-          <div className="mt-1 text-2xl font-bold text-info">{redigidos}</div>
-          <div className="text-xs text-muted-foreground">Disponíveis em Contrato Assinado</div>
+          <div className="mt-1 text-2xl font-bold text-info">{redigidos.length}</div>
+          <div className="text-xs text-muted-foreground">Imprimir e gerar assinado</div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total no funil</div>
@@ -360,20 +374,92 @@ function ContratosTab({
         )}
       </Card>
 
+      <Card className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <FileText className="h-4 w-4 text-info" /> Contratos redigidos · aguardando assinatura
+        </div>
+        {redigidosFiltrados.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhum contrato redigido. Cadastre os dados de um contrato acima para gerar.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Proposta</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {redigidosFiltrados.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
+                  <TableCell className="font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
+                        <Printer className="h-3.5 w-3.5" /> Imprimir
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setAberto(c)}>
+                        <SquarePen className="h-3.5 w-3.5" /> Editar dados
+                      </Button>
+                      <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
+                        <PenLine className="h-3.5 w-3.5" /> Gerar Assinado
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
       {aberto && (
         <RedigirContratoDialog
           contrato={aberto}
           onClose={() => setAberto(null)}
           onConfirm={(patch) => {
-            setContratos(contratos.map((c) => c.id === aberto.id ? { ...c, ...patch, contratoRedigido: true } : c));
-            toast.success(`Contrato ${aberto.id} redigido. Pronto para assinatura.`);
+            const atualizado = { ...aberto, ...patch, contratoRedigido: true } as Contrato;
+            setContratos(contratos.map((c) => c.id === aberto.id ? atualizado : c));
+            toast.success(`Contrato ${aberto.id} gerado. Abrindo visualização para impressão.`);
             setAberto(null);
+            setImprimir(atualizado);
           }}
         />
       )}
+
+      {imprimir && <ContratoImpressao contrato={imprimir} onClose={() => setImprimir(null)} />}
+
+      <Dialog open={!!gerarAssinado} onOpenChange={(o) => { if (!o) setGerarAssinado(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gerar contrato assinado {gerarAssinado?.id}</DialogTitle>
+            <DialogDescription className="text-xs">
+              Informe a data em que o contrato foi assinado pelo cliente. Após confirmar, o contrato será movido para a aba <strong>Contrato Assinado</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Label className="text-xs">Data de assinatura *</Label>
+            <Input type="date" className="mt-1.5" value={dataAssinaturaInput} onChange={(e) => setDataAssinaturaInput(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGerarAssinado(null)}>Cancelar</Button>
+            <Button onClick={confirmarAssinado} className="gap-1.5 bg-success text-success-foreground hover:bg-success/90">
+              <CheckCircle2 className="h-4 w-4" /> Confirmar assinatura
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function RedigirContratoDialog({
   contrato, onClose, onConfirm,

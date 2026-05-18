@@ -893,6 +893,26 @@ export function cancelarPropostaComMotivo(propostaId: string, usuario: string, m
   });
 }
 
+/** Retorna proposta APROVADA de volta para status GERADA (orçamentos), liberando edição.
+ *  Usado quando o contrato foi devolvido do Comercial para ajuste. */
+export function retornarPropostaParaOrcamento(propostaId: string, usuario: string, motivo: string) {
+  const cur = propsS.read();
+  const idx = cur.findIndex((p) => p.id === propostaId);
+  if (idx < 0) return;
+  const old = cur[idx];
+  const next = [...cur];
+  next[idx] = { ...old, status: "GERADA" as StatusProposta, motivoStatus: motivo, atualizadoEm: new Date().toISOString().slice(0,10) };
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta", entidadeId: propostaId,
+    acao: "RETORNO_ORCAMENTO", usuario, motivo,
+    valorAnterior: old.status, valorNovo: PROPOSTA_STATUS.PROPOSTA_GERADA,
+    detalhe: `Proposta ${old.numero} retornada do Comercial para Orçamentos.`,
+  });
+}
+
+
+
 /** Atalho: aprovar proposta + marcar lead como CONVERTIDO_EM_CONTRATO (chamado quando o contrato for gerado — Entrega 3). */
 export function vincularLeadConvertido(leadId: string, usuario: string) {
   _setLeadStatus(leadId, LEAD_STATUS.CONVERTIDO_EM_CONTRATO, usuario);

@@ -3,8 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
-  Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin,
+  Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2,
 } from "lucide-react";
+import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -162,6 +163,14 @@ function ContratoAssinadoTab({
     toast.success(`Contrato ${id} marcado como Assinado.`);
   };
 
+  const retornar = (c: Contrato) => {
+    const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
+    setContratos(contratos.filter((x) => x.id !== c.id));
+    if (c.propostaId) retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
+    toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+  };
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -227,6 +236,9 @@ function ContratoAssinadoTab({
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-1.5">
                       <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => retornar(c)}>
+                        <Undo2 className="h-3.5 w-3.5" /> Retornar
+                      </Button>
                       <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => marcarAssinado(c.id)}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Assinado
                       </Button>
@@ -242,12 +254,12 @@ function ContratoAssinadoTab({
   );
 }
 
-/* ---------------- CONTRATOS (cadastro de endereço + gerar contrato redigido) ---------------- */
+/* ---------------- CONTRATOS GERADOS (cadastro CPF/CNPJ + endereço → contrato redigido) ---------------- */
 function ContratosTab({
   contratos, setContratos,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
   const [busca, setBusca] = useState("");
-  // Aprovados pelo orçamento e ainda sem o contrato redigido (sem endereço cadastrado aqui).
+  // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return contratos
@@ -261,6 +273,17 @@ function ContratosTab({
 
   const [aberto, setAberto] = useState<Contrato | null>(null);
 
+  function retornarParaOrcamento(c: Contrato) {
+    const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
+    // Remove o contrato pendente e reabre a proposta no orçamento.
+    setContratos(contratos.filter((x) => x.id !== c.id));
+    if (c.propostaId) {
+      retornarPropostaParaOrcamento(c.propostaId, "Comercial", motivo.trim());
+    }
+    toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -270,7 +293,7 @@ function ContratosTab({
             <div className="text-2xl font-bold text-warning">{aRedigir.length}</div>
             {aRedigir.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />}
           </div>
-          <div className="text-xs text-muted-foreground">Cadastrar endereço e gerar contrato</div>
+          <div className="text-xs text-muted-foreground">Cadastrar CPF/CNPJ + endereço e gerar contrato</div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Redigidos · aguardando assinatura</div>
@@ -305,12 +328,16 @@ function ContratosTab({
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Endereço</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {aRedigir.map((c) => {
-                const temEndereco = !!(c.clienteFull?.cep && c.clienteFull?.rua && c.clienteFull?.numero);
+                const cf = c.clienteFull;
+                const docDig = onlyDigits(cf?.doc ?? "");
+                const temDoc = docDig.length === 11 || docDig.length === 14;
+                const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
                 return (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
@@ -318,15 +345,17 @@ function ContratosTab({
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                     <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                    <TableCell className="text-xs">
-                      {temEndereco
-                        ? <span className="text-success">Cadastrado</span>
-                        : <span className="text-warning">Pendente</span>}
-                    </TableCell>
+                    <TableCell className="text-xs">{temDoc ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
+                    <TableCell className="text-xs">{temEndereco ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" onClick={() => setAberto(c)} className="h-8 gap-1.5">
-                        <MapPin className="h-3.5 w-3.5" /> Cadastrar endereço · gerar contrato
-                      </Button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <Button size="sm" variant="outline" onClick={() => retornarParaOrcamento(c)} className="h-8 gap-1.5">
+                          <Undo2 className="h-3.5 w-3.5" /> Retornar
+                        </Button>
+                        <Button size="sm" onClick={() => setAberto(c)} className="h-8 gap-1.5">
+                          <MapPin className="h-3.5 w-3.5" /> Cadastrar · gerar contrato
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -360,6 +389,14 @@ function RedigirContratoDialog({
 }) {
   const upper = (v: string) => v.toUpperCase();
   const cf = contrato.clienteFull;
+  // Identificação
+  const initialTipo: "PF" | "PJ" = onlyDigits(cf?.doc ?? "").length === 14 ? "PJ" : "PF";
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">(initialTipo);
+  const [nome, setNome] = useState(cf?.nome ?? contrato.cliente ?? "");
+  const [doc, setDoc] = useState(maskDoc(cf?.doc ?? ""));
+  const [telefone, setTelefone] = useState(maskTel(cf?.telefone ?? ""));
+  const [email, setEmail] = useState(cf?.email ?? "");
+  // Endereço
   const [cep, setCep] = useState(cf?.cep ?? "");
   const [rua, setRua] = useState(cf?.rua ?? "");
   const [numero, setNumero] = useState(cf?.numero ?? "");
@@ -396,20 +433,25 @@ function RedigirContratoDialog({
   }
 
   function salvar() {
+    if (!nome.trim()) { toast.error("Nome do cliente é obrigatório."); return; }
+    const docDig = onlyDigits(doc);
+    if (!(tipoPessoa === "PF" ? docDig.length === 11 : docDig.length === 14)) {
+      toast.error(tipoPessoa === "PF" ? "CPF inválido (11 dígitos)." : "CNPJ inválido (14 dígitos)."); return;
+    }
     if (cep.replace(/\D/g, "").length !== 8) { toast.error("CEP é obrigatório (8 dígitos)."); return; }
     if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !uf.trim()) {
       toast.error("Endereço completo é obrigatório (Rua, Nº, Bairro, Cidade, UF)."); return;
     }
     const clienteFull: ClienteFull = {
-      nome: cf?.nome ?? contrato.cliente,
-      doc: cf?.doc ?? "",
-      telefone: cf?.telefone ?? "",
-      email: cf?.email ?? "",
+      nome: upper(nome),
+      doc,
+      telefone,
+      email,
       cep: cep.replace(/\D/g, ""),
       rua: upper(rua), numero: upper(numero), complemento: upper(complemento),
       bairro: upper(bairro), cidade: upper(cidade), uf: upper(uf),
     };
-    onConfirm({ clienteFull, status: "Pendente" });
+    onConfirm({ cliente: upper(nome), clienteFull, status: "Pendente" });
   }
 
   return (
@@ -417,13 +459,38 @@ function RedigirContratoDialog({
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
-            <DialogTitle className="text-lg">Cadastrar endereço · gerar contrato {contrato.id}</DialogTitle>
+            <DialogTitle className="text-lg">Cadastrar dados e gerar contrato {contrato.id}</DialogTitle>
             <DialogDescription className="text-xs">
-              Cliente <strong className="text-foreground">{contrato.cliente}</strong> · Proposta {contrato.propostaNumero ?? "—"}. O contrato redigido fica disponível em <strong>Contrato Assinado</strong>.
+              Proposta {contrato.propostaNumero ?? "—"} · valor {fmtBRL(contrato.valor)}. CPF/CNPJ e endereço são obrigatórios para gerar o contrato redigido.
             </DialogDescription>
           </DialogHeader>
         </div>
         <div className="px-6 py-5 overflow-y-auto space-y-3">
+          {/* Identificação */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" size="sm" variant={tipoPessoa === "PF" ? "default" : "outline"}
+              onClick={() => { setTipoPessoa("PF"); setDoc(maskDoc(doc)); }}>Pessoa Física</Button>
+            <Button type="button" size="sm" variant={tipoPessoa === "PJ" ? "default" : "outline"}
+              onClick={() => { setTipoPessoa("PJ"); setDoc(maskDoc(doc)); }}>Pessoa Jurídica</Button>
+          </div>
+          <div className="grid sm:grid-cols-[1fr_220px] gap-3">
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
+              <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
+            </div>
+            <div>
+              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+              <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))}
+                placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div><Label className="text-xs">Telefone</Label><Input className="mt-1.5" value={telefone} onChange={(e) => setTelefone(maskTel(e.target.value))} placeholder="(00) 00000-0000" /></div>
+            <div><Label className="text-xs">E-mail</Label><Input className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          </div>
+
+          {/* Endereço */}
+          <div className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Endereço</div>
           <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-end">
             <div>
               <Label className="text-xs">CEP *</Label>
@@ -437,34 +504,16 @@ function RedigirContratoDialog({
             <div className="text-[11px] text-muted-foreground">Caso o CEP esteja errado, edite os campos manualmente.</div>
           </div>
           <div className="grid sm:grid-cols-[1fr_120px] gap-3">
-            <div>
-              <Label className="text-xs">Rua / Logradouro *</Label>
-              <Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} />
-            </div>
-            <div>
-              <Label className="text-xs">Número *</Label>
-              <Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} />
-            </div>
+            <div><Label className="text-xs">Rua / Logradouro *</Label><Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} /></div>
+            <div><Label className="text-xs">Número *</Label><Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} /></div>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Complemento</Label>
-              <Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} />
-            </div>
-            <div>
-              <Label className="text-xs">Bairro *</Label>
-              <Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} />
-            </div>
+            <div><Label className="text-xs">Complemento</Label><Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} /></div>
+            <div><Label className="text-xs">Bairro *</Label><Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} /></div>
           </div>
           <div className="grid sm:grid-cols-[1fr_100px] gap-3">
-            <div>
-              <Label className="text-xs">Cidade *</Label>
-              <Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} />
-            </div>
-            <div>
-              <Label className="text-xs">UF *</Label>
-              <Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} />
-            </div>
+            <div><Label className="text-xs">Cidade *</Label><Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} /></div>
+            <div><Label className="text-xs">UF *</Label><Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} /></div>
           </div>
         </div>
         <DialogFooter className="border-t bg-muted/30 px-6 py-3">

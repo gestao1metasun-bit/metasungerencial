@@ -137,9 +137,10 @@ export function aprovarProposta(p: PropostaFV) {
   );
 }
 
-/* ============= Diálogo de Aprovação (sem endereço) ============= */
-/** Form de aprovação enxuto: confirma PF/PJ, nome, CPF/CNPJ e telefone.
- *  O endereço completo é cadastrado depois, no Comercial → Contratos. */
+/* ============= Diálogo de Aprovação (CPF e endereço opcionais) ============= */
+/** Form de aprovação enxuto: confirma PF/PJ e nome (obrigatórios).
+ *  CPF/CNPJ e endereço são OPCIONAIS aqui — o cadastro definitivo (CPF/CNPJ e endereço)
+ *  acontece no Comercial → Contratos Gerados, antes de redigir o contrato. */
 export function AprovarPropostaDialog({
   proposta, open, onOpenChange, onAprovado,
 }: {
@@ -154,9 +155,19 @@ export function AprovarPropostaDialog({
   const [doc, setDoc] = useState(formatDoc(p?.clienteDoc ?? "", p?.tipoPessoa ?? "PF"));
   const [telefone, setTelefone] = useState(p?.clienteTelefone ?? "");
   const [email, setEmail] = useState(p?.clienteEmail ?? "");
+
+  // Endereço opcional
+  const [preencherEndereco, setPreencherEndereco] = useState(false);
+  const [cep, setCep] = useState(p?.clienteCep ?? "");
+  const [rua, setRua] = useState(p?.clienteRua ?? "");
+  const [numero, setNumero] = useState(p?.clienteNumero ?? "");
+  const [complemento, setComplemento] = useState(p?.clienteComplemento ?? "");
+  const [bairro, setBairro] = useState(p?.clienteBairro ?? "");
+  const [cidade, setCidade] = useState(p?.clienteCidade ?? "");
+  const [uf, setUf] = useState(p?.clienteUf ?? "");
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
-  // Reset state when proposta changes
   useEffect(() => {
     if (!p) return;
     setTipoPessoa(p.tipoPessoa ?? "PF");
@@ -164,19 +175,48 @@ export function AprovarPropostaDialog({
     setDoc(formatDoc(p.clienteDoc ?? "", p.tipoPessoa ?? "PF"));
     setTelefone(p.clienteTelefone ?? "");
     setEmail(p.clienteEmail ?? "");
+    setPreencherEndereco(!!(p.clienteCep || p.clienteRua));
+    setCep(formatCEP(p.clienteCep ?? ""));
+    setRua(p.clienteRua ?? "");
+    setNumero(p.clienteNumero ?? "");
+    setComplemento(p.clienteComplemento ?? "");
+    setBairro(p.clienteBairro ?? "");
+    setCidade(p.clienteCidade ?? "");
+    setUf(p.clienteUf ?? "");
   }, [p?.id]);
 
   if (!p) return null;
   const upper = (v: string) => v.toUpperCase();
 
+  async function buscarCep() {
+    setBuscandoCep(true);
+    try {
+      const r = await buscarCEPViaCEP(cep);
+      if (!r) { toast.error("CEP não encontrado. Preencha manualmente."); return; }
+      setRua(r.rua); setBairro(r.bairro); setCidade(r.cidade); setUf(r.uf);
+      if (r.complemento && !complemento) setComplemento(r.complemento);
+      toast.success("Endereço preenchido — confira e ajuste se necessário.");
+    } finally { setBuscandoCep(false); }
+  }
+
   function aprovar() {
     if (!nome.trim()) { toast.error("Informe o nome do cliente."); return; }
-    if (!isDocValido(doc, tipoPessoa)) {
+    // CPF/CNPJ opcional — só valida se foi preenchido.
+    if (doc.trim() && !isDocValido(doc, tipoPessoa)) {
       toast.error(tipoPessoa === "PF" ? "CPF inválido (11 dígitos)." : "CNPJ inválido (14 dígitos)."); return;
+    }
+    // Endereço opcional — se marcado para preencher, valida obrigatórios.
+    let endereco: { cep: string; rua: string; numero: string; complemento?: string; bairro: string; cidade: string; uf: string } | undefined;
+    if (preencherEndereco) {
+      const cepDig = cep.replace(/\D/g, "");
+      if (cepDig.length !== 8) { toast.error("CEP inválido (8 dígitos)."); return; }
+      if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !uf.trim()) {
+        toast.error("Endereço incompleto (Rua, Nº, Bairro, Cidade, UF)."); return;
+      }
+      endereco = { cep: cepDig, rua: upper(rua), numero: upper(numero), complemento: upper(complemento), bairro: upper(bairro), cidade: upper(cidade), uf: upper(uf) };
     }
     setSalvando(true);
     try {
-      // Atualiza identificação no lead (sem endereço — será cadastrado no Comercial).
       atualizarCadastroCliente({
         leadId: p!.leadId,
         propostaId: p!.id,
@@ -185,12 +225,18 @@ export function AprovarPropostaDialog({
         clienteDoc: doc,
         clienteTelefone: telefone,
         clienteEmail: email,
+        endereco,
         origem: `Aprovação da proposta ${p!.numero}`,
         usuario: p!.criadoPor || "Operador",
       });
       const atualizada: PropostaFV = {
         ...p!, tipoPessoa, clienteNome: upper(nome), clienteDoc: doc,
         clienteTelefone: telefone, clienteEmail: email,
+        ...(endereco ? {
+          clienteCep: endereco.cep, clienteRua: endereco.rua, clienteNumero: endereco.numero,
+          clienteComplemento: endereco.complemento, clienteBairro: endereco.bairro,
+          clienteCidade: endereco.cidade, clienteUf: endereco.uf,
+        } : {}),
       };
       aprovarProposta(atualizada);
       onOpenChange(false);
@@ -202,17 +248,17 @@ export function AprovarPropostaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
             <DialogTitle className="text-lg">Aprovar proposta {p.numero}</DialogTitle>
             <p className="text-xs text-muted-foreground">
-              Confirme a identificação do cliente. O endereço completo será cadastrado no Comercial → Contratos antes da emissão do contrato redigido.
+              Apenas o nome é obrigatório. CPF/CNPJ e endereço são opcionais — o cadastro definitivo é feito no Comercial → Contratos Gerados.
             </p>
           </DialogHeader>
         </div>
 
-        <div className="px-6 py-5 space-y-3">
+        <div className="px-6 py-5 space-y-3 overflow-y-auto">
           <div className="grid grid-cols-2 gap-2">
             <Button type="button" size="sm" variant={tipoPessoa === "PF" ? "default" : "outline"}
               onClick={() => { setTipoPessoa("PF"); setDoc(formatDoc(doc, "PF")); }}>Pessoa Física</Button>
@@ -224,7 +270,7 @@ export function AprovarPropostaDialog({
             <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
           </div>
           <div>
-            <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+            <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground">(opcional)</span></Label>
             <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(formatDoc(e.target.value, tipoPessoa))}
               placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
           </div>
@@ -238,6 +284,43 @@ export function AprovarPropostaDialog({
               <Input className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           </div>
+
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex items-center justify-between gap-2">
+            <div className="text-xs">
+              <div className="font-semibold">Endereço (opcional)</div>
+              <div className="text-muted-foreground">Pode ser cadastrado/editado depois no Comercial.</div>
+            </div>
+            <Switch checked={preencherEndereco} onCheckedChange={setPreencherEndereco} />
+          </div>
+
+          {preencherEndereco && (
+            <div className="space-y-3">
+              <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-end">
+                <div>
+                  <Label className="text-xs">CEP</Label>
+                  <div className="mt-1.5 flex gap-1">
+                    <Input value={cep} onChange={(e) => setCep(formatCEP(e.target.value))} placeholder="00000-000" inputMode="numeric" maxLength={9} />
+                    <Button type="button" size="sm" variant="outline" onClick={buscarCep} disabled={buscandoCep}>
+                      {buscandoCep ? "..." : "Buscar"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-[11px] text-muted-foreground">Se o CEP estiver errado, edite os campos manualmente.</div>
+              </div>
+              <div className="grid sm:grid-cols-[1fr_120px] gap-3">
+                <div><Label className="text-xs">Rua / Logradouro</Label><Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">Número</Label><Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} /></div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div><Label className="text-xs">Complemento</Label><Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">Bairro</Label><Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} /></div>
+              </div>
+              <div className="grid sm:grid-cols-[1fr_100px] gap-3">
+                <div><Label className="text-xs">Cidade</Label><Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">UF</Label><Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0,2))} /></div>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="border-t bg-muted/30 px-6 py-3">

@@ -712,6 +712,71 @@ export function cancelarContrato(contratoId: string, motivo: string, usuario: st
   return { ok: true };
 }
 
+/* =============== Retorno em cascata (desfaz etapas) =============== */
+
+/**
+ * Retorna um contrato Assinado para "Redigido / aguardando assinatura".
+ * - Limpa data e arquivo de assinatura.
+ * - Remove projetos da Engenharia (zera enviadoEngenharia/aprovado).
+ * - Remove do módulo Financiamentos (zera possuiFinanciamento + campos).
+ * - Mantém o contrato redigido (contratoRedigido = true).
+ */
+export function retornarContratoParaGerado(contratoId: string, motivo: string, usuario = "Operador") {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false as const, motivo: "Contrato não encontrado." };
+  const old = c.status;
+  const projetos = (c.projetos ?? []).map((p) => ({
+    ...p,
+    enviadoEngenharia: false,
+    aprovado: false,
+    dataAprovacao: undefined,
+    usuarioAprovacao: undefined,
+  }));
+  updateContratoAudit(contratoId, {
+    status: "Pendente",
+    contratoRedigido: true,
+    dataAssinatura: undefined,
+    contratoAssinadoArquivo: undefined,
+    projetos,
+    possuiFinanciamento: false,
+    financiamentoBanco: undefined,
+    financiamentoValor: undefined,
+    financiamentoStatus: undefined,
+    financiamentoStatusLiberacao: undefined,
+    financiamentoLiberacao: undefined,
+    financiamentoPrevisao: undefined,
+    financiamentoEnvio: undefined,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "RETORNO_PARA_GERADO", usuario, motivo,
+    campo: "status", valorAnterior: old, valorNovo: "Pendente",
+    detalhe: "Contrato retornou de Assinado para Redigido. Projetos retirados da Engenharia e contrato removido de Financiamentos.",
+  });
+  return { ok: true as const };
+}
+
+/**
+ * Retorna um contrato Redigido para "A redigir" (mantém na aba Contratos Gerados,
+ * mas reabre o cadastro de cliente/endereço). Não mexe em Engenharia/Financiamentos
+ * porque essa etapa ainda não os populou.
+ */
+export function retornarContratoParaARedigir(contratoId: string, motivo: string, usuario = "Operador") {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false as const, motivo: "Contrato não encontrado." };
+  updateContratoAudit(contratoId, {
+    contratoRedigido: false,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "RETORNO_PARA_A_REDIGIR", usuario, motivo,
+    detalhe: "Contrato voltou para A redigir (reabertura do cadastro).",
+  });
+  return { ok: true as const };
+}
+
 /* =============== Cadeia de dependência =============== */
 
 /** True se a proposta já gerou contrato (não pode excluir/cancelar livremente). */

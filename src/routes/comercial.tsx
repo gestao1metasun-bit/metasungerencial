@@ -118,12 +118,16 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="contratos" className="mt-5">
+          <ContratosTab contratos={contratos} setContratos={setContratos} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
           <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
@@ -147,7 +151,7 @@ function ContratoAssinadoTab({
   const pendentes = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return contratos
-      .filter((c) => c.status === "Pendente")
+      .filter((c) => c.status === "Pendente" && c.contratoRedigido)
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const assinados = useMemo(() => contratos.filter((c) => c.status === "Assinado"), [contratos]);
@@ -235,6 +239,242 @@ function ContratoAssinadoTab({
         )}
       </Card>
     </div>
+  );
+}
+
+/* ---------------- CONTRATOS (cadastro de endereço + gerar contrato redigido) ---------------- */
+function ContratosTab({
+  contratos, setContratos,
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  const [busca, setBusca] = useState("");
+  // Aprovados pelo orçamento e ainda sem o contrato redigido (sem endereço cadastrado aqui).
+  const aRedigir = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return contratos
+      .filter((c) => c.status === "Pendente" && !c.contratoRedigido)
+      .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
+  }, [contratos, busca]);
+  const redigidos = useMemo(
+    () => contratos.filter((c) => c.contratoRedigido && c.status === "Pendente").length,
+    [contratos],
+  );
+
+  const [aberto, setAberto] = useState<Contrato | null>(null);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">A redigir</div>
+          <div className="mt-1 flex items-center gap-2">
+            <div className="text-2xl font-bold text-warning">{aRedigir.length}</div>
+            {aRedigir.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />}
+          </div>
+          <div className="text-xs text-muted-foreground">Cadastrar endereço e gerar contrato</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Redigidos · aguardando assinatura</div>
+          <div className="mt-1 text-2xl font-bold text-info">{redigidos}</div>
+          <div className="text-xs text-muted-foreground">Disponíveis em Contrato Assinado</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total no funil</div>
+          <div className="mt-1 text-2xl font-bold text-primary">{contratos.length}</div>
+        </Card>
+      </div>
+
+      <Card className="p-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileText className="h-4 w-4 text-primary" /> Contratos aprovados aguardando redação
+          </div>
+          <div className="relative w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato, cliente, proposta…" className="h-9 pl-9" />
+          </div>
+        </div>
+        {aRedigir.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhum contrato aguardando redação. Aprove uma proposta em Orçamentos para iniciar.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Proposta</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Endereço</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {aRedigir.map((c) => {
+                const temEndereco = !!(c.clienteFull?.cep && c.clienteFull?.rua && c.clienteFull?.numero);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
+                    <TableCell className="font-medium">{c.cliente}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                    <TableCell className="text-xs">
+                      {temEndereco
+                        ? <span className="text-success">Cadastrado</span>
+                        : <span className="text-warning">Pendente</span>}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" onClick={() => setAberto(c)} className="h-8 gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" /> Cadastrar endereço · gerar contrato
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      {aberto && (
+        <RedigirContratoDialog
+          contrato={aberto}
+          onClose={() => setAberto(null)}
+          onConfirm={(patch) => {
+            setContratos(contratos.map((c) => c.id === aberto.id ? { ...c, ...patch, contratoRedigido: true } : c));
+            toast.success(`Contrato ${aberto.id} redigido. Pronto para assinatura.`);
+            setAberto(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function RedigirContratoDialog({
+  contrato, onClose, onConfirm,
+}: {
+  contrato: Contrato;
+  onClose: () => void;
+  onConfirm: (patch: Partial<Contrato>) => void;
+}) {
+  const upper = (v: string) => v.toUpperCase();
+  const cf = contrato.clienteFull;
+  const [cep, setCep] = useState(cf?.cep ?? "");
+  const [rua, setRua] = useState(cf?.rua ?? "");
+  const [numero, setNumero] = useState(cf?.numero ?? "");
+  const [complemento, setComplemento] = useState(cf?.complemento ?? "");
+  const [bairro, setBairro] = useState(cf?.bairro ?? "");
+  const [cidade, setCidade] = useState(cf?.cidade ?? "");
+  const [uf, setUf] = useState(cf?.uf ?? "");
+  const [buscando, setBuscando] = useState(false);
+
+  function fmtCep(v: string) {
+    const d = v.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+  }
+
+  async function buscar() {
+    const d = cep.replace(/\D/g, "");
+    if (d.length !== 8) { toast.error("Informe um CEP de 8 dígitos."); return; }
+    setBuscando(true);
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+      const data = await r.json();
+      if (data?.erro) { toast.error("CEP não encontrado. Preencha manualmente."); return; }
+      setRua(upper(data.logradouro ?? ""));
+      setBairro(upper(data.bairro ?? ""));
+      setCidade(upper(data.localidade ?? ""));
+      setUf(upper(data.uf ?? ""));
+      if (data.complemento && !complemento) setComplemento(upper(data.complemento));
+      toast.success("Endereço preenchido — confira e ajuste se necessário.");
+    } catch {
+      toast.error("Erro de rede ao consultar CEP.");
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  function salvar() {
+    if (cep.replace(/\D/g, "").length !== 8) { toast.error("CEP é obrigatório (8 dígitos)."); return; }
+    if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !uf.trim()) {
+      toast.error("Endereço completo é obrigatório (Rua, Nº, Bairro, Cidade, UF)."); return;
+    }
+    const clienteFull: ClienteFull = {
+      nome: cf?.nome ?? contrato.cliente,
+      doc: cf?.doc ?? "",
+      telefone: cf?.telefone ?? "",
+      email: cf?.email ?? "",
+      cep: cep.replace(/\D/g, ""),
+      rua: upper(rua), numero: upper(numero), complemento: upper(complemento),
+      bairro: upper(bairro), cidade: upper(cidade), uf: upper(uf),
+    };
+    onConfirm({ clienteFull, status: "Pendente" });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Cadastrar endereço · gerar contrato {contrato.id}</DialogTitle>
+            <DialogDescription className="text-xs">
+              Cliente <strong className="text-foreground">{contrato.cliente}</strong> · Proposta {contrato.propostaNumero ?? "—"}. O contrato redigido fica disponível em <strong>Contrato Assinado</strong>.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+        <div className="px-6 py-5 overflow-y-auto space-y-3">
+          <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-end">
+            <div>
+              <Label className="text-xs">CEP *</Label>
+              <div className="mt-1.5 flex gap-1">
+                <Input value={cep} onChange={(e) => setCep(fmtCep(e.target.value))} placeholder="00000-000" inputMode="numeric" maxLength={9} />
+                <Button type="button" size="sm" variant="outline" onClick={buscar} disabled={buscando}>
+                  {buscando ? "..." : "Buscar"}
+                </Button>
+              </div>
+            </div>
+            <div className="text-[11px] text-muted-foreground">Caso o CEP esteja errado, edite os campos manualmente.</div>
+          </div>
+          <div className="grid sm:grid-cols-[1fr_120px] gap-3">
+            <div>
+              <Label className="text-xs">Rua / Logradouro *</Label>
+              <Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} />
+            </div>
+            <div>
+              <Label className="text-xs">Número *</Label>
+              <Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} />
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Complemento</Label>
+              <Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} />
+            </div>
+            <div>
+              <Label className="text-xs">Bairro *</Label>
+              <Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} />
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-[1fr_100px] gap-3">
+            <div>
+              <Label className="text-xs">Cidade *</Label>
+              <Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} />
+            </div>
+            <div>
+              <Label className="text-xs">UF *</Label>
+              <Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="border-t bg-muted/30 px-6 py-3">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} className="gap-1">
+            <CheckCircle2 className="h-4 w-4" /> Gerar contrato redigido
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

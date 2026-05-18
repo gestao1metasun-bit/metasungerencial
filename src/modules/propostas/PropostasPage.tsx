@@ -1017,14 +1017,14 @@ function PropostaSheet({
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Parâmetro de irradiação (kWh/kWp·mês)" hint="Base real corrigida da cidade. Travado. Apenas Admin pode alterar.">
+              <Field label="Parâmetro de irradiação (kWh/kWp·mês)" hint="Travado. Base real corrigida da cidade — edite em Cadastros → Cidades.">
                 <Input
                   type="number"
                   step="0.1"
                   value={p.irradiacaoMedia}
-                  onChange={(e) => update("irradiacaoMedia", +e.target.value)}
-                  disabled={!ehAdmin}
-                  className={!ehAdmin ? "bg-muted/50" : ""}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
                 />
               </Field>
             </div>

@@ -735,7 +735,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
     modulosQtd: 0,
     inversores: [],
     valorKit: 0,
-    parametroPorKwp: 2800,
+    parametroPorKwp: 2500,
     descontoPct: 0,
     descontoValor: 0,
     custos: [],
@@ -1030,7 +1030,7 @@ export function atualizarCadastroCliente(args: {
   clienteDoc: string;
   clienteTelefone?: string;
   clienteEmail?: string;
-  endereco: {
+  endereco?: {
     cep: string; rua: string; numero: string; complemento?: string;
     bairro: string; cidade: string; uf: string;
   };
@@ -1046,7 +1046,7 @@ export function atualizarCadastroCliente(args: {
   const hoje = new Date().toISOString().slice(0, 10);
   const next = lista.map((p) => {
     if (!alvos.some((a) => a.id === p.id)) return p;
-    const mudou = _enderecoDiferente(p, args.endereco);
+    const mudou = !!args.endereco && _enderecoDiferente(p, args.endereco);
     const hist: EnderecoHistorico[] = [...(p.enderecoHistorico ?? [])];
     if (mudou && (p.clienteCep || p.clienteRua || p.clienteCidade)) {
       hist.push({
@@ -1058,6 +1058,7 @@ export function atualizarCadastroCliente(args: {
         cidade: p.clienteCidade, uf: p.clienteUf,
       });
     }
+    const end = args.endereco;
     return {
       ...p,
       tipoPessoa: args.tipoPessoa,
@@ -1065,15 +1066,16 @@ export function atualizarCadastroCliente(args: {
       clienteDoc: args.clienteDoc.trim(),
       clienteTelefone: args.clienteTelefone ?? p.clienteTelefone,
       clienteEmail: args.clienteEmail ?? p.clienteEmail,
-      clienteCep: args.endereco.cep,
-      clienteRua: args.endereco.rua,
-      clienteNumero: args.endereco.numero,
-      clienteComplemento: args.endereco.complemento || "",
-      clienteBairro: args.endereco.bairro,
-      clienteCidade: args.endereco.cidade,
-      clienteUf: args.endereco.uf,
-      clienteEndereco: [args.endereco.rua, args.endereco.numero, args.endereco.bairro, args.endereco.cidade]
-        .filter(Boolean).join(", ").toUpperCase(),
+      clienteCep: end ? end.cep : p.clienteCep,
+      clienteRua: end ? end.rua : p.clienteRua,
+      clienteNumero: end ? end.numero : p.clienteNumero,
+      clienteComplemento: end ? (end.complemento || "") : p.clienteComplemento,
+      clienteBairro: end ? end.bairro : p.clienteBairro,
+      clienteCidade: end ? end.cidade : p.clienteCidade,
+      clienteUf: end ? end.uf : p.clienteUf,
+      clienteEndereco: end
+        ? [end.rua, end.numero, end.bairro, end.cidade].filter(Boolean).join(", ").toUpperCase()
+        : p.clienteEndereco,
       enderecoHistorico: hist,
       atualizadoEm: hoje,
     };

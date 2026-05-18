@@ -379,6 +379,10 @@ type Lead = {
   emAberto: number;
   aprovadas: number;
   assinados: number;
+  modulos: number;
+  potenciaW: number;
+  inversores: string;
+
 };
 
 function leadKey(p: PropostaFV): string {
@@ -410,7 +414,10 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     );
     const assinados = contratosLead.filter((c) => !!c.contratoAssinadoArquivo && !c.cancelado).length;
     const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
-    const emAberto = arr.filter((p) => !STATUS_FINAIS.includes(p.status)).length;
+    // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
+    const emAberto = Math.max(0, arr.length - assinados);
+    const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
+    const inversoresStr = invList.length > 0 ? invList.join(" + ") : (ultima.inversorMarca ?? "—");
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -432,6 +439,9 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       emAberto,
       aprovadas,
       assinados,
+      modulos: Number(ultima.modulosQtd) || 0,
+      potenciaW: Number(ultima.moduloPotenciaWp) || 0,
+      inversores: inversoresStr,
     });
   }
   return leads;
@@ -1100,21 +1110,22 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "propostas" | "aberto" | "aprovadas" | "assinados" | "valor" | "status" | "dias";
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "criado",    label: "Criado em",      defaultWidth: 120 },
-  { key: "cliente",   label: "Cliente",        defaultWidth: 240 },
-  { key: "consultor", label: "Consultor",      defaultWidth: 160 },
-  { key: "cidade",    label: "Cidade",         defaultWidth: 160 },
-  { key: "propostas", label: "Propostas",      align: "right", defaultWidth: 110 },
-  { key: "aberto",    label: "Em aberto",      align: "right", defaultWidth: 110 },
-  { key: "aprovadas", label: "Aprovadas",      align: "right", defaultWidth: 110 },
-  { key: "assinados", label: "Assinados",      align: "right", defaultWidth: 110 },
-  { key: "valor",     label: "Valor (última)", align: "right", defaultWidth: 150 },
-  { key: "status",    label: "Status",         defaultWidth: 130 },
-  { key: "dias",      label: "Dias",           defaultWidth: 80 },
+  { key: "criado",     label: "Criado em",       defaultWidth: 120 },
+  { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
+  { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
+  { key: "cidade",     label: "Cidade",          defaultWidth: 160 },
+  { key: "aberto",     label: "Em aberto",       align: "right", defaultWidth: 110 },
+  { key: "assinados",  label: "Assinados",       align: "right", defaultWidth: 110 },
+  { key: "modulos",    label: "Módulos",         align: "right", defaultWidth: 100 },
+  { key: "potencia",   label: "Potência (Wp)",   align: "right", defaultWidth: 120 },
+  { key: "inversores", label: "Inversores",      defaultWidth: 200 },
+  { key: "valor",      label: "Valor (última)",  align: "right", defaultWidth: 150 },
+  { key: "status",     label: "Status",          defaultWidth: 130 },
+  { key: "dias",       label: "Dias",            defaultWidth: 80 },
 ];
 const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
 const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
@@ -1228,10 +1239,11 @@ function TabelaView({
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
-      case "propostas": return <span className="tabular-nums">{l.propostas.length}</span>;
-      case "aberto":    return <span className="tabular-nums">{l.emAberto}</span>;
-      case "aprovadas": return <span className={`tabular-nums ${l.aprovadas > 0 ? "font-semibold text-success" : ""}`}>{l.aprovadas}</span>;
-      case "assinados": return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
+      case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "modulos":    return <span className="tabular-nums">{l.modulos || "—"}</span>;
+      case "potencia":   return <span className="tabular-nums">{l.potenciaW ? `${l.potenciaW} Wp` : "—"}</span>;
+      case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status": {
         // Espelha o status mostrado no Kanban: se o lead foi atribuído a uma

@@ -712,15 +712,6 @@ function RedigirContratoDialog({
             <TabsContent value="pagamento" className="space-y-3 pt-3">
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Forma de pagamento *</Label>
-                  <Select value={pagamentoTipo} onValueChange={(v) => setPagamentoTipo(v as any)}>
-                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(["PIX","Boleto","Financiamento","Cartão","Misto","Dinheiro"] as const).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <Label className="text-xs">Marco do pagamento inicial</Label>
                   <Select value={marcoInicial} onValueChange={(v) => setMarcoInicial(v as any)}>
                     <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
@@ -731,37 +722,145 @@ function RedigirContratoDialog({
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="rounded-md border bg-muted/20 p-2 text-xs flex flex-col justify-center">
+                  <div className="flex justify-between"><span>Valor do contrato</span><span className="font-semibold">{fmtBRL(contrato.valor)}</span></div>
+                  <div className="flex justify-between"><span>Soma das formas</span><span className={Math.abs(diffFormas) <= 0.5 ? "font-semibold text-success" : "font-semibold text-destructive"}>{fmtBRL(somaFormas)}</span></div>
+                  {Math.abs(diffFormas) > 0.5 && (
+                    <div className="flex justify-between text-destructive"><span>Diferença</span><span>{fmtBRL(diffFormas)}</span></div>
+                  )}
+                </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label className="text-xs">Nº de parcelas</Label><Input type="number" min={1} className="mt-1.5" value={parcelas} onChange={(e) => setParcelas(Math.max(1, Number(e.target.value) || 1))} /></div>
-                <div><Label className="text-xs">Entrada (%)</Label><Input type="number" min={0} max={100} className="mt-1.5" value={entradaPct} onChange={(e) => setEntradaPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))} /></div>
+              <div className="rounded-md border bg-warning/5 p-3 space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-warning">Regras gerais de boleto (default)</div>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div><Label className="text-xs">Multa (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={multaPctDefault} onChange={(e) => setMultaPctDefault(Number(e.target.value) || 0)} /></div>
+                  <div><Label className="text-xs">Juros ao mês (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={jurosMesPctDefault} onChange={(e) => setJurosMesPctDefault(Number(e.target.value) || 0)} /></div>
+                  <div><Label className="text-xs">Correção</Label><Input className="mt-1.5" value={correcaoDefault} onChange={(e) => setCorrecaoDefault(e.target.value)} placeholder="IGP-M" /></div>
+                </div>
               </div>
 
-              {pagamentoTipo === "Boleto" && (
-                <div className="rounded-md border bg-warning/10 p-3 space-y-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-warning">Regras do boleto</div>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    <div><Label className="text-xs">Multa por atraso (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={multaPct} onChange={(e) => setMultaPct(Number(e.target.value) || 0)} /></div>
-                    <div><Label className="text-xs">Juros ao mês (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={jurosMesPct} onChange={(e) => setJurosMesPct(Number(e.target.value) || 0)} /></div>
-                    <div><Label className="text-xs">Índice de correção</Label><Input className="mt-1.5" value={correcao} onChange={(e) => setCorrecao(e.target.value)} placeholder="IGP-M" /></div>
-                  </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Composição (formas de pagamento)</div>
+                  <Button size="sm" variant="outline" onClick={addForma}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar forma</Button>
                 </div>
-              )}
+                <p className="text-[11px] text-muted-foreground">
+                  Ex.: PIX <b>R$ 50.000</b> na entrada + 10 Boletos somando <b>R$ 50.000</b> pós-instalação.
+                  Cada linha vira uma letra <b>a) b) c)</b> na cláusula 2.2 do contrato.
+                </p>
 
-              {pagamentoTipo === "Financiamento" && (
-                <div className="rounded-md border bg-info/10 p-3 space-y-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-info">Financiamento bancário</div>
-                  <div><Label className="text-xs">Banco</Label><Input className="mt-1.5" value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="BASA, SICREDI, BB..." /></div>
-                  <p className="text-[11px] text-muted-foreground">Cláusula automática: caso o financiamento não seja aprovado, o cliente pode renegociar a forma de pagamento ou rescindir sem ônus antes da entrega dos materiais.</p>
-                </div>
-              )}
+                {formas.map((f, idx) => {
+                  const ehCartao = f.tipo.startsWith("Cartão");
+                  const parcelaCalc = f.parcelas > 1
+                    ? (ehCartao && f.jurosTipo === "cliente" && f.valorComJuros
+                        ? f.valorComJuros / f.parcelas
+                        : f.valor / f.parcelas)
+                    : f.valor;
+                  return (
+                    <div key={f.id} className="rounded-md border p-3 space-y-2 bg-card">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold text-primary">{String.fromCharCode(97 + idx)}) Forma {idx + 1}</div>
+                        <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => rmForma(f.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <div className="grid sm:grid-cols-[1fr_1fr] gap-2">
+                        <div>
+                          <Label className="text-xs">Tipo</Label>
+                          <Select value={f.tipo} onValueChange={(v) => updForma(f.id, { tipo: v as PagamentoLinha["tipo"] })}>
+                            <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {(["PIX","Boleto","Financiamento","Cartão de Crédito","Cartão de Débito","Dinheiro","Transferência","Permuta"] as const).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Momento</Label>
+                          <Select value={f.momento} onValueChange={(v) => updForma(f.id, { momento: v as PagamentoLinha["momento"] })}>
+                            <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="entrada">Entrada (assinatura)</SelectItem>
+                              <SelectItem value="ato">No ato</SelectItem>
+                              <SelectItem value="pos-instalacao">Após instalação</SelectItem>
+                              <SelectItem value="conforme-cronograma">Conforme cronograma</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid sm:grid-cols-[1fr_120px] gap-2">
+                        <div>
+                          <Label className="text-xs">Valor (R$)</Label>
+                          <Input type="number" step="0.01" min={0} className="mt-1.5" value={f.valor}
+                            onChange={(e) => updForma(f.id, { valor: Number(e.target.value) || 0 })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Nº parcelas</Label>
+                          <Input type="number" min={1} className="mt-1.5" value={f.parcelas}
+                            onChange={(e) => updForma(f.id, { parcelas: Math.max(1, Number(e.target.value) || 1) })} />
+                        </div>
+                      </div>
+
+                      {ehCartao && (
+                        <div className="rounded-md border bg-info/5 p-2 space-y-2">
+                          <div>
+                            <Label className="text-xs">Quem paga os juros do cartão?</Label>
+                            <Select value={f.jurosTipo ?? "sem"} onValueChange={(v) => updForma(f.id, { jurosTipo: v as any })}>
+                              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sem">Sem juros / à vista</SelectItem>
+                                <SelectItem value="empresa">Juros da empresa (não repassar)</SelectItem>
+                                <SelectItem value="cliente">Juros do cliente (acrescentar)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {f.jurosTipo === "cliente" && (
+                            <div>
+                              <Label className="text-xs">Valor total COM juros do cliente (R$)</Label>
+                              <Input type="number" step="0.01" min={0} className="mt-1.5" value={f.valorComJuros ?? 0}
+                                onChange={(e) => updForma(f.id, { valorComJuros: Number(e.target.value) || 0 })} />
+                              <p className="text-[11px] text-muted-foreground mt-1">
+                                Valor à vista da empresa: <b>{fmtBRL(f.valor)}</b>. O cliente pagará <b>{f.parcelas}x</b> de <b>{fmtBRL((f.valorComJuros || 0) / Math.max(1, f.parcelas))}</b>.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {f.tipo === "Financiamento" && (
+                        <div>
+                          <Label className="text-xs">Banco</Label>
+                          <Input className="mt-1.5" value={f.banco ?? ""} onChange={(e) => updForma(f.id, { banco: e.target.value })} placeholder="BASA, SICREDI, BB..." />
+                        </div>
+                      )}
+
+                      {f.tipo === "Boleto" && f.parcelas > 1 && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {f.parcelas} boletos de <b>{fmtBRL(f.valor / f.parcelas)}</b> · multa {f.multaPct ?? multaPctDefault}% · juros {f.jurosMesPct ?? jurosMesPctDefault}%/mês.
+                        </p>
+                      )}
+
+                      <div>
+                        <Label className="text-xs">Observação desta forma (opcional)</Label>
+                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: dividir em 5 boletos mensais a partir de 30 dias após a vistoria" />
+                      </div>
+
+                      {f.parcelas > 1 && !ehCartao && (
+                        <div className="text-[11px] text-muted-foreground">
+                          Cada parcela ≈ <b>{fmtBRL(parcelaCalc)}</b>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
               <div>
-                <Label className="text-xs">Observações de pagamento</Label>
-                <Textarea className="mt-1.5" rows={2} value={pagObs} onChange={(e) => setPagObs(e.target.value)} placeholder="Detalhes adicionais que aparecerão na cláusula 3." />
+                <Label className="text-xs">Observações gerais de pagamento</Label>
+                <Textarea className="mt-1.5" rows={2} value={pagObs} onChange={(e) => setPagObs(e.target.value)} placeholder="Texto livre adicional que aparecerá ao final da cláusula 2." />
               </div>
             </TabsContent>
+
 
             {/* CLÁUSULAS */}
             <TabsContent value="clausulas" className="space-y-3 pt-3">

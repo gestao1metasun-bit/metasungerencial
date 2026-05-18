@@ -228,7 +228,7 @@ function ContratoAssinadoTab({
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                  <TableCell className="text-xs">{c.dataAssinatura ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums">
                       {c.projetos?.length ?? 0}

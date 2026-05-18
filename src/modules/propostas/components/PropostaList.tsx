@@ -439,6 +439,9 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       emAberto,
       aprovadas,
       assinados,
+      modulos: Number(ultima.modulosQtd) || 0,
+      potenciaW: Number(ultima.moduloPotenciaWp) || 0,
+      inversores: inversoresStr,
     });
   }
   return leads;

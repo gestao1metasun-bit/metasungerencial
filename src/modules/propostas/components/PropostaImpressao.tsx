@@ -149,6 +149,10 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
               <div className="border-t border-foreground pt-1 text-xs">Meta Sun · Energia Solar</div>
             </div>
           </section>
+
+          <section className="pt-6 text-center text-xs text-muted-foreground">
+            Telefone de contato: {proposta.clienteTelefone || "(__) _____-____"}
+          </section>
         </div>
 
         <DialogFooter className="no-print">

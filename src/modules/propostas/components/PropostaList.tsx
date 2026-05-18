@@ -414,7 +414,10 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     );
     const assinados = contratosLead.filter((c) => !!c.contratoAssinadoArquivo && !c.cancelado).length;
     const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
-    const emAberto = arr.filter((p) => !STATUS_FINAIS.includes(p.status)).length;
+    // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
+    const emAberto = Math.max(0, arr.length - assinados);
+    const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
+    const inversoresStr = invList.length > 0 ? invList.join(" + ") : (ultima.inversorMarca ?? "—");
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",

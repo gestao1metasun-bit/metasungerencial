@@ -508,6 +508,10 @@ function RedigirContratoDialog({
   const [doc, setDoc] = useState(maskDoc(cf?.doc ?? ""));
   const [telefone, setTelefone] = useState(maskTel(cf?.telefone ?? ""));
   const [email, setEmail] = useState(cf?.email ?? "");
+  // Responsável (PJ)
+  const [responsavel, setResponsavel] = useState(contrato.responsavel ?? "");
+  const [responsavelDoc, setResponsavelDoc] = useState(maskDoc(contrato.responsavelDoc ?? ""));
+  const [responsavelCargo, setResponsavelCargo] = useState(contrato.responsavelCargo ?? "");
   // Endereço
   const [cep, setCep] = useState(cf?.cep ?? "");
   const [rua, setRua] = useState(cf?.rua ?? "");
@@ -517,6 +521,26 @@ function RedigirContratoDialog({
   const [cidade, setCidade] = useState(cf?.cidade ?? "");
   const [uf, setUf] = useState(cf?.uf ?? "");
   const [buscando, setBuscando] = useState(false);
+  // Pagamento
+  const [pagamentoTipo, setPagamentoTipo] = useState<NonNullable<Contrato["pagamentoTipo"]>>(contrato.pagamentoTipo ?? "PIX");
+  const det0 = contrato.pagamentoDetalhes ?? {};
+  const [parcelas, setParcelas] = useState<number>(det0.parcelas ?? 1);
+  const [entradaPct, setEntradaPct] = useState<number>(det0.entradaPct ?? 50);
+  const [marcoInicial, setMarcoInicial] = useState<NonNullable<NonNullable<Contrato["pagamentoDetalhes"]>["marcoInicial"]>>(det0.marcoInicial ?? "assinatura");
+  const [banco, setBanco] = useState(det0.banco ?? "");
+  const [multaPct, setMultaPct] = useState<number>(det0.multaPct ?? 2);
+  const [jurosMesPct, setJurosMesPct] = useState<number>(det0.jurosMesPct ?? 1);
+  const [correcao, setCorrecao] = useState(det0.correcao ?? "IGP-M");
+  const [pagObs, setPagObs] = useState(det0.obs ?? "");
+  // Cláusulas custom
+  const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(contrato.clausulasCustom ?? []);
+  function addClausula() {
+    setClausulas([...clausulas, { id: crypto.randomUUID(), acao: "substituir", referencia: "3.2", texto: "" }]);
+  }
+  function updClausula(id: string, patch: Partial<NonNullable<Contrato["clausulasCustom"]>[number]>) {
+    setClausulas(clausulas.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+  function rmClausula(id: string) { setClausulas(clausulas.filter((c) => c.id !== id)); }
 
   function fmtCep(v: string) {
     const d = v.replace(/\D/g, "").slice(0, 8);
@@ -550,6 +574,9 @@ function RedigirContratoDialog({
     if (!(tipoPessoa === "PF" ? docDig.length === 11 : docDig.length === 14)) {
       toast.error(tipoPessoa === "PF" ? "CPF inválido (11 dígitos)." : "CNPJ inválido (14 dígitos)."); return;
     }
+    if (tipoPessoa === "PJ" && !responsavel.trim()) {
+      toast.error("Para PJ informe o representante legal."); return;
+    }
     if (cep.replace(/\D/g, "").length !== 8) { toast.error("CEP é obrigatório (8 dígitos)."); return; }
     if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !uf.trim()) {
       toast.error("Endereço completo é obrigatório (Rua, Nº, Bairro, Cidade, UF)."); return;
@@ -563,70 +590,198 @@ function RedigirContratoDialog({
       rua: upper(rua), numero: upper(numero), complemento: upper(complemento),
       bairro: upper(bairro), cidade: upper(cidade), uf: upper(uf),
     };
-    onConfirm({ cliente: upper(nome), clienteFull, status: "Pendente" });
+    onConfirm({
+      cliente: upper(nome),
+      clienteFull,
+      status: "Pendente",
+      responsavel: tipoPessoa === "PJ" ? upper(responsavel) : undefined,
+      responsavelDoc: tipoPessoa === "PJ" ? responsavelDoc : undefined,
+      responsavelCargo: tipoPessoa === "PJ" ? responsavelCargo : undefined,
+      pagamentoTipo,
+      pagamentoDetalhes: { parcelas, entradaPct, marcoInicial, banco, multaPct, jurosMesPct, correcao, obs: pagObs },
+      clausulasCustom: clausulas.filter((c) => c.acao === "remover" || (c.referencia && c.texto)),
+      pagamento: pagamentoTipo === "Financiamento" && banco ? `Financiamento ${banco}` : pagamentoTipo,
+    });
   }
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
-            <DialogTitle className="text-lg">Cadastrar dados e gerar contrato {contrato.id}</DialogTitle>
+            <DialogTitle className="text-lg">Redigir contrato {contrato.id}</DialogTitle>
             <DialogDescription className="text-xs">
-              Proposta {contrato.propostaNumero ?? "—"} · valor {fmtBRL(contrato.valor)}. CPF/CNPJ e endereço são obrigatórios para gerar o contrato redigido.
+              Proposta {contrato.propostaNumero ?? "—"} · valor {fmtBRL(contrato.valor)}. Preencha as 3 abas abaixo para gerar o contrato.
             </DialogDescription>
           </DialogHeader>
         </div>
-        <div className="px-6 py-5 overflow-y-auto space-y-3">
-          {/* Identificação */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button type="button" size="sm" variant={tipoPessoa === "PF" ? "default" : "outline"}
-              onClick={() => { setTipoPessoa("PF"); setDoc(maskDoc(doc)); }}>Pessoa Física</Button>
-            <Button type="button" size="sm" variant={tipoPessoa === "PJ" ? "default" : "outline"}
-              onClick={() => { setTipoPessoa("PJ"); setDoc(maskDoc(doc)); }}>Pessoa Jurídica</Button>
-          </div>
-          <div className="grid sm:grid-cols-[1fr_220px] gap-3">
-            <div>
-              <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
-              <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
-            </div>
-            <div>
-              <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
-              <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))}
-                placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
-            </div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div><Label className="text-xs">Telefone</Label><Input className="mt-1.5" value={telefone} onChange={(e) => setTelefone(maskTel(e.target.value))} placeholder="(00) 00000-0000" /></div>
-            <div><Label className="text-xs">E-mail</Label><Input className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          </div>
+        <div className="px-6 py-4 overflow-y-auto">
+          <Tabs defaultValue="cliente" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
+              <TabsTrigger value="pagamento">2. Pagamento</TabsTrigger>
+              <TabsTrigger value="clausulas">3. Cláusulas</TabsTrigger>
+            </TabsList>
 
-          {/* Endereço */}
-          <div className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Endereço</div>
-          <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-end">
-            <div>
-              <Label className="text-xs">CEP *</Label>
-              <div className="mt-1.5 flex gap-1">
-                <Input value={cep} onChange={(e) => setCep(fmtCep(e.target.value))} placeholder="00000-000" inputMode="numeric" maxLength={9} />
-                <Button type="button" size="sm" variant="outline" onClick={buscar} disabled={buscando}>
-                  {buscando ? "..." : "Buscar"}
-                </Button>
+            {/* CLIENTE */}
+            <TabsContent value="cliente" className="space-y-3 pt-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" size="sm" variant={tipoPessoa === "PF" ? "default" : "outline"}
+                  onClick={() => { setTipoPessoa("PF"); setDoc(maskDoc(doc)); }}>Pessoa Física</Button>
+                <Button type="button" size="sm" variant={tipoPessoa === "PJ" ? "default" : "outline"}
+                  onClick={() => { setTipoPessoa("PJ"); setDoc(maskDoc(doc)); }}>Pessoa Jurídica</Button>
               </div>
-            </div>
-            <div className="text-[11px] text-muted-foreground">Caso o CEP esteja errado, edite os campos manualmente.</div>
-          </div>
-          <div className="grid sm:grid-cols-[1fr_120px] gap-3">
-            <div><Label className="text-xs">Rua / Logradouro *</Label><Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} /></div>
-            <div><Label className="text-xs">Número *</Label><Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} /></div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div><Label className="text-xs">Complemento</Label><Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} /></div>
-            <div><Label className="text-xs">Bairro *</Label><Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} /></div>
-          </div>
-          <div className="grid sm:grid-cols-[1fr_100px] gap-3">
-            <div><Label className="text-xs">Cidade *</Label><Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} /></div>
-            <div><Label className="text-xs">UF *</Label><Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} /></div>
-          </div>
+              <div className="grid sm:grid-cols-[1fr_220px] gap-3">
+                <div>
+                  <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
+                  <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
+                  <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))}
+                    placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div><Label className="text-xs">Telefone</Label><Input className="mt-1.5" value={telefone} onChange={(e) => setTelefone(maskTel(e.target.value))} placeholder="(00) 00000-0000" /></div>
+                <div><Label className="text-xs">E-mail</Label><Input className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+              </div>
+
+              {tipoPessoa === "PJ" && (
+                <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Representante legal</div>
+                  <div className="grid sm:grid-cols-[1fr_180px_160px] gap-3">
+                    <div><Label className="text-xs">Nome do responsável *</Label><Input className="mt-1.5" value={responsavel} onChange={(e) => setResponsavel(upper(e.target.value))} /></div>
+                    <div><Label className="text-xs">CPF</Label><Input className="mt-1.5" value={responsavelDoc} onChange={(e) => setResponsavelDoc(maskDoc(e.target.value))} placeholder="000.000.000-00" /></div>
+                    <div><Label className="text-xs">Cargo</Label><Input className="mt-1.5" value={responsavelCargo} onChange={(e) => setResponsavelCargo(e.target.value)} placeholder="Sócio-administrador" /></div>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Endereço</div>
+              <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-end">
+                <div>
+                  <Label className="text-xs">CEP *</Label>
+                  <div className="mt-1.5 flex gap-1">
+                    <Input value={cep} onChange={(e) => setCep(fmtCep(e.target.value))} placeholder="00000-000" inputMode="numeric" maxLength={9} />
+                    <Button type="button" size="sm" variant="outline" onClick={buscar} disabled={buscando}>
+                      {buscando ? "..." : "Buscar"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-[11px] text-muted-foreground">Caso o CEP esteja errado, edite os campos manualmente.</div>
+              </div>
+              <div className="grid sm:grid-cols-[1fr_120px] gap-3">
+                <div><Label className="text-xs">Rua / Logradouro *</Label><Input className="mt-1.5" value={rua} onChange={(e) => setRua(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">Número *</Label><Input className="mt-1.5" value={numero} onChange={(e) => setNumero(upper(e.target.value))} /></div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div><Label className="text-xs">Complemento</Label><Input className="mt-1.5" value={complemento} onChange={(e) => setComplemento(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">Bairro *</Label><Input className="mt-1.5" value={bairro} onChange={(e) => setBairro(upper(e.target.value))} /></div>
+              </div>
+              <div className="grid sm:grid-cols-[1fr_100px] gap-3">
+                <div><Label className="text-xs">Cidade *</Label><Input className="mt-1.5" value={cidade} onChange={(e) => setCidade(upper(e.target.value))} /></div>
+                <div><Label className="text-xs">UF *</Label><Input className="mt-1.5" value={uf} maxLength={2} onChange={(e) => setUf(upper(e.target.value).slice(0, 2))} /></div>
+              </div>
+            </TabsContent>
+
+            {/* PAGAMENTO */}
+            <TabsContent value="pagamento" className="space-y-3 pt-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Forma de pagamento *</Label>
+                  <Select value={pagamentoTipo} onValueChange={(v) => setPagamentoTipo(v as any)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(["PIX","Boleto","Financiamento","Cartão","Misto","Dinheiro"] as const).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Marco do pagamento inicial</Label>
+                  <Select value={marcoInicial} onValueChange={(v) => setMarcoInicial(v as any)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="assinatura">Na assinatura</SelectItem>
+                      <SelectItem value="entrega-materiais">Na entrega dos materiais</SelectItem>
+                      <SelectItem value="pos-instalacao">Após a instalação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div><Label className="text-xs">Nº de parcelas</Label><Input type="number" min={1} className="mt-1.5" value={parcelas} onChange={(e) => setParcelas(Math.max(1, Number(e.target.value) || 1))} /></div>
+                <div><Label className="text-xs">Entrada (%)</Label><Input type="number" min={0} max={100} className="mt-1.5" value={entradaPct} onChange={(e) => setEntradaPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))} /></div>
+              </div>
+
+              {pagamentoTipo === "Boleto" && (
+                <div className="rounded-md border bg-warning/10 p-3 space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-warning">Regras do boleto</div>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <div><Label className="text-xs">Multa por atraso (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={multaPct} onChange={(e) => setMultaPct(Number(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Juros ao mês (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={jurosMesPct} onChange={(e) => setJurosMesPct(Number(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Índice de correção</Label><Input className="mt-1.5" value={correcao} onChange={(e) => setCorrecao(e.target.value)} placeholder="IGP-M" /></div>
+                  </div>
+                </div>
+              )}
+
+              {pagamentoTipo === "Financiamento" && (
+                <div className="rounded-md border bg-info/10 p-3 space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-info">Financiamento bancário</div>
+                  <div><Label className="text-xs">Banco</Label><Input className="mt-1.5" value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="BASA, SICREDI, BB..." /></div>
+                  <p className="text-[11px] text-muted-foreground">Cláusula automática: caso o financiamento não seja aprovado, o cliente pode renegociar a forma de pagamento ou rescindir sem ônus antes da entrega dos materiais.</p>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-xs">Observações de pagamento</Label>
+                <Textarea className="mt-1.5" rows={2} value={pagObs} onChange={(e) => setPagObs(e.target.value)} placeholder="Detalhes adicionais que aparecerão na cláusula 3." />
+              </div>
+            </TabsContent>
+
+            {/* CLÁUSULAS */}
+            <TabsContent value="clausulas" className="space-y-3 pt-3">
+              <p className="text-xs text-muted-foreground">
+                Personalize cláusulas específicas. Você pode <b>substituir</b> uma cláusula existente (ex. 3.2),
+                <b> adicionar</b> uma nova (renumerando as seguintes) ou <b>remover</b> uma cláusula inteira (ex. "7").
+              </p>
+              {clausulas.length === 0 && (
+                <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  Nenhuma personalização. O contrato usará o template padrão Meta Sun.
+                </div>
+              )}
+              {clausulas.map((c) => (
+                <div key={c.id} className="rounded-md border p-3 space-y-2">
+                  <div className="grid sm:grid-cols-[160px_140px_1fr_auto] gap-2 items-end">
+                    <div>
+                      <Label className="text-xs">Ação</Label>
+                      <Select value={c.acao} onValueChange={(v) => updClausula(c.id, { acao: v as any })}>
+                        <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="substituir">Substituir</SelectItem>
+                          <SelectItem value="adicionar">Adicionar</SelectItem>
+                          <SelectItem value="remover">Remover</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Referência</Label>
+                      <Input className="mt-1.5" value={c.referencia} onChange={(e) => updClausula(c.id, { referencia: e.target.value })} placeholder="3.2" />
+                    </div>
+                    <div className="text-[11px] text-muted-foreground self-center pt-4">
+                      {c.acao === "remover" ? "Remove cláusula inteira (ex. \"7\")" : c.acao === "adicionar" ? "Insere novo parágrafo e renumera os seguintes" : "Substitui o texto do parágrafo"}
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => rmClausula(c.id)}>Remover</Button>
+                  </div>
+                  {c.acao !== "remover" && (
+                    <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => updClausula(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                  )}
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={addClausula}>+ Adicionar cláusula personalizada</Button>
+            </TabsContent>
+          </Tabs>
         </div>
         <DialogFooter className="border-t bg-muted/30 px-6 py-3">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -638,6 +793,7 @@ function RedigirContratoDialog({
     </Dialog>
   );
 }
+
 
 /* ---------------- DASHBOARD ---------------- */
 

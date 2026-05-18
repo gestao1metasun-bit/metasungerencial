@@ -117,16 +117,13 @@ function ComercialPage() {
       <PageHeader title="Comercial" subtitle="Propostas, contratos, vendedores e volume mensal." />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
-          <TabsTrigger value="dashboard">Dashboard & Leads</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
-          <div className="space-y-8">
-            <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
-            <LeadsPage />
-          </div>
+          <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
         </TabsContent>
         <TabsContent value="contrato-assinado" className="mt-5">
           <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />

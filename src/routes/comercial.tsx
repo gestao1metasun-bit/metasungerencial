@@ -40,6 +40,7 @@ import {
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
   aprovarProjeto,
+  retornarContratoParaGerado, retornarContratoParaARedigir,
   type ContratoFull, type ClienteFull, type ProjetoVinculado,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";

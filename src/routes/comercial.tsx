@@ -44,6 +44,7 @@ import {
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -323,6 +324,9 @@ function ContratosTab({
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-end">
+        <ModeloBaseContratoDialog />
+      </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">A redigir</div>
@@ -492,6 +496,116 @@ function ContratosTab({
 }
 
 
+/* ---------------- MODELO BASE DE CONTRATO ---------------- */
+function ModeloBaseContratoDialog() {
+  const [open, setOpen] = useState(false);
+  const [base, setBaseState] = useContratoBase();
+  const [draft, setDraft] = useState<BaseClausula[]>(base);
+
+  useEffect(() => { if (open) setDraft(base); }, [open, base]);
+
+  function add() {
+    setDraft([...draft, { id: crypto.randomUUID(), acao: "substituir", referencia: "3.2", texto: "" }]);
+  }
+  function upd(id: string, patch: Partial<BaseClausula>) {
+    setDraft(draft.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+  function rm(id: string) { setDraft(draft.filter((c) => c.id !== id)); }
+  function salvar() {
+    const limpo = draft.filter((c) => c.acao === "remover" || (c.referencia && c.texto));
+    setBaseState(limpo);
+    toast.success(`Modelo base atualizado (${limpo.length} ajuste${limpo.length === 1 ? "" : "s"}). Vale para os próximos contratos redigidos.`);
+    setOpen(false);
+  }
+  function limparTudo() {
+    if (!confirm("Limpar todas as personalizações do modelo base?")) return;
+    setDraft([]);
+  }
+
+  return (
+    <>
+      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setOpen(true)}>
+        <FileText className="h-3.5 w-3.5" /> Modelo base de contrato
+        {base.length > 0 && (
+          <span className="ml-1 rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[10px] font-bold">
+            {base.length}
+          </span>
+        )}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0">
+          <DialogHeader className="border-b px-6 py-4">
+            <DialogTitle>Modelo base de contrato</DialogTitle>
+            <DialogDescription className="text-xs">
+              Define ajustes <b>padrão</b> que entram automaticamente em todo novo contrato no momento da redação.
+              Alterações feitas dentro de um contrato já redigido <b>não</b> mudam essa base, e mudanças aqui
+              <b> não</b> afetam contratos já redigidos — só os próximos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 py-4 overflow-y-auto space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Cada linha é um ajuste sobre o template padrão Meta Sun. Você pode
+              <b> substituir</b> uma cláusula (ex. 3.2), <b>adicionar</b> uma nova
+              (renumeração automática), ou <b>remover</b> uma cláusula inteira (ex. "6").
+            </p>
+            {draft.length === 0 && (
+              <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
+                Nenhum ajuste no modelo base. Os contratos usarão o template Meta Sun padrão.
+              </div>
+            )}
+            {draft.map((c) => (
+              <div key={c.id} className="rounded-md border p-3 space-y-2 bg-card">
+                <div className="grid sm:grid-cols-[160px_140px_1fr_auto] gap-2 items-end">
+                  <div>
+                    <Label className="text-xs">Ação</Label>
+                    <Select value={c.acao} onValueChange={(v) => upd(c.id, { acao: v as BaseClausula["acao"] })}>
+                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="substituir">Substituir</SelectItem>
+                        <SelectItem value="adicionar">Adicionar</SelectItem>
+                        <SelectItem value="remover">Remover</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Referência</Label>
+                    <Input className="mt-1.5" value={c.referencia} onChange={(e) => upd(c.id, { referencia: e.target.value })} placeholder="3.2" />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground self-center pt-4">
+                    {c.acao === "remover" ? "Remove cláusula inteira (ex. \"6\")" : c.acao === "adicionar" ? "Insere antes desta e renumera" : "Substitui o texto desta cláusula"}
+                  </div>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => rm(c.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                {c.acao !== "remover" && (
+                  <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => upd(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                )}
+              </div>
+            ))}
+            <div className="flex justify-between pt-2">
+              <Button size="sm" variant="outline" onClick={add}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar ajuste à base
+              </Button>
+              {draft.length > 0 && (
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={limparTudo}>
+                  Limpar tudo
+                </Button>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="border-t bg-muted/30 px-6 py-3">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={salvar} className="gap-1.5">
+              <CheckCircle2 className="h-4 w-4" /> Salvar modelo base
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function mapTipoTopo(t?: PagamentoLinha["tipo"]): Contrato["pagamentoTipo"] | undefined {
   if (!t) return undefined;
   if (t === "PIX") return "PIX";
@@ -555,8 +669,10 @@ function RedigirContratoDialog({
   const somaFormas = formas.reduce((s, f) => s + (Number(f.valor) || 0), 0);
   const diffFormas = Number(contrato.valor || 0) - somaFormas;
 
-  // Cláusulas custom
-  const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(contrato.clausulasCustom ?? []);
+  // Cláusulas custom — começa com o MODELO BASE se o contrato ainda não tiver personalização própria
+  const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(
+    contrato.clausulasCustom ?? getContratoBase()
+  );
   function addClausula() {
     setClausulas([...clausulas, { id: crypto.randomUUID(), acao: "substituir", referencia: "3.2", texto: "" }]);
   }

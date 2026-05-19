@@ -140,6 +140,10 @@ export type PagamentoLinha = {
   correcao?: string;
   /** Financiamento: banco. */
   banco?: string;
+  /** Cronograma: dias até o 1º vencimento (a partir do "momento"). */
+  primeiroVencDias?: number;
+  /** Cronograma: intervalo (dias) entre parcelas subsequentes. Default 30. */
+  intervaloDias?: number;
   obs?: string;
 };
 

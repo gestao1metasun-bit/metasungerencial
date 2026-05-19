@@ -697,23 +697,47 @@ export function criarContratoDeProposta(
   return { ok: true, contratoId: id, missing };
 }
 
-/** Anexa contrato assinado e move o status para CONTRATO ASSINADO. */
+/** Anexa contrato assinado e move o status para CONTRATO ASSINADO.
+ *  Se houver linha(s) de pagamento do tipo "Financiamento" na composição,
+ *  marca o contrato com possuiFinanciamento e envia SÓ o valor financiado
+ *  (soma das linhas) para o módulo Financiamentos.
+ */
 export function anexarContratoAssinado(contratoId: string, arquivo: string, usuario: string) {
   const cur = read();
   const c = cur.find((x) => x.id === contratoId);
   if (!c) return;
   const old = c.status;
-  updateContratoAudit(contratoId, {
+
+  // Detecta linhas de Financiamento na composição de pagamento
+  const formas = c.pagamentoDetalhes?.formas ?? [];
+  const linhasFin = formas.filter((f) => f.tipo === "Financiamento");
+  const temFinanciamento = linhasFin.length > 0;
+  const valorFinanciado = linhasFin.reduce((s, f) => s + (Number(f.valor) || 0), 0);
+  const bancoFin = linhasFin.find((f) => f.banco)?.banco;
+
+  const patch: Partial<ContratoFull> = {
     contratoAssinadoArquivo: arquivo,
     dataAssinatura: new Date().toISOString().slice(0, 10),
     status: CONTRATO_STATUS_LABEL.CONTRATO_ASSINADO,
-  }, usuario);
+  };
+  if (temFinanciamento && valorFinanciado > 0) {
+    patch.possuiFinanciamento = true;
+    patch.financiamentoValor = valorFinanciado;
+    if (bancoFin && !c.financiamentoBanco) patch.financiamentoBanco = bancoFin;
+    if (!c.financiamentoStatus) patch.financiamentoStatus = "Em análise";
+  }
+
+  updateContratoAudit(contratoId, patch, usuario);
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
     acao: "ASSINATURA", usuario,
     campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CONTRATO_ASSINADO,
-    detalhe: `Contrato assinado anexado: ${arquivo}.`,
+    detalhe: `Contrato assinado anexado: ${arquivo}.${temFinanciamento ? ` Enviado para Financiamentos: ${fmtBRLLocal(valorFinanciado)}${bancoFin ? ` (${bancoFin})` : ""}.` : ""}`,
   });
+}
+
+function fmtBRLLocal(v: number): string {
+  try { return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); } catch { return `R$ ${v.toFixed(2)}`; }
 }
 
 /** Envia contrato para engenharia (status do contrato + flag nas obras). */

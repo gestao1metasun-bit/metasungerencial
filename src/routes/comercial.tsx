@@ -179,11 +179,6 @@ function ContratoAssinadoTab({
       .filter((c) => c.status === "Assinado")
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
-  const valorContrato = (c: Contrato) => {
-    if (Number(c.valor) > 0) return Number(c.valor);
-    const somaProj = (c.projetos ?? []).reduce((s, p) => s + (Number(p.valor) || 0), 0);
-    return somaProj;
-  };
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {

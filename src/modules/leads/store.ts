@@ -19,6 +19,9 @@ export type Lead = {
   criadoEm: string;           // ISO
   criadoPor?: string;
   atualizadoEm: string;
+  // Vínculo com cadastro de cliente (CRM). Quando preenchido, este lead refere-se a um cliente já cadastrado (CPF/CNPJ único).
+  clienteId?: string;
+  doc?: string;               // CPF/CNPJ (mascarado)
 };
 
 const KEY = "ms.leads.v1";

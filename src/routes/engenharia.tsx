@@ -1565,6 +1565,9 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         </Card>
         );
       })}
+      </>}
+
+
 
       {novoFor && (
         <NovoProjetoDialog contrato={novoFor} onClose={() => setNovoFor(null)} />

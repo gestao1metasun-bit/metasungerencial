@@ -3154,13 +3154,10 @@ function ProjetoEditCard({
         <div className="space-y-1.5"><Label>CEP</Label>
           <Input value={d.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
         </div>
-        <div className="space-y-1.5"><Label>Status</Label>
-          <Select value={d.status} onValueChange={(v) => set("status", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="space-y-1.5 flex items-end">
+          <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground w-full">
+            O status do projeto é definido pela Engenharia após o envio. Aqui, apenas defina os dados técnicos e do endereço.
+          </div>
         </div>
         <div className="space-y-1.5 md:col-span-2"><Label>Endereço (rua)</Label>
           <Input value={d.endereco} onChange={(e) => set("endereco", e.target.value)} />

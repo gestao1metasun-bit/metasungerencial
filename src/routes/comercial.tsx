@@ -233,8 +233,8 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-12 text-center">Ações</TableHead>
               <TableHead>Contrato</TableHead>
+              <TableHead className="w-[140px]">Ações</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>

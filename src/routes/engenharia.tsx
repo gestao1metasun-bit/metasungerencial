@@ -1316,7 +1316,12 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         </div>
       </Card>
 
-      {liberados.map((c) => (
+      {liberados.map((c) => {
+        const projetos = c.projetos ?? [];
+        const total = projetos.length;
+        const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
+        const enviados = total - pendentes;
+        return (
         <Card key={c.id} className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1329,13 +1334,27 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                   Endereço do contrato: {[c.clienteFull.rua, c.clienteFull.numero, c.clienteFull.bairro, c.clienteFull.cidade, c.clienteFull.uf].filter(Boolean).join(", ") || "—"}
                 </div>
               )}
+              <div className="mt-2 flex items-center gap-2 text-[11px]">
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-semibold tabular-nums">
+                  Projetos: {enviados}/{total}
+                </span>
+                {pendentes > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-bold text-amber-600 tabular-nums">
+                    <Clock className="h-3 w-3" /> {pendentes} pendente{pendentes > 1 ? "s" : ""} para Engenharia
+                  </span>
+                ) : total > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success">
+                    <CheckCircle2 className="h-3 w-3" /> Todos enviados
+                  </span>
+                ) : null}
+              </div>
             </div>
             <Button size="sm" className="gap-1.5" onClick={() => setNovoFor(c)}>
               <Plus className="h-3.5 w-3.5" /> Adicionar projeto
             </Button>
           </div>
 
-          {(c.projetos ?? []).length === 0 ? (
+          {projetos.length === 0 ? (
             <div className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
               Nenhum projeto definido. Clique em "Adicionar projeto" para começar.
             </div>
@@ -1347,24 +1366,49 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 <TableHead>Endereço</TableHead>
                 <TableHead>Cidade/UF</TableHead>
                 <TableHead className="text-right">kWp</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {(c.projetos ?? []).map((p) => (
+                {projetos.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-mono text-xs">{p.id}</TableCell>
                     <TableCell className="text-xs">{p.tipo}</TableCell>
                     <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
                     <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
                     <TableCell className="text-right text-xs">{(p.kwp ?? 0).toFixed(2)}</TableCell>
-                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                    <TableCell>
+                      {p.enviadoEngenharia ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+                          <CheckCircle2 className="h-3 w-3" /> Enviado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+                          <Clock className="h-3 w-3" /> Pendente
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
-                        if (!confirm(`Remover projeto ${p.id}?`)) return;
-                        removeProjeto(c.id, p.id);
-                        toast.success("Projeto removido");
-                      }}><RotateCcw className="h-3.5 w-3.5" /></Button>
+                      <div className="inline-flex items-center gap-1.5">
+                        {!p.enviadoEngenharia && (
+                          <Button size="sm" className="h-7 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => {
+                            updateProjeto(c.id, p.id, {
+                              enviadoEngenharia: true,
+                              aprovado: true,
+                              dataAprovacao: new Date().toISOString(),
+                              usuarioAprovacao: "Engenharia",
+                            });
+                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
+                          }}>
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Enviar p/ Engenharia
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
+                          if (!confirm(`Remover projeto ${p.id}?`)) return;
+                          removeProjeto(c.id, p.id);
+                          toast.success("Projeto removido");
+                        }}><RotateCcw className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1372,7 +1416,8 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
             </Table>
           )}
         </Card>
-      ))}
+        );
+      })}
 
       {novoFor && (
         <NovoProjetoDialog contrato={novoFor} onClose={() => setNovoFor(null)} />

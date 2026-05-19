@@ -1428,6 +1428,125 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   );
 }
 
+/* ---------------- PROJETOS (Kanban + Tabela) ---------------- */
+const KANBAN_COLS: { key: string; label: string; tone: string }[] = [
+  { key: "Em projeto/aprovação", label: "Em projeto / aprovação", tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
+  { key: "Aguardando instalação", label: "Aguardando instalação", tone: "bg-info/15 text-info border-info/30" },
+  { key: "Em instalação", label: "Em instalação", tone: "bg-primary/15 text-primary border-primary/30" },
+  { key: "Concluído", label: "Concluído", tone: "bg-success/15 text-success border-success/30" },
+];
+
+function bucketDe(status: string): string {
+  const s = (status || "").toLowerCase();
+  if (s.includes("conclu") || s.includes("finaliz")) return "Concluído";
+  if (s.includes("instal") && s.includes("agu")) return "Aguardando instalação";
+  if (s.includes("instal")) return "Em instalação";
+  return "Em projeto/aprovação";
+}
+
+function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
+  const [view, setView] = useState<"kanban" | "tabela">("kanban");
+  const [busca, setBusca] = useState("");
+
+  const cards = (() => {
+    const out: { p: ProjetoVinculado; c: ContratoFull }[] = [];
+    contratos.forEach((c) => (c.projetos ?? []).forEach((p) => {
+      if (p.enviadoEngenharia && p.aprovado) out.push({ p, c });
+    }));
+    const q = busca.trim().toLowerCase();
+    return q
+      ? out.filter(({ p, c }) =>
+          p.id.toLowerCase().includes(q) ||
+          c.cliente.toLowerCase().includes(q) ||
+          (p.endereco || "").toLowerCase().includes(q) ||
+          (p.cidade || "").toLowerCase().includes(q),
+        )
+      : out;
+  })();
+
+  if (cards.length === 0) {
+    return (
+      <Card className="p-8 text-center text-sm text-muted-foreground">
+        Nenhum projeto aprovado ainda. Quando um projeto for aprovado em <b>Gestão de Projetos</b>, ele aparece aqui como card.
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
+          <Button size="sm" variant={view === "tabela" ? "default" : "outline"} onClick={() => setView("tabela")}>Tabela</Button>
+        </div>
+        <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por cliente, projeto, endereço…" className="h-8 w-72" />
+      </div>
+
+      {view === "kanban" ? (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+          {KANBAN_COLS.map((col) => {
+            const itens = cards.filter(({ p }) => bucketDe(p.status) === col.key);
+            return (
+              <Card key={col.key} className="p-3 bg-muted/30">
+                <div className={`mb-2 inline-flex items-center gap-2 rounded-md border px-2 py-0.5 text-[11px] font-semibold ${col.tone}`}>
+                  {col.label} <span className="tabular-nums">· {itens.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {itens.length === 0 ? (
+                    <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">—</div>
+                  ) : itens.map(({ p, c }) => (
+                    <Card key={p.id} className="p-3 hover:shadow-md transition-shadow">
+                      <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
+                      <div className="text-sm font-semibold leading-tight">{c.cliente}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
+                      <div className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
+                        {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
+                      </div>
+                      <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="p-0 overflow-hidden">
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead>Projeto</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Endereço</TableHead>
+              <TableHead className="text-right">kWp</TableHead>
+              <TableHead>Equipe</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Previsto</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {cards.map(({ p, c }) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                  <TableCell className="font-medium text-xs">{c.cliente}</TableCell>
+                  <TableCell className="text-xs">{p.tipo}</TableCell>
+                  <TableCell className="text-xs">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)}</TableCell>
+                  <TableCell className="text-xs">{p.equipe || "—"}</TableCell>
+                  <TableCell><span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold">{bucketDe(p.status)}</span></TableCell>
+                  <TableCell className="text-xs">{p.previsto || "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+
+
 function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onClose: () => void }) {
   const cf = contrato.clienteFull;
   const [form, setForm] = useState({

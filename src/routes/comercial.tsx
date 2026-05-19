@@ -2525,10 +2525,6 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
       return;
     }
     updateContratoAudit(contrato.id, { status: "Aprovado" });
-    const projs = contrato.projetos ?? [];
-    projs.forEach((p) => {
-      if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-    });
     if (contrato.possuiFinanciamento) {
       addPendencia({
         id: contrato.id,
@@ -2539,9 +2535,9 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
         dataCadastro: contrato.dataCadastro || contrato.data,
         status: "Pendente",
       });
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+      toast.success(`Contrato ${contrato.id} aprovado · enviado a Financiamentos. Envie cada projeto à Engenharia individualmente.`);
     } else {
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+      toast.success(`Contrato ${contrato.id} aprovado. Envie cada projeto à Engenharia individualmente.`);
     }
     setOpen(false);
   };

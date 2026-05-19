@@ -72,7 +72,16 @@ export type NovoLeadInput = {
   origem: OrigemLead;
   observacao?: string;
   criadoPor?: string;
+  clienteId?: string;
+  doc?: string;
 };
+
+/** Procura lead existente pelo CPF/CNPJ (somente dígitos). */
+export function findLeadByDoc(doc: string): Lead | undefined {
+  const d = (doc ?? "").replace(/\D/g, "");
+  if (!d) return undefined;
+  return read().find((l) => (l.doc ?? "").replace(/\D/g, "") === d);
+}
 
 export function criarLead(input: NovoLeadInput): Lead {
   const now = new Date().toISOString();
@@ -89,12 +98,14 @@ export function criarLead(input: NovoLeadInput): Lead {
     criadoEm: now,
     atualizadoEm: now,
     criadoPor: input.criadoPor,
+    clienteId: input.clienteId,
+    doc: input.doc?.trim() || undefined,
   };
   write([lead, ...read()]);
   pushAudit({
     entidade: "lead", entidadeId: lead.id,
     acao: "CRIACAO", usuario: input.criadoPor,
-    detalhe: `Lead ${lead.numero} criado para ${lead.nome}.`,
+    detalhe: `Lead ${lead.numero} criado para ${lead.nome}${input.clienteId ? ` (cliente ${input.clienteId})` : ""}.`,
   });
   return lead;
 }

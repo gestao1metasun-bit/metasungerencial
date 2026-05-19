@@ -923,12 +923,39 @@ export function vincularLeadConvertido(leadId: string, usuario: string) {
 /** Apenas dígitos. */
 const _onlyDigits = (v: string) => (v ?? "").replace(/\D/g, "");
 
-/** Valida CPF (11) ou CNPJ (14) — apenas comprimento. */
+/** Valida CPF (11 dígitos + DVs) usando os dígitos verificadores oficiais. */
+function _isCpfValido(d: string): boolean {
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += Number(d[i]) * (10 - i);
+  let dv1 = (s * 10) % 11; if (dv1 === 10) dv1 = 0;
+  if (dv1 !== Number(d[9])) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += Number(d[i]) * (11 - i);
+  let dv2 = (s * 10) % 11; if (dv2 === 10) dv2 = 0;
+  return dv2 === Number(d[10]);
+}
+/** Valida CNPJ (14 dígitos + DVs) usando os dígitos verificadores oficiais. */
+function _isCnpjValido(d: string): boolean {
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const w1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+  const w2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+  let s = 0;
+  for (let i = 0; i < 12; i++) s += Number(d[i]) * w1[i];
+  let dv1 = s % 11; dv1 = dv1 < 2 ? 0 : 11 - dv1;
+  if (dv1 !== Number(d[12])) return false;
+  s = 0;
+  for (let i = 0; i < 13; i++) s += Number(d[i]) * w2[i];
+  let dv2 = s % 11; dv2 = dv2 < 2 ? 0 : 11 - dv2;
+  return dv2 === Number(d[13]);
+}
+
+/** Valida CPF (11) ou CNPJ (14) com dígitos verificadores oficiais. */
 export function isDocValido(doc: string, tipo?: "PF" | "PJ"): boolean {
   const d = _onlyDigits(doc);
-  if (tipo === "PF") return d.length === 11;
-  if (tipo === "PJ") return d.length === 14;
-  return d.length === 11 || d.length === 14;
+  if (tipo === "PF") return _isCpfValido(d);
+  if (tipo === "PJ") return _isCnpjValido(d);
+  return _isCpfValido(d) || _isCnpjValido(d);
 }
 
 /** Mascara CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00). */

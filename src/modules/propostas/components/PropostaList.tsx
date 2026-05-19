@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
   Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
-  X, Check, Pencil, FilePlus2,
+  X, Check, Pencil, FilePlus2, MoreVertical, Ban,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
-  aprovarPropostaDoLead,
+  aprovarPropostaDoLead, cancelarPropostaComMotivo,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
 } from "@/modules/propostas/store";
 import {
@@ -73,7 +77,7 @@ export function duplicarProposta(p: PropostaFV) {
 
 export function excluirProposta(p: PropostaFV) {
   if (p.status !== "RASCUNHO") {
-    toast.error("Propostas geradas não podem ser excluídas.");
+    toast.error("Propostas geradas não podem ser excluídas — use Cancelar.");
     return;
   }
   // Cadeia de dependência (Entrega 3): bloqueia exclusão se houver contrato vinculado.
@@ -89,6 +93,16 @@ export function excluirProposta(p: PropostaFV) {
   if (!confirm(`Excluir proposta ${p.numero}? Esta ação não pode ser desfeita.`)) return;
   removeProposta(p.id);
   toast.success("Proposta excluída.");
+}
+
+/** Cancela uma proposta — move para status CANCELADA com motivo. */
+export function cancelarProposta(p: PropostaFV) {
+  if (p.status === "CANCELADA") { toast.info("Proposta já está cancelada."); return; }
+  if (p.status === "APROVADA") { toast.error("Proposta aprovada não pode ser cancelada — retorne o contrato antes."); return; }
+  const motivo = prompt(`Cancelar proposta ${p.numero}?\n\nMotivo (obrigatório):`);
+  if (!motivo || !motivo.trim()) { toast.error("Informe o motivo do cancelamento."); return; }
+  cancelarPropostaComMotivo(p.id, p.criadoPor || "Operador", motivo.trim());
+  toast.success(`Proposta ${p.numero} cancelada.`);
 }
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
@@ -764,6 +778,7 @@ function LeadDetail({
                     const ehRascunho = p.status === "RASCUNHO";
                     const podeEditar = ehRascunho && !lead.bloqueado;
                     const podeExcluir = ehRascunho && !lead.bloqueado;
+                    const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
@@ -771,21 +786,40 @@ function LeadDetail({
                         <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Visualizar" onClick={() => onVisualizar(p.id)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {podeEditar && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar rascunho" onClick={() => { onEditar(p); onClose(); }}>
-                                <Pencil className="h-4 w-4" />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Ações">
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
-                            )}
-                            {podeExcluir && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            )}
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuLabel className="text-xs">{p.numero}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
+                                <Eye className="mr-2 h-4 w-4" /> Visualizar
+                              </DropdownMenuItem>
+                              {podeEditar && (
+                                <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
+                                </DropdownMenuItem>
+                              )}
+                              {podeCancelar && (
+                                <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
+                                  <Ban className="mr-2 h-4 w-4 text-destructive" />
+                                  <span className="text-destructive">Cancelar</span>
+                                </DropdownMenuItem>
+                              )}
+                              {podeExcluir && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onSelect={() => excluirProposta(p)}>
+                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                    <span className="text-destructive">Excluir rascunho</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -1090,7 +1124,35 @@ function KanbanView({
                         {l.consultor || "sem consultor"} · {l.propostas.length} proposta(s)
                       </div>
                     </div>
-                    {l.bloqueado && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
+                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
+                      {!l.bloqueado && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuLabel className="text-xs">{l.clienteNome}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                              <Eye className="mr-2 h-4 w-4" /> Abrir lead
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                                if (!p) { toast.info("Não há proposta cancelável."); return; }
+                                cancelarProposta(p);
+                              }}
+                            >
+                              <Ban className="mr-2 h-4 w-4 text-destructive" />
+                              <span className="text-destructive">Cancelar última proposta</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="text-sm font-semibold">{fmtBRL(l.valor)}</div>

@@ -1300,6 +1300,7 @@ function Row({ k, v }: { k: string; v: string }) {
 function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   const liberados = contratos.filter((c) => c.assinadoAprovado === true);
   const [novoFor, setNovoFor] = useState<ContratoFull | null>(null);
+  const [editing, setEditing] = useState<{ c: ContratoFull; p: ProjetoVinculado } | null>(null);
 
   if (liberados.length === 0) {
     return (
@@ -1351,8 +1352,8 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 ) : null}
               </div>
             </div>
-            <Button size="sm" className="gap-1.5" onClick={() => setNovoFor(c)}>
-              <Plus className="h-3.5 w-3.5" /> Adicionar projeto
+            <Button size="default" className="gap-1.5" onClick={() => setNovoFor(c)}>
+              <Plus className="h-4 w-4" /> Adicionar projeto
             </Button>
           </div>
 
@@ -1367,9 +1368,10 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 <TableHead>Tipo</TableHead>
                 <TableHead>Endereço</TableHead>
                 <TableHead>Cidade/UF</TableHead>
+                <TableHead className="text-right">Módulos</TableHead>
                 <TableHead className="text-right">kWp</TableHead>
                 <TableHead>Situação</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right w-[320px]">Ações</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {projetos.map((p) => (
@@ -1378,7 +1380,8 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                     <TableCell className="text-xs">{p.tipo}</TableCell>
                     <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
                     <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
-                    <TableCell className="text-right text-xs">{(p.kwp ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">{p.modulos || 0}</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)}</TableCell>
                     <TableCell>
                       {p.enviadoEngenharia ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
@@ -1391,9 +1394,12 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                      <div className="inline-flex items-center gap-2">
+                        <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
+                          <SquarePen className="h-4 w-4" /> Editar
+                        </Button>
                         {!p.enviadoEngenharia && (
-                          <Button size="sm" className="h-7 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => {
+                          <Button size="default" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => {
                             updateProjeto(c.id, p.id, {
                               enviadoEngenharia: true,
                               aprovado: true,
@@ -1402,14 +1408,14 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                             });
                             toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
                           }}>
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Enviar p/ Engenharia
+                            <CheckCircle2 className="h-4 w-4" /> Enviar p/ Engenharia
                           </Button>
                         )}
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
+                        <Button size="default" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => {
                           if (!confirm(`Remover projeto ${p.id}?`)) return;
                           removeProjeto(c.id, p.id);
                           toast.success("Projeto removido");
-                        }}><RotateCcw className="h-3.5 w-3.5" /></Button>
+                        }}><RotateCcw className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1423,6 +1429,9 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
       {novoFor && (
         <NovoProjetoDialog contrato={novoFor} onClose={() => setNovoFor(null)} />
+      )}
+      {editing && (
+        <EditProjetoDialog contrato={editing.c} projeto={editing.p} onClose={() => setEditing(null)} />
       )}
     </div>
   );
@@ -1447,6 +1456,7 @@ function bucketDe(status: string): string {
 function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   const [view, setView] = useState<"kanban" | "tabela">("kanban");
   const [busca, setBusca] = useState("");
+  const [editing, setEditing] = useState<{ c: ContratoFull; p: ProjetoVinculado } | null>(null);
 
   const cards = (() => {
     const out: { p: ProjetoVinculado; c: ContratoFull }[] = [];
@@ -1472,8 +1482,38 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
     );
   }
 
+  // Resumo por bucket
+  const totalKwp = cards.reduce((s, { p }) => s + (p.kwp || 0), 0);
+  const totalModulos = cards.reduce((s, { p }) => s + (p.modulos || 0), 0);
+  const resumo = KANBAN_COLS.map((col) => ({
+    ...col,
+    qtd: cards.filter(({ p }) => bucketDe(p.status) === col.key).length,
+  }));
+
   return (
     <div className="space-y-3">
+      {/* Resumo */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+        <Card className="p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Projetos</div>
+          <div className="text-lg font-bold tabular-nums">{cards.length}</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">Módulos</div>
+          <div className="text-lg font-bold tabular-nums">{totalModulos}</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-[10px] uppercase text-muted-foreground">kWp total</div>
+          <div className="text-lg font-bold tabular-nums">{totalKwp.toFixed(2)}</div>
+        </Card>
+        {resumo.slice(0, 3).map((r) => (
+          <Card key={r.key} className="p-3">
+            <div className="text-[10px] uppercase text-muted-foreground truncate">{r.label}</div>
+            <div className="text-lg font-bold tabular-nums">{r.qtd}</div>
+          </Card>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
@@ -1496,14 +1536,23 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                     <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">—</div>
                   ) : itens.map(({ p, c }) => (
                     <Card key={p.id} className="p-3 hover:shadow-md transition-shadow">
-                      <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
-                      <div className="text-sm font-semibold leading-tight">{c.cliente}</div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
-                      <div className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
+                          <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => setEditing({ c, p })} title="Editar projeto">
+                          <SquarePen className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
+                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
                         {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
                       </div>
                       <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
+                      {p.previsto && <div className="mt-1 text-[10px] text-muted-foreground">Previsto: {fmtBR(p.previsto)}</div>}
                     </Card>
                   ))}
                 </div>
@@ -1515,31 +1564,51 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[180px]">Ações</TableHead>
               <TableHead>Projeto</TableHead>
+              <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Endereço</TableHead>
+              <TableHead>Cidade/UF</TableHead>
+              <TableHead className="text-right">Módulos</TableHead>
               <TableHead className="text-right">kWp</TableHead>
+              <TableHead>Inversor</TableHead>
               <TableHead>Equipe</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Início</TableHead>
               <TableHead>Previsto</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {cards.map(({ p, c }) => (
                 <TableRow key={p.id}>
+                  <TableCell>
+                    <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
+                      <SquarePen className="h-4 w-4" /> Editar
+                    </Button>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell className="font-medium text-xs">{c.cliente}</TableCell>
                   <TableCell className="text-xs">{p.tipo}</TableCell>
-                  <TableCell className="text-xs">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</TableCell>
+                  <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
+                  <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">{p.modulos || 0}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
                   <TableCell className="text-xs">{p.equipe || "—"}</TableCell>
                   <TableCell><span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold">{bucketDe(p.status)}</span></TableCell>
-                  <TableCell className="text-xs">{p.previsto || "—"}</TableCell>
+                  <TableCell className="text-xs">{fmtBR(p.inicio)}</TableCell>
+                  <TableCell className="text-xs">{fmtBR(p.previsto)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </Card>
+      )}
+
+      {editing && (
+        <EditProjetoDialog contrato={editing.c} projeto={editing.p} onClose={() => setEditing(null)} />
       )}
     </div>
   );
@@ -1623,5 +1692,96 @@ function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onCl
     </Dialog>
   );
 }
+
+/* ---------------- EDIT PROJETO ---------------- */
+function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoFull; projeto: ProjetoVinculado; onClose: () => void }) {
+  const [form, setForm] = useState({
+    tipo: projeto.tipo || "",
+    endereco: projeto.endereco || "",
+    numero: projeto.numero || "",
+    bairro: projeto.bairro || "",
+    cep: projeto.cep || "",
+    cidade: projeto.cidade || "",
+    uf: projeto.uf || "",
+    modulos: projeto.modulos || 0,
+    potenciaModuloW: projeto.potenciaModuloW || 0,
+    kwp: projeto.kwp || 0,
+    inversor: projeto.inversor || "",
+    equipe: projeto.equipe || "",
+    status: projeto.status || "Em projeto/aprovação",
+    inicio: projeto.inicio || "",
+    previsto: projeto.previsto || "",
+    obs: projeto.obs || "",
+  });
+
+  function salvar() {
+    if (!form.endereco.trim()) { toast.error("Endereço é obrigatório"); return; }
+    updateProjeto(contrato.id, projeto.id, {
+      tipo: form.tipo.trim() || "Projeto",
+      endereco: form.endereco,
+      numero: form.numero,
+      bairro: form.bairro,
+      cep: form.cep,
+      cidade: form.cidade,
+      uf: form.uf,
+      modulos: Number(form.modulos) || 0,
+      potenciaModuloW: Number(form.potenciaModuloW) || 0,
+      kwp: Number(form.kwp) || 0,
+      inversor: form.inversor,
+      equipe: form.equipe,
+      status: form.status,
+      inicio: form.inicio,
+      previsto: form.previsto,
+      obs: form.obs,
+    });
+    toast.success(`Projeto ${projeto.id} atualizado`);
+    onClose();
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Editar projeto — {projeto.id}</DialogTitle>
+          <DialogDescription>
+            Contrato {contrato.id} — {contrato.cliente}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto pr-1">
+          <div className="col-span-2"><Label>Tipo / nome</Label><Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} /></div>
+          <div className="col-span-2"><Label>Endereço</Label><Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} /></div>
+          <div><Label>Número</Label><Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} /></div>
+          <div><Label>Bairro</Label><Input value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} /></div>
+          <div><Label>CEP</Label><Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} /></div>
+          <div><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} /></div>
+          <div><Label>UF</Label><Input value={form.uf} onChange={(e) => setForm({ ...form, uf: e.target.value.toUpperCase().slice(0,2) })} /></div>
+          <div><Label>Módulos</Label><Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Potência módulo (W)</Label><Input type="number" value={form.potenciaModuloW} onChange={(e) => setForm({ ...form, potenciaModuloW: Number(e.target.value) })} /></div>
+          <div><Label>kWp</Label><Input type="number" step="0.01" value={form.kwp} onChange={(e) => setForm({ ...form, kwp: Number(e.target.value) })} /></div>
+          <div className="col-span-2"><Label>Inversor</Label><Input value={form.inversor} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div><Label>Equipe</Label><Input value={form.equipe} onChange={(e) => setForm({ ...form, equipe: e.target.value })} /></div>
+          <div>
+            <Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Início</Label><Input type="date" value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
+          <div><Label>Previsto</Label><Input type="date" value={form.previsto} onChange={(e) => setForm({ ...form, previsto: e.target.value })} /></div>
+          <div className="col-span-2"><Label>Observações</Label><Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} className="gap-1.5"><CheckCircle2 className="h-4 w-4" /> Salvar alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
 

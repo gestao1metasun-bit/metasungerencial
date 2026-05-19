@@ -778,6 +778,7 @@ function LeadDetail({
                     const ehRascunho = p.status === "RASCUNHO";
                     const podeEditar = ehRascunho && !lead.bloqueado;
                     const podeExcluir = ehRascunho && !lead.bloqueado;
+                    const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">{p.numero}</TableCell>
@@ -785,21 +786,40 @@ function LeadDetail({
                         <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Visualizar" onClick={() => onVisualizar(p.id)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {podeEditar && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar rascunho" onClick={() => { onEditar(p); onClose(); }}>
-                                <Pencil className="h-4 w-4" />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Ações">
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
-                            )}
-                            {podeExcluir && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir" onClick={() => excluirProposta(p)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            )}
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuLabel className="text-xs">{p.numero}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
+                                <Eye className="mr-2 h-4 w-4" /> Visualizar
+                              </DropdownMenuItem>
+                              {podeEditar && (
+                                <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
+                                </DropdownMenuItem>
+                              )}
+                              {podeCancelar && (
+                                <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
+                                  <Ban className="mr-2 h-4 w-4 text-destructive" />
+                                  <span className="text-destructive">Cancelar</span>
+                                </DropdownMenuItem>
+                              )}
+                              {podeExcluir && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onSelect={() => excluirProposta(p)}>
+                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                    <span className="text-destructive">Excluir rascunho</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );

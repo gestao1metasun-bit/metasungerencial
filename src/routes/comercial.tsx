@@ -341,43 +341,58 @@ function ContratoAssinadoTab({
   );
 }
 
-/** Botão de anexar (ou re-anexar) contrato assinado. Salva o nome do arquivo. */
-function AnexarContratoButton({ contrato }: { contrato: Contrato }) {
+/** Armazena temporariamente a dataURL do anexo (para visualização) por id de contrato. */
+const ANEXO_URLS = new Map<string, string>();
+function setAnexoUrl(id: string, url: string) { ANEXO_URLS.set(id, url); }
+function getAnexoUrl(id: string) { return ANEXO_URLS.get(id); }
+function abrirAnexoContrato(contrato: Contrato) {
+  const url = getAnexoUrl(contrato.id);
+  if (!url) {
+    toast.info(`Anexo "${contrato.contratoAssinadoArquivo}" registrado nesta sessão não está disponível para abrir aqui. Reanexe o arquivo para visualizar.`);
+    return;
+  }
+  const w = window.open();
+  if (w) {
+    w.document.write(
+      `<title>${contrato.contratoAssinadoArquivo ?? "Anexo"}</title>` +
+      (url.startsWith("data:application/pdf")
+        ? `<iframe src="${url}" style="border:0;width:100%;height:100vh"></iframe>`
+        : `<img src="${url}" style="max-width:100%;height:auto;display:block;margin:auto" />`),
+    );
+  }
+}
+
+/** Trigger oculto pra abrir o seletor de arquivo do anexo, controlado pelo dropdown. */
+function useAnexarHandler(contrato: Contrato) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const temAnexo = !!contrato.contratoAssinadoArquivo;
-  return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="application/pdf,image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (!f) return;
-          updateContratoAudit(
-            contrato.id,
-            {
-              contratoAssinadoArquivo: f.name,
-              dataAssinatura: contrato.dataAssinatura ?? new Date().toISOString().slice(0, 10),
-            },
-            "Comercial",
-          );
-          toast.success(`Anexo "${f.name}" registrado em ${fmtContratoId(contrato.id)}.`);
-          if (inputRef.current) inputRef.current.value = "";
-        }}
-      />
-      <Button
-        size="sm"
-        variant={temAnexo ? "outline" : "default"}
-        className="h-8 gap-1.5"
-        onClick={() => inputRef.current?.click()}
-        title={temAnexo ? `Substituir anexo (${contrato.contratoAssinadoArquivo})` : "Anexar contrato assinado"}
-      >
-        <FileText className="h-3.5 w-3.5" /> {temAnexo ? "Reanexar" : "Anexar"}
-      </Button>
-    </>
+  const node = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="application/pdf,image/*"
+      className="hidden"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") setAnexoUrl(contrato.id, reader.result);
+        };
+        reader.readAsDataURL(f);
+        updateContratoAudit(
+          contrato.id,
+          {
+            contratoAssinadoArquivo: f.name,
+            dataAssinatura: contrato.dataAssinatura ?? new Date().toISOString().slice(0, 10),
+          },
+          "Comercial",
+        );
+        toast.success(`Anexo "${f.name}" registrado em ${fmtContratoId(contrato.id)}.`);
+        if (inputRef.current) inputRef.current.value = "";
+      }}
+    />
   );
+  return { node, trigger: () => inputRef.current?.click() };
 }
 
 

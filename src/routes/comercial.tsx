@@ -39,7 +39,7 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
-  aprovarProjeto,
+  aprovarProjeto, aprovarContratoAssinado,
   retornarContratoParaGerado, retornarContratoParaARedigir,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";

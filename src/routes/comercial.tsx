@@ -2636,13 +2636,9 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
       clienteFull: cli,
     });
 
-    // Se aprovou agora, libera projetos para Engenharia
+    // Se aprovou agora, NÃO envia projetos automaticamente. O envio à Engenharia
+    // é manual, por projeto, na aba "3. Projetos" (botão "Aprovar projeto").
     if (aprovouAgora) {
-      const projs = contrato.projetos ?? [];
-      projs.forEach((p) => {
-        if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-      });
-      // E, se possui financiamento, envia para Financiamentos > Pendências
       if (f.possuiFinanciamento) {
         addPendencia({
           id: contrato.id,
@@ -2653,9 +2649,9 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
           status: "Pendente",
         });
-        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+        toast.success(`Contrato ${contrato.id} aprovado · enviado a Financiamentos. Envie cada projeto à Engenharia individualmente.`);
       } else {
-        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+        toast.success(`Contrato ${contrato.id} aprovado. Envie cada projeto à Engenharia individualmente.`);
       }
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);

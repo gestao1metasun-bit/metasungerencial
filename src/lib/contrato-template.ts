@@ -272,6 +272,21 @@ function descreveLinha(f: import("./contratos-store").PagamentoLinha): string {
     "pos-instalacao": "após a conclusão da instalação",
     "conforme-cronograma": "conforme cronograma acordado",
   }[f.momento] ?? "";
+  const momentoBase = {
+    "entrada": "da assinatura",
+    "ato": "do ato",
+    "entrega-materiais": "da entrega do material",
+    "pos-instalacao": "da conclusão da instalação",
+    "conforme-cronograma": "do início do cronograma",
+  }[f.momento] ?? "";
+
+  function cronograma(parcelas: number, valorParcela: number): string {
+    if (parcelas <= 1) return "";
+    const primeiro = f.primeiroVencDias ?? 30;
+    const intervalo = f.intervaloDias ?? 30;
+    const dias = Array.from({ length: parcelas }, (_, i) => primeiro + i * intervalo);
+    return ` Cronograma: ${parcelas} parcela(s) de ${fmtBRL(valorParcela)}, com vencimentos em ${dias.join(", ")} dias ${momentoBase}.`;
+  }
 
   if (f.tipo === "Financiamento") {
     return `${fmtBRL(f.valor)} via **financiamento junto ao ${f.banco || "banco a definir"}**, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
@@ -280,24 +295,23 @@ function descreveLinha(f: import("./contratos-store").PagamentoLinha): string {
     if (f.parcelas > 1) {
       if (f.jurosTipo === "cliente" && f.valorComJuros && f.valorComJuros > 0) {
         const par = f.valorComJuros / f.parcelas;
-        return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (valor com juros do cliente: ${fmtBRL(f.valorComJuros)}), ${momentoTxt}.`;
+        return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (valor com juros do cliente: ${fmtBRL(f.valorComJuros)}), ${momentoTxt}.${cronograma(f.parcelas, par)}${f.obs ? ` Obs.: ${f.obs}.` : ""}`;
       }
-      // juros empresa ou sem juros: divide o próprio valor
       const par = f.valor / f.parcelas;
-      return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (sem acréscimo ao CONTRATANTE), ${momentoTxt}.`;
+      return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)} (sem acréscimo ao CONTRATANTE), ${momentoTxt}.${cronograma(f.parcelas, par)}${f.obs ? ` Obs.: ${f.obs}.` : ""}`;
     }
     return `${fmtBRL(f.valor)} via ${f.tipo} à vista, ${momentoTxt}.`;
   }
   if (f.tipo === "Boleto") {
     if (f.parcelas > 1) {
       const par = f.valor / f.parcelas;
-      return `${fmtBRL(f.valor)} via boleto bancário em ${f.parcelas} parcelas de ${fmtBRL(par)}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+      return `${fmtBRL(f.valor)} via boleto bancário em ${f.parcelas} parcelas de ${fmtBRL(par)}, ${momentoTxt}.${cronograma(f.parcelas, par)}${f.obs ? ` Obs.: ${f.obs}.` : ""}`;
     }
     return `${fmtBRL(f.valor)} via boleto bancário, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
   }
   if (f.parcelas > 1) {
     const par = f.valor / f.parcelas;
-    return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
+    return `${fmtBRL(f.valor)} via ${f.tipo} em ${f.parcelas}x de ${fmtBRL(par)}, ${momentoTxt}.${cronograma(f.parcelas, par)}${f.obs ? ` Obs.: ${f.obs}.` : ""}`;
   }
   return `${fmtBRL(f.valor)} via ${f.tipo}, ${momentoTxt}${f.obs ? ` (${f.obs})` : ""}.`;
 }

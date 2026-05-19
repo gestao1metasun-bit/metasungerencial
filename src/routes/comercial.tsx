@@ -233,6 +233,7 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-12 text-center">Ações</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -243,94 +244,11 @@ function ContratoAssinadoTab({
               <TableHead className="text-center">Aprovação</TableHead>
               <TableHead className="text-center">Projetos</TableHead>
               <TableHead className="text-center">Pendentes Eng.</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {assinados.map((c) => {
-                const aprovado = c.assinadoAprovado === true;
-                const projetos = c.projetos ?? [];
-                const total = projetos.length;
-                const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
-                const enviados = total - pendentes;
-                const temAnexo = !!c.contratoAssinadoArquivo;
-                return (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
-                  <TableCell className="font-medium">{c.cliente}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
-                  <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
-                  <TableCell className="text-center">
-                    {temAnexo ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> Anexado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive">
-                        <AlertTriangle className="h-3 w-3" /> Faltando
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {aprovado ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> Aprovado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
-                        <Clock className="h-3 w-3" /> Aguardando
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums" title={`${enviados} enviados de ${total}`}>
-                      {enviados}/{total}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {total === 0 ? (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    ) : pendentes === 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> 0
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 tabular-nums">
-                        <Clock className="h-3 w-3" /> {pendentes}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1.5">
-                      <AnexarContratoButton contrato={c} />
-                      {!aprovado && (
-                        <Button
-                          size="sm"
-                          className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90 disabled:opacity-50"
-                          disabled={!temAnexo}
-                          title={!temAnexo ? "Anexe o contrato assinado antes de aprovar." : undefined}
-                          onClick={() => {
-                            const r = aprovarContratoAssinado(c.id, "Comercial");
-                            if (!r.ok) { toast.error(r.motivo); return; }
-                            const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
-                            toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
-                          }}
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
-                        </Button>
-                      )}
-                      <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
-                        <Printer className="h-3.5 w-3.5" /> Imprimir
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => retornar(c)}>
-                        <Undo2 className="h-3.5 w-3.5" /> Retornar
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );})}
+              {assinados.map((c) => (
+                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} />
+              ))}
             </TableBody>
           </Table>
         )}
@@ -338,6 +256,120 @@ function ContratoAssinadoTab({
 
       {imprimir && <ContratoImpressao contrato={imprimir} onClose={() => setImprimir(null)} />}
     </div>
+  );
+}
+
+function ContratoAssinadoRow({
+  contrato: c, vendedoresList, onImprimir, onRetornar,
+}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void }) {
+  const aprovado = c.assinadoAprovado === true;
+  const projetos = c.projetos ?? [];
+  const total = projetos.length;
+  const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
+  const enviados = total - pendentes;
+  const temAnexo = !!c.contratoAssinadoArquivo;
+  const [editOpen, setEditOpen] = useState(false);
+  const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
+  return (
+    <TableRow>
+      <TableCell className="text-center">
+        {anexoInput}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="w-56">
+            <DropdownMenuLabel className="text-xs">{fmtContratoId(c.id)}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {temAnexo && (
+              <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
+                <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={abrirSeletor}>
+              <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+            </DropdownMenuItem>
+            {!aprovado && (
+              <DropdownMenuItem
+                disabled={!temAnexo}
+                onSelect={() => {
+                  const r = aprovarContratoAssinado(c.id, "Comercial");
+                  if (!r.ok) { toast.error(r.motivo); return; }
+                  const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                  toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+                }}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              <SquarePen className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onImprimir(c)}>
+              <Printer className="mr-2 h-4 w-4" /> Imprimir
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onRetornar(c)}>
+              <Undo2 className="mr-2 h-4 w-4" /> Retornar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
+      </TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+      <TableCell className="font-medium">{c.cliente}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
+      <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+      <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
+      <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
+      <TableCell className="text-center">
+        {temAnexo ? (
+          <button
+            type="button"
+            onClick={() => abrirAnexoContrato(c)}
+            className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success hover:bg-success/25"
+            title={`Visualizar ${c.contratoAssinadoArquivo}`}
+          >
+            <Eye className="h-3 w-3" /> Anexado
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive">
+            <AlertTriangle className="h-3 w-3" /> Faltando
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-center">
+        {aprovado ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+            <CheckCircle2 className="h-3 w-3" /> Aprovado
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+            <Clock className="h-3 w-3" /> Aguardando
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums" title={`${enviados} enviados de ${total}`}>
+          {enviados}/{total}
+        </span>
+      </TableCell>
+      <TableCell className="text-center">
+        {total === 0 ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : pendentes === 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+            <CheckCircle2 className="h-3 w-3" /> 0
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 tabular-nums">
+            <Clock className="h-3 w-3" /> {pendentes}
+          </span>
+        )}
+      </TableCell>
+    </TableRow>
   );
 }
 

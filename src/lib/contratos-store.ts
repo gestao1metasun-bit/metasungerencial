@@ -193,6 +193,10 @@ export type ContratoFull = {
   leadNumero?: string;
   contratoAssinadoArquivo?: string;     // nome do arquivo / URL do contrato assinado
   contratoRedigido?: boolean;           // true após cadastro de endereço + geração do contrato redigido
+  /** True após o Comercial aprovar o contrato assinado (gate antes de Engenharia/Financiamento). */
+  assinadoAprovado?: boolean;
+  assinadoAprovadoEm?: string;          // ISO
+  assinadoAprovadoPor?: string;
   motivoCancelamento?: string;
   cancelado?: boolean;
 
@@ -642,10 +646,8 @@ export function criarContratoDeProposta(
     previsto: hoje,
     obs: input.obs ?? "",
     cronograma: "",
-    enviadoEngenharia: true,
-    aprovado: true,
-    dataAprovacao: new Date().toISOString(),
-    usuarioAprovacao: input.usuario,
+    enviadoEngenharia: false,
+    aprovado: false,
     valor: Number(input.valor) || 0,
   };
 
@@ -698,9 +700,8 @@ export function criarContratoDeProposta(
 }
 
 /** Anexa contrato assinado e move o status para CONTRATO ASSINADO.
- *  Se houver linha(s) de pagamento do tipo "Financiamento" na composição,
- *  marca o contrato com possuiFinanciamento e envia SÓ o valor financiado
- *  (soma das linhas) para o módulo Financiamentos.
+ *  Não envia para Engenharia nem Financiamento — isso só ocorre quando o
+ *  Comercial aprovar o contrato assinado (aprovarContratoAssinado).
  */
 export function anexarContratoAssinado(contratoId: string, arquivo: string, usuario: string) {
   const cur = read();
@@ -708,7 +709,28 @@ export function anexarContratoAssinado(contratoId: string, arquivo: string, usua
   if (!c) return;
   const old = c.status;
 
-  // Detecta linhas de Financiamento na composição de pagamento
+  updateContratoAudit(contratoId, {
+    contratoAssinadoArquivo: arquivo,
+    dataAssinatura: new Date().toISOString().slice(0, 10),
+    status: CONTRATO_STATUS_LABEL.CONTRATO_ASSINADO,
+    assinadoAprovado: false,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "ASSINATURA", usuario,
+    campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CONTRATO_ASSINADO,
+    detalhe: `Contrato assinado anexado: ${arquivo}. Aguardando aprovação do Comercial.`,
+  });
+}
+
+/** Aprova o contrato assinado: libera para Engenharia (Gestão de Projetos) e
+ *  envia o valor financiado (se houver) para o módulo Financiamentos. */
+export function aprovarContratoAssinado(contratoId: string, usuario: string): { ok: boolean; motivo?: string } {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  if (!c.contratoAssinadoArquivo) return { ok: false, motivo: "Anexe o contrato assinado antes de aprovar." };
+
   const formas = c.pagamentoDetalhes?.formas ?? [];
   const linhasFin = formas.filter((f) => f.tipo === "Financiamento");
   const temFinanciamento = linhasFin.length > 0;
@@ -716,9 +738,9 @@ export function anexarContratoAssinado(contratoId: string, arquivo: string, usua
   const bancoFin = linhasFin.find((f) => f.banco)?.banco;
 
   const patch: Partial<ContratoFull> = {
-    contratoAssinadoArquivo: arquivo,
-    dataAssinatura: new Date().toISOString().slice(0, 10),
-    status: CONTRATO_STATUS_LABEL.CONTRATO_ASSINADO,
+    assinadoAprovado: true,
+    assinadoAprovadoEm: new Date().toISOString(),
+    assinadoAprovadoPor: usuario,
   };
   if (temFinanciamento && valorFinanciado > 0) {
     patch.possuiFinanciamento = true;
@@ -726,14 +748,14 @@ export function anexarContratoAssinado(contratoId: string, arquivo: string, usua
     if (bancoFin && !c.financiamentoBanco) patch.financiamentoBanco = bancoFin;
     if (!c.financiamentoStatus) patch.financiamentoStatus = "Em análise";
   }
-
   updateContratoAudit(contratoId, patch, usuario);
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
-    acao: "ASSINATURA", usuario,
-    campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CONTRATO_ASSINADO,
-    detalhe: `Contrato assinado anexado: ${arquivo}.${temFinanciamento ? ` Enviado para Financiamentos: ${fmtBRLLocal(valorFinanciado)}${bancoFin ? ` (${bancoFin})` : ""}.` : ""}`,
+    acao: "APROVACAO_ASSINADO", usuario,
+    campo: "assinadoAprovado", valorAnterior: "false", valorNovo: "true",
+    detalhe: `Contrato assinado aprovado. Liberado para Engenharia (Gestão de Projetos).${temFinanciamento ? ` Enviado para Financiamentos: ${fmtBRLLocal(valorFinanciado)}${bancoFin ? ` (${bancoFin})` : ""}.` : ""}`,
   });
+  return { ok: true };
 }
 
 function fmtBRLLocal(v: number): string {
@@ -813,6 +835,9 @@ export function retornarContratoParaGerado(contratoId: string, motivo: string, u
     contratoRedigido: true,
     dataAssinatura: undefined,
     contratoAssinadoArquivo: undefined,
+    assinadoAprovado: undefined,
+    assinadoAprovadoEm: undefined,
+    assinadoAprovadoPor: undefined,
     projetos,
     possuiFinanciamento: false,
     financiamentoBanco: undefined,

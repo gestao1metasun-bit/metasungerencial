@@ -39,7 +39,7 @@ import {
   useContratos, setContratos as storeSetContratos, upsertContrato, updateContratoAudit,
   addProjeto, updateProjeto, removeProjeto, buscarCEP,
   validateContratoCompleto, solicitarAlteracaoContrato,
-  aprovarProjeto,
+  aprovarProjeto, aprovarContratoAssinado,
   retornarContratoParaGerado, retornarContratoParaARedigir,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
@@ -228,11 +228,14 @@ function ContratoAssinadoTab({
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>Assinatura</TableHead>
+              <TableHead className="text-center">Aprovação</TableHead>
               <TableHead className="text-center">Projetos</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {assinados.map((c) => (
+              {assinados.map((c) => {
+                const aprovado = c.assinadoAprovado === true;
+                return (
                 <TableRow key={c.id}>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
@@ -241,12 +244,37 @@ function ContratoAssinadoTab({
                   <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
                   <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
                   <TableCell className="text-center">
+                    {aprovado ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+                        <CheckCircle2 className="h-3 w-3" /> Aprovado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+                        <Clock className="h-3 w-3" /> Aguardando
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
                     <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums">
                       {c.projetos?.length ?? 0}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-1.5">
+                      {!aprovado && (
+                        <Button
+                          size="sm"
+                          className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90"
+                          onClick={() => {
+                            const r = aprovarContratoAssinado(c.id, "Comercial");
+                            if (!r.ok) { toast.error(r.motivo); return; }
+                            const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                            toast.success(`Contrato ${c.id} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+                          }}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
+                        </Button>
+                      )}
                       <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
                       <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
                         <Printer className="h-3.5 w-3.5" /> Imprimir
@@ -257,7 +285,7 @@ function ContratoAssinadoTab({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              );})}
             </TableBody>
           </Table>
         )}

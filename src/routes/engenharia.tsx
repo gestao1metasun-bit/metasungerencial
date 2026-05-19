@@ -1419,10 +1419,8 @@ function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onCl
       previsto: new Date().toISOString().slice(0, 10),
       obs: form.obs,
       cronograma: "",
-      enviadoEngenharia: true,
-      aprovado: true,
-      dataAprovacao: new Date().toISOString(),
-      usuarioAprovacao: "Engenharia",
+      enviadoEngenharia: false,
+      aprovado: false,
     });
     toast.success(`Projeto adicionado ao contrato ${contrato.id}`);
     onClose();

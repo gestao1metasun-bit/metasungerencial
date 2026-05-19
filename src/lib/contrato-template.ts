@@ -348,5 +348,31 @@ export function aplicarCustom(base: ClausulaBase[], custom: ContratoFull["clausu
       }
     }
   }
+
+  // Renumera automaticamente os parágrafos "N.M" e sub "N.M.K" de cada cláusula
+  // para refletir adições/remoções/substituições. Mantém parágrafos sem numeração
+  // (cabeçalhos em negrito, alíneas a)/b), incisos I)/II), "Parágrafo único", etc.).
+  for (const cl of out) {
+    const N = cl.numero;
+    if (!/^\d+$/.test(N)) continue;
+    const reTop = new RegExp(`^(\\*\\*)?${N}\\.(\\d+)(?!\\.\\d)\\b\\.?`);
+    const reSub = new RegExp(`^(\\*\\*)?${N}\\.(\\d+)\\.(\\d+)\\b\\.?`);
+    let m = 0, k = 0;
+    cl.paragrafos = cl.paragrafos.map((p) => {
+      const mSub = p.match(reSub);
+      if (mSub) {
+        k += 1;
+        return p.replace(reSub, `${mSub[1] ?? ""}${N}.${m || 1}.${k}`);
+      }
+      const mTop = p.match(reTop);
+      if (mTop) {
+        m += 1;
+        k = 0;
+        return p.replace(reTop, `${mTop[1] ?? ""}${N}.${m}`);
+      }
+      return p;
+    });
+  }
+
   return out;
 }

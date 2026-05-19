@@ -4,7 +4,11 @@ import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
   Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2, Printer, PenLine,
+  MoreVertical, Eye, Paperclip,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
 import {

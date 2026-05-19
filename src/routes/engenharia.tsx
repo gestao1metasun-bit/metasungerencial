@@ -1311,11 +1311,15 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
     );
   }
 
-  // Lista achatada de todos os projetos (com contrato vinculado)
+  // Lista achatada — apenas projetos efetivamente enviados para a Engenharia.
+  // Projetos não selecionados na aprovação ficam pendentes em Comercial → Contratos Assinados
+  // e NÃO devem aparecer aqui até serem liberados individualmente.
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
-  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => flat.push({ p, c })));
-  const pendentesGlob = flat.filter(({ p }) => !p.enviadoEngenharia);
-  const enviadosGlob = flat.filter(({ p }) => p.enviadoEngenharia);
+  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
+    if (p.enviadoEngenharia) flat.push({ p, c });
+  }));
+  const pendentesGlob: typeof flat = [];
+  const enviadosGlob = flat;
 
   const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
     updateProjeto(c.id, p.id, {
@@ -1337,12 +1341,8 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               Para cada contrato aprovado, defina os projetos a executar. Cada projeto vai à Engenharia individualmente.
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px]">
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-semibold tabular-nums">Total: {flat.length}</span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-bold text-amber-600 tabular-nums">
-                <Clock className="h-3 w-3" /> {pendentesGlob.length} pendente{pendentesGlob.length !== 1 ? "s" : ""}
-              </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success tabular-nums">
-                <CheckCircle2 className="h-3 w-3" /> {enviadosGlob.length} enviado{enviadosGlob.length !== 1 ? "s" : ""}
+                <CheckCircle2 className="h-3 w-3" /> {enviadosGlob.length} projeto{enviadosGlob.length !== 1 ? "s" : ""} liberado{enviadosGlob.length !== 1 ? "s" : ""} para Engenharia
               </span>
             </div>
           </div>
@@ -1459,10 +1459,11 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
 
       {liberados.map((c) => {
-        const projetos = c.projetos ?? [];
+        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia);
         const total = projetos.length;
-        const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
-        const enviados = total - pendentes;
+        if (total === 0) return null;
+        const pendentes = 0;
+        const enviados = total;
         return (
         <Card key={c.id} className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">

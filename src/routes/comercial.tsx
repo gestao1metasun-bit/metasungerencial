@@ -4,7 +4,11 @@ import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
   Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2, Printer, PenLine,
+  MoreVertical, Eye, Paperclip,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
 import {
@@ -164,6 +168,11 @@ function ComercialPage() {
 }
 
 /* ---------------- CONTRATO ASSINADO (somente assinados) ---------------- */
+function valorContrato(c: Contrato): number {
+  if (Number(c.valor) > 0) return Number(c.valor);
+  return (c.projetos ?? []).reduce((s, p) => s + (Number(p.valor) || 0), 0);
+}
+
 function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
@@ -175,11 +184,6 @@ function ContratoAssinadoTab({
       .filter((c) => c.status === "Assinado")
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
-  const valorContrato = (c: Contrato) => {
-    if (Number(c.valor) > 0) return Number(c.valor);
-    const somaProj = (c.projetos ?? []).reduce((s, p) => s + (Number(p.valor) || 0), 0);
-    return somaProj;
-  };
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
@@ -229,6 +233,7 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-12 text-center">Ações</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -239,94 +244,11 @@ function ContratoAssinadoTab({
               <TableHead className="text-center">Aprovação</TableHead>
               <TableHead className="text-center">Projetos</TableHead>
               <TableHead className="text-center">Pendentes Eng.</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {assinados.map((c) => {
-                const aprovado = c.assinadoAprovado === true;
-                const projetos = c.projetos ?? [];
-                const total = projetos.length;
-                const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
-                const enviados = total - pendentes;
-                const temAnexo = !!c.contratoAssinadoArquivo;
-                return (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
-                  <TableCell className="font-medium">{c.cliente}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
-                  <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
-                  <TableCell className="text-center">
-                    {temAnexo ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> Anexado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive">
-                        <AlertTriangle className="h-3 w-3" /> Faltando
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {aprovado ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> Aprovado
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
-                        <Clock className="h-3 w-3" /> Aguardando
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums" title={`${enviados} enviados de ${total}`}>
-                      {enviados}/{total}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {total === 0 ? (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    ) : pendentes === 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        <CheckCircle2 className="h-3 w-3" /> 0
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 tabular-nums">
-                        <Clock className="h-3 w-3" /> {pendentes}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1.5">
-                      <AnexarContratoButton contrato={c} />
-                      {!aprovado && (
-                        <Button
-                          size="sm"
-                          className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90 disabled:opacity-50"
-                          disabled={!temAnexo}
-                          title={!temAnexo ? "Anexe o contrato assinado antes de aprovar." : undefined}
-                          onClick={() => {
-                            const r = aprovarContratoAssinado(c.id, "Comercial");
-                            if (!r.ok) { toast.error(r.motivo); return; }
-                            const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
-                            toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
-                          }}
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
-                        </Button>
-                      )}
-                      <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} />
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
-                        <Printer className="h-3.5 w-3.5" /> Imprimir
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => retornar(c)}>
-                        <Undo2 className="h-3.5 w-3.5" /> Retornar
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );})}
+              {assinados.map((c) => (
+                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} />
+              ))}
             </TableBody>
           </Table>
         )}
@@ -337,43 +259,172 @@ function ContratoAssinadoTab({
   );
 }
 
-/** Botão de anexar (ou re-anexar) contrato assinado. Salva o nome do arquivo. */
-function AnexarContratoButton({ contrato }: { contrato: Contrato }) {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const temAnexo = !!contrato.contratoAssinadoArquivo;
+function ContratoAssinadoRow({
+  contrato: c, vendedoresList, onImprimir, onRetornar,
+}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void }) {
+  const aprovado = c.assinadoAprovado === true;
+  const projetos = c.projetos ?? [];
+  const total = projetos.length;
+  const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
+  const enviados = total - pendentes;
+  const temAnexo = !!c.contratoAssinadoArquivo;
+  const [editOpen, setEditOpen] = useState(false);
+  const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
   return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="application/pdf,image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (!f) return;
-          updateContratoAudit(
-            contrato.id,
-            {
-              contratoAssinadoArquivo: f.name,
-              dataAssinatura: contrato.dataAssinatura ?? new Date().toISOString().slice(0, 10),
-            },
-            "Comercial",
-          );
-          toast.success(`Anexo "${f.name}" registrado em ${fmtContratoId(contrato.id)}.`);
-          if (inputRef.current) inputRef.current.value = "";
-        }}
-      />
-      <Button
-        size="sm"
-        variant={temAnexo ? "outline" : "default"}
-        className="h-8 gap-1.5"
-        onClick={() => inputRef.current?.click()}
-        title={temAnexo ? `Substituir anexo (${contrato.contratoAssinadoArquivo})` : "Anexar contrato assinado"}
-      >
-        <FileText className="h-3.5 w-3.5" /> {temAnexo ? "Reanexar" : "Anexar"}
-      </Button>
-    </>
+    <TableRow>
+      <TableCell className="text-center">
+        {anexoInput}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="w-56">
+            <DropdownMenuLabel className="text-xs">{fmtContratoId(c.id)}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {temAnexo && (
+              <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
+                <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={abrirSeletor}>
+              <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+            </DropdownMenuItem>
+            {!aprovado && (
+              <DropdownMenuItem
+                disabled={!temAnexo}
+                onSelect={() => {
+                  const r = aprovarContratoAssinado(c.id, "Comercial");
+                  if (!r.ok) { toast.error(r.motivo); return; }
+                  const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                  toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+                }}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              <SquarePen className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onImprimir(c)}>
+              <Printer className="mr-2 h-4 w-4" /> Imprimir
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onRetornar(c)}>
+              <Undo2 className="mr-2 h-4 w-4" /> Retornar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
+      </TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+      <TableCell className="font-medium">{c.cliente}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
+      <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+      <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
+      <TableCell className="text-xs">{fmtDataBR(c.dataAssinatura)}</TableCell>
+      <TableCell className="text-center">
+        {temAnexo ? (
+          <button
+            type="button"
+            onClick={() => abrirAnexoContrato(c)}
+            className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success hover:bg-success/25"
+            title={`Visualizar ${c.contratoAssinadoArquivo}`}
+          >
+            <Eye className="h-3 w-3" /> Anexado
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive">
+            <AlertTriangle className="h-3 w-3" /> Faltando
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-center">
+        {aprovado ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+            <CheckCircle2 className="h-3 w-3" /> Aprovado
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+            <Clock className="h-3 w-3" /> Aguardando
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-0.5 text-xs font-bold tabular-nums" title={`${enviados} enviados de ${total}`}>
+          {enviados}/{total}
+        </span>
+      </TableCell>
+      <TableCell className="text-center">
+        {total === 0 ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : pendentes === 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+            <CheckCircle2 className="h-3 w-3" /> 0
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 tabular-nums">
+            <Clock className="h-3 w-3" /> {pendentes}
+          </span>
+        )}
+      </TableCell>
+    </TableRow>
   );
+}
+
+/** Armazena temporariamente a dataURL do anexo (para visualização) por id de contrato. */
+const ANEXO_URLS = new Map<string, string>();
+function setAnexoUrl(id: string, url: string) { ANEXO_URLS.set(id, url); }
+function getAnexoUrl(id: string) { return ANEXO_URLS.get(id); }
+function abrirAnexoContrato(contrato: Contrato) {
+  const url = getAnexoUrl(contrato.id);
+  if (!url) {
+    toast.info(`Anexo "${contrato.contratoAssinadoArquivo}" registrado nesta sessão não está disponível para abrir aqui. Reanexe o arquivo para visualizar.`);
+    return;
+  }
+  const w = window.open();
+  if (w) {
+    w.document.write(
+      `<title>${contrato.contratoAssinadoArquivo ?? "Anexo"}</title>` +
+      (url.startsWith("data:application/pdf")
+        ? `<iframe src="${url}" style="border:0;width:100%;height:100vh"></iframe>`
+        : `<img src="${url}" style="max-width:100%;height:auto;display:block;margin:auto" />`),
+    );
+  }
+}
+
+/** Trigger oculto pra abrir o seletor de arquivo do anexo, controlado pelo dropdown. */
+function useAnexarHandler(contrato: Contrato) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const node = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="application/pdf,image/*"
+      className="hidden"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") setAnexoUrl(contrato.id, reader.result);
+        };
+        reader.readAsDataURL(f);
+        updateContratoAudit(
+          contrato.id,
+          {
+            contratoAssinadoArquivo: f.name,
+            dataAssinatura: contrato.dataAssinatura ?? new Date().toISOString().slice(0, 10),
+          },
+          "Comercial",
+        );
+        toast.success(`Anexo "${f.name}" registrado em ${fmtContratoId(contrato.id)}.`);
+        if (inputRef.current) inputRef.current.value = "";
+      }}
+    />
+  );
+  return { node, trigger: () => inputRef.current?.click() };
 }
 
 
@@ -2532,8 +2583,10 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 /* ---------------- EDITAR CONTRATO + PROJETOS + AUDITORIA ---------------- */
 
-function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato; vendedoresList: Vendedor[] }) {
-  const [open, setOpen] = useState(false);
+function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpenChange, hideTrigger }: { contrato: Contrato; vendedoresList: Vendedor[]; open?: boolean; onOpenChange?: (o: boolean) => void; hideTrigger?: boolean }) {
+  const [openInner, setOpenInner] = useState(false);
+  const open = openProp ?? openInner;
+  const setOpen = (o: boolean) => { onOpenChange ? onOpenChange(o) : setOpenInner(o); };
   const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("cliente");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
@@ -2616,9 +2669,11 @@ function EditarContratoDialog({ contrato, vendedoresList }: { contrato: Contrato
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><SquarePen className="h-3.5 w-3.5" /></Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><SquarePen className="h-3.5 w-3.5" /></Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar contrato <span className="font-mono text-primary">{contrato.id}</span></DialogTitle>

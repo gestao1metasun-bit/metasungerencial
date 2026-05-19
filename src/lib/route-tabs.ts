@@ -43,6 +43,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     tabs: [
       { value: "dashboard", label: "Dashboard" },
       { value: "gestao-projetos", label: "Gestão de Projetos" },
+      { value: "projetos", label: "Projetos" },
       { value: "ativas", label: "Obras ativas" },
       { value: "cronograma", label: "Cronograma" },
       { value: "pendencias", label: "Pendências" },

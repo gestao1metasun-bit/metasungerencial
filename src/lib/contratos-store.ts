@@ -646,10 +646,8 @@ export function criarContratoDeProposta(
     previsto: hoje,
     obs: input.obs ?? "",
     cronograma: "",
-    enviadoEngenharia: true,
-    aprovado: true,
-    dataAprovacao: new Date().toISOString(),
-    usuarioAprovacao: input.usuario,
+    enviadoEngenharia: false,
+    aprovado: false,
     valor: Number(input.valor) || 0,
   };
 

@@ -948,22 +948,73 @@ function RedigirContratoDialog({
                         </div>
                       )}
 
-                      {f.tipo === "Boleto" && f.parcelas > 1 && (
-                        <p className="text-[11px] text-muted-foreground">
-                          {f.parcelas} boletos de <b>{fmtBRL(f.valor / f.parcelas)}</b> · multa {f.multaPct ?? multaPctDefault}% · juros {f.jurosMesPct ?? jurosMesPctDefault}%/mês.
-                        </p>
+                      {f.parcelas > 1 && (
+                        <div className="grid sm:grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">1º vencimento (dias após o momento)</Label>
+                            <Input type="number" min={0} className="mt-1.5" value={f.primeiroVencDias ?? 30}
+                              onChange={(e) => updForma(f.id, { primeiroVencDias: Math.max(0, Number(e.target.value) || 0) })} />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Intervalo entre parcelas (dias)</Label>
+                            <Input type="number" min={1} className="mt-1.5" value={f.intervaloDias ?? 30}
+                              onChange={(e) => updForma(f.id, { intervaloDias: Math.max(1, Number(e.target.value) || 30) })} />
+                          </div>
+                        </div>
                       )}
 
                       <div>
                         <Label className="text-xs">Observação desta forma (opcional)</Label>
-                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: dividir em 5 boletos mensais a partir de 30 dias após a vistoria" />
+                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: a partir de 30 dias após a vistoria" />
                       </div>
 
-                      {f.parcelas > 1 && !ehCartao && (
-                        <div className="text-[11px] text-muted-foreground">
-                          Cada parcela ≈ <b>{fmtBRL(parcelaCalc)}</b>
-                        </div>
-                      )}
+                      {f.parcelas > 1 && (() => {
+                        const total = ehCartao && f.jurosTipo === "cliente" && f.valorComJuros ? f.valorComJuros : f.valor;
+                        const valorParcela = total / f.parcelas;
+                        const primeiro = f.primeiroVencDias ?? 30;
+                        const intervalo = f.intervaloDias ?? 30;
+                        const momentoLabel = ({
+                          "entrada": "assinatura",
+                          "ato": "ato",
+                          "entrega-materiais": "entrega do material",
+                          "pos-instalacao": "instalação",
+                          "conforme-cronograma": "cronograma",
+                        } as Record<string, string>)[f.momento] ?? "início";
+                        return (
+                          <div className="rounded-md border bg-muted/20 p-2 text-[11px]">
+                            <div className="font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                              Cronograma de parcelas
+                              {ehCartao && f.jurosTipo === "cliente" && f.valorComJuros
+                                ? ` · com juros do cliente (total ${fmtBRL(total)})`
+                                : ehCartao && f.jurosTipo === "empresa"
+                                ? ` · juros da empresa (cliente paga ${fmtBRL(total)})`
+                                : ""}
+                            </div>
+                            <table className="w-full">
+                              <thead>
+                                <tr className="text-left text-muted-foreground">
+                                  <th className="py-0.5 pr-2">#</th>
+                                  <th className="py-0.5 pr-2">Vencimento</th>
+                                  <th className="py-0.5 text-right">Valor</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Array.from({ length: f.parcelas }).map((_, i) => (
+                                  <tr key={i} className="border-t border-border/40">
+                                    <td className="py-0.5 pr-2">{i + 1}/{f.parcelas}</td>
+                                    <td className="py-0.5 pr-2">{primeiro + i * intervalo} dias após {momentoLabel}</td>
+                                    <td className="py-0.5 text-right font-medium">{fmtBRL(valorParcela)}</td>
+                                  </tr>
+                                ))}
+                                <tr className="border-t border-border font-semibold">
+                                  <td colSpan={2} className="pt-1">Total</td>
+                                  <td className="pt-1 text-right">{fmtBRL(valorParcela * f.parcelas)}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}

@@ -865,11 +865,6 @@ function RedigirContratoDialog({
 
                 {formas.map((f, idx) => {
                   const ehCartao = f.tipo.startsWith("Cartão");
-                  const parcelaCalc = f.parcelas > 1
-                    ? (ehCartao && f.jurosTipo === "cliente" && f.valorComJuros
-                        ? f.valorComJuros / f.parcelas
-                        : f.valor / f.parcelas)
-                    : f.valor;
                   return (
                     <div key={f.id} className="rounded-md border p-3 space-y-2 bg-card">
                       <div className="flex items-center justify-between">

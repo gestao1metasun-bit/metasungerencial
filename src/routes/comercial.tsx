@@ -556,8 +556,10 @@ function RedigirContratoDialog({
   const somaFormas = formas.reduce((s, f) => s + (Number(f.valor) || 0), 0);
   const diffFormas = Number(contrato.valor || 0) - somaFormas;
 
-  // Cláusulas custom
-  const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(contrato.clausulasCustom ?? []);
+  // Cláusulas custom — começa com o MODELO BASE se o contrato ainda não tiver personalização própria
+  const [clausulas, setClausulas] = useState<NonNullable<Contrato["clausulasCustom"]>>(
+    contrato.clausulasCustom ?? getContratoBase()
+  );
   function addClausula() {
     setClausulas([...clausulas, { id: crypto.randomUUID(), acao: "substituir", referencia: "3.2", texto: "" }]);
   }

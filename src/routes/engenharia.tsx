@@ -1301,6 +1301,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   const liberados = contratos.filter((c) => c.assinadoAprovado === true);
   const [novoFor, setNovoFor] = useState<ContratoFull | null>(null);
   const [editing, setEditing] = useState<{ c: ContratoFull; p: ProjetoVinculado } | null>(null);
+  const [view, setView] = useState<"contrato" | "kanban" | "tabela">("contrato");
 
   if (liberados.length === 0) {
     return (
@@ -1309,6 +1310,22 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
       </Card>
     );
   }
+
+  // Lista achatada de todos os projetos (com contrato vinculado)
+  const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
+  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => flat.push({ p, c })));
+  const pendentesGlob = flat.filter(({ p }) => !p.enviadoEngenharia);
+  const enviadosGlob = flat.filter(({ p }) => p.enviadoEngenharia);
+
+  const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
+    updateProjeto(c.id, p.id, {
+      enviadoEngenharia: true,
+      aprovado: true,
+      dataAprovacao: new Date().toISOString(),
+      usuarioAprovacao: "Engenharia",
+    });
+    toast.success(`Projeto ${p.id} enviado para Engenharia.`);
+  };
 
   return (
     <div className="space-y-4">

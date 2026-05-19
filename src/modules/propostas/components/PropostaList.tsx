@@ -1124,7 +1124,35 @@ function KanbanView({
                         {l.consultor || "sem consultor"} · {l.propostas.length} proposta(s)
                       </div>
                     </div>
-                    {l.bloqueado && <Lock className="h-3.5 w-3.5 shrink-0 text-success" />}
+                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
+                      {!l.bloqueado && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuLabel className="text-xs">{l.clienteNome}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                              <Eye className="mr-2 h-4 w-4" /> Abrir lead
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                                if (!p) { toast.info("Não há proposta cancelável."); return; }
+                                cancelarProposta(p);
+                              }}
+                            >
+                              <Ban className="mr-2 h-4 w-4 text-destructive" />
+                              <span className="text-destructive">Cancelar última proposta</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="text-sm font-semibold">{fmtBRL(l.valor)}</div>

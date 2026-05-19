@@ -191,97 +191,229 @@ export function LeadsPage() {
 function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const consultores = useConsultoresAtivos();
   const { user } = useAuth();
+  // Form básico
   const [nome, setNome] = useState("");
+  const [doc, setDoc] = useState("");
+  const [tipoPessoa, setTipoPessoa] = useState<"PF" | "PJ">("PF");
   const [telefone, setTelefone] = useState("");
   const [consumo, setConsumo] = useState("");
   const [consultorId, setConsultorId] = useState<string>("");
   const [origem, setOrigem] = useState<OrigemLead | "">("");
   const [observacao, setObservacao] = useState("");
+  // Endereço
+  const [cep, setCep] = useState("");
+  const [rua, setRua] = useState("");
+  const [numero, setNumero] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  // Estado de dedup
+  const [clienteExistenteId, setClienteExistenteId] = useState<string | null>(null);
+  const [leadExistenteNumero, setLeadExistenteNumero] = useState<string | null>(null);
+  const [docInvalido, setDocInvalido] = useState(false);
 
   const reset = () => {
-    setNome(""); setTelefone(""); setConsumo("");
+    setNome(""); setDoc(""); setTipoPessoa("PF"); setTelefone(""); setConsumo("");
     setConsultorId(""); setOrigem(""); setObservacao("");
+    setCep(""); setRua(""); setNumero(""); setBairro(""); setCidade(""); setUf("");
+    setClienteExistenteId(null); setLeadExistenteNumero(null); setDocInvalido(false);
   };
+
+  // Auto-detecta duplicidade ao digitar/colar CPF/CNPJ
+  function onDocChange(v: string) {
+    const masked = formatDoc(v, tipoPessoa);
+    setDoc(masked);
+    const dig = masked.replace(/\D/g, "");
+    setClienteExistenteId(null);
+    setLeadExistenteNumero(null);
+    setDocInvalido(false);
+    if (dig.length !== 11 && dig.length !== 14) return;
+    if (!isDocValido(masked)) { setDocInvalido(true); return; }
+    // Lead já cadastrado?
+    const leadExist = findLeadByDoc(masked);
+    if (leadExist) setLeadExistenteNumero(leadExist.numero);
+    // Cliente já cadastrado?
+    const cli = findClienteByDoc(masked);
+    if (cli) {
+      setClienteExistenteId(cli.id);
+      // Pré-preenche dados do cliente; endereço pode ser editado
+      setNome(cli.nome);
+      if (!telefone) setTelefone(formatTelefoneBR(cli.telefone || ""));
+      setCep(formatCEP(cli.cep || ""));
+      setRua(cli.rua || "");
+      setNumero(cli.numero || "");
+      setBairro(cli.bairro || "");
+      setCidade(cli.cidade || "");
+      setUf(cli.uf || "");
+    }
+  }
+
+  async function buscarCep() {
+    setBuscandoCep(true);
+    try {
+      const r = await buscarCEPViaCEP(cep);
+      if (!r) { toast.error("CEP não encontrado."); return; }
+      setRua(r.rua); setBairro(r.bairro); setCidade(r.cidade); setUf(r.uf);
+    } finally { setBuscandoCep(false); }
+  }
 
   const salvar = () => {
     if (!nome.trim() || !telefone.trim() || !consumo || !consultorId || !origem) {
-      toast.error("Preencha todos os campos obrigatórios antes de salvar o lead.");
-      return;
+      toast.error("Preencha os campos obrigatórios."); return;
     }
     const consumoNum = Number(consumo);
     if (!Number.isFinite(consumoNum) || consumoNum <= 0) {
-      toast.error("Consumo desejado inválido.");
+      toast.error("Consumo desejado inválido."); return;
+    }
+    // CPF/CNPJ obrigatório e válido
+    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
+    if (!isDocValido(doc)) {
+      toast.error(tipoPessoa === "PF" ? "CPF inválido — confira os dígitos." : "CNPJ inválido — confira os dígitos.");
       return;
+    }
+    if (leadExistenteNumero) {
+      toast.error(`Já existe lead ${leadExistenteNumero} com este CPF/CNPJ. Abra o lead existente.`);
+      return;
+    }
+    // Cadastra ou reaproveita cliente
+    let clienteId = clienteExistenteId ?? undefined;
+    try {
+      if (clienteId) {
+        // Atualiza endereço se editado
+        updateClienteFull(clienteId, {
+          nome, telefone, cep: cep.replace(/\D/g, ""),
+          rua, numero, bairro, cidade, uf,
+        });
+      } else {
+        const novo = addClienteFull({
+          nome, doc, telefone,
+          cep: cep.replace(/\D/g, ""),
+          rua, numero, bairro, cidade, uf,
+        });
+        clienteId = novo.id;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao salvar cliente."); return;
     }
     const lead = criarLead({
       nome, telefone, consumoKwh: consumoNum,
       consultorId, origem: origem as OrigemLead,
-      observacao,
+      observacao, doc, clienteId,
       criadoPor: user?.email ?? undefined,
     });
-    toast.success(`Lead ${lead.numero} criado.`);
+    toast.success(`Lead ${lead.numero} criado${clienteExistenteId ? " (cliente já cadastrado, endereço atualizado)" : ""}.`);
     reset();
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Lead</DialogTitle>
           <DialogDescription>
-            Campos com <span className="text-destructive">*</span> são obrigatórios.
+            Campos com <span className="text-destructive">*</span> são obrigatórios. O CPF/CNPJ é a chave do cliente — não permite duplicidade.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3 sm:grid-cols-2">
+
+        <div className="grid gap-3 sm:grid-cols-6">
           <div className="sm:col-span-2">
-            <Label>Nome do lead <span className="text-destructive">*</span></Label>
+            <Label>Tipo</Label>
+            <Select value={tipoPessoa} onValueChange={(v) => { setTipoPessoa(v as "PF" | "PJ"); setDoc(""); setDocInvalido(false); setClienteExistenteId(null); setLeadExistenteNumero(null); }}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PF">Pessoa Física</SelectItem>
+                <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-4">
+            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-destructive">*</span></Label>
+            <Input value={doc} onChange={(e) => onDocChange(e.target.value)} placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} />
+            {docInvalido && <p className="mt-1 text-[11px] text-destructive">Dígitos verificadores inválidos.</p>}
+            {leadExistenteNumero && (
+              <p className="mt-1 text-[11px] text-destructive">Lead <strong>{leadExistenteNumero}</strong> já existe com este CPF/CNPJ.</p>
+            )}
+            {clienteExistenteId && !leadExistenteNumero && (
+              <p className="mt-1 text-[11px] text-success">Cliente já cadastrado — dados preenchidos. Endereço pode ser editado.</p>
+            )}
+          </div>
+
+          <div className="sm:col-span-4">
+            <Label>Nome {tipoPessoa === "PJ" ? "/ Razão Social" : ""} <span className="text-destructive">*</span></Label>
             <Input value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <Label>Telefone <span className="text-destructive">*</span></Label>
             <Input value={telefone} onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))} />
           </div>
-          <div>
-            <Label>Consumo desejado (kWh/mês) <span className="text-destructive">*</span></Label>
-            <Input
-              type="number" min={1} value={consumo}
-              onChange={(e) => setConsumo(e.target.value)}
-            />
+
+          <div className="sm:col-span-2">
+            <Label>Consumo (kWh/mês) <span className="text-destructive">*</span></Label>
+            <Input type="number" min={1} value={consumo} onChange={(e) => setConsumo(e.target.value)} />
           </div>
-          <div>
-            <Label>Consultor responsável <span className="text-destructive">*</span></Label>
+          <div className="sm:col-span-2">
+            <Label>Consultor <span className="text-destructive">*</span></Label>
             <Select value={consultorId} onValueChange={setConsultorId}>
               <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
-                {consultores.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Origem do lead <span className="text-destructive">*</span></Label>
-            <Select value={origem} onValueChange={(v) => setOrigem(v as OrigemLead)}>
-              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-              <SelectContent>
-                {ORIGEM_LEAD_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
+                {consultores.map((c) => (<SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>))}
               </SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-2">
+            <Label>Origem <span className="text-destructive">*</span></Label>
+            <Select value={origem} onValueChange={(v) => setOrigem(v as OrigemLead)}>
+              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {ORIGEM_LEAD_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="sm:col-span-6 border-t pt-3">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Endereço (pode ser alterado)</div>
+            <div className="grid gap-3 sm:grid-cols-6">
+              <div className="sm:col-span-2">
+                <Label>CEP</Label>
+                <div className="flex gap-1">
+                  <Input value={cep} onChange={(e) => setCep(formatCEP(e.target.value))} onBlur={buscarCep} placeholder="00000-000" />
+                  <Button type="button" variant="outline" size="sm" onClick={buscarCep} disabled={buscandoCep}>Buscar</Button>
+                </div>
+              </div>
+              <div className="sm:col-span-3">
+                <Label>Rua</Label>
+                <Input value={rua} onChange={(e) => setRua(e.target.value.toUpperCase())} />
+              </div>
+              <div className="sm:col-span-1">
+                <Label>Nº</Label>
+                <Input value={numero} onChange={(e) => setNumero(e.target.value.toUpperCase())} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Bairro</Label>
+                <Input value={bairro} onChange={(e) => setBairro(e.target.value.toUpperCase())} />
+              </div>
+              <div className="sm:col-span-3">
+                <Label>Cidade</Label>
+                <Input value={cidade} onChange={(e) => setCidade(e.target.value.toUpperCase())} />
+              </div>
+              <div className="sm:col-span-1">
+                <Label>UF</Label>
+                <Input value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+              </div>
+            </div>
+          </div>
+
+          <div className="sm:col-span-6">
             <Label>Observação</Label>
-            <Textarea
-              rows={3} value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-            />
+            <Textarea rows={2} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
           </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => { reset(); onClose(); }}>Cancelar</Button>
-          <Button onClick={salvar}>Salvar lead</Button>
+          <Button onClick={salvar} disabled={!!leadExistenteNumero}>Salvar lead</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

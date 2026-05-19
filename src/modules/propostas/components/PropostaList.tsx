@@ -77,7 +77,7 @@ export function duplicarProposta(p: PropostaFV) {
 
 export function excluirProposta(p: PropostaFV) {
   if (p.status !== "RASCUNHO") {
-    toast.error("Propostas geradas não podem ser excluídas.");
+    toast.error("Propostas geradas não podem ser excluídas — use Cancelar.");
     return;
   }
   // Cadeia de dependência (Entrega 3): bloqueia exclusão se houver contrato vinculado.
@@ -93,6 +93,16 @@ export function excluirProposta(p: PropostaFV) {
   if (!confirm(`Excluir proposta ${p.numero}? Esta ação não pode ser desfeita.`)) return;
   removeProposta(p.id);
   toast.success("Proposta excluída.");
+}
+
+/** Cancela uma proposta — move para status CANCELADA com motivo. */
+export function cancelarProposta(p: PropostaFV) {
+  if (p.status === "CANCELADA") { toast.info("Proposta já está cancelada."); return; }
+  if (p.status === "APROVADA") { toast.error("Proposta aprovada não pode ser cancelada — retorne o contrato antes."); return; }
+  const motivo = prompt(`Cancelar proposta ${p.numero}?\n\nMotivo (obrigatório):`);
+  if (!motivo || !motivo.trim()) { toast.error("Informe o motivo do cancelamento."); return; }
+  cancelarPropostaComMotivo(p.id, p.criadoPor || "Operador", motivo.trim());
+  toast.success(`Proposta ${p.numero} cancelada.`);
 }
 
 /** Aprova efetivamente uma proposta após validação de cadastro:

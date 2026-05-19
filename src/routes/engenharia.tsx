@@ -1463,10 +1463,11 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
 
       {liberados.map((c) => {
-        const projetos = c.projetos ?? [];
+        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia);
         const total = projetos.length;
-        const pendentes = projetos.filter((p) => !p.enviadoEngenharia).length;
-        const enviados = total - pendentes;
+        if (total === 0) return null;
+        const pendentes = 0;
+        const enviados = total;
         return (
         <Card key={c.id} className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">

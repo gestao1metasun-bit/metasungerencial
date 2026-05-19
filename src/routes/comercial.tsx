@@ -168,6 +168,11 @@ function ComercialPage() {
 }
 
 /* ---------------- CONTRATO ASSINADO (somente assinados) ---------------- */
+function valorContrato(c: Contrato): number {
+  if (Number(c.valor) > 0) return Number(c.valor);
+  return (c.projetos ?? []).reduce((s, p) => s + (Number(p.valor) || 0), 0);
+}
+
 function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {

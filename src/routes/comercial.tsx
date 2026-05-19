@@ -305,8 +305,8 @@ function ContratoAssinadoRow({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-              <SquarePen className="mr-2 h-4 w-4" /> Editar
+            <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
+              <SquarePen className="mr-2 h-4 w-4" /> Criar projetos
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onImprimir(c)}>
               <Printer className="mr-2 h-4 w-4" /> Imprimir

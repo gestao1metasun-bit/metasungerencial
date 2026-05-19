@@ -2525,10 +2525,6 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
       return;
     }
     updateContratoAudit(contrato.id, { status: "Aprovado" });
-    const projs = contrato.projetos ?? [];
-    projs.forEach((p) => {
-      if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-    });
     if (contrato.possuiFinanciamento) {
       addPendencia({
         id: contrato.id,
@@ -2539,9 +2535,9 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
         dataCadastro: contrato.dataCadastro || contrato.data,
         status: "Pendente",
       });
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+      toast.success(`Contrato ${contrato.id} aprovado · enviado a Financiamentos. Envie cada projeto à Engenharia individualmente.`);
     } else {
-      toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+      toast.success(`Contrato ${contrato.id} aprovado. Envie cada projeto à Engenharia individualmente.`);
     }
     setOpen(false);
   };
@@ -2640,13 +2636,9 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
       clienteFull: cli,
     });
 
-    // Se aprovou agora, libera projetos para Engenharia
+    // Se aprovou agora, NÃO envia projetos automaticamente. O envio à Engenharia
+    // é manual, por projeto, na aba "3. Projetos" (botão "Aprovar projeto").
     if (aprovouAgora) {
-      const projs = contrato.projetos ?? [];
-      projs.forEach((p) => {
-        if (!p.enviadoEngenharia) updateProjeto(contrato.id, p.id, { enviadoEngenharia: true });
-      });
-      // E, se possui financiamento, envia para Financiamentos > Pendências
       if (f.possuiFinanciamento) {
         addPendencia({
           id: contrato.id,
@@ -2657,9 +2649,9 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           dataCadastro: f.dataCadastro ?? f.data ?? contrato.data,
           status: "Pendente",
         });
-        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia · enviado a Financiamentos`);
+        toast.success(`Contrato ${contrato.id} aprovado · enviado a Financiamentos. Envie cada projeto à Engenharia individualmente.`);
       } else {
-        toast.success(`Contrato ${contrato.id} aprovado · ${projs.length} projeto(s) à Engenharia`);
+        toast.success(`Contrato ${contrato.id} aprovado. Envie cada projeto à Engenharia individualmente.`);
       }
     } else {
       toast.success(`Contrato ${contrato.id} atualizado · auditoria registrada`);
@@ -3162,13 +3154,10 @@ function ProjetoEditCard({
         <div className="space-y-1.5"><Label>CEP</Label>
           <Input value={d.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
         </div>
-        <div className="space-y-1.5"><Label>Status</Label>
-          <Select value={d.status} onValueChange={(v) => set("status", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["Em projeto/aprovação", "Aguardando instalação", "Executando instalação", "Standby", "Finalizado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="space-y-1.5 flex items-end">
+          <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground w-full">
+            O status do projeto é definido pela Engenharia após o envio. Aqui, apenas defina os dados técnicos e do endereço.
+          </div>
         </div>
         <div className="space-y-1.5 md:col-span-2"><Label>Endereço (rua)</Label>
           <Input value={d.endereco} onChange={(e) => set("endereco", e.target.value)} />

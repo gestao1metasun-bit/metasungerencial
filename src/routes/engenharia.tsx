@@ -1301,6 +1301,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   const liberados = contratos.filter((c) => c.assinadoAprovado === true);
   const [novoFor, setNovoFor] = useState<ContratoFull | null>(null);
   const [editing, setEditing] = useState<{ c: ContratoFull; p: ProjetoVinculado } | null>(null);
+  const [view, setView] = useState<"contrato" | "kanban" | "tabela">("contrato");
 
   if (liberados.length === 0) {
     return (
@@ -1310,14 +1311,152 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
     );
   }
 
+  // Lista achatada de todos os projetos (com contrato vinculado)
+  const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
+  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => flat.push({ p, c })));
+  const pendentesGlob = flat.filter(({ p }) => !p.enviadoEngenharia);
+  const enviadosGlob = flat.filter(({ p }) => p.enviadoEngenharia);
+
+  const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
+    updateProjeto(c.id, p.id, {
+      enviadoEngenharia: true,
+      aprovado: true,
+      dataAprovacao: new Date().toISOString(),
+      usuarioAprovacao: "Engenharia",
+    });
+    toast.success(`Projeto ${p.id} enviado para Engenharia.`);
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-4">
-        <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          Para cada contrato aprovado, defina quantos e quais projetos serão executados. Cada projeto pode ter endereço próprio e segue para Obras Ativas individualmente.
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Para cada contrato aprovado, defina os projetos a executar. Cada projeto vai à Engenharia individualmente.
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-[11px]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-semibold tabular-nums">Total: {flat.length}</span>
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-bold text-amber-600 tabular-nums">
+                <Clock className="h-3 w-3" /> {pendentesGlob.length} pendente{pendentesGlob.length !== 1 ? "s" : ""}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success tabular-nums">
+                <CheckCircle2 className="h-3 w-3" /> {enviadosGlob.length} enviado{enviadosGlob.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" variant={view === "contrato" ? "default" : "outline"} onClick={() => setView("contrato")}>Por contrato</Button>
+            <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
+            <Button size="sm" variant={view === "tabela" ? "default" : "outline"} onClick={() => setView("tabela")}>Tabela</Button>
+          </div>
         </div>
       </Card>
+
+      {view === "kanban" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {[
+            { key: "pend", label: "Pendentes para Engenharia", items: pendentesGlob, tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
+            { key: "env", label: "Enviados para Engenharia", items: enviadosGlob, tone: "bg-success/15 text-success border-success/30" },
+          ].map((col) => (
+            <Card key={col.key} className="p-3 bg-muted/30">
+              <div className={`mb-2 inline-flex items-center gap-2 rounded-md border px-2 py-0.5 text-[11px] font-semibold ${col.tone}`}>
+                {col.label} <span className="tabular-nums">· {col.items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {col.items.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">—</div>
+                ) : col.items.map(({ p, c }) => (
+                  <Card key={p.id} className="p-3 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-mono text-muted-foreground">{p.id} · {c.id}</div>
+                        <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => setEditing({ c, p })} title="Editar projeto">
+                        <SquarePen className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <div className="mt-2 text-[11px] text-foreground/80 line-clamp-2">
+                      <b>Endereço:</b> {[p.endereco, p.numero, p.bairro, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]">
+                      <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
+                      <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
+                      {p.potenciaModuloW ? <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.potenciaModuloW}W</span> : null}
+                      {p.inversor ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 truncate max-w-[180px]" title={p.inversor}>Inv: {p.inversor}</span> : null}
+                    </div>
+                    {!p.enviadoEngenharia && (
+                      <div className="mt-2 flex justify-end">
+                        <Button size="sm" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => enviarUm(c, p)}>
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Enviar p/ Engenharia
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {view === "tabela" && (
+        <Card className="p-0 overflow-hidden">
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[260px]">Ações</TableHead>
+              <TableHead>Projeto</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Endereço</TableHead>
+              <TableHead>Sistema</TableHead>
+              <TableHead>Inversor</TableHead>
+              <TableHead>Situação</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {flat.map(({ p, c }) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <div className="inline-flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
+                        <SquarePen className="h-3.5 w-3.5" /> Editar
+                      </Button>
+                      {!p.enviadoEngenharia && (
+                        <Button size="sm" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => enviarUm(c, p)}>
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Enviar
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell className="text-xs font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-xs">{[p.endereco, p.numero, p.bairro, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</TableCell>
+                  <TableCell className="text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)} kWp · {p.modulos || 0} mód{p.potenciaModuloW ? ` · ${p.potenciaModuloW}W` : ""}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
+                  <TableCell>
+                    {p.enviadoEngenharia ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+                        <CheckCircle2 className="h-3 w-3" /> Enviado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+                        <Clock className="h-3 w-3" /> Pendente
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+
+      {view === "contrato" && <>
+
 
       {liberados.map((c) => {
         const projetos = c.projetos ?? [];
@@ -1426,6 +1565,9 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         </Card>
         );
       })}
+      </>}
+
+
 
       {novoFor && (
         <NovoProjetoDialog contrato={novoFor} onClose={() => setNovoFor(null)} />

@@ -160,6 +160,7 @@ function EngenhariaPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="gestao-projetos">Gestão de Projetos</TabsTrigger>
           <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
@@ -168,6 +169,7 @@ function EngenhariaPage() {
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
+        <TabsContent value="gestao-projetos" className="mt-5"><GestaoProjetosTab contratos={contratos} /></TabsContent>
         <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
         <TabsContent value="cronograma" className="mt-5"><CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>

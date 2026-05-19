@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 import {
   useLeads, criarLead, setLeadStatus, trocarOrigemLead, trocarConsultorLead,
-  type Lead,
+  findLeadByDoc, type Lead,
 } from "./store";
 import {
   LEAD_STATUS, LEAD_STATUS_LABEL, LEAD_STATUS_OPTIONS,
@@ -35,11 +35,15 @@ import {
   usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
   marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
   fmtBRL, calcPrecificacao, calcDimensionamento, type PropostaFV,
+  formatDoc, isDocValido, formatCEP, buscarCEPViaCEP,
 } from "@/modules/propostas/store";
 import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,
   enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
+import {
+  findClienteByDoc, addClienteFull, updateClienteFull, useClientesFull,
+} from "@/lib/clientes-store";
 
 function fmtDate(iso: string) {
   try {

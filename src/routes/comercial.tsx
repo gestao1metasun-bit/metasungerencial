@@ -99,6 +99,13 @@ function fmtDataBR(v?: string | null): string {
   return s;
 }
 
+/** Normaliza ID legado "CT-YYYY-NNNN" para o padrão "NNN/YYYY". */
+function fmtContratoId(id: string): string {
+  const m = id.match(/^CT-(\d{4})-(\d+)$/);
+  if (m) return `${String(m[2]).slice(-3).padStart(3, "0")}/${m[1]}`;
+  return id;
+}
+
 type Contrato = ContratoFull;
 type Vendedor = (typeof vendedoresSeed)[number];
 type Proposta = (typeof propostasSeed)[number];

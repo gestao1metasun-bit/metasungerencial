@@ -193,6 +193,10 @@ export type ContratoFull = {
   leadNumero?: string;
   contratoAssinadoArquivo?: string;     // nome do arquivo / URL do contrato assinado
   contratoRedigido?: boolean;           // true após cadastro de endereço + geração do contrato redigido
+  /** True após o Comercial aprovar o contrato assinado (gate antes de Engenharia/Financiamento). */
+  assinadoAprovado?: boolean;
+  assinadoAprovadoEm?: string;          // ISO
+  assinadoAprovadoPor?: string;
   motivoCancelamento?: string;
   cancelado?: boolean;
 

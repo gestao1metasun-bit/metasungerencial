@@ -324,6 +324,9 @@ function ContratosTab({
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-end">
+        <ModeloBaseContratoDialog />
+      </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">A redigir</div>

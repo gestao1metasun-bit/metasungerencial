@@ -1311,11 +1311,15 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
     );
   }
 
-  // Lista achatada de todos os projetos (com contrato vinculado)
+  // Lista achatada — apenas projetos efetivamente enviados para a Engenharia.
+  // Projetos não selecionados na aprovação ficam pendentes em Comercial → Contratos Assinados
+  // e NÃO devem aparecer aqui até serem liberados individualmente.
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
-  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => flat.push({ p, c })));
-  const pendentesGlob = flat.filter(({ p }) => !p.enviadoEngenharia);
-  const enviadosGlob = flat.filter(({ p }) => p.enviadoEngenharia);
+  liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
+    if (p.enviadoEngenharia) flat.push({ p, c });
+  }));
+  const pendentesGlob: typeof flat = [];
+  const enviadosGlob = flat;
 
   const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
     updateProjeto(c.id, p.id, {

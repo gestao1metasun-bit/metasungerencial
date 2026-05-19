@@ -1294,3 +1294,170 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
+/* ---------------- GESTÃO DE PROJETOS ---------------- */
+function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
+  const liberados = contratos.filter((c) => c.assinadoAprovado === true);
+  const [novoFor, setNovoFor] = useState<ContratoFull | null>(null);
+
+  if (liberados.length === 0) {
+    return (
+      <Card className="p-8 text-center text-sm text-muted-foreground">
+        Nenhum contrato liberado para gestão de projetos. Após aprovar o contrato assinado no Comercial, ele aparecerá aqui para definição dos projetos a executar.
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
+        <div className="text-xs text-muted-foreground mt-1">
+          Para cada contrato aprovado, defina quantos e quais projetos serão executados. Cada projeto pode ter endereço próprio e segue para Obras Ativas individualmente.
+        </div>
+      </Card>
+
+      {liberados.map((c) => (
+        <Card key={c.id} className="p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold text-primary">{c.id} — {c.cliente}</div>
+              <div className="text-xs text-muted-foreground">
+                {c.vendedor || "—"} · {(c.kwp ?? 0).toFixed(2)} kWp · Assinado em {c.dataAssinatura ?? "—"}
+              </div>
+              {c.clienteFull && (
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  Endereço do contrato: {[c.clienteFull.rua, c.clienteFull.numero, c.clienteFull.bairro, c.clienteFull.cidade, c.clienteFull.uf].filter(Boolean).join(", ") || "—"}
+                </div>
+              )}
+            </div>
+            <Button size="sm" className="gap-1.5" onClick={() => setNovoFor(c)}>
+              <Plus className="h-3.5 w-3.5" /> Adicionar projeto
+            </Button>
+          </div>
+
+          {(c.projetos ?? []).length === 0 ? (
+            <div className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+              Nenhum projeto definido. Clique em "Adicionar projeto" para começar.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader><TableRow className="hover:bg-transparent">
+                <TableHead>ID</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Endereço</TableHead>
+                <TableHead>Cidade/UF</TableHead>
+                <TableHead className="text-right">kWp</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {(c.projetos ?? []).map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                    <TableCell className="text-xs">{p.tipo}</TableCell>
+                    <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
+                    <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
+                    <TableCell className="text-right text-xs">{(p.kwp ?? 0).toFixed(2)}</TableCell>
+                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
+                        if (!confirm(`Remover projeto ${p.id}?`)) return;
+                        removeProjeto(c.id, p.id);
+                        toast.success("Projeto removido");
+                      }}><RotateCcw className="h-3.5 w-3.5" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      ))}
+
+      {novoFor && (
+        <NovoProjetoDialog contrato={novoFor} onClose={() => setNovoFor(null)} />
+      )}
+    </div>
+  );
+}
+
+function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onClose: () => void }) {
+  const cf = contrato.clienteFull;
+  const [form, setForm] = useState({
+    tipo: `Projeto ${(contrato.projetos?.length ?? 0) + 1}`,
+    endereco: "",
+    numero: "",
+    bairro: "",
+    cep: "",
+    cidade: cf?.cidade ?? "",
+    uf: cf?.uf ?? "",
+    modulos: 0,
+    potenciaModuloW: contrato.potencia ?? 0,
+    kwp: 0,
+    inversor: contrato.inv1 ?? "",
+    obs: "",
+  });
+
+  function salvar() {
+    if (!form.endereco.trim()) { toast.error("Endereço é obrigatório"); return; }
+    if (!form.cidade.trim() || !form.uf.trim()) { toast.error("Cidade e UF são obrigatórios"); return; }
+    addProjeto(contrato.id, {
+      tipo: form.tipo.trim() || "Projeto",
+      endereco: form.endereco,
+      numero: form.numero,
+      bairro: form.bairro,
+      cep: form.cep,
+      cidade: form.cidade,
+      uf: form.uf,
+      modulos: Number(form.modulos) || 0,
+      potenciaModuloW: Number(form.potenciaModuloW) || 0,
+      kwp: Number(form.kwp) || 0,
+      inversor: form.inversor,
+      equipe: "",
+      status: "Em projeto/aprovação",
+      inicio: new Date().toISOString().slice(0, 10),
+      previsto: new Date().toISOString().slice(0, 10),
+      obs: form.obs,
+      cronograma: "",
+      enviadoEngenharia: true,
+      aprovado: true,
+      dataAprovacao: new Date().toISOString(),
+      usuarioAprovacao: "Engenharia",
+    });
+    toast.success(`Projeto adicionado ao contrato ${contrato.id}`);
+    onClose();
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Novo projeto — {contrato.id}</DialogTitle>
+          <DialogDescription>
+            Cada projeto vira uma obra independente em "Obras ativas". Use endereços distintos quando o contrato cobre instalações em locais diferentes.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Tipo / nome</Label><Input value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} /></div>
+          <div className="col-span-2"><Label>Endereço</Label><Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} placeholder="Rua/Av., logradouro" /></div>
+          <div><Label>Número</Label><Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} /></div>
+          <div><Label>Bairro</Label><Input value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} /></div>
+          <div><Label>CEP</Label><Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} /></div>
+          <div><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} /></div>
+          <div><Label>UF</Label><Input value={form.uf} onChange={(e) => setForm({ ...form, uf: e.target.value.toUpperCase().slice(0,2) })} /></div>
+          <div><Label>Módulos</Label><Input type="number" value={form.modulos} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Potência módulo (W)</Label><Input type="number" value={form.potenciaModuloW} onChange={(e) => setForm({ ...form, potenciaModuloW: Number(e.target.value) })} /></div>
+          <div><Label>kWp</Label><Input type="number" step="0.01" value={form.kwp} onChange={(e) => setForm({ ...form, kwp: Number(e.target.value) })} /></div>
+          <div className="col-span-2"><Label>Inversor</Label><Input value={form.inversor} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div className="col-span-2"><Label>Observações</Label><Textarea value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} className="gap-1.5"><Plus className="h-4 w-4" /> Adicionar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+

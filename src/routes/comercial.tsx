@@ -836,25 +836,12 @@ function RedigirContratoDialog({
 
             {/* PAGAMENTO */}
             <TabsContent value="pagamento" className="space-y-3 pt-3">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Marco do pagamento inicial</Label>
-                  <Select value={marcoInicial} onValueChange={(v) => setMarcoInicial(v as any)}>
-                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="assinatura">Na assinatura</SelectItem>
-                      <SelectItem value="entrega-materiais">Na entrega dos materiais</SelectItem>
-                      <SelectItem value="pos-instalacao">Após a instalação</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="rounded-md border bg-muted/20 p-2 text-xs flex flex-col justify-center">
-                  <div className="flex justify-between"><span>Valor do contrato</span><span className="font-semibold">{fmtBRL(contrato.valor)}</span></div>
-                  <div className="flex justify-between"><span>Soma das formas</span><span className={Math.abs(diffFormas) <= 0.5 ? "font-semibold text-success" : "font-semibold text-destructive"}>{fmtBRL(somaFormas)}</span></div>
-                  {Math.abs(diffFormas) > 0.5 && (
-                    <div className="flex justify-between text-destructive"><span>Diferença</span><span>{fmtBRL(diffFormas)}</span></div>
-                  )}
-                </div>
+              <div className="rounded-md border bg-muted/20 p-2 text-xs">
+                <div className="flex justify-between"><span>Valor do contrato</span><span className="font-semibold">{fmtBRL(contrato.valor)}</span></div>
+                <div className="flex justify-between"><span>Soma das formas</span><span className={Math.abs(diffFormas) <= 0.5 ? "font-semibold text-success" : "font-semibold text-destructive"}>{fmtBRL(somaFormas)}</span></div>
+                {Math.abs(diffFormas) > 0.5 && (
+                  <div className="flex justify-between text-destructive"><span>Diferença</span><span>{fmtBRL(diffFormas)}</span></div>
+                )}
               </div>
 
               <div className="rounded-md border bg-warning/5 p-3 space-y-2">

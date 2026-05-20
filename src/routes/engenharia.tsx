@@ -997,14 +997,21 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
   return (
     <Table>
       <TableHeader><TableRow className="hover:bg-transparent">
+        <TableHead className="w-[80px]">Opções</TableHead>
         <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
         <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
         <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
-        <TableHead className="text-right">Ações</TableHead>
       </TableRow></TableHeader>
       <TableBody>
         {rows.map((p) => (
           <TableRow key={p.id}>
+            <TableCell>
+              <ActionsMenu label={p.id}>
+                <DropdownMenuItem onSelect={() => onEdit(p)}>
+                  <SquarePen className="mr-2 h-4 w-4" /> Editar
+                </DropdownMenuItem>
+              </ActionsMenu>
+            </TableCell>
             <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
             <TableCell>{p.equipe}</TableCell>
             <TableCell className="font-medium">{p.cliente}</TableCell>
@@ -1013,11 +1020,6 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
             <TableCell><StatusBadge status={p.status} /></TableCell>
             <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
             <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
-            <TableCell className="text-right">
-              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => onEdit(p)}>
-                <SquarePen className="h-3.5 w-3.5" />
-              </Button>
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>

@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 import {
   useLeads, criarLead, setLeadStatus, trocarOrigemLead, trocarConsultorLead,
-  findLeadByDoc, type Lead,
+  findLeadByDoc, findLeadByTelefoneRecent, type Lead,
 } from "./store";
 import {
   LEAD_STATUS, LEAD_STATUS_LABEL, LEAD_STATUS_OPTIONS,
@@ -216,12 +216,22 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
   const [clienteExistenteId, setClienteExistenteId] = useState<string | null>(null);
   const [leadExistenteNumero, setLeadExistenteNumero] = useState<string | null>(null);
   const [docInvalido, setDocInvalido] = useState(false);
+  // Bloqueio de telefone repetido nos últimos 90 dias
+  const [telefoneBloqueio, setTelefoneBloqueio] = useState<{ numero: string; nome: string } | null>(null);
+
+  function onTelChange(v: string) {
+    const masked = formatTelefoneBR(v);
+    setTelefone(masked);
+    const dup = findLeadByTelefoneRecent(masked, 90);
+    setTelefoneBloqueio(dup ? { numero: dup.numero, nome: dup.nome } : null);
+  }
 
   const reset = () => {
     setNome(""); setDoc(""); setTipoPessoa("PF"); setTelefone(""); setConsumo("");
     setConsultorId(""); setOrigem(""); setObservacao("");
     setCep(""); setRua(""); setNumero(""); setBairro(""); setCidade(""); setUf("");
     setClienteExistenteId(null); setLeadExistenteNumero(null); setDocInvalido(false);
+    setTelefoneBloqueio(null);
   };
 
   // Auto-detecta duplicidade ao digitar/colar CPF/CNPJ
@@ -278,6 +288,12 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     }
     if (leadExistenteNumero) {
       toast.error(`Já existe lead ${leadExistenteNumero} com este CPF/CNPJ. Abra o lead existente.`);
+      return;
+    }
+    // Bloqueio: telefone repetido nos últimos 90 dias
+    const telDup = findLeadByTelefoneRecent(telefone, 90);
+    if (telDup) {
+      toast.error(`Telefone já cadastrado no lead ${telDup.numero} — ${telDup.nome}. Aguarde 90 dias para novo cadastro.`);
       return;
     }
     // Cadastra ou reaproveita cliente
@@ -350,7 +366,12 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
           <div className="sm:col-span-2">
             <Label>Telefone <span className="text-destructive">*</span></Label>
-            <Input value={telefone} onChange={(e) => setTelefone(formatTelefoneBR(e.target.value))} />
+            <Input value={telefone} onChange={(e) => onTelChange(e.target.value)} />
+            {telefoneBloqueio && (
+              <p className="mt-1 text-[11px] text-destructive">
+                Telefone já cadastrado em lead <strong>{telefoneBloqueio.numero}</strong> ({telefoneBloqueio.nome}) nos últimos 90 dias. Novo cadastro bloqueado.
+              </p>
+            )}
           </div>
 
           <div className="sm:col-span-2">

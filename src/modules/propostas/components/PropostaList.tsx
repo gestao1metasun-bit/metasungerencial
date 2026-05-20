@@ -113,7 +113,7 @@ export function reativarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} reativada.`);
 }
 
-import { fmtInversorNumero } from "@/lib/inversor-fmt";
+// fmtInversorNumero importado de @/lib/inversor-fmt no topo do arquivo
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas

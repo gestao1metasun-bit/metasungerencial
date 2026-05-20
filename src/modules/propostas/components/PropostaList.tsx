@@ -1388,6 +1388,7 @@ function TabelaView({
           colId === COL_CONTRATO_ID ? "default"
           : colId === "col-aprovada" ? "default"
           : colId === "col-perdida" ? "destructive"
+          : colId === "col-cancelados" ? "destructive"
           : colId === "col-rascunho" ? "outline"
           : "secondary";
         return <Badge variant={variant}>{titulo}</Badge>;

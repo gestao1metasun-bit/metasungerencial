@@ -812,6 +812,7 @@ function LeadDetail({
                     const podeEditar = ehRascunho && !lead.bloqueado;
                     const podeExcluir = ehRascunho && !lead.bloqueado;
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
+                    const podeReativar = p.status === "CANCELADA";
                     return (
                       <TableRow key={p.id}>
                         <TableCell>
@@ -822,6 +823,12 @@ function LeadDetail({
                             {podeEditar && (
                               <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
                                 <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
+                              </DropdownMenuItem>
+                            )}
+                            {podeReativar && (
+                              <DropdownMenuItem onSelect={() => reativarProposta(p)}>
+                                <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                                <span className="text-success">Reativar</span>
                               </DropdownMenuItem>
                             )}
                             {podeCancelar && (

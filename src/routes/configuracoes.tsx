@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from "sonner";
 import {
   MODULES, ACTIONS, type ModuleKey, type ActionKey, type Perfil, type Usuario,
+  type PermissaoModulo, type PermLevel, PERM_LEVELS,
   usePerfis, useUsuarios, useUsuarioAtual, upsertPerfil, removePerfil, novoPerfilId,
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,
 } from "@/lib/perfis-store";

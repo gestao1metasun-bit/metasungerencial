@@ -198,29 +198,52 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
   const [nome, setNome] = useState(perfil?.nome ?? "");
   const [descricao, setDescricao] = useState(perfil?.descricao ?? "");
   const [ativo, setAtivo] = useState(perfil?.ativo ?? true);
-  const [perms, setPerms] = useState<Partial<Record<ModuleKey, ActionKey[]>>>(
-    () => perfil ? structuredClone(perfil.permissoes) : {}
-  );
+
+  // Estado V2 (ver/alterar por módulo). Migra do modelo antigo se necessário.
+  const initialV2 = (): Partial<Record<ModuleKey, PermissaoModulo>> => {
+    if (perfil?.permissoesV2) return structuredClone(perfil.permissoesV2);
+    const out: Partial<Record<ModuleKey, PermissaoModulo>> = {};
+    for (const m of MODULES) {
+      const acts = perfil?.permissoes?.[m.key] ?? [];
+      const ver: PermLevel = acts.includes("visualizar") ? "todos" : "nenhum";
+      const alteraSet: ActionKey[] = ["cadastrar","editar","aprovar","cancelar","excluir","alterar_status"];
+      const alterar: PermLevel = acts.some((a) => alteraSet.includes(a)) ? "todos" : "nenhum";
+      out[m.key] = { ver, alterar };
+    }
+    return out;
+  };
+  const [permsV2, setPermsV2] = useState<Partial<Record<ModuleKey, PermissaoModulo>>>(initialV2);
   const isAdmin = !!perfil?.isAdminMaster;
 
-  const toggle = (m: ModuleKey, a: ActionKey) => {
-    setPerms((cur) => {
-      const arr = new Set(cur[m] ?? []);
-      if (arr.has(a)) arr.delete(a); else arr.add(a);
-      return { ...cur, [m]: Array.from(arr) };
+  const setLevel = (m: ModuleKey, campo: "ver" | "alterar", v: PermLevel) => {
+    setPermsV2((cur) => {
+      const atual = cur[m] ?? { ver: "nenhum", alterar: "nenhum" };
+      const next: PermissaoModulo = { ...atual, [campo]: v };
+      // Se não pode ver, também não pode alterar.
+      if (campo === "ver" && v === "nenhum") next.alterar = "nenhum";
+      // Se passou a poder alterar, garantir que ver tenha ao menos o mesmo escopo.
+      if (campo === "alterar" && v !== "nenhum" && next.ver === "nenhum") next.ver = v;
+      return { ...cur, [m]: next };
     });
-  };
-  const toggleAllModule = (m: ModuleKey, on: boolean) => {
-    setPerms((cur) => ({ ...cur, [m]: on ? ACTIONS.map((a) => a.key) : [] }));
   };
 
   const salvar = () => {
     if (!nome.trim()) { toast.error("Informe o nome do perfil"); return; }
+    // Manter compat: deriva permissoes legacy a partir de V2.
+    const legacy: Partial<Record<ModuleKey, ActionKey[]>> = {};
+    for (const m of MODULES) {
+      const p = permsV2[m.key] ?? { ver: "nenhum", alterar: "nenhum" };
+      const acts: ActionKey[] = [];
+      if (p.ver !== "nenhum") acts.push("visualizar");
+      if (p.alterar !== "nenhum") acts.push("cadastrar","editar","alterar_status");
+      if (acts.length) legacy[m.key] = acts;
+    }
     const novo: Perfil = {
       id: perfil?.id ?? novoPerfilId(),
       nome: nome.trim(), descricao: descricao.trim(), ativo,
       isAdminMaster: perfil?.isAdminMaster,
-      permissoes: perms,
+      permissoes: perfil?.isAdminMaster ? (perfil?.permissoes ?? legacy) : legacy,
+      permissoesV2: perfil?.isAdminMaster ? undefined : permsV2,
     };
     upsertPerfil(novo);
     toast.success(editing ? "Perfil atualizado" : "Perfil criado");
@@ -230,10 +253,13 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? `Editar perfil · ${perfil?.nome}` : "Novo perfil de acesso"}</DialogTitle>
-          <DialogDescription>Marque as ações permitidas em cada módulo.</DialogDescription>
+          <DialogDescription>
+            Para cada módulo, defina o que o perfil pode <b>Ver</b> e <b>Alterar</b>. O escopo
+            "Apenas próprios" restringe aos registros do consultor vinculado ao usuário.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1.5 md:col-span-2"><Label>Nome</Label>
@@ -259,25 +285,45 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[140px]">Módulo</TableHead>
-                  {ACTIONS.map((a) => <TableHead key={a.key} className="text-center text-[10px]">{a.label}</TableHead>)}
-                  <TableHead className="text-center text-[10px]">Tudo</TableHead>
+                  <TableHead className="min-w-[180px]">Módulo</TableHead>
+                  <TableHead className="w-[220px]">Ver</TableHead>
+                  <TableHead className="w-[220px]">Alterar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {MODULES.map((m) => {
-                  const arr = perms[m.key] ?? [];
-                  const allOn = arr.length === ACTIONS.length;
+                  const p = permsV2[m.key] ?? { ver: "nenhum", alterar: "nenhum" };
                   return (
                     <TableRow key={m.key}>
                       <TableCell className="font-medium text-sm">{m.label}</TableCell>
-                      {ACTIONS.map((a) => (
-                        <TableCell key={a.key} className="text-center">
-                          <Checkbox checked={arr.includes(a.key)} onCheckedChange={() => toggle(m.key, a.key)} />
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-center">
-                        <Checkbox checked={allOn} onCheckedChange={(v) => toggleAllModule(m.key, !!v)} />
+                      <TableCell>
+                        <Select value={p.ver} onValueChange={(v) => setLevel(m.key, "ver", v as PermLevel)}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {PERM_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={p.alterar}
+                          onValueChange={(v) => setLevel(m.key, "alterar", v as PermLevel)}
+                          disabled={p.ver === "nenhum"}
+                        >
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {PERM_LEVELS.map((l) => (
+                              <SelectItem
+                                key={l.key}
+                                value={l.key}
+                                // Não permitir "todos" alterar se "ver" for "proprios"
+                                disabled={l.key === "todos" && p.ver === "proprios"}
+                              >
+                                {l.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                     </TableRow>
                   );

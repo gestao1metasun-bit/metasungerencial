@@ -529,29 +529,13 @@ function ContratosTab({
     setGerarAssinado(null);
   }
 
+  const showGeracao = filtroStatus === "geracao" || filtroStatus === "ambos";
+  const showAssinatura = filtroStatus === "assinatura" || filtroStatus === "ambos";
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-end">
         <ModeloBaseContratoDialog />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">A redigir</div>
-          <div className="mt-1 flex items-center gap-2">
-            <div className="text-2xl font-bold text-warning">{aRedigir.length}</div>
-            {aRedigir.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />}
-          </div>
-          <div className="text-xs text-muted-foreground">Cadastrar dados → gerar contrato impresso</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Redigidos · aguardando assinatura</div>
-          <div className="mt-1 text-2xl font-bold text-info">{redigidos.length}</div>
-          <div className="text-xs text-muted-foreground">Imprimir e gerar assinado</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total no funil</div>
-          <div className="mt-1 text-2xl font-bold text-primary">{contratos.length}</div>
-        </Card>
       </div>
 
       <Card className="p-5">

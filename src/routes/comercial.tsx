@@ -1381,14 +1381,36 @@ function RedigirContratoDialog({
 
 /* ---------------- DASHBOARD ---------------- */
 
-type PeriodKey = "mes" | "3m" | "6m" | "ano" | "all";
+type PeriodKey =
+  | "hoje" | "ontem" | "7d" | "15d" | "30d"
+  | "mes" | "mes_ant" | "3m" | "6m"
+  | "trimestre" | "semestre" | "ano" | "ano_ant"
+  | "custom" | "all";
+
 const PERIOD_LABELS: Record<PeriodKey, string> = {
+  hoje: "Hoje",
+  ontem: "Ontem",
+  "7d": "Últimos 7 dias",
+  "15d": "Últimos 15 dias",
+  "30d": "Últimos 30 dias",
   mes: "Mês atual",
+  mes_ant: "Mês anterior",
   "3m": "Últimos 3 meses",
   "6m": "Últimos 6 meses",
+  trimestre: "Trimestre atual",
+  semestre: "Semestre atual",
   ano: "Ano atual",
+  ano_ant: "Ano anterior",
+  custom: "Personalizado…",
   all: "Todo o histórico",
 };
+
+const PERIOD_GROUPS: { label: string; keys: PeriodKey[] }[] = [
+  { label: "Rápidos", keys: ["hoje", "ontem", "7d", "15d", "30d"] },
+  { label: "Mensal", keys: ["mes", "mes_ant", "3m", "6m"] },
+  { label: "Trimestre / Ano", keys: ["trimestre", "semestre", "ano", "ano_ant"] },
+  { label: "Outros", keys: ["custom", "all"] },
+];
 
 function DashboardComercial({
   contratos: contratosProp, setContratos, vendedoresList, volume: volumeProp,

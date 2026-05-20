@@ -688,10 +688,14 @@ function EditObraDialog({
           <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
-              <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-                <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
-                Modo ADMIN MASTER
-              </label>
+              {isAdminMaster ? (
+                <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+                  <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
+                  Modo ADMIN MASTER
+                </label>
+              ) : (
+                <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

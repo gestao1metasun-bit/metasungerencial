@@ -1535,6 +1535,7 @@ export function PropostaList({
 
   const [filtro, setFiltro] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
+  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO">("ABERTO");
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
@@ -1547,6 +1548,10 @@ export function PropostaList({
   const leadsFiltrados = useMemo(() => {
     const q = filtro.trim().toLowerCase();
     return leadsAll.filter((l) => {
+      // Aberto = lead ainda em negociação (sem contrato assinado).
+      // Fechado = lead já fechou (tem contrato assinado / bloqueado).
+      if (estadoLead === "ABERTO" && l.bloqueado) return false;
+      if (estadoLead === "FECHADO" && !l.bloqueado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
       if (!q) return true;
       return (
@@ -1555,7 +1560,7 @@ export function PropostaList({
         l.propostas.some((p) => (p.numero || "").toLowerCase().includes(q))
       );
     });
-  }, [leadsAll, filtro, filtroStatus]);
+  }, [leadsAll, filtro, filtroStatus, estadoLead]);
 
   const totais = useMemo(() => {
     const total = propostas.length;

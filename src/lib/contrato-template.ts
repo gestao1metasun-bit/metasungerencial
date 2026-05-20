@@ -269,19 +269,22 @@ function descreveLinha(f: import("./contratos-store").PagamentoLinha): string {
     "entrada": "como entrada, na assinatura do contrato",
     "ato": "no ato",
     "entrega-materiais": "na entrega do material",
-    "pos-instalacao": "após a conclusão da instalação",
+    "pos-instalacao": "iniciando após a conclusão do projeto",
     "conforme-cronograma": "conforme cronograma acordado",
   }[f.momento] ?? "";
   const momentoBase = {
     "entrada": "da assinatura",
     "ato": "do ato",
     "entrega-materiais": "da entrega do material",
-    "pos-instalacao": "da conclusão da instalação",
+    "pos-instalacao": "da conclusão do projeto",
     "conforme-cronograma": "do início do cronograma",
   }[f.momento] ?? "";
 
   function cronograma(parcelas: number, valorParcela: number): string {
     if (parcelas <= 1) return "";
+    if (f.momento === "pos-instalacao") {
+      return ` Cronograma: ${parcelas} parcela(s) de ${fmtBRL(valorParcela)}, iniciando após a conclusão do projeto.`;
+    }
     const primeiro = f.primeiroVencDias ?? 30;
     const intervalo = f.intervaloDias ?? 30;
     const dias = Array.from({ length: parcelas }, (_, i) => primeiro + i * intervalo);

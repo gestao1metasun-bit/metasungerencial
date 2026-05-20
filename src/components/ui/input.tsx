@@ -10,8 +10,9 @@ const NO_UPPERCASE_TYPES = new Set([
 ]);
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, onChange, noUppercase, style, ...props }, ref) => {
+  ({ className, type, onChange, onWheel, noUppercase, style, ...props }, ref) => {
     const shouldUpper = !noUppercase && !NO_UPPERCASE_TYPES.has(type ?? "text");
+    const isNumber = type === "number";
 
     const handleChange = shouldUpper
       ? (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,6 +28,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         }
       : onChange;
 
+    // Em inputs numéricos, scroll do mouse NÃO deve alterar o valor.
+    // Tira o foco para que a roda do mouse só role a página.
+    const handleWheel = isNumber
+      ? (e: React.WheelEvent<HTMLInputElement>) => {
+          (e.currentTarget as HTMLInputElement).blur();
+          onWheel?.(e);
+        }
+      : onWheel;
+
     return (
       <input
         type={type}
@@ -37,6 +47,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         style={shouldUpper ? { textTransform: "uppercase", ...style } : style}
         ref={ref}
         onChange={handleChange}
+        onWheel={handleWheel}
         {...props}
       />
     );

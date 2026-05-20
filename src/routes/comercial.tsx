@@ -712,7 +712,7 @@ function ContratosTab({
                   <TableCell>
                     <ActionsMenu label={c.id}>
                       <DropdownMenuItem onSelect={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
-                        <PenLine className="mr-2 h-4 w-4" /> Gerar Assinado
+                        <PenLine className="mr-2 h-4 w-4" /> Assinar Contrato
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => setImprimir(c)}>
                         <Printer className="mr-2 h-4 w-4" /> Imprimir
@@ -779,7 +779,7 @@ function ContratosTab({
       <Dialog open={!!gerarAssinado} onOpenChange={(o) => { if (!o) setGerarAssinado(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Gerar contrato assinado {gerarAssinado?.id}</DialogTitle>
+            <DialogTitle>Assinar contrato {gerarAssinado?.id}</DialogTitle>
             <DialogDescription className="text-xs">
               Informe a data em que o contrato foi assinado pelo cliente. Após confirmar, o contrato será movido para a aba <strong>Contrato Assinado</strong>.
             </DialogDescription>
@@ -1196,7 +1196,7 @@ function RedigirContratoDialog({
                               <SelectItem value="entrada">Entrada (assinatura)</SelectItem>
                               <SelectItem value="ato">No ato</SelectItem>
                               <SelectItem value="entrega-materiais">Na entrega do material</SelectItem>
-                              <SelectItem value="pos-instalacao">Após instalação</SelectItem>
+                              <SelectItem value="pos-instalacao">Após conclusão do projeto</SelectItem>
                               <SelectItem value="conforme-cronograma">Conforme cronograma</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1265,7 +1265,7 @@ function RedigirContratoDialog({
 
                       <div>
                         <Label className="text-xs">Observação desta forma (opcional)</Label>
-                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: a partir de 30 dias após a vistoria" />
+                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: iniciando após a conclusão do projeto" />
                       </div>
 
                       {f.parcelas > 1 && (() => {
@@ -1277,9 +1277,10 @@ function RedigirContratoDialog({
                           "entrada": "assinatura",
                           "ato": "ato",
                           "entrega-materiais": "entrega do material",
-                          "pos-instalacao": "instalação",
+                          "pos-instalacao": "conclusão do projeto",
                           "conforme-cronograma": "cronograma",
                         } as Record<string, string>)[f.momento] ?? "início";
+                        const isPosInst = f.momento === "pos-instalacao";
                         return (
                           <div className="rounded-md border bg-muted/20 p-2 text-[11px]">
                             <div className="font-semibold uppercase tracking-wide text-muted-foreground mb-1">
@@ -1302,7 +1303,7 @@ function RedigirContratoDialog({
                                 {Array.from({ length: f.parcelas }).map((_, i) => (
                                   <tr key={i} className="border-t border-border/40">
                                     <td className="py-0.5 pr-2">{i + 1}/{f.parcelas}</td>
-                                    <td className="py-0.5 pr-2">{primeiro + i * intervalo} dias após {momentoLabel}</td>
+                                    <td className="py-0.5 pr-2">{isPosInst ? "Iniciando após a conclusão do projeto" : `${primeiro + i * intervalo} dias após ${momentoLabel}`}</td>
                                     <td className="py-0.5 text-right font-medium">{fmtBRL(valorParcela)}</td>
                                   </tr>
                                 ))}

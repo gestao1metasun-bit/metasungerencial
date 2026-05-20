@@ -4,7 +4,7 @@ import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
   Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2, Printer, PenLine,
-  MoreVertical, Eye, Paperclip,
+  Eye, Paperclip, ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
@@ -233,8 +233,8 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-12 text-center">Ações</TableHead>
               <TableHead>Contrato</TableHead>
+              <TableHead className="w-[140px]">Ações</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
@@ -272,12 +272,21 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
   return (
     <TableRow>
-      <TableCell className="text-center">
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+      <TableCell>
         {anexoInput}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
-              <MoreVertical className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-full justify-between gap-2 border-primary/40 bg-primary/5 px-3 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+              title="Ações"
+            >
+              <span className="flex items-center gap-1.5">
+                <SquarePen className="h-3.5 w-3.5" /> Ações
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start" className="w-56">
@@ -306,7 +315,7 @@ function ContratoAssinadoRow({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
-              <SquarePen className="mr-2 h-4 w-4" /> Criar projetos
+              <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onImprimir(c)}>
               <Printer className="mr-2 h-4 w-4" /> Imprimir
@@ -316,9 +325,8 @@ function ContratoAssinadoRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
+        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>
-      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
       <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
@@ -2579,11 +2587,11 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 /* ---------------- EDITAR CONTRATO + PROJETOS + AUDITORIA ---------------- */
 
-function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpenChange, hideTrigger }: { contrato: Contrato; vendedoresList: Vendedor[]; open?: boolean; onOpenChange?: (o: boolean) => void; hideTrigger?: boolean }) {
+function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpenChange, hideTrigger, lockDados }: { contrato: Contrato; vendedoresList: Vendedor[]; open?: boolean; onOpenChange?: (o: boolean) => void; hideTrigger?: boolean; lockDados?: boolean }) {
   const [openInner, setOpenInner] = useState(false);
   const open = openProp ?? openInner;
   const setOpen = (o: boolean) => { onOpenChange ? onOpenChange(o) : setOpenInner(o); };
-  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("cliente");
+  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">(lockDados ? "projetos" : "cliente");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
     nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",
@@ -2681,12 +2689,18 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
-            {contrato.status === "Aprovado" && (
+            {lockDados && (
+              <div className="mb-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
+                <b>Visualização somente.</b> O contrato já está assinado — edição de dados bloqueada nesta etapa. Use a aba <b>3. Projetos</b> para aprovar e enviar os projetos à Engenharia.
+              </div>
+            )}
+            {contrato.status === "Aprovado" && !lockDados && (
               <div className="mb-3 flex items-center justify-between rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs">
                 <span className="text-success font-medium">Contrato aprovado · campos estruturais bloqueados.</span>
                 <SolicitarAlteracaoButton contrato={contrato} />
               </div>
             )}
+            <fieldset disabled={lockDados} className="contents">
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5"><Label>Cliente (vinculado)</Label>
                 <Input value={f.cliente} readOnly className="bg-muted" />
@@ -2790,6 +2804,7 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
                 <AprovarEnviarDialog contrato={contrato} />
               </div>
             </div>
+            </fieldset>
           </TabsContent>
 
           <TabsContent value="cliente" className="mt-4">
@@ -2870,7 +2885,7 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
 
         <DialogFooter className="mt-5">
           <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
-          {tab === "dados" && (
+          {tab === "dados" && !lockDados && (
             <Button className="bg-primary text-primary-foreground" onClick={salvar}>Salvar alterações</Button>
           )}
         </DialogFooter>

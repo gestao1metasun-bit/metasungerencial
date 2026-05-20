@@ -1689,31 +1689,103 @@ function DashboardComercial({
   return (
     <>
       {/* Filtro de período */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 shadow-elegant">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
-          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-            <SelectTrigger className="h-8 w-[200px] text-xs font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(PERIOD_LABELS) as PeriodKey[]).map((k) => (
-                <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+      <div className="mb-4 rounded-xl border border-border/70 bg-card/80 px-4 py-3 shadow-elegant">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+              <SelectTrigger className="h-8 w-[220px] text-xs font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[420px]">
+                {PERIOD_GROUPS.map((g, gi) => (
+                  <React.Fragment key={g.label}>
+                    {gi > 0 && <SelectSeparator />}
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</SelectLabel>
+                      {g.keys.map((k) => (
+                        <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </React.Fragment>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Atalhos rápidos */}
+            <div className="hidden lg:flex items-center gap-1 ml-1">
+              {(["hoje","7d","30d","mes","ano","all"] as PeriodKey[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setPeriod(k)}
+                  className={
+                    "rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors " +
+                    (period === k
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted")
+                  }
+                >
+                  {k === "hoje" ? "Hoje" : k === "7d" ? "7d" : k === "30d" ? "30d" : k === "mes" ? "Mês" : k === "ano" ? "Ano" : "Tudo"}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-          {periodRange.from && periodRange.to && (
-            <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-              {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos no período</span>
-          <span className="h-3 w-px bg-border" />
-          <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+            </div>
+
+            {/* Pickers de data personalizada */}
+            {period === "custom" && (
+              <div className="flex items-center gap-1.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs font-normal">
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customFrom ? customFrom.toLocaleDateString("pt-BR") : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-muted-foreground">→</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs font-normal">
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customTo ? customTo.toLocaleDateString("pt-BR") : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customTo} onSelect={setCustomTo} disabled={(d) => customFrom ? d < customFrom : false} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {periodRange.from && periodRange.to && period !== "custom" && (
+              <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
+              </span>
+            )}
+            {period !== "all" && (
+              <button
+                type="button"
+                onClick={() => { setPeriod("all"); setCustomFrom(undefined); setCustomTo(undefined); }}
+                className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos</span>
+            <span className="h-3 w-px bg-border" />
+            <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+            <span className="h-3 w-px bg-border" />
+            <span><b className="text-foreground tabular-nums">{fmtBRL(valorAssinado)}</b> assinado</span>
+          </div>
         </div>
       </div>
+
 
       {/* ========== PAINEL EXECUTIVO — DIRETOR COMERCIAL ========== */}
       <section className="mb-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-card via-card to-card/60 p-5 shadow-elegant">

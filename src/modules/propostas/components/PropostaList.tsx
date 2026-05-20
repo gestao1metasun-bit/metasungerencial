@@ -1328,6 +1328,37 @@ function TabelaView({
 
   const renderCell = (l: Lead, key: TabelaColKey) => {
     switch (key) {
+      case "opcoes": {
+        const podeReativar = l.status === "CANCELADA";
+        const podeCancelar = !l.bloqueado && l.status !== "CANCELADA" && l.status !== "APROVADA";
+        return (
+          <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+            <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
+              <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                <Eye className="mr-2 h-4 w-4" /> Abrir lead
+              </DropdownMenuItem>
+              {podeReativar && (
+                <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                  <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                  <span className="text-success">Reativar última proposta</span>
+                </DropdownMenuItem>
+              )}
+              {podeCancelar && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                    if (!p) { toast.info("Não há proposta cancelável."); return; }
+                    cancelarProposta(p);
+                  }}
+                >
+                  <Ban className="mr-2 h-4 w-4 text-destructive" />
+                  <span className="text-destructive">Cancelar última proposta</span>
+                </DropdownMenuItem>
+              )}
+            </ActionsMenu>
+          </div>
+        );
+      }
       case "cliente":
         return (
           <div className="flex items-center gap-2 min-w-0">

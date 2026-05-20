@@ -1247,14 +1247,25 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
     <Card>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead className="w-[80px]">Opções</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {list.map((o) => (
             <TableRow key={o.id}>
+              <TableCell>
+                <ActionsMenu label={o.id}>
+                  <DropdownMenuItem onSelect={() => setDetail(o)}>
+                    <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => retornar(o.id)}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Retornar para ativos
+                  </DropdownMenuItem>
+                </ActionsMenu>
+              </TableCell>
               <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
               <TableCell className="font-medium">{o.cliente}</TableCell>
               <TableCell>{o.equipe}</TableCell>
@@ -1262,10 +1273,6 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
               <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
               <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
               <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
-              <TableCell className="text-right whitespace-nowrap">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(o)}><Eye className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => retornar(o.id)}><RotateCcw className="mr-1 h-3.5 w-3.5" /> Retornar</Button>
-              </TableCell>
             </TableRow>
           ))}
           {list.length === 0 && <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}

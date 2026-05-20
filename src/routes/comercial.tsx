@@ -1103,6 +1103,23 @@ function RedigirContratoDialog({
         ? `Misto (${formas.map((f) => f.tipo).join(" + ")})`
         : (formas[0]?.tipo === "Financiamento" && formas[0]?.banco ? `Financiamento ${formas[0].banco}` : (formas[0]?.tipo ?? pagamentoTipo)),
     });
+    // Se o cliente foi vinculado, atualiza endereço/telefone no cadastro
+    // sem criar duplicata. Caso contrário, mantém apenas no contrato.
+    if (clienteVincId) {
+      try {
+        updateClienteFull(clienteVincId, {
+          nome: clienteFull.nome,
+          telefone: clienteFull.telefone,
+          cep: clienteFull.cep,
+          rua: clienteFull.rua,
+          numero: clienteFull.numero,
+          complemento: clienteFull.complemento,
+          bairro: clienteFull.bairro,
+          cidade: clienteFull.cidade,
+          uf: clienteFull.uf,
+        });
+      } catch { /* segue a geração mesmo se a atualização falhar */ }
+    }
   }
 
   return (
@@ -1437,8 +1454,30 @@ function RedigirContratoDialog({
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => rmClausula(c.id)}>Remover</Button>
                   </div>
+                  {c.acao === "substituir" && (() => {
+                    const orig = textoOriginalDe(c.referencia);
+                    return orig ? (
+                      <div className="rounded-md border bg-muted/40 p-2 text-[11px]">
+                        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Como está hoje (cláusula {c.referencia})
+                        </div>
+                        <div className="whitespace-pre-line text-foreground/80">{orig.replace(/\*\*/g, "")}</div>
+                      </div>
+                    ) : (
+                      <div className="rounded-md border border-dashed bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                        Referência <strong>{c.referencia || "—"}</strong> não encontrada no contrato base.
+                      </div>
+                    );
+                  })()}
                   {c.acao !== "remover" && (
-                    <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => updClausula(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                    <div>
+                      {c.acao === "substituir" && (
+                        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Como vai ficar
+                        </div>
+                      )}
+                      <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => updClausula(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                    </div>
                   )}
                 </div>
               ))}

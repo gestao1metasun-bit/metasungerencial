@@ -1137,10 +1137,38 @@ function RedigirContratoDialog({
                   <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
                   <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
                 </div>
-                <div>
+                <div className="relative">
                   <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
-                  <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))}
-                    placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
+                  <Input
+                    className="mt-1.5"
+                    value={doc}
+                    onChange={(e) => { setDoc(maskDoc(e.target.value)); setShowSugestoes(true); setClienteVincId(null); }}
+                    onFocus={() => setShowSugestoes(true)}
+                    onBlur={() => setTimeout(() => setShowSugestoes(false), 180)}
+                    placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                    inputMode="numeric"
+                  />
+                  {clienteVincId && (
+                    <p className="mt-1 text-[11px] text-success">✓ Vinculado a cliente cadastrado — sem duplicar registro.</p>
+                  )}
+                  {showSugestoes && sugestoesClientes.length > 0 && !clienteVincId && (
+                    <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md max-h-56 overflow-y-auto">
+                      <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                        Clientes cadastrados
+                      </div>
+                      {sugestoesClientes.map((c) => (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onMouseDown={(e) => { e.preventDefault(); selecionarCliente(c); }}
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent border-b last:border-b-0"
+                        >
+                          <div className="font-semibold">{c.nome}</div>
+                          <div className="text-muted-foreground">{c.doc} · {c.cidade}/{c.uf}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">

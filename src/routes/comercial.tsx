@@ -16,7 +16,10 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
   ComposedChart, FunnelChart, Funnel, LabelList,
+  ScatterChart, Scatter, ZAxis, RadialBarChart, RadialBar,
 } from "recharts";
+import { useLeads } from "@/modules/leads/store";
+import { LEAD_STATUS, ORIGEM_LEAD_LABEL, type OrigemLead } from "@/lib/status-catalog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { EyeButton } from "@/components/app/EyeButton";

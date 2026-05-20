@@ -453,6 +453,25 @@ function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React
             <Input value={f.setor} onChange={(e) => setF({ ...f, setor: e.target.value })} />
           </div>
           <div className="space-y-1.5 md:col-span-2">
+            <Label>Consultor vinculado <span className="text-[10px] text-muted-foreground">(opcional)</span></Label>
+            <Select
+              value={f.consultorId ?? "__none__"}
+              onValueChange={(v) => setF({ ...f, consultorId: v === "__none__" ? undefined : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Nenhum —</SelectItem>
+                {consultores.filter((c) => c.ativo).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Quando o perfil tiver permissão "Apenas próprios", o usuário verá/alterará somente
+              registros do consultor aqui vinculado.
+            </p>
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
             <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
               <Switch checked={f.ativo} onCheckedChange={(v) => setF({ ...f, ativo: v })} />
               <span className="text-sm">{f.ativo ? "Ativo" : "Inativo"}</span>

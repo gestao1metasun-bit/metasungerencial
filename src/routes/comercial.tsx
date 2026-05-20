@@ -1632,7 +1632,224 @@ function DashboardComercial({
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ========== PAINEL EXECUTIVO — DIRETOR COMERCIAL ========== */}
+      <section className="mb-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-card via-card to-card/60 p-5 shadow-elegant">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">Painel executivo</div>
+            <h2 className="font-display text-xl font-bold tracking-tight text-foreground">Diretor Comercial</h2>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span className="inline-flex h-2 w-2 rounded-full bg-success animate-pulse" />
+            KPIs principais do período
+          </div>
+        </div>
+
+        {/* Linha 1 — KPIs primários */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <StatCard label="Faturamento Total" value={fmtBRL(valorAssinado)} hint={`${assinados.length} contratos`} icon={DollarSign} tone="success" trend={metaTotal > 0 ? { value: `${metaPct.toFixed(0)}% da meta`, positive: metaPct >= 100 } : undefined} />
+          <StatCard label="Ticket Médio" value={fmtBRL(ticket)} hint="por contrato assinado" icon={TrendingUp} tone="primary" />
+          <StatCard label="Pipeline Total" value={fmtBRL(pipelineValor)} hint={`${pipelineQtd} negociações abertas`} icon={Layers} tone="info" />
+          <StatCard label="Conversão" value={`${conversaoPct.toFixed(1)}%`} hint={`${assinados.length}/${totalPropostas} propostas`} icon={Percent} tone="warning" />
+          <StatCard label="Meta × Realizado" value={`${metaPct.toFixed(0)}%`} hint={`${fmtBRL(valorAssinado)} de ${fmtBRL(metaTotal)}`} icon={Target} tone={metaPct >= 100 ? "success" : metaPct >= 70 ? "warning" : "destructive"} />
+        </div>
+
+        {/* Linha 2 — KPIs operacionais comerciais */}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <StatCard label="kWp Vendido" value={kwpTotal.toFixed(1)} hint="volume técnico/comercial" icon={Sun} tone="gold" />
+          <StatCard label="Parâmetro Médio" value={fmtBRL(valorPorKwp)} hint="por kWp — força de preço" icon={Gauge} tone="primary" />
+          <StatCard label="Tempo de Fechamento" value={`${tempoFechamento.toFixed(0)} d`} hint="média lead → assinatura" icon={Clock} tone="info" />
+          <StatCard label="Taxa de Perda" value={`${taxaCancelamento.toFixed(1)}%`} hint={`${cancelados.length} cancelados`} icon={XCircle} tone="destructive" />
+          <StatCard label="Top Consultor" value={topConsultorNome.split(" ")[0] || "—"} hint={fmtBRL(topConsultorValor)} icon={Award} tone="success" />
+        </div>
+
+        {/* Linha 3 — Funil + Vendas por canal + Meta vs Realizado */}
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          {/* Funil */}
+          <Card className="p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4 text-primary" /> Funil de conversão</div>
+            <div className="space-y-2">
+              {funil.map((f, i) => {
+                const prev = i > 0 ? funil[i - 1].valor : f.valor;
+                const stepConv = prev > 0 ? (f.valor / prev) * 100 : 0;
+                return (
+                  <div key={f.etapa}>
+                    <div className="mb-1 flex items-center justify-between text-[11px]">
+                      <span className="font-medium text-foreground">{f.etapa}</span>
+                      <span className="font-mono tabular-nums text-muted-foreground">
+                        <b className="text-foreground">{f.valor}</b> · {f.pct.toFixed(0)}%
+                        {i > 0 && <span className="ml-1 text-[10px] text-info">(▼ {stepConv.toFixed(0)}%)</span>}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-info"
+                        style={{ width: `${Math.min(f.pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {leads.length === 0 && (
+                <div className="rounded-md border border-dashed border-border p-4 text-center text-[11px] text-muted-foreground">
+                  Cadastre leads para visualizar o funil completo.
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Vendas por canal */}
+          <Card className="p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Activity className="h-4 w-4 text-primary" /> Vendas por canal</div>
+            {vendasPorCanal.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-6 text-center text-[11px] text-muted-foreground">
+                Sem dados de canal no período.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={vendasPorCanal.slice(0, 6)} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis type="number" stroke="var(--muted-foreground)" fontSize={10} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <YAxis dataKey="canal" type="category" stroke="var(--muted-foreground)" fontSize={10} width={80} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11 }}
+                    formatter={(v: number, n: string) => (n === "valor" ? fmtBRL(v) : v)}
+                  />
+                  <Bar dataKey="valor" fill="var(--chart-1)" radius={[0, 6, 6, 0]} name="Valor" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+
+          {/* Meta vs Realizado por consultor */}
+          <Card className="p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Target className="h-4 w-4 text-primary" /> Meta × Realizado</div>
+            <div className="space-y-2.5">
+              {metaVsReal.slice(0, 6).map((v) => (
+                <div key={v.nome}>
+                  <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-foreground">{v.nome}</span>
+                    <span className={`font-mono tabular-nums ${v.pct >= 100 ? "text-success" : v.pct >= 70 ? "text-warning" : "text-destructive"}`}>
+                      {v.pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full ${v.pct >= 100 ? "bg-success" : v.pct >= 70 ? "bg-warning" : "bg-destructive"}`}
+                      style={{ width: `${Math.min(v.pct, 100)}%` }}
+                    />
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-muted-foreground tabular-nums">
+                    {fmtBRL(v.realizado)} / {fmtBRL(v.meta)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Linha 4 — Cruzamentos executivos */}
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {/* Ticket × Conversão por vendedor */}
+          <Card className="p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm font-semibold"><BarChart3 className="h-4 w-4 text-primary" /> Ticket médio × Conversão por consultor</div>
+            <div className="mb-2 text-[10px] text-muted-foreground">Cada bolha = 1 consultor. Tamanho = valor total vendido.</div>
+            <ResponsiveContainer width="100%" height={240}>
+              <ScatterChart margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="ticket" type="number" stroke="var(--muted-foreground)" fontSize={10} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} name="Ticket" />
+                <YAxis dataKey="conversao" type="number" stroke="var(--muted-foreground)" fontSize={10} tickFormatter={(v) => `${v}%`} name="Conversão" />
+                <ZAxis dataKey="valor" range={[60, 400]} />
+                <Tooltip
+                  cursor={{ strokeDasharray: "3 3" }}
+                  contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11 }}
+                  formatter={(v: number, n: string) => {
+                    if (n === "ticket" || n === "valor") return fmtBRL(v);
+                    if (n === "conversao") return `${v}%`;
+                    return v;
+                  }}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.nome ?? ""}
+                />
+                <Scatter data={cruzTicketConv} fill="var(--chart-2)" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Vendas por região */}
+          <Card className="p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><MapPin className="h-4 w-4 text-primary" /> Vendas por região</div>
+            {vendasPorRegiao.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-6 text-center text-[11px] text-muted-foreground">
+                Sem contratos assinados com UF informada.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-8 text-[10px] uppercase">UF</TableHead>
+                    <TableHead className="h-8 text-center text-[10px] uppercase">Contratos</TableHead>
+                    <TableHead className="h-8 text-right text-[10px] uppercase">kWp</TableHead>
+                    <TableHead className="h-8 text-right text-[10px] uppercase">Valor</TableHead>
+                    <TableHead className="h-8 text-right text-[10px] uppercase">Part.</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vendasPorRegiao.map((r) => {
+                    const part = (r.valor / Math.max(valorAssinado, 1)) * 100;
+                    return (
+                      <TableRow key={r.uf} className="text-xs">
+                        <TableCell className="py-1.5 font-semibold">{r.uf}</TableCell>
+                        <TableCell className="py-1.5 text-center tabular-nums">{r.qtd}</TableCell>
+                        <TableCell className="py-1.5 text-right tabular-nums">{r.kwp.toFixed(1)}</TableCell>
+                        <TableCell className="py-1.5 text-right font-semibold tabular-nums">{fmtBRL(r.valor)}</TableCell>
+                        <TableCell className="py-1.5 text-right tabular-nums text-primary">{part.toFixed(1)}%</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        </div>
+
+        {/* Linha 5 — Performance detalhada por consultor */}
+        <Card className="mt-4 p-4">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Users className="h-4 w-4 text-primary" /> Performance por consultor</div>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-8 text-[10px] uppercase">#</TableHead>
+                <TableHead className="h-8 text-[10px] uppercase">Consultor</TableHead>
+                <TableHead className="h-8 text-center text-[10px] uppercase">Contratos</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">Faturamento</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">Ticket</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">kWp</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">Parâm. R$/kWp</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">Conv.</TableHead>
+                <TableHead className="h-8 text-right text-[10px] uppercase">Meta</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {perfVendedor.map((v, i) => (
+                <TableRow key={v.nome} className="text-xs">
+                  <TableCell className="py-1.5 font-bold text-primary">{i + 1}</TableCell>
+                  <TableCell className="py-1.5 font-medium">{v.nome}</TableCell>
+                  <TableCell className="py-1.5 text-center tabular-nums">{v.qtd}</TableCell>
+                  <TableCell className="py-1.5 text-right font-semibold tabular-nums">{fmtBRL(v.valor)}</TableCell>
+                  <TableCell className="py-1.5 text-right tabular-nums">{fmtBRL(v.ticket)}</TableCell>
+                  <TableCell className="py-1.5 text-right tabular-nums">{v.kwp.toFixed(1)}</TableCell>
+                  <TableCell className="py-1.5 text-right tabular-nums">{fmtBRL(v.parametro)}</TableCell>
+                  <TableCell className="py-1.5 text-right tabular-nums">{v.conversao}%</TableCell>
+                  <TableCell className={`py-1.5 text-right tabular-nums font-semibold ${v.metaPct >= 100 ? "text-success" : v.metaPct >= 70 ? "text-warning" : "text-destructive"}`}>
+                    {v.metaPct.toFixed(0)}%
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      </section>
+
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Propostas (mês a mês)</div>
           <div className="mt-1 flex items-baseline gap-2"><div className="text-2xl font-bold text-primary">{totalPropostas}</div><div className="text-xs text-muted-foreground">{fmtBRL(valorPropostas)}</div></div>

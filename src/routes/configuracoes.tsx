@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  MODULES, ACTIONS, type ModuleKey, type ActionKey, type Perfil, type Usuario,
+  MODULES, type ModuleKey, type ActionKey, type Perfil, type Usuario,
   type PermissaoModulo, type PermLevel, PERM_LEVELS,
   usePerfis, useUsuarios, useUsuarioAtual, upsertPerfil, removePerfil, novoPerfilId,
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,

@@ -1208,10 +1208,11 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
+  { key: "opcoes",     label: "Opções",          align: "center", defaultWidth: 90 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
@@ -1225,9 +1226,9 @@ const TABELA_COLS: TabelaColDef[] = [
   { key: "status",     label: "Status",          defaultWidth: 130 },
   { key: "dias",       label: "Dias",            defaultWidth: 80 },
 ];
-const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
-const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
-const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden";
+const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v2";
+const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v2";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({

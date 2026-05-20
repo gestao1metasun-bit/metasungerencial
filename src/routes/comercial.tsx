@@ -1564,7 +1564,7 @@ function DashboardComercial({
   const vendasPorRegiao = useMemo(() => {
     const map = new Map<string, { qtd: number; valor: number; kwp: number }>();
     assinados.forEach((c) => {
-      const k = c.uf || c.cidade || "—";
+      const k = c.clienteFull?.uf || c.clienteFull?.cidade || "—";
       const cur = map.get(k) ?? { qtd: 0, valor: 0, kwp: 0 };
       map.set(k, { qtd: cur.qtd + 1, valor: cur.valor + c.valor, kwp: cur.kwp + (Number(c.kwp) || 0) });
     });

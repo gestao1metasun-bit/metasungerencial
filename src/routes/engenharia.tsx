@@ -243,7 +243,7 @@ function DashboardEng({
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
-        <StatCard label="Obras ativas" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
+        <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
         <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />
         <StatCard label="Aguardando" value={aguard.length} hint={`${aguard.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Clock} tone="warning" onView={() => setOpenModal("aguard")} />
         <StatCard label="Em projeto" value={projeto.length} hint={`${projeto.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="info" onView={() => setOpenModal("projeto")} />

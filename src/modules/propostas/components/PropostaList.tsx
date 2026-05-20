@@ -588,6 +588,18 @@ function useKanbanState(leads: Lead[]) {
           if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
           continue;
         }
+        // Status CANCELADA → sempre na coluna "Cancelados".
+        if (l.status === "CANCELADA" && ativosIds.has("col-cancelados")) {
+          if (next[l.key] !== "col-cancelados") { next[l.key] = "col-cancelados"; mudou = true; }
+          continue;
+        }
+        // Sair de "Cancelados" se a proposta foi reativada.
+        if (next[l.key] === "col-cancelados" && l.status !== "CANCELADA") {
+          const padrao = colPadraoPorStatus(l.status);
+          next[l.key] = ativosIds.has(padrao) ? padrao : "col-rascunho";
+          mudou = true;
+          continue;
+        }
         if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
           const padrao = colPadraoPorStatus(l.status);
           next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && c.id !== COL_CONTRATO_ID)?.id ?? "col-rascunho");

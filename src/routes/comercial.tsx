@@ -577,6 +577,9 @@ function ContratosTab({
 
   const [aberto, setAberto] = useState<Contrato | null>(null);
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
+  // Contrato "montado" exibido em pré-visualização ANTES da geração efetiva.
+  // Quando o usuário confirma, persiste no store; se voltar, reabre o editor.
+  const [previewGeracao, setPreviewGeracao] = useState<Contrato | null>(null);
   const [gerarAssinado, setGerarAssinado] = useState<Contrato | null>(null);
   const [dataAssinaturaInput, setDataAssinaturaInput] = useState<string>(() => new Date().toISOString().slice(0, 10));
 

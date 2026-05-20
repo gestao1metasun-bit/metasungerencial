@@ -55,8 +55,9 @@ import {
   cancelarContrato, reativarContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
-import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
+import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -712,7 +713,7 @@ function ContratosTab({
                   <TableCell>
                     <ActionsMenu label={c.id}>
                       <DropdownMenuItem onSelect={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
-                        <PenLine className="mr-2 h-4 w-4" /> Gerar Assinado
+                        <PenLine className="mr-2 h-4 w-4" /> Assinar Contrato
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => setImprimir(c)}>
                         <Printer className="mr-2 h-4 w-4" /> Imprimir
@@ -779,7 +780,7 @@ function ContratosTab({
       <Dialog open={!!gerarAssinado} onOpenChange={(o) => { if (!o) setGerarAssinado(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Gerar contrato assinado {gerarAssinado?.id}</DialogTitle>
+            <DialogTitle>Assinar contrato {gerarAssinado?.id}</DialogTitle>
             <DialogDescription className="text-xs">
               Informe a data em que o contrato foi assinado pelo cliente. Após confirmar, o contrato será movido para a aba <strong>Contrato Assinado</strong>.
             </DialogDescription>
@@ -986,6 +987,52 @@ function RedigirContratoDialog({
   }
   function rmClausula(id: string) { setClausulas(clausulas.filter((c) => c.id !== id)); }
 
+  // === Autocomplete de CLIENTE pelo CPF/CNPJ ===
+  const allClientes = useClientesFull();
+  const [clienteVincId, setClienteVincId] = useState<string | null>(null);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const docDigits = doc.replace(/\D/g, "");
+  const sugestoesClientes = useMemo(() => {
+    if (docDigits.length < 3) return [];
+    return allClientes
+      .filter((c) => c.doc.replace(/\D/g, "").startsWith(docDigits))
+      .slice(0, 8);
+  }, [allClientes, docDigits]);
+
+  function selecionarCliente(c: ClienteRecord) {
+    setClienteVincId(c.id);
+    setNome(upper(c.nome));
+    setDoc(maskDoc(c.doc));
+    setTipoPessoa(onlyDigits(c.doc).length === 14 ? "PJ" : "PF");
+    setTelefone(maskTel(c.telefone || ""));
+    setEmail(c.email ?? "");
+    setCep(c.cep || "");
+    setRua(c.rua || "");
+    setNumero(c.numero || "");
+    setComplemento(c.complemento || "");
+    setBairro(c.bairro || "");
+    setCidade(c.cidade || "");
+    setUf(c.uf || "");
+    setShowSugestoes(false);
+    toast.success(`Cliente vinculado: ${c.nome}. Endereço e telefone podem ser editados.`);
+  }
+
+  // === Preview do texto ORIGINAL da cláusula ao substituir ===
+  const baseClausulasMemo = useMemo(() => {
+    try { return clausulasBase(contrato as any); } catch { return []; }
+  }, [contrato]);
+  function textoOriginalDe(ref: string): string | null {
+    if (!ref) return null;
+    const numRaiz = ref.split(".")[0];
+    const grupo = baseClausulasMemo.find((x) => x.numero === numRaiz);
+    if (!grupo) return null;
+    const found = grupo.paragrafos.find((p) => {
+      const t = p.replace(/\*\*/g, "").trim();
+      return t.startsWith(ref + " ") || t.startsWith(ref + ".") || t.startsWith(ref + "\t");
+    });
+    return found ?? null;
+  }
+
   function fmtCep(v: string) {
     const d = v.replace(/\D/g, "").slice(0, 8);
     return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
@@ -1056,6 +1103,23 @@ function RedigirContratoDialog({
         ? `Misto (${formas.map((f) => f.tipo).join(" + ")})`
         : (formas[0]?.tipo === "Financiamento" && formas[0]?.banco ? `Financiamento ${formas[0].banco}` : (formas[0]?.tipo ?? pagamentoTipo)),
     });
+    // Se o cliente foi vinculado, atualiza endereço/telefone no cadastro
+    // sem criar duplicata. Caso contrário, mantém apenas no contrato.
+    if (clienteVincId) {
+      try {
+        updateClienteFull(clienteVincId, {
+          nome: clienteFull.nome,
+          telefone: clienteFull.telefone,
+          cep: clienteFull.cep,
+          rua: clienteFull.rua,
+          numero: clienteFull.numero,
+          complemento: clienteFull.complemento,
+          bairro: clienteFull.bairro,
+          cidade: clienteFull.cidade,
+          uf: clienteFull.uf,
+        });
+      } catch { /* segue a geração mesmo se a atualização falhar */ }
+    }
   }
 
   return (
@@ -1090,10 +1154,38 @@ function RedigirContratoDialog({
                   <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
                   <Input className="mt-1.5" value={nome} onChange={(e) => setNome(upper(e.target.value))} />
                 </div>
-                <div>
+                <div className="relative">
                   <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} *</Label>
-                  <Input className="mt-1.5" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))}
-                    placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} inputMode="numeric" />
+                  <Input
+                    className="mt-1.5"
+                    value={doc}
+                    onChange={(e) => { setDoc(maskDoc(e.target.value)); setShowSugestoes(true); setClienteVincId(null); }}
+                    onFocus={() => setShowSugestoes(true)}
+                    onBlur={() => setTimeout(() => setShowSugestoes(false), 180)}
+                    placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                    inputMode="numeric"
+                  />
+                  {clienteVincId && (
+                    <p className="mt-1 text-[11px] text-success">✓ Vinculado a cliente cadastrado — sem duplicar registro.</p>
+                  )}
+                  {showSugestoes && sugestoesClientes.length > 0 && !clienteVincId && (
+                    <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md max-h-56 overflow-y-auto">
+                      <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                        Clientes cadastrados
+                      </div>
+                      {sugestoesClientes.map((c) => (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onMouseDown={(e) => { e.preventDefault(); selecionarCliente(c); }}
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-accent border-b last:border-b-0"
+                        >
+                          <div className="font-semibold">{c.nome}</div>
+                          <div className="text-muted-foreground">{c.doc} · {c.cidade}/{c.uf}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -1196,7 +1288,7 @@ function RedigirContratoDialog({
                               <SelectItem value="entrada">Entrada (assinatura)</SelectItem>
                               <SelectItem value="ato">No ato</SelectItem>
                               <SelectItem value="entrega-materiais">Na entrega do material</SelectItem>
-                              <SelectItem value="pos-instalacao">Após instalação</SelectItem>
+                              <SelectItem value="pos-instalacao">Após conclusão do projeto</SelectItem>
                               <SelectItem value="conforme-cronograma">Conforme cronograma</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1265,7 +1357,7 @@ function RedigirContratoDialog({
 
                       <div>
                         <Label className="text-xs">Observação desta forma (opcional)</Label>
-                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: a partir de 30 dias após a vistoria" />
+                        <Input className="mt-1.5" value={f.obs ?? ""} onChange={(e) => updForma(f.id, { obs: e.target.value })} placeholder="Ex.: iniciando após a conclusão do projeto" />
                       </div>
 
                       {f.parcelas > 1 && (() => {
@@ -1277,9 +1369,10 @@ function RedigirContratoDialog({
                           "entrada": "assinatura",
                           "ato": "ato",
                           "entrega-materiais": "entrega do material",
-                          "pos-instalacao": "instalação",
+                          "pos-instalacao": "conclusão do projeto",
                           "conforme-cronograma": "cronograma",
                         } as Record<string, string>)[f.momento] ?? "início";
+                        const isPosInst = f.momento === "pos-instalacao";
                         return (
                           <div className="rounded-md border bg-muted/20 p-2 text-[11px]">
                             <div className="font-semibold uppercase tracking-wide text-muted-foreground mb-1">
@@ -1302,7 +1395,7 @@ function RedigirContratoDialog({
                                 {Array.from({ length: f.parcelas }).map((_, i) => (
                                   <tr key={i} className="border-t border-border/40">
                                     <td className="py-0.5 pr-2">{i + 1}/{f.parcelas}</td>
-                                    <td className="py-0.5 pr-2">{primeiro + i * intervalo} dias após {momentoLabel}</td>
+                                    <td className="py-0.5 pr-2">{isPosInst ? "Iniciando após a conclusão do projeto" : `${primeiro + i * intervalo} dias após ${momentoLabel}`}</td>
                                     <td className="py-0.5 text-right font-medium">{fmtBRL(valorParcela)}</td>
                                   </tr>
                                 ))}
@@ -1361,8 +1454,30 @@ function RedigirContratoDialog({
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => rmClausula(c.id)}>Remover</Button>
                   </div>
+                  {c.acao === "substituir" && (() => {
+                    const orig = textoOriginalDe(c.referencia);
+                    return orig ? (
+                      <div className="rounded-md border bg-muted/40 p-2 text-[11px]">
+                        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Como está hoje (cláusula {c.referencia})
+                        </div>
+                        <div className="whitespace-pre-line text-foreground/80">{orig.replace(/\*\*/g, "")}</div>
+                      </div>
+                    ) : (
+                      <div className="rounded-md border border-dashed bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                        Referência <strong>{c.referencia || "—"}</strong> não encontrada no contrato base.
+                      </div>
+                    );
+                  })()}
                   {c.acao !== "remover" && (
-                    <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => updClausula(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                    <div>
+                      {c.acao === "substituir" && (
+                        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Como vai ficar
+                        </div>
+                      )}
+                      <Textarea rows={3} value={c.texto ?? ""} onChange={(e) => updClausula(c.id, { texto: e.target.value })} placeholder="Texto da cláusula..." />
+                    </div>
                   )}
                 </div>
               ))}

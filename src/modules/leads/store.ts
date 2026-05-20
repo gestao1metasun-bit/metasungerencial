@@ -83,6 +83,19 @@ export function findLeadByDoc(doc: string): Lead | undefined {
   return read().find((l) => (l.doc ?? "").replace(/\D/g, "") === d);
 }
 
+/** Procura lead com mesmo telefone criado nos últimos `dias` (default 90). */
+export function findLeadByTelefoneRecent(telefone: string, dias = 90): Lead | undefined {
+  const d = (telefone ?? "").replace(/\D/g, "");
+  if (!d) return undefined;
+  const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
+  return read().find((l) => {
+    const td = (l.telefone ?? "").replace(/\D/g, "");
+    if (td !== d) return false;
+    const t = new Date(l.criadoEm).getTime();
+    return Number.isFinite(t) && t >= limite;
+  });
+}
+
 export function criarLead(input: NovoLeadInput): Lead {
   const now = new Date().toISOString();
   const lead: Lead = {

@@ -10,35 +10,35 @@ type TableProps = React.HTMLAttributes<HTMLTableElement> & {
   disableColumnSettings?: boolean;
 };
 
-function useAutoTableId(explicit?: string) {
-  const [id, setId] = React.useState<string>(explicit ?? "");
-  React.useEffect(() => {
-    if (explicit) {
-      setId(explicit);
-      return;
-    }
-    if (typeof window === "undefined") return;
-    const path = window.location.pathname.replace(/\/$/, "") || "/";
-    const existing = document.querySelectorAll(`[data-et-auto-path="${path}"]`).length;
-    setId(`${path}::t${existing}`);
-  }, [explicit]);
-  return id;
-}
-
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, tableId, disableColumnSettings, ...props }, ref) => {
-    const autoId = useAutoTableId(tableId);
+  ({ className, tableId, disableColumnSettings, ...props }, forwardedRef) => {
+    const innerRef = React.useRef<HTMLTableElement | null>(null);
+    const setRefs = (el: HTMLTableElement | null) => {
+      innerRef.current = el;
+      if (typeof forwardedRef === "function") forwardedRef(el);
+      else if (forwardedRef) (forwardedRef as React.MutableRefObject<HTMLTableElement | null>).current = el;
+    };
+    const [autoId, setAutoId] = React.useState<string>(tableId ?? "");
+
+    React.useLayoutEffect(() => {
+      if (tableId) {
+        setAutoId(tableId);
+        return;
+      }
+      if (typeof window === "undefined" || !innerRef.current) return;
+      const path = window.location.pathname.replace(/\/$/, "") || "/";
+      const all = Array.from(document.querySelectorAll("table"));
+      const idx = all.indexOf(innerRef.current);
+      setAutoId(`${path}::t${idx >= 0 ? idx : 0}`);
+    });
+
     const inner = (
       <div className="relative w-full overflow-auto">
-        <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+        <table ref={setRefs} className={cn("w-full caption-bottom text-sm", className)} {...props} />
       </div>
     );
     if (disableColumnSettings || !autoId) return inner;
-    return (
-      <div data-et-auto-path={typeof window !== "undefined" ? window.location.pathname : ""}>
-        <EnhancedTable tableId={autoId}>{inner}</EnhancedTable>
-      </div>
-    );
+    return <EnhancedTable tableId={autoId}>{inner}</EnhancedTable>;
   },
 );
 Table.displayName = "Table";

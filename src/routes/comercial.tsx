@@ -1416,16 +1416,74 @@ function DashboardComercial({
   contratos: contratosProp, setContratos, vendedoresList, volume: volumeProp,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[]; volume: VolumeMes[] }) {
   const [period, setPeriod] = useState<PeriodKey>("all");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(undefined);
+  const [customTo, setCustomTo] = useState<Date | undefined>(undefined);
 
   const periodRange = useMemo(() => {
     const now = new Date();
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    if (period === "mes") return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: end };
-    if (period === "3m") return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: end };
-    if (period === "6m") return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: end };
-    if (period === "ano") return { from: new Date(now.getFullYear(), 0, 1), to: end };
-    return { from: null as Date | null, to: null as Date | null };
-  }, [period]);
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const today = startOfDay(now);
+
+    switch (period) {
+      case "hoje":
+        return { from: today, to: endOfDay(now) };
+      case "ontem": {
+        const y = new Date(now); y.setDate(now.getDate() - 1);
+        return { from: startOfDay(y), to: endOfDay(y) };
+      }
+      case "7d": {
+        const f = new Date(now); f.setDate(now.getDate() - 6);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "15d": {
+        const f = new Date(now); f.setDate(now.getDate() - 14);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "30d": {
+        const f = new Date(now); f.setDate(now.getDate() - 29);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "mes":
+        return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: endOfMonth };
+      case "mes_ant":
+        return {
+          from: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+          to: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59),
+        };
+      case "3m":
+        return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: endOfMonth };
+      case "6m":
+        return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: endOfMonth };
+      case "trimestre": {
+        const qStart = Math.floor(now.getMonth() / 3) * 3;
+        return {
+          from: new Date(now.getFullYear(), qStart, 1),
+          to: new Date(now.getFullYear(), qStart + 3, 0, 23, 59, 59),
+        };
+      }
+      case "semestre": {
+        const sStart = now.getMonth() < 6 ? 0 : 6;
+        return {
+          from: new Date(now.getFullYear(), sStart, 1),
+          to: new Date(now.getFullYear(), sStart + 6, 0, 23, 59, 59),
+        };
+      }
+      case "ano":
+        return { from: new Date(now.getFullYear(), 0, 1), to: endOfMonth };
+      case "ano_ant":
+        return {
+          from: new Date(now.getFullYear() - 1, 0, 1),
+          to: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59),
+        };
+      case "custom":
+        if (customFrom && customTo) return { from: startOfDay(customFrom), to: endOfDay(customTo) };
+        return { from: null as Date | null, to: null as Date | null };
+      default:
+        return { from: null as Date | null, to: null as Date | null };
+    }
+  }, [period, customFrom, customTo]);
 
   const contratos = useMemo(() => {
     if (!periodRange.from || !periodRange.to) return contratosProp;

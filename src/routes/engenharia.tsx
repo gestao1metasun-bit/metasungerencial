@@ -784,33 +784,31 @@ function recalcPrevisto(inicio: string, equipe: string, modulos: number): string
  * - AGUARDANDO: continua a fila a partir do último previsto de EXECUTANDO (+1),
  *   ou mantém o próprio início da primeira se não houver EXECUTANDO.
  */
-function chainSchedule(obras: Obra[], equipe: string, _status?: string): Obra[] {
+function chainSchedule(obras: Obra[], equipe: string, anchorId?: string): Obra[] {
   if (!equipe) return obras;
   const patches = new Map<string, Partial<Obra>>();
-  const queue = (st: string) =>
-    obras.filter((o) => o.equipe === equipe && o.status === st).sort((a, b) => a.ordem - b.ordem);
+  const exec = obras.filter((o) => o.equipe === equipe && o.status === "Executando instalação").sort((a, b) => a.ordem - b.ordem);
+  const aguard = obras.filter((o) => o.equipe === equipe && o.status === "Aguardando instalação").sort((a, b) => a.ordem - b.ordem);
+  const seq = [...exec, ...aguard];
+  if (seq.length === 0) return obras;
 
-  const chain = (list: Obra[], startPrev: string): string => {
-    let prevPrev = startPrev;
-    for (let i = 0; i < list.length; i++) {
-      const cur = list[i];
-      let newInicio = cur.inicio;
-      if (i === 0) {
-        if (startPrev) newInicio = addDaysISO(startPrev, 1);
-      } else if (prevPrev) {
-        newInicio = addDaysISO(prevPrev, 1);
-      }
-      const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
-      if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
-        patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
-      }
-      prevPrev = newPrev;
+  // Item-âncora: seu início é preservado; itens abaixo re-encadeiam a partir dele.
+  // Sem âncora explícita, o primeiro da fila é a âncora natural.
+  const anchorIdx = anchorId ? Math.max(0, seq.findIndex((o) => o.id === anchorId)) : 0;
+
+  let prevPrev = "";
+  for (let i = 0; i < seq.length; i++) {
+    const cur = seq[i];
+    let newInicio = cur.inicio;
+    if (i > anchorIdx && prevPrev) {
+      newInicio = addDaysISO(prevPrev, 1);
     }
-    return prevPrev;
-  };
-
-  const lastExecPrev = chain(queue("Executando instalação"), "");
-  chain(queue("Aguardando instalação"), lastExecPrev);
+    const newPrev = recalcPrevisto(newInicio, cur.equipe, cur.modulos);
+    if (newInicio !== cur.inicio || newPrev !== cur.previsto) {
+      patches.set(cur.id, { inicio: newInicio, previsto: newPrev });
+    }
+    prevPrev = newPrev;
+  }
 
   if (patches.size === 0) return obras;
   return obras.map((o) => patches.has(o.id) ? { ...o, ...patches.get(o.id)! } : o);
@@ -835,7 +833,7 @@ function CronogramaTab({
       if (o.id === swapWith.id) return { ...o, ordem: target.ordem };
       return o;
     });
-    setObras(chainSchedule(swapped, target.equipe, target.status));
+    setObras(chainSchedule(swapped, target.equipe));
   };
 
   const updateInicio = (id: string, novoInicio: string) => {
@@ -845,8 +843,9 @@ function CronogramaTab({
       return { ...o, inicio: novoInicio, previsto };
     });
     const target = next.find((o) => o.id === id);
-    if (!target) { setObras(next); return; }
-    setObras(chainSchedule(next, target.equipe, target.status));
+    if (!target?.equipe) { setObras(next); return; }
+    // Âncora = item editado; itens abaixo re-encadeiam a partir dele.
+    setObras(chainSchedule(next, target.equipe, id));
   };
 
   return (

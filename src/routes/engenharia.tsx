@@ -1721,7 +1721,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[180px]">Ações</TableHead>
+              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -1740,9 +1740,11 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {cards.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                      <SquarePen className="h-4 w-4" /> Editar
-                    </Button>
+                    <ActionsMenu label={p.id}>
+                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
+                    </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>

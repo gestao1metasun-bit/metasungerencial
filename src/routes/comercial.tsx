@@ -538,6 +538,7 @@ function ContratosTab({
         <ModeloBaseContratoDialog />
       </div>
 
+      {showGeracao && (
       <Card className="p-5">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -596,7 +597,9 @@ function ContratosTab({
           </Table>
         )}
       </Card>
+      )}
 
+      {showAssinatura && (
       <Card className="p-5">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <FileText className="h-4 w-4 text-info" /> Contratos redigidos · aguardando assinatura
@@ -645,6 +648,7 @@ function ContratosTab({
           </Table>
         )}
       </Card>
+      )}
 
       {aberto && (
         <RedigirContratoDialog

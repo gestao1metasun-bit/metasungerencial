@@ -801,85 +801,86 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
       <div className="overflow-hidden rounded-md border border-border">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Versão</TableHead>
-              <TableHead>Número</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Contrato</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {propostas.map((p) => {
-              const canonical = mapStatusLegacyToCanonical(p.status);
-              const valor = calcPrecificacao(p).valorFinal;
-              const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
-              const contrato = contratos.find((c) => c.propostaId === p.id);
-              return (
-                <TableRow key={p.id}>
-                  <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{p.numero}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`${statusClass(canonical)} text-[10px]`}>
-                      {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {contrato ? (
-                      <div className="flex flex-col">
-                        <span className="font-mono">{contrato.id}</span>
-                        <span className="text-[10px] text-muted-foreground">{contrato.status}</span>
-                      </div>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex flex-wrap justify-end gap-1">
-                      <Button size="sm" variant="ghost" disabled={!podeAprovar}
-                        onClick={() => setAcao({ proposta: p, tipo: "aprovar" })}>
-                        Aprovar
-                      </Button>
-                      <Button size="sm" variant="ghost" disabled={!podeAprovar}
-                        onClick={() => setAcao({ proposta: p, tipo: "recusar" })}>
-                        Não aprovar
-                      </Button>
-                      <Button size="sm" variant="ghost"
-                        disabled={p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato}
-                        title={contrato ? "Existe contrato vinculado — cancele o contrato antes." : ""}
-                        onClick={() => setAcao({ proposta: p, tipo: "cancelar" })}>
-                        Cancelar
-                      </Button>
-                      {contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado && (
-                        <Button size="sm" variant="outline"
-                          onClick={() => setAnexarAlvo(contrato.id)}>
-                          Anexar assinado
-                        </Button>
-                      )}
-                      {contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado && (
-                        <Button size="sm" variant="outline"
-                          onClick={() => {
+              <TableRow>
+                <TableHead className="w-[80px]">Opções</TableHead>
+                <TableHead className="w-16">Versão</TableHead>
+                <TableHead>Número</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Contrato</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {propostas.map((p) => {
+                const canonical = mapStatusLegacyToCanonical(p.status);
+                const valor = calcPrecificacao(p).valorFinal;
+                const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
+                const contrato = contratos.find((c) => c.propostaId === p.id);
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <ActionsMenu label={p.numero}>
+                        <DropdownMenuItem disabled={!podeAprovar} onSelect={() => setAcao({ proposta: p, tipo: "aprovar" })}>
+                          Aprovar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={!podeAprovar} onSelect={() => setAcao({ proposta: p, tipo: "recusar" })}>
+                          Não aprovar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato}
+                          onSelect={() => setAcao({ proposta: p, tipo: "cancelar" })}
+                        >
+                          Cancelar proposta
+                        </DropdownMenuItem>
+                        {contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => setAnexarAlvo(contrato.id)}>
+                              Anexar assinado
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado && (
+                          <DropdownMenuItem onSelect={() => {
                             const r = enviarContratoParaEngenharia(contrato.id, usuario);
                             if (!r.ok) toast.error(r.motivo);
                             else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
                           }}>
-                          Enviar p/ engenharia
-                        </Button>
-                      )}
-                      {contrato && !contrato.cancelado && (
-                        <Button size="sm" variant="ghost" className="text-destructive"
-                          onClick={() => setCancelarContratoAlvo(contrato.id)}>
-                          Cancelar contrato
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                            Enviar p/ engenharia
+                          </DropdownMenuItem>
+                        )}
+                        {contrato && !contrato.cancelado && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onSelect={() => setCancelarContratoAlvo(contrato.id)}>
+                              Cancelar contrato
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </ActionsMenu>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{p.numero}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`${statusClass(canonical)} text-[10px]`}>
+                        {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {contrato ? (
+                        <div className="flex flex-col">
+                          <span className="font-mono">{contrato.id}</span>
+                          <span className="text-[10px] text-muted-foreground">{contrato.status}</span>
+                        </div>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
 
       {acao && acao.tipo === "aprovar" && (
         <AprovarPropostaDialog

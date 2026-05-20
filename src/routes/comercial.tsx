@@ -1367,7 +1367,7 @@ function RedigirContratoDialog({
         <DialogFooter className="border-t bg-muted/30 px-6 py-3">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={salvar} className="gap-1">
-            <CheckCircle2 className="h-4 w-4" /> Gerar contrato redigido
+            <Eye className="h-4 w-4" /> Pré-visualizar contrato
           </Button>
         </DialogFooter>
       </DialogContent>

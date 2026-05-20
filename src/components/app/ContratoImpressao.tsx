@@ -1,13 +1,30 @@
 // ContratoImpressao — renderiza o contrato completo (template Meta Sun) com
 // cláusulas dinâmicas, dados do cliente, forma de pagamento e personalizações.
-import { Printer } from "lucide-react";
+// Suporta modo "pré-visualização" — exibe o contrato montado ANTES da geração
+// efetiva, com botões "Voltar para edição" e "Confirmar geração".
+import { Printer, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { fmtBRL } from "@/lib/mock-data";
 import type { ContratoFull } from "@/lib/contratos-store";
 import { clausulasBase, aplicarCustom, CONTRATADA } from "@/lib/contrato-template";
 
-export function ContratoImpressao({ contrato, onClose }: { contrato: ContratoFull; onClose: () => void }) {
+export function ContratoImpressao({
+  contrato,
+  onClose,
+  preview,
+  onConfirm,
+  onBack,
+}: {
+  contrato: ContratoFull;
+  onClose: () => void;
+  /** Quando true, mostra o contrato como "pré-visualização" antes da geração. */
+  preview?: boolean;
+  /** Disparado ao clicar em "Confirmar geração" (apenas em modo preview). */
+  onConfirm?: () => void;
+  /** Disparado ao clicar em "Voltar para edição" (apenas em modo preview). */
+  onBack?: () => void;
+}) {
   const cf = contrato.clienteFull;
   const clausulas = aplicarCustom(clausulasBase(contrato), contrato.clausulasCustom);
   const isPJ = (cf?.doc ?? "").replace(/\D/g, "").length === 14;

@@ -106,6 +106,22 @@ export function cancelarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} cancelada.`);
 }
 
+/** Reativa proposta cancelada → volta para GERADA, sai do card "Cancelados". */
+export function reativarProposta(p: PropostaFV) {
+  if (p.status !== "CANCELADA") { toast.info("Apenas propostas canceladas podem ser reativadas."); return; }
+  storeReativarProposta(p.id, p.criadoPor || "Operador");
+  toast.success(`Proposta ${p.numero} reativada.`);
+}
+
+/** Extrai apenas o número (kW) de um ID de inversor padrão.
+ *  Ex.: "INV-STD-37_5" → "37,5"; "INV-STD-10" → "10". Outros valores: retorna como veio. */
+function fmtInversorNumero(idOrText: string): string {
+  if (!idOrText) return "";
+  const m = /INV-STD-(.+)$/i.exec(idOrText);
+  if (m) return m[1].replace("_", ",");
+  return idOrText;
+}
+
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas
  *  e cria um Contrato em status "Pendente" no Comercial → Cadastrar Contrato. */

@@ -1456,7 +1456,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
 
       {liberados.map((c) => {
-        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia);
+        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia && !p.aprovado);
         const total = projetos.length;
         if (total === 0) return null;
         const pendentes = 0;

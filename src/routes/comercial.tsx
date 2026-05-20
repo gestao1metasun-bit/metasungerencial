@@ -1378,9 +1378,49 @@ function RedigirContratoDialog({
 
 /* ---------------- DASHBOARD ---------------- */
 
+type PeriodKey = "mes" | "3m" | "6m" | "ano" | "all";
+const PERIOD_LABELS: Record<PeriodKey, string> = {
+  mes: "Mês atual",
+  "3m": "Últimos 3 meses",
+  "6m": "Últimos 6 meses",
+  ano: "Ano atual",
+  all: "Todo o histórico",
+};
+
 function DashboardComercial({
-  contratos, setContratos, vendedoresList, volume,
+  contratos: contratosProp, setContratos, vendedoresList, volume: volumeProp,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[]; volume: VolumeMes[] }) {
+  const [period, setPeriod] = useState<PeriodKey>("all");
+
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    if (period === "mes") return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: end };
+    if (period === "3m") return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: end };
+    if (period === "6m") return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: end };
+    if (period === "ano") return { from: new Date(now.getFullYear(), 0, 1), to: end };
+    return { from: null as Date | null, to: null as Date | null };
+  }, [period]);
+
+  const contratos = useMemo(() => {
+    if (!periodRange.from || !periodRange.to) return contratosProp;
+    return contratosProp.filter((c) => {
+      const d = new Date(c.dataAssinatura ?? c.data);
+      return d >= periodRange.from! && d <= periodRange.to!;
+    });
+  }, [contratosProp, periodRange]);
+
+  const volume = useMemo(() => {
+    if (!periodRange.from || !periodRange.to) return volumeProp;
+    const months = new Set<string>();
+    const cur = new Date(periodRange.from);
+    while (cur <= periodRange.to) {
+      months.add(MESES[cur.getMonth()]);
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    return volumeProp.filter((v) => months.has(v.mes));
+  }, [volumeProp, periodRange]);
+
   const total = contratos.length;
   const valorTotal = contratos.reduce((s, c) => s + c.valor, 0);
   const assinados = contratos.filter((c) => c.status === "Assinado");
@@ -1419,9 +1459,10 @@ function DashboardComercial({
   const [openModal, setOpenModal] = useState<null | "gerados" | "assinados" | "pendentes" | "cancelados" | "valor" | "ticket">(null);
 
   const updateStatus = (id: string, status: string) => {
-    setContratos(contratos.map((c) => (c.id === id ? { ...c, status } : c)));
+    setContratos(contratosProp.map((c) => (c.id === id ? { ...c, status } : c)));
     toast.success(`${id} → ${status}`);
   };
+
 
   // KPIs adicionais essenciais
   const kwpTotal = assinados.reduce((s, c) => s + (Number(c.kwp) || 0), 0);
@@ -1448,7 +1489,33 @@ function DashboardComercial({
 
   return (
     <>
-      {/* KPIs comparativos */}
+      {/* Filtro de período */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 shadow-elegant">
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+            <SelectTrigger className="h-8 w-[200px] text-xs font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(PERIOD_LABELS) as PeriodKey[]).map((k) => (
+                <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {periodRange.from && periodRange.to && (
+            <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+              {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos no período</span>
+          <span className="h-3 w-px bg-border" />
+          <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+        </div>
+      </div>
+
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Propostas (mês a mês)</div>

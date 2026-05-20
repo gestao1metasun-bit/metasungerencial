@@ -203,7 +203,7 @@ function DashboardEng({
     ativas, exec, aguard, projeto, standby, fin,
   };
   const titles: Record<string, string> = {
-    ativas: "Obras ativas", exec: "Executando instalação", aguard: "Aguardando instalação",
+    ativas: "Gestão de projetos", exec: "Executando instalação", aguard: "Aguardando instalação",
     projeto: "Em projeto/elaboração", standby: "Standby", fin: "Finalizadas",
   };
 

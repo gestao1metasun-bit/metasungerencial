@@ -1335,11 +1335,11 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           <div>
             <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Para cada contrato aprovado, defina os projetos a executar. Cada projeto vai à Engenharia individualmente.
+              Cadastramento técnico da Engenharia. Ao aprovar um projeto, ele é movido para Obras Ativas.
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px]">
-              <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success tabular-nums">
-                <CheckCircle2 className="h-3 w-3" /> {enviadosGlob.length} projeto{enviadosGlob.length !== 1 ? "s" : ""} liberado{enviadosGlob.length !== 1 ? "s" : ""} para Engenharia
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-600 tabular-nums">
+                <Clock className="h-3 w-3" /> {pendentesGlob.length} pendente{pendentesGlob.length !== 1 ? "s" : ""} de aprovação
               </span>
             </div>
           </div>

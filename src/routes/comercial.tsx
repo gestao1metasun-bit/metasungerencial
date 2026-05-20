@@ -596,37 +596,38 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {redigidosFiltrados.map((c) => (
                 <TableRow key={c.id}>
+                  <TableCell>
+                    <ActionsMenu label={c.id}>
+                      <DropdownMenuItem onSelect={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
+                        <PenLine className="mr-2 h-4 w-4" /> Gerar Assinado
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setImprimir(c)}>
+                        <Printer className="mr-2 h-4 w-4" /> Imprimir
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setAberto(c)}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar dados
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => reabrirRedigido(c)}>
+                        <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                      </DropdownMenuItem>
+                    </ActionsMenu>
+                  </TableCell>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1.5">
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
-                        <Printer className="h-3.5 w-3.5" /> Imprimir
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setAberto(c)}>
-                        <SquarePen className="h-3.5 w-3.5" /> Editar dados
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => reabrirRedigido(c)}>
-                        <Undo2 className="h-3.5 w-3.5" /> Retornar
-                      </Button>
-                      <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
-                        <PenLine className="h-3.5 w-3.5" /> Gerar Assinado
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -580,7 +580,7 @@ function EditObraDialog({
   const equipeAllowed = isExecutando || isAguardando;
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
-  const realDatesEditable = adminMode;
+  const realDatesEditable = adminMode && isAdminMaster;
   const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {

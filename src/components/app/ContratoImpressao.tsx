@@ -41,7 +41,15 @@ export function ContratoImpressao({
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
         <DialogHeader className="no-print">
-          <DialogTitle>Contrato {contrato.id} — visualização</DialogTitle>
+          <DialogTitle>
+            {preview ? `Pré-visualização — contrato ${contrato.id}` : `Contrato ${contrato.id} — visualização`}
+          </DialogTitle>
+          {preview && (
+            <p className="text-xs text-muted-foreground">
+              Revise o contrato montado abaixo. Ele <b>ainda não foi gerado</b>. Volte para a edição se algo estiver errado,
+              ou confirme a geração para registrar o contrato redigido.
+            </p>
+          )}
         </DialogHeader>
 
         <style>{`

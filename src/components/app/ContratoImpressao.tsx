@@ -139,10 +139,26 @@ export function ContratoImpressao({
         </div>
 
         <DialogFooter className="no-print">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
-          <Button onClick={imprimir} className="gap-1.5">
-            <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
-          </Button>
+          {preview ? (
+            <>
+              <Button variant="outline" onClick={onBack ?? onClose} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" /> Voltar para edição
+              </Button>
+              <Button variant="outline" onClick={imprimir} className="gap-1.5">
+                <Printer className="h-4 w-4" /> Imprimir prévia
+              </Button>
+              <Button onClick={onConfirm} className="gap-1.5 bg-success text-success-foreground hover:bg-success/90">
+                <CheckCircle2 className="h-4 w-4" /> Confirmar geração
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>Fechar</Button>
+              <Button onClick={imprimir} className="gap-1.5">
+                <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

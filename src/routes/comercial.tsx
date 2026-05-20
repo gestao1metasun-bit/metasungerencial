@@ -2804,6 +2804,7 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
                 <AprovarEnviarDialog contrato={contrato} />
               </div>
             </div>
+            </fieldset>
           </TabsContent>
 
           <TabsContent value="cliente" className="mt-4">

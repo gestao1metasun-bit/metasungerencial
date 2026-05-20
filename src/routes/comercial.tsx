@@ -272,12 +272,21 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
   return (
     <TableRow>
-      <TableCell className="text-center">
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+      <TableCell>
         {anexoInput}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
-              <MoreVertical className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-full justify-between gap-2 border-primary/40 bg-primary/5 px-3 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+              title="Ações"
+            >
+              <span className="flex items-center gap-1.5">
+                <SquarePen className="h-3.5 w-3.5" /> Ações
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start" className="w-56">
@@ -306,7 +315,7 @@ function ContratoAssinadoRow({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
-              <SquarePen className="mr-2 h-4 w-4" /> Criar projetos
+              <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onImprimir(c)}>
               <Printer className="mr-2 h-4 w-4" /> Imprimir
@@ -316,9 +325,8 @@ function ContratoAssinadoRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
+        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>
-      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
       <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>

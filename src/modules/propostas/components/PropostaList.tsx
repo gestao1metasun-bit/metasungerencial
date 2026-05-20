@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
   Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
-  X, Check, Pencil, FilePlus2, MoreVertical, Ban,
+  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
-  aprovarPropostaDoLead, cancelarPropostaComMotivo,
+  aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
 } from "@/modules/propostas/store";
 import {
@@ -104,6 +104,22 @@ export function cancelarProposta(p: PropostaFV) {
   if (!motivo || !motivo.trim()) { toast.error("Informe o motivo do cancelamento."); return; }
   cancelarPropostaComMotivo(p.id, p.criadoPor || "Operador", motivo.trim());
   toast.success(`Proposta ${p.numero} cancelada.`);
+}
+
+/** Reativa proposta cancelada → volta para GERADA, sai do card "Cancelados". */
+export function reativarProposta(p: PropostaFV) {
+  if (p.status !== "CANCELADA") { toast.info("Apenas propostas canceladas podem ser reativadas."); return; }
+  storeReativarProposta(p.id, p.criadoPor || "Operador");
+  toast.success(`Proposta ${p.numero} reativada.`);
+}
+
+/** Extrai apenas o número (kW) de um ID de inversor padrão.
+ *  Ex.: "INV-STD-37_5" → "37,5"; "INV-STD-10" → "10". Outros valores: retorna como veio. */
+function fmtInversorNumero(idOrText: string): string {
+  if (!idOrText) return "";
+  const m = /INV-STD-(.+)$/i.exec(idOrText);
+  if (m) return m[1].replace("_", ",");
+  return idOrText;
 }
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
@@ -435,12 +451,12 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
     const emAberto = Math.max(0, arr.length - assinados);
     const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
-    // Agrupa duplicados como "2x INV-15"
+    // Agrupa duplicados como "2x 15"
     const invCount = new Map<string, number>();
     invList.forEach((id: string) => invCount.set(id, (invCount.get(id) ?? 0) + 1));
     const inversoresStr = invCount.size > 0
-      ? [...invCount.entries()].map(([id, n]) => (n > 1 ? `${n}x ${id}` : id)).join(" + ")
-      : (ultima.inversorMarca ?? "—");
+      ? [...invCount.entries()].map(([id, n]) => (n > 1 ? `${n}x ${fmtInversorNumero(id)}` : fmtInversorNumero(id))).join(" + ")
+      : (ultima.inversorMarca ? fmtInversorNumero(ultima.inversorMarca) : "—");
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -517,13 +533,17 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-negociacao", titulo: "Em negociação", ativo: true },
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
+  { id: "col-cancelados", titulo: "Cancelados", ativo: true },
   COL_CONTRATO,
 ];
 
-// Garante que a coluna fixa exista e seja sempre a última do array.
+// Garante que a coluna fixa exista e seja sempre a última, e que a coluna
+// "Cancelados" exista para receber propostas com status CANCELADA.
 function normalizeCols(cols: KCol[]): KCol[] {
   const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
-  return [...semFixa, { ...COL_CONTRATO }];
+  const temCanc = semFixa.some((c) => c.id === "col-cancelados");
+  const base = temCanc ? semFixa : [...semFixa, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
+  return [...base, { ...COL_CONTRATO }];
 }
 
 function colPadraoPorStatus(s: StatusProposta): string {
@@ -532,9 +552,9 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "GERADA":
     case "ENVIADA": return "col-enviada";
     case "APROVADA": return "col-aprovada";
+    case "CANCELADA": return "col-cancelados";
     case "RECUSADA":
-    case "VENCIDA":
-    case "CANCELADA": return "col-perdida";
+    case "VENCIDA": return "col-perdida";
     default: return "col-rascunho";
   }
 }
@@ -566,6 +586,18 @@ function useKanbanState(leads: Lead[]) {
       for (const l of leads) {
         if (l.bloqueado) {
           if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
+          continue;
+        }
+        // Status CANCELADA → sempre na coluna "Cancelados".
+        if (l.status === "CANCELADA" && ativosIds.has("col-cancelados")) {
+          if (next[l.key] !== "col-cancelados") { next[l.key] = "col-cancelados"; mudou = true; }
+          continue;
+        }
+        // Sair de "Cancelados" se a proposta foi reativada.
+        if (next[l.key] === "col-cancelados" && l.status !== "CANCELADA") {
+          const padrao = colPadraoPorStatus(l.status);
+          next[l.key] = ativosIds.has(padrao) ? padrao : "col-rascunho";
+          mudou = true;
           continue;
         }
         if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
@@ -780,6 +812,7 @@ function LeadDetail({
                     const podeEditar = ehRascunho && !lead.bloqueado;
                     const podeExcluir = ehRascunho && !lead.bloqueado;
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
+                    const podeReativar = p.status === "CANCELADA";
                     return (
                       <TableRow key={p.id}>
                         <TableCell>
@@ -790,6 +823,12 @@ function LeadDetail({
                             {podeEditar && (
                               <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
                                 <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
+                              </DropdownMenuItem>
+                            )}
+                            {podeReativar && (
+                              <DropdownMenuItem onSelect={() => reativarProposta(p)}>
+                                <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                                <span className="text-success">Reativar</span>
                               </DropdownMenuItem>
                             )}
                             {podeCancelar && (
@@ -1123,6 +1162,12 @@ function KanbanView({
                           <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
                             <Eye className="mr-2 h-4 w-4" /> Abrir lead
                           </DropdownMenuItem>
+                          {l.status === "CANCELADA" && (
+                            <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                              <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                              <span className="text-success">Reativar última proposta</span>
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onSelect={() => {
                               const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
@@ -1163,10 +1208,11 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
+  { key: "opcoes",     label: "Opções",          align: "center", defaultWidth: 90 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
@@ -1180,9 +1226,9 @@ const TABELA_COLS: TabelaColDef[] = [
   { key: "status",     label: "Status",          defaultWidth: 130 },
   { key: "dias",       label: "Dias",            defaultWidth: 80 },
 ];
-const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order";
-const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths";
-const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden";
+const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v2";
+const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v2";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
@@ -1282,6 +1328,37 @@ function TabelaView({
 
   const renderCell = (l: Lead, key: TabelaColKey) => {
     switch (key) {
+      case "opcoes": {
+        const podeReativar = l.status === "CANCELADA";
+        const podeCancelar = !l.bloqueado && l.status !== "CANCELADA" && l.status !== "APROVADA";
+        return (
+          <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+            <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
+              <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                <Eye className="mr-2 h-4 w-4" /> Abrir lead
+              </DropdownMenuItem>
+              {podeReativar && (
+                <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                  <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                  <span className="text-success">Reativar última proposta</span>
+                </DropdownMenuItem>
+              )}
+              {podeCancelar && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                    if (!p) { toast.info("Não há proposta cancelável."); return; }
+                    cancelarProposta(p);
+                  }}
+                >
+                  <Ban className="mr-2 h-4 w-4 text-destructive" />
+                  <span className="text-destructive">Cancelar última proposta</span>
+                </DropdownMenuItem>
+              )}
+            </ActionsMenu>
+          </div>
+        );
+      }
       case "cliente":
         return (
           <div className="flex items-center gap-2 min-w-0">
@@ -1311,6 +1388,7 @@ function TabelaView({
           colId === COL_CONTRATO_ID ? "default"
           : colId === "col-aprovada" ? "default"
           : colId === "col-perdida" ? "destructive"
+          : colId === "col-cancelados" ? "destructive"
           : colId === "col-rascunho" ? "outline"
           : "secondary";
         return <Badge variant={variant}>{titulo}</Badge>;

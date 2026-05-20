@@ -791,27 +791,65 @@ export function enviarContratoParaEngenharia(contratoId: string, usuario: string
   return { ok: true as const };
 }
 
-/** Cancela contrato — bloqueia se houver obra em andamento operacional. */
+/** Cancela contrato — não trava: sai de Engenharia e Financiamentos, mas pode ser reativado. */
 export function cancelarContrato(contratoId: string, motivo: string, usuario: string): { ok: boolean; motivo?: string } {
   const cur = read();
   const c = cur.find((x) => x.id === contratoId);
   if (!c) return { ok: false, motivo: "Contrato não encontrado." };
-  const emAndamento = (c.projetos ?? []).some(
-    (p) => p.enviadoEngenharia && p.status && !/projeto|aprovação/i.test(p.status),
-  );
-  if (emAndamento) {
-    return { ok: false, motivo: "Existe obra em andamento operacional. Encerre/retorne a obra antes de cancelar o contrato." };
-  }
   const old = c.status;
+  // Retira projetos da Engenharia (zera envio/aprovação) e limpa financiamento.
+  const projetos = (c.projetos ?? []).map((p) => ({
+    ...p,
+    enviadoEngenharia: false,
+    aprovado: false,
+    dataAprovacao: undefined,
+    usuarioAprovacao: undefined,
+  }));
   updateContratoAudit(contratoId, {
     status: CONTRATO_STATUS_LABEL.CANCELADO,
     cancelado: true,
     motivoCancelamento: motivo,
+    projetos,
+    possuiFinanciamento: false,
+    financiamentoBanco: undefined,
+    financiamentoValor: undefined,
+    financiamentoStatus: undefined,
+    financiamentoStatusLiberacao: undefined,
+    financiamentoLiberacao: undefined,
+    financiamentoPrevisao: undefined,
+    financiamentoEnvio: undefined,
   }, usuario);
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
     acao: "CANCELAMENTO", usuario, motivo,
     campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CANCELADO,
+    detalhe: "Contrato cancelado — saiu de Engenharia e Financiamentos. Pode ser reativado.",
+  });
+  return { ok: true };
+}
+
+/** Reativa um contrato cancelado — volta ao status anterior (Assinado se já tinha assinatura). */
+export function reativarContrato(contratoId: string, usuario: string): { ok: boolean; motivo?: string } {
+  const cur = read();
+  const c = cur.find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  if (!c.cancelado) return { ok: false, motivo: "Contrato não está cancelado." };
+  const novoStatus = c.dataAssinatura ? "Assinado" : (c.contratoRedigido ? "Pendente" : "Pendente");
+  updateContratoAudit(contratoId, {
+    cancelado: false,
+    motivoCancelamento: undefined,
+    status: novoStatus,
+    // Atenção: NÃO reenviamos automaticamente para Engenharia/Financiamento.
+    // O usuário deve aprovar novamente / reanexar conforme necessário.
+    assinadoAprovado: false,
+    assinadoAprovadoEm: undefined,
+    assinadoAprovadoPor: undefined,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "REATIVACAO", usuario,
+    campo: "status", valorAnterior: CONTRATO_STATUS.CANCELADO, valorNovo: novoStatus,
+    detalhe: "Contrato reativado. Reaprovar para liberar Engenharia/Financiamento.",
   });
   return { ok: true };
 }

@@ -4,7 +4,7 @@ import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
   Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2, Printer, PenLine,
-  Eye, Paperclip, ChevronDown,
+  Eye, Paperclip, ChevronDown, Ban, RotateCcw,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
@@ -46,6 +46,7 @@ import {
   validateContratoCompleto, solicitarAlteracaoContrato,
   aprovarProjeto, aprovarContratoAssinado,
   retornarContratoParaGerado, retornarContratoParaARedigir,
+  cancelarContrato, reativarContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
@@ -168,10 +169,11 @@ function ComercialPage() {
 function ContratosUnificadosTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
-  const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido).length;
-  const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente").length;
-  const assinados = contratos.filter((c) => c.status === "Assinado").length;
-  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado">("geracao");
+  const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido && !c.cancelado).length;
+  const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente" && !c.cancelado).length;
+  const assinados = contratos.filter((c) => c.status === "Assinado" && !c.cancelado).length;
+  const cancelados = contratos.filter((c) => c.cancelado === true).length;
+  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado" | "cancelados">("geracao");
 
   const btn = (key: typeof sub, label: string, count: number, tone: string) => (
     <button
@@ -197,12 +199,15 @@ function ContratosUnificadosTab({
         {btn("geracao", "Aguardando geração", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
         {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
         {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
+        {btn("cancelados", "Cancelados", cancelados, "border-destructive/40 bg-destructive/10 text-destructive")}
       </div>
 
-      {sub !== "assinado" ? (
-        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
-      ) : (
+      {sub === "assinado" ? (
         <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+      ) : sub === "cancelados" ? (
+        <ContratosCanceladosTab contratos={contratos} />
+      ) : (
+        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
       )}
     </div>
   );
@@ -222,7 +227,7 @@ function ContratoAssinadoTab({
   const assinados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return contratos
-      .filter((c) => c.status === "Assinado")
+      .filter((c) => c.status === "Assinado" && !c.cancelado)
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
@@ -347,6 +352,24 @@ function ContratoAssinadoRow({
           <DropdownMenuItem onSelect={() => onRetornar(c)}>
             <Undo2 className="mr-2 h-4 w-4" /> Retornar
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              const motivo = prompt(
+                `Cancelar contrato ${fmtContratoId(c.id)}?\n\n` +
+                `Ao cancelar, ele sai da Engenharia e do Financiamento e vai para a aba "Cancelados".\n` +
+                `Você poderá reativá-lo depois.\n\n` +
+                `Motivo (obrigatório):`,
+              );
+              if (!motivo || !motivo.trim()) { toast.error("Informe um motivo."); return; }
+              const r = cancelarContrato(c.id, motivo.trim(), "Comercial");
+              if (!r.ok) { toast.error(r.motivo); return; }
+              toast.success(`Contrato ${fmtContratoId(c.id)} cancelado.`);
+            }}
+          >
+            <Ban className="mr-2 h-4 w-4 text-destructive" />
+            <span className="text-destructive">Cancelar contrato</span>
+          </DropdownMenuItem>
         </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>
@@ -402,6 +425,77 @@ function ContratoAssinadoRow({
         )}
       </TableCell>
     </TableRow>
+  );
+}
+
+/* ---------------- CONTRATOS CANCELADOS ---------------- */
+function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
+  const [busca, setBusca] = useState("");
+  const cancelados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return contratos
+      .filter((c) => c.cancelado === true)
+      .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+  }, [contratos, busca]);
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Ban className="h-4 w-4 text-destructive" /> Contratos cancelados
+        </div>
+        <div className="relative w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato ou cliente…" className="h-9 pl-9" />
+        </div>
+      </div>
+      {cancelados.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum contrato cancelado.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Cancelado em</TableHead>
+              <TableHead>Motivo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cancelados.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell>
+                  <ActionsMenu label={fmtContratoId(c.id)}>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        if (!confirm(`Reativar contrato ${fmtContratoId(c.id)}?\n\nEle voltará para "Assinado" (precisa ser aprovado novamente para liberar Engenharia/Financiamento).`)) return;
+                        const r = reativarContrato(c.id, "Comercial");
+                        if (!r.ok) { toast.error(r.motivo); return; }
+                        toast.success(`Contrato ${fmtContratoId(c.id)} reativado.`);
+                      }}
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                      <span className="text-success">Reativar contrato</span>
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
+                <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+                <TableCell className="font-medium">{c.cliente}</TableCell>
+                <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
+                <TableCell className="text-xs">{fmtDataBR((c.auditoria ?? []).filter((a) => a.campo === "status" && /Cancel/i.test(a.para)).pop()?.data?.slice(0,10)) || "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={c.motivoCancelamento || ""}>{c.motivoCancelamento || "—"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </Card>
   );
 }
 

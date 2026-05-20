@@ -893,6 +893,23 @@ export function cancelarPropostaComMotivo(propostaId: string, usuario: string, m
   });
 }
 
+/** Reativa uma proposta cancelada — volta para GERADA. */
+export function reativarProposta(propostaId: string, usuario: string) {
+  const cur = propsS.read();
+  const idx = cur.findIndex((p) => p.id === propostaId);
+  if (idx < 0) return;
+  const old = cur[idx];
+  if (old.status !== "CANCELADA") return;
+  const next = [...cur];
+  next[idx] = { ...old, status: "GERADA" as StatusProposta, motivoStatus: "Reativada", atualizadoEm: new Date().toISOString().slice(0,10) };
+  propsS.write(next);
+  _pushAudit({
+    entidade: "proposta", entidadeId: propostaId,
+    acao: "REATIVACAO", usuario,
+    valorAnterior: PROPOSTA_STATUS.CANCELADA, valorNovo: PROPOSTA_STATUS.PROPOSTA_GERADA,
+  });
+}
+
 /** Retorna proposta APROVADA de volta para status GERADA (orçamentos), liberando edição.
  *  Usado quando o contrato foi devolvido do Comercial para ajuste. */
 export function retornarPropostaParaOrcamento(propostaId: string, usuario: string, motivo: string) {

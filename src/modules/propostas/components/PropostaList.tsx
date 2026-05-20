@@ -32,7 +32,7 @@ import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
-  aprovarPropostaDoLead, cancelarPropostaComMotivo,
+  aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
 } from "@/modules/propostas/store";
 import {

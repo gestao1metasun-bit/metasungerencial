@@ -1418,7 +1418,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[260px]">Ações</TableHead>
+              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -1431,16 +1431,16 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {flat.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <div className="inline-flex items-center gap-1.5">
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                        <SquarePen className="h-3.5 w-3.5" /> Editar
-                      </Button>
+                    <ActionsMenu label={p.id}>
+                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
                       {!p.enviadoEngenharia && (
-                        <Button size="sm" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => enviarUm(c, p)}>
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Enviar
-                        </Button>
+                        <DropdownMenuItem onSelect={() => enviarUm(c, p)}>
+                          <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar
+                        </DropdownMenuItem>
                       )}
-                    </div>
+                    </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>

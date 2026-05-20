@@ -26,6 +26,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,

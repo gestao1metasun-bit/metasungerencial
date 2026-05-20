@@ -365,6 +365,7 @@ function UsuariosTab() {
               <TableHead>Nome</TableHead>
               <TableHead>E-mail / login</TableHead>
               <TableHead>Perfil</TableHead>
+              <TableHead>Consultor</TableHead>
               <TableHead>Setor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Sessão</TableHead>
@@ -374,12 +375,14 @@ function UsuariosTab() {
           <TableBody>
             {usuarios.map((u) => {
               const p = perfis.find((x) => x.id === u.perfilId);
+              const c = u.consultorId ? consultores.find((x) => x.id === u.consultorId) : null;
               const isAtual = atual?.id === u.id;
               return (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.nome}</TableCell>
                   <TableCell className="text-xs">{u.email}</TableCell>
                   <TableCell>{p?.nome ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{c?.nome ?? "—"}</TableCell>
                   <TableCell className="text-xs">{u.setor}</TableCell>
                   <TableCell>{u.ativo ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</TableCell>
                   <TableCell>

@@ -185,6 +185,12 @@ function MarcaCombobox({
 function ensureInversorByLabel(label: string, marca: string, lista: InversorFV[]): string {
   const l = label.trim().toUpperCase();
   if (!l) return "";
+  // Aceita só o número (ex.: "75", "37,5", "37.5") — mapeia para o inversor padrão.
+  const onlyNum = l.replace(",", ".").match(/^(\d+(?:\.\d+)?)\s*(?:KW)?$/);
+  if (onlyNum) {
+    const kw = Number(onlyNum[1]);
+    if ((STANDARD_INVERSOR_KW as readonly number[]).includes(kw)) return inversorIdPadrao(kw);
+  }
   const stdMatch = l.match(/^INVERSOR\s+([\d.,]+)\s*KW$/);
   if (stdMatch) {
     const kw = Number(stdMatch[1].replace(",", "."));

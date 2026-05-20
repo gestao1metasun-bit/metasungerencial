@@ -352,6 +352,24 @@ function ContratoAssinadoRow({
           <DropdownMenuItem onSelect={() => onRetornar(c)}>
             <Undo2 className="mr-2 h-4 w-4" /> Retornar
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              const motivo = prompt(
+                `Cancelar contrato ${fmtContratoId(c.id)}?\n\n` +
+                `Ao cancelar, ele sai da Engenharia e do Financiamento e vai para a aba "Cancelados".\n` +
+                `Você poderá reativá-lo depois.\n\n` +
+                `Motivo (obrigatório):`,
+              );
+              if (!motivo || !motivo.trim()) { toast.error("Informe um motivo."); return; }
+              const r = cancelarContrato(c.id, motivo.trim(), "Comercial");
+              if (!r.ok) { toast.error(r.motivo); return; }
+              toast.success(`Contrato ${fmtContratoId(c.id)} cancelado.`);
+            }}
+          >
+            <Ban className="mr-2 h-4 w-4 text-destructive" />
+            <span className="text-destructive">Cancelar contrato</span>
+          </DropdownMenuItem>
         </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>

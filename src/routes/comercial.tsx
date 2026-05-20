@@ -1490,6 +1490,119 @@ function DashboardComercial({
   const topConsultorNome = rankConsultor?.[0] ?? "—";
   const topConsultorValor = rankConsultor?.[1].valor ?? 0;
 
+  /* ===================== PAINEL EXECUTIVO — DIRETOR COMERCIAL ===================== */
+  const leadsAll = useLeads();
+  const leads = useMemo(() => {
+    if (!periodRange.from || !periodRange.to) return leadsAll;
+    return leadsAll.filter((l) => {
+      const d = new Date(l.criadoEm);
+      return d >= periodRange.from! && d <= periodRange.to!;
+    });
+  }, [leadsAll, periodRange]);
+
+  // Pipeline = negociações abertas (pendentes + propostas em aberto estimadas)
+  const pipelineValor = valorPend;
+  const pipelineQtd = pendentes.length;
+
+  // Tempo médio de fechamento (dias entre criação e assinatura)
+  const tempoFechamento = useMemo(() => {
+    const dias = assinados
+      .map((c) => {
+        const ini = new Date(c.data);
+        const fim = new Date(c.dataAssinatura ?? c.data);
+        const d = (fim.getTime() - ini.getTime()) / 86400000;
+        return Number.isFinite(d) && d >= 0 ? d : null;
+      })
+      .filter((x): x is number => x !== null);
+    if (!dias.length) return 0;
+    return dias.reduce((s, d) => s + d, 0) / dias.length;
+  }, [assinados]);
+
+  // Meta vs Realizado (soma metas dos consultores ativos)
+  const metaTotal = vendedoresList.reduce((s, v) => s + (Number((v as any).meta) || 0), 0);
+  const metaPct = metaTotal > 0 ? (valorAssinado / metaTotal) * 100 : 0;
+
+  // Funil: Lead → Atendimento → Proposta → Fechamento
+  const funil = useMemo(() => {
+    const totalLeads = leads.length || 1;
+    const atend = leads.filter((l) => l.status !== LEAD_STATUS.LEAD_CADASTRADO).length;
+    const propostasFunil = leads.filter((l) =>
+      l.status === LEAD_STATUS.PROPOSTA_SOLICITADA ||
+      l.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO,
+    ).length;
+    const fechados = leads.filter((l) => l.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO).length;
+    return [
+      { etapa: "Leads", valor: leads.length, pct: 100 },
+      { etapa: "Atendimento", valor: atend, pct: (atend / totalLeads) * 100 },
+      { etapa: "Proposta", valor: propostasFunil, pct: (propostasFunil / totalLeads) * 100 },
+      { etapa: "Fechamento", valor: fechados, pct: (fechados / totalLeads) * 100 },
+    ];
+  }, [leads]);
+
+  // Vendas por canal (origem do lead vinculado ao contrato assinado)
+  const vendasPorCanal = useMemo(() => {
+    const map = new Map<string, { qtd: number; valor: number; leads: number }>();
+    // Contagem de leads por origem (para conversão)
+    leads.forEach((l) => {
+      const k = ORIGEM_LEAD_LABEL[l.origem as OrigemLead] ?? "Outros";
+      const cur = map.get(k) ?? { qtd: 0, valor: 0, leads: 0 };
+      map.set(k, { ...cur, leads: cur.leads + 1 });
+    });
+    // Soma de contratos assinados por origem (via leadId)
+    assinados.forEach((c) => {
+      const lead = leadsAll.find((l) => l.id === c.leadId);
+      const k = lead ? (ORIGEM_LEAD_LABEL[lead.origem as OrigemLead] ?? "Outros") : "Direto";
+      const cur = map.get(k) ?? { qtd: 0, valor: 0, leads: 0 };
+      map.set(k, { ...cur, qtd: cur.qtd + 1, valor: cur.valor + c.valor });
+    });
+    return [...map.entries()]
+      .map(([canal, v]) => ({ canal, ...v, conversao: v.leads > 0 ? (v.qtd / v.leads) * 100 : 0 }))
+      .sort((a, b) => b.valor - a.valor);
+  }, [assinados, leads, leadsAll]);
+
+  // Vendas por região (UF / cidade)
+  const vendasPorRegiao = useMemo(() => {
+    const map = new Map<string, { qtd: number; valor: number; kwp: number }>();
+    assinados.forEach((c) => {
+      const k = c.uf || c.cidade || "—";
+      const cur = map.get(k) ?? { qtd: 0, valor: 0, kwp: 0 };
+      map.set(k, { qtd: cur.qtd + 1, valor: cur.valor + c.valor, kwp: cur.kwp + (Number(c.kwp) || 0) });
+    });
+    return [...map.entries()]
+      .map(([uf, v]) => ({ uf, ...v }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 8);
+  }, [assinados]);
+
+  // Performance por vendedor (com meta, parâmetro, eficiência)
+  const perfVendedor = useMemo(() => {
+    const map = new Map<string, { qtd: number; valor: number; kwp: number }>();
+    assinados.forEach((c) => {
+      const k = c.vendedor || "—";
+      const cur = map.get(k) ?? { qtd: 0, valor: 0, kwp: 0 };
+      map.set(k, { qtd: cur.qtd + 1, valor: cur.valor + c.valor, kwp: cur.kwp + (Number(c.kwp) || 0) });
+    });
+    return vendedoresList.map((v) => {
+      const real = map.get(v.nome) ?? { qtd: v.contratos, valor: v.vendido, kwp: v.kwp };
+      const ticket = real.valor / Math.max(real.qtd, 1);
+      const parametro = real.kwp > 0 ? real.valor / real.kwp : 0;
+      const metaPctV = (v as any).meta > 0 ? (real.valor / (v as any).meta) * 100 : 0;
+      return { nome: v.nome, ...real, ticket, parametro, meta: (v as any).meta || 0, metaPct: metaPctV, conversao: (v as any).conversao || 0 };
+    }).sort((a, b) => b.valor - a.valor);
+  }, [assinados, vendedoresList]);
+
+  // Cruzamento: ticket × conversão por vendedor
+  const cruzTicketConv = perfVendedor.map((v) => ({
+    nome: v.nome.split(" ")[0], ticket: v.ticket, conversao: v.conversao, valor: v.valor,
+  }));
+
+  // Meta vs Realizado por vendedor
+  const metaVsReal = perfVendedor.map((v) => ({
+    nome: v.nome.split(" ")[0], meta: v.meta, realizado: v.valor, pct: v.metaPct,
+  }));
+
+
+
   return (
     <>
       {/* Filtro de período */}

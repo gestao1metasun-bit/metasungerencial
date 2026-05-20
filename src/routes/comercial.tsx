@@ -478,8 +478,8 @@ function useAnexarHandler(contrato: Contrato) {
 
 /* ---------------- CONTRATOS GERADOS (cadastro CPF/CNPJ + endereço → contrato redigido) ---------------- */
 function ContratosTab({
-  contratos, setContratos,
-}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  contratos, setContratos, filtroStatus = "ambos",
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; filtroStatus?: "geracao" | "assinatura" | "ambos" }) {
   const [busca, setBusca] = useState("");
   // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {

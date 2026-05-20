@@ -540,6 +540,7 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -547,7 +548,6 @@ function ContratosTab({
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Endereço</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {aRedigir.map((c) => {
@@ -557,6 +557,17 @@ function ContratosTab({
                 const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
                 return (
                   <TableRow key={c.id}>
+                    <TableCell>
+                      <ActionsMenu label={c.id}>
+                        <DropdownMenuItem onSelect={() => setAberto(c)}>
+                          <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => retornarParaOrcamento(c)}>
+                          <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                        </DropdownMenuItem>
+                      </ActionsMenu>
+                    </TableCell>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                     <TableCell className="font-medium">{c.cliente}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -564,16 +575,6 @@ function ContratosTab({
                     <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
                     <TableCell className="text-xs">{temDoc ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                     <TableCell className="text-xs">{temEndereco ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-1.5">
-                        <Button size="sm" variant="outline" onClick={() => retornarParaOrcamento(c)} className="h-8 gap-1.5">
-                          <Undo2 className="h-3.5 w-3.5" /> Retornar
-                        </Button>
-                        <Button size="sm" onClick={() => setAberto(c)} className="h-8 gap-1.5">
-                          <MapPin className="h-3.5 w-3.5" /> Cadastrar · gerar contrato
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 );
               })}

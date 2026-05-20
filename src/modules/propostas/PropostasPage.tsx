@@ -185,6 +185,12 @@ function MarcaCombobox({
 function ensureInversorByLabel(label: string, marca: string, lista: InversorFV[]): string {
   const l = label.trim().toUpperCase();
   if (!l) return "";
+  // Aceita só o número (ex.: "75", "37,5", "37.5") — mapeia para o inversor padrão.
+  const onlyNum = l.replace(",", ".").match(/^(\d+(?:\.\d+)?)\s*(?:KW)?$/);
+  if (onlyNum) {
+    const kw = Number(onlyNum[1]);
+    if ((STANDARD_INVERSOR_KW as readonly number[]).includes(kw)) return inversorIdPadrao(kw);
+  }
   const stdMatch = l.match(/^INVERSOR\s+([\d.,]+)\s*KW$/);
   if (stdMatch) {
     const kw = Number(stdMatch[1].replace(",", "."));
@@ -1205,7 +1211,14 @@ function PropostaSheet({
                 const slotId = flat[idx] ?? "";
                 const slotLabel = (() => {
                   if (!slotId) return "";
+                  // Sempre exibir apenas o número (ex.: "75", "37,5").
+                  const m = /INV-STD-(.+)$/i.exec(slotId);
+                  if (m) return m[1].replace("_", ",");
                   const inv = inversores.find((i) => i.id === slotId);
+                  if (inv?.potenciaKw) {
+                    const kw = inv.potenciaKw;
+                    return Number.isInteger(kw) ? String(kw) : String(kw).replace(".", ",");
+                  }
                   return inv?.modelo ?? "";
                 })();
                 const setSlot = (newId: string) => {
@@ -1219,8 +1232,9 @@ function PropostaSheet({
                   arr.filter(Boolean).forEach((id) => agg.set(id, (agg.get(id) ?? 0) + 1));
                   update("inversores", Array.from(agg.entries()).map(([inversorId, quantidade]) => ({ inversorId, quantidade })));
                 };
+                // Opções: apenas os números (kW) dos inversores padrão + modelos custom.
                 const opcoes = [
-                  ...STANDARD_INVERSOR_KW.map((kw) => `INVERSOR ${Number.isInteger(kw) ? kw : String(kw).replace(".", ",")}KW`),
+                  ...STANDARD_INVERSOR_KW.map((kw) => (Number.isInteger(kw) ? String(kw) : String(kw).replace(".", ","))),
                   ...inversores.filter((i) => !i.id.startsWith("INV-STD-")).map((i) => i.modelo),
                 ];
                 return (

@@ -1378,9 +1378,49 @@ function RedigirContratoDialog({
 
 /* ---------------- DASHBOARD ---------------- */
 
+type PeriodKey = "mes" | "3m" | "6m" | "ano" | "all";
+const PERIOD_LABELS: Record<PeriodKey, string> = {
+  mes: "Mês atual",
+  "3m": "Últimos 3 meses",
+  "6m": "Últimos 6 meses",
+  ano: "Ano atual",
+  all: "Todo o histórico",
+};
+
 function DashboardComercial({
-  contratos, setContratos, vendedoresList, volume,
+  contratos: contratosProp, setContratos, vendedoresList, volume: volumeProp,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[]; volume: VolumeMes[] }) {
+  const [period, setPeriod] = useState<PeriodKey>("all");
+
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    if (period === "mes") return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: end };
+    if (period === "3m") return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: end };
+    if (period === "6m") return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: end };
+    if (period === "ano") return { from: new Date(now.getFullYear(), 0, 1), to: end };
+    return { from: null as Date | null, to: null as Date | null };
+  }, [period]);
+
+  const contratos = useMemo(() => {
+    if (!periodRange.from || !periodRange.to) return contratosProp;
+    return contratosProp.filter((c) => {
+      const d = new Date(c.dataAssinatura ?? c.data);
+      return d >= periodRange.from! && d <= periodRange.to!;
+    });
+  }, [contratosProp, periodRange]);
+
+  const volume = useMemo(() => {
+    if (!periodRange.from || !periodRange.to) return volumeProp;
+    const months = new Set<string>();
+    const cur = new Date(periodRange.from);
+    while (cur <= periodRange.to) {
+      months.add(MESES[cur.getMonth()]);
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    return volumeProp.filter((v) => months.has(v.mes));
+  }, [volumeProp, periodRange]);
+
   const total = contratos.length;
   const valorTotal = contratos.reduce((s, c) => s + c.valor, 0);
   const assinados = contratos.filter((c) => c.status === "Assinado");
@@ -1419,9 +1459,10 @@ function DashboardComercial({
   const [openModal, setOpenModal] = useState<null | "gerados" | "assinados" | "pendentes" | "cancelados" | "valor" | "ticket">(null);
 
   const updateStatus = (id: string, status: string) => {
-    setContratos(contratos.map((c) => (c.id === id ? { ...c, status } : c)));
+    setContratos(contratosProp.map((c) => (c.id === id ? { ...c, status } : c)));
     toast.success(`${id} → ${status}`);
   };
+
 
   // KPIs adicionais essenciais
   const kwpTotal = assinados.reduce((s, c) => s + (Number(c.kwp) || 0), 0);

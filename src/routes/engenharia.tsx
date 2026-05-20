@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
+import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),
@@ -473,44 +474,61 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-[80px]">Opções</TableHead>
             <TableHead className="w-12">#</TableHead>
-            <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
+            <TableHead className="w-[80px]">Opções</TableHead>
+            <TableHead>Contrato</TableHead>
+            <TableHead>Projeto</TableHead>
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
-            <TableHead>Início</TableHead><TableHead>Previsto</TableHead>
+            <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
             <TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {list.map((o) => (
+            {list.map((o, idx) => {
+              const link = findProjetoLink(o.id, contratos);
+              return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
+                <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell>
-                  <ActionsMenu label={o.id}>
+                  <ActionsMenu>
                     <DropdownMenuItem onSelect={() => setEditing(o)}>
                       <SquarePen className="mr-2 h-4 w-4" /> Editar
                     </DropdownMenuItem>
+                    {link && (
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
+                            retornar(o.id);
+                          }
+                        }}
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4 text-warning" />
+                        <span className="text-warning">Retornar ao Comercial</span>
+                      </DropdownMenuItem>
+                    )}
                   </ActionsMenu>
                 </TableCell>
-                <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{o.id}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
                 <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
                 <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv2 ? fmtInversorNumero(o.inv2) : "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.inv3 ? fmtInversorNumero(o.inv3) : "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
                 <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
                 <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
               </TableRow>
-            ))}
+              );
+            })}
             {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
+
       <div className="border-t border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
         Para alterar qualquer campo (módulos, inversores, status, finalizar), use o lápis <SquarePen className="inline h-3 w-3" /> editar.
       </div>
@@ -540,6 +558,8 @@ function EditObraDialog({
   const [confirming, setConfirming] = useState(false);
   const [confirmRet, setConfirmRet] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const { role } = useAuth();
+  const isAdminMaster = role === "admin_master";
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
@@ -560,7 +580,7 @@ function EditObraDialog({
   const equipeAllowed = isExecutando || isAguardando;
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
-  const realDatesEditable = adminMode;
+  const realDatesEditable = adminMode && isAdminMaster;
   const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
 
   const trySave = () => {
@@ -668,10 +688,14 @@ function EditObraDialog({
           <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
-              <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-                <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
-                Modo ADMIN MASTER
-              </label>
+              {isAdminMaster ? (
+                <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+                  <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
+                  Modo ADMIN MASTER
+                </label>
+              ) : (
+                <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

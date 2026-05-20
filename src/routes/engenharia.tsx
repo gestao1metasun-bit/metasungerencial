@@ -1304,30 +1304,29 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   if (liberados.length === 0) {
     return (
       <Card className="p-8 text-center text-sm text-muted-foreground">
-        Nenhum contrato liberado para gestão de projetos. Após aprovar o contrato assinado no Comercial, ele aparecerá aqui para definição dos projetos a executar.
+        Nenhum contrato liberado para gestão de projetos. Após aprovar o contrato assinado no Comercial, ele aparecerá aqui para o cadastramento técnico da Engenharia.
       </Card>
     );
   }
 
-  // Lista achatada — apenas projetos efetivamente enviados para a Engenharia.
-  // Projetos não selecionados na aprovação ficam pendentes em Comercial → Contratos Assinados
-  // e NÃO devem aparecer aqui até serem liberados individualmente.
+  // Apenas projetos pendentes na Engenharia (não aprovados ainda).
+  // Ao aprovar, o projeto sai daqui e aparece em Obras Ativas.
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
   liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
-    if (p.enviadoEngenharia) flat.push({ p, c });
+    if (p.enviadoEngenharia && !p.aprovado) flat.push({ p, c });
   }));
-  const pendentesGlob: typeof flat = [];
-  const enviadosGlob = flat;
+  const pendentesGlob = flat;
+  const enviadosGlob: typeof flat = [];
 
-  const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
+  const aprovarProjetoEng = (c: ContratoFull, p: ProjetoVinculado) => {
     updateProjeto(c.id, p.id, {
-      enviadoEngenharia: true,
       aprovado: true,
       dataAprovacao: new Date().toISOString(),
       usuarioAprovacao: "Engenharia",
     });
-    toast.success(`Projeto ${p.id} enviado para Engenharia.`);
+    toast.success(`Projeto ${p.id} aprovado pela Engenharia. Movido para Obras Ativas.`);
   };
+  const enviarUm = aprovarProjetoEng;
 
   return (
     <div className="space-y-4">

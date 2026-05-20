@@ -55,8 +55,9 @@ import {
   cancelarContrato, reativarContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
-import { useClientesFull, addClienteFull, findClienteByDoc, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
+import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -985,6 +986,52 @@ function RedigirContratoDialog({
     setClausulas(clausulas.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   }
   function rmClausula(id: string) { setClausulas(clausulas.filter((c) => c.id !== id)); }
+
+  // === Autocomplete de CLIENTE pelo CPF/CNPJ ===
+  const allClientes = useClientesFull();
+  const [clienteVincId, setClienteVincId] = useState<string | null>(null);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const docDigits = doc.replace(/\D/g, "");
+  const sugestoesClientes = useMemo(() => {
+    if (docDigits.length < 3) return [];
+    return allClientes
+      .filter((c) => c.doc.replace(/\D/g, "").startsWith(docDigits))
+      .slice(0, 8);
+  }, [allClientes, docDigits]);
+
+  function selecionarCliente(c: ClienteRecord) {
+    setClienteVincId(c.id);
+    setNome(upper(c.nome));
+    setDoc(maskDoc(c.doc));
+    setTipoPessoa(onlyDigits(c.doc).length === 14 ? "PJ" : "PF");
+    setTelefone(maskTel(c.telefone || ""));
+    setEmail(c.email ?? "");
+    setCep(c.cep || "");
+    setRua(c.rua || "");
+    setNumero(c.numero || "");
+    setComplemento(c.complemento || "");
+    setBairro(c.bairro || "");
+    setCidade(c.cidade || "");
+    setUf(c.uf || "");
+    setShowSugestoes(false);
+    toast.success(`Cliente vinculado: ${c.nome}. Endereço e telefone podem ser editados.`);
+  }
+
+  // === Preview do texto ORIGINAL da cláusula ao substituir ===
+  const baseClausulasMemo = useMemo(() => {
+    try { return clausulasBase(contrato as any); } catch { return []; }
+  }, [contrato]);
+  function textoOriginalDe(ref: string): string | null {
+    if (!ref) return null;
+    const numRaiz = ref.split(".")[0];
+    const grupo = baseClausulasMemo.find((x) => x.numero === numRaiz);
+    if (!grupo) return null;
+    const found = grupo.paragrafos.find((p) => {
+      const t = p.replace(/\*\*/g, "").trim();
+      return t.startsWith(ref + " ") || t.startsWith(ref + ".") || t.startsWith(ref + "\t");
+    });
+    return found ?? null;
+  }
 
   function fmtCep(v: string) {
     const d = v.replace(/\D/g, "").slice(0, 8);

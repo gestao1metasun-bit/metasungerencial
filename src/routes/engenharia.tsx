@@ -497,7 +497,7 @@ function ObrasAtivasTab({
                     {link && (
                       <DropdownMenuItem
                         onSelect={() => {
-                          if (confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
+                          if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
                             retornar(o.id);
                           }
                         }}

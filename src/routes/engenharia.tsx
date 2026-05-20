@@ -497,7 +497,7 @@ function ObrasAtivasTab({
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
                 <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-                <TableCell className="text-xs">{o.inversor}</TableCell>
+                <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
@@ -873,7 +873,7 @@ function CronogramaCard({ o, tone, first, last, onMove, onChangeInicio }: { o: O
             <div className="font-medium text-sm truncate">{o.cliente}</div>
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground truncate">{fmtInversorNumero(o.inversor)}</div>
 
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px] items-center">
             <div className="text-muted-foreground">Previsão início</div>
@@ -1287,7 +1287,7 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
               <Row k="Equipe" v={detail.equipe} />
               <Row k="Módulos" v={`${detail.modulos}`} />
               <Row k="Potência" v={`${detail.potencia.toFixed(1)} kWp`} />
-              <Row k="Inversor" v={detail.inversor} />
+              <Row k="Inversor" v={fmtInversorNumero(detail.inversor)} />
               <Row k="Telhado" v={detail.telhadoTipo} />
               <Row k="Início" v={detail.inicio} />
               <Row k="Finalização" v={detail.finalizacao ?? "—"} />
@@ -1398,7 +1398,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                       <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
                       <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
                       {p.potenciaModuloW ? <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.potenciaModuloW}W</span> : null}
-                      {p.inversor ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 truncate max-w-[180px]" title={p.inversor}>Inv: {p.inversor}</span> : null}
+                      {p.inversor ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 truncate max-w-[180px]" title={p.inversor}>Inv: {fmtInversorNumero(p.inversor)}</span> : null}
                     </div>
                     {!p.enviadoEngenharia && (
                       <div className="mt-2 flex justify-end">
@@ -1448,7 +1448,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                   <TableCell className="text-xs font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs">{[p.endereco, p.numero, p.bairro, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</TableCell>
                   <TableCell className="text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)} kWp · {p.modulos || 0} mód{p.potenciaModuloW ? ` · ${p.potenciaModuloW}W` : ""}</TableCell>
-                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{fmtInversorNumero(p.inversor) || "—"}</TableCell>
                   <TableCell>
                     {p.enviadoEngenharia ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
@@ -1755,7 +1755,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                   <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{p.modulos || 0}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)}</TableCell>
-                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{fmtInversorNumero(p.inversor) || "—"}</TableCell>
                   <TableCell className="text-xs">{p.equipe || "—"}</TableCell>
                   <TableCell><span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold">{bucketDe(p.status)}</span></TableCell>
                   <TableCell className="text-xs">{fmtBR(p.inicio)}</TableCell>

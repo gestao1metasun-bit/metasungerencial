@@ -368,7 +368,7 @@ function EntregasTab() {
         <Truck className="h-4 w-4 text-primary" />
         <div className="text-sm font-semibold">Entregas Realizadas</div>
         <div className="ml-auto text-xs text-muted-foreground">
-          Fonte: Engenharia &gt; Obras Ativas · {rows.length} obra(s)
+          Fonte: Engenharia &gt; Gestão de projetos · {rows.length} obra(s)
         </div>
       </div>
       <div className="overflow-auto">

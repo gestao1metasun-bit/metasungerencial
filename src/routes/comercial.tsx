@@ -2689,12 +2689,18 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
-            {contrato.status === "Aprovado" && (
+            {lockDados && (
+              <div className="mb-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
+                <b>Visualização somente.</b> O contrato já está assinado — edição de dados bloqueada nesta etapa. Use a aba <b>3. Projetos</b> para aprovar e enviar os projetos à Engenharia.
+              </div>
+            )}
+            {contrato.status === "Aprovado" && !lockDados && (
               <div className="mb-3 flex items-center justify-between rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs">
                 <span className="text-success font-medium">Contrato aprovado · campos estruturais bloqueados.</span>
                 <SolicitarAlteracaoButton contrato={contrato} />
               </div>
             )}
+            <fieldset disabled={lockDados} className="contents">
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5"><Label>Cliente (vinculado)</Label>
                 <Input value={f.cliente} readOnly className="bg-muted" />

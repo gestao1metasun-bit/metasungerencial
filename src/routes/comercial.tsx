@@ -143,7 +143,6 @@ function ComercialPage() {
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
-          <TabsTrigger value="contrato-assinado">Contrato Assinado</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
@@ -151,10 +150,7 @@ function ComercialPage() {
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
-          <ContratosTab contratos={contratos} setContratos={setContratos} />
-        </TabsContent>
-        <TabsContent value="contrato-assinado" className="mt-5">
-          <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+          <ContratosUnificadosTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />
@@ -164,6 +160,50 @@ function ComercialPage() {
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+/* -------- Contratos unificados: 3 status (geração / assinatura / assinado) -------- */
+function ContratosUnificadosTab({
+  contratos, setContratos, vendedoresList,
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
+  const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido).length;
+  const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente").length;
+  const assinados = contratos.filter((c) => c.status === "Assinado").length;
+  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado">("geracao");
+
+  const btn = (key: typeof sub, label: string, count: number, tone: string) => (
+    <button
+      type="button"
+      onClick={() => setSub(key)}
+      className={
+        "flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors " +
+        (sub === key
+          ? `${tone} shadow-sm`
+          : "border-border bg-background text-muted-foreground hover:bg-muted")
+      }
+    >
+      <span>{label}</span>
+      <span className="inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-background/60 px-1.5 text-xs font-bold tabular-nums">
+        {count}
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {btn("geracao", "Aguardando geração", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
+        {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
+        {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
+      </div>
+
+      {sub !== "assinado" ? (
+        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
+      ) : (
+        <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+      )}
+    </div>
   );
 }
 
@@ -438,8 +478,8 @@ function useAnexarHandler(contrato: Contrato) {
 
 /* ---------------- CONTRATOS GERADOS (cadastro CPF/CNPJ + endereço → contrato redigido) ---------------- */
 function ContratosTab({
-  contratos, setContratos,
-}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) {
+  contratos, setContratos, filtroStatus = "ambos",
+}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; filtroStatus?: "geracao" | "assinatura" | "ambos" }) {
   const [busca, setBusca] = useState("");
   // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {
@@ -489,31 +529,16 @@ function ContratosTab({
     setGerarAssinado(null);
   }
 
+  const showGeracao = filtroStatus === "geracao" || filtroStatus === "ambos";
+  const showAssinatura = filtroStatus === "assinatura" || filtroStatus === "ambos";
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-end">
         <ModeloBaseContratoDialog />
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">A redigir</div>
-          <div className="mt-1 flex items-center gap-2">
-            <div className="text-2xl font-bold text-warning">{aRedigir.length}</div>
-            {aRedigir.length > 0 && <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />}
-          </div>
-          <div className="text-xs text-muted-foreground">Cadastrar dados → gerar contrato impresso</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Redigidos · aguardando assinatura</div>
-          <div className="mt-1 text-2xl font-bold text-info">{redigidos.length}</div>
-          <div className="text-xs text-muted-foreground">Imprimir e gerar assinado</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total no funil</div>
-          <div className="mt-1 text-2xl font-bold text-primary">{contratos.length}</div>
-        </Card>
-      </div>
 
+      {showGeracao && (
       <Card className="p-5">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -572,7 +597,9 @@ function ContratosTab({
           </Table>
         )}
       </Card>
+      )}
 
+      {showAssinatura && (
       <Card className="p-5">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <FileText className="h-4 w-4 text-info" /> Contratos redigidos · aguardando assinatura
@@ -621,6 +648,7 @@ function ContratosTab({
           </Table>
         )}
       </Card>
+      )}
 
       {aberto && (
         <RedigirContratoDialog

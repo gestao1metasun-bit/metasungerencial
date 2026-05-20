@@ -160,6 +160,7 @@ function EngenhariaPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="gestao-projetos">Gestão de Projetos</TabsTrigger>
           <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
@@ -168,8 +169,7 @@ function EngenhariaPage() {
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
-        
-        
+        <TabsContent value="gestao-projetos" className="mt-5"><GestaoProjetosTab contratos={contratos} /></TabsContent>
         <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
         <TabsContent value="cronograma" className="mt-5"><CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>
@@ -1304,30 +1304,29 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   if (liberados.length === 0) {
     return (
       <Card className="p-8 text-center text-sm text-muted-foreground">
-        Nenhum contrato liberado para gestão de projetos. Após aprovar o contrato assinado no Comercial, ele aparecerá aqui para definição dos projetos a executar.
+        Nenhum contrato liberado para gestão de projetos. Após aprovar o contrato assinado no Comercial, ele aparecerá aqui para o cadastramento técnico da Engenharia.
       </Card>
     );
   }
 
-  // Lista achatada — apenas projetos efetivamente enviados para a Engenharia.
-  // Projetos não selecionados na aprovação ficam pendentes em Comercial → Contratos Assinados
-  // e NÃO devem aparecer aqui até serem liberados individualmente.
+  // Apenas projetos pendentes na Engenharia (não aprovados ainda).
+  // Ao aprovar, o projeto sai daqui e aparece em Obras Ativas.
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
   liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
-    if (p.enviadoEngenharia) flat.push({ p, c });
+    if (p.enviadoEngenharia && !p.aprovado) flat.push({ p, c });
   }));
-  const pendentesGlob: typeof flat = [];
-  const enviadosGlob = flat;
+  const pendentesGlob = flat;
+  const enviadosGlob: typeof flat = [];
 
-  const enviarUm = (c: ContratoFull, p: ProjetoVinculado) => {
+  const aprovarProjetoEng = (c: ContratoFull, p: ProjetoVinculado) => {
     updateProjeto(c.id, p.id, {
-      enviadoEngenharia: true,
       aprovado: true,
       dataAprovacao: new Date().toISOString(),
       usuarioAprovacao: "Engenharia",
     });
-    toast.success(`Projeto ${p.id} enviado para Engenharia.`);
+    toast.success(`Projeto ${p.id} aprovado pela Engenharia. Movido para Obras Ativas.`);
   };
+  const enviarUm = aprovarProjetoEng;
 
   return (
     <div className="space-y-4">
@@ -1336,11 +1335,11 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           <div>
             <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Para cada contrato aprovado, defina os projetos a executar. Cada projeto vai à Engenharia individualmente.
+              Cadastramento técnico da Engenharia. Ao aprovar um projeto, ele é movido para Obras Ativas.
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px]">
-              <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success tabular-nums">
-                <CheckCircle2 className="h-3 w-3" /> {enviadosGlob.length} projeto{enviadosGlob.length !== 1 ? "s" : ""} liberado{enviadosGlob.length !== 1 ? "s" : ""} para Engenharia
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-600 tabular-nums">
+                <Clock className="h-3 w-3" /> {pendentesGlob.length} pendente{pendentesGlob.length !== 1 ? "s" : ""} de aprovação
               </span>
             </div>
           </div>
@@ -1457,7 +1456,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
 
       {liberados.map((c) => {
-        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia);
+        const projetos = (c.projetos ?? []).filter((p) => p.enviadoEngenharia && !p.aprovado);
         const total = projetos.length;
         if (total === 0) return null;
         const pendentes = 0;

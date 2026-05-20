@@ -244,12 +244,12 @@ function DashboardEng({
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
-        <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
-        <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />
-        <StatCard label="Aguardando" value={aguard.length} hint={`${aguard.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Clock} tone="warning" onView={() => setOpenModal("aguard")} />
-        <StatCard label="Em projeto" value={projeto.length} hint={`${projeto.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="info" onView={() => setOpenModal("projeto")} />
-        <StatCard label="Standby" value={standby.length} hint={`${standby.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Clock} tone="muted" onView={() => setOpenModal("standby")} />
-        <StatCard label="Finalizadas" value={fin.length} hint={`${fin.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={CheckCircle2} tone="success" onView={() => setOpenModal("fin")} />
+        <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos · ${ativas.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
+        <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos · ${exec.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />
+        <StatCard label="Aguardando" value={aguard.length} hint={`${aguard.reduce((s,o)=>s+o.modulos,0)} módulos · ${aguard.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Clock} tone="warning" onView={() => setOpenModal("aguard")} />
+        <StatCard label="Em projeto" value={projeto.length} hint={`${projeto.reduce((s,o)=>s+o.modulos,0)} módulos · ${projeto.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Wrench} tone="info" onView={() => setOpenModal("projeto")} />
+        <StatCard label="Standby" value={standby.length} hint={`${standby.reduce((s,o)=>s+o.modulos,0)} módulos · ${standby.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Clock} tone="muted" onView={() => setOpenModal("standby")} />
+        <StatCard label="Finalizadas" value={fin.length} hint={`${fin.reduce((s,o)=>s+o.modulos,0)} módulos · ${fin.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={CheckCircle2} tone="success" onView={() => setOpenModal("fin")} />
         <StatCard label="Pendências abertas" value={pendsAbertas.length} icon={AlertTriangle} tone="destructive" />
         <StatCard label="Equipes" value={equipes.length} icon={Users} tone="info" />
       </div>

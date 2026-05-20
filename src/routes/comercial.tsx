@@ -428,6 +428,77 @@ function ContratoAssinadoRow({
   );
 }
 
+/* ---------------- CONTRATOS CANCELADOS ---------------- */
+function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
+  const [busca, setBusca] = useState("");
+  const cancelados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return contratos
+      .filter((c) => c.cancelado === true)
+      .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+  }, [contratos, busca]);
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Ban className="h-4 w-4 text-destructive" /> Contratos cancelados
+        </div>
+        <div className="relative w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato ou cliente…" className="h-9 pl-9" />
+        </div>
+      </div>
+      {cancelados.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum contrato cancelado.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Cancelado em</TableHead>
+              <TableHead>Motivo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cancelados.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell>
+                  <ActionsMenu label={fmtContratoId(c.id)}>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        if (!confirm(`Reativar contrato ${fmtContratoId(c.id)}?\n\nEle voltará para "Assinado" (precisa ser aprovado novamente para liberar Engenharia/Financiamento).`)) return;
+                        const r = reativarContrato(c.id, "Comercial");
+                        if (!r.ok) { toast.error(r.motivo); return; }
+                        toast.success(`Contrato ${fmtContratoId(c.id)} reativado.`);
+                      }}
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                      <span className="text-success">Reativar contrato</span>
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
+                <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
+                <TableCell className="font-medium">{c.cliente}</TableCell>
+                <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
+                <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
+                <TableCell className="text-xs">{fmtDataBR((c.auditoria ?? []).filter((a) => a.campo === "status" && /Cancel/i.test(a.para)).pop()?.data?.slice(0,10)) || "—"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={c.motivoCancelamento || ""}>{c.motivoCancelamento || "—"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </Card>
+  );
+}
+
 /** Armazena temporariamente a dataURL do anexo (para visualização) por id de contrato. */
 const ANEXO_URLS = new Map<string, string>();
 function setAnexoUrl(id: string, url: string) { ANEXO_URLS.set(id, url); }

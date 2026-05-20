@@ -165,7 +165,7 @@ function EngenhariaPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
+          <TabsTrigger value="ativas">Gestão de projetos</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="equipes">Equipes</TabsTrigger>

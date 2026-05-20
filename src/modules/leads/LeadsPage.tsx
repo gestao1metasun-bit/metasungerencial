@@ -131,6 +131,7 @@ export function LeadsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Nº</TableHead>
               <TableHead>Criado</TableHead>
               <TableHead>Nome</TableHead>
@@ -139,7 +140,6 @@ export function LeadsPage() {
               <TableHead>Consultor</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -152,6 +152,13 @@ export function LeadsPage() {
             )}
             {filtrados.map((l) => (
               <TableRow key={l.id}>
+                <TableCell>
+                  <ActionsMenu label={l.numero}>
+                    <DropdownMenuItem onSelect={() => setDetalhe(l)}>
+                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>
@@ -163,11 +170,6 @@ export function LeadsPage() {
                   <Badge variant="outline" className={`${statusClass(l.status)} font-medium`}>
                     {LEAD_STATUS_LABEL[l.status] ?? l.status}
                   </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button size="sm" variant="ghost" onClick={() => setDetalhe(l)}>
-                    <Eye className="mr-1 h-4 w-4" /> Detalhes
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}

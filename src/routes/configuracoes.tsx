@@ -10,14 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+// (Checkbox removido — perfis usam selects)
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  MODULES, ACTIONS, type ModuleKey, type ActionKey, type Perfil, type Usuario,
+  MODULES, type ModuleKey, type ActionKey, type Perfil, type Usuario,
+  type PermissaoModulo, type PermLevel, PERM_LEVELS,
   usePerfis, useUsuarios, useUsuarioAtual, upsertPerfil, removePerfil, novoPerfilId,
   upsertUsuario, removeUsuario, novoUsuarioId, setUsuarioAtual,
 } from "@/lib/perfis-store";
@@ -197,29 +198,52 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
   const [nome, setNome] = useState(perfil?.nome ?? "");
   const [descricao, setDescricao] = useState(perfil?.descricao ?? "");
   const [ativo, setAtivo] = useState(perfil?.ativo ?? true);
-  const [perms, setPerms] = useState<Partial<Record<ModuleKey, ActionKey[]>>>(
-    () => perfil ? structuredClone(perfil.permissoes) : {}
-  );
+
+  // Estado V2 (ver/alterar por módulo). Migra do modelo antigo se necessário.
+  const initialV2 = (): Partial<Record<ModuleKey, PermissaoModulo>> => {
+    if (perfil?.permissoesV2) return structuredClone(perfil.permissoesV2);
+    const out: Partial<Record<ModuleKey, PermissaoModulo>> = {};
+    for (const m of MODULES) {
+      const acts = perfil?.permissoes?.[m.key] ?? [];
+      const ver: PermLevel = acts.includes("visualizar") ? "todos" : "nenhum";
+      const alteraSet: ActionKey[] = ["cadastrar","editar","aprovar","cancelar","excluir","alterar_status"];
+      const alterar: PermLevel = acts.some((a) => alteraSet.includes(a)) ? "todos" : "nenhum";
+      out[m.key] = { ver, alterar };
+    }
+    return out;
+  };
+  const [permsV2, setPermsV2] = useState<Partial<Record<ModuleKey, PermissaoModulo>>>(initialV2);
   const isAdmin = !!perfil?.isAdminMaster;
 
-  const toggle = (m: ModuleKey, a: ActionKey) => {
-    setPerms((cur) => {
-      const arr = new Set(cur[m] ?? []);
-      if (arr.has(a)) arr.delete(a); else arr.add(a);
-      return { ...cur, [m]: Array.from(arr) };
+  const setLevel = (m: ModuleKey, campo: "ver" | "alterar", v: PermLevel) => {
+    setPermsV2((cur) => {
+      const atual = cur[m] ?? { ver: "nenhum", alterar: "nenhum" };
+      const next: PermissaoModulo = { ...atual, [campo]: v };
+      // Se não pode ver, também não pode alterar.
+      if (campo === "ver" && v === "nenhum") next.alterar = "nenhum";
+      // Se passou a poder alterar, garantir que ver tenha ao menos o mesmo escopo.
+      if (campo === "alterar" && v !== "nenhum" && next.ver === "nenhum") next.ver = v;
+      return { ...cur, [m]: next };
     });
-  };
-  const toggleAllModule = (m: ModuleKey, on: boolean) => {
-    setPerms((cur) => ({ ...cur, [m]: on ? ACTIONS.map((a) => a.key) : [] }));
   };
 
   const salvar = () => {
     if (!nome.trim()) { toast.error("Informe o nome do perfil"); return; }
+    // Manter compat: deriva permissoes legacy a partir de V2.
+    const legacy: Partial<Record<ModuleKey, ActionKey[]>> = {};
+    for (const m of MODULES) {
+      const p = permsV2[m.key] ?? { ver: "nenhum", alterar: "nenhum" };
+      const acts: ActionKey[] = [];
+      if (p.ver !== "nenhum") acts.push("visualizar");
+      if (p.alterar !== "nenhum") acts.push("cadastrar","editar","alterar_status");
+      if (acts.length) legacy[m.key] = acts;
+    }
     const novo: Perfil = {
       id: perfil?.id ?? novoPerfilId(),
       nome: nome.trim(), descricao: descricao.trim(), ativo,
       isAdminMaster: perfil?.isAdminMaster,
-      permissoes: perms,
+      permissoes: perfil?.isAdminMaster ? (perfil?.permissoes ?? legacy) : legacy,
+      permissoesV2: perfil?.isAdminMaster ? undefined : permsV2,
     };
     upsertPerfil(novo);
     toast.success(editing ? "Perfil atualizado" : "Perfil criado");
@@ -229,10 +253,13 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? `Editar perfil · ${perfil?.nome}` : "Novo perfil de acesso"}</DialogTitle>
-          <DialogDescription>Marque as ações permitidas em cada módulo.</DialogDescription>
+          <DialogDescription>
+            Para cada módulo, defina o que o perfil pode <b>Ver</b> e <b>Alterar</b>. O escopo
+            "Apenas próprios" restringe aos registros do consultor vinculado ao usuário.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1.5 md:col-span-2"><Label>Nome</Label>
@@ -258,25 +285,45 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[140px]">Módulo</TableHead>
-                  {ACTIONS.map((a) => <TableHead key={a.key} className="text-center text-[10px]">{a.label}</TableHead>)}
-                  <TableHead className="text-center text-[10px]">Tudo</TableHead>
+                  <TableHead className="min-w-[180px]">Módulo</TableHead>
+                  <TableHead className="w-[220px]">Ver</TableHead>
+                  <TableHead className="w-[220px]">Alterar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {MODULES.map((m) => {
-                  const arr = perms[m.key] ?? [];
-                  const allOn = arr.length === ACTIONS.length;
+                  const p = permsV2[m.key] ?? { ver: "nenhum", alterar: "nenhum" };
                   return (
                     <TableRow key={m.key}>
                       <TableCell className="font-medium text-sm">{m.label}</TableCell>
-                      {ACTIONS.map((a) => (
-                        <TableCell key={a.key} className="text-center">
-                          <Checkbox checked={arr.includes(a.key)} onCheckedChange={() => toggle(m.key, a.key)} />
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-center">
-                        <Checkbox checked={allOn} onCheckedChange={(v) => toggleAllModule(m.key, !!v)} />
+                      <TableCell>
+                        <Select value={p.ver} onValueChange={(v) => setLevel(m.key, "ver", v as PermLevel)}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {PERM_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={p.alterar}
+                          onValueChange={(v) => setLevel(m.key, "alterar", v as PermLevel)}
+                          disabled={p.ver === "nenhum"}
+                        >
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {PERM_LEVELS.map((l) => (
+                              <SelectItem
+                                key={l.key}
+                                value={l.key}
+                                // Não permitir "todos" alterar se "ver" for "proprios"
+                                disabled={l.key === "todos" && p.ver === "proprios"}
+                              >
+                                {l.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                     </TableRow>
                   );
@@ -300,6 +347,7 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
 function UsuariosTab() {
   const usuarios = useUsuarios();
   const perfis = usePerfis();
+  const consultores = useConsultores();
   const { user: atual } = useUsuarioAtual();
   return (
     <Card className="p-6">
@@ -317,6 +365,7 @@ function UsuariosTab() {
               <TableHead>Nome</TableHead>
               <TableHead>E-mail / login</TableHead>
               <TableHead>Perfil</TableHead>
+              <TableHead>Consultor</TableHead>
               <TableHead>Setor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Sessão</TableHead>
@@ -326,12 +375,14 @@ function UsuariosTab() {
           <TableBody>
             {usuarios.map((u) => {
               const p = perfis.find((x) => x.id === u.perfilId);
+              const c = u.consultorId ? consultores.find((x) => x.id === u.consultorId) : null;
               const isAtual = atual?.id === u.id;
               return (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.nome}</TableCell>
                   <TableCell className="text-xs">{u.email}</TableCell>
                   <TableCell>{p?.nome ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{c?.nome ?? "—"}</TableCell>
                   <TableCell className="text-xs">{u.setor}</TableCell>
                   <TableCell>{u.ativo ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</TableCell>
                   <TableCell>
@@ -360,9 +411,10 @@ function UsuariosTab() {
 function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React.ReactNode }) {
   const editing = !!usuario;
   const perfis = usePerfis();
+  const consultores = useConsultores();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<Usuario>(usuario ?? {
-    id: "", nome: "", email: "", senha: "", perfilId: perfis[0]?.id ?? "", setor: "", ativo: true,
+    id: "", nome: "", email: "", senha: "", perfilId: perfis[0]?.id ?? "", setor: "", ativo: true, consultorId: undefined,
   });
 
   const salvar = () => {
@@ -403,6 +455,25 @@ function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React
           </div>
           <div className="space-y-1.5"><Label>Setor</Label>
             <Input value={f.setor} onChange={(e) => setF({ ...f, setor: e.target.value })} />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Consultor vinculado <span className="text-[10px] text-muted-foreground">(opcional)</span></Label>
+            <Select
+              value={f.consultorId ?? "__none__"}
+              onValueChange={(v) => setF({ ...f, consultorId: v === "__none__" ? undefined : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Nenhum —</SelectItem>
+                {consultores.filter((c) => c.ativo).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Quando o perfil tiver permissão "Apenas próprios", o usuário verá/alterará somente
+              registros do consultor aqui vinculado.
+            </p>
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">

@@ -36,6 +36,14 @@ export const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: "configuracoes", label: "Acessar configurações" },
 ];
 
+export type PermLevel = "nenhum" | "proprios" | "todos";
+export const PERM_LEVELS: { key: PermLevel; label: string }[] = [
+  { key: "nenhum", label: "Não pode" },
+  { key: "proprios", label: "Apenas próprios" },
+  { key: "todos", label: "Todos" },
+];
+export type PermissaoModulo = { ver: PermLevel; alterar: PermLevel };
+
 export type Perfil = {
   id: string;
   nome: string;
@@ -43,6 +51,8 @@ export type Perfil = {
   ativo: boolean;
   isAdminMaster?: boolean;
   permissoes: Partial<Record<ModuleKey, ActionKey[]>>;
+  /** Novo modelo: por módulo, escopo de Ver e Alterar (todos / próprios / nenhum). */
+  permissoesV2?: Partial<Record<ModuleKey, PermissaoModulo>>;
 };
 
 export type Usuario = {
@@ -53,6 +63,8 @@ export type Usuario = {
   perfilId: string;
   setor: string;
   ativo: boolean;
+  /** Vínculo opcional com um consultor de vendas. */
+  consultorId?: string;
 };
 
 const ALL_ACTIONS: ActionKey[] = ACTIONS.map((a) => a.key);
@@ -230,3 +242,27 @@ export function podeExecutar(perfil: Perfil | null, modulo: ModuleKey, acao: Act
   if (perfil.isAdminMaster) return true;
   return !!perfil.permissoes[modulo]?.includes(acao);
 }
+
+/** Deriva a permissão V2 (ver/alterar) a partir do modelo antigo, se V2 não estiver definido. */
+function derivarPermV2(perfil: Perfil, modulo: ModuleKey): PermissaoModulo {
+  if (perfil.isAdminMaster) return { ver: "todos", alterar: "todos" };
+  const v2 = perfil.permissoesV2?.[modulo];
+  if (v2) return v2;
+  const acts = perfil.permissoes[modulo] ?? [];
+  const ver: PermLevel = acts.includes("visualizar") ? "todos" : "nenhum";
+  const alteraSet: ActionKey[] = ["cadastrar","editar","aprovar","cancelar","excluir","alterar_status"];
+  const alterar: PermLevel = acts.some((a) => alteraSet.includes(a)) ? "todos" : "nenhum";
+  return { ver, alterar };
+}
+
+export function getPermissaoModulo(perfil: Perfil | null, modulo: ModuleKey): PermissaoModulo {
+  if (!perfil || !perfil.ativo) return { ver: "nenhum", alterar: "nenhum" };
+  return derivarPermV2(perfil, modulo);
+}
+export function podeVer(perfil: Perfil | null, modulo: ModuleKey): PermLevel {
+  return getPermissaoModulo(perfil, modulo).ver;
+}
+export function podeAlterar(perfil: Perfil | null, modulo: ModuleKey): PermLevel {
+  return getPermissaoModulo(perfil, modulo).alterar;
+}
+

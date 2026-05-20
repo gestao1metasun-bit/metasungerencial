@@ -312,61 +312,44 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
   return (
     <TableRow>
-      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell>
         {anexoInput}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 w-full justify-between gap-2 border-primary/40 bg-primary/5 px-3 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
-              title="Ações"
+        <ActionsMenu label={fmtContratoId(c.id)}>
+          {temAnexo && (
+            <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
+              <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={abrirSeletor}>
+            <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+          </DropdownMenuItem>
+          {!aprovado && (
+            <DropdownMenuItem
+              disabled={!temAnexo}
+              onSelect={() => {
+                const r = aprovarContratoAssinado(c.id, "Comercial");
+                if (!r.ok) { toast.error(r.motivo); return; }
+                const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+              }}
             >
-              <span className="flex items-center gap-1.5">
-                <SquarePen className="h-3.5 w-3.5" /> Ações
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="right" align="start" className="w-56">
-            <DropdownMenuLabel className="text-xs">{fmtContratoId(c.id)}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {temAnexo && (
-              <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
-                <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onSelect={abrirSeletor}>
-              <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
             </DropdownMenuItem>
-            {!aprovado && (
-              <DropdownMenuItem
-                disabled={!temAnexo}
-                onSelect={() => {
-                  const r = aprovarContratoAssinado(c.id, "Comercial");
-                  if (!r.ok) { toast.error(r.motivo); return; }
-                  const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
-                  toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
-                }}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
-              <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onImprimir(c)}>
-              <Printer className="mr-2 h-4 w-4" /> Imprimir
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onRetornar(c)}>
-              <Undo2 className="mr-2 h-4 w-4" /> Retornar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
+            <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onImprimir(c)}>
+            <Printer className="mr-2 h-4 w-4" /> Imprimir
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRetornar(c)}>
+            <Undo2 className="mr-2 h-4 w-4" /> Retornar
+          </DropdownMenuItem>
+        </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
       <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>

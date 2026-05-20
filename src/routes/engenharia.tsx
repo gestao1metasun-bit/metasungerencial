@@ -558,6 +558,8 @@ function EditObraDialog({
   const [confirming, setConfirming] = useState(false);
   const [confirmRet, setConfirmRet] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const { role } = useAuth();
+  const isAdminMaster = role === "admin_master";
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {

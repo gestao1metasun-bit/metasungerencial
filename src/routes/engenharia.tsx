@@ -472,17 +472,25 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead className="w-[80px]">Opções</TableHead>
             <TableHead className="w-12">#</TableHead>
             <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
             <TableHead>Início</TableHead><TableHead>Previsto</TableHead>
-            <TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
+                <TableCell>
+                  <ActionsMenu label={o.id}>
+                    <DropdownMenuItem onSelect={() => setEditing(o)}>
+                      <SquarePen className="mr-2 h-4 w-4" /> Editar
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
@@ -496,11 +504,6 @@ function ObrasAtivasTab({
                 <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(o)}>
-                    <SquarePen className="h-3.5 w-3.5" />
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
             {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}

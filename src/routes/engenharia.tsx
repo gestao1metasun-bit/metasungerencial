@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
+import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),

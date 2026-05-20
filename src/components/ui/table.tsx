@@ -1,13 +1,45 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { EnhancedTable } from "@/components/app/EnhancedTable";
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
-    </div>
-  ),
+type TableProps = React.HTMLAttributes<HTMLTableElement> & {
+  /** ID estável para persistir prefs. Se omitido, deriva de rota + posição. */
+  tableId?: string;
+  /** Desativa o painel de colunas (⚙) para esta tabela. */
+  disableColumnSettings?: boolean;
+};
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, tableId, disableColumnSettings, ...props }, forwardedRef) => {
+    const innerRef = React.useRef<HTMLTableElement | null>(null);
+    const setRefs = (el: HTMLTableElement | null) => {
+      innerRef.current = el;
+      if (typeof forwardedRef === "function") forwardedRef(el);
+      else if (forwardedRef) (forwardedRef as React.MutableRefObject<HTMLTableElement | null>).current = el;
+    };
+    const [autoId, setAutoId] = React.useState<string>(tableId ?? "");
+
+    React.useLayoutEffect(() => {
+      if (tableId) {
+        setAutoId(tableId);
+        return;
+      }
+      if (typeof window === "undefined" || !innerRef.current) return;
+      const path = window.location.pathname.replace(/\/$/, "") || "/";
+      const all = Array.from(document.querySelectorAll("table"));
+      const idx = all.indexOf(innerRef.current);
+      setAutoId(`${path}::t${idx >= 0 ? idx : 0}`);
+    });
+
+    const inner = (
+      <div className="relative w-full overflow-auto">
+        <table ref={setRefs} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+      </div>
+    );
+    if (disableColumnSettings || !autoId) return inner;
+    return <EnhancedTable tableId={autoId}>{inner}</EnhancedTable>;
+  },
 );
 Table.displayName = "Table";
 

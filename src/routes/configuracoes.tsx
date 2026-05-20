@@ -407,9 +407,10 @@ function UsuariosTab() {
 function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React.ReactNode }) {
   const editing = !!usuario;
   const perfis = usePerfis();
+  const consultores = useConsultores();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<Usuario>(usuario ?? {
-    id: "", nome: "", email: "", senha: "", perfilId: perfis[0]?.id ?? "", setor: "", ativo: true,
+    id: "", nome: "", email: "", senha: "", perfilId: perfis[0]?.id ?? "", setor: "", ativo: true, consultorId: undefined,
   });
 
   const salvar = () => {

@@ -169,10 +169,11 @@ function ComercialPage() {
 function ContratosUnificadosTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
-  const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido).length;
-  const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente").length;
-  const assinados = contratos.filter((c) => c.status === "Assinado").length;
-  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado">("geracao");
+  const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido && !c.cancelado).length;
+  const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente" && !c.cancelado).length;
+  const assinados = contratos.filter((c) => c.status === "Assinado" && !c.cancelado).length;
+  const cancelados = contratos.filter((c) => c.cancelado === true).length;
+  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado" | "cancelados">("geracao");
 
   const btn = (key: typeof sub, label: string, count: number, tone: string) => (
     <button
@@ -198,12 +199,15 @@ function ContratosUnificadosTab({
         {btn("geracao", "Aguardando geração", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
         {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
         {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
+        {btn("cancelados", "Cancelados", cancelados, "border-destructive/40 bg-destructive/10 text-destructive")}
       </div>
 
-      {sub !== "assinado" ? (
-        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
-      ) : (
+      {sub === "assinado" ? (
         <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+      ) : sub === "cancelados" ? (
+        <ContratosCanceladosTab contratos={contratos} />
+      ) : (
+        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
       )}
     </div>
   );

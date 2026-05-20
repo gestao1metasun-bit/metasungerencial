@@ -138,17 +138,19 @@ function EngenhariaPage() {
   // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
   useEffect(() => {
     const aprovados: { p: ProjetoVinculado; c: ContratoFull }[] = [];
-    contratos.forEach((c) => (c.projetos ?? []).forEach((p) => {
-      if (p.aprovado && p.enviadoEngenharia) aprovados.push({ p, c });
-    }));
+    contratos.forEach((c) => {
+      if (c.cancelado) return;
+      (c.projetos ?? []).forEach((p) => {
+        if (p.aprovado && p.enviadoEngenharia) aprovados.push({ p, c });
+      });
+    });
     setObras((cur) => {
       const ids = new Set(cur.map((o) => o.id));
       const news = aprovados.filter(({ p }) => !ids.has(p.id))
         .map(({ p, c }, i) => projetoToObra(p, c, cur.length + i + 1));
-      // Remove obras cujo projeto foi retornado ao Comercial
+      // Remove obras cujo projeto foi retornado ao Comercial OU cujo contrato foi cancelado
       const validIds = new Set(aprovados.map(({ p }) => p.id));
       const filtered = cur.filter((o) => {
-        // mantém obras que vieram do seed (sem projeto associado)
         const fromComercial = contratos.some((c) => (c.projetos ?? []).some((p) => p.id === o.id));
         return !fromComercial || validIds.has(o.id);
       });

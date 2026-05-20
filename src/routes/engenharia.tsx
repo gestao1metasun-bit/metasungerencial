@@ -1515,6 +1515,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           ) : (
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent">
+                <TableHead className="w-[80px]">Opções</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Endereço</TableHead>
@@ -1522,11 +1523,38 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 <TableHead className="text-right">Módulos</TableHead>
                 <TableHead className="text-right">kWp</TableHead>
                 <TableHead>Situação</TableHead>
-                <TableHead className="text-right w-[320px]">Ações</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {projetos.map((p) => (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <ActionsMenu label={p.id}>
+                        <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                          <SquarePen className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        {!p.enviadoEngenharia && (
+                          <DropdownMenuItem onSelect={() => {
+                            updateProjeto(c.id, p.id, {
+                              enviadoEngenharia: true,
+                              aprovado: true,
+                              dataAprovacao: new Date().toISOString(),
+                              usuarioAprovacao: "Engenharia",
+                            });
+                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
+                          }}>
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar p/ Engenharia
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onSelect={() => {
+                          if (!confirm(`Remover projeto ${p.id}?`)) return;
+                          removeProjeto(c.id, p.id);
+                          toast.success("Projeto removido");
+                        }}>
+                          <RotateCcw className="mr-2 h-4 w-4" /> Remover projeto
+                        </DropdownMenuItem>
+                      </ActionsMenu>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.id}</TableCell>
                     <TableCell className="text-xs">{p.tipo}</TableCell>
                     <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
@@ -1543,31 +1571,6 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                           <Clock className="h-3 w-3" /> Pendente
                         </span>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                          <SquarePen className="h-4 w-4" /> Editar
-                        </Button>
-                        {!p.enviadoEngenharia && (
-                          <Button size="default" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => {
-                            updateProjeto(c.id, p.id, {
-                              enviadoEngenharia: true,
-                              aprovado: true,
-                              dataAprovacao: new Date().toISOString(),
-                              usuarioAprovacao: "Engenharia",
-                            });
-                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
-                          }}>
-                            <CheckCircle2 className="h-4 w-4" /> Enviar p/ Engenharia
-                          </Button>
-                        )}
-                        <Button size="default" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => {
-                          if (!confirm(`Remover projeto ${p.id}?`)) return;
-                          removeProjeto(c.id, p.id);
-                          toast.success("Projeto removido");
-                        }}><RotateCcw className="h-4 w-4" /></Button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

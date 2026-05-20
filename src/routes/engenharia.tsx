@@ -32,6 +32,7 @@ import {
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
+import { fmtInversorNumero } from "@/lib/inversor-fmt";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),
@@ -135,7 +136,7 @@ function EngenhariaPage() {
   const [equipes, setEquipes] = useState(equipesSeed);
   const [tab, setTab] = useTabFromHash("/engenharia");
 
-  // Auto-incorpora projetos aprovados no Comercial em Obras Ativas
+  // Auto-incorpora projetos aprovados no Comercial em Gestão de projetos
   useEffect(() => {
     const aprovados: { p: ProjetoVinculado; c: ContratoFull }[] = [];
     contratos.forEach((c) => {
@@ -164,7 +165,7 @@ function EngenhariaPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="ativas">Obras ativas</TabsTrigger>
+          <TabsTrigger value="ativas">Gestão de projetos</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pendencias">Pendências</TabsTrigger>
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
@@ -202,7 +203,7 @@ function DashboardEng({
     ativas, exec, aguard, projeto, standby, fin,
   };
   const titles: Record<string, string> = {
-    ativas: "Obras ativas", exec: "Executando instalação", aguard: "Aguardando instalação",
+    ativas: "Gestão de projetos", exec: "Executando instalação", aguard: "Aguardando instalação",
     projeto: "Em projeto/elaboração", standby: "Standby", fin: "Finalizadas",
   };
 
@@ -242,7 +243,7 @@ function DashboardEng({
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
-        <StatCard label="Obras ativas" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
+        <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
         <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />
         <StatCard label="Aguardando" value={aguard.length} hint={`${aguard.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Clock} tone="warning" onView={() => setOpenModal("aguard")} />
         <StatCard label="Em projeto" value={projeto.length} hint={`${projeto.reduce((s,o)=>s+o.modulos,0)} módulos`} icon={Wrench} tone="info" onView={() => setOpenModal("projeto")} />
@@ -496,7 +497,7 @@ function ObrasAtivasTab({
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
                 <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-                <TableCell className="text-xs">{o.inversor}</TableCell>
+                <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv2 || "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv3 || "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
@@ -836,7 +837,7 @@ function CronogramaTab({
               <div className="font-semibold">{eq.nome}</div>
               {pendQtd > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive"><AlertTriangle className="h-3 w-3" /> {pendQtd} pend.</span>}
             </div>
-            {exec.length === 0 && aguard.length === 0 && <div className="rounded border border-dashed border-border p-6 text-center text-xs text-muted-foreground">Sem obras ativas</div>}
+            {exec.length === 0 && aguard.length === 0 && <div className="rounded border border-dashed border-border p-6 text-center text-xs text-muted-foreground">Sem gestão de projetos</div>}
             {exec.length > 0 && (
               <div className="mb-3">
                 <div className="mb-2 text-[10px] font-semibold uppercase text-success">Executando</div>
@@ -872,7 +873,7 @@ function CronogramaCard({ o, tone, first, last, onMove, onChangeInicio }: { o: O
             <div className="font-medium text-sm truncate">{o.cliente}</div>
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{o.modulos} mód · {o.potencia.toFixed(1)} kWp · {o.telhadoTipo}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground truncate">{o.inversor}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground truncate">{fmtInversorNumero(o.inversor)}</div>
 
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md bg-background/50 p-2 text-[11px] items-center">
             <div className="text-muted-foreground">Previsão início</div>
@@ -1286,7 +1287,7 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
               <Row k="Equipe" v={detail.equipe} />
               <Row k="Módulos" v={`${detail.modulos}`} />
               <Row k="Potência" v={`${detail.potencia.toFixed(1)} kWp`} />
-              <Row k="Inversor" v={detail.inversor} />
+              <Row k="Inversor" v={fmtInversorNumero(detail.inversor)} />
               <Row k="Telhado" v={detail.telhadoTipo} />
               <Row k="Início" v={detail.inicio} />
               <Row k="Finalização" v={detail.finalizacao ?? "—"} />
@@ -1324,7 +1325,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   }
 
   // Apenas projetos pendentes na Engenharia (não aprovados ainda).
-  // Ao aprovar, o projeto sai daqui e aparece em Obras Ativas.
+  // Ao aprovar, o projeto sai daqui e aparece em Gestão de projetos.
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
   liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
     if (p.enviadoEngenharia && !p.aprovado) flat.push({ p, c });
@@ -1338,7 +1339,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
       dataAprovacao: new Date().toISOString(),
       usuarioAprovacao: "Engenharia",
     });
-    toast.success(`Projeto ${p.id} aprovado pela Engenharia. Movido para Obras Ativas.`);
+    toast.success(`Projeto ${p.id} aprovado pela Engenharia. Movido para Gestão de projetos.`);
   };
   const enviarUm = aprovarProjetoEng;
 
@@ -1349,7 +1350,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           <div>
             <div className="text-sm font-semibold flex items-center gap-2"><HardHat className="h-4 w-4 text-primary" /> Gestão de Projetos</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Cadastramento técnico da Engenharia. Ao aprovar um projeto, ele é movido para Obras Ativas.
+              Cadastramento técnico da Engenharia. Ao aprovar um projeto, ele é movido para Gestão de projetos.
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px]">
               <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-600 tabular-nums">
@@ -1397,7 +1398,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                       <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
                       <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
                       {p.potenciaModuloW ? <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.potenciaModuloW}W</span> : null}
-                      {p.inversor ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 truncate max-w-[180px]" title={p.inversor}>Inv: {p.inversor}</span> : null}
+                      {p.inversor ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 truncate max-w-[180px]" title={p.inversor}>Inv: {fmtInversorNumero(p.inversor)}</span> : null}
                     </div>
                     {!p.enviadoEngenharia && (
                       <div className="mt-2 flex justify-end">
@@ -1447,7 +1448,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                   <TableCell className="text-xs font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs">{[p.endereco, p.numero, p.bairro, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</TableCell>
                   <TableCell className="text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)} kWp · {p.modulos || 0} mód{p.potenciaModuloW ? ` · ${p.potenciaModuloW}W` : ""}</TableCell>
-                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{fmtInversorNumero(p.inversor) || "—"}</TableCell>
                   <TableCell>
                     {p.enviadoEngenharia ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
@@ -1540,7 +1541,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                               dataAprovacao: new Date().toISOString(),
                               usuarioAprovacao: "Engenharia",
                             });
-                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
+                            toast.success(`Projeto ${p.id} enviado para Engenharia (Gestão de projetos).`);
                           }}>
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar p/ Engenharia
                           </DropdownMenuItem>
@@ -1754,7 +1755,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                   <TableCell className="text-xs">{p.cidade}/{p.uf}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{p.modulos || 0}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{(p.kwp ?? 0).toFixed(2)}</TableCell>
-                  <TableCell className="text-xs truncate max-w-[160px]">{p.inversor || "—"}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[160px]">{fmtInversorNumero(p.inversor) || "—"}</TableCell>
                   <TableCell className="text-xs">{p.equipe || "—"}</TableCell>
                   <TableCell><span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold">{bucketDe(p.status)}</span></TableCell>
                   <TableCell className="text-xs">{fmtBR(p.inicio)}</TableCell>
@@ -1826,7 +1827,7 @@ function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onCl
         <DialogHeader>
           <DialogTitle>Novo projeto — {contrato.id}</DialogTitle>
           <DialogDescription>
-            Cada projeto vira uma obra independente em "Obras ativas". Use endereços distintos quando o contrato cobre instalações em locais diferentes.
+            Cada projeto vira uma obra independente em "Gestão de projetos". Use endereços distintos quando o contrato cobre instalações em locais diferentes.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">

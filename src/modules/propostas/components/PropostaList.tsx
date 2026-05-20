@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
+import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
@@ -113,14 +114,7 @@ export function reativarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} reativada.`);
 }
 
-/** Extrai apenas o número (kW) de um ID de inversor padrão.
- *  Ex.: "INV-STD-37_5" → "37,5"; "INV-STD-10" → "10". Outros valores: retorna como veio. */
-function fmtInversorNumero(idOrText: string): string {
-  if (!idOrText) return "";
-  const m = /INV-STD-(.+)$/i.exec(idOrText);
-  if (m) return m[1].replace("_", ",");
-  return idOrText;
-}
+// fmtInversorNumero importado de @/lib/inversor-fmt no topo do arquivo
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas

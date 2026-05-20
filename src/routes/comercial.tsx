@@ -577,6 +577,9 @@ function ContratosTab({
 
   const [aberto, setAberto] = useState<Contrato | null>(null);
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
+  // Contrato "montado" exibido em pré-visualização ANTES da geração efetiva.
+  // Quando o usuário confirma, persiste no store; se voltar, reabre o editor.
+  const [previewGeracao, setPreviewGeracao] = useState<Contrato | null>(null);
   const [gerarAssinado, setGerarAssinado] = useState<Contrato | null>(null);
   const [dataAssinaturaInput, setDataAssinaturaInput] = useState<string>(() => new Date().toISOString().slice(0, 10));
 
@@ -735,11 +738,32 @@ function ContratosTab({
           contrato={aberto}
           onClose={() => setAberto(null)}
           onConfirm={(patch) => {
-            const atualizado = { ...aberto, ...patch, contratoRedigido: true } as Contrato;
-            setContratos(contratos.map((c) => c.id === aberto.id ? atualizado : c));
-            toast.success(`Contrato ${aberto.id} gerado. Abrindo visualização para impressão.`);
+            // Monta o contrato em memória e abre a PRÉ-VISUALIZAÇÃO.
+            // Só persiste após o usuário confirmar na prévia.
+            const montado = { ...aberto, ...patch, contratoRedigido: true } as Contrato;
+            setPreviewGeracao(montado);
             setAberto(null);
-            setImprimir(atualizado);
+          }}
+        />
+      )}
+
+      {previewGeracao && (
+        <ContratoImpressao
+          contrato={previewGeracao}
+          preview
+          onClose={() => setPreviewGeracao(null)}
+          onBack={() => {
+            // volta para o editor com os dados que o usuário montou
+            const back = previewGeracao;
+            setPreviewGeracao(null);
+            setAberto(back);
+          }}
+          onConfirm={() => {
+            const montado = previewGeracao;
+            setContratos(contratos.map((c) => c.id === montado.id ? montado : c));
+            toast.success(`Contrato ${montado.id} gerado.`);
+            setPreviewGeracao(null);
+            setImprimir(montado);
           }}
         />
       )}
@@ -1343,7 +1367,7 @@ function RedigirContratoDialog({
         <DialogFooter className="border-t bg-muted/30 px-6 py-3">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={salvar} className="gap-1">
-            <CheckCircle2 className="h-4 w-4" /> Gerar contrato redigido
+            <Eye className="h-4 w-4" /> Pré-visualizar contrato
           </Button>
         </DialogFooter>
       </DialogContent>

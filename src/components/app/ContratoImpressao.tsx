@@ -1,13 +1,30 @@
 // ContratoImpressao — renderiza o contrato completo (template Meta Sun) com
 // cláusulas dinâmicas, dados do cliente, forma de pagamento e personalizações.
-import { Printer } from "lucide-react";
+// Suporta modo "pré-visualização" — exibe o contrato montado ANTES da geração
+// efetiva, com botões "Voltar para edição" e "Confirmar geração".
+import { Printer, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { fmtBRL } from "@/lib/mock-data";
 import type { ContratoFull } from "@/lib/contratos-store";
 import { clausulasBase, aplicarCustom, CONTRATADA } from "@/lib/contrato-template";
 
-export function ContratoImpressao({ contrato, onClose }: { contrato: ContratoFull; onClose: () => void }) {
+export function ContratoImpressao({
+  contrato,
+  onClose,
+  preview,
+  onConfirm,
+  onBack,
+}: {
+  contrato: ContratoFull;
+  onClose: () => void;
+  /** Quando true, mostra o contrato como "pré-visualização" antes da geração. */
+  preview?: boolean;
+  /** Disparado ao clicar em "Confirmar geração" (apenas em modo preview). */
+  onConfirm?: () => void;
+  /** Disparado ao clicar em "Voltar para edição" (apenas em modo preview). */
+  onBack?: () => void;
+}) {
   const cf = contrato.clienteFull;
   const clausulas = aplicarCustom(clausulasBase(contrato), contrato.clausulasCustom);
   const isPJ = (cf?.doc ?? "").replace(/\D/g, "").length === 14;
@@ -24,7 +41,15 @@ export function ContratoImpressao({ contrato, onClose }: { contrato: ContratoFul
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
         <DialogHeader className="no-print">
-          <DialogTitle>Contrato {contrato.id} — visualização</DialogTitle>
+          <DialogTitle>
+            {preview ? `Pré-visualização — contrato ${contrato.id}` : `Contrato ${contrato.id} — visualização`}
+          </DialogTitle>
+          {preview && (
+            <p className="text-xs text-muted-foreground">
+              Revise o contrato montado abaixo. Ele <b>ainda não foi gerado</b>. Volte para a edição se algo estiver errado,
+              ou confirme a geração para registrar o contrato redigido.
+            </p>
+          )}
         </DialogHeader>
 
         <style>{`
@@ -114,10 +139,26 @@ export function ContratoImpressao({ contrato, onClose }: { contrato: ContratoFul
         </div>
 
         <DialogFooter className="no-print">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
-          <Button onClick={imprimir} className="gap-1.5">
-            <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
-          </Button>
+          {preview ? (
+            <>
+              <Button variant="outline" onClick={onBack ?? onClose} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" /> Voltar para edição
+              </Button>
+              <Button variant="outline" onClick={imprimir} className="gap-1.5">
+                <Printer className="h-4 w-4" /> Imprimir prévia
+              </Button>
+              <Button onClick={onConfirm} className="gap-1.5 bg-success text-success-foreground hover:bg-success/90">
+                <CheckCircle2 className="h-4 w-4" /> Confirmar geração
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>Fechar</Button>
+              <Button onClick={imprimir} className="gap-1.5">
+                <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

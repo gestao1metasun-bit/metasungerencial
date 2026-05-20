@@ -3229,13 +3229,13 @@ function ProjetoEditCard({
         <div className="text-sm font-semibold flex items-center gap-2">
           <Layers className="h-4 w-4 text-primary" />
           <span className="font-mono text-primary">{projeto.id}</span>
-          {projeto.enviadoEngenharia
+          {projeto.aprovado && projeto.enviadoEngenharia
             ? <span className="text-[10px] rounded bg-success/15 px-2 py-0.5 text-success font-bold">ENVIADO À ENGENHARIA</span>
-            : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE</span>}
+            : <span className="text-[10px] rounded bg-warning/15 px-2 py-0.5 text-warning font-bold">PENDENTE DE APROVAÇÃO</span>}
           {dirty && <span className="text-[10px] rounded bg-amber-500/15 px-2 py-0.5 text-amber-700 font-bold">ALTERAÇÕES NÃO SALVAS</span>}
         </div>
         <div className="flex items-center gap-2">
-          {!projeto.aprovado && contrato.status === "Aprovado" && (
+          {!projeto.aprovado && (
             <Button size="sm" className="bg-success text-success-foreground" onClick={() => {
               const faltam: string[] = [];
               if (!(Number(projeto.valor) > 0)) faltam.push("valor do projeto");

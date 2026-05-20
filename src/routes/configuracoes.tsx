@@ -347,6 +347,7 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
 function UsuariosTab() {
   const usuarios = useUsuarios();
   const perfis = usePerfis();
+  const consultores = useConsultores();
   const { user: atual } = useUsuarioAtual();
   return (
     <Card className="p-6">

@@ -1850,6 +1850,7 @@ function DashboardComercial({
         </Card>
       </section>
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Propostas (mês a mês)</div>
           <div className="mt-1 flex items-baseline gap-2"><div className="text-2xl font-bold text-primary">{totalPropostas}</div><div className="text-xs text-muted-foreground">{fmtBRL(valorPropostas)}</div></div>

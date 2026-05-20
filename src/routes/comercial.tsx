@@ -419,8 +419,8 @@ function ContratoAssinadoRow({
             <CheckCircle2 className="h-3 w-3" /> 0
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 tabular-nums">
-            <Clock className="h-3 w-3" /> {pendentes}
+          <span className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-[11px] font-bold text-destructive tabular-nums animate-pulse" title="Projetos pendentes de aprovação na Engenharia">
+            <AlertTriangle className="h-3 w-3" /> {pendentes}
           </span>
         )}
       </TableCell>

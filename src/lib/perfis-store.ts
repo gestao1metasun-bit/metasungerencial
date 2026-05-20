@@ -36,6 +36,14 @@ export const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: "configuracoes", label: "Acessar configurações" },
 ];
 
+export type PermLevel = "nenhum" | "proprios" | "todos";
+export const PERM_LEVELS: { key: PermLevel; label: string }[] = [
+  { key: "nenhum", label: "Não pode" },
+  { key: "proprios", label: "Apenas próprios" },
+  { key: "todos", label: "Todos" },
+];
+export type PermissaoModulo = { ver: PermLevel; alterar: PermLevel };
+
 export type Perfil = {
   id: string;
   nome: string;
@@ -43,6 +51,8 @@ export type Perfil = {
   ativo: boolean;
   isAdminMaster?: boolean;
   permissoes: Partial<Record<ModuleKey, ActionKey[]>>;
+  /** Novo modelo: por módulo, escopo de Ver e Alterar (todos / próprios / nenhum). */
+  permissoesV2?: Partial<Record<ModuleKey, PermissaoModulo>>;
 };
 
 export type Usuario = {
@@ -53,6 +63,8 @@ export type Usuario = {
   perfilId: string;
   setor: string;
   ativo: boolean;
+  /** Vínculo opcional com um consultor de vendas. */
+  consultorId?: string;
 };
 
 const ALL_ACTIONS: ActionKey[] = ACTIONS.map((a) => a.key);

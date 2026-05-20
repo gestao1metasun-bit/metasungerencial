@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ActionsMenu } from "@/components/app/ActionsMenu";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   obras as obrasSeed, pendencias as pendenciasSeed, equipes as equipesSeed,
   produtividadeEquipe, diasPrevistos, registrarHistoricoExec,
@@ -470,17 +472,25 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
+            <TableHead className="w-[80px]">Opções</TableHead>
             <TableHead className="w-12">#</TableHead>
             <TableHead>Cliente</TableHead><TableHead>Contrato</TableHead>
             <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
             <TableHead>Início</TableHead><TableHead>Previsto</TableHead>
-            <TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {list.map((o) => (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
+                <TableCell>
+                  <ActionsMenu label={o.id}>
+                    <DropdownMenuItem onSelect={() => setEditing(o)}>
+                      <SquarePen className="mr-2 h-4 w-4" /> Editar
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
                 <TableCell className="font-bold text-primary">{o.ordem}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{fmtContrato(o.contrato)}</TableCell>
@@ -494,11 +504,6 @@ function ObrasAtivasTab({
                 <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => setEditing(o)}>
-                    <SquarePen className="h-3.5 w-3.5" />
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
             {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
@@ -992,14 +997,21 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
   return (
     <Table>
       <TableHeader><TableRow className="hover:bg-transparent">
+        <TableHead className="w-[80px]">Opções</TableHead>
         <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
         <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
         <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
-        <TableHead className="text-right">Ações</TableHead>
       </TableRow></TableHeader>
       <TableBody>
         {rows.map((p) => (
           <TableRow key={p.id}>
+            <TableCell>
+              <ActionsMenu label={p.id}>
+                <DropdownMenuItem onSelect={() => onEdit(p)}>
+                  <SquarePen className="mr-2 h-4 w-4" /> Editar
+                </DropdownMenuItem>
+              </ActionsMenu>
+            </TableCell>
             <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
             <TableCell>{p.equipe}</TableCell>
             <TableCell className="font-medium">{p.cliente}</TableCell>
@@ -1008,11 +1020,6 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
             <TableCell><StatusBadge status={p.status} /></TableCell>
             <TableCell className="text-muted-foreground">{p.abertura}</TableCell>
             <TableCell className="text-muted-foreground">{p.resolucao ?? "—"}</TableCell>
-            <TableCell className="text-right">
-              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => onEdit(p)}>
-                <SquarePen className="h-3.5 w-3.5" />
-              </Button>
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -1240,14 +1247,25 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
     <Card>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
+          <TableHead className="w-[80px]">Opções</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {list.map((o) => (
             <TableRow key={o.id}>
+              <TableCell>
+                <ActionsMenu label={o.id}>
+                  <DropdownMenuItem onSelect={() => setDetail(o)}>
+                    <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => retornar(o.id)}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Retornar para ativos
+                  </DropdownMenuItem>
+                </ActionsMenu>
+              </TableCell>
               <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
               <TableCell className="font-medium">{o.cliente}</TableCell>
               <TableCell>{o.equipe}</TableCell>
@@ -1255,10 +1273,6 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
               <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
               <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
               <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
-              <TableCell className="text-right whitespace-nowrap">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(o)}><Eye className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => retornar(o.id)}><RotateCcw className="mr-1 h-3.5 w-3.5" /> Retornar</Button>
-              </TableCell>
             </TableRow>
           ))}
           {list.length === 0 && <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}
@@ -1404,7 +1418,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[260px]">Ações</TableHead>
+              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -1417,16 +1431,16 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {flat.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <div className="inline-flex items-center gap-1.5">
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                        <SquarePen className="h-3.5 w-3.5" /> Editar
-                      </Button>
+                    <ActionsMenu label={p.id}>
+                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
                       {!p.enviadoEngenharia && (
-                        <Button size="sm" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => enviarUm(c, p)}>
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Enviar
-                        </Button>
+                        <DropdownMenuItem onSelect={() => enviarUm(c, p)}>
+                          <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar
+                        </DropdownMenuItem>
                       )}
-                    </div>
+                    </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
@@ -1501,6 +1515,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           ) : (
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent">
+                <TableHead className="w-[80px]">Opções</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Endereço</TableHead>
@@ -1508,11 +1523,38 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 <TableHead className="text-right">Módulos</TableHead>
                 <TableHead className="text-right">kWp</TableHead>
                 <TableHead>Situação</TableHead>
-                <TableHead className="text-right w-[320px]">Ações</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {projetos.map((p) => (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <ActionsMenu label={p.id}>
+                        <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                          <SquarePen className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        {!p.enviadoEngenharia && (
+                          <DropdownMenuItem onSelect={() => {
+                            updateProjeto(c.id, p.id, {
+                              enviadoEngenharia: true,
+                              aprovado: true,
+                              dataAprovacao: new Date().toISOString(),
+                              usuarioAprovacao: "Engenharia",
+                            });
+                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
+                          }}>
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar p/ Engenharia
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onSelect={() => {
+                          if (!confirm(`Remover projeto ${p.id}?`)) return;
+                          removeProjeto(c.id, p.id);
+                          toast.success("Projeto removido");
+                        }}>
+                          <RotateCcw className="mr-2 h-4 w-4" /> Remover projeto
+                        </DropdownMenuItem>
+                      </ActionsMenu>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.id}</TableCell>
                     <TableCell className="text-xs">{p.tipo}</TableCell>
                     <TableCell className="text-xs">{p.endereco || "—"}</TableCell>
@@ -1529,31 +1571,6 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                           <Clock className="h-3 w-3" /> Pendente
                         </span>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                          <SquarePen className="h-4 w-4" /> Editar
-                        </Button>
-                        {!p.enviadoEngenharia && (
-                          <Button size="default" className="gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => {
-                            updateProjeto(c.id, p.id, {
-                              enviadoEngenharia: true,
-                              aprovado: true,
-                              dataAprovacao: new Date().toISOString(),
-                              usuarioAprovacao: "Engenharia",
-                            });
-                            toast.success(`Projeto ${p.id} enviado para Engenharia (Obras Ativas).`);
-                          }}>
-                            <CheckCircle2 className="h-4 w-4" /> Enviar p/ Engenharia
-                          </Button>
-                        )}
-                        <Button size="default" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => {
-                          if (!confirm(`Remover projeto ${p.id}?`)) return;
-                          removeProjeto(c.id, p.id);
-                          toast.success("Projeto removido");
-                        }}><RotateCcw className="h-4 w-4" /></Button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1704,7 +1721,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[180px]">Ações</TableHead>
+              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -1723,9 +1740,11 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {cards.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <Button size="default" variant="outline" className="gap-1.5" onClick={() => setEditing({ c, p })}>
-                      <SquarePen className="h-4 w-4" /> Editar
-                    </Button>
+                    <ActionsMenu label={p.id}>
+                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
+                    </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>

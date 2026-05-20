@@ -26,6 +26,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { toast } from "sonner";
 import {
   type PropostaFV, type StatusProposta,
@@ -765,11 +766,11 @@ function LeadDetail({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[80px]">Opções</TableHead>
                     <TableHead>Nº</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Criada</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -781,46 +782,37 @@ function LeadDetail({
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     return (
                       <TableRow key={p.id}>
+                        <TableCell>
+                          <ActionsMenu label={p.numero}>
+                            <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
+                              <Eye className="mr-2 h-4 w-4" /> Visualizar
+                            </DropdownMenuItem>
+                            {podeEditar && (
+                              <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
+                                <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
+                              </DropdownMenuItem>
+                            )}
+                            {podeCancelar && (
+                              <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
+                                <Ban className="mr-2 h-4 w-4 text-destructive" />
+                                <span className="text-destructive">Cancelar</span>
+                              </DropdownMenuItem>
+                            )}
+                            {podeExcluir && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => excluirProposta(p)}>
+                                  <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                  <span className="text-destructive">Excluir rascunho</span>
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </ActionsMenu>
+                        </TableCell>
                         <TableCell className="font-medium">{p.numero}</TableCell>
                         <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
                         <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Ações">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuLabel className="text-xs">{p.numero}</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
-                                <Eye className="mr-2 h-4 w-4" /> Visualizar
-                              </DropdownMenuItem>
-                              {podeEditar && (
-                                <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
-                                  <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
-                                </DropdownMenuItem>
-                              )}
-                              {podeCancelar && (
-                                <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
-                                  <Ban className="mr-2 h-4 w-4 text-destructive" />
-                                  <span className="text-destructive">Cancelar</span>
-                                </DropdownMenuItem>
-                              )}
-                              {podeExcluir && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onSelect={() => excluirProposta(p)}>
-                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                                    <span className="text-destructive">Excluir rascunho</span>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -1127,30 +1119,21 @@ function KanbanView({
                     <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
                       {!l.bloqueado && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Ações">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuLabel className="text-xs">{l.clienteNome}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                              <Eye className="mr-2 h-4 w-4" /> Abrir lead
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                                if (!p) { toast.info("Não há proposta cancelável."); return; }
-                                cancelarProposta(p);
-                              }}
-                            >
-                              <Ban className="mr-2 h-4 w-4 text-destructive" />
-                              <span className="text-destructive">Cancelar última proposta</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
+                          <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                            <Eye className="mr-2 h-4 w-4" /> Abrir lead
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                              if (!p) { toast.info("Não há proposta cancelável."); return; }
+                              cancelarProposta(p);
+                            }}
+                          >
+                            <Ban className="mr-2 h-4 w-4 text-destructive" />
+                            <span className="text-destructive">Cancelar última proposta</span>
+                          </DropdownMenuItem>
+                        </ActionsMenu>
                       )}
                     </div>
                   </div>

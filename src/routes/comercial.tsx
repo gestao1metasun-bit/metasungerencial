@@ -10,6 +10,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
+import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -273,8 +274,8 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
-              <TableHead className="w-[140px]">Ações</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
@@ -312,61 +313,44 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
   return (
     <TableRow>
-      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell>
         {anexoInput}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 w-full justify-between gap-2 border-primary/40 bg-primary/5 px-3 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
-              title="Ações"
+        <ActionsMenu label={fmtContratoId(c.id)}>
+          {temAnexo && (
+            <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
+              <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={abrirSeletor}>
+            <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+          </DropdownMenuItem>
+          {!aprovado && (
+            <DropdownMenuItem
+              disabled={!temAnexo}
+              onSelect={() => {
+                const r = aprovarContratoAssinado(c.id, "Comercial");
+                if (!r.ok) { toast.error(r.motivo); return; }
+                const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+              }}
             >
-              <span className="flex items-center gap-1.5">
-                <SquarePen className="h-3.5 w-3.5" /> Ações
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="right" align="start" className="w-56">
-            <DropdownMenuLabel className="text-xs">{fmtContratoId(c.id)}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {temAnexo && (
-              <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
-                <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onSelect={abrirSeletor}>
-              <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
             </DropdownMenuItem>
-            {!aprovado && (
-              <DropdownMenuItem
-                disabled={!temAnexo}
-                onSelect={() => {
-                  const r = aprovarContratoAssinado(c.id, "Comercial");
-                  if (!r.ok) { toast.error(r.motivo); return; }
-                  const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
-                  toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
-                }}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
-              <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onImprimir(c)}>
-              <Printer className="mr-2 h-4 w-4" /> Imprimir
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onRetornar(c)}>
-              <Undo2 className="mr-2 h-4 w-4" /> Retornar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
+            <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onImprimir(c)}>
+            <Printer className="mr-2 h-4 w-4" /> Imprimir
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRetornar(c)}>
+            <Undo2 className="mr-2 h-4 w-4" /> Retornar
+          </DropdownMenuItem>
+        </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
       </TableCell>
+      <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
       <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
@@ -556,6 +540,7 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -563,7 +548,6 @@ function ContratosTab({
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Endereço</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {aRedigir.map((c) => {
@@ -573,6 +557,17 @@ function ContratosTab({
                 const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
                 return (
                   <TableRow key={c.id}>
+                    <TableCell>
+                      <ActionsMenu label={c.id}>
+                        <DropdownMenuItem onSelect={() => setAberto(c)}>
+                          <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => retornarParaOrcamento(c)}>
+                          <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                        </DropdownMenuItem>
+                      </ActionsMenu>
+                    </TableCell>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                     <TableCell className="font-medium">{c.cliente}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -580,16 +575,6 @@ function ContratosTab({
                     <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
                     <TableCell className="text-xs">{temDoc ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                     <TableCell className="text-xs">{temEndereco ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-1.5">
-                        <Button size="sm" variant="outline" onClick={() => retornarParaOrcamento(c)} className="h-8 gap-1.5">
-                          <Undo2 className="h-3.5 w-3.5" /> Retornar
-                        </Button>
-                        <Button size="sm" onClick={() => setAberto(c)} className="h-8 gap-1.5">
-                          <MapPin className="h-3.5 w-3.5" /> Cadastrar · gerar contrato
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -611,37 +596,38 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {redigidosFiltrados.map((c) => (
                 <TableRow key={c.id}>
+                  <TableCell>
+                    <ActionsMenu label={c.id}>
+                      <DropdownMenuItem onSelect={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
+                        <PenLine className="mr-2 h-4 w-4" /> Gerar Assinado
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setImprimir(c)}>
+                        <Printer className="mr-2 h-4 w-4" /> Imprimir
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setAberto(c)}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar dados
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => reabrirRedigido(c)}>
+                        <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                      </DropdownMenuItem>
+                    </ActionsMenu>
+                  </TableCell>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1.5">
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setImprimir(c)}>
-                        <Printer className="h-3.5 w-3.5" /> Imprimir
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setAberto(c)}>
-                        <SquarePen className="h-3.5 w-3.5" /> Editar dados
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => reabrirRedigido(c)}>
-                        <Undo2 className="h-3.5 w-3.5" /> Retornar
-                      </Button>
-                      <Button size="sm" className="h-8 gap-1.5 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
-                        <PenLine className="h-3.5 w-3.5" /> Gerar Assinado
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

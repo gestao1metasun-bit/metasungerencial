@@ -227,7 +227,7 @@ function ContratoAssinadoTab({
   const assinados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return contratos
-      .filter((c) => c.status === "Assinado")
+      .filter((c) => c.status === "Assinado" && !c.cancelado)
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);

@@ -533,13 +533,17 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-negociacao", titulo: "Em negociação", ativo: true },
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
+  { id: "col-cancelados", titulo: "Cancelados", ativo: true },
   COL_CONTRATO,
 ];
 
-// Garante que a coluna fixa exista e seja sempre a última do array.
+// Garante que a coluna fixa exista e seja sempre a última, e que a coluna
+// "Cancelados" exista para receber propostas com status CANCELADA.
 function normalizeCols(cols: KCol[]): KCol[] {
   const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
-  return [...semFixa, { ...COL_CONTRATO }];
+  const temCanc = semFixa.some((c) => c.id === "col-cancelados");
+  const base = temCanc ? semFixa : [...semFixa, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
+  return [...base, { ...COL_CONTRATO }];
 }
 
 function colPadraoPorStatus(s: StatusProposta): string {
@@ -548,9 +552,9 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "GERADA":
     case "ENVIADA": return "col-enviada";
     case "APROVADA": return "col-aprovada";
+    case "CANCELADA": return "col-cancelados";
     case "RECUSADA":
-    case "VENCIDA":
-    case "CANCELADA": return "col-perdida";
+    case "VENCIDA": return "col-perdida";
     default: return "col-rascunho";
   }
 }

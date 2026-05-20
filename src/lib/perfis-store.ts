@@ -242,3 +242,27 @@ export function podeExecutar(perfil: Perfil | null, modulo: ModuleKey, acao: Act
   if (perfil.isAdminMaster) return true;
   return !!perfil.permissoes[modulo]?.includes(acao);
 }
+
+/** Deriva a permissão V2 (ver/alterar) a partir do modelo antigo, se V2 não estiver definido. */
+function derivarPermV2(perfil: Perfil, modulo: ModuleKey): PermissaoModulo {
+  if (perfil.isAdminMaster) return { ver: "todos", alterar: "todos" };
+  const v2 = perfil.permissoesV2?.[modulo];
+  if (v2) return v2;
+  const acts = perfil.permissoes[modulo] ?? [];
+  const ver: PermLevel = acts.includes("visualizar") ? "todos" : "nenhum";
+  const alteraSet: ActionKey[] = ["cadastrar","editar","aprovar","cancelar","excluir","alterar_status"];
+  const alterar: PermLevel = acts.some((a) => alteraSet.includes(a)) ? "todos" : "nenhum";
+  return { ver, alterar };
+}
+
+export function getPermissaoModulo(perfil: Perfil | null, modulo: ModuleKey): PermissaoModulo {
+  if (!perfil || !perfil.ativo) return { ver: "nenhum", alterar: "nenhum" };
+  return derivarPermV2(perfil, modulo);
+}
+export function podeVer(perfil: Perfil | null, modulo: ModuleKey): PermLevel {
+  return getPermissaoModulo(perfil, modulo).ver;
+}
+export function podeAlterar(perfil: Perfil | null, modulo: ModuleKey): PermLevel {
+  return getPermissaoModulo(perfil, modulo).alterar;
+}
+

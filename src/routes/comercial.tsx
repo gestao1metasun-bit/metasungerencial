@@ -2587,11 +2587,11 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
 
 /* ---------------- EDITAR CONTRATO + PROJETOS + AUDITORIA ---------------- */
 
-function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpenChange, hideTrigger }: { contrato: Contrato; vendedoresList: Vendedor[]; open?: boolean; onOpenChange?: (o: boolean) => void; hideTrigger?: boolean }) {
+function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpenChange, hideTrigger, lockDados }: { contrato: Contrato; vendedoresList: Vendedor[]; open?: boolean; onOpenChange?: (o: boolean) => void; hideTrigger?: boolean; lockDados?: boolean }) {
   const [openInner, setOpenInner] = useState(false);
   const open = openProp ?? openInner;
   const setOpen = (o: boolean) => { onOpenChange ? onOpenChange(o) : setOpenInner(o); };
-  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">("cliente");
+  const [tab, setTab] = useState<"dados" | "cliente" | "projetos" | "auditoria">(lockDados ? "projetos" : "cliente");
   const [f, setF] = useState<Contrato>(contrato);
   const [cli, setCli] = useState<ClienteFull>(contrato.clienteFull ?? {
     nome: contrato.cliente, doc: "", telefone: "", telefone2: "", email: "",

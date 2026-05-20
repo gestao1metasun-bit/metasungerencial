@@ -1162,6 +1162,12 @@ function KanbanView({
                           <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
                             <Eye className="mr-2 h-4 w-4" /> Abrir lead
                           </DropdownMenuItem>
+                          {l.status === "CANCELADA" && (
+                            <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                              <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                              <span className="text-success">Reativar última proposta</span>
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onSelect={() => {
                               const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");

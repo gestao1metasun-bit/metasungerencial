@@ -1,13 +1,45 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { EnhancedTable } from "@/components/app/EnhancedTable";
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
-    </div>
-  ),
+type TableProps = React.HTMLAttributes<HTMLTableElement> & {
+  /** ID estável para persistir prefs. Se omitido, deriva de rota + posição. */
+  tableId?: string;
+  /** Desativa o painel de colunas (⚙) para esta tabela. */
+  disableColumnSettings?: boolean;
+};
+
+function useAutoTableId(explicit?: string) {
+  const [id, setId] = React.useState<string>(explicit ?? "");
+  React.useEffect(() => {
+    if (explicit) {
+      setId(explicit);
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const path = window.location.pathname.replace(/\/$/, "") || "/";
+    const existing = document.querySelectorAll(`[data-et-auto-path="${path}"]`).length;
+    setId(`${path}::t${existing}`);
+  }, [explicit]);
+  return id;
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, tableId, disableColumnSettings, ...props }, ref) => {
+    const autoId = useAutoTableId(tableId);
+    const inner = (
+      <div className="relative w-full overflow-auto">
+        <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+      </div>
+    );
+    if (disableColumnSettings || !autoId) return inner;
+    return (
+      <div data-et-auto-path={typeof window !== "undefined" ? window.location.pathname : ""}>
+        <EnhancedTable tableId={autoId}>{inner}</EnhancedTable>
+      </div>
+    );
+  },
 );
 Table.displayName = "Table";
 

@@ -36,7 +36,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { addPendencia } from "@/lib/fin-pendencias";
 import {
@@ -1381,29 +1384,109 @@ function RedigirContratoDialog({
 
 /* ---------------- DASHBOARD ---------------- */
 
-type PeriodKey = "mes" | "3m" | "6m" | "ano" | "all";
+type PeriodKey =
+  | "hoje" | "ontem" | "7d" | "15d" | "30d"
+  | "mes" | "mes_ant" | "3m" | "6m"
+  | "trimestre" | "semestre" | "ano" | "ano_ant"
+  | "custom" | "all";
+
 const PERIOD_LABELS: Record<PeriodKey, string> = {
+  hoje: "Hoje",
+  ontem: "Ontem",
+  "7d": "Últimos 7 dias",
+  "15d": "Últimos 15 dias",
+  "30d": "Últimos 30 dias",
   mes: "Mês atual",
+  mes_ant: "Mês anterior",
   "3m": "Últimos 3 meses",
   "6m": "Últimos 6 meses",
+  trimestre: "Trimestre atual",
+  semestre: "Semestre atual",
   ano: "Ano atual",
+  ano_ant: "Ano anterior",
+  custom: "Personalizado…",
   all: "Todo o histórico",
 };
+
+const PERIOD_GROUPS: { label: string; keys: PeriodKey[] }[] = [
+  { label: "Rápidos", keys: ["hoje", "ontem", "7d", "15d", "30d"] },
+  { label: "Mensal", keys: ["mes", "mes_ant", "3m", "6m"] },
+  { label: "Trimestre / Ano", keys: ["trimestre", "semestre", "ano", "ano_ant"] },
+  { label: "Outros", keys: ["custom", "all"] },
+];
 
 function DashboardComercial({
   contratos: contratosProp, setContratos, vendedoresList, volume: volumeProp,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[]; volume: VolumeMes[] }) {
   const [period, setPeriod] = useState<PeriodKey>("all");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(undefined);
+  const [customTo, setCustomTo] = useState<Date | undefined>(undefined);
 
   const periodRange = useMemo(() => {
     const now = new Date();
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    if (period === "mes") return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: end };
-    if (period === "3m") return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: end };
-    if (period === "6m") return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: end };
-    if (period === "ano") return { from: new Date(now.getFullYear(), 0, 1), to: end };
-    return { from: null as Date | null, to: null as Date | null };
-  }, [period]);
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const today = startOfDay(now);
+
+    switch (period) {
+      case "hoje":
+        return { from: today, to: endOfDay(now) };
+      case "ontem": {
+        const y = new Date(now); y.setDate(now.getDate() - 1);
+        return { from: startOfDay(y), to: endOfDay(y) };
+      }
+      case "7d": {
+        const f = new Date(now); f.setDate(now.getDate() - 6);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "15d": {
+        const f = new Date(now); f.setDate(now.getDate() - 14);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "30d": {
+        const f = new Date(now); f.setDate(now.getDate() - 29);
+        return { from: startOfDay(f), to: endOfDay(now) };
+      }
+      case "mes":
+        return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: endOfMonth };
+      case "mes_ant":
+        return {
+          from: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+          to: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59),
+        };
+      case "3m":
+        return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: endOfMonth };
+      case "6m":
+        return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to: endOfMonth };
+      case "trimestre": {
+        const qStart = Math.floor(now.getMonth() / 3) * 3;
+        return {
+          from: new Date(now.getFullYear(), qStart, 1),
+          to: new Date(now.getFullYear(), qStart + 3, 0, 23, 59, 59),
+        };
+      }
+      case "semestre": {
+        const sStart = now.getMonth() < 6 ? 0 : 6;
+        return {
+          from: new Date(now.getFullYear(), sStart, 1),
+          to: new Date(now.getFullYear(), sStart + 6, 0, 23, 59, 59),
+        };
+      }
+      case "ano":
+        return { from: new Date(now.getFullYear(), 0, 1), to: endOfMonth };
+      case "ano_ant":
+        return {
+          from: new Date(now.getFullYear() - 1, 0, 1),
+          to: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59),
+        };
+      case "custom":
+        if (customFrom && customTo) return { from: startOfDay(customFrom), to: endOfDay(customTo) };
+        return { from: null as Date | null, to: null as Date | null };
+      default:
+        return { from: null as Date | null, to: null as Date | null };
+    }
+  }, [period, customFrom, customTo]);
 
   const contratos = useMemo(() => {
     if (!periodRange.from || !periodRange.to) return contratosProp;
@@ -1606,31 +1689,103 @@ function DashboardComercial({
   return (
     <>
       {/* Filtro de período */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 shadow-elegant">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
-          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-            <SelectTrigger className="h-8 w-[200px] text-xs font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(PERIOD_LABELS) as PeriodKey[]).map((k) => (
-                <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+      <div className="mb-4 rounded-xl border border-border/70 bg-card/80 px-4 py-3 shadow-elegant">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+              <SelectTrigger className="h-8 w-[220px] text-xs font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[420px]">
+                {PERIOD_GROUPS.map((g, gi) => (
+                  <React.Fragment key={g.label}>
+                    {gi > 0 && <SelectSeparator />}
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</SelectLabel>
+                      {g.keys.map((k) => (
+                        <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </React.Fragment>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Atalhos rápidos */}
+            <div className="hidden lg:flex items-center gap-1 ml-1">
+              {(["hoje","7d","30d","mes","ano","all"] as PeriodKey[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setPeriod(k)}
+                  className={
+                    "rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors " +
+                    (period === k
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted")
+                  }
+                >
+                  {k === "hoje" ? "Hoje" : k === "7d" ? "7d" : k === "30d" ? "30d" : k === "mes" ? "Mês" : k === "ano" ? "Ano" : "Tudo"}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-          {periodRange.from && periodRange.to && (
-            <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-              {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos no período</span>
-          <span className="h-3 w-px bg-border" />
-          <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+            </div>
+
+            {/* Pickers de data personalizada */}
+            {period === "custom" && (
+              <div className="flex items-center gap-1.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs font-normal">
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customFrom ? customFrom.toLocaleDateString("pt-BR") : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-muted-foreground">→</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs font-normal">
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {customTo ? customTo.toLocaleDateString("pt-BR") : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={customTo} onSelect={setCustomTo} disabled={(d) => customFrom ? d < customFrom : false} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {periodRange.from && periodRange.to && period !== "custom" && (
+              <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
+              </span>
+            )}
+            {period !== "all" && (
+              <button
+                type="button"
+                onClick={() => { setPeriod("all"); setCustomFrom(undefined); setCustomTo(undefined); }}
+                className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos</span>
+            <span className="h-3 w-px bg-border" />
+            <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+            <span className="h-3 w-px bg-border" />
+            <span><b className="text-foreground tabular-nums">{fmtBRL(valorAssinado)}</b> assinado</span>
+          </div>
         </div>
       </div>
+
 
       {/* ========== PAINEL EXECUTIVO — DIRETOR COMERCIAL ========== */}
       <section className="mb-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-card via-card to-card/60 p-5 shadow-elegant">

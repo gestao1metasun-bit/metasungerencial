@@ -1489,7 +1489,33 @@ function DashboardComercial({
 
   return (
     <>
-      {/* KPIs comparativos */}
+      {/* Filtro de período */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 shadow-elegant">
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Período</span>
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+            <SelectTrigger className="h-8 w-[200px] text-xs font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(PERIOD_LABELS) as PeriodKey[]).map((k) => (
+                <SelectItem key={k} value={k} className="text-xs">{PERIOD_LABELS[k]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {periodRange.from && periodRange.to && (
+            <span className="ml-1 hidden md:inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+              {periodRange.from.toLocaleDateString("pt-BR")} → {periodRange.to.toLocaleDateString("pt-BR")}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span><b className="text-foreground tabular-nums">{contratos.length}</b> contratos no período</span>
+          <span className="h-3 w-px bg-border" />
+          <span><b className="text-foreground tabular-nums">{volume.reduce((s,v)=>s+v.qtd,0)}</b> propostas</span>
+        </div>
+      </div>
+
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Propostas (mês a mês)</div>

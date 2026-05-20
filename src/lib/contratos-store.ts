@@ -741,6 +741,13 @@ export function aprovarContratoAssinado(contratoId: string, usuario: string): { 
     assinadoAprovado: true,
     assinadoAprovadoEm: new Date().toISOString(),
     assinadoAprovadoPor: usuario,
+    // envia automaticamente todos os projetos para a Engenharia (Gestão de Projetos),
+    // mantendo aprovado=false até que a Engenharia faça o cadastramento e aprove.
+    projetos: (c.projetos ?? []).map((p) => ({
+      ...p,
+      enviadoEngenharia: true,
+      aprovado: p.aprovado ?? false,
+    })),
   };
   if (temFinanciamento && valorFinanciado > 0) {
     patch.possuiFinanciamento = true;

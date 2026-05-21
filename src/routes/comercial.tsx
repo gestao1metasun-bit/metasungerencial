@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
-import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
+import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW, atualizarCadastroCliente } from "@/modules/propostas/store";
 import { PropostasPage } from "@/modules/propostas";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { useIsAdmin } from "@/lib/auth-store";
@@ -890,10 +890,38 @@ function ContratosTab({
             }
             const final = { ...montado, ...patchFin } as Contrato;
             setContratos(contratos.map((c) => c.id === final.id ? final : c));
+            // Propaga o "dono" do contrato para a proposta vinculada (e demais do mesmo lead).
+            // Ex.: proposta no nome da esposa → contrato gerado no nome do marido → atualiza a proposta.
+            const cf = final.clienteFull;
+            const tipoP: "PF" | "PJ" = onlyDigits(cf?.doc ?? "").length === 14 ? "PJ" : "PF";
+            if (cf && final.propostaId) {
+              try {
+                atualizarCadastroCliente({
+                  leadId: final.leadId,
+                  propostaId: final.propostaId,
+                  tipoPessoa: tipoP,
+                  clienteNome: cf.nome,
+                  clienteDoc: cf.doc,
+                  clienteTelefone: cf.telefone,
+                  clienteEmail: cf.email,
+                  endereco: cf.cep ? {
+                    cep: cf.cep, rua: cf.rua || "", numero: cf.numero || "",
+                    complemento: cf.complemento || "", bairro: cf.bairro || "",
+                    cidade: cf.cidade || "", uf: cf.uf || "",
+                  } : undefined,
+                  origem: `Geração do contrato ${final.id}`,
+                  usuario: "Operador",
+                });
+              } catch { /* não bloqueia geração do contrato */ }
+            }
+            const trocouTitular = original?.clienteFull?.doc && cf?.doc &&
+              onlyDigits(original.clienteFull.doc) !== onlyDigits(cf.doc);
             toast.success(
-              patchFin.financiamentoValor != null
-                ? `Contrato ${final.id} gerado. Valor financiado atualizado em Financiamentos.`
-                : `Contrato ${final.id} gerado.`,
+              trocouTitular
+                ? `Contrato ${final.id} gerado. Titular da proposta atualizado para ${cf?.nome}.`
+                : (patchFin.financiamentoValor != null
+                    ? `Contrato ${final.id} gerado. Valor financiado atualizado em Financiamentos.`
+                    : `Contrato ${final.id} gerado.`),
             );
             setPreviewGeracao(null);
             setImprimir(final);

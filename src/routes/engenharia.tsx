@@ -2243,3 +2243,66 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
   );
 }
 
+
+/* ---------- Bloco Kanban editável de Obras (Gestão de Projetos) ---------- */
+const OBRAS_KANBAN_DEFAULTS: KCol[] = ETAPA_COLS.map((c) => ({
+  id: `etapa:${c.key}`,
+  titulo: c.label,
+  ativo: true,
+  tone: c.tone,
+}));
+
+function ObrasKanbanBlock({
+  obras, moveTo,
+}: {
+  obras: Obra[];
+  moveTo: (id: string, status: string) => void;
+}) {
+  const [manage, setManage] = useState(false);
+  const { cols, setCols, assign, setAssign } = useKanbanColumns(
+    "ms.engenharia.obras.kanban",
+    OBRAS_KANBAN_DEFAULTS,
+  );
+  const items: KItem<Obra>[] = obras.map((o) => ({
+    key: o.id,
+    data: o,
+    defaultColId: `etapa:${o.status}`,
+  }));
+  const handleDrop = (cardKey: string, colId: string) => {
+    if (colId.startsWith("etapa:")) moveTo(cardKey, colId.slice(6));
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <ColunasButton onClick={() => setManage(true)} />
+      </div>
+      <KanbanGeneric
+        cols={cols}
+        items={items}
+        assign={assign}
+        setAssign={setAssign}
+        onCardDrop={handleDrop}
+        columnMinWidth={230}
+        fullHeight
+        renderCard={(o) => (
+          <div className="rounded-md border bg-card p-2 shadow-sm hover:shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
+            </div>
+            {o.tipo ? <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div> : null}
+            <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
+              <span>{o.equipe || "—"}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
+              <span>Prev: {fmtBR(o.previsto)}</span>
+            </div>
+          </div>
+        )}
+      />
+      <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
+    </div>
+  );
+}

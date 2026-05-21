@@ -185,6 +185,10 @@ export type ContratoFull = {
   financiamentoLiberacao?: string;
   financiamentoPrevisao?: string; // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   financiamentoEnvio?: string;             // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
+  /** Liberação operacional do Financiamento → Engenharia (flip Stand-by ⇒ Novo projeto). */
+  financiamentoLiberadoEng?: boolean;
+  financiamentoLiberadoEngEm?: string;
+  financiamentoLiberadoEngPor?: string;
 
   // Cadeia comercial (Entrega 3)
   propostaId?: string;                  // proposta de origem

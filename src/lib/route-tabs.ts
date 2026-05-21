@@ -42,8 +42,8 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     default: "dashboard",
     tabs: [
       { value: "dashboard", label: "Dashboard" },
-      { value: "ativas", label: "Gestão de projetos" },
-      { value: "kanban", label: "Kanban" },
+      { value: "ativas", label: "Cronograma" },
+      { value: "kanban", label: "Gestão de projetos" },
       { value: "pendencias", label: "Pendências" },
       { value: "equipes", label: "Equipes" },
       { value: "produtividade", label: "Produtividade" },

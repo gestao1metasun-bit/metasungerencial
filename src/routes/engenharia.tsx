@@ -34,6 +34,7 @@ import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useAuth } from "@/lib/auth-store";
+import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),

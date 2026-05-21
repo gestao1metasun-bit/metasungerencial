@@ -1602,10 +1602,14 @@ export function PropostaList({
   const leadsFiltrados = useMemo(() => {
     const q = filtro.trim().toLowerCase();
     return leadsAll.filter((l) => {
-      // Aberto = lead ainda em negociação (sem contrato assinado).
-      // Fechado = lead já fechou (tem contrato assinado / bloqueado).
-      if (estadoLead === "ABERTO" && l.bloqueado) return false;
-      if (estadoLead === "FECHADO" && !l.bloqueado) return false;
+      // ABERTO = ainda em negociação (não cancelado e contrato não assinado).
+      // FECHADO = contrato assinado.
+      // CANCELADO = última proposta cancelada (e ainda não assinou).
+      const isAssinado = l.fase === "ASSINADO";
+      const isCancelado = l.status === "CANCELADA" && !isAssinado;
+      if (estadoLead === "ABERTO" && (isAssinado || isCancelado)) return false;
+      if (estadoLead === "FECHADO" && !isAssinado) return false;
+      if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
       if (!q) return true;
       return (

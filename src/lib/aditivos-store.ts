@@ -11,9 +11,11 @@ import { pushAudit } from "./audit-store";
 import {
   updateContratoAudit,
   updateProjeto,
+  removerVinculoFinanciamento,
   type ContratoFull,
   type ProjetoVinculado,
 } from "./contratos-store";
+import { cancelarPendenciaFin, getPendenciaByContrato } from "./fin-pendencias";
 
 export type AditivoStatus =
   | "CRIADO"

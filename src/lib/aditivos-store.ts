@@ -70,6 +70,10 @@ export type AditivoAlteracoes = {
   endereco?: string;         // novo endereço
   estruturaTecnica?: string; // descrição técnica
   observacoesTecnicas?: string;
+  /** Troca da forma de pagamento. Se sair de "Financiamento" para outra, ao aprovar
+   *  o aditivo o vínculo de financiamento é removido, a pendência (se houver) é cancelada
+   *  e a Engenharia é liberada automaticamente (Stand-by → Novo projeto). */
+  novaFormaPagamento?: "PIX" | "Boleto" | "Cartão" | "Misto" | "Dinheiro" | "Financiamento";
 };
 
 export type AditivoProjetoDistribuicao = {

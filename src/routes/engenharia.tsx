@@ -110,6 +110,7 @@ function enrichObras(): Obra[] {
 
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
+  const statusInicial = c.pagamentoDetalhes?.statusInicialObra ?? "Em projeto/aprovação";
   return {
     id: p.id,
     contrato: c.id,
@@ -121,7 +122,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inicio: p.inicio || "",
     previsto: p.previsto || "",
     finalizacao: null,
-    status: p.status || "Em projeto/aprovação",
+    status: p.status || statusInicial,
     telhado: "Outro",
     obs: p.obs || "",
     ordem,

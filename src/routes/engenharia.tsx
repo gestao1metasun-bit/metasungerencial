@@ -483,8 +483,8 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-12">#</TableHead>
             <TableHead className="w-[80px]">Opções</TableHead>
+            <TableHead className="w-12">#</TableHead>
             <TableHead>Contrato</TableHead>
             <TableHead>Projeto</TableHead>
             <TableHead className="text-center">Mód.</TableHead>

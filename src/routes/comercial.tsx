@@ -3855,8 +3855,10 @@ function ProjetoEditCard({
       toast.error("Este projeto já foi aprovado e possui vínculos gerados. Para editar, remova primeiro os lançamentos financeiros e registros de Engenharia vinculados.");
       return;
     }
+    if (!d.tipo?.trim()) { toast.error(`Projeto ${index + 1}: informe o Tipo do projeto`); return; }
     if (!d.endereco?.trim()) { toast.error(`Projeto ${index + 1}: informe o endereço`); return; }
     if (!(Number(d.valor) > 0)) { toast.error(`Projeto ${index + 1}: informe o valor`); return; }
+
     const valorContrato = Number(contrato.valor) || 0;
     const somaOutros = projetos.filter((x) => x.id !== projeto.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
     if (valorContrato > 0 && somaOutros + Number(d.valor) - valorContrato > 0.5) {
@@ -3966,9 +3968,10 @@ function ProjetoEditCard({
       )}
       <fieldset disabled={projeto.aprovado} className="contents">
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="space-y-1.5"><Label>Tipo do projeto</Label>
-          <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} />
+        <div className="space-y-1.5"><Label>Tipo do projeto <span className="text-destructive">*</span></Label>
+          <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} required aria-invalid={!d.tipo?.trim()} placeholder="Ex.: Residencial, Comercial, Rural…" />
         </div>
+
         <div className="space-y-1.5"><Label>CEP</Label>
           <Input value={d.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
         </div>

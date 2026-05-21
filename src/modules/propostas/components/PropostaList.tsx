@@ -386,6 +386,9 @@ function fmtData(iso?: string): string {
 
 /* ===================== LEADS ===================== */
 
+/** Fase do funil "pós-aprovação" — define a coluna-âncora travada do lead. */
+type FaseContrato = "GERANDO" | "GERADO" | "ASSINADO" | null;
+
 type Lead = {
   key: string;
   clienteNome: string;
@@ -410,7 +413,8 @@ type Lead = {
   modulos: number;
   potenciaW: number;
   inversores: string;
-
+  /** Fase pós-aprovação. null = ainda em negociação. */
+  fase: FaseContrato;
 };
 
 function leadKey(p: PropostaFV): string {
@@ -444,6 +448,15 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
     // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
     const emAberto = Math.max(0, arr.length - assinados);
+    const hasAssinado = assinados > 0;
+    const hasGerado = !hasAssinado && contratosLead.some(
+      (c) => !c.cancelado && !c.contratoAssinadoArquivo
+          && /CONTRATO\s*GERADO|AGUARDANDO|ASSINATURA/i.test(c.status || ""),
+    );
+    const hasPendente = !hasAssinado && !hasGerado && (
+      aprovadas > 0 || contratosLead.some((c) => !c.cancelado && /pendente/i.test(c.status || ""))
+    );
+    const fase: FaseContrato = hasAssinado ? "ASSINADO" : hasGerado ? "GERADO" : hasPendente ? "GERANDO" : null;
     const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
     // Agrupa duplicados como "2x 15"
     const invCount = new Map<string, number>();
@@ -467,7 +480,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: aprovadas > 0 || assinados > 0,
+      bloqueado: fase !== null,
       status: ultima.status,
       emAberto,
       aprovadas,
@@ -475,6 +488,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       modulos: Number(ultima.modulosQtd) || 0,
       potenciaW: Number(ultima.moduloPotenciaWp) || 0,
       inversores: inversoresStr,
+      fase,
     });
   }
   return leads;
@@ -509,17 +523,22 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
 /* ===================== KANBAN: colunas ===================== */
 
 type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
-const COLS_KEY = "ms.fv.kanban.cols.v3";
+// v4 — reestrutura: 3 colunas-âncora travadas (Gerando/Gerado/Assinado) ao final.
+const COLS_KEY = "ms.fv.kanban.cols.v4";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 
-// Coluna final fixa (não pode ser excluída, desativada, renomeada nem reordenada).
-const COL_CONTRATO_ID = "col-contrato-assinado";
-const COL_CONTRATO: KCol = {
-  id: COL_CONTRATO_ID,
-  titulo: "ASSINADOS",
-  ativo: true,
-  locked: true,
+// Colunas-âncora travadas (não podem ser excluídas, desativadas, renomeadas nem reordenadas).
+// Progressão: GERANDO → GERADO → ASSINADO. Card não volta de uma para a anterior.
+const COL_GERANDO_ID = "col-gerando-contrato";
+const COL_GERADO_ID = "col-contrato-gerado";
+const COL_ASSINADO_ID = "col-contrato-assinado";
+const ANCHOR_IDS = [COL_GERANDO_ID, COL_GERADO_ID, COL_ASSINADO_ID] as const;
+const ANCHOR_INDEX: Record<string, number> = {
+  [COL_GERANDO_ID]: 0, [COL_GERADO_ID]: 1, [COL_ASSINADO_ID]: 2,
 };
+const COL_GERANDO: KCol = { id: COL_GERANDO_ID, titulo: "GERANDO CONTRATO", ativo: true, locked: true };
+const COL_GERADO: KCol = { id: COL_GERADO_ID, titulo: "CONTRATO GERADO", ativo: true, locked: true };
+const COL_ASSINADO: KCol = { id: COL_ASSINADO_ID, titulo: "CONTRATO ASSINADO", ativo: true, locked: true };
 
 const DEFAULT_COLS: KCol[] = [
   { id: "col-rascunho", titulo: "Rascunho", ativo: true },
@@ -528,16 +547,19 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
   { id: "col-cancelados", titulo: "Cancelados", ativo: true },
-  COL_CONTRATO,
+  COL_GERANDO, COL_GERADO, COL_ASSINADO,
 ];
 
-// Garante que a coluna fixa exista e seja sempre a última, e que a coluna
-// "Cancelados" exista para receber propostas com status CANCELADA.
+// Garante que as 3 colunas-âncora existam e fiquem sempre ao final, nesta ordem;
+// e que "Cancelados" exista para receber propostas com status CANCELADA.
+// Também remove a coluna legada "ASSINADOS" (col-contrato-assinado-legacy).
 function normalizeCols(cols: KCol[]): KCol[] {
-  const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
-  const temCanc = semFixa.some((c) => c.id === "col-cancelados");
-  const base = temCanc ? semFixa : [...semFixa, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
-  return [...base, { ...COL_CONTRATO }];
+  const semAncoras = cols.filter(
+    (c) => !(ANCHOR_IDS as readonly string[]).includes(c.id) && c.id !== "col-assinados-legacy",
+  );
+  const temCanc = semAncoras.some((c) => c.id === "col-cancelados");
+  const base = temCanc ? semAncoras : [...semAncoras, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
+  return [...base, { ...COL_GERANDO }, { ...COL_GERADO }, { ...COL_ASSINADO }];
 }
 
 function colPadraoPorStatus(s: StatusProposta): string {
@@ -551,6 +573,14 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "VENCIDA": return "col-perdida";
     default: return "col-rascunho";
   }
+}
+
+/** Coluna-âncora correspondente à fase do lead. */
+function colPorFase(fase: FaseContrato): string | null {
+  if (fase === "ASSINADO") return COL_ASSINADO_ID;
+  if (fase === "GERADO") return COL_GERADO_ID;
+  if (fase === "GERANDO") return COL_GERANDO_ID;
+  return null;
 }
 
 function useKanbanState(leads: Lead[]) {
@@ -571,15 +601,22 @@ function useKanbanState(leads: Lead[]) {
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
 
   // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
-  // Leads aprovados são forçados para a coluna fixa "CONTRATO ASSINADO — COMERCIAL".
+  // Leads com fase pós-aprovação são FORÇADOS para a respectiva coluna-âncora (não voltam).
   useEffect(() => {
     setAssign((prev) => {
       const next = { ...prev };
       const ativosIds = new Set(cols.filter((c) => c.ativo !== false).map((c) => c.id));
       let mudou = false;
       for (const l of leads) {
-        if (l.bloqueado) {
-          if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
+        const ancora = colPorFase(l.fase);
+        if (ancora) {
+          // Só avança (nunca volta): se o assign atual já é uma âncora posterior, mantém.
+          const atual = next[l.key];
+          const idxAtual = atual && atual in ANCHOR_INDEX ? ANCHOR_INDEX[atual] : -1;
+          const idxNovo = ANCHOR_INDEX[ancora];
+          if (idxAtual < idxNovo) {
+            next[l.key] = ancora; mudou = true;
+          }
           continue;
         }
         // Status CANCELADA → sempre na coluna "Cancelados".
@@ -594,9 +631,11 @@ function useKanbanState(leads: Lead[]) {
           mudou = true;
           continue;
         }
-        if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
+        // Lead sem fase: nunca pode estar numa âncora.
+        const ehAncora = next[l.key] && next[l.key] in ANCHOR_INDEX;
+        if (!next[l.key] || !ativosIds.has(next[l.key]) || ehAncora) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && c.id !== COL_CONTRATO_ID)?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? "col-rascunho");
           mudou = true;
         }
       }
@@ -1086,6 +1125,30 @@ function KanbanView({
 
   const dropEmColuna = (colId: string) => {
     if (dragLead) {
+      const lead = leads.find((x) => x.key === dragLead);
+      if (lead) {
+        const origemId = assign[lead.key] ?? colPadraoPorStatus(lead.status);
+        const origemAncora = origemId in ANCHOR_INDEX;
+        const destinoAncora = colId in ANCHOR_INDEX;
+        // 1) Não sair de uma coluna-âncora (não pode voltar).
+        if (origemAncora) {
+          toast.error("Cards em colunas de contrato não podem ser movidos.");
+          setDragLead(null); return;
+        }
+        // 2) Só lead aprovado/com fase pode entrar em coluna-âncora,
+        //    e somente na coluna correspondente à sua fase atual.
+        if (destinoAncora) {
+          const ancoraValida = colPorFase(lead.fase);
+          if (!ancoraValida) {
+            toast.error("Somente propostas aprovadas podem ir para colunas de contrato.");
+            setDragLead(null); return;
+          }
+          if (ancoraValida !== colId) {
+            toast.error("Este lead está na fase " + (cols.find((c) => c.id === ancoraValida)?.titulo || ancoraValida) + ".");
+            setDragLead(null); return;
+          }
+        }
+      }
       setAssign((a) => ({ ...a, [dragLead]: colId }));
       setDragLead(null);
     } else if (dragCol && dragCol !== colId) {
@@ -1370,16 +1433,13 @@ function TabelaView({
       case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status": {
-        // Espelha o status mostrado no Kanban: se o lead foi atribuído a uma
-        // coluna do Kanban, usa o título dela; caso contrário, fallback para
-        // a coluna padrão calculada a partir do status da última proposta.
-        const colId = l.bloqueado
-          ? COL_CONTRATO_ID
-          : (assign[l.key] || colPadraoPorStatus(l.status));
+        // Espelha o status mostrado no Kanban: se o lead tem fase pós-aprovação,
+        // usa a coluna-âncora correspondente; senão, fallback para o assign.
+        const colId = colPorFase(l.fase) ?? assign[l.key] ?? colPadraoPorStatus(l.status);
         const col = cols.find((c) => c.id === colId);
         const titulo = (col?.titulo || l.status).toUpperCase();
         const variant: "default" | "secondary" | "destructive" | "outline" =
-          colId === COL_CONTRATO_ID ? "default"
+          colId in ANCHOR_INDEX ? "default"
           : colId === "col-aprovada" ? "default"
           : colId === "col-perdida" ? "destructive"
           : colId === "col-cancelados" ? "destructive"
@@ -1529,7 +1589,7 @@ export function PropostaList({
 
   const [filtro, setFiltro] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
-  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO">("ABERTO");
+  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO" | "CANCELADO">("ABERTO");
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
@@ -1542,10 +1602,14 @@ export function PropostaList({
   const leadsFiltrados = useMemo(() => {
     const q = filtro.trim().toLowerCase();
     return leadsAll.filter((l) => {
-      // Aberto = lead ainda em negociação (sem contrato assinado).
-      // Fechado = lead já fechou (tem contrato assinado / bloqueado).
-      if (estadoLead === "ABERTO" && l.bloqueado) return false;
-      if (estadoLead === "FECHADO" && !l.bloqueado) return false;
+      // ABERTO = ainda em negociação (não cancelado e contrato não assinado).
+      // FECHADO = contrato assinado.
+      // CANCELADO = última proposta cancelada (e ainda não assinou).
+      const isAssinado = l.fase === "ASSINADO";
+      const isCancelado = l.status === "CANCELADA" && !isAssinado;
+      if (estadoLead === "ABERTO" && (isAssinado || isCancelado)) return false;
+      if (estadoLead === "FECHADO" && !isAssinado) return false;
+      if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
       if (!q) return true;
       return (
@@ -1606,11 +1670,11 @@ export function PropostaList({
             variant={estadoLead === "ABERTO" ? "default" : "ghost"}
             className="h-7 px-3 text-xs"
             onClick={() => setEstadoLead("ABERTO")}
-            title="Leads em negociação (sem contrato assinado)"
+            title="Leads em negociação (sem contrato assinado e não cancelados)"
           >
             Aberto
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => !l.bloqueado).length}
+              {leadsAll.filter((l) => l.fase !== "ASSINADO" && l.status !== "CANCELADA").length}
             </span>
           </Button>
           <Button
@@ -1622,7 +1686,19 @@ export function PropostaList({
           >
             Fechado
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => l.bloqueado).length}
+              {leadsAll.filter((l) => l.fase === "ASSINADO").length}
+            </span>
+          </Button>
+          <Button
+            size="sm"
+            variant={estadoLead === "CANCELADO" ? "default" : "ghost"}
+            className="h-7 px-3 text-xs"
+            onClick={() => setEstadoLead("CANCELADO")}
+            title="Leads com a última proposta cancelada"
+          >
+            Cancelado
+            <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
+              {leadsAll.filter((l) => l.status === "CANCELADA" && l.fase !== "ASSINADO").length}
             </span>
           </Button>
         </div>

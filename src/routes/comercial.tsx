@@ -345,6 +345,10 @@ function ContratoAssinadoTab({
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
+    if (!isAdmin) {
+      toast.error("Apenas Admin Master pode retroceder um contrato assinado. Solicite ao administrador.");
+      return;
+    }
     const motivo = prompt(
       `Retornar contrato ${c.id} para Geração de contrato (refazer assinatura)?\n\n` +
       `Atenção: os projetos saem da Engenharia. O financiamento é mantido — eventuais alterações de valor refletem em Financiamentos.\n\n` +

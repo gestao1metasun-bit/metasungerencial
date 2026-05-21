@@ -1973,7 +1973,110 @@ function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoF
   );
 }
 
+/* ---------------- KANBAN (etapas dos projetos aprovados) ---------------- */
+const KANBAN_COLS: { key: string; label: string; tone: string }[] = [
+  { key: "Em projeto/aprovação", label: "Em projeto / aprovação", tone: "border-t-info" },
+  { key: "Standby", label: "Stand-by", tone: "border-t-muted-foreground" },
+  { key: "Aguardando instalação", label: "Aguardando instalação", tone: "border-t-warning" },
+  { key: "Executando instalação", label: "Etapa de obra", tone: "border-t-primary" },
+  { key: "Finalizado", label: "Finalizado", tone: "border-t-success" },
+];
+
+function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
+  const [q, setQ] = useState("");
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const filtered = obras.filter((o) => {
+    if (!q.trim()) return true;
+    const s = q.toLowerCase();
+    return o.cliente.toLowerCase().includes(s) || o.id.toLowerCase().includes(s) || (o.contrato || "").toLowerCase().includes(s);
+  });
+
+  const moveTo = (id: string, status: string) => {
+    const cur = obras.find((o) => o.id === id);
+    if (!cur || cur.status === status) return;
+    setObras(obras.map((o) => o.id === id ? {
+      ...o,
+      status,
+      finalizacao: status === "Finalizado" ? (o.finalizacao ?? new Date().toISOString().slice(0,10)) : o.finalizacao,
+    } : o));
+    toast.success(`${cur.cliente} → ${status}`);
+  };
+
+  return (
+    <div className="space-y-3">
+      <Card className="p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Pesquisar cliente, projeto ou contrato…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="h-9 max-w-xs"
+          />
+          <div className="ml-auto text-xs text-muted-foreground">
+            Arraste os cards entre as colunas para alterar a etapa.
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${KANBAN_COLS.length}, minmax(220px, 1fr))` }}>
+        {KANBAN_COLS.map((col) => {
+          const items = filtered.filter((o) => o.status === col.key);
+          return (
+            <div
+              key={col.key}
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
+              className={`rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 min-h-[300px]`}
+            >
+              <div className="mb-2 flex items-center justify-between px-1">
+                <div className="text-[11px] font-semibold uppercase tracking-wider">{col.label}</div>
+                <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold">{items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {items.map((o) => (
+                  <div
+                    key={o.id}
+                    draggable
+                    onDragStart={() => setDragId(o.id)}
+                    onDragEnd={() => setDragId(null)}
+                    className="cursor-grab rounded-md border bg-card p-2 shadow-sm hover:shadow active:cursor-grabbing"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs font-semibold text-foreground line-clamp-2">
+                        {o.cliente}
+                      </div>
+                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
+                    </div>
+                    {o.tipo ? (
+                      <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div>
+                    ) : null}
+                    <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
+                      <span>{o.equipe || "—"}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
+                      <span>Prev: {fmtBR(o.previsto)}</span>
+                    </div>
+                  </div>
+                ))}
+                {items.length === 0 ? (
+                  <div className="rounded border border-dashed py-6 text-center text-[11px] text-muted-foreground">
+                    Sem projetos
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- CANCELADOS (engenharia) ---------------- */
+
 function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
   const cancelados = contratos.filter((c) => c.cancelado === true);
   const projetosCount = cancelados.reduce((s, c) => s + ((c.projetos ?? []).filter((p) => p.enviadoEngenharia || p.aprovado).length), 0);

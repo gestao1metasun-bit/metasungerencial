@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
-  { to: "/propostas", label: "Orçamentos", icon: FileText, key: "propostas" },
+  
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
   { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },

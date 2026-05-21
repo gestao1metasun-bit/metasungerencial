@@ -185,6 +185,10 @@ export type ContratoFull = {
   financiamentoLiberacao?: string;
   financiamentoPrevisao?: string; // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
   financiamentoEnvio?: string;             // ISO yyyy-mm-dd — data limite calculada a partir da faixa de previsão (7/10/15/30/60/90 dias)
+  /** Liberação operacional do Financiamento → Engenharia (flip Stand-by ⇒ Novo projeto). */
+  financiamentoLiberadoEng?: boolean;
+  financiamentoLiberadoEngEm?: string;
+  financiamentoLiberadoEngPor?: string;
 
   // Cadeia comercial (Entrega 3)
   propostaId?: string;                  // proposta de origem
@@ -1053,3 +1057,34 @@ export function revogarLiberacaoContrato(
   return { ok: true };
 }
 
+
+/* ----------------- Liberação Financiamento → Engenharia ----------------- */
+
+/** Marca o contrato como liberado pelo Financiamento → Engenharia promove obras Stand-by para Novo projeto. */
+export function liberarFinanciamentoEngenharia(contratoId: string, usuario = "Operador") {
+  updateContratoAudit(contratoId, {
+    financiamentoLiberadoEng: true,
+    financiamentoLiberadoEngEm: new Date().toISOString(),
+    financiamentoLiberadoEngPor: usuario,
+  }, usuario);
+}
+
+/** Remove vínculo de financiamento e libera engenharia (uso típico: aprovação de aditivo que troca a forma de pagamento). */
+export function removerVinculoFinanciamento(
+  contratoId: string,
+  novoPagamentoTipo: ContratoFull["pagamentoTipo"],
+  usuario = "Operador",
+) {
+  updateContratoAudit(contratoId, {
+    possuiFinanciamento: false,
+    financiamentoBanco: undefined,
+    financiamentoStatus: undefined,
+    financiamentoStatusLiberacao: undefined,
+    financiamentoValor: undefined,
+    pagamentoTipo: novoPagamentoTipo,
+    pagamento: novoPagamentoTipo ?? "À combinar",
+    financiamentoLiberadoEng: true,
+    financiamentoLiberadoEngEm: new Date().toISOString(),
+    financiamentoLiberadoEngPor: usuario,
+  }, usuario);
+}

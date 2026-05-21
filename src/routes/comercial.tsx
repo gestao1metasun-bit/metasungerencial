@@ -756,7 +756,23 @@ function ContratosTab({
     if (!gerarAssinado) return;
     if (!dataAssinaturaInput) { toast.error("Informe a data de assinatura."); return; }
     updateContratoAudit(gerarAssinado.id, { status: "Assinado", dataAssinatura: dataAssinaturaInput }, "Comercial");
-    toast.success(`Contrato ${gerarAssinado.id} assinado em ${dataAssinaturaInput}. Disponível em Contrato Assinado.`);
+    // Contrato com financiamento na forma de pagamento ⇒ entra automaticamente em Financiamentos (Pendências)
+    // e na Engenharia em Stand-by (aguardando liberação do setor de Financiamentos).
+    if (gerarAssinado.possuiFinanciamento) {
+      addPendencia({
+        id: gerarAssinado.id,
+        cliente: gerarAssinado.clienteFull?.nome || gerarAssinado.cliente,
+        vendedor: gerarAssinado.vendedor,
+        valor: gerarAssinado.valor,
+        valorFinanciado: gerarAssinado.financiamentoValor ?? gerarAssinado.valor,
+        kwp: gerarAssinado.kwp,
+        dataCadastro: dataAssinaturaInput,
+        status: "Pendente",
+      });
+      toast.success(`Contrato ${gerarAssinado.id} assinado · enviado a Financiamentos (Pendências) e Engenharia (Stand-by).`);
+    } else {
+      toast.success(`Contrato ${gerarAssinado.id} assinado em ${dataAssinaturaInput}. Disponível em Contrato Assinado.`);
+    }
     setGerarAssinado(null);
   }
 

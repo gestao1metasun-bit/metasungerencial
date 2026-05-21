@@ -11,9 +11,11 @@ import { pushAudit } from "./audit-store";
 import {
   updateContratoAudit,
   updateProjeto,
+  removerVinculoFinanciamento,
   type ContratoFull,
   type ProjetoVinculado,
 } from "./contratos-store";
+import { cancelarPendenciaFin, getPendenciaByContrato } from "./fin-pendencias";
 
 export type AditivoStatus =
   | "CRIADO"
@@ -70,6 +72,10 @@ export type AditivoAlteracoes = {
   endereco?: string;         // novo endereço
   estruturaTecnica?: string; // descrição técnica
   observacoesTecnicas?: string;
+  /** Troca da forma de pagamento. Se sair de "Financiamento" para outra, ao aprovar
+   *  o aditivo o vínculo de financiamento é removido, a pendência (se houver) é cancelada
+   *  e a Engenharia é liberada automaticamente (Stand-by → Novo projeto). */
+  novaFormaPagamento?: "PIX" | "Boleto" | "Cartão" | "Misto" | "Dinheiro" | "Financiamento";
 };
 
 export type AditivoProjetoDistribuicao = {
@@ -405,6 +411,24 @@ export function aprovarAditivo(
   if (Object.keys(patchContrato).length > 0) {
     updateContratoAudit(contrato.id, patchContrato, usuario);
   }
+
+  // 1.b) Troca de forma de pagamento (saindo de Financiamento ⇒ libera Engenharia e cancela pendência)
+  const novaForma = aditivo.alteracoes.novaFormaPagamento;
+  if (novaForma && novaForma !== "Financiamento" && contrato.possuiFinanciamento) {
+    removerVinculoFinanciamento(contrato.id, novaForma, usuario);
+    const pend = getPendenciaByContrato(contrato.id);
+    if (pend && pend.status !== "Cancelado") {
+      cancelarPendenciaFin(
+        contrato.id,
+        `Forma de pagamento alterada para ${novaForma} via aditivo ${aditivo.id}`,
+        usuario,
+      );
+    }
+  } else if (novaForma === "Financiamento" && !contrato.possuiFinanciamento) {
+    // Caso raro: aditivo passou a exigir financiamento — apenas registra.
+    updateContratoAudit(contrato.id, { possuiFinanciamento: true, pagamentoTipo: "Financiamento" }, usuario);
+  }
+
 
   // 2) Distribui nos projetos
   for (const d of aditivo.distribuicaoProjetos) {

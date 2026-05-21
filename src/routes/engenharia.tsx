@@ -105,6 +105,7 @@ type Obra = (typeof obrasSeed)[number] & {
   painelW: number;
   tipo?: string;
   inicioReal?: string; fimReal?: string;
+  aguardandoLiberacaoFin?: boolean;
 };
 
 
@@ -134,13 +135,26 @@ function enrichObras(): Obra[] {
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
   // Regra de nascimento na Engenharia:
-  // - Contrato com financiamento (pagamentoTipo === "Financiamento" ou possuiFinanciamento) → "Stand-by".
-  // - Qualquer outra forma de pagamento → "Novo projeto".
-  // Status já gravado no projeto (p.status) tem prioridade — preserva movimentações manuais.
+  // - Contrato com financiamento ainda NÃO liberado pelo setor de Financiamentos → "Stand-by"
+  //   (badge "AGUARDANDO LIBERAÇÃO DO FINANCIAMENTO" — não inicia execução / não libera obra).
+  // - Após o Financiamentos marcar "Pode liberar Engenharia" (ou aditivo trocar a forma
+  //   de pagamento), promove automaticamente para "Novo projeto".
+  // - Qualquer outra forma de pagamento → "Novo projeto" desde o início.
   const temFinanciamento = c.possuiFinanciamento === true
     || c.pagamentoTipo === "Financiamento"
     || /financiamento/i.test(c.pagamento ?? "");
-  const statusInicial = temFinanciamento ? "Stand-by" : "Novo projeto";
+  const financiamentoLiberado = !!c.financiamentoLiberadoEng;
+  const aguardandoLiberacaoFin = temFinanciamento && !financiamentoLiberado;
+  const statusInicial = aguardandoLiberacaoFin ? "Stand-by" : "Novo projeto";
+
+  let status = p.status || statusInicial;
+  // Trava operacional: enquanto o financiamento não liberar, força Stand-by.
+  if (aguardandoLiberacaoFin) status = "Stand-by";
+  // Promoção automática: liberou financiamento e estava parado em Stand-by → Novo projeto.
+  else if (temFinanciamento && financiamentoLiberado && (status === "Stand-by" || status === "Standby")) {
+    status = "Novo projeto";
+  }
+
   return {
     id: p.id,
     contrato: c.id,
@@ -152,7 +166,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inicio: p.inicio || "",
     previsto: p.previsto || "",
     finalizacao: null,
-    status: p.status || statusInicial,
+    status,
     telhado: "Outro",
     obs: p.obs || "",
     ordem,
@@ -161,7 +175,8 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     painelW: p.potenciaModuloW || PAINEL_W_DEFAULT,
     telhadoTipo: "Outro",
     tipo: p.tipo || "",
-  };
+    aguardandoLiberacaoFin,
+  } as Obra;
 
 }
 
@@ -2610,12 +2625,17 @@ function ObrasKanbanBlock({
         columnMinWidth={230}
         fullHeight
         renderCard={(o) => (
-          <div className="rounded-md border bg-card p-2 shadow-sm hover:shadow">
+          <div className={`rounded-md border bg-card p-2 shadow-sm hover:shadow ${o.aguardandoLiberacaoFin ? "border-amber-400 ring-1 ring-amber-300/60" : ""}`}>
             <div className="flex items-start justify-between gap-2">
               <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
               <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
             </div>
             {o.tipo ? <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div> : null}
+            {o.aguardandoLiberacaoFin ? (
+              <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                Aguardando liberação Financiamento
+              </div>
+            ) : null}
             <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
               <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
               <span>{o.equipe || "—"}</span>

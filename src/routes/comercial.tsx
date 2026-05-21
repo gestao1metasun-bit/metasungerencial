@@ -204,7 +204,7 @@ function ContratosUnificadosTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {btn("geracao", "Aguardando geração", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
+        {btn("geracao", "Geração de contrato", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
         {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
         {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
         {btn("cancelados", "Cancelados", cancelados, "border-destructive/40 bg-destructive/10 text-destructive")}

@@ -2046,8 +2046,8 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
       </Card>
 
       {view === "kanban" ? (
-        <div className="overflow-x-auto">
-          <div className="flex gap-3 pb-2" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
+        <div className="overflow-x-auto overflow-y-hidden h-[calc(100vh-230px)]">
+          <div className="flex gap-3 pb-2 h-full" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
             {ETAPA_COLS.map((col) => {
               const items = filtered.filter((o) => o.status === col.key);
               return (

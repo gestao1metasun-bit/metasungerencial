@@ -37,6 +37,8 @@ const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var
 function DashboardGeral() {
   const [tab, setTab] = useTabFromHash("/dashboard");
   const liveContratos = useContratos();
+  const aditivos = useAditivos();
+  const aditivosPendentes = aditivos.filter(isAditivoPendente);
 
   const total = contratos.length;
   const assinadosList = contratos.filter((c) => c.status === "Assinado");

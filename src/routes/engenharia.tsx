@@ -129,7 +129,9 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inv3: p.inv3 || "",
     painelW: p.potenciaModuloW || PAINEL_W_DEFAULT,
     telhadoTipo: "Outro",
+    tipo: p.tipo || "",
   };
+
 }
 
 function EngenhariaPage() {

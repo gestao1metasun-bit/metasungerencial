@@ -2163,6 +2163,11 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                           ))}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => retornarComercial(o)}>
+                        <RotateCcw className="mr-2 h-4 w-4 text-warning" />
+                        <span className="text-warning">Retornar ao Comercial (Assinados)</span>
+                      </DropdownMenuItem>
                     </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>

@@ -12,6 +12,7 @@ import {
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
+import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,

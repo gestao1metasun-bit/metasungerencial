@@ -196,6 +196,31 @@ function EngenhariaPage() {
     });
   }, [contratos]);
 
+  // Auto-finalização: assim que houver as DUAS aprovações (engenharia + financeiro)
+  // o sistema marca a obra como Finalizado automaticamente.
+  const aguardandoIds = useObrasAguardandoIds();
+  useEffect(() => {
+    setObras((cur) => {
+      let mudou = false;
+      const next = cur.map((o) => {
+        if (o.status !== "Finalizado" && temAmbasAprovacoes(o.id)) {
+          mudou = true;
+          const hoje = new Date().toISOString().slice(0, 10);
+          return {
+            ...o,
+            status: "Finalizado",
+            finalizacao: o.finalizacao ?? hoje,
+            fimReal: o.fimReal ?? hoje,
+            inicioReal: o.inicioReal ?? o.inicio ?? hoje,
+          };
+        }
+        return o;
+      });
+      return mudou ? next : cur;
+    });
+    // depende da lista de aguardando (proxy do estado de aprovações)
+  }, [aguardandoIds.join(",")]);
+
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />

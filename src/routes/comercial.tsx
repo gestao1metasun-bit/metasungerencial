@@ -5138,9 +5138,9 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <StatCard label="Pendentes" value={pendentesCount} icon={AlertTriangle} variant="warning" />
-        <StatCard label="Aprovados" value={aprovadosCount} icon={CheckCircle2} variant="success" />
-        <StatCard label="Reprovados" value={reprovadosCount} icon={XCircle} variant="destructive" />
+        <StatCard label="Pendentes" value={pendentesCount} icon={AlertTriangle} tone="warning" />
+        <StatCard label="Aprovados" value={aprovadosCount} icon={CheckCircle2} tone="success" />
+        <StatCard label="Reprovados" value={reprovadosCount} icon={XCircle} tone="destructive" />
       </div>
 
       <Card className="p-3">

@@ -1627,7 +1627,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 }
 
 /* ---------------- PROJETOS (Kanban + Tabela) ---------------- */
-const KANBAN_COLS: { key: string; label: string; tone: string }[] = [
+const KANBAN_PROJ_COLS: { key: string; label: string; tone: string }[] = [
   { key: "Em projeto/aprovação", label: "Em projeto / aprovação", tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
   { key: "Aguardando instalação", label: "Aguardando instalação", tone: "bg-info/15 text-info border-info/30" },
   { key: "Em instalação", label: "Em instalação", tone: "bg-primary/15 text-primary border-primary/30" },
@@ -1674,7 +1674,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   // Resumo por bucket
   const totalKwp = cards.reduce((s, { p }) => s + (p.kwp || 0), 0);
   const totalModulos = cards.reduce((s, { p }) => s + (p.modulos || 0), 0);
-  const resumo = ETAPA_COLS.map((col) => ({
+  const resumo = KANBAN_PROJ_COLS.map((col) => ({
     ...col,
     qtd: cards.filter(({ p }) => bucketDe(p.status) === col.key).length,
   }));
@@ -1713,7 +1713,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
       {view === "kanban" ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-          {ETAPA_COLS.map((col) => {
+          {KANBAN_PROJ_COLS.map((col) => {
             const itens = cards.filter(({ p }) => bucketDe(p.status) === col.key);
             return (
               <Card key={col.key} className="p-3 bg-muted/30">

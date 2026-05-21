@@ -1784,6 +1784,75 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   );
 }
 
+/* ---------- Bloco Kanban editável de Projetos ---------- */
+const PROJETOS_KANBAN_DEFAULTS: KCol[] = KANBAN_PROJ_COLS.map((c, i) => ({
+  id: `col-proj-${i}`,
+  titulo: c.label,
+  ativo: true,
+  tone: c.tone,
+}));
+const PROJETO_KEY_TO_COL: Record<string, string> = KANBAN_PROJ_COLS.reduce(
+  (acc, c, i) => { acc[c.key] = `col-proj-${i}`; return acc; },
+  {} as Record<string, string>,
+);
+
+function ProjetosKanbanBlock({
+  cards, onEdit,
+}: {
+  cards: { p: ProjetoVinculado; c: ContratoFull }[];
+  onEdit: (v: { c: ContratoFull; p: ProjetoVinculado }) => void;
+}) {
+  const [manage, setManage] = useState(false);
+  const { cols, setCols, assign, setAssign } = useKanbanColumns(
+    "ms.engenharia.projetos.kanban",
+    PROJETOS_KANBAN_DEFAULTS,
+  );
+  const items: KItem<{ p: ProjetoVinculado; c: ContratoFull }>[] = cards.map(({ p, c }) => ({
+    key: p.id,
+    data: { p, c },
+    defaultColId: PROJETO_KEY_TO_COL[bucketDe(p.status)] ?? PROJETOS_KANBAN_DEFAULTS[0].id,
+  }));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <ColunasButton onClick={() => setManage(true)} />
+      </div>
+      <KanbanGeneric
+        cols={cols}
+        items={items}
+        assign={assign}
+        setAssign={setAssign}
+        columnMinWidth={260}
+        renderCard={({ p, c }) => (
+          <Card className="p-3 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
+                <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
+              </div>
+              <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => onEdit({ c, p })} title="Editar projeto">
+                <SquarePen className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
+              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
+              {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
+            </div>
+            <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
+            {p.previsto && <div className="mt-1 text-[10px] text-muted-foreground">Previsto: {fmtBR(p.previsto)}</div>}
+          </Card>
+        )}
+      />
+      <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
+    </div>
+  );
+}
+
+
+
 
 
 function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onClose: () => void }) {

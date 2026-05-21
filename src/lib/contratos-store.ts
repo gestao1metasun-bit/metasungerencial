@@ -998,3 +998,58 @@ export function criarContratoPendenteDeProposta(input: {
   return { contratoId: id, jaExistia: false };
 }
 
+/**
+ * Libera um contrato Pendente para que o Comercial possa gerar/redigir.
+ * Restrito a Admin Master/Diretoria — a checagem de papel é responsabilidade do chamador.
+ */
+export function liberarContratoParaGerar(
+  contratoId: string,
+  usuario: string,
+  obs?: string,
+): { ok: boolean; motivo?: string } {
+  const c = read().find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  if (c.cancelado) return { ok: false, motivo: "Contrato cancelado." };
+  if (c.contratoRedigido) return { ok: false, motivo: "Contrato já redigido." };
+  if (c.liberadoParaContrato) return { ok: true };
+  const agora = new Date().toISOString();
+  updateContratoAudit(contratoId, {
+    liberadoParaContrato: true,
+    liberadoPor: usuario,
+    liberadoEm: agora,
+    liberacaoObs: obs?.trim() || undefined,
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "LIBERACAO", usuario,
+    valorAnterior: "aguardando liberacao", valorNovo: "liberado",
+    detalhe: `Contrato ${contratoId} liberado por ${usuario} para geração no Comercial.${obs?.trim() ? ` Obs: ${obs.trim()}` : ""}`,
+  });
+  return { ok: true };
+}
+
+/** Revoga a liberação (volta ao estado "aguardando liberação"). */
+export function revogarLiberacaoContrato(
+  contratoId: string,
+  usuario: string,
+  motivo: string,
+): { ok: boolean; motivo?: string } {
+  const c = read().find((x) => x.id === contratoId);
+  if (!c) return { ok: false, motivo: "Contrato não encontrado." };
+  if (c.contratoRedigido) return { ok: false, motivo: "Contrato já foi redigido — não é possível revogar a liberação." };
+  if (!motivo?.trim()) return { ok: false, motivo: "Informe o motivo da revogação." };
+  updateContratoAudit(contratoId, {
+    liberadoParaContrato: false,
+    liberadoPor: undefined,
+    liberadoEm: undefined,
+    liberacaoObs: motivo.trim(),
+  }, usuario);
+  pushAudit({
+    entidade: "contrato", entidadeId: contratoId,
+    acao: "REVOGACAO_LIBERACAO", usuario,
+    valorAnterior: "liberado", valorNovo: "aguardando liberacao",
+    motivo: motivo.trim(),
+  });
+  return { ok: true };
+}
+

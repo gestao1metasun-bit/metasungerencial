@@ -2055,7 +2055,7 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                   key={col.key}
                   onDragOver={(e) => { e.preventDefault(); }}
                   onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
-                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 min-h-[320px]`}
+                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 h-full overflow-y-auto`}
                 >
                   <div className="mb-2 flex items-center justify-between px-1">
                     <div className="text-[11px] font-semibold uppercase tracking-wider leading-tight">{col.label}</div>

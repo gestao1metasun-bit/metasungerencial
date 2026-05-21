@@ -480,7 +480,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
-      bloqueado: aprovadas > 0 || assinados > 0,
+      bloqueado: fase !== null,
       status: ultima.status,
       emAberto,
       aprovadas,
@@ -488,6 +488,7 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       modulos: Number(ultima.modulosQtd) || 0,
       potenciaW: Number(ultima.moduloPotenciaWp) || 0,
       inversores: inversoresStr,
+      fase,
     });
   }
   return leads;

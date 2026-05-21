@@ -3844,11 +3844,14 @@ function ProjetoEditCard({
   const dirty = JSON.stringify(d) !== JSON.stringify(projeto);
 
   // Sugestão automática de inversor sempre que a quantidade de módulos ou a potência do módulo mudar.
-  // Aplica também ao Projeto 1, 2, … N. Não sobrescreve quando o projeto já foi aprovado.
+  // Aplica também ao Projeto 1, 2, … N. Não dispara no primeiro render — somente após edição do usuário.
+  const initInvRef = React.useRef({ m: Number(projeto.modulos) || 0, w: Number(projeto.potenciaModuloW) || 0 });
   useEffect(() => {
     if (projeto.aprovado) return;
     const m = Number(d.modulos) || 0;
     const w = Number(d.potenciaModuloW) || 0;
+    if (m === initInvRef.current.m && w === initInvRef.current.w) return;
+    initInvRef.current = { m, w };
     if (m <= 0 || w <= 0) return;
     const sug = sugerirInversoresAuto(m, w);
     if (!sug.length) return;
@@ -3862,6 +3865,7 @@ function ProjetoEditCard({
       }
       return next;
     });
+    toast.info(`Inversor sugerido: ${quantidade > 1 ? `${quantidade}x ` : ""}${val} kW`, { duration: 2500 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d.modulos, d.potenciaModuloW]);
 

@@ -1992,11 +1992,9 @@ const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
   { key: "Compensação",                    label: "Compensação",                    tone: "border-t-teal-400" },
   { key: "Finalizado",                     label: "Finalizado",                     tone: "border-t-green-500" },
   { key: "Manutenção",                     label: "Manutenção",                     tone: "border-t-red-400" },
-  { key: "Manutenção concluída",           label: "Manutenção concluída",           tone: "border-t-cyan-300" },
   { key: "Administrativo",                 label: "Administrativo",                 tone: "border-t-stone-400" },
   { key: "Administrativo concluído",       label: "Administrativo concluído",       tone: "border-t-emerald-300" },
   { key: "Vistoria pré contrato",          label: "Vistoria pré contrato",          tone: "border-t-emerald-400" },
-  { key: "Vistorias finalizadas",          label: "Vistorias finalizadas",          tone: "border-t-green-400" },
   { key: "Estudos",                        label: "Estudos",                        tone: "border-t-slate-500" },
   { key: "Contrato cancelado",             label: "Contrato cancelado",             tone: "border-t-red-600" },
 ];

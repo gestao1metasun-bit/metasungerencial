@@ -80,8 +80,10 @@ function addDaysISO(iso: string, days: number): string {
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
   painelW: number;
+  tipo?: string;
   inicioReal?: string; fimReal?: string;
 };
+
 
 const PAINEL_W_DEFAULT = 550;
 const PAINEIS_W_OPCOES = [450, 500, 540, 550, 565, 575, 585, 600, 610, 620, 630, 650, 665, 700];

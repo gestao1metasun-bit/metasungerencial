@@ -2109,13 +2109,16 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 <TableHead>Equipe</TableHead>
                 <TableHead>Início</TableHead>
                 <TableHead>Previsto</TableHead>
-                <TableHead className="min-w-[220px]">Etapa</TableHead>
+                <TableHead className="min-w-[180px]">Etapa</TableHead>
+                <TableHead className="w-[80px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">Nenhum projeto encontrado.</TableCell></TableRow>
-              ) : filtered.map((o) => (
+                <TableRow><TableCell colSpan={10} className="py-8 text-center text-sm text-muted-foreground">Nenhum projeto encontrado.</TableCell></TableRow>
+              ) : filtered.map((o) => {
+                const etapa = ETAPA_COLS.find((c) => c.key === o.status);
+                return (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>
                   <TableCell className="font-medium">{o.cliente}</TableCell>
@@ -2125,18 +2128,30 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                   <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
                   <TableCell className="text-xs">{fmtBR(o.inicioReal || o.inicio)}</TableCell>
                   <TableCell className="text-xs">{fmtBR(o.previsto)}</TableCell>
-                  <TableCell>
-                    <Select value={ETAPA_KEYS.includes(o.status) ? o.status : ""} onValueChange={(v) => moveTo(o.id, v)}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar etapa…" /></SelectTrigger>
-                      <SelectContent>
-                        {ETAPA_COLS.map((c) => (
-                          <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <TableCell className="text-xs">
+                    {etapa ? (
+                      <span className="inline-flex rounded-md border px-2 py-0.5 text-xs">{etapa.label}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ActionsMenu label={fmtContrato(o.contrato)}>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
+                          {ETAPA_COLS.map((c) => (
+                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
+                              {c.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </ActionsMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </Card>

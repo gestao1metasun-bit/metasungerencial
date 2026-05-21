@@ -13,6 +13,7 @@ import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
 import { PropostasPage } from "@/modules/propostas";
+import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { useIsAdmin } from "@/lib/auth-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
@@ -219,21 +220,23 @@ function ContratosUnificadosTab({
           {btn("contrato", "Em contrato", assinados, "border-success/40 bg-success/10 text-success")}
           {btn("fechado", "Fechado", fechado, "border-destructive/40 bg-destructive/10 text-destructive")}
         </div>
-        <div className="inline-flex rounded-md border border-border bg-background p-0.5">
-          <button
-            type="button"
-            onClick={() => setView("tabela")}
-            className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "tabela" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
-          >
-            Tabela
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("kanban")}
-            className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
-          >
-            Kanban
-          </button>
+        <div className="inline-flex items-center gap-2">
+          <div className="inline-flex rounded-md border border-border bg-background p-0.5">
+            <button
+              type="button"
+              onClick={() => setView("tabela")}
+              className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "tabela" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
+            >
+              Tabela
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("kanban")}
+              className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
+            >
+              Kanban
+            </button>
+          </div>
         </div>
       </div>
 
@@ -250,76 +253,74 @@ function ContratosUnificadosTab({
   );
 }
 
-/* -------- Kanban (somente leitura) dos 3 grupos -------- */
+/* -------- Kanban editável dos 3 grupos -------- */
+
+const CONTRATOS_KANBAN_DEFAULTS: Record<"aberto" | "contrato" | "fechado", KCol[]> = {
+  aberto: [
+    { id: "col-gerar", titulo: "Gerar contrato", ativo: true, tone: "bg-warning/10 text-warning border-warning/40" },
+    { id: "col-aguardando", titulo: "Aguardando assinatura", ativo: true, tone: "bg-info/10 text-info border-info/40" },
+  ],
+  contrato: [
+    { id: "col-ass-pend", titulo: "Assinado · aguardando aprovação", ativo: true, tone: "bg-amber-500/10 text-amber-600 border-amber-500/40" },
+    { id: "col-ass-eng", titulo: "Aprovado · enviado à Engenharia", ativo: true, tone: "bg-success/10 text-success border-success/40", locked: true },
+  ],
+  fechado: [
+    { id: "col-cancelado", titulo: "Cancelado", ativo: true, tone: "bg-destructive/10 text-destructive border-destructive/40" },
+  ],
+};
+
+function defaultColContrato(c: Contrato, grupo: "aberto" | "contrato" | "fechado"): string {
+  if (grupo === "aberto") {
+    return (c.status === "Pendente" && c.contratoRedigido && !c.cancelado) ? "col-aguardando" : "col-gerar";
+  }
+  if (grupo === "contrato") {
+    return c.assinadoAprovado ? "col-ass-eng" : "col-ass-pend";
+  }
+  return "col-cancelado";
+}
+
 function ContratosKanbanView({ contratos, grupo }: { contratos: Contrato[]; grupo: "aberto" | "contrato" | "fechado" }) {
-  const colunas = useMemo(() => {
-    if (grupo === "aberto") {
-      return [
-        {
-          titulo: "Gerar contrato",
-          tone: "border-warning/40 bg-warning/5 text-warning",
-          itens: contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido && !c.cancelado),
-        },
-        {
-          titulo: "Contrato gerado · aguardando assinatura",
-          tone: "border-info/40 bg-info/5 text-info",
-          itens: contratos.filter((c) => c.status === "Pendente" && c.contratoRedigido && !c.cancelado),
-        },
-      ];
-    }
-    if (grupo === "contrato") {
-      const ass = contratos.filter((c) => c.status === "Assinado" && !c.cancelado);
-      return [
-        {
-          titulo: "Assinado · aguardando aprovação",
-          tone: "border-amber-500/40 bg-amber-500/5 text-amber-600",
-          itens: ass.filter((c) => !c.assinadoAprovado),
-        },
-        {
-          titulo: "Aprovado · enviado à Engenharia",
-          tone: "border-success/40 bg-success/5 text-success",
-          itens: ass.filter((c) => c.assinadoAprovado),
-        },
-      ];
-    }
-    return [
-      {
-        titulo: "Cancelado",
-        tone: "border-destructive/40 bg-destructive/5 text-destructive",
-        itens: contratos.filter((c) => c.cancelado === true),
-      },
-    ];
+  const [manage, setManage] = useState(false);
+  const { cols, setCols, assign, setAssign } = useKanbanColumns(
+    `ms.contratos.kanban.${grupo}`,
+    CONTRATOS_KANBAN_DEFAULTS[grupo],
+  );
+
+  const items: KItem<Contrato>[] = useMemo(() => {
+    const base = grupo === "aberto"
+      ? contratos.filter((c) => c.status === "Pendente" && !c.cancelado)
+      : grupo === "contrato"
+        ? contratos.filter((c) => c.status === "Assinado" && !c.cancelado)
+        : contratos.filter((c) => c.cancelado === true);
+    return base.map((c) => ({ key: c.id, data: c, defaultColId: defaultColContrato(c, grupo) }));
   }, [contratos, grupo]);
 
   return (
-    <div className={"grid gap-3 " + (colunas.length >= 2 ? "md:grid-cols-2" : "md:grid-cols-1")}>
-      {colunas.map((col) => (
-        <Card key={col.titulo} className="p-3">
-          <div className={"mb-3 inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs font-bold " + col.tone}>
-            <span>{col.titulo}</span>
-            <span className="rounded-full bg-background/70 px-1.5 tabular-nums">{col.itens.length}</span>
-          </div>
-          {col.itens.length === 0 ? (
-            <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">Vazio</div>
-          ) : (
-            <div className="space-y-2">
-              {col.itens.map((c) => (
-                <div key={c.id} className="rounded-md border bg-card p-2.5 hover:shadow-sm transition-shadow">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="font-mono text-[11px] font-semibold text-muted-foreground">{c.id}</div>
-                    <div className="text-xs font-semibold tabular-nums">{fmtBRL(valorContrato(c))}</div>
-                  </div>
-                  <div className="mt-1 truncate text-sm font-medium">{c.cliente}</div>
-                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                    <span className="truncate">{c.vendedor || "—"}</span>
-                    <span className="font-mono">{c.propostaNumero ?? ""}</span>
-                  </div>
-                </div>
-              ))}
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <ColunasButton onClick={() => setManage(true)} />
+      </div>
+      <KanbanGeneric
+        cols={cols}
+        items={items}
+        assign={assign}
+        setAssign={setAssign}
+        columnMinWidth={260}
+        renderCard={(c) => (
+          <div className="rounded-md border bg-card p-2.5 shadow-sm hover:shadow transition-shadow">
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-mono text-[11px] font-semibold text-muted-foreground">{c.id}</div>
+              <div className="text-xs font-semibold tabular-nums">{fmtBRL(valorContrato(c))}</div>
             </div>
-          )}
-        </Card>
-      ))}
+            <div className="mt-1 truncate text-sm font-medium">{c.cliente}</div>
+            <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+              <span className="truncate">{c.vendedor || "—"}</span>
+              <span className="font-mono">{c.propostaNumero ?? ""}</span>
+            </div>
+          </div>
+        )}
+      />
+      <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
     </div>
   );
 }

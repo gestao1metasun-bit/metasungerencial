@@ -34,6 +34,7 @@ import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useAuth } from "@/lib/auth-store";
+import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 
 export const Route = createFileRoute("/engenharia")({
   head: () => ({ meta: [{ title: "Engenharia — Meta Sun Gerencial" }] }),
@@ -1725,43 +1726,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
       </div>
 
       {view === "kanban" ? (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-          {KANBAN_PROJ_COLS.map((col) => {
-            const itens = cards.filter(({ p }) => bucketDe(p.status) === col.key);
-            return (
-              <Card key={col.key} className="p-3 bg-muted/30">
-                <div className={`mb-2 inline-flex items-center gap-2 rounded-md border px-2 py-0.5 text-[11px] font-semibold ${col.tone}`}>
-                  {col.label} <span className="tabular-nums">· {itens.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {itens.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">—</div>
-                  ) : itens.map(({ p, c }) => (
-                    <Card key={p.id} className="p-3 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
-                          <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
-                        </div>
-                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => setEditing({ c, p })} title="Editar projeto">
-                          <SquarePen className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
-                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
-                        {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
-                      </div>
-                      <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
-                      {p.previsto && <div className="mt-1 text-[10px] text-muted-foreground">Previsto: {fmtBR(p.previsto)}</div>}
-                    </Card>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <ProjetosKanbanBlock cards={cards} onEdit={setEditing} />
       ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
@@ -1811,12 +1776,82 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         </Card>
       )}
 
+
       {editing && (
         <EditProjetoDialog contrato={editing.c} projeto={editing.p} onClose={() => setEditing(null)} />
       )}
     </div>
   );
 }
+
+/* ---------- Bloco Kanban editável de Projetos ---------- */
+const PROJETOS_KANBAN_DEFAULTS: KCol[] = KANBAN_PROJ_COLS.map((c, i) => ({
+  id: `col-proj-${i}`,
+  titulo: c.label,
+  ativo: true,
+  tone: c.tone,
+}));
+const PROJETO_KEY_TO_COL: Record<string, string> = KANBAN_PROJ_COLS.reduce(
+  (acc, c, i) => { acc[c.key] = `col-proj-${i}`; return acc; },
+  {} as Record<string, string>,
+);
+
+function ProjetosKanbanBlock({
+  cards, onEdit,
+}: {
+  cards: { p: ProjetoVinculado; c: ContratoFull }[];
+  onEdit: (v: { c: ContratoFull; p: ProjetoVinculado }) => void;
+}) {
+  const [manage, setManage] = useState(false);
+  const { cols, setCols, assign, setAssign } = useKanbanColumns(
+    "ms.engenharia.projetos.kanban",
+    PROJETOS_KANBAN_DEFAULTS,
+  );
+  const items: KItem<{ p: ProjetoVinculado; c: ContratoFull }>[] = cards.map(({ p, c }) => ({
+    key: p.id,
+    data: { p, c },
+    defaultColId: PROJETO_KEY_TO_COL[bucketDe(p.status)] ?? PROJETOS_KANBAN_DEFAULTS[0].id,
+  }));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <ColunasButton onClick={() => setManage(true)} />
+      </div>
+      <KanbanGeneric
+        cols={cols}
+        items={items}
+        assign={assign}
+        setAssign={setAssign}
+        columnMinWidth={260}
+        renderCard={({ p, c }) => (
+          <Card className="p-3 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
+                <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
+              </div>
+              <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => onEdit({ c, p })} title="Editar projeto">
+                <SquarePen className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
+              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
+              {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
+            </div>
+            <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
+            {p.previsto && <div className="mt-1 text-[10px] text-muted-foreground">Previsto: {fmtBR(p.previsto)}</div>}
+          </Card>
+        )}
+      />
+      <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
+    </div>
+  );
+}
+
+
 
 
 
@@ -2075,59 +2110,9 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
       </Card>
 
       {view === "kanban" ? (
-        <div className="overflow-x-auto overflow-y-hidden h-[calc(100vh-230px)]">
-          <div className="flex gap-3 pb-2 h-full" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
-            {ETAPA_COLS.map((col) => {
-              const items = filtered.filter((o) => o.status === col.key);
-              return (
-                <div
-                  key={col.key}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
-                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 h-full overflow-y-auto`}
-                >
-                  <div className="mb-2 flex items-center justify-between px-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider leading-tight">{col.label}</div>
-                    <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold">{items.length}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {items.map((o) => (
-                      <div
-                        key={o.id}
-                        draggable
-                        onDragStart={() => setDragId(o.id)}
-                        onDragEnd={() => setDragId(null)}
-                        className="cursor-grab rounded-md border bg-card p-2 shadow-sm hover:shadow active:cursor-grabbing"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
-                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
-                        </div>
-                        {o.tipo ? (
-                          <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div>
-                        ) : null}
-                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                          <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
-                          <span>{o.equipe || "—"}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                          <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
-                          <span>Prev: {fmtBR(o.previsto)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {items.length === 0 ? (
-                      <div className="rounded border border-dashed py-6 text-center text-[11px] text-muted-foreground">
-                        Sem projetos
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <ObrasKanbanBlock obras={filtered} moveTo={moveTo} />
       ) : (
+
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>
@@ -2258,3 +2243,66 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
   );
 }
 
+
+/* ---------- Bloco Kanban editável de Obras (Gestão de Projetos) ---------- */
+const OBRAS_KANBAN_DEFAULTS: KCol[] = ETAPA_COLS.map((c) => ({
+  id: `etapa:${c.key}`,
+  titulo: c.label,
+  ativo: true,
+  tone: c.tone,
+}));
+
+function ObrasKanbanBlock({
+  obras, moveTo,
+}: {
+  obras: Obra[];
+  moveTo: (id: string, status: string) => void;
+}) {
+  const [manage, setManage] = useState(false);
+  const { cols, setCols, assign, setAssign } = useKanbanColumns(
+    "ms.engenharia.obras.kanban",
+    OBRAS_KANBAN_DEFAULTS,
+  );
+  const items: KItem<Obra>[] = obras.map((o) => ({
+    key: o.id,
+    data: o,
+    defaultColId: `etapa:${o.status}`,
+  }));
+  const handleDrop = (cardKey: string, colId: string) => {
+    if (colId.startsWith("etapa:")) moveTo(cardKey, colId.slice(6));
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <ColunasButton onClick={() => setManage(true)} />
+      </div>
+      <KanbanGeneric
+        cols={cols}
+        items={items}
+        assign={assign}
+        setAssign={setAssign}
+        onCardDrop={handleDrop}
+        columnMinWidth={230}
+        fullHeight
+        renderCard={(o) => (
+          <div className="rounded-md border bg-card p-2 shadow-sm hover:shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
+            </div>
+            {o.tipo ? <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div> : null}
+            <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
+              <span>{o.equipe || "—"}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
+              <span>Prev: {fmtBR(o.previsto)}</span>
+            </div>
+          </div>
+        )}
+      />
+      <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
+    </div>
+  );
+}

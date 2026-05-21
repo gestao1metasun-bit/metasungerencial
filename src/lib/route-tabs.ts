@@ -35,6 +35,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "previsao", label: "Previsão" },
       { value: "pendencias", label: "Pendências" },
       { value: "finalizados", label: "Finalizados" },
+      { value: "cancelados", label: "Cancelados" },
     ],
   },
   "/engenharia": {
@@ -47,6 +48,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "equipes", label: "Equipes" },
       { value: "produtividade", label: "Produtividade" },
       { value: "finalizados", label: "Finalizados" },
+      { value: "cancelados", label: "Cancelados" },
     ],
   },
   "/estoque": {

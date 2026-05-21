@@ -46,7 +46,8 @@ function write(next: AuditEntry[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot(): AuditEntry[] { return []; }
+const SERVER_SNAPSHOT: AuditEntry[] = [];
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useAudit(): AuditEntry[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

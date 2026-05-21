@@ -36,7 +36,8 @@ function write(next: Gerente[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return gerentesSeed.map((g) => ({ ...g })); }
+const SERVER_SNAPSHOT = gerentesSeed.map((g) => ({ ...g }));
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useGerentes(): Gerente[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

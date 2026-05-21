@@ -51,7 +51,8 @@ function write(next: Consultor[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return seed(); }
+const SERVER_SNAPSHOT = seed();
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useConsultores(): Consultor[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

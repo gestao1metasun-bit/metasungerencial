@@ -56,7 +56,8 @@ function write(next: ClienteRecord[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return seedAll(); }
+const SERVER_SNAPSHOT = seedAll();
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useClientesFull(): ClienteRecord[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

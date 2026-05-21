@@ -56,7 +56,7 @@ export function clausulasBase(c: ContratoFull): ClausulaBase[] {
   list.push({
     numero: "0",
     paragrafos: [
-      `**CONTRATANTE:** ${cli?.nome ?? c.cliente}, ${contratanteTipo}, inscrita no ${docLabel} sob o nº ${cli?.doc ?? "—"}, com ${isPJ ? "sede" : "endereço"} na ${endereco}${responsavelTxt}.`,
+      `**CONTRATANTE:** ${cli?.nome ?? c.cliente}, ${contratanteTipo}, inscrita no ${docLabel} sob o nº ${cli?.doc ?? "—"}, com ${isPJ ? "sede" : "endereço"} na ${endereco}${responsavelTxt}, telefone para contato ${cli?.telefone ?? "—"}.`,
       `**CONTRATADA:** ${CONTRATADA.razao}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${CONTRATADA.cnpj}, com sede na ${CONTRATADA.endereco}, telefone: ${CONTRATADA.telefone}, neste ato representada pelo Sr. ${CONTRATADA.representante}, ${CONTRATADA.representanteEstado}, ${CONTRATADA.representanteProf}, inscrito no CPF sob o nº ${CONTRATADA.representanteCpf} e no RG nº ${CONTRATADA.representanteRg}.`,
       "Têm, entre si, justo e acordado o que dispõem as cláusulas abaixo e às quais se obrigam mutuamente:",
     ],

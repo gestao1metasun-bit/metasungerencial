@@ -176,6 +176,7 @@ function EngenhariaPage() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
+          <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
         <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
@@ -184,6 +185,7 @@ function EngenhariaPage() {
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><FinalizadosTab obras={obras} setObras={setObras} /></TabsContent>
+        <TabsContent value="cancelados" className="mt-5"><CanceladosEngTab contratos={contratos} /></TabsContent>
       </Tabs>
     </>
   );

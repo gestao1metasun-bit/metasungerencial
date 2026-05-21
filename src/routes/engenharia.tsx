@@ -2110,59 +2110,9 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
       </Card>
 
       {view === "kanban" ? (
-        <div className="overflow-x-auto overflow-y-hidden h-[calc(100vh-230px)]">
-          <div className="flex gap-3 pb-2 h-full" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
-            {ETAPA_COLS.map((col) => {
-              const items = filtered.filter((o) => o.status === col.key);
-              return (
-                <div
-                  key={col.key}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
-                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 h-full overflow-y-auto`}
-                >
-                  <div className="mb-2 flex items-center justify-between px-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider leading-tight">{col.label}</div>
-                    <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold">{items.length}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {items.map((o) => (
-                      <div
-                        key={o.id}
-                        draggable
-                        onDragStart={() => setDragId(o.id)}
-                        onDragEnd={() => setDragId(null)}
-                        className="cursor-grab rounded-md border bg-card p-2 shadow-sm hover:shadow active:cursor-grabbing"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
-                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
-                        </div>
-                        {o.tipo ? (
-                          <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div>
-                        ) : null}
-                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                          <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
-                          <span>{o.equipe || "—"}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                          <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
-                          <span>Prev: {fmtBR(o.previsto)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {items.length === 0 ? (
-                      <div className="rounded border border-dashed py-6 text-center text-[11px] text-muted-foreground">
-                        Sem projetos
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <ObrasKanbanBlock obras={filtered} moveTo={moveTo} />
       ) : (
+
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>

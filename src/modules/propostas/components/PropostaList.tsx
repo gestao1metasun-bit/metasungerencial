@@ -523,17 +523,22 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
 /* ===================== KANBAN: colunas ===================== */
 
 type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
-const COLS_KEY = "ms.fv.kanban.cols.v3";
+// v4 — reestrutura: 3 colunas-âncora travadas (Gerando/Gerado/Assinado) ao final.
+const COLS_KEY = "ms.fv.kanban.cols.v4";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 
-// Coluna final fixa (não pode ser excluída, desativada, renomeada nem reordenada).
-const COL_CONTRATO_ID = "col-contrato-assinado";
-const COL_CONTRATO: KCol = {
-  id: COL_CONTRATO_ID,
-  titulo: "ASSINADOS",
-  ativo: true,
-  locked: true,
+// Colunas-âncora travadas (não podem ser excluídas, desativadas, renomeadas nem reordenadas).
+// Progressão: GERANDO → GERADO → ASSINADO. Card não volta de uma para a anterior.
+const COL_GERANDO_ID = "col-gerando-contrato";
+const COL_GERADO_ID = "col-contrato-gerado";
+const COL_ASSINADO_ID = "col-contrato-assinado";
+const ANCHOR_IDS = [COL_GERANDO_ID, COL_GERADO_ID, COL_ASSINADO_ID] as const;
+const ANCHOR_INDEX: Record<string, number> = {
+  [COL_GERANDO_ID]: 0, [COL_GERADO_ID]: 1, [COL_ASSINADO_ID]: 2,
 };
+const COL_GERANDO: KCol = { id: COL_GERANDO_ID, titulo: "GERANDO CONTRATO", ativo: true, locked: true };
+const COL_GERADO: KCol = { id: COL_GERADO_ID, titulo: "CONTRATO GERADO", ativo: true, locked: true };
+const COL_ASSINADO: KCol = { id: COL_ASSINADO_ID, titulo: "CONTRATO ASSINADO", ativo: true, locked: true };
 
 const DEFAULT_COLS: KCol[] = [
   { id: "col-rascunho", titulo: "Rascunho", ativo: true },
@@ -542,16 +547,19 @@ const DEFAULT_COLS: KCol[] = [
   { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
   { id: "col-perdida", titulo: "Perdidas", ativo: true },
   { id: "col-cancelados", titulo: "Cancelados", ativo: true },
-  COL_CONTRATO,
+  COL_GERANDO, COL_GERADO, COL_ASSINADO,
 ];
 
-// Garante que a coluna fixa exista e seja sempre a última, e que a coluna
-// "Cancelados" exista para receber propostas com status CANCELADA.
+// Garante que as 3 colunas-âncora existam e fiquem sempre ao final, nesta ordem;
+// e que "Cancelados" exista para receber propostas com status CANCELADA.
+// Também remove a coluna legada "ASSINADOS" (col-contrato-assinado-legacy).
 function normalizeCols(cols: KCol[]): KCol[] {
-  const semFixa = cols.filter((c) => c.id !== COL_CONTRATO_ID);
-  const temCanc = semFixa.some((c) => c.id === "col-cancelados");
-  const base = temCanc ? semFixa : [...semFixa, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
-  return [...base, { ...COL_CONTRATO }];
+  const semAncoras = cols.filter(
+    (c) => !(ANCHOR_IDS as readonly string[]).includes(c.id) && c.id !== "col-assinados-legacy",
+  );
+  const temCanc = semAncoras.some((c) => c.id === "col-cancelados");
+  const base = temCanc ? semAncoras : [...semAncoras, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
+  return [...base, { ...COL_GERANDO }, { ...COL_GERADO }, { ...COL_ASSINADO }];
 }
 
 function colPadraoPorStatus(s: StatusProposta): string {
@@ -565,6 +573,14 @@ function colPadraoPorStatus(s: StatusProposta): string {
     case "VENCIDA": return "col-perdida";
     default: return "col-rascunho";
   }
+}
+
+/** Coluna-âncora correspondente à fase do lead. */
+function colPorFase(fase: FaseContrato): string | null {
+  if (fase === "ASSINADO") return COL_ASSINADO_ID;
+  if (fase === "GERADO") return COL_GERADO_ID;
+  if (fase === "GERANDO") return COL_GERANDO_ID;
+  return null;
 }
 
 function useKanbanState(leads: Lead[]) {
@@ -585,15 +601,22 @@ function useKanbanState(leads: Lead[]) {
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
 
   // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
-  // Leads aprovados são forçados para a coluna fixa "CONTRATO ASSINADO — COMERCIAL".
+  // Leads com fase pós-aprovação são FORÇADOS para a respectiva coluna-âncora (não voltam).
   useEffect(() => {
     setAssign((prev) => {
       const next = { ...prev };
       const ativosIds = new Set(cols.filter((c) => c.ativo !== false).map((c) => c.id));
       let mudou = false;
       for (const l of leads) {
-        if (l.bloqueado) {
-          if (next[l.key] !== COL_CONTRATO_ID) { next[l.key] = COL_CONTRATO_ID; mudou = true; }
+        const ancora = colPorFase(l.fase);
+        if (ancora) {
+          // Só avança (nunca volta): se o assign atual já é uma âncora posterior, mantém.
+          const atual = next[l.key];
+          const idxAtual = atual && atual in ANCHOR_INDEX ? ANCHOR_INDEX[atual] : -1;
+          const idxNovo = ANCHOR_INDEX[ancora];
+          if (idxAtual < idxNovo) {
+            next[l.key] = ancora; mudou = true;
+          }
           continue;
         }
         // Status CANCELADA → sempre na coluna "Cancelados".
@@ -608,9 +631,11 @@ function useKanbanState(leads: Lead[]) {
           mudou = true;
           continue;
         }
-        if (!next[l.key] || !ativosIds.has(next[l.key]) || next[l.key] === COL_CONTRATO_ID) {
+        // Lead sem fase: nunca pode estar numa âncora.
+        const ehAncora = next[l.key] && next[l.key] in ANCHOR_INDEX;
+        if (!next[l.key] || !ativosIds.has(next[l.key]) || ehAncora) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && c.id !== COL_CONTRATO_ID)?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? "col-rascunho");
           mudou = true;
         }
       }

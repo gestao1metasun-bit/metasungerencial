@@ -35,7 +35,8 @@ function write(next: Usuario[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return usuariosSeed.map((u) => ({ ...u })); }
+const SERVER_SNAPSHOT = usuariosSeed.map((u) => ({ ...u }));
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useUsuarios(): Usuario[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

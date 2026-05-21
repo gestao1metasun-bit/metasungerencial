@@ -35,7 +35,8 @@ function write(next: Banco[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return bancosSeed.map((b) => ({ ...b })); }
+const SERVER_SNAPSHOT = bancosSeed.map((b) => ({ ...b }));
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useBancos(): Banco[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

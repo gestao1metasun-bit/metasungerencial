@@ -263,7 +263,8 @@ function write(next: ContratoFull[]) {
 
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
-function getServerSnapshot() { return seedAll(); }
+const SERVER_SNAPSHOT = seedAll();
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useContratos(): ContratoFull[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

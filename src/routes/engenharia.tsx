@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
+import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, reativarContrato, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
@@ -176,6 +176,7 @@ function EngenhariaPage() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="produtividade">Produtividade</TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
+          <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
         <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
@@ -184,6 +185,7 @@ function EngenhariaPage() {
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="finalizados" className="mt-5"><FinalizadosTab obras={obras} setObras={setObras} /></TabsContent>
+        <TabsContent value="cancelados" className="mt-5"><CanceladosEngTab contratos={contratos} /></TabsContent>
       </Tabs>
     </>
   );
@@ -1968,6 +1970,62 @@ function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoF
   );
 }
 
-
-
+/* ---------------- CANCELADOS (engenharia) ---------------- */
+function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
+  const cancelados = contratos.filter((c) => c.cancelado === true);
+  const projetosCount = cancelados.reduce((s, c) => s + ((c.projetos ?? []).filter((p) => p.enviadoEngenharia || p.aprovado).length), 0);
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Contratos cancelados</div>
+          <div className="mt-1 text-2xl font-bold text-destructive">{cancelados.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Projetos retirados</div>
+          <div className="mt-1 text-2xl font-bold text-warning">{projetosCount}</div>
+        </Card>
+      </div>
+      <Card className="p-5">
+        <div className="mb-3 text-sm font-semibold">Contratos cancelados — Engenharia</div>
+        {cancelados.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhum contrato cancelado.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Motivo</TableHead>
+              <TableHead className="text-center">Projetos</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {cancelados.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <ActionsMenu label={c.id}>
+                      <DropdownMenuItem onSelect={() => {
+                        const r = reativarContrato(c.id, "Engenharia");
+                        if (!r.ok) { toast.error(r.motivo); return; }
+                        toast.success(`Contrato ${c.id} reativado. Reaprovar para retornar à Engenharia.`);
+                      }}>
+                        Reativar
+                      </DropdownMenuItem>
+                    </ActionsMenu>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell className="font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.motivoCancelamento ?? "—"}</TableCell>
+                  <TableCell className="text-center text-xs">{(c.projetos ?? []).length}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
+  );
+}
 

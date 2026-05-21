@@ -28,7 +28,7 @@ import { financiamentos as finSeed, finsSemContrato, fmtBRL } from "@/lib/mock-d
 import { useBancosAtivos } from "@/lib/bancos-store";
 import { useGerentesAtivos } from "@/lib/gerentes-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
-import { useContratos, updateContratoAudit } from "@/lib/contratos-store";
+import { useContratos, updateContratoAudit, reativarContrato } from "@/lib/contratos-store";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { OperacionalFinTable, type OpRow, PREVISAO_FAIXAS, previsaoFromDias } from "@/components/app/OperacionalFinTable";
@@ -90,6 +90,7 @@ function FinanciamentosPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
+          <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-5">
@@ -104,6 +105,7 @@ function FinanciamentosPage() {
         <TabsContent value="finalizados" className="mt-5">
           <Carteira ops={ops} updateOp={updateOp} filterFin />
         </TabsContent>
+        <TabsContent value="cancelados" className="mt-5"><CanceladosFinTab /></TabsContent>
       </Tabs>
     </>
   );
@@ -1110,7 +1112,7 @@ function ContratosComercialFin() {
   const contratos = useContratos();
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const lista = contratos.filter((c) => c.possuiFinanciamento);
+  const lista = contratos.filter((c) => c.possuiFinanciamento && !c.cancelado);
   const [editing, setEditing] = useState<typeof lista[number] | null>(null);
   if (lista.length === 0) return null;
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
@@ -1341,3 +1343,63 @@ function EditFinAvulsoDialog({
     </Dialog>
   );
 }
+
+/* ---------------- CANCELADOS (financiamentos) ---------------- */
+function CanceladosFinTab() {
+  const contratos = useContratos();
+  const cancelados = contratos.filter((c) => c.cancelado === true && c.possuiFinanciamento === true);
+  // Também: contratos que TINHAM financiamento mas foram removidos via cancelamento
+  // Mantemos heurística simples: motivoCancelamento existe.
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Contratos cancelados c/ financiamento</div>
+          <div className="mt-1 text-2xl font-bold text-destructive">{cancelados.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor total perdido</div>
+          <div className="mt-1 text-2xl font-bold text-warning">{fmtBRL(cancelados.reduce((s, c) => s + (c.financiamentoValor ?? c.valor ?? 0), 0))}</div>
+        </Card>
+      </div>
+      <Card className="p-5">
+        <div className="mb-3 text-sm font-semibold">Operações canceladas</div>
+        {cancelados.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhuma operação cancelada.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Banco</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Motivo</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {cancelados.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const r = reativarContrato(c.id, "Financiamentos");
+                      if (!r.ok) { toast.error(r.motivo); return; }
+                      toast.success(`Contrato ${c.id} reativado.`);
+                    }}>Reativar</Button>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell className="font-medium">{c.cliente}</TableCell>
+                  <TableCell className="text-xs">{c.financiamentoBanco ?? "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(c.financiamentoValor ?? c.valor ?? 0)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.motivoCancelamento ?? "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
+  );
+}
+

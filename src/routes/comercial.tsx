@@ -204,7 +204,7 @@ function ContratosUnificadosTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {btn("geracao", "Aguardando geração", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
+        {btn("geracao", "Geração de contrato", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
         {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
         {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
         {btn("cancelados", "Cancelados", cancelados, "border-destructive/40 bg-destructive/10 text-destructive")}
@@ -242,14 +242,14 @@ function ContratoAssinadoTab({
 
   const retornar = (c: Contrato) => {
     const motivo = prompt(
-      `Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\n` +
-      `Atenção: ao retornar, os projetos saem da Engenharia e o contrato é removido de Financiamentos.\n\n` +
+      `Retornar contrato ${c.id} para Geração de contrato (refazer assinatura)?\n\n` +
+      `Atenção: os projetos saem da Engenharia. O financiamento é mantido — eventuais alterações de valor refletem em Financiamentos.\n\n` +
       `Motivo (obrigatório):`,
     );
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
     const r = retornarContratoParaGerado(c.id, motivo.trim(), "Comercial");
     if (!r.ok) { toast.error(r.motivo); return; }
-    toast.success(`Contrato ${c.id} retornado. Engenharia e Financiamentos atualizados.`);
+    toast.success(`Contrato ${c.id} retornado. Projetos saíram da Engenharia (Financiamento mantido).`);
   };
 
   return (
@@ -719,12 +719,12 @@ function ContratosTab({
                       <DropdownMenuItem onSelect={() => setImprimir(c)}>
                         <Printer className="mr-2 h-4 w-4" /> Imprimir
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setAberto(c)}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar dados
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => reabrirRedigido(c)}>
-                        <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                      <DropdownMenuItem
+                        onSelect={() => reabrirRedigido(c)}
+                        title="Para editar os dados do contrato, retorne para Geração de contrato."
+                      >
+                        <Undo2 className="mr-2 h-4 w-4" /> Retornar para Geração de contrato
                       </DropdownMenuItem>
                     </ActionsMenu>
                   </TableCell>
@@ -768,10 +768,21 @@ function ContratosTab({
           }}
           onConfirm={() => {
             const montado = previewGeracao;
-            setContratos(contratos.map((c) => c.id === montado.id ? montado : c));
-            toast.success(`Contrato ${montado.id} gerado.`);
+            // Se o contrato tem financiamento e o valor mudou, propaga apenas o valor para a camada de Financiamentos.
+            const original = contratos.find((c) => c.id === montado.id);
+            const patchFin: Partial<Contrato> = {};
+            if (original?.possuiFinanciamento && montado.valor !== original.valor) {
+              patchFin.financiamentoValor = montado.valor;
+            }
+            const final = { ...montado, ...patchFin } as Contrato;
+            setContratos(contratos.map((c) => c.id === final.id ? final : c));
+            toast.success(
+              patchFin.financiamentoValor != null
+                ? `Contrato ${final.id} gerado. Valor financiado atualizado em Financiamentos.`
+                : `Contrato ${final.id} gerado.`,
+            );
             setPreviewGeracao(null);
-            setImprimir(montado);
+            setImprimir(final);
           }}
         />
       )}

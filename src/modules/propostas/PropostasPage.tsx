@@ -242,8 +242,7 @@ function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boole
 
 /* =========================== PÁGINA =========================== */
 
-function PropostasPage() {
-  const [tab, setTab] = useTabFromHash("/propostas");
+function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
@@ -255,7 +254,6 @@ function PropostasPage() {
   function novaProposta(preset?: Partial<PropostaFV>) {
     const numero = proximoNumeroProposta(propostas);
     let p = novaPropostaVazia(numero);
-    // Aplica última cidade selecionada como padrão (vem cinza, com X para limpar)
     const lastId = getLastCidadeId();
     const cidadeDefault = lastId ? cidadesAll.find((c) => c.id === lastId) : undefined;
     if (cidadeDefault) p = aplicarCidadeNaProposta(p, cidadeDefault, true);
@@ -265,28 +263,32 @@ function PropostasPage() {
 
   return (
     <>
-      <PageHeader
-        title="Propostas Fotovoltaicas"
-        subtitle="Crie propostas guiadas com cálculo automático de potência, preço e margem."
-        actions={
+      {!embedded && (
+        <PageHeader
+          title="Propostas Fotovoltaicas"
+          subtitle="Crie propostas guiadas com cálculo automático de potência, preço e margem."
+          actions={
+            <Button onClick={() => novaProposta()} className="gap-2">
+              <Plus className="h-4 w-4" /> Nova Proposta
+            </Button>
+          }
+        />
+      )}
+      {embedded && (
+        <div className="flex items-center justify-end mt-4">
           <Button onClick={() => novaProposta()} className="gap-2">
             <Plus className="h-4 w-4" /> Nova Proposta
           </Button>
-        }
-      />
-      <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList className="hidden">
-          <TabsTrigger value="lista">Propostas</TabsTrigger>
-        </TabsList>
-        <TabsContent value="lista" className="mt-5">
-          <PropostaList
-            propostas={propostas}
-            onEditar={setEditando}
-            onVisualizar={(id) => setVendoId(id)}
-            onNova={novaProposta}
-          />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
+      <div className="mt-5">
+        <PropostaList
+          propostas={propostas}
+          onEditar={setEditando}
+          onVisualizar={(id) => setVendoId(id)}
+          onNova={novaProposta}
+        />
+      </div>
 
       {leadDraft && (
         <LeadModal

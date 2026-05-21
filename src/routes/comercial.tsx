@@ -3855,8 +3855,10 @@ function ProjetoEditCard({
       toast.error("Este projeto já foi aprovado e possui vínculos gerados. Para editar, remova primeiro os lançamentos financeiros e registros de Engenharia vinculados.");
       return;
     }
+    if (!d.tipo?.trim()) { toast.error(`Projeto ${index + 1}: informe o Tipo do projeto`); return; }
     if (!d.endereco?.trim()) { toast.error(`Projeto ${index + 1}: informe o endereço`); return; }
     if (!(Number(d.valor) > 0)) { toast.error(`Projeto ${index + 1}: informe o valor`); return; }
+
     const valorContrato = Number(contrato.valor) || 0;
     const somaOutros = projetos.filter((x) => x.id !== projeto.id).reduce((s, x) => s + (Number(x.valor) || 0), 0);
     if (valorContrato > 0 && somaOutros + Number(d.valor) - valorContrato > 0.5) {

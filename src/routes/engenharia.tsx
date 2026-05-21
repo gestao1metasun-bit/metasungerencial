@@ -38,6 +38,14 @@ import {
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
+import { setObrasSnapshot, type ObraSnapshot } from "@/lib/obras-snapshot-store";
+import {
+  garantirNecessidadeObra,
+  recalcularNecessidade,
+  arquivarNecessidade,
+  useEstoqueState,
+  isMaterialEntregueTotal,
+} from "@/lib/estoque-store";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";

@@ -982,7 +982,16 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.key]);
 
-  const isLocked = (f: string, v: string) => !unlocked[f] && !!v;
+  // Cliente vinculado ao banco de dados pelo CPF/CNPJ: trava os dados
+  // cadastrais (nome, doc, telefone, e-mail, consultor). Endereço sempre livre.
+  const clienteFromDB = !!findClienteByDoc(doc);
+  const ALWAYS_LOCKED_FIELDS = new Set(["nome", "doc", "tel", "email", "consultor"]);
+  const isLocked = (f: string, v: string) => {
+    if (f === "endereco") return false;
+    if (clienteFromDB && ALWAYS_LOCKED_FIELDS.has(f)) return true;
+    return !unlocked[f] && !!v;
+  };
+  const canUnlock = (f: string) => !(clienteFromDB && ALWAYS_LOCKED_FIELDS.has(f));
   const unlock = (f: string) => setUnlocked((u) => ({ ...u, [f]: true }));
   const dirty =
     nome !== (lead.clienteNome || "") ||

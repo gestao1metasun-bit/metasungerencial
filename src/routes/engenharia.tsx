@@ -2120,6 +2120,20 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 const etapa = ETAPA_COLS.find((c) => c.key === o.status);
                 return (
                 <TableRow key={o.id}>
+                  <TableCell>
+                    <ActionsMenu label={fmtContrato(o.contrato)}>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
+                          {ETAPA_COLS.map((c) => (
+                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
+                              {c.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </ActionsMenu>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>
                   <TableCell className="font-medium">{o.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{o.tipo || "—"}</TableCell>
@@ -2134,20 +2148,6 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionsMenu label={fmtContrato(o.contrato)}>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
-                          {ETAPA_COLS.map((c) => (
-                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
-                              {c.label}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                    </ActionsMenu>
                   </TableCell>
                 </TableRow>
                 );

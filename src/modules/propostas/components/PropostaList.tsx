@@ -39,6 +39,7 @@ import {
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
 } from "@/lib/contratos-store";
+import { findClienteByDoc } from "@/lib/clientes-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {

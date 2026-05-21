@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
+import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";
 import { useAuth } from "@/lib/auth-store";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 
@@ -159,7 +160,8 @@ function EngenhariaPage() {
   const contratos = useContratos();
   const [obras, setObras] = useState<Obra[]>(() => enrichObras());
   const [pends, setPends] = useState(pendenciasSeed);
-  const [equipes, setEquipes] = useState(equipesSeed);
+  const equipes = useEquipes();
+  const setEquipes = setEquipesStore;
   const [tab, setTab] = useTabFromHash("/engenharia");
 
   // Auto-incorpora projetos aprovados no Comercial em Gestão de projetos

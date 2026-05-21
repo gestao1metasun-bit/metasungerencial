@@ -24,13 +24,14 @@ export const Route = createFileRoute("/cadastros")({
   component: CadastrosPage,
 });
 
-type Equipe = { id: string; nome: string; lider: string; membros: number; obrasAtivas: number; status: string };
+import { useEquipes, setEquipes as setEquipesStore, type Equipe } from "@/lib/equipes-store";
 
 function CadastrosPage() {
   const [tab, setTab] = useTabFromHash("/cadastros");
   const bancos = useBancos();
   const gerentes = useGerentes();
-  const [equipes, setEquipes] = useState<Equipe[]>(() => equipesSeed.map((e) => ({ ...e })));
+  const equipes = useEquipes();
+  const setEquipes = setEquipesStore;
   const consultores = useConsultores();
 
   return (

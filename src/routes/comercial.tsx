@@ -1107,6 +1107,7 @@ function RedigirContratoDialog({
         multaPct: multaPctDefault, jurosMesPct: jurosMesPctDefault, correcao: correcaoDefault,
         obs: pagObs,
         formas,
+        statusInicialObra,
         // Compat legado (1ª linha)
         parcelas: formas[0]?.parcelas ?? 1,
         banco: formas.find((f) => f.tipo === "Financiamento")?.banco,

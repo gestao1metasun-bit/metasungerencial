@@ -1467,23 +1467,76 @@ function EditFinAvulsoDialog({
 /* ---------------- CANCELADOS (financiamentos) ---------------- */
 function CanceladosFinTab() {
   const contratos = useContratos();
+  const [pendAll] = useFinPendencias();
+  const pendCanceladas = pendAll.filter((p) => p.status === "Cancelado");
   const cancelados = contratos.filter((c) => c.cancelado === true && c.possuiFinanciamento === true);
-  // Também: contratos que TINHAM financiamento mas foram removidos via cancelamento
-  // Mantemos heurística simples: motivoCancelamento existe.
+  const totalPerdido =
+    cancelados.reduce((s, c) => s + (c.financiamentoValor ?? c.valor ?? 0), 0) +
+    pendCanceladas.reduce((s, p) => s + (p.valorFinanciado ?? p.valor ?? 0), 0);
+
+  function reativarPend(id: string) {
+    if (!window.confirm("Reativar pendência? Volta para a aba Pendências.")) return;
+    import("@/lib/fin-pendencias").then(({ reativarPendenciaFin }) => {
+      reativarPendenciaFin(id, "Financiamentos");
+      toast.success("Pendência reativada.");
+    });
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pendências canceladas</div>
+          <div className="mt-1 text-2xl font-bold text-destructive">{pendCanceladas.length}</div>
+        </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Contratos cancelados c/ financiamento</div>
           <div className="mt-1 text-2xl font-bold text-destructive">{cancelados.length}</div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor total perdido</div>
-          <div className="mt-1 text-2xl font-bold text-warning">{fmtBRL(cancelados.reduce((s, c) => s + (c.financiamentoValor ?? c.valor ?? 0), 0))}</div>
+          <div className="mt-1 text-2xl font-bold text-warning">{fmtBRL(totalPerdido)}</div>
         </Card>
       </div>
+
       <Card className="p-5">
-        <div className="mb-3 text-sm font-semibold">Operações canceladas</div>
+        <div className="mb-3 text-sm font-semibold">Pendências canceladas no Financiamentos</div>
+        {pendCanceladas.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Nenhuma pendência cancelada.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-[110px]">Opções</TableHead>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Banco</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Motivo</TableHead>
+              <TableHead>Cancelado em</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {pendCanceladas.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <Button size="sm" variant="outline" onClick={() => reativarPend(p.id)}>Reativar</Button>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                  <TableCell className="font-medium">{p.cliente}</TableCell>
+                  <TableCell className="text-xs">{p.banco ?? "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(p.valorFinanciado ?? p.valor)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{p.motivoCancelamento ?? "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{p.canceladoEm ? new Date(p.canceladoEm).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      <Card className="p-5">
+        <div className="mb-3 text-sm font-semibold">Contratos cancelados (operações antigas)</div>
         {cancelados.length === 0 ? (
           <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             Nenhuma operação cancelada.

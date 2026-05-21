@@ -87,6 +87,14 @@ export function useIsAdmin(): boolean {
   return role === "admin_master" || role === "admin_geral";
 }
 
+/**
+ * Permissão para gerenciar aditivos contratuais (criar, aprovar, reprovar, substituir).
+ * Restrito a Financeiro/Diretoria (representados aqui por admin_master e admin_geral).
+ */
+export function usePodeGerenciarAditivos(): boolean {
+  return useIsAdmin();
+}
+
 export async function signInEmail(email: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;

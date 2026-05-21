@@ -2,12 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   FileText, CheckCircle2, Clock, XCircle, DollarSign, Banknote,
-  HardHat, TrendingUp, Activity,
+  HardHat, TrendingUp, Activity, AlertTriangle,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Line, Legend, ComposedChart, Area, AreaChart,
 } from "recharts";
+import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -35,6 +37,8 @@ const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var
 function DashboardGeral() {
   const [tab, setTab] = useTabFromHash("/dashboard");
   const liveContratos = useContratos();
+  const aditivos = useAditivos();
+  const aditivosPendentes = aditivos.filter(isAditivoPendente);
 
   const total = contratos.length;
   const assinadosList = contratos.filter((c) => c.status === "Assinado");
@@ -125,6 +129,29 @@ function DashboardGeral() {
             <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" />
             <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} />
           </div>
+
+          {aditivosPendentes.length > 0 && (
+            <Card className="mt-4 p-4 border-warning/40 bg-warning/5">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-md bg-warning/15 text-warning">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">
+                      {aditivosPendentes.length} aditivo{aditivosPendentes.length > 1 ? "s" : ""} pendente{aditivosPendentes.length > 1 ? "s" : ""}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Contratos com alterações em andamento. Operações sensíveis estão travadas até aprovação.
+                    </div>
+                  </div>
+                </div>
+                <Link to="/comercial" hash="tab=aditivos" className="text-xs font-semibold text-primary hover:underline">
+                  Gerenciar aditivos →
+                </Link>
+              </div>
+            </Card>
+          )}
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <Card className="p-5 bg-[image:var(--gradient-card)]">

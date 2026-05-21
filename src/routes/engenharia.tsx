@@ -1975,15 +1975,37 @@ function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoF
 
 /* ---------------- KANBAN (etapas dos projetos aprovados) ---------------- */
 const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
-  { key: "Em projeto/aprovação", label: "Em projeto / aprovação", tone: "border-t-info" },
-  { key: "Standby", label: "Stand-by", tone: "border-t-muted-foreground" },
-  { key: "Aguardando instalação", label: "Aguardando instalação", tone: "border-t-warning" },
-  { key: "Executando instalação", label: "Etapa de obra", tone: "border-t-primary" },
-  { key: "Finalizado", label: "Finalizado", tone: "border-t-success" },
+  { key: "Stand-by",                       label: "Stand-by",                       tone: "border-t-red-400" },
+  { key: "Novo projeto",                   label: "Novo projeto",                   tone: "border-t-indigo-400" },
+  { key: "Vistoria pós contrato",          label: "Vistoria pós contrato",          tone: "border-t-emerald-400" },
+  { key: "Novo projeto - PF",              label: "Novo projeto - Pessoa física",   tone: "border-t-yellow-400" },
+  { key: "Novo projeto - PJ",              label: "Novo projeto - Pessoa jurídica", tone: "border-t-amber-500" },
+  { key: "Elaboração de projeto",          label: "Elaboração de projeto",          tone: "border-t-blue-400" },
+  { key: "Projeto em análise",             label: "Projeto em análise 3/6",         tone: "border-t-rose-400" },
+  { key: "Parecer de acesso em aberto",    label: "Parecer de acesso em aberto",    tone: "border-t-emerald-500" },
+  { key: "Etapa de obra",                  label: "Etapa de obra (Energisa x Terceiros)", tone: "border-t-red-500" },
+  { key: "Projeto aprovado",               label: "Projeto aprovado",               tone: "border-t-slate-400" },
+  { key: "Projeto executivo",              label: "Projeto executivo",              tone: "border-t-violet-400" },
+  { key: "Vistoria pré-Energisa",          label: "Vistoria pré-Energisa",          tone: "border-t-orange-400" },
+  { key: "Vistoria Energisa",              label: "Vistoria Energisa 4/6",          tone: "border-t-cyan-400" },
+  { key: "Monitoramento",                  label: "Monitoramento",                  tone: "border-t-pink-400" },
+  { key: "Compensação",                    label: "Compensação",                    tone: "border-t-teal-400" },
+  { key: "Finalizado",                     label: "Finalizado",                     tone: "border-t-green-500" },
+  { key: "Manutenção",                     label: "Manutenção",                     tone: "border-t-red-400" },
+  { key: "Manutenção concluída",           label: "Manutenção concluída",           tone: "border-t-cyan-300" },
+  { key: "Administrativo",                 label: "Administrativo",                 tone: "border-t-stone-400" },
+  { key: "Administrativo concluído",       label: "Administrativo concluído",       tone: "border-t-emerald-300" },
+  { key: "Vistoria pré contrato",          label: "Vistoria pré contrato",          tone: "border-t-emerald-400" },
+  { key: "Vistorias finalizadas",          label: "Vistorias finalizadas",          tone: "border-t-green-400" },
+  { key: "Estudos",                        label: "Estudos",                        tone: "border-t-slate-500" },
+  { key: "Contrato cancelado",             label: "Contrato cancelado",             tone: "border-t-red-600" },
 ];
+
+const ETAPA_KEYS = ETAPA_COLS.map((c) => c.key);
 
 function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"kanban" | "tabela">("kanban");
   const [dragId, setDragId] = useState<string | null>(null);
 
   const filtered = obras.filter((o) => {
@@ -2013,67 +2035,119 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
             onChange={(e) => setQ(e.target.value)}
             className="h-9 max-w-xs"
           />
-          <div className="ml-auto text-xs text-muted-foreground">
-            Arraste os cards entre as colunas para alterar a etapa.
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
+            <Button size="sm" variant={view === "tabela" ? "default" : "outline"} onClick={() => setView("tabela")}>Tabela</Button>
           </div>
         </div>
+        {view === "kanban" ? (
+          <div className="mt-2 text-xs text-muted-foreground">Arraste os cards entre as colunas para alterar a etapa.</div>
+        ) : null}
       </Card>
 
-      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${ETAPA_COLS.length}, minmax(220px, 1fr))` }}>
-        {ETAPA_COLS.map((col) => {
-          const items = filtered.filter((o) => o.status === col.key);
-          return (
-            <div
-              key={col.key}
-              onDragOver={(e) => { e.preventDefault(); }}
-              onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
-              className={`rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 min-h-[300px]`}
-            >
-              <div className="mb-2 flex items-center justify-between px-1">
-                <div className="text-[11px] font-semibold uppercase tracking-wider">{col.label}</div>
-                <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold">{items.length}</span>
-              </div>
-              <div className="space-y-2">
-                {items.map((o) => (
-                  <div
-                    key={o.id}
-                    draggable
-                    onDragStart={() => setDragId(o.id)}
-                    onDragEnd={() => setDragId(null)}
-                    className="cursor-grab rounded-md border bg-card p-2 shadow-sm hover:shadow active:cursor-grabbing"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-xs font-semibold text-foreground line-clamp-2">
-                        {o.cliente}
+      {view === "kanban" ? (
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 pb-2" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
+            {ETAPA_COLS.map((col) => {
+              const items = filtered.filter((o) => o.status === col.key);
+              return (
+                <div
+                  key={col.key}
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
+                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 min-h-[320px]`}
+                >
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider leading-tight">{col.label}</div>
+                    <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold">{items.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {items.map((o) => (
+                      <div
+                        key={o.id}
+                        draggable
+                        onDragStart={() => setDragId(o.id)}
+                        onDragEnd={() => setDragId(null)}
+                        className="cursor-grab rounded-md border bg-card p-2 shadow-sm hover:shadow active:cursor-grabbing"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
+                        </div>
+                        {o.tipo ? (
+                          <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div>
+                        ) : null}
+                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
+                          <span>{o.equipe || "—"}</span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
+                          <span>Prev: {fmtBR(o.previsto)}</span>
+                        </div>
                       </div>
-                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
-                    </div>
-                    {o.tipo ? (
-                      <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div>
+                    ))}
+                    {items.length === 0 ? (
+                      <div className="rounded border border-dashed py-6 text-center text-[11px] text-muted-foreground">
+                        Sem projetos
+                      </div>
                     ) : null}
-                    <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
-                      <span>{o.equipe || "—"}</span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>Início: {fmtBR(o.inicioReal || o.inicio)}</span>
-                      <span>Prev: {fmtBR(o.previsto)}</span>
-                    </div>
                   </div>
-                ))}
-                {items.length === 0 ? (
-                  <div className="rounded border border-dashed py-6 text-center text-[11px] text-muted-foreground">
-                    Sem projetos
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Contrato</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead className="text-center">Módulos</TableHead>
+                <TableHead className="text-center">kWp</TableHead>
+                <TableHead>Equipe</TableHead>
+                <TableHead>Início</TableHead>
+                <TableHead>Previsto</TableHead>
+                <TableHead className="min-w-[220px]">Etapa</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">Nenhum projeto encontrado.</TableCell></TableRow>
+              ) : filtered.map((o) => (
+                <TableRow key={o.id}>
+                  <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>
+                  <TableCell className="font-medium">{o.cliente}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{o.tipo || "—"}</TableCell>
+                  <TableCell className="text-center">{o.modulos}</TableCell>
+                  <TableCell className="text-center">{o.potencia.toFixed(2)}</TableCell>
+                  <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
+                  <TableCell className="text-xs">{fmtBR(o.inicioReal || o.inicio)}</TableCell>
+                  <TableCell className="text-xs">{fmtBR(o.previsto)}</TableCell>
+                  <TableCell>
+                    <Select value={ETAPA_KEYS.includes(o.status) ? o.status : ""} onValueChange={(v) => moveTo(o.id, v)}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar etapa…" /></SelectTrigger>
+                      <SelectContent>
+                        {ETAPA_COLS.map((c) => (
+                          <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }
+
+
 
 /* ---------------- CANCELADOS (engenharia) ---------------- */
 

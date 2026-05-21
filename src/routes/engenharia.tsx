@@ -2674,6 +2674,11 @@ function ObrasKanbanBlock({
                 Aguardando liberação Financiamento
               </div>
             ) : null}
+            {materialOK(o.id) ? (
+              <div className="mt-1 inline-flex rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                Material entregue
+              </div>
+            ) : null}
             <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
               <span>{o.modulos} mód · {o.potencia.toFixed(1)} kWp</span>
               <span>{o.equipe || "—"}</span>

@@ -39,6 +39,7 @@ import {
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
 } from "@/lib/contratos-store";
+import { findClienteByDoc } from "@/lib/clientes-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
@@ -981,7 +982,16 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.key]);
 
-  const isLocked = (f: string, v: string) => !unlocked[f] && !!v;
+  // Cliente vinculado ao banco de dados pelo CPF/CNPJ: trava os dados
+  // cadastrais (nome, doc, telefone, e-mail, consultor). Endereço sempre livre.
+  const clienteFromDB = !!findClienteByDoc(doc);
+  const ALWAYS_LOCKED_FIELDS = new Set(["nome", "doc", "tel", "email", "consultor"]);
+  const isLocked = (f: string, v: string) => {
+    if (f === "endereco") return false;
+    if (clienteFromDB && ALWAYS_LOCKED_FIELDS.has(f)) return true;
+    return !unlocked[f] && !!v;
+  };
+  const canUnlock = (f: string) => !(clienteFromDB && ALWAYS_LOCKED_FIELDS.has(f));
   const unlock = (f: string) => setUnlocked((u) => ({ ...u, [f]: true }));
   const dirty =
     nome !== (lead.clienteNome || "") ||
@@ -1034,16 +1044,22 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
     transform?: (v: string) => string;
   }) => {
     const locked = isLocked(field, value);
+    const unlockable = canUnlock(field);
     return (
       <div className={`relative ${className || ""}`}>
-        <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+        <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {label}
+          {locked && !unlockable && (
+            <span className="ml-1 text-[10px] text-muted-foreground/80">(do cadastro)</span>
+          )}
+        </Label>
         <Input
           value={value}
           onChange={(e) => onChange(transform ? transform(e.target.value) : e.target.value)}
           disabled={locked}
           className={`mt-1 ${locked ? "pr-8 bg-muted/50" : ""}`}
         />
-        {locked && <LockX field={field} />}
+        {locked && unlockable && <LockX field={field} />}
       </div>
     );
   };

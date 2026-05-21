@@ -612,23 +612,11 @@ function useKanbanState(leads: Lead[]) {
           }
           continue;
         }
-        // Status CANCELADA → sempre na coluna "Cancelados".
-        if (l.status === "CANCELADA" && ativosIds.has("col-cancelados")) {
-          if (next[l.key] !== "col-cancelados") { next[l.key] = "col-cancelados"; mudou = true; }
-          continue;
-        }
-        // Sair de "Cancelados" se a proposta foi reativada.
-        if (next[l.key] === "col-cancelados" && l.status !== "CANCELADA") {
-          const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : "col-rascunho";
-          mudou = true;
-          continue;
-        }
         // Lead sem fase: nunca pode estar numa âncora.
         const ehAncora = next[l.key] && next[l.key] in ANCHOR_INDEX;
         if (!next[l.key] || !ativosIds.has(next[l.key]) || ehAncora) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? COL_PROPOSTA_GERADA_ID);
           mudou = true;
         }
       }

@@ -12,6 +12,8 @@ import {
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
+import { PropostasPage } from "@/modules/propostas";
+import { useIsAdmin } from "@/lib/auth-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -152,12 +154,16 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="orcamentos" className="mt-5">
+          <PropostasPage />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
           <ContratosUnificadosTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
@@ -173,7 +179,7 @@ function ComercialPage() {
   );
 }
 
-/* -------- Contratos unificados: 3 status (geração / assinatura / assinado) -------- */
+/* -------- Contratos unificados: 3 grupos (Em aberto / Em contrato / Fechado) -------- */
 function ContratosUnificadosTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
@@ -181,7 +187,11 @@ function ContratosUnificadosTab({
   const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente" && !c.cancelado).length;
   const assinados = contratos.filter((c) => c.status === "Assinado" && !c.cancelado).length;
   const cancelados = contratos.filter((c) => c.cancelado === true).length;
-  const [sub, setSub] = useState<"geracao" | "assinatura" | "assinado" | "cancelados">("geracao");
+  const emAberto = aRedigir + aguardando;
+  const fechado = cancelados; // finalizados ainda não existem como flag separada
+
+  const [sub, setSub] = useState<"aberto" | "contrato" | "fechado">("aberto");
+  const [view, setView] = useState<"tabela" | "kanban">("tabela");
 
   const btn = (key: typeof sub, label: string, count: number, tone: string) => (
     <button
@@ -203,20 +213,113 @@ function ContratosUnificadosTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {btn("geracao", "Geração de contrato", aRedigir, "border-warning/40 bg-warning/10 text-warning")}
-        {btn("assinatura", "Aguardando assinatura", aguardando, "border-info/40 bg-info/10 text-info")}
-        {btn("assinado", "Assinado", assinados, "border-success/40 bg-success/10 text-success")}
-        {btn("cancelados", "Cancelados", cancelados, "border-destructive/40 bg-destructive/10 text-destructive")}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {btn("aberto", "Em aberto", emAberto, "border-warning/40 bg-warning/10 text-warning")}
+          {btn("contrato", "Em contrato", assinados, "border-success/40 bg-success/10 text-success")}
+          {btn("fechado", "Fechado", fechado, "border-destructive/40 bg-destructive/10 text-destructive")}
+        </div>
+        <div className="inline-flex rounded-md border border-border bg-background p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("tabela")}
+            className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "tabela" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
+          >
+            Tabela
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("kanban")}
+            className={"rounded px-2.5 py-1 text-xs font-semibold transition-colors " + (view === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")}
+          >
+            Kanban
+          </button>
+        </div>
       </div>
 
-      {sub === "assinado" ? (
+      {view === "kanban" ? (
+        <ContratosKanbanView contratos={contratos} grupo={sub} />
+      ) : sub === "aberto" ? (
+        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus="ambos" />
+      ) : sub === "contrato" ? (
         <ContratoAssinadoTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
-      ) : sub === "cancelados" ? (
-        <ContratosCanceladosTab contratos={contratos} />
       ) : (
-        <ContratosTab contratos={contratos} setContratos={setContratos} filtroStatus={sub} />
+        <ContratosCanceladosTab contratos={contratos} />
       )}
+    </div>
+  );
+}
+
+/* -------- Kanban (somente leitura) dos 3 grupos -------- */
+function ContratosKanbanView({ contratos, grupo }: { contratos: Contrato[]; grupo: "aberto" | "contrato" | "fechado" }) {
+  const colunas = useMemo(() => {
+    if (grupo === "aberto") {
+      return [
+        {
+          titulo: "Gerar contrato",
+          tone: "border-warning/40 bg-warning/5 text-warning",
+          itens: contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido && !c.cancelado),
+        },
+        {
+          titulo: "Contrato gerado · aguardando assinatura",
+          tone: "border-info/40 bg-info/5 text-info",
+          itens: contratos.filter((c) => c.status === "Pendente" && c.contratoRedigido && !c.cancelado),
+        },
+      ];
+    }
+    if (grupo === "contrato") {
+      const ass = contratos.filter((c) => c.status === "Assinado" && !c.cancelado);
+      return [
+        {
+          titulo: "Assinado · aguardando aprovação",
+          tone: "border-amber-500/40 bg-amber-500/5 text-amber-600",
+          itens: ass.filter((c) => !c.assinadoAprovado),
+        },
+        {
+          titulo: "Aprovado · enviado à Engenharia",
+          tone: "border-success/40 bg-success/5 text-success",
+          itens: ass.filter((c) => c.assinadoAprovado),
+        },
+      ];
+    }
+    return [
+      {
+        titulo: "Cancelado",
+        tone: "border-destructive/40 bg-destructive/5 text-destructive",
+        itens: contratos.filter((c) => c.cancelado === true),
+      },
+    ];
+  }, [contratos, grupo]);
+
+  return (
+    <div className={"grid gap-3 " + (colunas.length >= 2 ? "md:grid-cols-2" : "md:grid-cols-1")}>
+      {colunas.map((col) => (
+        <Card key={col.titulo} className="p-3">
+          <div className={"mb-3 inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs font-bold " + col.tone}>
+            <span>{col.titulo}</span>
+            <span className="rounded-full bg-background/70 px-1.5 tabular-nums">{col.itens.length}</span>
+          </div>
+          {col.itens.length === 0 ? (
+            <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">Vazio</div>
+          ) : (
+            <div className="space-y-2">
+              {col.itens.map((c) => (
+                <div key={c.id} className="rounded-md border bg-card p-2.5 hover:shadow-sm transition-shadow">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-mono text-[11px] font-semibold text-muted-foreground">{c.id}</div>
+                    <div className="text-xs font-semibold tabular-nums">{fmtBRL(valorContrato(c))}</div>
+                  </div>
+                  <div className="mt-1 truncate text-sm font-medium">{c.cliente}</div>
+                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span className="truncate">{c.vendedor || "—"}</span>
+                    <span className="font-mono">{c.propostaNumero ?? ""}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      ))}
     </div>
   );
 }
@@ -231,6 +334,7 @@ function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const [busca, setBusca] = useState("");
+  const isAdmin = useIsAdmin();
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
   const assinados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -241,6 +345,10 @@ function ContratoAssinadoTab({
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
 
   const retornar = (c: Contrato) => {
+    if (!isAdmin) {
+      toast.error("Apenas Admin Master pode retroceder um contrato assinado. Solicite ao administrador.");
+      return;
+    }
     const motivo = prompt(
       `Retornar contrato ${c.id} para Geração de contrato (refazer assinatura)?\n\n` +
       `Atenção: os projetos saem da Engenharia. O financiamento é mantido — eventuais alterações de valor refletem em Financiamentos.\n\n` +
@@ -567,6 +675,7 @@ function ContratosTab({
   contratos, setContratos, filtroStatus = "ambos",
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; filtroStatus?: "geracao" | "assinatura" | "ambos" }) {
   const [busca, setBusca] = useState("");
+  const isAdmin = useIsAdmin();
   // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -603,6 +712,10 @@ function ContratosTab({
 
 
   function reabrirRedigido(c: Contrato) {
+    if (!isAdmin) {
+      toast.error("Apenas Admin Master pode retroceder um contrato já gerado. Solicite ao administrador.");
+      return;
+    }
     const motivo = prompt(`Reabrir cadastro do contrato ${c.id}?\n\nMotivo (obrigatório):`);
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
     const r = retornarContratoParaARedigir(c.id, motivo.trim(), "Comercial");

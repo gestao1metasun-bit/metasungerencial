@@ -28,7 +28,7 @@ import { financiamentos as finSeed, finsSemContrato, fmtBRL } from "@/lib/mock-d
 import { useBancosAtivos } from "@/lib/bancos-store";
 import { useGerentesAtivos } from "@/lib/gerentes-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
-import { useContratos, updateContratoAudit } from "@/lib/contratos-store";
+import { useContratos, updateContratoAudit, reativarContrato } from "@/lib/contratos-store";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { OperacionalFinTable, type OpRow, PREVISAO_FAIXAS, previsaoFromDias } from "@/components/app/OperacionalFinTable";

@@ -43,7 +43,6 @@ import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";
 import { useAuth } from "@/lib/auth-store";
 
-const STATUS_EDITAVEL = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby"];
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 
 export const Route = createFileRoute("/engenharia")({

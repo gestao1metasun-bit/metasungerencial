@@ -111,7 +111,14 @@ function enrichObras(): Obra[] {
 
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
-  const statusInicial = c.pagamentoDetalhes?.statusInicialObra ?? "Em projeto/aprovação";
+  // Regra de nascimento na Engenharia:
+  // - Contrato com financiamento (pagamentoTipo === "Financiamento" ou possuiFinanciamento) → "Stand-by".
+  // - Qualquer outra forma de pagamento → "Novo projeto".
+  // Status já gravado no projeto (p.status) tem prioridade — preserva movimentações manuais.
+  const temFinanciamento = c.possuiFinanciamento === true
+    || c.pagamentoTipo === "Financiamento"
+    || /financiamento/i.test(c.pagamento ?? "");
+  const statusInicial = temFinanciamento ? "Stand-by" : "Novo projeto";
   return {
     id: p.id,
     contrato: c.id,

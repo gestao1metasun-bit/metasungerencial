@@ -5100,3 +5100,139 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
     </div>
   );
 }
+
+/* ============================================================
+ * Aba Aditivos — central de gestão de aditivos contratuais.
+ * Lista contratos com aditivos, destaca pendentes, abre painel por contrato.
+ * ============================================================ */
+function AditivosTab({ contratos }: { contratos: Contrato[] }) {
+  const aditivos = useAditivos();
+  const podeGerenciar = usePodeGerenciarAditivos();
+  const { user } = useAuthCurrent();
+  const [filtro, setFiltro] = useState<"todos" | "pendentes" | "aprovados">("pendentes");
+  const [busca, setBusca] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const contratosComAditivos = useMemo(() => {
+    const set = new Set(aditivos.map((a) => a.contratoId));
+    return contratos.filter((c) => set.has(c.id));
+  }, [aditivos, contratos]);
+
+  const contratosAssinados = contratos.filter((c) => c.status === "Assinado" && !c.cancelado);
+  const elegiveis = filtro === "todos" ? contratosAssinados : contratosComAditivos;
+
+  const lista = elegiveis.filter((c) => {
+    const aDoContrato = aditivos.filter((a) => a.contratoId === c.id);
+    if (filtro === "pendentes" && !aDoContrato.some(isAditivoPendente)) return false;
+    if (filtro === "aprovados" && !aDoContrato.some((a) => a.status === "APROVADO")) return false;
+    if (busca && !`${c.id} ${c.cliente}`.toLowerCase().includes(busca.toLowerCase())) return false;
+    return true;
+  });
+
+  const pendentesCount = aditivos.filter(isAditivoPendente).length;
+  const aprovadosCount = aditivos.filter((a) => a.status === "APROVADO" && !a.oculto).length;
+  const reprovadosCount = aditivos.filter((a) => a.status === "REPROVADO").length;
+
+  const contratoAberto = openId ? contratos.find((c) => c.id === openId) ?? null : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <StatCard label="Pendentes" value={pendentesCount} icon={AlertTriangle} variant="warning" />
+        <StatCard label="Aprovados" value={aprovadosCount} icon={CheckCircle2} variant="success" />
+        <StatCard label="Reprovados" value={reprovadosCount} icon={XCircle} variant="destructive" />
+      </div>
+
+      <Card className="p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {(["pendentes", "aprovados", "todos"] as const).map((f) => (
+              <Button key={f} size="sm" variant={filtro === f ? "default" : "outline"} onClick={() => setFiltro(f)}>
+                {f === "pendentes" ? "Pendentes" : f === "aprovados" ? "Aprovados" : "Todos os contratos assinados"}
+              </Button>
+            ))}
+          </div>
+          <div className="ml-auto relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Buscar contrato/cliente..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-7 h-8 w-64" />
+          </div>
+        </div>
+      </Card>
+
+      {!podeGerenciar && (
+        <Card className="p-3 border-warning/40 bg-warning/5 text-xs">
+          <b>Visualização somente.</b> Apenas Financeiro/Diretoria pode criar, aprovar, reprovar ou substituir aditivos.
+        </Card>
+      )}
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Contrato</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead className="text-right">Valor consolidado</TableHead>
+              <TableHead className="text-right">Aditivos</TableHead>
+              <TableHead>Situação</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lista.length === 0 && (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Nenhum contrato.</TableCell></TableRow>
+            )}
+            {lista.map((c) => {
+              const aDoContrato = aditivos.filter((a) => a.contratoId === c.id);
+              const pend = aDoContrato.find(isAditivoPendente);
+              const aprov = aDoContrato.filter((a) => a.status === "APROVADO" && !a.oculto).length;
+              return (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell>{c.cliente}</TableCell>
+                  <TableCell className="text-right font-mono">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell className="text-right">
+                    <span className="text-xs">{aDoContrato.length} total · {aprov} aprovados</span>
+                  </TableCell>
+                  <TableCell>
+                    {pend ? <AditivoBadge contratoId={c.id} size="sm" /> : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="outline" onClick={() => setOpenId(c.id)}>Abrir</Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={!!contratoAberto} onOpenChange={(v) => { if (!v) setOpenId(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Aditivos — contrato {contratoAberto?.id} · {contratoAberto?.cliente}</DialogTitle>
+          </DialogHeader>
+          {contratoAberto && (
+            <AditivosPanel contrato={contratoAberto} usuario={user} podeGerenciar={podeGerenciar} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/** Helper local: pega email/nome do usuário autenticado para auditoria. */
+function useAuthCurrent(): { user: string } {
+  // Importa de forma leve para não criar ciclo com auth-store.
+  // Usa useIsAdmin não, mas precisamos do email — reaproveita useAuth.
+  // (import dinâmico evitado — usamos sessão direta)
+  if (typeof window === "undefined") return { user: "sistema" };
+  try {
+    const raw = Object.keys(localStorage).find((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
+    if (raw) {
+      const data = JSON.parse(localStorage.getItem(raw) || "{}");
+      const email = data?.user?.email || data?.currentSession?.user?.email;
+      if (email) return { user: email };
+    }
+  } catch {}
+  return { user: "operador" };
+}

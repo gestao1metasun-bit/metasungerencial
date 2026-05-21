@@ -334,6 +334,7 @@ function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const [busca, setBusca] = useState("");
+  const isAdmin = useIsAdmin();
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
   const assinados = useMemo(() => {
     const q = busca.trim().toLowerCase();

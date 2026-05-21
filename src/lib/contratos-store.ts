@@ -197,6 +197,11 @@ export type ContratoFull = {
   assinadoAprovado?: boolean;
   assinadoAprovadoEm?: string;          // ISO
   assinadoAprovadoPor?: string;
+  /** Gate de liberação Admin/Diretoria — proposta aprovada precisa ser liberada antes de gerar o contrato. */
+  liberadoParaContrato?: boolean;
+  liberadoPor?: string;
+  liberadoEm?: string;                  // ISO datetime
+  liberacaoObs?: string;
   motivoCancelamento?: string;
   cancelado?: boolean;
 

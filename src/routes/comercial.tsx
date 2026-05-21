@@ -63,6 +63,11 @@ import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, D
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
+import { AditivosPanel } from "@/components/app/AditivosPanel";
+import { AditivoBadge } from "@/components/app/AditivoBadge";
+import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
+import { usePodeGerenciarAditivos } from "@/lib/auth-store";
+
 
 
 export const Route = createFileRoute("/comercial")({

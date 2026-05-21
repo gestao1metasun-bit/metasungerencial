@@ -242,14 +242,14 @@ function ContratoAssinadoTab({
 
   const retornar = (c: Contrato) => {
     const motivo = prompt(
-      `Retornar contrato ${c.id} para Contratos Gerados (refazer assinatura)?\n\n` +
-      `Atenção: ao retornar, os projetos saem da Engenharia e o contrato é removido de Financiamentos.\n\n` +
+      `Retornar contrato ${c.id} para Geração de contrato (refazer assinatura)?\n\n` +
+      `Atenção: os projetos saem da Engenharia. O financiamento é mantido — eventuais alterações de valor refletem em Financiamentos.\n\n` +
       `Motivo (obrigatório):`,
     );
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
     const r = retornarContratoParaGerado(c.id, motivo.trim(), "Comercial");
     if (!r.ok) { toast.error(r.motivo); return; }
-    toast.success(`Contrato ${c.id} retornado. Engenharia e Financiamentos atualizados.`);
+    toast.success(`Contrato ${c.id} retornado. Projetos saíram da Engenharia (Financiamento mantido).`);
   };
 
   return (

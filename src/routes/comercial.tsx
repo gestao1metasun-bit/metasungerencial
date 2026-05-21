@@ -57,6 +57,7 @@ import {
   aprovarProjeto, aprovarContratoAssinado,
   retornarContratoParaGerado, retornarContratoParaARedigir,
   cancelarContrato, reativarContrato,
+  liberarContratoParaGerar, revogarLiberacaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
@@ -720,6 +721,24 @@ function ContratosTab({
     toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
   }
 
+  function liberarParaGerar(c: Contrato) {
+    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode liberar o contrato para geração."); return; }
+    const obs = prompt(`Liberar contrato ${c.id} (${c.cliente}) para geração no Comercial?\n\nObservação (opcional):`);
+    if (obs === null) return; // cancelado
+    const r = liberarContratoParaGerar(c.id, "Admin Master", obs || undefined);
+    if (!r.ok) { toast.error(r.motivo || "Não foi possível liberar."); return; }
+    toast.success(`Contrato ${c.id} liberado para geração.`);
+  }
+
+  function revogarLiberacao(c: Contrato) {
+    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode revogar a liberação."); return; }
+    const motivo = prompt(`Revogar liberação do contrato ${c.id}?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe o motivo da revogação."); return; }
+    const r = revogarLiberacaoContrato(c.id, "Admin Master", motivo.trim());
+    if (!r.ok) { toast.error(r.motivo || "Não foi possível revogar."); return; }
+    toast.success(`Liberação do contrato ${c.id} revogada.`);
+  }
+
 
   function reabrirRedigido(c: Contrato) {
     if (!isAdmin) {
@@ -755,6 +774,14 @@ function ContratosTab({
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <FileText className="h-4 w-4 text-primary" /> Contratos aprovados aguardando redação
+            {(() => {
+              const aguard = aRedigir.filter((c) => !c.liberadoParaContrato).length;
+              return aguard > 0 ? (
+                <span className="ml-2 inline-flex items-center rounded-full bg-warning/15 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-medium">
+                  {aguard} aguardando liberação
+                </span>
+              ) : null;
+            })()}
           </div>
           <div className="relative w-64">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -774,6 +801,7 @@ function ContratosTab({
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead>Liberação</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Endereço</TableHead>
             </TableRow></TableHeader>
@@ -783,16 +811,43 @@ function ContratosTab({
                 const docDig = onlyDigits(cf?.doc ?? "");
                 const temDoc = docDig.length === 11 || docDig.length === 14;
                 const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
+                const liberado = !!c.liberadoParaContrato;
                 return (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={!liberado ? "bg-warning/5" : undefined}>
                     <TableCell>
                       <ActionsMenu label={c.id}>
-                        <DropdownMenuItem onSelect={() => setAberto(c)}>
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            if (!liberado) { toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
+                            setAberto(c);
+                          }}
+                          disabled={!liberado}
+                          title={liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato."}
+                        >
                           <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        {!liberado ? (
+                          <DropdownMenuItem
+                            onSelect={() => liberarParaGerar(c)}
+                            disabled={!isAdmin}
+                            title={isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria"}
+                            className={isAdmin ? "text-success focus:text-success" : undefined}
+                          >
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Liberar para gerar contrato
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onSelect={() => revogarLiberacao(c)}
+                            disabled={!isAdmin}
+                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : "Disponível apenas para Admin Master/Diretoria"}
+                          >
+                            <Undo2 className="mr-2 h-4 w-4" /> Revogar liberação
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => retornarParaOrcamento(c)}>
-                          <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                          <Undo2 className="mr-2 h-4 w-4" /> Retornar para Orçamentos
                         </DropdownMenuItem>
                       </ActionsMenu>
                     </TableCell>
@@ -801,6 +856,20 @@ function ContratosTab({
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                     <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                    <TableCell className="text-xs">
+                      {liberado ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-success"
+                          title={`Liberado por ${c.liberadoPor ?? "—"} em ${c.liberadoEm ? new Date(c.liberadoEm).toLocaleString("pt-BR") : "—"}${c.liberacaoObs ? ` — ${c.liberacaoObs}` : ""}`}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Liberado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-warning font-medium">
+                          <Clock className="h-3.5 w-3.5" /> Aguardando
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">{temDoc ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                     <TableCell className="text-xs">{temEndereco ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                   </TableRow>

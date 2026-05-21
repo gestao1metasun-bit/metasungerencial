@@ -80,8 +80,10 @@ function addDaysISO(iso: string, days: number): string {
 type Obra = (typeof obrasSeed)[number] & {
   ordem: number; inv2: string; inv3: string; telhadoTipo: string;
   painelW: number;
+  tipo?: string;
   inicioReal?: string; fimReal?: string;
 };
+
 
 const PAINEL_W_DEFAULT = 550;
 const PAINEIS_W_OPCOES = [450, 500, 540, 550, 565, 575, 585, 600, 610, 620, 630, 650, 665, 700];
@@ -127,7 +129,9 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inv3: p.inv3 || "",
     painelW: p.potenciaModuloW || PAINEL_W_DEFAULT,
     telhadoTipo: "Outro",
+    tipo: p.tipo || "",
   };
+
 }
 
 function EngenhariaPage() {
@@ -510,7 +514,7 @@ function ObrasAtivasTab({
                   </ActionsMenu>
                 </TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{o.id}</TableCell>
+                <TableCell className="text-xs">{o.tipo || <span className="font-mono text-muted-foreground">{o.id}</span>}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
                 <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
                 <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>

@@ -2101,6 +2101,7 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">Ações</TableHead>
                 <TableHead>Contrato</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -2110,7 +2111,6 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 <TableHead>Início</TableHead>
                 <TableHead>Previsto</TableHead>
                 <TableHead className="min-w-[180px]">Etapa</TableHead>
-                <TableHead className="w-[80px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

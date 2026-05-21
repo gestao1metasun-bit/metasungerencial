@@ -152,12 +152,16 @@ function ComercialPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5">
           <DashboardComercial contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} volume={volume} />
+        </TabsContent>
+        <TabsContent value="orcamentos" className="mt-5">
+          <PropostasPage />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
           <ContratosUnificadosTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />

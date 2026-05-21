@@ -1433,16 +1433,13 @@ function TabelaView({
       case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
       case "status": {
-        // Espelha o status mostrado no Kanban: se o lead foi atribuído a uma
-        // coluna do Kanban, usa o título dela; caso contrário, fallback para
-        // a coluna padrão calculada a partir do status da última proposta.
-        const colId = l.bloqueado
-          ? COL_CONTRATO_ID
-          : (assign[l.key] || colPadraoPorStatus(l.status));
+        // Espelha o status mostrado no Kanban: se o lead tem fase pós-aprovação,
+        // usa a coluna-âncora correspondente; senão, fallback para o assign.
+        const colId = colPorFase(l.fase) ?? assign[l.key] ?? colPadraoPorStatus(l.status);
         const col = cols.find((c) => c.id === colId);
         const titulo = (col?.titulo || l.status).toUpperCase();
         const variant: "default" | "secondary" | "destructive" | "outline" =
-          colId === COL_CONTRATO_ID ? "default"
+          colId in ANCHOR_INDEX ? "default"
           : colId === "col-aprovada" ? "default"
           : colId === "col-perdida" ? "destructive"
           : colId === "col-cancelados" ? "destructive"

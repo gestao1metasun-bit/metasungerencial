@@ -178,10 +178,6 @@ function ComercialPage() {
   );
 }
 
-/* -------- Contratos unificados: 3 status (geração / assinatura / assinado) -------- */
-function ContratosUnificadosTab({
-  contratos, setContratos, vendedoresList,
-}: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
 /* -------- Contratos unificados: 3 grupos (Em aberto / Em contrato / Fechado) -------- */
 function ContratosUnificadosTab({
   contratos, setContratos, vendedoresList,

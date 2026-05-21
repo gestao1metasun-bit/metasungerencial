@@ -1621,7 +1621,7 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
           setEditing(null);
           toast.success("Obra atualizada");
         }}
-        equipes={[] as unknown as typeof equipesSeed}
+        equipes={equipes}
       />
     </Card>
   );

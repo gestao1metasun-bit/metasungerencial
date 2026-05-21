@@ -319,8 +319,30 @@ function DashboardEng({
     return `${entry.qtd} (${pct}%)`;
   };
 
+  const aguardandoIds = useObrasAguardandoIds();
+  const aguardando = obras.filter((o) => aguardandoIds.includes(o.id));
+
   return (
     <>
+      {aguardando.length > 0 && (
+        <Card className="mb-4 border-warning/40 bg-warning/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-warning">
+                {aguardando.length} obra(s) aguardando aprovação de finalização
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {aguardando.slice(0, 5).map((o) => o.cliente).join(" · ")}
+                {aguardando.length > 5 ? " · …" : ""}
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                Necessário aprovação da Engenharia <strong>e</strong> do Financeiro/Diretoria. Quando ambas existirem, a obra é finalizada automaticamente.
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
         <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos · ${ativas.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
         <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos · ${exec.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />

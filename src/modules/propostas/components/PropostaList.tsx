@@ -1044,16 +1044,22 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
     transform?: (v: string) => string;
   }) => {
     const locked = isLocked(field, value);
+    const unlockable = canUnlock(field);
     return (
       <div className={`relative ${className || ""}`}>
-        <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</Label>
+        <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {label}
+          {locked && !unlockable && (
+            <span className="ml-1 text-[10px] text-muted-foreground/80">(do cadastro)</span>
+          )}
+        </Label>
         <Input
           value={value}
           onChange={(e) => onChange(transform ? transform(e.target.value) : e.target.value)}
           disabled={locked}
           className={`mt-1 ${locked ? "pr-8 bg-muted/50" : ""}`}
         />
-        {locked && <LockX field={field} />}
+        {locked && unlockable && <LockX field={field} />}
       </div>
     );
   };

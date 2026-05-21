@@ -1,133 +1,119 @@
-## Visão geral
+## Aditivos Contratuais — Implementação Oficial
 
-Implementar a governança comercial do ERP Meta Sun: enums de status canônicos, módulo de **Leads** novo, refatoração de **Propostas** (vinculadas a lead, multi-versão), **Contratos** (gerar/assinar/enviar engenharia), cadeia de dependência Lead→Proposta→Contrato→Engenharia, histórico/auditoria em todas as ações sensíveis, e controle de permissões (Admin Master / Gerente Comercial / Consultor).
+Implementar módulo completo de aditivos para contratos assinados, com fluxo, trava operacional, consolidação automática e permissões.
 
-Por ser uma mudança grande, proponho **dividir em 4 entregas** sequenciais, validando cada uma antes de seguir. Tudo continua em store local (localStorage), seguindo o padrão atual do projeto — sem migração para Supabase agora.
+### 1. Store de Aditivos (`src/lib/aditivos-store.ts`)
 
----
+Novo store (localStorage, padrão do projeto) com:
 
-## Entrega 1 — Fundação (status + auditoria + leads)
+**Tipo `Aditivo`:**
+- `id`, `contratoId`, `numero` (sequencial por contrato: ADT-001, ADT-002...)
+- `tipo`: `"acumulativo" | "substitutivo"`
+- `impactoFinanceiro`: `boolean`
+- `categoria`: `"troca_inversor" | "troca_modulo" | "troca_telhado" | "ajuste_tecnico" | "alteracao_operacional" | "financeiro" | "outro"`
+- `descricao`, `motivo`
+- `status`: `"CRIADO" | "AGUARDANDO_ASSINATURA" | "ASSINADO" | "AGUARDANDO_APROVACAO" | "APROVADO" | "REPROVADO" | "CANCELADO"`
+- `alteracoes`: objeto com deltas — `modulos?`, `inversores?`, `potenciaKwp?`, `valor?`, `endereco?`, `estruturaTecnica?`, `observacoesTecnicas?`
+- `distribuicaoProjetos`: `Array<{ projetoId, deltaModulos, deltaValor }>` (calculada automaticamente, editável)
+- `anexoAssinadoUrl?`, `dataCriacao`, `dataAssinatura?`, `dataAprovacao?`
+- `criadoPor`, `aprovadoPor?`, `reprovadoMotivo?`
 
-**1.1 Enums de status canônicos** — `src/lib/status-catalog.ts` (novo)
-- `PROPOSTA_STATUS` (11 valores), `CONTRATO_STATUS` (7 valores), `LEAD_STATUS` (`LEAD_CADASTRADO`, `EM_ATENDIMENTO`, `PROPOSTA_SOLICITADA`, `CONVERTIDO_EM_CONTRATO`, `PERDIDO`).
-- Helpers: `labelStatus()`, `colorStatus()`, `nextAllowed()` (transições válidas).
-- Substituir todas as strings soltas de status nos stores existentes pelos enums.
+**Funções:**
+- `criarAditivo(contratoId, dados)` → registra audit
+- `enviarParaAssinatura(id)`, `anexarAssinado(id, url)`, `enviarParaAprovacao(id)`
+- `aprovarAditivo(id, usuario)` → aplica alterações no contrato (consolidação automática) e distribui nos projetos
+- `reprovarAditivo(id, motivo)` → libera trava, descarta alterações pendentes
+- `getAditivosByContrato(contratoId)`, `getAditivoAtivo(contratoId)` (último substitutivo válido)
+- `temAditivoPendente(contratoId)` → boolean (qualquer status != APROVADO/REPROVADO/CANCELADO)
+- `getCamposBloqueados(contratoId)` → retorna áreas impactadas pelo aditivo pendente
 
-**1.2 Módulo de auditoria** — `src/lib/audit-store.ts` (novo)
-- `AuditEntry { id, entidade, entidadeId, acao, usuario, data, campo?, valorAnterior?, valorNovo?, motivo? }`.
-- `pushAudit(entry)`, `getHistorico(entidade, entidadeId)`.
-- Componente `<HistoricoTimeline entidade entidadeId />` reaproveitável.
+### 2. Consolidação Automática
 
-**1.3 Permissões** — extender `src/lib/auth-store.ts`
-- Helpers: `isAdminMaster()`, `isGerenteComercial()`, `canChangeOrigemLead()`, `canChangeConsultorLead()`, `canReabrirProposta()`.
+Ao aprovar:
+- Soma deltas no `ContratoFull` (módulos, inversores, kWp, valor)
+- Se substitutivo: marca aditivos anteriores como `oculto: true` operacionalmente
+- Se acumulativo: soma sobre estado consolidado atual
+- Distribuição proporcional automática em projetos (regra de 3 sobre módulos atuais), com possibilidade de override manual antes de aprovar
+- Registra audit completo (campo, valor anterior, valor novo)
 
-**1.4 Módulo Leads** — `src/modules/leads/` (novo)
-- `store.ts`: `Lead { id, nome, telefone, consumoKwh, consultorId, origem, observacao?, status, criadoEm, criadoPor }`. Origem = enum `ORIGEM_LEAD` (10 opções).
-- `LeadList.tsx`: tabela com busca/filtro por status/origem/consultor + colunas reordenáveis (mesmo padrão de Propostas).
-- `LeadForm.tsx`: dialog "Novo Lead" com validação dos 5 obrigatórios.
-- `LeadDetail.tsx`: ficha do lead com aba histórico, botão **Solicitar Proposta**, botões protegidos para alterar origem/consultor (com motivo obrigatório → grava audit).
-- Rota `/comercial` ganha aba **Leads**.
+### 3. Trava Operacional Parcial
 
----
+Função `podeExecutarAcao(contratoId, acao)` onde `acao` ∈ `"finalizar_obra" | "liberar_estoque" | "faturar" | "gerar_financeiro" | "concluir_etapa_critica" | "consolidar"`.
 
-## Entrega 2 — Propostas refatoradas
+- Se houver aditivo pendente que impacte a área → bloqueia
+- Áreas não impactadas continuam livres
+- Hook `useAditivoLock(contratoId)` para consumir em telas
 
-**2.1 Refatorar `src/modules/propostas/store.ts`**
-- Adicionar `leadId` (obrigatório), `numero` (sequencial por lead: P01, P02…), `responsavelGeracao`, `dataSolicitacao`.
-- Status passa a usar `PROPOSTA_STATUS`.
-- Toda mutação chama `pushAudit` (campo, antes, depois).
-- Multi-proposta por lead (já suportado, garantir que nenhuma sobrescreva).
+### 4. UI — Componentes Novos
 
-**2.2 Tela Propostas** — `src/modules/propostas/components/PropostaList.tsx`
-- Filtro por status novo, coluna "Lead", clique abre detalhe.
-- Tela detalhe: aba **Histórico** (timeline de auditoria).
-- Botão **Aprovar Proposta**: se o lead tem >1 proposta, modal com lista para escolher; ao confirmar:
-  - aprovada → `APROVADA`
-  - demais → `OBSOLETA`
-  - lead → `CONVERTIDO_EM_CONTRATO`
-  - dispara fluxo de geração de contrato (Entrega 3).
+**`src/components/app/AditivoBadge.tsx`**: badge vermelho "CONTRATO COM ADITIVO PENDENTE" reutilizável (contrato, projeto, obra, dashboard).
 
-**2.3 Solicitar Proposta a partir do Lead**
-- Modal puxa dados do lead (nome, telefone, consumo, consultor, origem) — read-only.
-- Permite preencher: observação, tipo de sistema, cidade, concessionária, anexos.
-- Cria proposta com status `AGUARDANDO_GERACAO`; lead vai pra `PROPOSTA_SOLICITADA`.
+**`src/components/app/AditivoDialog.tsx`**: dialog multi-step:
+1. Tipo (acumulativo/substitutivo) + impacto financeiro (sim/não) + categoria
+2. Alterações (campos dinâmicos conforme categoria)
+3. Distribuição nos projetos (preview automático + edição manual)
+4. Revisão + criação
 
----
+**`src/components/app/AditivosPanel.tsx`**: lista de aditivos do contrato com timeline de status, ações conforme status:
+- CRIADO → "Enviar para assinatura"
+- AGUARDANDO_ASSINATURA → "Anexar assinado"
+- ASSINADO → "Enviar para aprovação"
+- AGUARDANDO_APROVACAO → "Aprovar" / "Reprovar" (só Financeiro/Diretoria)
 
-## Entrega 3 — Contratos + dependência
+### 5. Integração com Telas Existentes
 
-**3.1 Refatorar `src/lib/contratos-store.ts`**
-- Status passa a usar `CONTRATO_STATUS`.
-- `Contrato.propostaId` e `Contrato.leadId` obrigatórios.
-- `contratoAssinadoArquivo?: { nome, dataUrl, anexadoPor, anexadoEm }`.
-- Auditoria em todas as mutações.
+**`src/routes/comercial.tsx` (Contratos)**:
+- Botão "Novo aditivo" no detalhe do contrato (só visível para contratos APROVADOS/ASSINADOS)
+- Aba "Aditivos" mostrando AditivosPanel
+- Badge de aditivo pendente na lista e no detalhe
+- Exibir valores/módulos consolidados (não os originais)
 
-**3.2 Validação pré-contrato** — função `validarDadosFinalizacao(propostaId)`
-- Checa cliente completo (nome, doc, telefone, endereço, cidade, UF, concessionária), proposta aprovada, valor, módulos, potência, inversor, estrutura.
-- Se faltar, abre `ComplementacaoCadastralDialog` com os campos pendentes.
+**`src/routes/engenharia.tsx`**:
+- Badge de aditivo pendente em obras/projetos do contrato afetado
+- Bloquear botões "Finalizar etapa crítica" e "Liberar estoque" quando aditivo pendente impacta área
 
-**3.3 Botão Gerar Contrato** (na proposta aprovada)
-- Após validar, cria contrato com status `CONTRATO_GERADO`, copia dados da proposta, trava a proposta para edição livre, marca proposta como `CONVERTIDA_EM_CONTRATO`.
+**`src/routes/financeiro.tsx`** + **`src/routes/financiamentos.tsx`**:
+- Bloquear "Faturar" / "Gerar financeiro" com tooltip explicativo
+- Badge na linha
 
-**3.4 Tela Contratos** — `/comercial?tab=contratos`
-- Tabela: número, cliente, consultor, proposta vinculada, valor, status, ações.
-- Detalhe: dois botões separados — **Visualizar Contrato** e **Anexar Contrato Assinado** (upload PDF/imagem). Anexar → status `CONTRATO_ASSINADO`, grava audit.
+**`src/routes/dashboard.tsx`**:
+- Card "Aditivos pendentes" com contagem e link
 
-**3.5 Envio automático para Engenharia**
-- Ao status virar `CONTRATO_ASSINADO` (ou regra: ao gerar contrato — confirmar abaixo), criar registro em `engenharia-store` (`ObraAtiva`) vinculado ao contrato. Status do contrato → `ENVIADO_PARA_ENGENHARIA`.
+### 6. Permissões
 
-**3.6 Cadeia de dependência (travas)**
-- `podeExcluirContrato(id)` → false se houver obra vinculada ativa.
-- `podeReabrirProposta(id)` → só Admin Master + sem contrato/obra dependente.
-- Mensagens de bloqueio conforme spec.
-- Ao reabrir proposta: motivo obrigatório, status volta para `EM_ELABORACAO`, audit completo.
+Em `src/lib/auth-store.ts`, helper `podeGerenciarAditivos()` → `true` para perfis Financeiro, Diretoria, Admin Master, Admin Geral. Botões de criar/aprovar/reprovar ficam ocultos para outros perfis.
 
----
+### 7. Regra: Contrato Assinado Não Volta
 
-## Entrega 4 — Comparativo Contratado vs Executado
+Remover/desabilitar qualquer botão "voltar etapa" / "reabrir comercial" em contratos com status assinado. Substituir por CTA "Criar aditivo".
 
-**4.1** Estender `engenharia-store` para guardar `executado: { modulos, potenciaModulo, inversores, estrutura, telhado }` separado dos dados contratados.
+### 8. Auditoria
 
-**4.2** Componente `<ContratadoVsExecutado contratoId />` exibido na obra e no contrato — tabela lado a lado com diferenças destacadas.
-
-**4.3** Engenharia pode editar dados executados sem alterar o contrato.
-
----
-
-## Detalhes técnicos consolidados
-
-```text
-src/
-├── lib/
-│   ├── status-catalog.ts          (novo) enums + helpers
-│   ├── audit-store.ts             (novo) histórico universal
-│   ├── auth-store.ts              (estender) helpers de permissão
-│   ├── contratos-store.ts         (refatorar) enum + audit + dependências
-│   └── engenharia-store.ts        (estender) campo `executado`
-├── modules/
-│   ├── leads/                     (novo) store + páginas
-│   │   ├── store.ts
-│   │   ├── LeadsPage.tsx
-│   │   └── components/{LeadList,LeadForm,LeadDetail,SolicitarPropostaDialog}.tsx
-│   └── propostas/
-│       └── store.ts               (refatorar) leadId + numero + audit
-├── components/app/
-│   ├── HistoricoTimeline.tsx      (novo)
-│   └── ContratadoVsExecutado.tsx  (novo)
-└── routes/
-    └── comercial.tsx              (estender) abas Leads, Propostas, Contratos
-```
-
-Padrão de cada ação (vale para todas):
-- valida → muta store → `pushAudit` → toast → atualiza UI.
-- Permissão checada antes da ação; mensagem de bloqueio padronizada.
+Toda ação de aditivo registra via `pushAudit()` com entidade `"contrato"` e detalhe descrevendo o aditivo (criação, assinatura, aprovação, reprovação, consolidação, distribuição).
 
 ---
 
-## Pontos para confirmar antes de começar
+### Arquivos novos
+- `src/lib/aditivos-store.ts`
+- `src/components/app/AditivoBadge.tsx`
+- `src/components/app/AditivoDialog.tsx`
+- `src/components/app/AditivosPanel.tsx`
 
-1. **Quando dispara "ENVIADO PARA ENGENHARIA"?** A spec diz "quando proposta for aprovada e contrato for gerado" (item 15) e também menciona "anexar contrato assinado" (item 14). Proponho: cria a obra ao **gerar contrato** (item 15 literal), e ao **anexar assinado** muda status para `CONTRATO_ASSINADO`. Confirma?
-2. **Faço as 4 entregas em sequência nesta mesma conversa**, validando build a cada uma? Ou prefere que eu entregue as 4 de uma vez?
-3. **Origem do lead — campo `motivo` da alteração** é texto livre obrigatório?
+### Arquivos editados
+- `src/lib/contratos-store.ts` (campo `aditivosConsolidados`, helpers de consolidação)
+- `src/lib/auth-store.ts` (permissão `podeGerenciarAditivos`)
+- `src/routes/comercial.tsx` (aba + botão + badge + bloqueio de "voltar")
+- `src/routes/engenharia.tsx` (badge + bloqueios)
+- `src/routes/financeiro.tsx` (bloqueios + badge)
+- `src/routes/financiamentos.tsx` (bloqueios + badge)
+- `src/routes/dashboard.tsx` (card de pendências)
 
-Após sua aprovação, começo pela Entrega 1.
+### Persistência
+
+Mantenho localStorage (padrão atual do ERP — alinhado com a auditoria, que recomenda migração futura para Supabase). Quando a migração para banco acontecer, este store entra no mesmo lote.
+
+### Confirmações que preciso antes de codar
+Vou seguir as regras como descritas, **a menos que** você queira ajustar:
+- Distribuição automática proporcional aos módulos **já existentes** em cada projeto (e não por área/potência). OK?
+- "Concluir etapas críticas" = últimas 3 etapas do kanban de engenharia (Vistoria final, Comissionamento, Entrega). OK?
+- Aditivo substitutivo oculta os anteriores **apenas operacionalmente** (continuam visíveis no histórico). OK?

@@ -174,7 +174,8 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     painelW: p.potenciaModuloW || PAINEL_W_DEFAULT,
     telhadoTipo: "Outro",
     tipo: p.tipo || "",
-  };
+    aguardandoLiberacaoFin,
+  } as Obra;
 
 }
 

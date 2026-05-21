@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
-import { retornarPropostaParaOrcamento } from "@/modules/propostas/store";
+import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
+import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -3782,9 +3783,9 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
 
 type NovoProjForm = Omit<ProjetoVinculado, "id" | "contratoId">;
 
-function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
+function emptyProjeto(contrato: Contrato, _tipoLabel: string): NovoProjForm {
   return {
-    tipo: tipoLabel,
+    tipo: "",
     endereco: contrato.clienteFull?.rua ?? "",
     numero: contrato.clienteFull?.numero ?? "",
     bairro: contrato.clienteFull?.bairro ?? "",
@@ -3794,12 +3795,12 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     modulos: contrato.modulos ?? 0,
     potenciaModuloW: contrato.potencia ?? 620,
     kwp: contrato.kwp ?? 0,
-    inversor: contrato.inv1 ?? "",
-    inv2: contrato.inv2 ?? "",
-    inv3: contrato.inv3 ?? "",
-    inv4: contrato.inv4 ?? "",
-    inv5: contrato.inv5 ?? "",
-    inv6: contrato.inv6 ?? "",
+    inversor: "",
+    inv2: "",
+    inv3: "",
+    inv4: "",
+    inv5: "",
+    inv6: "",
     equipe: "",
     status: "Em projeto/aprovação",
     inicio: "",
@@ -3842,6 +3843,32 @@ function ProjetoEditCard({
   useEffect(() => { setD(projeto); /* eslint-disable-next-line */ }, [projeto.id, projeto.aprovado, projeto.enviadoEngenharia]);
   const set = (k: keyof ProjetoVinculado, v: any) => setD((p) => ({ ...p, [k]: v }));
   const dirty = JSON.stringify(d) !== JSON.stringify(projeto);
+
+  // Sugestão automática de inversor sempre que a quantidade de módulos ou a potência do módulo mudar.
+  // Aplica também ao Projeto 1, 2, … N. Não dispara no primeiro render — somente após edição do usuário.
+  const initInvRef = React.useRef({ m: Number(projeto.modulos) || 0, w: Number(projeto.potenciaModuloW) || 0 });
+  useEffect(() => {
+    if (projeto.aprovado) return;
+    const m = Number(d.modulos) || 0;
+    const w = Number(d.potenciaModuloW) || 0;
+    if (m === initInvRef.current.m && w === initInvRef.current.w) return;
+    initInvRef.current = { m, w };
+    if (m <= 0 || w <= 0) return;
+    const sug = sugerirInversoresAuto(m, w);
+    if (!sug.length) return;
+    const { potKw, quantidade } = sug[0];
+    const val = Number.isInteger(potKw) ? String(potKw) : String(potKw).replace(".", ",");
+    const slots: (keyof ProjetoVinculado)[] = ["inversor", "inv2", "inv3", "inv4", "inv5", "inv6"];
+    setD((p) => {
+      const next = { ...p } as any;
+      for (let i = 0; i < slots.length; i++) {
+        next[slots[i]] = i < quantidade ? val : "";
+      }
+      return next;
+    });
+    toast.info(`Inversor sugerido: ${quantidade > 1 ? `${quantidade}x ` : ""}${val} kW`, { duration: 2500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d.modulos, d.potenciaModuloW]);
 
   const lookupCEP = async (cep: string) => {
     set("cep", cep);
@@ -4014,11 +4041,39 @@ function ProjetoEditCard({
           ["inv4", "Inversor 4"],
           ["inv5", "Inversor 5"],
           ["inv6", "Inversor 6"],
-        ] as const).map(([k, label]) => (
-          <div key={k} className="space-y-1.5"><Label>{label}</Label>
-            <Input value={(d as any)[k] ?? ""} onChange={(e) => set(k as any, e.target.value)} />
-          </div>
-        ))}
+        ] as const).map(([k, label]) => {
+          const raw = String((d as any)[k] ?? "");
+          const cur = fmtInversorNumero(raw);
+          const opcoes = STANDARD_INVERSOR_KW.map((kw) =>
+            Number.isInteger(kw) ? String(kw) : String(kw).replace(".", ","),
+          );
+          const isCustom = raw !== "" && !opcoes.includes(cur);
+          const selValue = raw === "" ? "" : (isCustom ? "__novo__" : cur);
+          return (
+            <div key={k} className="space-y-1.5"><Label>{label}</Label>
+              <Select
+                value={selValue}
+                onValueChange={(v) => {
+                  if (v === "__novo__") {
+                    const entrada = window.prompt(`Informe a potência (kW) do ${label} — apenas número:`, isCustom ? cur : "");
+                    if (entrada == null) return;
+                    const limpo = entrada.replace(/[^\d.,]/g, "").replace(".", ",");
+                    set(k as any, limpo);
+                  } else {
+                    set(k as any, v);
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  {opcoes.map((o) => <SelectItem key={o} value={o}>{o} kW</SelectItem>)}
+                  {isCustom && <SelectItem value={cur}>{cur} kW (atual)</SelectItem>}
+                  <SelectItem value="__novo__">+ Novo…</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        })}
         <div className="space-y-1.5"><Label>Equipe</Label>
           <Input value={d.equipe} onChange={(e) => set("equipe", e.target.value)} placeholder="Equipe A, B…" />
         </div>

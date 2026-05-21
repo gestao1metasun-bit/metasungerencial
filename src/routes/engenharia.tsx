@@ -482,7 +482,7 @@ function ObrasAtivasTab({
             <TableHead className="w-[80px]">Opções</TableHead>
             <TableHead>Contrato</TableHead>
             <TableHead>Projeto</TableHead>
-            <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
+            <TableHead className="text-center">Mód.</TableHead>
             <TableHead>INV</TableHead><TableHead>INV2</TableHead><TableHead>INV3</TableHead>
             <TableHead>Telhado</TableHead><TableHead>Equipe</TableHead>
             <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
@@ -516,19 +516,18 @@ function ObrasAtivasTab({
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="text-xs">{o.tipo || <span className="font-mono text-muted-foreground">{o.id}</span>}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
-                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
                 <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv2 ? fmtInversorNumero(o.inv2) : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{o.inv3 ? fmtInversorNumero(o.inv3) : "—"}</TableCell>
                 <TableCell className="text-xs">{o.telhadoTipo}</TableCell>
                 <TableCell className="text-xs">{o.equipe || "—"}</TableCell>
-                <TableCell className="text-xs whitespace-nowrap">{fmtBR(o.inicio)}</TableCell>
-                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{fmtBR(o.previsto)}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{o.inicioReal ? fmtBR(o.inicioReal) : <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{o.fimReal ? fmtBR(o.fimReal) : <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell><StatusBadge status={o.status} /></TableCell>
               </TableRow>
               );
             })}
-            {list.length === 0 && <TableRow><TableCell colSpan={14} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={13} className="py-10 text-center text-muted-foreground">Nenhuma obra ativa</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>

@@ -208,13 +208,15 @@ export type KItem<T> = {
 };
 
 export function KanbanGeneric<T>({
-  cols, items, assign, setAssign, renderCard, columnMinWidth = 240, fullHeight = false,
+  cols, items, assign, setAssign, renderCard, onCardDrop, columnMinWidth = 240, fullHeight = false,
 }: {
   cols: KCol[];
   items: KItem<T>[];
   assign: Record<string, string>;
   setAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   renderCard: (item: T, key: string) => React.ReactNode;
+  /** Disparado quando um card é solto numa coluna. Útil pra refletir num estado externo (ex.: status). */
+  onCardDrop?: (cardKey: string, colId: string) => void;
   columnMinWidth?: number;
   fullHeight?: boolean;
 }) {
@@ -231,8 +233,10 @@ export function KanbanGeneric<T>({
   const drop = (colId: string) => {
     if (!dragKey) return;
     setAssign((prev) => ({ ...prev, [dragKey]: colId }));
+    onCardDrop?.(dragKey, colId);
     setDragKey(null);
   };
+
 
   return (
     <div className={fullHeight ? "overflow-x-auto overflow-y-hidden h-[calc(100vh-230px)]" : "overflow-x-auto"}>

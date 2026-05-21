@@ -1125,6 +1125,30 @@ function KanbanView({
 
   const dropEmColuna = (colId: string) => {
     if (dragLead) {
+      const lead = leads.find((x) => x.key === dragLead);
+      if (lead) {
+        const origemId = assign[lead.key] ?? colPadraoPorStatus(lead.status);
+        const origemAncora = origemId in ANCHOR_INDEX;
+        const destinoAncora = colId in ANCHOR_INDEX;
+        // 1) Não sair de uma coluna-âncora (não pode voltar).
+        if (origemAncora) {
+          toast.error("Cards em colunas de contrato não podem ser movidos.");
+          setDragLead(null); return;
+        }
+        // 2) Só lead aprovado/com fase pode entrar em coluna-âncora,
+        //    e somente na coluna correspondente à sua fase atual.
+        if (destinoAncora) {
+          const ancoraValida = colPorFase(lead.fase);
+          if (!ancoraValida) {
+            toast.error("Somente propostas aprovadas podem ir para colunas de contrato.");
+            setDragLead(null); return;
+          }
+          if (ancoraValida !== colId) {
+            toast.error("Este lead está na fase " + (cols.find((c) => c.id === ancoraValida)?.titulo || ancoraValida) + ".");
+            setDragLead(null); return;
+          }
+        }
+      }
       setAssign((a) => ({ ...a, [dragLead]: colId }));
       setDragLead(null);
     } else if (dragCol && dragCol !== colId) {

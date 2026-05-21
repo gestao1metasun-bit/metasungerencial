@@ -59,6 +59,18 @@ const STATUS_ROW_BG: Record<string, string> = {
   "Finalizado": "",
 };
 
+/** Status do Kanban que ainda NÃO entram no Cronograma (fase pré-elaboração). */
+const STATUS_PRE_CRONOGRAMA = new Set<string>([
+  "Novo projeto", "Novo projeto - PF", "Novo projeto - PJ",
+  "Stand-by", "Standby",
+  "Vistoria pós contrato", "Vistoria pré contrato",
+  "Estudos",
+]);
+/** Uma obra só aparece no Cronograma a partir de "Elaboração de projeto". */
+function elegivelCronograma(status: string): boolean {
+  return !STATUS_PRE_CRONOGRAMA.has(status) && status !== "Finalizado" && status !== "Contrato cancelado";
+}
+
 function fmtBR(iso?: string): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-");
@@ -111,7 +123,14 @@ function enrichObras(): Obra[] {
 
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
-  const statusInicial = c.pagamentoDetalhes?.statusInicialObra ?? "Em projeto/aprovação";
+  // Regra de nascimento na Engenharia:
+  // - Contrato com financiamento (pagamentoTipo === "Financiamento" ou possuiFinanciamento) → "Stand-by".
+  // - Qualquer outra forma de pagamento → "Novo projeto".
+  // Status já gravado no projeto (p.status) tem prioridade — preserva movimentações manuais.
+  const temFinanciamento = c.possuiFinanciamento === true
+    || c.pagamentoTipo === "Financiamento"
+    || /financiamento/i.test(c.pagamento ?? "");
+  const statusInicial = temFinanciamento ? "Stand-by" : "Novo projeto";
   return {
     id: p.id,
     contrato: c.id,
@@ -436,7 +455,7 @@ function ObrasAtivasTab({
   const [editing, setEditing] = useState<Obra | null>(null);
 
   const list = obras
-    .filter((o) => o.status !== "Finalizado")
+    .filter((o) => elegivelCronograma(o.status))
     .filter((o) => equipe === "todas" || o.equipe === equipe)
     .sort((a, b) => {
       const r = (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99);

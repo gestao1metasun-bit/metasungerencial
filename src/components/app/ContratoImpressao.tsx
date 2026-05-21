@@ -119,7 +119,7 @@ export function ContratoImpressao({
                 <div className="mx-auto w-3/4 border-t border-foreground pt-2">CONTRATANTE</div>
                 <div className="mt-2 font-semibold">{cf?.nome ?? contrato.cliente}</div>
                 <div className="text-muted-foreground">{isPJ ? "CNPJ" : "CPF"}: {cf?.doc ?? "—"}</div>
-                <div className="text-muted-foreground">Telefone: {cf?.telefone ?? "—"}</div>
+                
                 {isPJ && contrato.responsavel && (
                   <div className="text-muted-foreground">Representada por {contrato.responsavel}{contrato.responsavelDoc ? ` — CPF ${contrato.responsavelDoc}` : ""}</div>
                 )}

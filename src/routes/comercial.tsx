@@ -712,6 +712,10 @@ function ContratosTab({
 
 
   function reabrirRedigido(c: Contrato) {
+    if (!isAdmin) {
+      toast.error("Apenas Admin Master pode retroceder um contrato já gerado. Solicite ao administrador.");
+      return;
+    }
     const motivo = prompt(`Reabrir cadastro do contrato ${c.id}?\n\nMotivo (obrigatório):`);
     if (!motivo || !motivo.trim()) { toast.error("Informe um motivo para retornar."); return; }
     const r = retornarContratoParaARedigir(c.id, motivo.trim(), "Comercial");

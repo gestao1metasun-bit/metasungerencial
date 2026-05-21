@@ -498,7 +498,6 @@ function ObrasAtivasTab({
               const link = findProjetoLink(o.id, contratos);
               return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
-                <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell>
                   <ActionsMenu>
                     <DropdownMenuItem onSelect={() => setEditing(o)}>
@@ -518,6 +517,7 @@ function ObrasAtivasTab({
                     )}
                   </ActionsMenu>
                 </TableCell>
+                <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="text-xs">{o.tipo || <span className="font-mono text-muted-foreground">{o.id}</span>}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>

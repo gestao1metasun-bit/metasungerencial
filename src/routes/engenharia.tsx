@@ -2015,6 +2015,7 @@ const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
 const ETAPA_KEYS = ETAPA_COLS.map((c) => c.key);
 
 function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
+  const contratos = useContratos();
   const [q, setQ] = useState("");
   const [view, setView] = useState<"kanban" | "tabela">("kanban");
   const [dragId, setDragId] = useState<string | null>(null);
@@ -2034,6 +2035,23 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
       finalizacao: status === "Finalizado" ? (o.finalizacao ?? new Date().toISOString().slice(0,10)) : o.finalizacao,
     } : o));
     toast.success(`${cur.cliente} → ${status}`);
+  };
+
+  const retornarComercial = (o: Obra) => {
+    const link = findProjetoLink(o.id, contratos);
+    if (!link) {
+      toast.error("Esta obra não está vinculada a um projeto do Comercial");
+      return;
+    }
+    const ok = window.confirm(
+      `Retornar o projeto de ${o.cliente} para o Comercial (Assinados)?\n\n` +
+      `Isso vai APAGAR informações da Engenharia: etapa atual, equipe, datas de início/finalização e observações operacionais.\n\n` +
+      `O projeto poderá ser reeditado e reaprovado no Comercial. Deseja continuar?`
+    );
+    if (!ok) return;
+    retornarProjetoComercial(link.contratoId, o.id);
+    setObras(obras.filter((x) => x.id !== o.id));
+    toast.success(`Projeto de ${o.cliente} retornado ao Comercial (Assinados).`);
   };
 
   return (
@@ -2145,6 +2163,11 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                           ))}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => retornarComercial(o)}>
+                        <RotateCcw className="mr-2 h-4 w-4 text-warning" />
+                        <span className="text-warning">Retornar ao Comercial (Assinados)</span>
+                      </DropdownMenuItem>
                     </ActionsMenu>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>

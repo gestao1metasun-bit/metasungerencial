@@ -17,8 +17,6 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "dashboard", label: "Dashboard" },
       { value: "orcamentos", label: "Propostas" },
       { value: "contratos", label: "Contratos" },
-      { value: "vendedores", label: "Consultores" },
-      { value: "analise", label: "Análise Executiva" },
     ],
   },
   "/propostas": {
@@ -43,13 +41,11 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     default: "dashboard",
     tabs: [
       { value: "dashboard", label: "Dashboard" },
-      { value: "ativas", label: "Cronograma" },
       { value: "kanban", label: "Gestão de projetos" },
+      { value: "ativas", label: "Cronograma" },
       { value: "pendencias", label: "Pendências" },
       { value: "equipes", label: "Equipes" },
-      { value: "produtividade", label: "Produtividade" },
       { value: "finalizados", label: "Finalizados" },
-      { value: "cancelados", label: "Cancelados" },
     ],
   },
 

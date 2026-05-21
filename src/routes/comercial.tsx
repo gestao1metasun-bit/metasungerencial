@@ -4040,11 +4040,39 @@ function ProjetoEditCard({
           ["inv4", "Inversor 4"],
           ["inv5", "Inversor 5"],
           ["inv6", "Inversor 6"],
-        ] as const).map(([k, label]) => (
-          <div key={k} className="space-y-1.5"><Label>{label}</Label>
-            <Input value={(d as any)[k] ?? ""} onChange={(e) => set(k as any, e.target.value)} />
-          </div>
-        ))}
+        ] as const).map(([k, label]) => {
+          const raw = String((d as any)[k] ?? "");
+          const cur = fmtInversorNumero(raw);
+          const opcoes = STANDARD_INVERSOR_KW.map((kw) =>
+            Number.isInteger(kw) ? String(kw) : String(kw).replace(".", ","),
+          );
+          const isCustom = raw !== "" && !opcoes.includes(cur);
+          const selValue = raw === "" ? "" : (isCustom ? "__novo__" : cur);
+          return (
+            <div key={k} className="space-y-1.5"><Label>{label}</Label>
+              <Select
+                value={selValue}
+                onValueChange={(v) => {
+                  if (v === "__novo__") {
+                    const entrada = window.prompt(`Informe a potência (kW) do ${label} — apenas número:`, isCustom ? cur : "");
+                    if (entrada == null) return;
+                    const limpo = entrada.replace(/[^\d.,]/g, "").replace(".", ",");
+                    set(k as any, limpo);
+                  } else {
+                    set(k as any, v);
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  {opcoes.map((o) => <SelectItem key={o} value={o}>{o} kW</SelectItem>)}
+                  {isCustom && <SelectItem value={cur}>{cur} kW (atual)</SelectItem>}
+                  <SelectItem value="__novo__">+ Novo…</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        })}
         <div className="space-y-1.5"><Label>Equipe</Label>
           <Input value={d.equipe} onChange={(e) => set("equipe", e.target.value)} placeholder="Equipe A, B…" />
         </div>

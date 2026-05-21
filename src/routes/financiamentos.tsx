@@ -1112,7 +1112,7 @@ function ContratosComercialFin() {
   const contratos = useContratos();
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const lista = contratos.filter((c) => c.possuiFinanciamento);
+  const lista = contratos.filter((c) => c.possuiFinanciamento && !c.cancelado);
   const [editing, setEditing] = useState<typeof lista[number] | null>(null);
   if (lista.length === 0) return null;
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);

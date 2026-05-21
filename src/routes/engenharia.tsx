@@ -1531,6 +1531,7 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
   const [editing, setEditing] = useState<Obra | null>(null);
   const { user } = useAuth();
   const usuario = user?.email ?? "usuário";
+  const equipes = useEquipes();
 
   const handleLiberar = (o: Obra) => {
     liberarEdicao(o.id, usuario);

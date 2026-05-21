@@ -2632,6 +2632,11 @@ function ObrasKanbanBlock({
   moveTo: (id: string, status: string) => void;
 }) {
   const [manage, setManage] = useState(false);
+  const est = useEstoqueState();
+  const materialOK = (id: string) => {
+    const n = est.necessidades.find((x) => x.obraId === id);
+    return !!n && isMaterialEntregueTotal(n);
+  };
   const { cols, setCols, assign, setAssign } = useKanbanColumns(
     "ms.engenharia.obras.kanban",
     OBRAS_KANBAN_DEFAULTS,

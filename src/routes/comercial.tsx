@@ -3782,9 +3782,9 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
 
 type NovoProjForm = Omit<ProjetoVinculado, "id" | "contratoId">;
 
-function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
+function emptyProjeto(contrato: Contrato, _tipoLabel: string): NovoProjForm {
   return {
-    tipo: tipoLabel,
+    tipo: "",
     endereco: contrato.clienteFull?.rua ?? "",
     numero: contrato.clienteFull?.numero ?? "",
     bairro: contrato.clienteFull?.bairro ?? "",
@@ -3794,12 +3794,12 @@ function emptyProjeto(contrato: Contrato, tipoLabel: string): NovoProjForm {
     modulos: contrato.modulos ?? 0,
     potenciaModuloW: contrato.potencia ?? 620,
     kwp: contrato.kwp ?? 0,
-    inversor: contrato.inv1 ?? "",
-    inv2: contrato.inv2 ?? "",
-    inv3: contrato.inv3 ?? "",
-    inv4: contrato.inv4 ?? "",
-    inv5: contrato.inv5 ?? "",
-    inv6: contrato.inv6 ?? "",
+    inversor: "",
+    inv2: "",
+    inv3: "",
+    inv4: "",
+    inv5: "",
+    inv6: "",
     equipe: "",
     status: "Em projeto/aprovação",
     inicio: "",

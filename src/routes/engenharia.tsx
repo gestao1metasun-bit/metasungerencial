@@ -3,8 +3,15 @@ import { useEffect, useState } from "react";
 import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, reativarContrato, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
-  ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
+  ChevronUp, ChevronDown, RotateCcw, Eye, Plus, Lock, Unlock, ShieldCheck, History,
 } from "lucide-react";
+import {
+  aprovarFinalizacao, revogarAprovacao, useAprovacoes, temAmbasAprovacoes,
+  aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,
+  getLiberacao, registrarAlteracaoFinalizada,
+} from "@/lib/obras-finalizacao-store";
+import { useHistorico } from "@/lib/audit-store";
+import { useIsAdmin } from "@/lib/auth-store";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -35,6 +42,7 @@ import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";
 import { useAuth } from "@/lib/auth-store";
+
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 
 export const Route = createFileRoute("/engenharia")({
@@ -45,6 +53,7 @@ export const Route = createFileRoute("/engenharia")({
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const TELHADOS = ["Fibrocimento", "Cerâmica", "Metálico", "Solo", "Laje", "Outro"];
 const STATUS = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby", "Finalizado"];
+const STATUS_EDITAVEL = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby"];
 const STATUS_RANK: Record<string, number> = {
   "Executando instalação": 0,
   "Aguardando instalação": 1,
@@ -187,6 +196,31 @@ function EngenhariaPage() {
     });
   }, [contratos]);
 
+  // Auto-finalização: assim que houver as DUAS aprovações (engenharia + financeiro)
+  // o sistema marca a obra como Finalizado automaticamente.
+  const aguardandoIds = useObrasAguardandoIds();
+  useEffect(() => {
+    setObras((cur) => {
+      let mudou = false;
+      const next = cur.map((o) => {
+        if (o.status !== "Finalizado" && temAmbasAprovacoes(o.id)) {
+          mudou = true;
+          const hoje = new Date().toISOString().slice(0, 10);
+          return {
+            ...o,
+            status: "Finalizado",
+            finalizacao: o.finalizacao ?? hoje,
+            fimReal: o.fimReal ?? hoje,
+            inicioReal: o.inicioReal ?? o.inicio ?? hoje,
+          };
+        }
+        return o;
+      });
+      return mudou ? next : cur;
+    });
+    // depende da lista de aguardando (proxy do estado de aprovações)
+  }, [aguardandoIds.join(",")]);
+
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
@@ -285,8 +319,30 @@ function DashboardEng({
     return `${entry.qtd} (${pct}%)`;
   };
 
+  const aguardandoIds = useObrasAguardandoIds();
+  const aguardando = obras.filter((o) => aguardandoIds.includes(o.id));
+
   return (
     <>
+      {aguardando.length > 0 && (
+        <Card className="mb-4 border-warning/40 bg-warning/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-warning">
+                {aguardando.length} obra(s) aguardando aprovação de finalização
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {aguardando.slice(0, 5).map((o) => o.cliente).join(" · ")}
+                {aguardando.length > 5 ? " · …" : ""}
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                Necessário aprovação da Engenharia <strong>e</strong> do Financeiro/Diretoria. Quando ambas existirem, a obra é finalizada automaticamente.
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
         <StatCard label="Gestão de projetos" value={ativas.length} hint={`${ativas.reduce((s,o)=>s+o.modulos,0)} módulos · ${ativas.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={HardHat} tone="primary" onView={() => setOpenModal("ativas")} />
         <StatCard label="Executando" value={exec.length} hint={`${exec.reduce((s,o)=>s+o.modulos,0)} módulos · ${exec.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp`} icon={Wrench} tone="success" onView={() => setOpenModal("exec")} />
@@ -601,8 +657,16 @@ function EditObraDialog({
   const [confirming, setConfirming] = useState(false);
   const [confirmRet, setConfirmRet] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdminMaster = role === "admin_master";
+  const isAdmin = useIsAdmin();
+  const usuario = user?.email ?? "usuário";
+
+  // Hooks reativos — sempre executam, mesmo quando obra é null (usam id seguro)
+  const obraId = obra?.id ?? "__none__";
+  const aprov = useAprovacoes(obraId);
+  const edicaoLiberada = usePodeEditarFinalizada(obraId);
+  const liberacao = obra ? getLiberacao(obraId) : undefined;
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
@@ -617,16 +681,24 @@ function EditObraDialog({
   const previsaoInicio = f.inicio || "";
   const previsaoFim = recalcPrevisto(previsaoInicio, f.equipe || "", modulos);
 
-  const finalizing = f.status === "Finalizado";
+  const isFinalizado = obra.status === "Finalizado";
   const isExecutando = f.status === "Executando instalação";
   const isAguardando = f.status === "Aguardando instalação";
-  const equipeAllowed = isExecutando || isAguardando;
+  const equipeAllowed = (isExecutando || isAguardando) && (!isFinalizado || edicaoLiberada);
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
-  const realDatesEditable = adminMode && isAdminMaster;
-  const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
+  const realDatesEditable = adminMode && isAdminMaster && (!isFinalizado || edicaoLiberada);
+
+  // Edição bloqueada quando obra finalizada e sem liberação ativa
+  const camposBloqueados = isFinalizado && !edicaoLiberada;
+
+  const aguardandoFinalizacao = aguardandoAprovacao(obraId);
 
   const trySave = () => {
+    if (camposBloqueados) {
+      toast.error("Obra finalizada. Solicite liberação de edição para alterar.");
+      return;
+    }
     if (isExecutando || isAguardando) {
       const faltam: string[] = [];
       if (!(modulos > 0)) faltam.push("quantidade de módulos");
@@ -643,32 +715,69 @@ function EditObraDialog({
       toast.error("Equipe é obrigatória quando o status é Executando instalação");
       return;
     }
-    if (finalizing && !valid) {
-      toast.error("Preencha Início real e Fim real para finalizar (modo ADMIN MASTER)");
-      return;
-    }
     setConfirming(true);
   };
 
   const confirm = () => {
-    const patch: Partial<Obra> = {
+    // Para obras finalizadas: manter status FINALIZADO e datas históricas
+    const patch: Partial<Obra> = isFinalizado ? {
+      modulos, painelW, potencia: kwpAuto,
+      inversor: f.inversor, inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
+      equipe: f.equipe, obs: f.obs,
+      // status, inicio, finalizacao, fimReal, inicioReal NÃO mudam
+    } : {
       modulos, painelW, potencia: kwpAuto,
       inversor: f.inversor, inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
       equipe: f.equipe, inicio: f.inicio, status: f.status, obs: f.obs,
       inicioReal: f.inicioReal, fimReal: f.fimReal,
-      finalizacao: finalizing ? (f.fimReal ?? null) : null,
       previsto: previsaoFim,
     };
-    // Alimenta histórico de produtividade quando há datas reais completas
-    if (f.inicioReal && f.fimReal && f.equipe && modulos > 0) {
+    // Histórico de produtividade — apenas quando datas reais completas (modo normal)
+    if (!isFinalizado && f.inicioReal && f.fimReal && f.equipe && modulos > 0) {
       const ini = new Date(f.inicioReal + "T00:00:00");
       const fim = new Date(f.fimReal + "T00:00:00");
       const dias = Math.max(1, Math.round((fim.getTime() - ini.getTime()) / 86400000) + 1);
       registrarHistoricoExec(f.equipe, { fimReal: f.fimReal, modulos, dias });
     }
+    // Registrar diff em obras finalizadas (histórico automático)
+    if (isFinalizado) {
+      const diffs: Array<{ campo: string; antes?: string; depois?: string }> = [];
+      const check = (campo: string, antes: any, depois: any) => {
+        if (String(antes ?? "") !== String(depois ?? "")) {
+          diffs.push({ campo, antes: String(antes ?? "—"), depois: String(depois ?? "—") });
+        }
+      };
+      check("Módulos", obra.modulos, modulos);
+      check("Painel (W)", obra.painelW, painelW);
+      check("Potência (kWp)", obra.potencia, kwpAuto);
+      check("Inversor 1", obra.inversor, f.inversor);
+      check("Inversor 2", obra.inv2, f.inv2);
+      check("Inversor 3", obra.inv3, f.inv3);
+      check("Telhado", obra.telhadoTipo, f.telhadoTipo);
+      check("Equipe", obra.equipe, f.equipe);
+      check("Observações", obra.obs, f.obs);
+      if (diffs.length > 0) {
+        registrarAlteracaoFinalizada(obra.id, usuario, diffs, { cliente: obra.cliente });
+      }
+    }
     onSave(obra.id, patch);
     setConfirming(false);
     setForm({});
+  };
+
+  const handleAprovar = (setor: "engenharia" | "financeiro") => {
+    aprovarFinalizacao(obra.id, setor, usuario, { cliente: obra.cliente });
+    toast.success(`Aprovação ${setor === "engenharia" ? "Engenharia" : "Financeiro/Diretoria"} registrada`);
+  };
+
+  const handleRevogar = (setor: "engenharia" | "financeiro") => {
+    revogarAprovacao(obra.id, setor, usuario);
+    toast.info("Aprovação revogada");
+  };
+
+  const handleLiberarEdicao = () => {
+    liberarEdicao(obra.id, usuario);
+    toast.success("Edição liberada até o fim do dia");
   };
 
   return (
@@ -678,11 +787,32 @@ function EditObraDialog({
           <DialogTitle>Editar obra · {obra.cliente}</DialogTitle>
           <DialogDescription>Contrato {fmtContrato(obra.contrato)} · #{obra.ordem}</DialogDescription>
         </DialogHeader>
+
+        {/* Alerta visual quando obra finalizada */}
+        {isFinalizado && (
+          <div className={`rounded-md border p-3 text-xs ${edicaoLiberada ? "border-success/40 bg-success/10" : "border-muted bg-muted/30"}`}>
+            <div className="flex items-center gap-2 font-semibold">
+              {edicaoLiberada ? <Unlock className="h-4 w-4 text-success" /> : <Lock className="h-4 w-4" />}
+              {edicaoLiberada
+                ? `Edição liberada até ${liberacao ? new Date(liberacao.validoAteISO).toLocaleString("pt-BR") : "fim do dia"}`
+                : "Obra FINALIZADA — campos bloqueados"}
+            </div>
+            <div className="mt-1 text-muted-foreground">
+              Obras finalizadas não voltam etapa nem saem dos Finalizados. Para ajustar, libere a edição (válida até o fim do dia). Toda alteração gera registro automático no histórico.
+            </div>
+            {!edicaoLiberada && (
+              <Button size="sm" variant="outline" className="mt-2" onClick={handleLiberarEdicao}>
+                <Unlock className="mr-2 h-3.5 w-3.5" /> Liberar edição (até o fim do dia)
+              </Button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
           <div>
             <Label>Potência do painel (W)</Label>
-            <Select value={String(painelW)} onValueChange={(v) => setForm({ ...form, painelW: Number(v) })}>
+            <Select value={String(painelW)} onValueChange={(v) => setForm({ ...form, painelW: Number(v) })} disabled={camposBloqueados}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PAINEIS_W_OPCOES.map((w) => <SelectItem key={w} value={String(w)}>{w}W</SelectItem>)}
@@ -695,85 +825,131 @@ function EditObraDialog({
             <div className="mt-1 text-[10px] text-muted-foreground">{modulos} × {painelW}W ÷ 1000</div>
           </div>
           <div><Label>Telhado</Label>
-            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })}>
+            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })} disabled={camposBloqueados}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{TELHADOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
-          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
-          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
+          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
+          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
           <div>
             <Label>Equipe / Instalador {equipeRequired && <span className="text-destructive">*</span>}</Label>
-            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed}>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed && !isFinalizado || camposBloqueados}>
               <SelectTrigger className={equipeMissing ? "border-destructive" : ""}>
-                <SelectValue placeholder={equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status"} />
+                <SelectValue placeholder={isFinalizado ? "Equipe atual" : (equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status")} />
               </SelectTrigger>
               <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
             </Select>
             <div className="mt-1 text-[10px] text-muted-foreground">
-              Liberado apenas em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.
+              {isFinalizado
+                ? "Equipe pode ser substituída livremente — sem aprovação ou motivo."
+                : <>Troca de equipe é livre — sem aprovação. Liberado em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.</>}
             </div>
           </div>
-          <div><Label>Status</Label>
-            <Select value={f.status} onValueChange={(v) => {
-              const allowed = v === "Executando instalação" || v === "Aguardando instalação";
-              setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
-            }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          {!isFinalizado && (
+            <div><Label>Status</Label>
+              <Select value={f.status} onValueChange={(v) => {
+                const allowed = v === "Executando instalação" || v === "Aguardando instalação";
+                setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUS_EDITAVEL.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="mt-1 text-[10px] text-muted-foreground">
+                Finalização é automática quando houver as duas aprovações.
+              </div>
+            </div>
+          )}
 
-          {/* Datas de previsão removidas — ver no Cronograma */}
+          {/* Datas reais — somente ADMIN MASTER e fora de finalizado bloqueado */}
+          {!isFinalizado && (
+            <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
+                {isAdminMaster ? (
+                  <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+                    <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
+                    Modo ADMIN MASTER
+                  </label>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-success">Início real</Label>
+                  <Input type="date" value={f.inicioReal ?? ""} disabled={!realDatesEditable}
+                    onChange={(e) => setForm({ ...form, inicioReal: e.target.value })}
+                    className={!realDatesEditable ? "bg-muted/40" : ""} />
+                </div>
+                <div>
+                  <Label className="text-success">Finalização real</Label>
+                  <Input type="date" value={f.fimReal ?? ""} disabled={!realDatesEditable}
+                    onChange={(e) => setForm({ ...form, fimReal: e.target.value })}
+                    className={!realDatesEditable ? "bg-muted/40" : ""} />
+                </div>
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Editáveis somente pelo ADMIN MASTER. Alimentam produtividade, histórico, KPIs e cronograma.
+              </div>
+            </div>
+          )}
 
-          {/* Datas reais — somente ADMIN MASTER */}
-          <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
+          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+
+        {/* Bloco de FINALIZAÇÃO — dupla aprovação */}
+        {!isFinalizado && (
+          <div className={`rounded-md border p-3 ${aguardandoFinalizacao ? "border-warning/40 bg-warning/10" : "border-border bg-muted/20"}`}>
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
-              {isAdminMaster ? (
-                <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-                  <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
-                  Modo ADMIN MASTER
-                </label>
-              ) : (
-                <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase">
+                <ShieldCheck className="h-4 w-4" /> Finalização — dupla aprovação
+              </div>
+              {aguardandoFinalizacao && (
+                <span className="rounded-full bg-warning/30 px-2 py-0.5 text-[10px] font-semibold uppercase text-warning">
+                  Aguardando aprovação
+                </span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-success">Início real {finalizing && <span className="text-destructive">*</span>}</Label>
-                <Input type="date" value={f.inicioReal ?? ""} disabled={!realDatesEditable}
-                  onChange={(e) => setForm({ ...form, inicioReal: e.target.value })}
-                  className={!realDatesEditable ? "bg-muted/40" : ""} />
-              </div>
-              <div>
-                <Label className="text-success">Finalização real {finalizing && <span className="text-destructive">*</span>}</Label>
-                <Input type="date" value={f.fimReal ?? ""} disabled={!realDatesEditable}
-                  onChange={(e) => setForm({ ...form, fimReal: e.target.value })}
-                  className={!realDatesEditable ? "bg-muted/40" : ""} />
-              </div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <AprovacaoCell
+                titulo="Engenharia"
+                aprov={aprov.engenharia}
+                podeAprovar={true}
+                onAprovar={() => handleAprovar("engenharia")}
+                onRevogar={() => handleRevogar("engenharia")}
+              />
+              <AprovacaoCell
+                titulo="Financeiro / Diretoria"
+                aprov={aprov.financeiro}
+                podeAprovar={isAdmin}
+                impedido={!isAdmin ? "Restrito ao Financeiro/Diretoria" : undefined}
+                onAprovar={() => handleAprovar("financeiro")}
+                onRevogar={() => handleRevogar("financeiro")}
+              />
             </div>
             <div className="mt-2 text-[10px] text-muted-foreground">
-              Editáveis somente pelo ADMIN MASTER. Alimentam produtividade, histórico, KPIs e cronograma.
+              Quando as duas aprovações existirem, a obra é finalizada automaticamente. A ordem não importa. Não há reprovação — enquanto faltar aprovação a obra continua operacional.
             </div>
           </div>
-
-          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
-        </div>
-        {finalizing && (
-          <div className="rounded-md border border-success/30 bg-success/10 p-3 text-xs">
-            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para <strong>Finalizados</strong>. Início real e Finalização real são obrigatórios (ative o modo ADMIN MASTER para preenchê-los).
-          </div>
         )}
+
         <DialogFooter className="flex-wrap gap-2">
-          {fromComercial && onRetornar && (
+          {fromComercial && onRetornar && !isFinalizado && (
             <Button variant="outline" className="mr-auto border-warning/50 text-warning hover:bg-warning/10" onClick={() => setConfirmRet(true)}>
               <RotateCcw className="mr-2 h-4 w-4" /> Retornar para Comercial
             </Button>
           )}
           <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
-          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
+          <Button
+            className="bg-primary text-primary-foreground"
+            onClick={trySave}
+            disabled={camposBloqueados}
+            title={camposBloqueados ? "Libere a edição para alterar" : undefined}
+          >
+            Salvar alterações
+          </Button>
         </DialogFooter>
       </DialogContent>
 
@@ -797,8 +973,8 @@ function EditObraDialog({
           <DialogHeader>
             <DialogTitle>Confirmar alteração</DialogTitle>
             <DialogDescription>
-              {finalizing
-                ? `Tem certeza que deseja FINALIZAR a obra de ${obra.cliente}? Ela sairá das ativas.`
+              {isFinalizado
+                ? `Confirmar alterações na obra finalizada de ${obra.cliente}? O registro vai para o histórico automático.`
                 : `Tem certeza que deseja salvar as alterações da obra de ${obra.cliente}?`}
             </DialogDescription>
           </DialogHeader>
@@ -811,6 +987,53 @@ function EditObraDialog({
     </Dialog>
   );
 }
+
+function AprovacaoCell({
+  titulo, aprov, podeAprovar, impedido, onAprovar, onRevogar,
+}: {
+  titulo: string;
+  aprov?: { usuario: string; data: string };
+  podeAprovar: boolean;
+  impedido?: string;
+  onAprovar: () => void;
+  onRevogar: () => void;
+}) {
+  const aprovado = !!aprov;
+  return (
+    <div className={`rounded border p-2 text-xs ${aprovado ? "border-success/40 bg-success/10" : "border-border bg-background"}`}>
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">{titulo}</div>
+        {aprovado ? (
+          <span className="flex items-center gap-1 text-success">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Aprovado
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Pendente</span>
+        )}
+      </div>
+      {aprovado && aprov && (
+        <div className="mt-1 text-[10px] text-muted-foreground">
+          {aprov.usuario} · {new Date(aprov.data).toLocaleString("pt-BR")}
+        </div>
+      )}
+      <div className="mt-2 flex gap-2">
+        {!aprovado ? (
+          <Button size="sm" variant="default" className="h-7 text-[11px]" onClick={onAprovar} disabled={!podeAprovar} title={impedido}>
+            <CheckCircle2 className="mr-1 h-3 w-3" /> Aprovar
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onRevogar}>
+            Revogar
+          </Button>
+        )}
+      </div>
+      {impedido && !podeAprovar && !aprovado && (
+        <div className="mt-1 text-[10px] italic text-muted-foreground">{impedido}</div>
+      )}
+    </div>
+  );
+}
+
 
 function recalcPrevisto(inicio: string, equipe: string, modulos: number): string {
   if (!inicio) return "";
@@ -1301,48 +1524,75 @@ function ProdutividadeTab({ obras, pends, equipes }: { obras: Obra[]; pends: typ
 
 /* ---------------- FINALIZADOS ---------------- */
 
-function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
+function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
   const list = obras.filter((o) => o.status === "Finalizado");
   const [detail, setDetail] = useState<Obra | null>(null);
+  const [historico, setHistorico] = useState<Obra | null>(null);
+  const [editing, setEditing] = useState<Obra | null>(null);
+  const { user } = useAuth();
+  const usuario = user?.email ?? "usuário";
+  const equipes = useEquipes();
 
-  const retornar = (id: string) => {
-    setObras(obras.map((o) => o.id === id ? { ...o, status: "Aguardando instalação", finalizacao: null } : o));
-    toast.success("Obra retornou para ativos");
+  const handleLiberar = (o: Obra) => {
+    liberarEdicao(o.id, usuario);
+    toast.success(`Edição liberada para ${o.cliente} — válida até o fim do dia`);
   };
 
   return (
     <Card>
+      <div className="border-b border-border p-3 text-[11px] text-muted-foreground">
+        Obras finalizadas permanecem aqui mesmo após ajustes. Para alterar campos da obra, libere a edição (válida até o fim do dia). Toda alteração gera registro automático no histórico.
+      </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead className="w-[80px]">Opções</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
+          <TableHead>Edição</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {list.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell>
-                <ActionsMenu label={o.id}>
-                  <DropdownMenuItem onSelect={() => setDetail(o)}>
-                    <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => retornar(o.id)}>
-                    <RotateCcw className="mr-2 h-4 w-4" /> Retornar para ativos
-                  </DropdownMenuItem>
-                </ActionsMenu>
-              </TableCell>
-              <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
-              <TableCell className="font-medium">{o.cliente}</TableCell>
-              <TableCell>{o.equipe}</TableCell>
-              <TableCell className="text-center">{o.modulos}</TableCell>
-              <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-              <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
-              <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
-            </TableRow>
-          ))}
-          {list.length === 0 && <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}
+          {list.map((o) => {
+            const lib = getLiberacao(o.id);
+            const liberada = !!lib && new Date(lib.validoAteISO).getTime() > Date.now();
+            return (
+              <TableRow key={o.id}>
+                <TableCell>
+                  <ActionsMenu label={o.id}>
+                    <DropdownMenuItem onSelect={() => setDetail(o)}>
+                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setHistorico(o)}>
+                      <History className="mr-2 h-4 w-4" /> Histórico de alterações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {!liberada && (
+                      <DropdownMenuItem onSelect={() => handleLiberar(o)}>
+                        <Unlock className="mr-2 h-4 w-4 text-success" />
+                        <span className="text-success">Liberar edição (até fim do dia)</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onSelect={() => setEditing(o)}>
+                      <SquarePen className="mr-2 h-4 w-4" /> Editar obra
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
+                <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
+                <TableCell className="font-medium">{o.cliente}</TableCell>
+                <TableCell>{o.equipe}</TableCell>
+                <TableCell className="text-center">{o.modulos}</TableCell>
+                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
+                <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
+                <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
+                <TableCell className="text-[11px]">
+                  {liberada
+                    ? <span className="flex items-center gap-1 text-success"><Unlock className="h-3 w-3" /> liberada</span>
+                    : <span className="flex items-center gap-1 text-muted-foreground"><Lock className="h-3 w-3" /> travada</span>}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+          {list.length === 0 && <TableRow><TableCell colSpan={9} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}
         </TableBody>
       </Table>
       <Dialog open={!!detail} onOpenChange={(v)=>!v && setDetail(null)}>
@@ -1362,9 +1612,63 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
           )}
         </DialogContent>
       </Dialog>
+      <HistoricoObraDialog obra={historico} onClose={() => setHistorico(null)} />
+      <EditObraDialog
+        obra={editing}
+        onClose={() => setEditing(null)}
+        onSave={(id, patch) => {
+          _setObras(obras.map((o) => o.id === id ? { ...o, ...patch } : o));
+          setEditing(null);
+          toast.success("Obra atualizada");
+        }}
+        equipes={equipes}
+      />
     </Card>
   );
 }
+
+function HistoricoObraDialog({ obra, onClose }: { obra: Obra | null; onClose: () => void }) {
+  const historico = useHistorico("obra", obra?.id ?? "__none__");
+  if (!obra) return null;
+  return (
+    <Dialog open={!!obra} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Histórico — {obra.cliente}</DialogTitle>
+          <DialogDescription>{obra.id} · {historico.length} registro(s)</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 text-xs">
+          {historico.length === 0 && (
+            <div className="rounded border border-dashed border-border p-6 text-center text-muted-foreground">
+              Nenhum registro de histórico para esta obra.
+            </div>
+          )}
+          {historico.map((h) => (
+            <div key={h.id} className="rounded border border-border bg-muted/20 p-2">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold">{h.acao.replace(/_/g, " ")}</div>
+                <div className="text-[10px] text-muted-foreground">{new Date(h.data).toLocaleString("pt-BR")}</div>
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                {h.usuario && <span>por <strong>{h.usuario}</strong></span>}
+              </div>
+              {h.campo && (
+                <div className="mt-1">
+                  <strong>{h.campo}:</strong>{" "}
+                  {h.valorAnterior !== undefined && <span className="text-muted-foreground line-through">{h.valorAnterior}</span>}
+                  {h.valorAnterior !== undefined && h.valorNovo !== undefined && " → "}
+                  {h.valorNovo !== undefined && <span className="text-foreground">{h.valorNovo}</span>}
+                </div>
+              )}
+              {h.detalhe && <div className="mt-1 text-[10px] text-muted-foreground">{h.detalhe}</div>}
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function Row({ k, v }: { k: string; v: string }) {
   return (

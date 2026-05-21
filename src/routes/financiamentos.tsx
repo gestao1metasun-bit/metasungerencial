@@ -113,61 +113,181 @@ function FinanciamentosPage() {
 
 function PendenciasTab() {
   const bancos = useBancosAtivos();
+  const gerentes = useGerentesAtivos();
   const [pendAll, update, remove] = useFinPendencias();
-  const pend = pendAll.filter((p) => p.status === "Pendente");
+  const pend = pendAll.filter((p) => p.status !== "Cancelado" && p.status !== "Liberou Engenharia");
+  const liberadas = pendAll.filter((p) => p.status === "Liberou Engenharia");
+
+  const [cancelOpen, setCancelOpen] = useState<string | null>(null);
+  const [cancelMotivo, setCancelMotivo] = useState("");
+
+  function confirmarLiberacao(id: string, cliente: string) {
+    if (!window.confirm(
+      `Liberar Engenharia para o contrato de ${cliente}?\n\n` +
+      `O projeto sairá de Stand-by e entrará automaticamente em "Novo projeto" na Engenharia.`
+    )) return;
+    import("@/lib/fin-pendencias").then(({ liberarParaEngenharia }) => {
+      liberarParaEngenharia(id, "Financiamentos");
+      toast.success("Engenharia liberada. Projeto promovido para Novo projeto.");
+    });
+  }
+
+  function confirmarCancelar() {
+    if (!cancelOpen) return;
+    const motivo = cancelMotivo.trim();
+    if (!motivo) { toast.error("Informe o motivo do cancelamento."); return; }
+    import("@/lib/fin-pendencias").then(({ cancelarPendenciaFin }) => {
+      cancelarPendenciaFin(cancelOpen, motivo, "Financiamentos");
+      toast.success("Pendência movida para Cancelados.");
+      setCancelOpen(null);
+      setCancelMotivo("");
+    });
+  }
+
   return (
-    <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-semibold flex items-center gap-2">
-            Pendências de Financiamento
-            {pend.length > 0 && (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                {pend.length}
-              </span>
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground">Contratos cadastrados no Comercial aguardando encaminhamento. Ao encaminhar para BASA ou SICREDI, sai automaticamente desta aba.</div>
-        </div>
-        <div className="text-xs text-muted-foreground">{pend.length} pendência(s)</div>
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pendentes</div>
+          <div className="mt-1 text-2xl font-bold text-warning">{pend.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Já liberadas para Engenharia</div>
+          <div className="mt-1 text-2xl font-bold text-success">{liberadas.length}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor pendente</div>
+          <div className="mt-1 text-2xl font-bold">{fmtBRL(pend.reduce((s, p) => s + (p.valorFinanciado ?? p.valor), 0))}</div>
+        </Card>
       </div>
-      {pend.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhuma pendência no momento.</div>
-      ) : (
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead>Nº</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
-            <TableHead className="text-right">kWp</TableHead><TableHead className="text-right">Valor</TableHead>
-            <TableHead>Data</TableHead><TableHead>Banco (simulação)</TableHead>
-            <TableHead className="text-right">Ação</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
+
+      <Card className="p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold flex items-center gap-2">
+              Pendências de Financiamento
+              {pend.length > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                  {pend.length}
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Contratos assinados com financiamento na forma de pagamento. Defina banco, gerente e andamento. Quando aprovado, marque <b>Pode liberar Engenharia</b> para que o projeto saia de Stand-by.
+            </div>
+          </div>
+        </div>
+        {pend.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhuma pendência no momento.</div>
+        ) : (
+          <div className="space-y-3">
             {pend.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
-                <TableCell className="font-medium">{p.cliente}</TableCell>
-                <TableCell className="text-muted-foreground">{p.vendedor}</TableCell>
-                <TableCell className="text-right">{p.kwp.toFixed(2)}</TableCell>
-                <TableCell className="text-right font-semibold">{fmtBRL(p.valor)}</TableCell>
-                <TableCell className="text-muted-foreground text-xs">{p.dataCadastro}</TableCell>
-                <TableCell>
-                  <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
-                    <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Selecione o banco" /></SelectTrigger>
-                    <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="outline" disabled={!p.banco} onClick={() => { update(p.id, { status: "Encaminhado" }); toast.success(`Encaminhado para ${p.banco}`); }}>Encaminhar</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { remove(p.id); toast.success("Pendência removida"); }}>Remover</Button>
+              <Card key={p.id} className="p-4 border-l-4 border-l-warning">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-[220px]">
+                    <div className="text-xs text-muted-foreground">Nº {p.id} · {p.dataCadastro}</div>
+                    <div className="font-semibold">{p.cliente}</div>
+                    <div className="text-xs text-muted-foreground">Vendedor: {p.vendedor}</div>
                   </div>
-                </TableCell>
-              </TableRow>
+                  <div className="text-right">
+                    <div className="text-[11px] uppercase text-muted-foreground">Valor financiado</div>
+                    <div className="font-bold">{fmtBRL(p.valorFinanciado ?? p.valor)}</div>
+                    <div className="text-xs text-muted-foreground">{p.kwp.toFixed(2)} kWp</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <div>
+                    <Label className="text-xs">Banco</Label>
+                    <Select value={p.banco || ""} onValueChange={(v) => update(p.id, { banco: v })}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Selecionar banco" /></SelectTrigger>
+                      <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Gerente</Label>
+                    <Select value={p.gerente || ""} onValueChange={(v) => update(p.id, { gerente: v })}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Selecionar gerente" /></SelectTrigger>
+                      <SelectContent>{gerentes.map((g) => <SelectItem key={g.id} value={g.nome}>{g.nome} · {g.banco}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Status</Label>
+                    <Select value={p.status} onValueChange={(v) => update(p.id, { status: v as any })}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pendente">Pendente</SelectItem>
+                        <SelectItem value="Em análise">Em análise</SelectItem>
+                        <SelectItem value="Pendente banco">Pendente banco</SelectItem>
+                        <SelectItem value="Pendente cliente">Pendente cliente</SelectItem>
+                        <SelectItem value="Aguardando documentação">Aguardando documentação</SelectItem>
+                        <SelectItem value="Aguardando liberação">Aguardando liberação</SelectItem>
+                        <SelectItem value="Aprovado">Aprovado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <Label className="text-xs">Andamento / Análise</Label>
+                    <Textarea
+                      value={p.andamento || ""}
+                      onChange={(e) => update(p.id, { andamento: e.target.value })}
+                      placeholder="Ex.: docs enviadas, aguardando análise de crédito, simulação aprovada…"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Observações</Label>
+                    <Textarea
+                      value={p.observacao || ""}
+                      onChange={(e) => update(p.id, { observacao: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setCancelOpen(p.id); setCancelMotivo(""); }}>
+                    <XCircle className="mr-1 h-3.5 w-3.5" /> Cancelar financiamento
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-success text-success-foreground hover:bg-success/90"
+                    disabled={!p.banco || p.status !== "Aprovado"}
+                    title={!p.banco ? "Selecione o banco" : p.status !== "Aprovado" ? "Status precisa estar Aprovado" : "Liberar Engenharia"}
+                    onClick={() => confirmarLiberacao(p.id, p.cliente)}
+                  >
+                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Pode liberar Engenharia
+                  </Button>
+                </div>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-      )}
-    </Card>
+          </div>
+        )}
+      </Card>
+
+      <Dialog open={!!cancelOpen} onOpenChange={(o) => { if (!o) { setCancelOpen(null); setCancelMotivo(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar financiamento</DialogTitle>
+            <DialogDescription>
+              O contrato continua existindo. A pendência será movida para a aba <b>Cancelados</b>.
+              Para alterar a forma de pagamento (PIX, boleto, cartão), abra um <b>Aditivo contratual</b> no Comercial — quando aprovado, o vínculo de financiamento é removido e a Engenharia é liberada automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label className="text-xs">Motivo do cancelamento *</Label>
+            <Textarea value={cancelMotivo} onChange={(e) => setCancelMotivo(e.target.value)} rows={3} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCancelOpen(null); setCancelMotivo(""); }}>Voltar</Button>
+            <Button variant="destructive" onClick={confirmarCancelar}>Confirmar cancelamento</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

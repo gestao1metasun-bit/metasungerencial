@@ -1247,6 +1247,21 @@ function RedigirContratoDialog({
 
             {/* PAGAMENTO */}
             <TabsContent value="pagamento" className="space-y-3 pt-3">
+              <div className="rounded-md border bg-primary/5 p-3 space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-primary">Status inicial da obra na Engenharia</div>
+                <p className="text-[11px] text-muted-foreground">
+                  Quando o contrato for assinado e o projeto aprovado, a obra nasce na <b>Gestão de projetos</b> com este status.
+                  Ela só passa a aparecer no <b>Cronograma</b> quando avançar para <b>Aguardando instalação</b> / <b>Executando instalação</b>.
+                </p>
+                <Select value={statusInicialObra} onValueChange={(v) => setStatusInicialObra(v as typeof statusInicialObra)}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Em projeto/aprovação">Novo projeto (Em projeto/aprovação)</SelectItem>
+                    <SelectItem value="Standby">Standby</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="rounded-md border bg-muted/20 p-2 text-xs">
                 <div className="flex justify-between"><span>Valor do contrato</span><span className="font-semibold">{fmtBRL(contrato.valor)}</span></div>
                 <div className="flex justify-between"><span>Soma das formas</span><span className={Math.abs(diffFormas) <= 0.5 ? "font-semibold text-success" : "font-semibold text-destructive"}>{fmtBRL(somaFormas)}</span></div>

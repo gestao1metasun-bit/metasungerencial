@@ -298,14 +298,14 @@ function ensureHeaderHandlers(
   th.setAttribute("draggable", "true");
   th.title = "Arraste para reordenar · arraste a borda direita para redimensionar";
 
-  // ---- Resizer handle (visível no hover) ----
+  // ---- Resizer handle (visível no hover do TH inteiro) ----
   const handle = document.createElement("div");
   handle.setAttribute("data-resizer", "1");
   Object.assign(handle.style, {
     position: "absolute",
     top: "0",
     right: "0",
-    width: "8px",
+    width: "6px",
     height: "100%",
     cursor: "col-resize",
     userSelect: "none",
@@ -313,12 +313,17 @@ function ensureHeaderHandlers(
     background: "transparent",
     transition: "background 120ms",
   } as CSSStyleDeclaration);
-  handle.addEventListener("mouseenter", () => {
-    handle.style.background = "hsl(var(--primary) / 0.4)";
+  // Faixa visível no hover do cabeçalho — pista visual de que dá pra redimensionar
+  th.addEventListener("mouseenter", () => {
+    handle.style.background = "hsl(var(--primary) / 0.25)";
   });
-  handle.addEventListener("mouseleave", () => {
+  th.addEventListener("mouseleave", () => {
     handle.style.background = "transparent";
   });
+  handle.addEventListener("mouseenter", () => {
+    handle.style.background = "hsl(var(--primary) / 0.6)";
+  });
+
 
   handle.addEventListener("mousedown", (e) => {
     e.preventDefault();

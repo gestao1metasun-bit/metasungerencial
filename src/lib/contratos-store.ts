@@ -884,20 +884,14 @@ export function retornarContratoParaGerado(contratoId: string, motivo: string, u
     assinadoAprovadoEm: undefined,
     assinadoAprovadoPor: undefined,
     projetos,
-    possuiFinanciamento: false,
-    financiamentoBanco: undefined,
-    financiamentoValor: undefined,
-    financiamentoStatus: undefined,
-    financiamentoStatusLiberacao: undefined,
-    financiamentoLiberacao: undefined,
-    financiamentoPrevisao: undefined,
-    financiamentoEnvio: undefined,
+    // Mantém o financiamento intacto — apenas Engenharia é desfeita.
+    // Se o valor do contrato mudar na regeração, o Financiamento será atualizado lá.
   }, usuario);
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
     acao: "RETORNO_PARA_GERADO", usuario, motivo,
     campo: "status", valorAnterior: old, valorNovo: "Pendente",
-    detalhe: "Contrato retornou de Assinado para Redigido. Projetos retirados da Engenharia e contrato removido de Financiamentos.",
+    detalhe: "Contrato retornou de Assinado. Projetos retirados da Engenharia. Financiamento mantido — alterações de valor serão refletidas no módulo Financiamentos.",
   });
   return { ok: true as const };
 }

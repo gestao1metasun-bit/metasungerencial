@@ -1717,8 +1717,17 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         ))}
       </div>
 
-      <ProjetosKanbanBlock cards={cards} view={view} setView={setView} busca={busca} setBusca={setBusca} onEdit={setEditing} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
+          <Button size="sm" variant={view === "tabela" ? "default" : "outline"} onClick={() => setView("tabela")}>Tabela</Button>
+        </div>
+        <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por cliente, projeto, endereço…" className="h-8 w-72" />
+      </div>
 
+      {view === "kanban" ? (
+        <ProjetosKanbanBlock cards={cards} onEdit={setEditing} />
+      ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
@@ -1766,6 +1775,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           </Table>
         </Card>
       )}
+
 
       {editing && (
         <EditProjetoDialog contrato={editing.c} projeto={editing.p} onClose={() => setEditing(null)} />

@@ -448,6 +448,15 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     const aprovadas = arr.filter((p) => p.status === "APROVADA").length;
     // "Em aberto" = tudo que ainda não virou contrato assinado (independente do status da proposta).
     const emAberto = Math.max(0, arr.length - assinados);
+    const hasAssinado = assinados > 0;
+    const hasGerado = !hasAssinado && contratosLead.some(
+      (c) => !c.cancelado && !c.contratoAssinadoArquivo
+          && /CONTRATO\s*GERADO|AGUARDANDO|ASSINATURA/i.test(c.status || ""),
+    );
+    const hasPendente = !hasAssinado && !hasGerado && (
+      aprovadas > 0 || contratosLead.some((c) => !c.cancelado && /pendente/i.test(c.status || ""))
+    );
+    const fase: FaseContrato = hasAssinado ? "ASSINADO" : hasGerado ? "GERADO" : hasPendente ? "GERANDO" : null;
     const invList = (ultima.inversores ?? []).map((e: any) => e.inversorId).filter(Boolean);
     // Agrupa duplicados como "2x 15"
     const invCount = new Map<string, number>();

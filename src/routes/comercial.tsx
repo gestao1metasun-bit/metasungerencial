@@ -721,6 +721,24 @@ function ContratosTab({
     toast.success(`Contrato ${c.id} retornado para Orçamentos.`);
   }
 
+  function liberarParaGerar(c: Contrato) {
+    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode liberar o contrato para geração."); return; }
+    const obs = prompt(`Liberar contrato ${c.id} (${c.cliente}) para geração no Comercial?\n\nObservação (opcional):`);
+    if (obs === null) return; // cancelado
+    const r = liberarContratoParaGerar(c.id, "Admin Master", obs || undefined);
+    if (!r.ok) { toast.error(r.motivo || "Não foi possível liberar."); return; }
+    toast.success(`Contrato ${c.id} liberado para geração.`);
+  }
+
+  function revogarLiberacao(c: Contrato) {
+    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode revogar a liberação."); return; }
+    const motivo = prompt(`Revogar liberação do contrato ${c.id}?\n\nMotivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) { toast.error("Informe o motivo da revogação."); return; }
+    const r = revogarLiberacaoContrato(c.id, "Admin Master", motivo.trim());
+    if (!r.ok) { toast.error(r.motivo || "Não foi possível revogar."); return; }
+    toast.success(`Liberação do contrato ${c.id} revogada.`);
+  }
+
 
   function reabrirRedigido(c: Contrato) {
     if (!isAdmin) {

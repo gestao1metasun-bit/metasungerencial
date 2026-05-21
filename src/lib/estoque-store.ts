@@ -109,7 +109,7 @@ export function setEstoqueAtual(itemId: string, qtd: number, usuario = "Estoque"
     i.id === itemId ? { ...i, qtdAtual: Math.max(0, qtd), atualizadoEm: new Date().toISOString(), atualizadoPor: usuario } : i,
   );
   setState({ itens });
-  pushAudit({ entity: "Estoque", entityId: itemId, action: "atualizar_qtd", usuario, detalhe: `qtd=${qtd}` });
+  pushAudit({ entidade: "obra", entidadeId: itemId, acao: "estoque_qtd", usuario, detalhe: `qtd=${qtd}` });
 }
 
 export function upsertEstoqueItem(item: EstoqueItem) {
@@ -247,7 +247,7 @@ export function marcarEntrega(
     em: new Date().toISOString(), por: usuario,
   };
   setState({ necessidades, log: [log, ...state.log].slice(0, 500) });
-  pushAudit({ entity: "Estoque", entityId: `${obraId}:${itemId}`, action: "entrega", usuario, detalhe: `qtd=${qtdEntregue}${completa ? " (completo)" : ""}` });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_entrega", usuario, detalhe: `${itemId}: qtd=${qtdEntregue}${completa ? " (completo)" : ""}` });
 }
 
 // --------- Cálculo derivados ------------------------------------------------

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
+import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, reativarContrato, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Plus,

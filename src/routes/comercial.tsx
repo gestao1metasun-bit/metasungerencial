@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
-import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW } from "@/modules/propostas/store";
+import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW, atualizarCadastroCliente } from "@/modules/propostas/store";
 import { PropostasPage } from "@/modules/propostas";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { useIsAdmin } from "@/lib/auth-store";

@@ -1524,48 +1524,74 @@ function ProdutividadeTab({ obras, pends, equipes }: { obras: Obra[]; pends: typ
 
 /* ---------------- FINALIZADOS ---------------- */
 
-function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
+function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
   const list = obras.filter((o) => o.status === "Finalizado");
   const [detail, setDetail] = useState<Obra | null>(null);
+  const [historico, setHistorico] = useState<Obra | null>(null);
+  const [editing, setEditing] = useState<Obra | null>(null);
+  const { user } = useAuth();
+  const usuario = user?.email ?? "usuário";
 
-  const retornar = (id: string) => {
-    setObras(obras.map((o) => o.id === id ? { ...o, status: "Aguardando instalação", finalizacao: null } : o));
-    toast.success("Obra retornou para ativos");
+  const handleLiberar = (o: Obra) => {
+    liberarEdicao(o.id, usuario);
+    toast.success(`Edição liberada para ${o.cliente} — válida até o fim do dia`);
   };
 
   return (
     <Card>
+      <div className="border-b border-border p-3 text-[11px] text-muted-foreground">
+        Obras finalizadas permanecem aqui mesmo após ajustes. Para alterar campos da obra, libere a edição (válida até o fim do dia). Toda alteração gera registro automático no histórico.
+      </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
           <TableHead className="w-[80px]">Opções</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
+          <TableHead>Edição</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {list.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell>
-                <ActionsMenu label={o.id}>
-                  <DropdownMenuItem onSelect={() => setDetail(o)}>
-                    <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => retornar(o.id)}>
-                    <RotateCcw className="mr-2 h-4 w-4" /> Retornar para ativos
-                  </DropdownMenuItem>
-                </ActionsMenu>
-              </TableCell>
-              <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
-              <TableCell className="font-medium">{o.cliente}</TableCell>
-              <TableCell>{o.equipe}</TableCell>
-              <TableCell className="text-center">{o.modulos}</TableCell>
-              <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-              <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
-              <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
-            </TableRow>
-          ))}
-          {list.length === 0 && <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}
+          {list.map((o) => {
+            const lib = getLiberacao(o.id);
+            const liberada = !!lib && new Date(lib.validoAteISO).getTime() > Date.now();
+            return (
+              <TableRow key={o.id}>
+                <TableCell>
+                  <ActionsMenu label={o.id}>
+                    <DropdownMenuItem onSelect={() => setDetail(o)}>
+                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setHistorico(o)}>
+                      <History className="mr-2 h-4 w-4" /> Histórico de alterações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {!liberada && (
+                      <DropdownMenuItem onSelect={() => handleLiberar(o)}>
+                        <Unlock className="mr-2 h-4 w-4 text-success" />
+                        <span className="text-success">Liberar edição (até fim do dia)</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onSelect={() => setEditing(o)}>
+                      <SquarePen className="mr-2 h-4 w-4" /> Editar obra
+                    </DropdownMenuItem>
+                  </ActionsMenu>
+                </TableCell>
+                <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
+                <TableCell className="font-medium">{o.cliente}</TableCell>
+                <TableCell>{o.equipe}</TableCell>
+                <TableCell className="text-center">{o.modulos}</TableCell>
+                <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
+                <TableCell className="text-muted-foreground">{o.inicio}</TableCell>
+                <TableCell className="text-muted-foreground">{o.finalizacao ?? "—"}</TableCell>
+                <TableCell className="text-[11px]">
+                  {liberada
+                    ? <span className="flex items-center gap-1 text-success"><Unlock className="h-3 w-3" /> liberada</span>
+                    : <span className="flex items-center gap-1 text-muted-foreground"><Lock className="h-3 w-3" /> travada</span>}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+          {list.length === 0 && <TableRow><TableCell colSpan={9} className="py-10 text-center text-muted-foreground">Nenhuma obra finalizada</TableCell></TableRow>}
         </TableBody>
       </Table>
       <Dialog open={!!detail} onOpenChange={(v)=>!v && setDetail(null)}>
@@ -1585,9 +1611,63 @@ function FinalizadosTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra
           )}
         </DialogContent>
       </Dialog>
+      <HistoricoObraDialog obra={historico} onClose={() => setHistorico(null)} />
+      <EditObraDialog
+        obra={editing}
+        onClose={() => setEditing(null)}
+        onSave={(id, patch) => {
+          _setObras(obras.map((o) => o.id === id ? { ...o, ...patch } : o));
+          setEditing(null);
+          toast.success("Obra atualizada");
+        }}
+        equipes={[] as unknown as typeof equipesSeed}
+      />
     </Card>
   );
 }
+
+function HistoricoObraDialog({ obra, onClose }: { obra: Obra | null; onClose: () => void }) {
+  const historico = useHistorico("obra", obra?.id ?? "__none__");
+  if (!obra) return null;
+  return (
+    <Dialog open={!!obra} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Histórico — {obra.cliente}</DialogTitle>
+          <DialogDescription>{obra.id} · {historico.length} registro(s)</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 text-xs">
+          {historico.length === 0 && (
+            <div className="rounded border border-dashed border-border p-6 text-center text-muted-foreground">
+              Nenhum registro de histórico para esta obra.
+            </div>
+          )}
+          {historico.map((h) => (
+            <div key={h.id} className="rounded border border-border bg-muted/20 p-2">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold">{h.acao.replace(/_/g, " ")}</div>
+                <div className="text-[10px] text-muted-foreground">{new Date(h.data).toLocaleString("pt-BR")}</div>
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                {h.usuario && <span>por <strong>{h.usuario}</strong></span>}
+              </div>
+              {h.campo && (
+                <div className="mt-1">
+                  <strong>{h.campo}:</strong>{" "}
+                  {h.valorAnterior !== undefined && <span className="text-muted-foreground line-through">{h.valorAnterior}</span>}
+                  {h.valorAnterior !== undefined && h.valorNovo !== undefined && " → "}
+                  {h.valorNovo !== undefined && <span className="text-foreground">{h.valorNovo}</span>}
+                </div>
+              )}
+              {h.detalhe && <div className="mt-1 text-[10px] text-muted-foreground">{h.detalhe}</div>}
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function Row({ k, v }: { k: string; v: string }) {
   return (

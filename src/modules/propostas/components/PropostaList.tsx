@@ -386,6 +386,9 @@ function fmtData(iso?: string): string {
 
 /* ===================== LEADS ===================== */
 
+/** Fase do funil "pós-aprovação" — define a coluna-âncora travada do lead. */
+type FaseContrato = "GERANDO" | "GERADO" | "ASSINADO" | null;
+
 type Lead = {
   key: string;
   clienteNome: string;
@@ -410,7 +413,8 @@ type Lead = {
   modulos: number;
   potenciaW: number;
   inversores: string;
-
+  /** Fase pós-aprovação. null = ainda em negociação. */
+  fase: FaseContrato;
 };
 
 function leadKey(p: PropostaFV): string {

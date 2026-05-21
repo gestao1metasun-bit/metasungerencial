@@ -3968,9 +3968,10 @@ function ProjetoEditCard({
       )}
       <fieldset disabled={projeto.aprovado} className="contents">
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="space-y-1.5"><Label>Tipo do projeto</Label>
-          <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} />
+        <div className="space-y-1.5"><Label>Tipo do projeto <span className="text-destructive">*</span></Label>
+          <Input value={d.tipo} onChange={(e) => set("tipo", e.target.value)} required aria-invalid={!d.tipo?.trim()} placeholder="Ex.: Residencial, Comercial, Rural…" />
         </div>
+
         <div className="space-y-1.5"><Label>CEP</Label>
           <Input value={d.cep ?? ""} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} />
         </div>

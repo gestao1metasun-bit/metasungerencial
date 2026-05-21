@@ -105,6 +105,7 @@ type Obra = (typeof obrasSeed)[number] & {
   painelW: number;
   tipo?: string;
   inicioReal?: string; fimReal?: string;
+  aguardandoLiberacaoFin?: boolean;
 };
 
 

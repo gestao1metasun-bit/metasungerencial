@@ -3843,6 +3843,28 @@ function ProjetoEditCard({
   const set = (k: keyof ProjetoVinculado, v: any) => setD((p) => ({ ...p, [k]: v }));
   const dirty = JSON.stringify(d) !== JSON.stringify(projeto);
 
+  // Sugestão automática de inversor sempre que a quantidade de módulos ou a potência do módulo mudar.
+  // Aplica também ao Projeto 1, 2, … N. Não sobrescreve quando o projeto já foi aprovado.
+  useEffect(() => {
+    if (projeto.aprovado) return;
+    const m = Number(d.modulos) || 0;
+    const w = Number(d.potenciaModuloW) || 0;
+    if (m <= 0 || w <= 0) return;
+    const sug = sugerirInversoresAuto(m, w);
+    if (!sug.length) return;
+    const { potKw, quantidade } = sug[0];
+    const val = Number.isInteger(potKw) ? String(potKw) : String(potKw).replace(".", ",");
+    const slots: (keyof ProjetoVinculado)[] = ["inversor", "inv2", "inv3", "inv4", "inv5", "inv6"];
+    setD((p) => {
+      const next = { ...p } as any;
+      for (let i = 0; i < slots.length; i++) {
+        next[slots[i]] = i < quantidade ? val : "";
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d.modulos, d.potenciaModuloW]);
+
   const lookupCEP = async (cep: string) => {
     set("cep", cep);
     if (cep.replace(/\D/g, "").length !== 8) return;

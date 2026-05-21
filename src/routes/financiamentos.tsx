@@ -90,6 +90,7 @@ function FinanciamentosPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
+          <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-5">
@@ -104,6 +105,7 @@ function FinanciamentosPage() {
         <TabsContent value="finalizados" className="mt-5">
           <Carteira ops={ops} updateOp={updateOp} filterFin />
         </TabsContent>
+        <TabsContent value="cancelados" className="mt-5"><CanceladosFinTab /></TabsContent>
       </Tabs>
     </>
   );

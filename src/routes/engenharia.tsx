@@ -134,13 +134,26 @@ function enrichObras(): Obra[] {
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
   // Regra de nascimento na Engenharia:
-  // - Contrato com financiamento (pagamentoTipo === "Financiamento" ou possuiFinanciamento) → "Stand-by".
-  // - Qualquer outra forma de pagamento → "Novo projeto".
-  // Status já gravado no projeto (p.status) tem prioridade — preserva movimentações manuais.
+  // - Contrato com financiamento ainda NÃO liberado pelo setor de Financiamentos → "Stand-by"
+  //   (badge "AGUARDANDO LIBERAÇÃO DO FINANCIAMENTO" — não inicia execução / não libera obra).
+  // - Após o Financiamentos marcar "Pode liberar Engenharia" (ou aditivo trocar a forma
+  //   de pagamento), promove automaticamente para "Novo projeto".
+  // - Qualquer outra forma de pagamento → "Novo projeto" desde o início.
   const temFinanciamento = c.possuiFinanciamento === true
     || c.pagamentoTipo === "Financiamento"
     || /financiamento/i.test(c.pagamento ?? "");
-  const statusInicial = temFinanciamento ? "Stand-by" : "Novo projeto";
+  const financiamentoLiberado = !!c.financiamentoLiberadoEng;
+  const aguardandoLiberacaoFin = temFinanciamento && !financiamentoLiberado;
+  const statusInicial = aguardandoLiberacaoFin ? "Stand-by" : "Novo projeto";
+
+  let status = p.status || statusInicial;
+  // Trava operacional: enquanto o financiamento não liberar, força Stand-by.
+  if (aguardandoLiberacaoFin) status = "Stand-by";
+  // Promoção automática: liberou financiamento e estava parado em Stand-by → Novo projeto.
+  else if (temFinanciamento && financiamentoLiberado && (status === "Stand-by" || status === "Standby")) {
+    status = "Novo projeto";
+  }
+
   return {
     id: p.id,
     contrato: c.id,
@@ -152,7 +165,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inicio: p.inicio || "",
     previsto: p.previsto || "",
     finalizacao: null,
-    status: p.status || statusInicial,
+    status,
     telhado: "Outro",
     obs: p.obs || "",
     ordem,

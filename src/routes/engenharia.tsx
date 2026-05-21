@@ -3,8 +3,15 @@ import { useEffect, useState } from "react";
 import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, reativarContrato, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
-  ChevronUp, ChevronDown, RotateCcw, Eye, Plus,
+  ChevronUp, ChevronDown, RotateCcw, Eye, Plus, Lock, Unlock, ShieldCheck, History,
 } from "lucide-react";
+import {
+  aprovarFinalizacao, revogarAprovacao, useAprovacoes, temAmbasAprovacoes,
+  aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,
+  getLiberacao, registrarAlteracaoFinalizada,
+} from "@/lib/obras-finalizacao-store";
+import { useHistorico } from "@/lib/audit-store";
+import { useIsAdmin } from "@/lib/auth-store";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend, LineChart, Line,

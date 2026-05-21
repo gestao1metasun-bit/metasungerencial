@@ -719,12 +719,12 @@ function ContratosTab({
                       <DropdownMenuItem onSelect={() => setImprimir(c)}>
                         <Printer className="mr-2 h-4 w-4" /> Imprimir
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setAberto(c)}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar dados
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => reabrirRedigido(c)}>
-                        <Undo2 className="mr-2 h-4 w-4" /> Retornar
+                      <DropdownMenuItem
+                        onSelect={() => reabrirRedigido(c)}
+                        title="Para editar os dados do contrato, retorne para Geração de contrato."
+                      >
+                        <Undo2 className="mr-2 h-4 w-4" /> Retornar para Geração de contrato
                       </DropdownMenuItem>
                     </ActionsMenu>
                   </TableCell>

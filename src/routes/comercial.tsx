@@ -57,6 +57,7 @@ import {
   aprovarProjeto, aprovarContratoAssinado,
   retornarContratoParaGerado, retornarContratoParaARedigir,
   cancelarContrato, reativarContrato,
+  liberarContratoParaGerar, revogarLiberacaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";

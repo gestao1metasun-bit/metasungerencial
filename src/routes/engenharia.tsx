@@ -657,8 +657,16 @@ function EditObraDialog({
   const [confirming, setConfirming] = useState(false);
   const [confirmRet, setConfirmRet] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdminMaster = role === "admin_master";
+  const isAdmin = useIsAdmin();
+  const usuario = user?.email ?? "usuário";
+
+  // Hooks reativos — sempre executam, mesmo quando obra é null (usam id seguro)
+  const obraId = obra?.id ?? "__none__";
+  const aprov = useAprovacoes(obraId);
+  const edicaoLiberada = usePodeEditarFinalizada(obraId);
+  const liberacao = obra ? getLiberacao(obraId) : undefined;
 
   // re-init when obra changes
   if (obra && form.id !== obra.id) {
@@ -673,16 +681,24 @@ function EditObraDialog({
   const previsaoInicio = f.inicio || "";
   const previsaoFim = recalcPrevisto(previsaoInicio, f.equipe || "", modulos);
 
-  const finalizing = f.status === "Finalizado";
+  const isFinalizado = obra.status === "Finalizado";
   const isExecutando = f.status === "Executando instalação";
   const isAguardando = f.status === "Aguardando instalação";
-  const equipeAllowed = isExecutando || isAguardando;
+  const equipeAllowed = (isExecutando || isAguardando) && (!isFinalizado || edicaoLiberada);
   const equipeRequired = isExecutando;
   const equipeMissing = equipeRequired && !(f.equipe ?? "").trim();
-  const realDatesEditable = adminMode && isAdminMaster;
-  const valid = (!finalizing || (!!f.inicioReal && !!f.fimReal)) && !equipeMissing;
+  const realDatesEditable = adminMode && isAdminMaster && (!isFinalizado || edicaoLiberada);
+
+  // Edição bloqueada quando obra finalizada e sem liberação ativa
+  const camposBloqueados = isFinalizado && !edicaoLiberada;
+
+  const aguardandoFinalizacao = aguardandoAprovacao(obraId);
 
   const trySave = () => {
+    if (camposBloqueados) {
+      toast.error("Obra finalizada. Solicite liberação de edição para alterar.");
+      return;
+    }
     if (isExecutando || isAguardando) {
       const faltam: string[] = [];
       if (!(modulos > 0)) faltam.push("quantidade de módulos");
@@ -699,32 +715,69 @@ function EditObraDialog({
       toast.error("Equipe é obrigatória quando o status é Executando instalação");
       return;
     }
-    if (finalizing && !valid) {
-      toast.error("Preencha Início real e Fim real para finalizar (modo ADMIN MASTER)");
-      return;
-    }
     setConfirming(true);
   };
 
   const confirm = () => {
-    const patch: Partial<Obra> = {
+    // Para obras finalizadas: manter status FINALIZADO e datas históricas
+    const patch: Partial<Obra> = isFinalizado ? {
+      modulos, painelW, potencia: kwpAuto,
+      inversor: f.inversor, inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
+      equipe: f.equipe, obs: f.obs,
+      // status, inicio, finalizacao, fimReal, inicioReal NÃO mudam
+    } : {
       modulos, painelW, potencia: kwpAuto,
       inversor: f.inversor, inv2: f.inv2, inv3: f.inv3, telhadoTipo: f.telhadoTipo,
       equipe: f.equipe, inicio: f.inicio, status: f.status, obs: f.obs,
       inicioReal: f.inicioReal, fimReal: f.fimReal,
-      finalizacao: finalizing ? (f.fimReal ?? null) : null,
       previsto: previsaoFim,
     };
-    // Alimenta histórico de produtividade quando há datas reais completas
-    if (f.inicioReal && f.fimReal && f.equipe && modulos > 0) {
+    // Histórico de produtividade — apenas quando datas reais completas (modo normal)
+    if (!isFinalizado && f.inicioReal && f.fimReal && f.equipe && modulos > 0) {
       const ini = new Date(f.inicioReal + "T00:00:00");
       const fim = new Date(f.fimReal + "T00:00:00");
       const dias = Math.max(1, Math.round((fim.getTime() - ini.getTime()) / 86400000) + 1);
       registrarHistoricoExec(f.equipe, { fimReal: f.fimReal, modulos, dias });
     }
+    // Registrar diff em obras finalizadas (histórico automático)
+    if (isFinalizado) {
+      const diffs: Array<{ campo: string; antes?: string; depois?: string }> = [];
+      const check = (campo: string, antes: any, depois: any) => {
+        if (String(antes ?? "") !== String(depois ?? "")) {
+          diffs.push({ campo, antes: String(antes ?? "—"), depois: String(depois ?? "—") });
+        }
+      };
+      check("Módulos", obra.modulos, modulos);
+      check("Painel (W)", obra.painelW, painelW);
+      check("Potência (kWp)", obra.potencia, kwpAuto);
+      check("Inversor 1", obra.inversor, f.inversor);
+      check("Inversor 2", obra.inv2, f.inv2);
+      check("Inversor 3", obra.inv3, f.inv3);
+      check("Telhado", obra.telhadoTipo, f.telhadoTipo);
+      check("Equipe", obra.equipe, f.equipe);
+      check("Observações", obra.obs, f.obs);
+      if (diffs.length > 0) {
+        registrarAlteracaoFinalizada(obra.id, usuario, diffs, { cliente: obra.cliente });
+      }
+    }
     onSave(obra.id, patch);
     setConfirming(false);
     setForm({});
+  };
+
+  const handleAprovar = (setor: "engenharia" | "financeiro") => {
+    aprovarFinalizacao(obra.id, setor, usuario, { cliente: obra.cliente });
+    toast.success(`Aprovação ${setor === "engenharia" ? "Engenharia" : "Financeiro/Diretoria"} registrada`);
+  };
+
+  const handleRevogar = (setor: "engenharia" | "financeiro") => {
+    revogarAprovacao(obra.id, setor, usuario);
+    toast.info("Aprovação revogada");
+  };
+
+  const handleLiberarEdicao = () => {
+    liberarEdicao(obra.id, usuario);
+    toast.success("Edição liberada até o fim do dia");
   };
 
   return (
@@ -734,11 +787,32 @@ function EditObraDialog({
           <DialogTitle>Editar obra · {obra.cliente}</DialogTitle>
           <DialogDescription>Contrato {fmtContrato(obra.contrato)} · #{obra.ordem}</DialogDescription>
         </DialogHeader>
+
+        {/* Alerta visual quando obra finalizada */}
+        {isFinalizado && (
+          <div className={`rounded-md border p-3 text-xs ${edicaoLiberada ? "border-success/40 bg-success/10" : "border-muted bg-muted/30"}`}>
+            <div className="flex items-center gap-2 font-semibold">
+              {edicaoLiberada ? <Unlock className="h-4 w-4 text-success" /> : <Lock className="h-4 w-4" />}
+              {edicaoLiberada
+                ? `Edição liberada até ${liberacao ? new Date(liberacao.validoAteISO).toLocaleString("pt-BR") : "fim do dia"}`
+                : "Obra FINALIZADA — campos bloqueados"}
+            </div>
+            <div className="mt-1 text-muted-foreground">
+              Obras finalizadas não voltam etapa nem saem dos Finalizados. Para ajustar, libere a edição (válida até o fim do dia). Toda alteração gera registro automático no histórico.
+            </div>
+            {!edicaoLiberada && (
+              <Button size="sm" variant="outline" className="mt-2" onClick={handleLiberarEdicao}>
+                <Unlock className="mr-2 h-3.5 w-3.5" /> Liberar edição (até o fim do dia)
+              </Button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
+          <div><Label>Qtd módulos</Label><Input type="number" value={f.modulos ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, modulos: Number(e.target.value) })} /></div>
           <div>
             <Label>Potência do painel (W)</Label>
-            <Select value={String(painelW)} onValueChange={(v) => setForm({ ...form, painelW: Number(v) })}>
+            <Select value={String(painelW)} onValueChange={(v) => setForm({ ...form, painelW: Number(v) })} disabled={camposBloqueados}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PAINEIS_W_OPCOES.map((w) => <SelectItem key={w} value={String(w)}>{w}W</SelectItem>)}
@@ -751,85 +825,131 @@ function EditObraDialog({
             <div className="mt-1 text-[10px] text-muted-foreground">{modulos} × {painelW}W ÷ 1000</div>
           </div>
           <div><Label>Telhado</Label>
-            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })}>
+            <Select value={f.telhadoTipo} onValueChange={(v) => setForm({ ...form, telhadoTipo: v })} disabled={camposBloqueados}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{TELHADOS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
-          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
-          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
+          <div><Label>Inversor 1</Label><Input value={f.inversor ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inversor: e.target.value })} /></div>
+          <div><Label>Inversor 2</Label><Input value={f.inv2 ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inv2: e.target.value })} /></div>
+          <div><Label>Inversor 3</Label><Input value={f.inv3 ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, inv3: e.target.value })} /></div>
           <div>
             <Label>Equipe / Instalador {equipeRequired && <span className="text-destructive">*</span>}</Label>
-            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed}>
+            <Select value={f.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })} disabled={!equipeAllowed && !isFinalizado || camposBloqueados}>
               <SelectTrigger className={equipeMissing ? "border-destructive" : ""}>
-                <SelectValue placeholder={equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status"} />
+                <SelectValue placeholder={isFinalizado ? "Equipe atual" : (equipeAllowed ? (equipeRequired ? "Obrigatória" : "Selecione") : "Bloqueado para este status")} />
               </SelectTrigger>
               <SelectContent>{equipes.map((e) => <SelectItem key={e.id} value={e.nome}>{e.nome}</SelectItem>)}</SelectContent>
             </Select>
             <div className="mt-1 text-[10px] text-muted-foreground">
-              Liberado apenas em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.
+              {isFinalizado
+                ? "Equipe pode ser substituída livremente — sem aprovação ou motivo."
+                : <>Troca de equipe é livre — sem aprovação. Liberado em <strong>Aguardando</strong> e <strong>Executando instalação</strong>.</>}
             </div>
           </div>
-          <div><Label>Status</Label>
-            <Select value={f.status} onValueChange={(v) => {
-              const allowed = v === "Executando instalação" || v === "Aguardando instalação";
-              setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
-            }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          {!isFinalizado && (
+            <div><Label>Status</Label>
+              <Select value={f.status} onValueChange={(v) => {
+                const allowed = v === "Executando instalação" || v === "Aguardando instalação";
+                setForm({ ...form, status: v, ...(allowed ? {} : { equipe: "" }) });
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{STATUS_EDITAVEL.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="mt-1 text-[10px] text-muted-foreground">
+                Finalização é automática quando houver as duas aprovações.
+              </div>
+            </div>
+          )}
 
-          {/* Datas de previsão removidas — ver no Cronograma */}
+          {/* Datas reais — somente ADMIN MASTER e fora de finalizado bloqueado */}
+          {!isFinalizado && (
+            <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
+                {isAdminMaster ? (
+                  <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+                    <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
+                    Modo ADMIN MASTER
+                  </label>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-success">Início real</Label>
+                  <Input type="date" value={f.inicioReal ?? ""} disabled={!realDatesEditable}
+                    onChange={(e) => setForm({ ...form, inicioReal: e.target.value })}
+                    className={!realDatesEditable ? "bg-muted/40" : ""} />
+                </div>
+                <div>
+                  <Label className="text-success">Finalização real</Label>
+                  <Input type="date" value={f.fimReal ?? ""} disabled={!realDatesEditable}
+                    onChange={(e) => setForm({ ...form, fimReal: e.target.value })}
+                    className={!realDatesEditable ? "bg-muted/40" : ""} />
+                </div>
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Editáveis somente pelo ADMIN MASTER. Alimentam produtividade, histórico, KPIs e cronograma.
+              </div>
+            </div>
+          )}
 
-          {/* Datas reais — somente ADMIN MASTER */}
-          <div className="col-span-2 md:col-span-3 mt-2 rounded-md border border-border bg-muted/20 p-3">
+          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} disabled={camposBloqueados} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
+        </div>
+
+        {/* Bloco de FINALIZAÇÃO — dupla aprovação */}
+        {!isFinalizado && (
+          <div className={`rounded-md border p-3 ${aguardandoFinalizacao ? "border-warning/40 bg-warning/10" : "border-border bg-muted/20"}`}>
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase text-muted-foreground">Datas reais (operacionais)</div>
-              {isAdminMaster ? (
-                <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-                  <input type="checkbox" checked={adminMode} onChange={(e) => setAdminMode(e.target.checked)} />
-                  Modo ADMIN MASTER
-                </label>
-              ) : (
-                <span className="text-[10px] text-muted-foreground italic">Bloqueado — somente ADMIN MASTER</span>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase">
+                <ShieldCheck className="h-4 w-4" /> Finalização — dupla aprovação
+              </div>
+              {aguardandoFinalizacao && (
+                <span className="rounded-full bg-warning/30 px-2 py-0.5 text-[10px] font-semibold uppercase text-warning">
+                  Aguardando aprovação
+                </span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-success">Início real {finalizing && <span className="text-destructive">*</span>}</Label>
-                <Input type="date" value={f.inicioReal ?? ""} disabled={!realDatesEditable}
-                  onChange={(e) => setForm({ ...form, inicioReal: e.target.value })}
-                  className={!realDatesEditable ? "bg-muted/40" : ""} />
-              </div>
-              <div>
-                <Label className="text-success">Finalização real {finalizing && <span className="text-destructive">*</span>}</Label>
-                <Input type="date" value={f.fimReal ?? ""} disabled={!realDatesEditable}
-                  onChange={(e) => setForm({ ...form, fimReal: e.target.value })}
-                  className={!realDatesEditable ? "bg-muted/40" : ""} />
-              </div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <AprovacaoCell
+                titulo="Engenharia"
+                aprov={aprov.engenharia}
+                podeAprovar={true}
+                onAprovar={() => handleAprovar("engenharia")}
+                onRevogar={() => handleRevogar("engenharia")}
+              />
+              <AprovacaoCell
+                titulo="Financeiro / Diretoria"
+                aprov={aprov.financeiro}
+                podeAprovar={isAdmin}
+                impedido={!isAdmin ? "Restrito ao Financeiro/Diretoria" : undefined}
+                onAprovar={() => handleAprovar("financeiro")}
+                onRevogar={() => handleRevogar("financeiro")}
+              />
             </div>
             <div className="mt-2 text-[10px] text-muted-foreground">
-              Editáveis somente pelo ADMIN MASTER. Alimentam produtividade, histórico, KPIs e cronograma.
+              Quando as duas aprovações existirem, a obra é finalizada automaticamente. A ordem não importa. Não há reprovação — enquanto faltar aprovação a obra continua operacional.
             </div>
           </div>
-
-          <div className="col-span-2 md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={f.obs ?? ""} onChange={(e) => setForm({ ...form, obs: e.target.value })} /></div>
-        </div>
-        {finalizing && (
-          <div className="rounded-md border border-success/30 bg-success/10 p-3 text-xs">
-            Ao salvar com status <strong>Finalizado</strong>, a obra será movida para <strong>Finalizados</strong>. Início real e Finalização real são obrigatórios (ative o modo ADMIN MASTER para preenchê-los).
-          </div>
         )}
+
         <DialogFooter className="flex-wrap gap-2">
-          {fromComercial && onRetornar && (
+          {fromComercial && onRetornar && !isFinalizado && (
             <Button variant="outline" className="mr-auto border-warning/50 text-warning hover:bg-warning/10" onClick={() => setConfirmRet(true)}>
               <RotateCcw className="mr-2 h-4 w-4" /> Retornar para Comercial
             </Button>
           )}
           <Button variant="outline" onClick={() => { onClose(); setForm({}); }}>Cancelar</Button>
-          <Button className="bg-primary text-primary-foreground" onClick={trySave}>Salvar alterações</Button>
+          <Button
+            className="bg-primary text-primary-foreground"
+            onClick={trySave}
+            disabled={camposBloqueados}
+            title={camposBloqueados ? "Libere a edição para alterar" : undefined}
+          >
+            Salvar alterações
+          </Button>
         </DialogFooter>
       </DialogContent>
 
@@ -853,8 +973,8 @@ function EditObraDialog({
           <DialogHeader>
             <DialogTitle>Confirmar alteração</DialogTitle>
             <DialogDescription>
-              {finalizing
-                ? `Tem certeza que deseja FINALIZAR a obra de ${obra.cliente}? Ela sairá das ativas.`
+              {isFinalizado
+                ? `Confirmar alterações na obra finalizada de ${obra.cliente}? O registro vai para o histórico automático.`
                 : `Tem certeza que deseja salvar as alterações da obra de ${obra.cliente}?`}
             </DialogDescription>
           </DialogHeader>
@@ -867,6 +987,53 @@ function EditObraDialog({
     </Dialog>
   );
 }
+
+function AprovacaoCell({
+  titulo, aprov, podeAprovar, impedido, onAprovar, onRevogar,
+}: {
+  titulo: string;
+  aprov?: { usuario: string; data: string };
+  podeAprovar: boolean;
+  impedido?: string;
+  onAprovar: () => void;
+  onRevogar: () => void;
+}) {
+  const aprovado = !!aprov;
+  return (
+    <div className={`rounded border p-2 text-xs ${aprovado ? "border-success/40 bg-success/10" : "border-border bg-background"}`}>
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">{titulo}</div>
+        {aprovado ? (
+          <span className="flex items-center gap-1 text-success">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Aprovado
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Pendente</span>
+        )}
+      </div>
+      {aprovado && aprov && (
+        <div className="mt-1 text-[10px] text-muted-foreground">
+          {aprov.usuario} · {new Date(aprov.data).toLocaleString("pt-BR")}
+        </div>
+      )}
+      <div className="mt-2 flex gap-2">
+        {!aprovado ? (
+          <Button size="sm" variant="default" className="h-7 text-[11px]" onClick={onAprovar} disabled={!podeAprovar} title={impedido}>
+            <CheckCircle2 className="mr-1 h-3 w-3" /> Aprovar
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onRevogar}>
+            Revogar
+          </Button>
+        )}
+      </div>
+      {impedido && !podeAprovar && !aprovado && (
+        <div className="mt-1 text-[10px] italic text-muted-foreground">{impedido}</div>
+      )}
+    </div>
+  );
+}
+
 
 function recalcPrevisto(inicio: string, equipe: string, modulos: number): string {
   if (!inicio) return "";

@@ -971,6 +971,7 @@ function RedigirContratoDialog({
   const [jurosMesPctDefault, setJurosMesPctDefault] = useState<number>(det0.jurosMesPct ?? 1);
   const [correcaoDefault, setCorrecaoDefault] = useState(det0.correcao ?? "IGP-M");
   const [pagObs, setPagObs] = useState(det0.obs ?? "");
+  const [statusInicialObra, setStatusInicialObra] = useState<NonNullable<NonNullable<Contrato["pagamentoDetalhes"]>["statusInicialObra"]>>(det0.statusInicialObra ?? "Em projeto/aprovação");
   // Composição de formas (várias linhas — entrada PIX + boletos etc.)
   const [formas, setFormas] = useState<PagamentoLinha[]>(
     det0.formas && det0.formas.length > 0

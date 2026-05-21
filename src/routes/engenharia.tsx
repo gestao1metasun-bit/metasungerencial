@@ -483,8 +483,8 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-12">#</TableHead>
             <TableHead className="w-[80px]">Opções</TableHead>
+            <TableHead className="w-12">#</TableHead>
             <TableHead>Contrato</TableHead>
             <TableHead>Projeto</TableHead>
             <TableHead className="text-center">Mód.</TableHead>
@@ -498,7 +498,6 @@ function ObrasAtivasTab({
               const link = findProjetoLink(o.id, contratos);
               return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
-                <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell>
                   <ActionsMenu>
                     <DropdownMenuItem onSelect={() => setEditing(o)}>
@@ -518,6 +517,7 @@ function ObrasAtivasTab({
                     )}
                   </ActionsMenu>
                 </TableCell>
+                <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
                 <TableCell className="text-xs">{o.tipo || <span className="font-mono text-muted-foreground">{o.id}</span>}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
@@ -2101,6 +2101,7 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">Ações</TableHead>
                 <TableHead>Contrato</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -2110,7 +2111,6 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 <TableHead>Início</TableHead>
                 <TableHead>Previsto</TableHead>
                 <TableHead className="min-w-[180px]">Etapa</TableHead>
-                <TableHead className="w-[80px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -2120,6 +2120,20 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 const etapa = ETAPA_COLS.find((c) => c.key === o.status);
                 return (
                 <TableRow key={o.id}>
+                  <TableCell>
+                    <ActionsMenu label={fmtContrato(o.contrato)}>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
+                          {ETAPA_COLS.map((c) => (
+                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
+                              {c.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </ActionsMenu>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>
                   <TableCell className="font-medium">{o.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{o.tipo || "—"}</TableCell>
@@ -2134,20 +2148,6 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionsMenu label={fmtContrato(o.contrato)}>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
-                          {ETAPA_COLS.map((c) => (
-                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
-                              {c.label}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                    </ActionsMenu>
                   </TableCell>
                 </TableRow>
                 );

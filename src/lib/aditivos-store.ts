@@ -412,6 +412,24 @@ export function aprovarAditivo(
     updateContratoAudit(contrato.id, patchContrato, usuario);
   }
 
+  // 1.b) Troca de forma de pagamento (saindo de Financiamento ⇒ libera Engenharia e cancela pendência)
+  const novaForma = aditivo.alteracoes.novaFormaPagamento;
+  if (novaForma && novaForma !== "Financiamento" && contrato.possuiFinanciamento) {
+    removerVinculoFinanciamento(contrato.id, novaForma, usuario);
+    const pend = getPendenciaByContrato(contrato.id);
+    if (pend && pend.status !== "Cancelado") {
+      cancelarPendenciaFin(
+        contrato.id,
+        `Forma de pagamento alterada para ${novaForma} via aditivo ${aditivo.id}`,
+        usuario,
+      );
+    }
+  } else if (novaForma === "Financiamento" && !contrato.possuiFinanciamento) {
+    // Caso raro: aditivo passou a exigir financiamento — apenas registra.
+    updateContratoAudit(contrato.id, { possuiFinanciamento: true, pagamentoTipo: "Financiamento" }, usuario);
+  }
+
+
   // 2) Distribui nos projetos
   for (const d of aditivo.distribuicaoProjetos) {
     const proj = (contrato.projetos ?? []).find((p) => p.id === d.projetoId);

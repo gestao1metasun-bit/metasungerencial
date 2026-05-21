@@ -523,12 +523,11 @@ function presetFromLead(l: Lead): Partial<PropostaFV> {
 /* ===================== KANBAN: colunas ===================== */
 
 type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
-// v4 — reestrutura: 3 colunas-âncora travadas (Gerando/Gerado/Assinado) ao final.
-const COLS_KEY = "ms.fv.kanban.cols.v4";
+// v5 — colunas fixas pré-definidas (todas travadas).
+const COLS_KEY = "ms.fv.kanban.cols.v5";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
 
-// Colunas-âncora travadas (não podem ser excluídas, desativadas, renomeadas nem reordenadas).
-// Progressão: GERANDO → GERADO → ASSINADO. Card não volta de uma para a anterior.
+// Colunas-âncora travadas (progressão: GERANDO → GERADO → ASSINADO; não voltam).
 const COL_GERANDO_ID = "col-gerando-contrato";
 const COL_GERADO_ID = "col-contrato-gerado";
 const COL_ASSINADO_ID = "col-contrato-assinado";
@@ -540,39 +539,34 @@ const COL_GERANDO: KCol = { id: COL_GERANDO_ID, titulo: "GERANDO CONTRATO", ativ
 const COL_GERADO: KCol = { id: COL_GERADO_ID, titulo: "CONTRATO GERADO", ativo: true, locked: true };
 const COL_ASSINADO: KCol = { id: COL_ASSINADO_ID, titulo: "CONTRATO ASSINADO", ativo: true, locked: true };
 
-const DEFAULT_COLS: KCol[] = [
-  { id: "col-rascunho", titulo: "Rascunho", ativo: true },
-  { id: "col-enviada", titulo: "Enviadas", ativo: true },
-  { id: "col-negociacao", titulo: "Em negociação", ativo: true },
-  { id: "col-aprovada", titulo: "Aprovadas", ativo: true },
-  { id: "col-perdida", titulo: "Perdidas", ativo: true },
-  { id: "col-cancelados", titulo: "Cancelados", ativo: true },
-  COL_GERANDO, COL_GERADO, COL_ASSINADO,
+// Coluna padrão de nascimento de toda proposta.
+const COL_PROPOSTA_GERADA_ID = "col-proposta-gerada";
+
+// Colunas pré-âncora — todas travadas por enquanto.
+const DEFAULT_PRE: KCol[] = [
+  { id: COL_PROPOSTA_GERADA_ID, titulo: "PROPOSTA GERADA", ativo: true, locked: true },
+  { id: "col-agendar-visita", titulo: "AGENDAR VISITA", ativo: true, locked: true },
+  { id: "col-negociacao-fria", titulo: "NEGOCIAÇÃO FRIA", ativo: true, locked: true },
+  { id: "col-negociacao-morna", titulo: "NEGOCIAÇÃO MORNA", ativo: true, locked: true },
+  { id: "col-negociacao-quente", titulo: "NEGOCIAÇÃO QUENTE", ativo: true, locked: true },
+  { id: "col-sem-contrato-financiamento", titulo: "SEM CONTRATO EM FINANCIAMENTO", ativo: true, locked: true },
 ];
 
-// Garante que as 3 colunas-âncora existam e fiquem sempre ao final, nesta ordem;
-// e que "Cancelados" exista para receber propostas com status CANCELADA.
-// Também remove a coluna legada "ASSINADOS" (col-contrato-assinado-legacy).
-function normalizeCols(cols: KCol[]): KCol[] {
-  const semAncoras = cols.filter(
-    (c) => !(ANCHOR_IDS as readonly string[]).includes(c.id) && c.id !== "col-assinados-legacy",
-  );
-  const temCanc = semAncoras.some((c) => c.id === "col-cancelados");
-  const base = temCanc ? semAncoras : [...semAncoras, { id: "col-cancelados", titulo: "Cancelados", ativo: true } as KCol];
-  return [...base, { ...COL_GERANDO }, { ...COL_GERADO }, { ...COL_ASSINADO }];
+
+
+const DEFAULT_COLS: KCol[] = [...DEFAULT_PRE, COL_GERANDO, COL_GERADO, COL_ASSINADO];
+
+// Mantém apenas as colunas fixas, na ordem oficial. Remove qualquer coluna
+// custom/legada (incluindo "Cancelados" e a antiga "ASSINADOS"). Garante locked.
+function normalizeCols(_cols: KCol[]): KCol[] {
+  return DEFAULT_COLS.map((c) => ({ ...c }));
 }
 
 function colPadraoPorStatus(s: StatusProposta): string {
-  switch (s) {
-    case "RASCUNHO": return "col-rascunho";
-    case "GERADA":
-    case "ENVIADA": return "col-enviada";
-    case "APROVADA": return "col-aprovada";
-    case "CANCELADA": return "col-cancelados";
-    case "RECUSADA":
-    case "VENCIDA": return "col-perdida";
-    default: return "col-rascunho";
-  }
+  // Toda proposta nasce em "PROPOSTA GERADA". Aprovadas/canceladas são
+  // tratadas por fase ou pelo filtro de aba — aqui só importa o fallback.
+  void s;
+  return COL_PROPOSTA_GERADA_ID;
 }
 
 /** Coluna-âncora correspondente à fase do lead. */
@@ -619,23 +613,11 @@ function useKanbanState(leads: Lead[]) {
           }
           continue;
         }
-        // Status CANCELADA → sempre na coluna "Cancelados".
-        if (l.status === "CANCELADA" && ativosIds.has("col-cancelados")) {
-          if (next[l.key] !== "col-cancelados") { next[l.key] = "col-cancelados"; mudou = true; }
-          continue;
-        }
-        // Sair de "Cancelados" se a proposta foi reativada.
-        if (next[l.key] === "col-cancelados" && l.status !== "CANCELADA") {
-          const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : "col-rascunho";
-          mudou = true;
-          continue;
-        }
         // Lead sem fase: nunca pode estar numa âncora.
         const ehAncora = next[l.key] && next[l.key] in ANCHOR_INDEX;
         if (!next[l.key] || !ativosIds.has(next[l.key]) || ehAncora) {
           const padrao = colPadraoPorStatus(l.status);
-          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? "col-rascunho");
+          next[l.key] = ativosIds.has(padrao) ? padrao : (cols.find((c) => c.ativo !== false && !(c.id in ANCHOR_INDEX))?.id ?? COL_PROPOSTA_GERADA_ID);
           mudou = true;
         }
       }

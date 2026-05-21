@@ -216,6 +216,8 @@ export type ContratoFull = {
     obs?: string;
     /** Composição livre: várias formas (ex.: entrada PIX + boletos pós-instalação). */
     formas?: PagamentoLinha[];
+    /** Em que status a obra deve nascer ao ser aprovada e enviada para Engenharia. */
+    statusInicialObra?: "Standby" | "Em projeto/aprovação";
   };
   clausulasCustom?: Array<{
     id: string;

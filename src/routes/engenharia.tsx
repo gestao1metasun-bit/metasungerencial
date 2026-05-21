@@ -110,6 +110,7 @@ function enrichObras(): Obra[] {
 
 /** Converte um projeto aprovado do Comercial em uma "Obra" da Engenharia. */
 function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obra {
+  const statusInicial = c.pagamentoDetalhes?.statusInicialObra ?? "Em projeto/aprovação";
   return {
     id: p.id,
     contrato: c.id,
@@ -121,7 +122,7 @@ function projetoToObra(p: ProjetoVinculado, c: ContratoFull, ordem: number): Obr
     inicio: p.inicio || "",
     previsto: p.previsto || "",
     finalizacao: null,
-    status: p.status || "Em projeto/aprovação",
+    status: p.status || statusInicial,
     telhado: "Outro",
     obs: p.obs || "",
     ordem,
@@ -180,9 +181,19 @@ function EngenhariaPage() {
           <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
-        <TabsContent value="ativas" className="mt-5 space-y-6">
-          <ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} />
-          <CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} />
+        <TabsContent value="ativas" className="mt-5">
+          <Tabs defaultValue="gestao">
+            <TabsList>
+              <TabsTrigger value="gestao">Gestão cronograma</TabsTrigger>
+              <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
+            </TabsList>
+            <TabsContent value="gestao" className="mt-4">
+              <ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} />
+            </TabsContent>
+            <TabsContent value="cronograma" className="mt-4">
+              <CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="kanban" className="mt-5"><KanbanTab obras={obras} setObras={setObras} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>

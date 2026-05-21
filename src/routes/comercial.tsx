@@ -768,10 +768,21 @@ function ContratosTab({
           }}
           onConfirm={() => {
             const montado = previewGeracao;
-            setContratos(contratos.map((c) => c.id === montado.id ? montado : c));
-            toast.success(`Contrato ${montado.id} gerado.`);
+            // Se o contrato tem financiamento e o valor mudou, propaga apenas o valor para a camada de Financiamentos.
+            const original = contratos.find((c) => c.id === montado.id);
+            const patchFin: Partial<Contrato> = {};
+            if (original?.possuiFinanciamento && montado.valor !== original.valor) {
+              patchFin.financiamentoValor = montado.valor;
+            }
+            const final = { ...montado, ...patchFin } as Contrato;
+            setContratos(contratos.map((c) => c.id === final.id ? final : c));
+            toast.success(
+              patchFin.financiamentoValor != null
+                ? `Contrato ${final.id} gerado. Valor financiado atualizado em Financiamentos.`
+                : `Contrato ${final.id} gerado.`,
+            );
             setPreviewGeracao(null);
-            setImprimir(montado);
+            setImprimir(final);
           }}
         />
       )}

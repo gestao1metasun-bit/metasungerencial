@@ -180,9 +180,11 @@ function EngenhariaPage() {
           <TabsTrigger value="cancelados">Cancelados</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="mt-5"><DashboardEng obras={obras} pends={pends} equipes={equipes} setObras={setObras} /></TabsContent>
-        <TabsContent value="ativas" className="mt-5"><ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} /></TabsContent>
+        <TabsContent value="ativas" className="mt-5 space-y-6">
+          <ObrasAtivasTab obras={obras} setObras={setObras} equipes={equipes} contratos={contratos} />
+          <CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} />
+        </TabsContent>
         <TabsContent value="kanban" className="mt-5"><KanbanTab obras={obras} setObras={setObras} /></TabsContent>
-        <TabsContent value="cronograma" className="mt-5"><CronogramaTab obras={obras} setObras={setObras} pends={pends} equipes={equipes} /></TabsContent>
         <TabsContent value="pendencias" className="mt-5"><PendenciasTab pends={pends} setPends={setPends} equipes={equipes} obras={obras} /></TabsContent>
         <TabsContent value="equipes" className="mt-5"><EquipesTab equipes={equipes} setEquipes={setEquipes} obras={obras} pends={pends} /></TabsContent>
         <TabsContent value="produtividade" className="mt-5"><ProdutividadeTab obras={obras} pends={pends} equipes={equipes} /></TabsContent>
@@ -2044,8 +2046,8 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
       </Card>
 
       {view === "kanban" ? (
-        <div className="overflow-x-auto">
-          <div className="flex gap-3 pb-2" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
+        <div className="overflow-x-auto overflow-y-hidden h-[calc(100vh-230px)]">
+          <div className="flex gap-3 pb-2 h-full" style={{ minWidth: `${ETAPA_COLS.length * 240}px` }}>
             {ETAPA_COLS.map((col) => {
               const items = filtered.filter((o) => o.status === col.key);
               return (
@@ -2053,7 +2055,7 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                   key={col.key}
                   onDragOver={(e) => { e.preventDefault(); }}
                   onDrop={() => { if (dragId) { moveTo(dragId, col.key); setDragId(null); } }}
-                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 min-h-[320px]`}
+                  className={`w-[230px] shrink-0 rounded-lg border border-t-4 ${col.tone} bg-muted/20 p-2 h-full overflow-y-auto`}
                 >
                   <div className="mb-2 flex items-center justify-between px-1">
                     <div className="text-[11px] font-semibold uppercase tracking-wider leading-tight">{col.label}</div>

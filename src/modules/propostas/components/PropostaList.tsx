@@ -551,7 +551,8 @@ const DEFAULT_PRE: KCol[] = [
   { id: "col-negociacao-quente", titulo: "NEGOCIAÇÃO QUENTE", ativo: true, locked: true },
   { id: "col-sem-contrato-financiamento", titulo: "SEM CONTRATO EM FINANCIAMENTO", ativo: true, locked: true },
 ];
-const PRE_IDS = DEFAULT_PRE.map((c) => c.id);
+
+
 
 const DEFAULT_COLS: KCol[] = [...DEFAULT_PRE, COL_GERANDO, COL_GERADO, COL_ASSINADO];
 

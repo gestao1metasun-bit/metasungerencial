@@ -514,7 +514,7 @@ function ObrasAtivasTab({
                   </ActionsMenu>
                 </TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{o.id}</TableCell>
+                <TableCell className="text-xs">{o.tipo || <span className="font-mono text-muted-foreground">{o.id}</span>}</TableCell>
                 <TableCell className="text-center">{o.modulos}</TableCell>
                 <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
                 <TableCell className="text-xs">{fmtInversorNumero(o.inversor)}</TableCell>

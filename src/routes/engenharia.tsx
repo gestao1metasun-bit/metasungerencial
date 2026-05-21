@@ -54,6 +54,7 @@ export const Route = createFileRoute("/engenharia")({
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const TELHADOS = ["Fibrocimento", "Cerâmica", "Metálico", "Solo", "Laje", "Outro"];
 const STATUS = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby", "Finalizado"];
+const STATUS_EDITAVEL = ["Executando instalação", "Aguardando instalação", "Em projeto/aprovação", "Standby"];
 const STATUS_RANK: Record<string, number> = {
   "Executando instalação": 0,
   "Aguardando instalação": 1,

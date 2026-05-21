@@ -810,20 +810,14 @@ export function cancelarContrato(contratoId: string, motivo: string, usuario: st
     cancelado: true,
     motivoCancelamento: motivo,
     projetos,
-    possuiFinanciamento: false,
-    financiamentoBanco: undefined,
-    financiamentoValor: undefined,
-    financiamentoStatus: undefined,
-    financiamentoStatusLiberacao: undefined,
-    financiamentoLiberacao: undefined,
-    financiamentoPrevisao: undefined,
-    financiamentoEnvio: undefined,
+    // Mantém campos de financiamento preservados (apenas marca cancelamento).
+    // As views ativas filtram por !c.cancelado, então sai naturalmente de Financiamentos/Engenharia ativos.
   }, usuario);
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
     acao: "CANCELAMENTO", usuario, motivo,
     campo: "status", valorAnterior: old, valorNovo: CONTRATO_STATUS.CANCELADO,
-    detalhe: "Contrato cancelado — saiu de Engenharia e Financiamentos. Pode ser reativado.",
+    detalhe: "Contrato cancelado — saiu de Engenharia e Financiamentos ativos. Visível em Cancelados. Pode ser reativado.",
   });
   return { ok: true };
 }

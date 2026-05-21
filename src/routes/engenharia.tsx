@@ -1674,7 +1674,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
   // Resumo por bucket
   const totalKwp = cards.reduce((s, { p }) => s + (p.kwp || 0), 0);
   const totalModulos = cards.reduce((s, { p }) => s + (p.modulos || 0), 0);
-  const resumo = KANBAN_COLS.map((col) => ({
+  const resumo = ETAPA_COLS.map((col) => ({
     ...col,
     qtd: cards.filter(({ p }) => bucketDe(p.status) === col.key).length,
   }));
@@ -1713,7 +1713,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
 
       {view === "kanban" ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-          {KANBAN_COLS.map((col) => {
+          {ETAPA_COLS.map((col) => {
             const itens = cards.filter(({ p }) => bucketDe(p.status) === col.key);
             return (
               <Card key={col.key} className="p-3 bg-muted/30">
@@ -1974,7 +1974,7 @@ function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoF
 }
 
 /* ---------------- KANBAN (etapas dos projetos aprovados) ---------------- */
-const KANBAN_COLS: { key: string; label: string; tone: string }[] = [
+const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
   { key: "Em projeto/aprovação", label: "Em projeto / aprovação", tone: "border-t-info" },
   { key: "Standby", label: "Stand-by", tone: "border-t-muted-foreground" },
   { key: "Aguardando instalação", label: "Aguardando instalação", tone: "border-t-warning" },
@@ -2019,8 +2019,8 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
         </div>
       </Card>
 
-      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${KANBAN_COLS.length}, minmax(220px, 1fr))` }}>
-        {KANBAN_COLS.map((col) => {
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${ETAPA_COLS.length}, minmax(220px, 1fr))` }}>
+        {ETAPA_COLS.map((col) => {
           const items = filtered.filter((o) => o.status === col.key);
           return (
             <div

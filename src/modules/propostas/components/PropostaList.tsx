@@ -1670,11 +1670,11 @@ export function PropostaList({
             variant={estadoLead === "ABERTO" ? "default" : "ghost"}
             className="h-7 px-3 text-xs"
             onClick={() => setEstadoLead("ABERTO")}
-            title="Leads em negociação (sem contrato assinado)"
+            title="Leads em negociação (sem contrato assinado e não cancelados)"
           >
             Aberto
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => !l.bloqueado).length}
+              {leadsAll.filter((l) => l.fase !== "ASSINADO" && l.status !== "CANCELADA").length}
             </span>
           </Button>
           <Button
@@ -1686,7 +1686,19 @@ export function PropostaList({
           >
             Fechado
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => l.bloqueado).length}
+              {leadsAll.filter((l) => l.fase === "ASSINADO").length}
+            </span>
+          </Button>
+          <Button
+            size="sm"
+            variant={estadoLead === "CANCELADO" ? "default" : "ghost"}
+            className="h-7 px-3 text-xs"
+            onClick={() => setEstadoLead("CANCELADO")}
+            title="Leads com a última proposta cancelada"
+          >
+            Cancelado
+            <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
+              {leadsAll.filter((l) => l.status === "CANCELADA" && l.fase !== "ASSINADO").length}
             </span>
           </Button>
         </div>

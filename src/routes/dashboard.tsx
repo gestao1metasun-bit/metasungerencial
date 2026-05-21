@@ -2,12 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   FileText, CheckCircle2, Clock, XCircle, DollarSign, Banknote,
-  HardHat, TrendingUp, Activity,
+  HardHat, TrendingUp, Activity, AlertTriangle,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Line, Legend, ComposedChart, Area, AreaChart,
 } from "recharts";
+import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";

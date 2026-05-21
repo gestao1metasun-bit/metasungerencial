@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SquarePen, Trash2, Landmark, UserCog, Users as UsersIcon } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -304,7 +304,11 @@ function EquipesCrud({ items, setItems }: { items: Equipe[]; setItems: (v: Equip
 }
 
 function EquipeDialog({ open, initial, onClose, onSave }: { open: boolean; initial: Equipe | null; onClose: () => void; onSave: (e: Equipe) => void }) {
-  const [form, setForm] = useState<Equipe>(() => initial ?? { id: `EQ-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", lider: "", membros: 0, obrasAtivas: 0, status: "Ativo" });
+  const makeNew = (): Equipe => ({ id: `EQ-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`, nome: "", lider: "", membros: 0, obrasAtivas: 0, status: "Ativo" });
+  const [form, setForm] = useState<Equipe>(() => initial ?? makeNew());
+  useEffect(() => {
+    if (open) setForm(initial ?? makeNew());
+  }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">

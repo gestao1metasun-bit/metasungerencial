@@ -1717,53 +1717,8 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>Kanban</Button>
-          <Button size="sm" variant={view === "tabela" ? "default" : "outline"} onClick={() => setView("tabela")}>Tabela</Button>
-        </div>
-        <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por cliente, projeto, endereço…" className="h-8 w-72" />
-      </div>
+      <ProjetosKanbanBlock cards={cards} view={view} setView={setView} busca={busca} setBusca={setBusca} onEdit={setEditing} />
 
-      {view === "kanban" ? (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-          {KANBAN_PROJ_COLS.map((col) => {
-            const itens = cards.filter(({ p }) => bucketDe(p.status) === col.key);
-            return (
-              <Card key={col.key} className="p-3 bg-muted/30">
-                <div className={`mb-2 inline-flex items-center gap-2 rounded-md border px-2 py-0.5 text-[11px] font-semibold ${col.tone}`}>
-                  {col.label} <span className="tabular-nums">· {itens.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {itens.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">—</div>
-                  ) : itens.map(({ p, c }) => (
-                    <Card key={p.id} className="p-3 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-mono text-muted-foreground">{p.id}</div>
-                          <div className="text-sm font-semibold leading-tight truncate">{c.cliente}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{p.tipo}</div>
-                        </div>
-                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 shrink-0" onClick={() => setEditing({ c, p })} title="Editar projeto">
-                          <SquarePen className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums font-semibold">{(p.kwp ?? 0).toFixed(2)} kWp</span>
-                        <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 tabular-nums">{p.modulos || 0} mód</span>
-                        {p.equipe ? <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1.5 py-0.5 font-semibold">{p.equipe}</span> : null}
-                      </div>
-                      <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{[p.endereco, p.cidade, p.uf].filter(Boolean).join(", ") || "—"}</div>
-                      {p.previsto && <div className="mt-1 text-[10px] text-muted-foreground">Previsto: {fmtBR(p.previsto)}</div>}
-                    </Card>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">

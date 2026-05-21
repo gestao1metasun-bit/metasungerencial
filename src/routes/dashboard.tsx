@@ -130,6 +130,29 @@ function DashboardGeral() {
             <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} />
           </div>
 
+          {aditivosPendentes.length > 0 && (
+            <Card className="mt-4 p-4 border-warning/40 bg-warning/5">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-md bg-warning/15 text-warning">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">
+                      {aditivosPendentes.length} aditivo{aditivosPendentes.length > 1 ? "s" : ""} pendente{aditivosPendentes.length > 1 ? "s" : ""}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Contratos com alterações em andamento. Operações sensíveis estão travadas até aprovação.
+                    </div>
+                  </div>
+                </div>
+                <Link to="/comercial" hash="tab=aditivos" className="text-xs font-semibold text-primary hover:underline">
+                  Gerenciar aditivos →
+                </Link>
+              </div>
+            </Card>
+          )}
+
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <Card className="p-5 bg-[image:var(--gradient-card)]">
               <div className="mb-4 flex items-center justify-between">

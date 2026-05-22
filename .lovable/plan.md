@@ -1,102 +1,127 @@
 ## Objetivo
 
-Esconder a complexidade do ERP atrás de uma navegação enxuta, sem remover funcionalidades. O mesmo sistema continua robusto; o que muda é **como o menu é exibido**.
+Adicionar ao módulo Financeiro uma camada **madura de renegociação** sobre os títulos existentes, sem quebrar o histórico atual (`Movimento`, baixas, estornos, fechamento). Toda renegociação fica auditada e o título original **nunca é apagado**.
 
-## Diagnóstico atual
+Permanece tudo client-side (Zustand + localStorage), seguindo o padrão atual de `fin-titulos-store.ts`. Migração para Supabase fica para fase futura (Fase E já mapeada).
 
-- Sidebar tem 11 módulos no mesmo nível (Dashboard, Comercial, Financeiro, Financiamentos, Engenharia, Pós-venda, Estoque, Analytics, Cadastros, Relatórios, Configurações).
-- Dentro de cada módulo (ex.: `/financeiro` tem 13 abas) tudo aparece achatado, misturando Visão / Operação / Cadastros / Controle.
-- Não existe distinção visual entre o que é **dia a dia** e o que é **estrutura/admin**.
-- Nomes genéricos ("Cadastros estruturais", "Parâmetros gerais") não comunicam.
-- Não há favoritos nem últimos acessos.
+---
 
-## Mudanças propostas (Fase 1 — só UI/navegação, zero impacto em dados)
+## Fase 1 — Parâmetros Financeiros (configuração)
 
-### 1. Sidebar em 3 camadas visuais
+Novo store `src/lib/fin-parametros-financeiros-store.ts`:
 
-```
-┌─ OPERAÇÃO ─────────────┐
-│  Dashboard             │
-│  Tarefas               │
-│  Comercial             │
-│  Financeiro            │
-│  Financiamentos        │
-│  Engenharia            │
-│  Pós-venda             │
-│  Estoque               │
-├─ CONTROLE ─────────────┤
-│  Analytics             │
-│  Relatórios            │
-├─ ESTRUTURA ────────────┤ (recolhido por padrão)
-│  Cadastros             │
-│  Configurações         │
-└────────────────────────┘
+```ts
+ParametrosFinanceiros {
+  jurosTipo: "percentual" | "fixo";
+  jurosModo: "diario" | "mensal";
+  jurosValor: number;            // ex: 1 (% a.m.)
+  multaTipo: "percentual" | "fixo";
+  multaValor: number;            // ex: 2 (%)
+  carenciaDias: number;          // dias sem cobrança
+  toleranciaAtrasoDias: number;  // não aplica multa
+  limiteDescontoSemAprovacao: number; // %
+  limiteDescontoDiretoria: number;     // % acima exige diretoria
+}
 ```
 
-- Cada camada vira um grupo com label discreto (uppercase, opacidade reduzida).
-- **Estrutura** começa **colapsada** — quem usa dia a dia não vê ruído administrativo.
-- Visual mais leve: espaçamento maior entre grupos, divisores sutis.
+UI: nova aba `/financeiro` → **Parâmetros Financeiros** (grupo Estrutura).
 
-### 2. Reorganização das abas internas (por módulo)
+## Fase 2 — Modelo de Renegociação
 
-Reescrever `src/lib/route-tabs.ts` agrupando todas as abas em 4 grupos padronizados: **Visão**, **Operação**, **Controle**, **Estrutura**. Nada é removido — apenas reordenado e renomeado.
+Estender `fin-titulos-store.ts` (sem migração destrutiva):
 
-Exemplo Financeiro (já tem grupos, só ajustar nomes/ordem):
-- Visão: Dashboard, Fluxo de Caixa, Visão Gerencial, CMV / Compras
-- Operação: Contas a Receber, Contas a Pagar, Lançamentos, Despesas Fixas
-- Controle: Conciliação, Fechamento
-- Estrutura: Fornecedores, Naturezas & Centros, Parâmetros financeiros
+```ts
+type Renegociacao = {
+  id: string;
+  tituloOriginalId: string;
+  data: string;                 // ISO
+  valorOriginal: number;
+  jurosCalculado: number;
+  jurosAplicado: number;        // após ajuste
+  multaCalculada: number;
+  multaAplicada: number;
+  desconto: number;
+  descontoPct: number;
+  valorFinal: number;
+  motivo: string;
+  usuarioId: string;
+  aprovadoPor?: string;         // se exigiu diretoria
+  nivelAprovacao: "auto" | "financeiro" | "diretoria";
+  tipoSaida: "parcela_unica" | "parcelado";
+  parcelasGeradas: string[];    // ids dos novos títulos
+  observacao?: string;
+};
 
-Exemplo Configurações (hoje 17 abas no mesmo nível):
-- Empresa: Empresa, Parâmetros gerais
-- Acessos: Perfis, Permissões, Usuários, Consultores, Logs de sessão
-- Operacional: Dashboard, Comercial, Engenharia, Financeiro (cfg de módulos)
-- Orçamentos: Fórmulas, Cadastros
-- Sistema: Integrações, Sistema & Flags, Logs, Lixeira
+// no Titulo:
+renegociacaoId?: string;        // título-filho aponta para origem
+renegociadoEm?: string;         // título-pai marcado como renegociado
+statusRenegociacao?: "ativo" | "renegociado" | "renegociacao";
+```
 
-No submenu lateral, grupos de **Estrutura** aparecem com cor mais apagada e ficam **após** Visão/Operação/Controle.
+Regras:
+- Título original recebe `statusRenegociacao = "renegociado"` e fica **bloqueado para baixa direta** (saldo zerado contabilmente, mas registro preservado).
+- Novos títulos nascem com `renegociacaoId` referenciando a renegociação.
+- Histórico em `audit_log` (já existente via `pushAudit`).
 
-### 3. Renomeações para clareza
+## Fase 3 — Cálculo canônico
 
-- "Cadastros estruturais" → "Plano de Contas & Categorias"
-- "Centros & Naturezas (legado)" → remover do menu (mantém rota acessível, mas não exposta)
-- "Parâmetros gerais" → "Parâmetros do Sistema"
-- "Sistema & Flags" → "Feature Flags"
-- "Cadastros" (módulo) → "Cadastros Operacionais"
+Novo `src/lib/fin-calculo-encargos.ts`:
 
-### 4. Favoritos / acesso rápido (topbar)
+```ts
+calcularEncargos(titulo, dataRef, params) → {
+  diasAtraso, jurosSugerido, multaSugerida, valorComEncargos
+}
+```
 
-- Novo botão **estrela** na topbar abre dropdown com:
-  - **Favoritos**: o usuário fixa qualquer aba (botão estrela ao lado do título da página).
-  - **Últimos acessos**: 5 últimas rotas/abas visitadas (localStorage por usuário).
-- Persistência: localStorage `ms:favs:{userId}` e `ms:recent:{userId}`.
+Usado por: simulação, baixa com atraso, renegociação.
 
-### 5. Menu por perfil (refinamento do que já existe)
+## Fase 4 — UI Simulador / Modal de Renegociação
 
-Já existe `podeAcessarModulo(perfil, key)`. Adicionar mais granularidade:
-- **Financeiro operacional**: não vê grupo "Estrutura" do sidebar nem aba "CFO/Controladoria" do Analytics.
-- **Diretoria**: vê tudo, com Analytics em destaque.
-- **Engenharia**: só Operação + Estoque + Tarefas.
+Novo `src/components/app/financeiro/RenegociarTituloDialog.tsx`:
 
-Implementado adicionando flag `tier?: "operacao" | "controle" | "estrutura"` em cada item e filtrando por perfil.
+- Sumário: valor original, dias de atraso, juros calc, multa calc.
+- Inputs: ajustar juros (R$ ou %), ajustar multa, conceder desconto, motivo (obrigatório, min 5 chars).
+- Toggle **parcelar**: nº parcelas, 1º vencimento, intervalo (dias/mês) → preview.
+- Indicador de aprovação: chip "auto / requer financeiro / requer diretoria" conforme `% desconto`.
+- Botão **Simular** (não persiste) e **Confirmar renegociação**.
 
-## Detalhes técnicos
+Entradas no menu de ações da linha do título (aba Operação).
 
-Arquivos tocados (todos frontend, nenhuma migration):
+## Fase 5 — Indicadores
 
-- `src/components/app/AppLayout.tsx` — reorganizar `nav` em 3 grupos, render com section labels, colapsar "Estrutura" por padrão.
-- `src/lib/route-tabs.ts` — adicionar `group` em todas as abas, padronizar para Visão/Operação/Controle/Estrutura, renomear labels, esconder abas "legado".
-- `src/lib/favoritos-store.ts` (novo) — hook `useFavoritos()` e `useRecentes()` com localStorage.
-- `src/components/app/FavoritosMenu.tsx` (novo) — dropdown na topbar.
-- `src/components/app/PageHeader.tsx` — adicionar botão "favoritar esta aba".
-- `src/lib/perfis-store.ts` — adicionar helper `tierVisivel(perfil, tier)`.
+Nova aba `/analytics` ou card no DRE:
+- Valor renegociado no período
+- Desconto concedido (R$ e %)
+- Recuperação de inadimplência
+- Top clientes com renegociações
+- Alerta: consultor/usuário com % de desconto acima da média
 
-Sem mudança de rotas, sem mudança de banco, sem quebra de URLs existentes (hash `#tab=...` continua igual).
+Métricas calculadas client-side a partir das renegociações.
 
-## Fora de escopo desta fase
+## Fora do escopo (Fase futura)
 
-- Command palette (Ctrl+K) — fica para fase 2 se você quiser.
-- Breadcrumbs dinâmicos no header — fase 2.
-- Refazer visualmente o sidebar (mudar cores/tema) — só ajustes finos de espaçamento.
+- Persistência Supabase de títulos/renegociações.
+- Workflow de aprovação assíncrono (notificação ao diretor).
+- Integração com boletos/banco.
+- Movimentação automática de juros/multa em contas de receita.
 
-Confirma que sigo nessa direção, ou quer ajustar algum agrupamento antes?
+---
+
+## Arquivos a criar / editar
+
+**Criar**
+- `src/lib/fin-parametros-financeiros-store.ts`
+- `src/lib/fin-calculo-encargos.ts`
+- `src/lib/fin-renegociacao-store.ts` (operações: simular, confirmar, listar histórico)
+- `src/components/app/financeiro/RenegociarTituloDialog.tsx`
+- `src/components/app/financeiro/RenegociacaoHistoricoList.tsx`
+- `src/components/app/financeiro/ParametrosFinanceirosForm.tsx`
+
+**Editar**
+- `src/lib/fin-titulos-store.ts` → adicionar campos `statusRenegociacao`, `renegociacaoId`, helpers `marcarRenegociado`, `criarTitulosRenegociacao`.
+- `src/routes/financeiro.tsx` → novas abas “Renegociações” (Controle) e “Parâmetros Financeiros” (Estrutura); ação “Renegociar” na lista de títulos.
+- `src/lib/route-tabs.ts` → registrar abas.
+
+## Confirmação
+
+Pode seguir com a **Fase 1 + Fase 2 + Fase 4** nesta rodada (parâmetros, modelo, modal funcional com simulação e parcelamento)? A Fase 5 (indicadores no analytics) entra na próxima rodada.

@@ -1230,6 +1230,65 @@ export type Database = {
         Args: { _data: string; _modulo: string }
         Returns: boolean
       }
+      kpi_comercial: {
+        Args: never
+        Returns: {
+          assinados: number | null
+          cancelados: number | null
+          kwp_vendido: number | null
+          mes: string | null
+          pipeline_total: number | null
+          rascunhos: number | null
+          receita_assinada: number | null
+          ticket_medio: number | null
+          total_contratos: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mv_kpi_comercial"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      kpi_consultor: {
+        Args: never
+        Returns: {
+          assinados: number | null
+          cancelados: number | null
+          consultor_id: string | null
+          consultor_nome: string | null
+          conversao_pct: number | null
+          kwp_vendido: number | null
+          receita: number | null
+          ticket_medio: number | null
+          total_contratos: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mv_kpi_consultor"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      kpi_engenharia: {
+        Args: never
+        Returns: {
+          atrasadas: number | null
+          em_andamento: number | null
+          finalizadas: number | null
+          kwp_total: number | null
+          mes: string | null
+          modulos_total: number | null
+          planejadas: number | null
+          total_obras: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mv_kpi_engenharia"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       refresh_mv_kpis: { Args: never; Returns: Json }
       restore_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }

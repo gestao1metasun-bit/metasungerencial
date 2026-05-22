@@ -27,6 +27,7 @@ import { CadastrosFV } from "@/modules/propostas/PropostasPage";
 import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { FileText } from "lucide-react";
 import { PermissoesTab } from "@/components/app/PermissoesTab";
+import { LixeiraTab } from "@/components/app/LixeiraTab";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Meta Sun Gerencial" }] }),
@@ -111,6 +112,8 @@ function ConfigPage() {
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="lixeira" className="mt-5"><LixeiraTab /></TabsContent>
 
         <TabsContent value="logs" className="mt-5">
           <Card className="bg-[image:var(--gradient-card)] p-6">

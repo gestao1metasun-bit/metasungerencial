@@ -84,10 +84,11 @@ function PosVendaPage() {
 
         <TabsContent value="dashboard" className="mt-5">
           <div className="grid gap-4 md:grid-cols-4">
-            <StatCard label="Chamados abertos" value={String(abertos)} icon={<Headset className="h-5 w-5" />} />
-            <StatCard label="Em atendimento" value={String(contagem["Em atendimento"])} icon={<Wrench className="h-5 w-5" />} />
-            <StatCard label="Atrasados (SLA)" value={String(atrasados)} icon={<AlertTriangle className="h-5 w-5" />} tone={atrasados ? "destructive" : "muted"} />
-            <StatCard label="Resolvidos" value={String(contagem["Resolvido"])} icon={<CheckCircle2 className="h-5 w-5" />} />
+            <StatCard label="Chamados abertos" value={String(abertos)} icon={Headset} />
+            <StatCard label="Em atendimento" value={String(contagem["Em atendimento"])} icon={Wrench} />
+            <StatCard label="Atrasados (SLA)" value={String(atrasados)} icon={AlertTriangle} tone={atrasados ? "destructive" : "muted"} />
+            <StatCard label="Resolvidos" value={String(contagem["Resolvido"])} icon={CheckCircle2} tone="success" />
+
           </div>
 
           <Card className="mt-6 p-5">

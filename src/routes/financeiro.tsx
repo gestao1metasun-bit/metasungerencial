@@ -185,6 +185,14 @@ function FinanceiroPage() {
         <TabsContent value="cmv" className="mt-5">
           <CmvTab />
         </TabsContent>
+
+        <TabsContent value="renegociacoes" className="mt-5">
+          <RenegociacaoHistoricoList />
+        </TabsContent>
+
+        <TabsContent value="parametros-fin" className="mt-5">
+          <ParametrosFinanceirosForm />
+        </TabsContent>
       </Tabs>
     </>
   );

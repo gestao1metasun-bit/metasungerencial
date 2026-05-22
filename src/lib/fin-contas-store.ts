@@ -12,10 +12,16 @@ export type ContaFinanceira = {
   ativo: boolean;
 };
 
-const KEY = "ms.fin.contas.v1";
+const KEY = "ms.fin.contas.v2";
+const LEGACY_KEY = "ms.fin.contas.v1";
 const SEED: ContaFinanceira[] = [
-  { id: "CF-001", nome: "Banco do Brasil — CC", tipo: "Banco", banco: "BB", agencia: "1234", conta: "56789-0", saldoInicial: 0, ativo: true },
-  { id: "CF-002", nome: "Caixa Interno", tipo: "Caixa", saldoInicial: 0, ativo: true },
+  { id: "CF-001", nome: "Sicredi",        tipo: "Banco",  banco: "Sicredi",         saldoInicial: 0, ativo: true },
+  { id: "CF-002", nome: "Basa",           tipo: "Banco",  banco: "BASA",            saldoInicial: 0, ativo: true },
+  { id: "CF-003", nome: "Banco do Brasil",tipo: "Banco",  banco: "BB",              saldoInicial: 0, ativo: true },
+  { id: "CF-004", nome: "Nubank PJ",      tipo: "Banco",  banco: "Nubank",          saldoInicial: 0, ativo: true },
+  { id: "CF-005", nome: "Caixa interno",  tipo: "Caixa",                            saldoInicial: 0, ativo: true },
+  { id: "CF-006", nome: "Cartão Itaú",    tipo: "Cartão", banco: "Itaú",            saldoInicial: 0, ativo: true },
+  { id: "CF-007", nome: "Cartão Sicredi", tipo: "Cartão", banco: "Sicredi",         saldoInicial: 0, ativo: true },
 ];
 
 type L = () => void;
@@ -27,7 +33,17 @@ function read(): ContaFinanceira[] {
   if (typeof window === "undefined") { cache = SEED; return cache; }
   try {
     const raw = localStorage.getItem(KEY);
-    cache = raw ? JSON.parse(raw) : SEED;
+    if (raw) { cache = JSON.parse(raw); return cache!; }
+    // migra v1 → mantém contas customizadas + injeta novas
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy) {
+      const old: ContaFinanceira[] = JSON.parse(legacy);
+      const ids = new Set(old.map((x) => x.id));
+      const merged = [...old, ...SEED.filter((s) => !ids.has(s.id))];
+      cache = merged;
+    } else {
+      cache = SEED;
+    }
   } catch { cache = SEED; }
   if (!localStorage.getItem(KEY)) localStorage.setItem(KEY, JSON.stringify(cache));
   return cache!;

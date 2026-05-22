@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package, FileText, Wallet,
-  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight, LineChart, Headset,
+  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight, LineChart, Headset, ListChecks,
 } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useRef, useState } from "react";
@@ -12,9 +12,11 @@ import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { useAuth, signOut } from "@/lib/auth-store";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
+import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
+  { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard" },
 
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro" },
@@ -234,6 +236,7 @@ export function AppLayout() {
             </Button>
           </div>
         </header>
+        <MaintenanceBanner />
 
         <main className="flex-1 overflow-x-hidden p-6">
           <Outlet />

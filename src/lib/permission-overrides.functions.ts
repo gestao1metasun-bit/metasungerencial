@@ -120,9 +120,9 @@ export const upsertUserOverride = createServerFn({ method: "POST" })
       .from("user_permission_overrides")
       .delete()
       .eq("user_id", data.userId)
-      .eq("permission", data.permission)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .eq("effect", opposite as any);
+      .eq("permission", data.permission as any)
+      .eq("effect", opposite);
 
     const { error } = await supabase
       .from("user_permission_overrides")

@@ -1279,9 +1279,24 @@ function ContratosComercialFin() {
           onClose={() => setEditing(null)}
           onSave={(patch) => {
             updateContratoAudit(editing.id, patch);
+            // Gatilho Fase C: ao marcar "Liberado", gera AR de liberação bancária.
+            if (patch.financiamentoStatus === "Liberado") {
+              const valor = Number(patch.financiamentoValor) || Number(editing.financiamentoValor) || Number(editing.valor) || 0;
+              if (valor > 0) {
+                const t = gerarARdeLiberacaoFinanciamento({
+                  contratoId: editing.id,
+                  cliente: editing.cliente,
+                  valor,
+                  dataLiberacao: patch.financiamentoLiberacao || new Date().toISOString().slice(0, 10),
+                  banco: patch.financiamentoBanco || editing.financiamentoBanco,
+                });
+                if (t) toast.success("AR de liberação criado no Financeiro.");
+              }
+            }
             setEditing(null);
             toast.success("Operação atualizada");
           }}
+
         />
       )}
     </Card>

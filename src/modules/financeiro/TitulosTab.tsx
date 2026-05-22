@@ -319,75 +319,193 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
 }
 
 /* ============================================================
- * Dialog: criar / editar título
+ * Tipos auxiliares de cadastros
+ * ============================================================ */
+type Cadastros = {
+  naturezas: ReturnType<typeof useNaturezasFin>;
+  grupos: ReturnType<typeof useGrupos>;
+  subgrupos: ReturnType<typeof useSubgrupos>;
+  centros: ReturnType<typeof useCentrosCustoFin>;
+  tiposAplic: ReturnType<typeof useTiposAplicacao>;
+  meios: ReturnType<typeof useMeiosPagamento>;
+  fornecedores: { id: string; nome: string }[];
+  contas: { id: string; nome: string }[];
+};
+
+/* ============================================================
+ * Dialog: criar / editar título — cascata Natureza → Grupo/Subgrupo/Centro/Aplicação
  * ============================================================ */
 function TituloDialog({
-  tipo, initial, fornecedores, contas, naturezas, centros,
-  onSave, onCancel, onCancelarTitulo,
+  tipo, initial, cadastros, onSave, onCancel, onCancelarTitulo,
 }: {
   tipo: TituloTipo;
   initial?: Titulo;
-  fornecedores: { id: string; nome: string }[];
-  contas: { id: string; nome: string }[];
-  naturezas: string[];
-  centros: string[];
+  cadastros: Cadastros;
   onSave: (input: any) => void;
   onCancel: () => void;
   onCancelarTitulo?: (motivo: string) => void;
 }) {
+  const { naturezas, grupos, subgrupos, centros, tiposAplic, meios, fornecedores, contas } = cadastros;
+
+  // filtra naturezas pelo tipo do título (AP → Pagar | AR → Receber) e somente ativas
+  const naturezasDisp = useMemo(
+    () => naturezas.filter((n) => n.ativo && (tipo === "AP" ? n.tipo === "Pagar" : n.tipo === "Receber")),
+    [naturezas, tipo],
+  );
+
+  const [naturezaId, setNaturezaId] = useState<string>(initial?.naturezaId ?? naturezasDisp[0]?.id ?? "");
+  const natSel = naturezasDisp.find((n) => n.id === naturezaId) ?? naturezas.find((n) => n.id === naturezaId);
+
+  const [grupoId, setGrupoId] = useState<string>(initial?.grupoId ?? natSel?.grupoId ?? "");
+  const [subgrupoId, setSubgrupoId] = useState<string>(initial?.subgrupoId ?? natSel?.subgrupoId ?? "");
+  const [centroCustoId, setCentroCustoId] = useState<string>(initial?.centroCustoId ?? natSel?.centroCustoPadraoId ?? centros[0]?.id ?? "");
+  const [tipoAplicacaoId, setTipoAplicacaoId] = useState<string>(initial?.tipoAplicacaoId ?? natSel?.tipoAplicacaoPadraoId ?? "");
+  const [meioPagamentoId, setMeioPagamentoId] = useState<string>(initial?.meioPagamentoId ?? "");
+  const [contaFinanceiraNome, setContaNome] = useState(initial?.contaFinanceira ?? "");
+
   const [descricao, setDescricao] = useState(initial?.descricao ?? "");
   const [valorOriginal, setValor] = useState<number>(initial?.valorOriginal ?? 0);
   const [vencimento, setVenc] = useState(initial?.vencimento ?? new Date().toISOString().slice(0, 10));
-  const [natureza, setNatureza] = useState(initial?.natureza ?? (naturezas[0] ?? ""));
-  const [centroCusto, setCentro] = useState(initial?.centroCusto ?? (centros[0] ?? ""));
   const [fornecedor, setFornecedor] = useState(initial?.fornecedor ?? "");
   const [cliente, setCliente] = useState(initial?.cliente ?? "");
   const [obraId, setObra] = useState(initial?.obraId ?? "");
   const [contratoId, setContrato] = useState(initial?.contratoId ?? "");
-  const [meioPagamento, setMeio] = useState(initial?.meioPagamento ?? "");
-  const [contaFinanceira, setConta] = useState(initial?.contaFinanceira ?? "");
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
+
+  // Anexos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
+  const [anexosPend, setAnexosPend] = useState<Anexo[]>(initial?.anexos ?? []);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Cascata: ao trocar a natureza, sugerir grupo/subgrupo/centro/aplicação padrão
+  const aoTrocarNatureza = (id: string) => {
+    setNaturezaId(id);
+    const n = naturezas.find((x) => x.id === id);
+    if (n) {
+      setGrupoId(n.grupoId);
+      setSubgrupoId(n.subgrupoId ?? "");
+      if (n.centroCustoPadraoId) setCentroCustoId(n.centroCustoPadraoId);
+      if (n.tipoAplicacaoPadraoId) setTipoAplicacaoId(n.tipoAplicacaoPadraoId);
+    }
+  };
+
+  const subgruposDisp = useMemo(() => subgrupos.filter((s) => s.grupoId === grupoId && s.ativo), [subgrupos, grupoId]);
+
+  const handleFiles = async (fs: FileList | null) => {
+    if (!fs) return;
+    for (const file of Array.from(fs)) {
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      setAnexosPend((prev) => [...prev, {
+        id: `ANX-NEW-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        nome: file.name, mime: file.type || "application/octet-stream",
+        tamanho: file.size, dataUrl, enviadoEm: new Date().toISOString(),
+      }]);
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const submit = () => {
     if (!descricao.trim()) return toast.error("Descrição obrigatória.");
     if (!(valorOriginal > 0)) return toast.error("Valor deve ser maior que zero.");
     if (!vencimento) return toast.error("Vencimento obrigatório.");
+    if (!naturezaId) return toast.error("Selecione a natureza financeira.");
+    if (!centroCustoId) return toast.error("Selecione o centro de custo.");
+
+    const nat = naturezas.find((n) => n.id === naturezaId);
+    const cc = centros.find((c) => c.id === centroCustoId);
+    const meio = meios.find((m) => m.id === meioPagamentoId);
+
     onSave({
       descricao, valorOriginal: Number(valorOriginal), vencimento,
       competencia: vencimento.slice(0, 7),
-      natureza, centroCusto,
+      // IDs estruturais
+      naturezaId, grupoId, subgrupoId: subgrupoId || undefined,
+      centroCustoId, tipoAplicacaoId: tipoAplicacaoId || undefined,
+      meioPagamentoId: meioPagamentoId || undefined,
+      // Strings para compat
+      natureza: nat?.nome ?? "",
+      centroCusto: cc?.nome ?? "",
+      meioPagamento: meio?.nome,
+      contaFinanceira: contaFinanceiraNome || undefined,
       fornecedor: tipo === "AP" ? fornecedor : undefined,
       cliente: tipo === "AR" ? cliente : undefined,
       obraId: obraId || undefined,
       contratoId: contratoId || undefined,
-      meioPagamento: meioPagamento || undefined,
-      contaFinanceira: contaFinanceira || undefined,
       observacao: observacao || undefined,
+      anexos: anexosPend.length ? anexosPend : undefined,
     });
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>{initial ? "Editar título" : `Novo título · ${tipo === "AP" ? "Contas a Pagar" : "Contas a Receber"}`}</DialogTitle></DialogHeader>
+
+      {/* Linha 1: identificação básica */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2"><Label>Descrição</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
-        <div><Label>Valor</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} /></div>
-        <div><Label>Vencimento</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
-        <div>
-          <Label>Natureza</Label>
-          <Select value={natureza} onValueChange={setNatureza}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{naturezas.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
-          </Select>
+        <div className="col-span-2"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
+        <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
+        <div><Label>Vencimento *</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
+      </div>
+
+      {/* Bloco classificação contábil (cascata) */}
+      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary/80">Classificação gerencial</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <Label>Natureza financeira *</Label>
+            <Select value={naturezaId} onValueChange={aoTrocarNatureza}>
+              <SelectTrigger><SelectValue placeholder="Selecione a natureza…" /></SelectTrigger>
+              <SelectContent>
+                {naturezasDisp.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{n.codigo}</span> · {n.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Grupo</Label>
+            <Select value={grupoId} onValueChange={setGrupoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{grupos.filter((g) => g.ativo).map((g) => <SelectItem key={g.id} value={g.id}>{g.codigo} · {g.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Subgrupo</Label>
+            <Select value={subgrupoId} onValueChange={setSubgrupoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{subgruposDisp.map((s) => <SelectItem key={s.id} value={s.id}>{s.codigo} · {s.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Centro de custo *</Label>
+            <Select value={centroCustoId} onValueChange={setCentroCustoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{centros.filter((c) => c.ativo).map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} · {c.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Tipo de aplicação</Label>
+            <Select value={tipoAplicacaoId} onValueChange={setTipoAplicacaoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{tiposAplic.filter((t) => t.ativo).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}{t.posVenda ? " (pós-venda)" : ""}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
         </div>
-        <div>
-          <Label>Centro de custo</Label>
-          <Select value={centroCusto} onValueChange={setCentro}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{centros.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
+        {natSel?.contaContabilFutura && (
+          <div className="mt-2 text-[10px] text-muted-foreground">Conta contábil: <span className="font-mono">{natSel.contaContabilFutura}</span></div>
+        )}
+      </div>
+
+      {/* Bloco partes + pagamento */}
+      <div className="mt-3 grid grid-cols-2 gap-3">
         {tipo === "AP" ? (
           <div>
             <Label>Fornecedor</Label>
@@ -399,10 +517,16 @@ function TituloDialog({
         ) : (
           <div><Label>Cliente</Label><Input value={cliente} onChange={(e) => setCliente(e.target.value)} /></div>
         )}
-        <div><Label>Meio de pagamento</Label><Input value={meioPagamento} onChange={(e) => setMeio(e.target.value)} placeholder="PIX, Boleto, Cartão…" /></div>
+        <div>
+          <Label>Meio de pagamento</Label>
+          <Select value={meioPagamentoId} onValueChange={setMeioPagamentoId}>
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>{meios.filter((m) => m.ativo).map((m) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
         <div>
           <Label>Conta financeira</Label>
-          <Select value={contaFinanceira} onValueChange={setConta}>
+          <Select value={contaFinanceiraNome} onValueChange={setContaNome}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
           </Select>
@@ -411,8 +535,42 @@ function TituloDialog({
         <div><Label>Contrato (opcional)</Label><Input value={contratoId} onChange={(e) => setContrato(e.target.value)} /></div>
         <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
       </div>
+
+      {/* Anexos */}
+      <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
+          </div>
+          <div>
+            <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
+            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+              <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
+            </Button>
+          </div>
+        </div>
+        {anexosPend.length === 0 ? (
+          <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 5 MB cada.</div>
+        ) : (
+          <div className="space-y-1">
+            {anexosPend.map((a) => (
+              <div key={a.id} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="flex-1 truncate">{a.nome}</span>
+                <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
+                <a href={a.dataUrl} download={a.nome}><Download className="h-3.5 w-3.5" /></a>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setAnexosPend((prev) => prev.filter((x) => x.id !== a.id))}>
+                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {initial && onCancelarTitulo && (
-        <div className="mt-2 rounded border border-rose-500/30 bg-rose-500/5 p-3">
+        <div className="mt-3 rounded border border-rose-500/30 bg-rose-500/5 p-3">
           <div className="mb-1 text-xs font-semibold text-rose-600">Cancelar título</div>
           <div className="flex items-center gap-2">
             <Input placeholder="Motivo do cancelamento" value={cancelMotivo} onChange={(e) => setCancelMotivo(e.target.value)} />
@@ -428,6 +586,71 @@ function TituloDialog({
       </DialogFooter>
     </DialogContent>
   );
+}
+
+/* ============================================================
+ * Bloco de anexos do histórico — permite adicionar/remover diretamente
+ * ============================================================ */
+function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }) {
+  const anexos = titulo.anexos ?? [];
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = async (fs: FileList | null) => {
+    if (!fs) return;
+    for (const file of Array.from(fs)) {
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      try {
+        adicionarAnexo(titulo.id, { nome: file.name, mime: file.type || "application/octet-stream", tamanho: file.size, dataUrl });
+      } catch (e: any) { toast.error(e.message); }
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-xs font-semibold text-muted-foreground">
+          <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos ({anexos.length})
+        </div>
+        {editavel && (
+          <>
+            <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
+            <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+              <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
+            </Button>
+          </>
+        )}
+      </div>
+      {anexos.length === 0 ? (
+        <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo.</div>
+      ) : (
+        <div className="space-y-1">
+          {anexos.map((a) => (
+            <div key={a.id} className="flex items-center gap-2 rounded bg-muted/40 px-2 py-1 text-xs">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="flex-1 truncate">{a.nome}</span>
+              <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
+              <a href={a.dataUrl} download={a.nome} title="Baixar"><Download className="h-3.5 w-3.5" /></a>
+              {editavel && (
+                <Button size="icon" variant="ghost" className="h-6 w-6"
+                  onClick={() => { try { removerAnexo(titulo.id, a.id); } catch (e: any) { toast.error(e.message); } }}>
+                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 }
 
 /* ============================================================

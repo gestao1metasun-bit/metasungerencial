@@ -214,6 +214,30 @@ export function removeLancamentosDoProjeto(projetoId: string) {
   } catch {}
 }
 
+/** Atualiza statusFin com auditoria automática. */
+export function setStatusFin(id: string, novo: StatusFin, usuario = "Sistema", motivo?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = readLancamentos();
+    const before = cur.find((l) => l.id === id);
+    if (!before) return;
+    const antes = before.statusFin ?? derivarStatusFin(before.camada);
+    if (antes === novo) return;
+    const next = cur.map((l) => (l.id === id ? { ...l, statusFin: novo } : l));
+    localStorage.setItem(LS_LANC, JSON.stringify(next));
+    pushAudit({
+      entidade: "contrato",
+      entidadeId: before.contrato ?? before.id,
+      acao: "FIN_TITULO_EDITADO",
+      usuario,
+      motivo,
+      campo: "statusFin",
+      valorAnterior: antes,
+      valorNovo: novo,
+    });
+  } catch {}
+}
+
 /** Existe lançamento Realizado/Confirmado vinculado ao contrato? */
 export function temLancamentoConcretizado(contratoId: string): boolean {
   return readLancamentos().some((l) =>

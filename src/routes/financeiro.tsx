@@ -572,31 +572,101 @@ function Field({ label, children, className = "" }: { label: string; children: R
 
 /* ============== Recorrentes ============== */
 const RECORRENCIAS: Recorrencia[] = ["Mensal", "Quinzenal", "Semanal", "Anual", "Personalizada", "Única"];
+const ORIGENS_REC: { v: import("@/lib/financeiro-store").OrigemRecorrente; label: string }[] = [
+  { v: "manual", label: "Manual" },
+  { v: "aluguel", label: "Aluguel" },
+  { v: "folha", label: "Folha / Pró-labore" },
+  { v: "assinatura", label: "Assinatura / Serviço" },
+  { v: "contrato", label: "Contrato (parcela)" },
+  { v: "comissao", label: "Comissão" },
+  { v: "imposto", label: "Imposto / Tributo" },
+  { v: "outro", label: "Outro" },
+];
 
 function RecorrentesTab({ recs, setRecs, centros, naturezas }: any) {
-  const total = recs.filter((r: DespesaRecorrente) => r.ativa).reduce((s: number, r: DespesaRecorrente) => s + r.valor, 0);
+  const [filtroTipo, setFiltroTipo] = useState<"Todos" | Tipo>("Todos");
+  const ym = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
+  const visiveis = recs.filter((r: DespesaRecorrente) => filtroTipo === "Todos" || r.tipo === filtroTipo);
+  const entradasAtivas = recs.filter((r: DespesaRecorrente) => r.ativa && r.tipo === "Entrada").reduce((s: number, r: DespesaRecorrente) => s + r.valor, 0);
+  const saidasAtivas = recs.filter((r: DespesaRecorrente) => r.ativa && r.tipo === "Saída").reduce((s: number, r: DespesaRecorrente) => s + r.valor, 0);
+  const pendentes = recs.filter((r: DespesaRecorrente) => r.ativa && r.recorrencia === "Mensal" && (!r.ultimaGeracao || r.ultimaGeracao < ym)).length;
+
+  const gerarMes = async () => {
+    const { gerarLancamentosRecorrentes } = await import("@/lib/financeiro-store");
+    const { lancamentos, recs: out } = gerarLancamentosRecorrentes(recs, ym);
+    if (lancamentos.length === 0) { toast.info("Nada a gerar para " + ym); return; }
+    setRecs(() => out);
+    toast.success(`${lancamentos.length} lançamento(s) gerado(s) para ${ym}`);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">Total ativo: <span className="font-semibold text-foreground">{fmtBRL(total)}</span></div>
+      <div className="grid gap-3 md:grid-cols-4">
+        <Card className="p-3 bg-[image:var(--gradient-card)]">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Entradas recorrentes/mês</div>
+          <div className="mt-1 text-lg font-bold text-success">{fmtBRLPrecise(entradasAtivas)}</div>
+        </Card>
+        <Card className="p-3 bg-[image:var(--gradient-card)]">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Saídas recorrentes/mês</div>
+          <div className="mt-1 text-lg font-bold text-destructive">{fmtBRLPrecise(saidasAtivas)}</div>
+        </Card>
+        <Card className="p-3 bg-[image:var(--gradient-card)]">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Saldo recorrente</div>
+          <div className={`mt-1 text-lg font-bold ${entradasAtivas - saidasAtivas >= 0 ? "text-success" : "text-destructive"}`}>
+            {fmtBRLPrecise(entradasAtivas - saidasAtivas)}
+          </div>
+        </Card>
+        <Card className="p-3 bg-[image:var(--gradient-card)]">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Pendentes em {ym}</div>
+          <div className="mt-1 text-lg font-bold">{pendentes}</div>
+        </Card>
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as any)}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Todos">Todos os tipos</SelectItem>
+              <SelectItem value="Entrada">Apenas entradas</SelectItem>
+              <SelectItem value="Saída">Apenas saídas</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={gerarMes} disabled={pendentes === 0}>
+            <Repeat className="mr-1.5 h-3.5 w-3.5" /> Gerar lançamentos de {ym}
+          </Button>
+        </div>
         <NovaRecorrenteDialog onSave={(r) => setRecs((p: DespesaRecorrente[]) => [r, ...p])} centros={centros} naturezas={naturezas} />
       </div>
+
       <Card className="bg-[image:var(--gradient-card)]">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Descrição</TableHead><TableHead>Natureza</TableHead><TableHead>Centro</TableHead>
+            <TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Origem</TableHead>
+            <TableHead>Natureza</TableHead><TableHead>Centro</TableHead>
             <TableHead>Recorrência</TableHead><TableHead>Vencto.</TableHead>
+            <TableHead>Vigência</TableHead><TableHead>Última geração</TableHead>
             <TableHead className="text-right">Valor</TableHead><TableHead>Ativa</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {recs.map((r: DespesaRecorrente) => (
+            {visiveis.map((r: DespesaRecorrente) => (
               <TableRow key={r.id}>
+                <TableCell>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${r.tipo === "Entrada" ? "bg-success/10 text-success border border-success/30" : "bg-destructive/10 text-destructive border border-destructive/30"}`}>
+                    {r.tipo === "Entrada" ? "Entrada" : "Saída"}
+                  </span>
+                </TableCell>
                 <TableCell className="font-medium">{r.descricao}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{ORIGENS_REC.find(o => o.v === r.origem)?.label ?? "Manual"}</TableCell>
                 <TableCell className="text-muted-foreground">{r.natureza}</TableCell>
                 <TableCell className="text-muted-foreground">{r.centroCusto}</TableCell>
                 <TableCell><StatusBadge status={r.recorrencia} /></TableCell>
                 <TableCell className="text-muted-foreground">Dia {r.diaVencimento}</TableCell>
-                <TableCell className="text-right font-semibold">{fmtBRLPrecise(r.valor)}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">
+                  {r.vigenciaInicio ?? "—"}{r.vigenciaFim ? ` → ${r.vigenciaFim}` : ""}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-xs">{r.ultimaGeracao ?? "—"}</TableCell>
+                <TableCell className={`text-right font-semibold ${r.tipo === "Entrada" ? "text-success" : ""}`}>{fmtBRLPrecise(r.valor)}</TableCell>
                 <TableCell><Switch checked={r.ativa} onCheckedChange={(c) => setRecs((p: DespesaRecorrente[]) => p.map(x => x.id === r.id ? { ...x, ativa: c } : x))} /></TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" onClick={() => setRecs((p: DespesaRecorrente[]) => p.filter(x => x.id !== r.id))}><Trash2 className="h-4 w-4" /></Button>
@@ -612,10 +682,12 @@ function RecorrentesTab({ recs, setRecs, centros, naturezas }: any) {
 
 function NovaRecorrenteDialog({ onSave, centros, naturezas }: { onSave: (r: DespesaRecorrente) => void; centros: any[]; naturezas: any[] }) {
   const [open, setOpen] = useState(false);
+  const ymHoje = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
   const [f, setF] = useState<DespesaRecorrente>({
-    id: "", descricao: "", valor: 0, recorrencia: "Mensal", diaVencimento: 5,
+    id: "", descricao: "", tipo: "Saída", valor: 0, recorrencia: "Mensal", diaVencimento: 5,
     natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
     empresa: "Meta Sun", filial: "Manaus", responsavel: "", ativa: true,
+    origem: "manual", vigenciaInicio: ymHoje,
   });
   const set = (k: keyof DespesaRecorrente, v: any) => setF(p => ({ ...p, [k]: v }));
   const save = () => {
@@ -624,25 +696,46 @@ function NovaRecorrenteDialog({ onSave, centros, naturezas }: { onSave: (r: Desp
     toast.success("Recorrente criada");
     setOpen(false);
   };
+  const naturezasFiltradas = naturezas.filter((n: any) => n.tipo === f.tipo);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button><Repeat className="mr-2 h-4 w-4" /> Nova despesa fixa</Button></DialogTrigger>
+      <DialogTrigger asChild><Button><Repeat className="mr-2 h-4 w-4" /> Nova recorrente</Button></DialogTrigger>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>Despesa fixa / recorrente</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Lançamento recorrente</DialogTitle>
+          <div className="mt-1 text-xs text-muted-foreground">Entradas (aluguéis, parcelas, assinaturas recebidas) e saídas (folha, contas fixas) com geração automática mês a mês.</div>
+        </DialogHeader>
         <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Tipo">
+            <Select value={f.tipo} onValueChange={(v) => set("tipo", v as Tipo)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Saída">Saída (despesa)</SelectItem>
+                <SelectItem value="Entrada">Entrada (receita)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Origem operacional">
+            <Select value={f.origem} onValueChange={(v) => set("origem", v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{ORIGENS_REC.map(o => <SelectItem key={o.v} value={o.v}>{o.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
           <Field label="Descrição" className="md:col-span-2"><Input value={f.descricao} onChange={(e) => set("descricao", e.target.value)} /></Field>
           <Field label="Valor (R$)"><Input type="number" step="0.01" value={f.valor} onChange={(e) => set("valor", parseFloat(e.target.value) || 0)} /></Field>
           <Field label="Recorrência">
-            <Select value={f.recorrencia} onValueChange={(v) => set("recorrencia", v)}>
+            <Select value={f.recorrencia} onValueChange={(v) => set("recorrencia", v as Recorrencia)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{RECORRENCIAS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
           <Field label="Dia do vencimento"><Input type="number" min={1} max={28} value={f.diaVencimento} onChange={(e) => set("diaVencimento", parseInt(e.target.value) || 1)} /></Field>
+          <Field label="Vigência início (YYYY-MM)"><Input value={f.vigenciaInicio ?? ""} onChange={(e) => set("vigenciaInicio", e.target.value)} placeholder="2026-05" /></Field>
+          <Field label="Vigência fim (opcional)"><Input value={f.vigenciaFim ?? ""} onChange={(e) => set("vigenciaFim", e.target.value)} placeholder="2027-05" /></Field>
           <Field label="Natureza">
             <Select value={f.natureza} onValueChange={(v) => set("natureza", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{naturezas.filter((n: any) => n.tipo === "Saída").map((n: any) => <SelectItem key={n.id} value={n.nome}>{n.nome}</SelectItem>)}</SelectContent>
+              <SelectContent>{naturezasFiltradas.map((n: any) => <SelectItem key={n.id} value={n.nome}>{n.nome}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
           <Field label="Centro de custo">
@@ -653,7 +746,8 @@ function NovaRecorrenteDialog({ onSave, centros, naturezas }: { onSave: (r: Desp
           </Field>
           <Field label="Empresa"><Input value={f.empresa} onChange={(e) => set("empresa", e.target.value)} /></Field>
           <Field label="Filial"><Input value={f.filial} onChange={(e) => set("filial", e.target.value)} /></Field>
-          <Field label="Responsável"><Input value={f.responsavel} onChange={(e) => set("responsavel", e.target.value)} /></Field>
+          <Field label="Responsável"><Input value={f.responsavel ?? ""} onChange={(e) => set("responsavel", e.target.value)} /></Field>
+          <Field label="Contrato vinculado (opcional)"><Input value={f.contratoVinculado ?? ""} onChange={(e) => set("contratoVinculado", e.target.value)} placeholder="CT-0142" /></Field>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Salvar</Button></DialogFooter>
       </DialogContent>

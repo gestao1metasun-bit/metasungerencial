@@ -548,6 +548,15 @@ function ContratoAssinadoRow({
           </DropdownMenuItem>
         </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
+        <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
+            </DialogHeader>
+            <AditivosPanel contrato={c} usuario={aditivoUser} podeGerenciar={podeGerenciarAditivos} />
+          </DialogContent>
+        </Dialog>
+
       </TableCell>
       <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>

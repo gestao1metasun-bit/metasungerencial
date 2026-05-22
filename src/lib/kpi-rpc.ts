@@ -4,31 +4,38 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type KpiComercialRow = {
-  mes: string;
-  total_contratos: number;
-  assinados: number;
-  cancelados: number;
-  receita_assinada: number;
-  ticket_medio: number;
-  taxa_conversao: number;
+  mes: string | null;
+  total_contratos: number | null;
+  assinados: number | null;
+  rascunhos: number | null;
+  cancelados: number | null;
+  receita_assinada: number | null;
+  pipeline_total: number | null;
+  ticket_medio: number | null;
+  kwp_vendido: number | null;
 };
 
 export type KpiEngenhariaRow = {
-  mes: string;
-  total_obras: number;
-  finalizadas: number;
-  atrasadas: number;
-  em_andamento: number;
-  taxa_conclusao: number;
+  mes: string | null;
+  total_obras: number | null;
+  planejadas: number | null;
+  em_andamento: number | null;
+  finalizadas: number | null;
+  atrasadas: number | null;
+  kwp_total: number | null;
+  modulos_total: number | null;
 };
 
 export type KpiConsultorRow = {
   consultor_id: string | null;
   consultor_nome: string | null;
-  contratos: number;
-  assinados: number;
-  receita: number;
-  ticket_medio: number;
+  total_contratos: number | null;
+  assinados: number | null;
+  cancelados: number | null;
+  receita: number | null;
+  ticket_medio: number | null;
+  conversao_pct: number | null;
+  kwp_vendido: number | null;
 };
 
 // Stale: 5min (refresh do banco é a cada 15min). Sem refetch agressivo.
@@ -74,5 +81,5 @@ export function useKpiConsultor() {
 export async function refreshKpisAgora() {
   const { data, error } = await supabase.rpc("refresh_mv_kpis");
   if (error) throw error;
-  return data as { ok: boolean; duration_ms: number; refreshed_at: string };
+  return data as unknown as { ok: boolean; duration_ms: number; refreshed_at: string };
 }

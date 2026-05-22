@@ -37,13 +37,13 @@ export function CmvTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Boxes} title="Valor em estoque" value={fmtBRLPrecise(valorEstoque)}
+        <StatCard icon={Boxes} label="Valor em estoque" value={fmtBRLPrecise(valorEstoque)}
           hint="Qtd × Custo médio ponderado" />
-        <StatCard icon={TrendingDown} title="CMV acumulado" value={fmtBRLPrecise(totalCmv)}
+        <StatCard icon={TrendingDown} label="CMV acumulado" value={fmtBRLPrecise(totalCmv)}
           hint="Saídas para obras (custo médio)" />
-        <StatCard icon={ShoppingCart} title="Total comprado" value={fmtBRLPrecise(totalComprado)}
+        <StatCard icon={ShoppingCart} label="Total comprado" value={fmtBRLPrecise(totalComprado)}
           hint={`${compras.length} compras registradas`} />
-        <StatCard icon={Package} title="Compras a estocar" value={String(comprasAbertas.length)}
+        <StatCard icon={Package} label="Compras a estocar" value={String(comprasAbertas.length)}
           hint={`${comprasEstocadas.length} já estocadas`} />
       </div>
 

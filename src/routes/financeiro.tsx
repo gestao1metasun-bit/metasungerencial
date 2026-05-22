@@ -148,6 +148,11 @@ function FinanceiroPage() {
           />
         </TabsContent>
 
+        <TabsContent value="cadastros" className="mt-5">
+          <CadastrosTab />
+        </TabsContent>
+
+
         <TabsContent value="receber" className="mt-5">
           <TitulosTab tipo="AR" />
         </TabsContent>

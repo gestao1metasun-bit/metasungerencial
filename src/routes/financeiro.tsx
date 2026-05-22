@@ -109,6 +109,10 @@ function FinanceiroPage() {
             <StatCard label="Custo empresa (fixo)" value={fmtBRL(fixasMensais)} hint="Sem obras · ir p/ Gerencial" icon={Building2} tone="muted" onClick={() => setTab("gerencial")} />
           </div>
 
+          <div className="mt-5">
+            <StatusFinMatriz lancs={lancs} onJump={() => setTab("lancamentos")} />
+          </div>
+
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <Card className="p-5 bg-[image:var(--gradient-card)]">
               <div className="mb-3 text-sm font-semibold">Projeção de caixa</div>

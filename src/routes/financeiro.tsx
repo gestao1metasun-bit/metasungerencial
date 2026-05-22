@@ -85,7 +85,8 @@ function FinanceiroPage() {
           <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
           <TabsTrigger value="recorrentes">Despesas fixas</TabsTrigger>
           <TabsTrigger value="gerencial">Visão gerencial</TabsTrigger>
-          <TabsTrigger value="centros">Centros & Naturezas</TabsTrigger>
+          <TabsTrigger value="centros">Centros & Naturezas (legado)</TabsTrigger>
+          <TabsTrigger value="cadastros">Cadastros estruturais</TabsTrigger>
           <TabsTrigger value="receber">A receber</TabsTrigger>
           <TabsTrigger value="pagar">A pagar</TabsTrigger>
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>

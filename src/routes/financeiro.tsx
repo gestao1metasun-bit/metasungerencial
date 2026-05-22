@@ -349,9 +349,12 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
   const [busca, setBusca] = useState("");
   const [tipoF, setTipoF] = useState<"Todos" | Tipo>("Todos");
   const [camadaF, setCamadaF] = useState<"Todas" | Camada>("Todas");
+  const [statusF, setStatusF] = useState<"Todos" | StatusFin>("Todos");
   const filtered = lancs.filter((l: Lancamento) => {
     if (tipoF !== "Todos" && l.tipo !== tipoF) return false;
     if (camadaF !== "Todas" && l.camada !== camadaF) return false;
+    const sf = l.statusFin ?? derivarStatusFin(l.camada);
+    if (statusF !== "Todos" && sf !== statusF) return false;
     if (busca && !`${l.descricao} ${l.natureza} ${l.centroCusto} ${l.obra ?? ""}`.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
   });
@@ -375,6 +378,13 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
             {CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={statusF} onValueChange={(v) => setStatusF(v as any)}>
+          <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todos">Todos status fin.</SelectItem>
+            {STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="ml-auto">
           <NovoLancamentoDialog onSave={(l) => setLancs((p: Lancamento[]) => [l, ...p])} centros={centros} naturezas={naturezas} />
         </div>
@@ -385,10 +395,13 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
           <TableHeader><TableRow>
             <TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Natureza</TableHead>
             <TableHead>Centro</TableHead><TableHead>Obra</TableHead><TableHead>Camada</TableHead>
+            <TableHead>Status fin.</TableHead>
             <TableHead>Tipo</TableHead><TableHead className="text-right">Valor</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {filtered.map((l: Lancamento) => (
+            {filtered.map((l: Lancamento) => {
+              const sf = l.statusFin ?? derivarStatusFin(l.camada);
+              return (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{fmtBR(l.data)}</TableCell>
                 <TableCell className="font-medium">{l.descricao}</TableCell>
@@ -396,6 +409,22 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
                 <TableCell className="text-muted-foreground">{l.centroCusto}</TableCell>
                 <TableCell className="text-muted-foreground">{l.obra ?? "—"}</TableCell>
                 <TableCell><StatusBadge status={l.camada} /></TableCell>
+                <TableCell>
+                  <Select
+                    value={sf}
+                    onValueChange={(v) => {
+                      setStatusFin(l.id, v as StatusFin, "Operador");
+                      setLancs((p: Lancamento[]) => p.map(x => x.id === l.id ? { ...x, statusFin: v as StatusFin } : x));
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-[140px] border-0 bg-transparent p-0 [&>svg]:hidden">
+                      <StatusBadge status={sf} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
                 <TableCell><StatusBadge status={l.tipo} /></TableCell>
                 <TableCell className={`text-right font-semibold ${l.tipo === "Entrada" ? "text-success" : "text-destructive"}`}>
                   {l.tipo === "Entrada" ? "+" : "−"} {fmtBRLPrecise(l.valor)}
@@ -406,7 +435,8 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>

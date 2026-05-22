@@ -95,6 +95,7 @@ function FinanceiroPage() {
           <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
           <TabsTrigger value="dre">DRE</TabsTrigger>
+          <TabsTrigger value="cmv">CMV / Compras</TabsTrigger>
         </TabsList>
 
         {/* DASHBOARD */}

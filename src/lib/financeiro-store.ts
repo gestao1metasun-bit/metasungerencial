@@ -261,3 +261,91 @@ export const fmtBRLPrecise = (v: number) =>
 
 export const startOfWeek = (d: Date) => { const x = new Date(d); const day = x.getDay(); x.setDate(x.getDate() - day); x.setHours(0,0,0,0); return x; };
 export const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+// ============================================================================
+// Geração de lançamentos a partir das recorrentes
+// ============================================================================
+
+/** YYYY-MM atual. */
+export function mesAtual(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Lista todos meses YYYY-MM entre dois pontos (inclusivo). */
+function mesesEntre(deYM: string, ateYM: string): string[] {
+  const [y1, m1] = deYM.split("-").map(Number);
+  const [y2, m2] = ateYM.split("-").map(Number);
+  const out: string[] = [];
+  let y = y1, m = m1;
+  while (y < y2 || (y === y2 && m <= m2)) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+
+function recDevidaNoMes(r: DespesaRecorrente, ym: string): boolean {
+  if (!r.ativa) return false;
+  if (r.vigenciaInicio && r.vigenciaInicio > ym) return false;
+  if (r.vigenciaFim && r.vigenciaFim < ym) return false;
+  // só mensal e anual têm previsibilidade de "1 lançamento por mês" aqui;
+  // quinzenal/semanal/personalizada/única ficam fora da geração automática.
+  if (r.recorrencia === "Mensal") return true;
+  if (r.recorrencia === "Anual") {
+    // mês fixo de início = mês de aniversário
+    const baseMes = r.vigenciaInicio ? r.vigenciaInicio.slice(5, 7) : ym.slice(5, 7);
+    return ym.slice(5, 7) === baseMes;
+  }
+  return false;
+}
+
+/**
+ * Gera lançamentos das recorrentes para o mês informado (default = mês atual).
+ * Não duplica: pula recorrentes cujo `ultimaGeracao >= ym`.
+ * Camada/statusFin = "A realizar" / "Pagar" (para Saída) ou "Confirmado"/"Pagar" (Entrada).
+ * Retorna { gerados, recsAtualizadas }.
+ */
+export function gerarLancamentosRecorrentes(
+  recs: DespesaRecorrente[],
+  ym: string = mesAtual(),
+): { lancamentos: Lancamento[]; recs: DespesaRecorrente[] } {
+  const novos: Lancamento[] = [];
+  const out: DespesaRecorrente[] = recs.map((r) => {
+    if (!recDevidaNoMes(r, ym)) return r;
+    if (r.ultimaGeracao && r.ultimaGeracao >= ym) return r;
+    const dia = Math.min(28, Math.max(1, r.diaVencimento || 1));
+    const data = `${ym}-${String(dia).padStart(2, "0")}`;
+    const camada: Camada = r.tipo === "Entrada" ? "Confirmado" : "A realizar";
+    novos.push({
+      id: `L-REC-${r.id}-${ym}`,
+      data,
+      descricao: `${r.descricao} · ${ym}`,
+      tipo: r.tipo,
+      valor: r.valor,
+      camada,
+      statusFin: r.tipo === "Entrada" ? "Pagar" : "Pagar",
+      natureza: r.natureza,
+      centroCusto: r.centroCusto,
+      empresa: r.empresa,
+      filial: r.filial,
+      responsavel: r.responsavel,
+      contrato: r.contratoVinculado,
+      obra: r.obraVinculada,
+      competencia: ym,
+      obs: `Gerado automaticamente da recorrente ${r.id} (${r.origem ?? "manual"})`,
+    });
+    return { ...r, ultimaGeracao: ym };
+  });
+  if (novos.length > 0) {
+    appendLancamentos(novos);
+    try { localStorage.setItem(LS_REC, JSON.stringify(out)); } catch {}
+  }
+  return { lancamentos: novos, recs: out };
+}
+
+/** Quantas recorrentes ainda estão pendentes de geração no mês informado. */
+export function recorrentesPendentes(recs: DespesaRecorrente[], ym: string = mesAtual()): number {
+  return recs.filter((r) => recDevidaNoMes(r, ym) && (!r.ultimaGeracao || r.ultimaGeracao < ym)).length;
+}
+

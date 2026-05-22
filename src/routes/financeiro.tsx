@@ -448,7 +448,7 @@ function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lanc
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Lancamento>({
     id: "", data: new Date().toISOString().slice(0, 10), descricao: "", tipo: "Saída", valor: 0,
-    camada: "Confirmado", natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
+    camada: "Confirmado", statusFin: "Pagar", natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
     obra: "", empresa: "Meta Sun", filial: "Manaus", responsavel: "", obs: "",
   });
   const set = (k: keyof Lancamento, v: any) => setForm(p => ({ ...p, [k]: v }));

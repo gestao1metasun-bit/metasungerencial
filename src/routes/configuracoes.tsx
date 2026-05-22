@@ -26,6 +26,7 @@ import { usePropostaConfig, setPropostaConfig } from "@/modules/propostas/propos
 import { CadastrosFV } from "@/modules/propostas/PropostasPage";
 import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { FileText } from "lucide-react";
+import { PermissoesTab } from "@/components/app/PermissoesTab";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Meta Sun Gerencial" }] }),

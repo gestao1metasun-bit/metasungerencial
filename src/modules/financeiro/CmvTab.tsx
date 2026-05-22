@@ -2,16 +2,23 @@
 // CMV — Custo de Mercadoria Vendida por Obra
 // Lê movimentos de saída do estoque-store e compras vinculadas a títulos AP.
 // ============================================================================
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useEstoqueState, cmvPorObra, valorEstoqueTotal } from "@/lib/estoque-store";
-import { useCompras } from "@/lib/fin-compras-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEstoqueState, cmvPorObra, valorEstoqueTotal, registrarSaidaObra } from "@/lib/estoque-store";
+import { useCompras, criarCompra, estocarCompra, cancelarCompra, type ItemCompra } from "@/lib/fin-compras-store";
 import { useTitulos } from "@/lib/fin-titulos-store";
+import { useFornecedores } from "@/lib/fin-fornecedores-store";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { StatCard } from "@/components/app/StatCard";
-import { Boxes, TrendingDown, Package, ShoppingCart } from "lucide-react";
+import { Boxes, TrendingDown, Package, ShoppingCart, Plus, CheckCircle2, XCircle, ArrowDownToLine } from "lucide-react";
+import { toast } from "sonner";
 
 function fmtDT(iso: string) {
   if (!iso) return "—";

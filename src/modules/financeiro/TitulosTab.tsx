@@ -651,7 +651,6 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
     </div>
   );
 }
-}
 
 /* ============================================================
  * Dialog: baixa (parcial/total)

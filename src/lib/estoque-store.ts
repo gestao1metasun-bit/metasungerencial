@@ -453,3 +453,156 @@ export function cmvDaObra(obraId: string): number {
 export function valorEstoqueTotal(): number {
   return state.itens.reduce((s, i) => s + (i.qtdAtual || 0) * (i.custoMedio ?? 0), 0);
 }
+
+// ============================================================================
+// RESERVAS — bloqueio de estoque para uma obra (sem baixa física).
+// ============================================================================
+
+export function disponivelParaReserva(itemId: string, obraId?: string): number {
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return 0;
+  const totalReservado = item.qtdReservada || 0;
+  const propria = obraId
+    ? (state.necessidades.find((n) => n.obraId === obraId)?.itens.find((i) => i.itemId === itemId)?.qtdReservada || 0)
+    : 0;
+  const outras = Math.max(0, totalReservado - propria);
+  return Math.max(0, (item.qtdAtual || 0) - outras - propria);
+}
+
+export function reservarMaterial(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+): { ok: boolean; erro?: string } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const disp = disponivelParaReserva(itemId, obraId);
+  if (disp < qtd) return { ok: false, erro: `Sem estoque disponível (disp=${disp}).` };
+
+  const item = state.itens.find((x) => x.id === itemId)!;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdReservada: (i.qtdReservada || 0) + qtd } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : { ...it, qtdReservada: (it.qtdReservada || 0) + qtd },
+      ),
+      atualizadaEm: new Date().toISOString(),
+    },
+  );
+  const mov: MovimentoEstoque = {
+    id: novoMovId(), em: new Date().toISOString(), tipo: "Reserva",
+    itemId, itemNome: item.nome, qtd, custoUnit: item.custoMedio ?? 0,
+    custoTotal: qtd * (item.custoMedio ?? 0), obraId, por: usuario,
+  };
+  setState({ itens, necessidades, movimentos: [mov, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_reserva", usuario, detalhe: `${itemId}: ${qtd}` });
+  return { ok: true };
+}
+
+export function liberarReserva(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+  silencioso = false,
+): { ok: boolean; erro?: string } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const nec = state.necessidades.find((n) => n.obraId === obraId);
+  const necIt = nec?.itens.find((i) => i.itemId === itemId);
+  const reservada = necIt?.qtdReservada || 0;
+  if (reservada < qtd) return { ok: false, erro: `Reserva insuficiente (res=${reservada}).` };
+
+  const item = state.itens.find((x) => x.id === itemId)!;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdReservada: Math.max(0, (i.qtdReservada || 0) - qtd) } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : { ...it, qtdReservada: Math.max(0, (it.qtdReservada || 0) - qtd) },
+      ),
+      atualizadaEm: new Date().toISOString(),
+    },
+  );
+  const movs: MovimentoEstoque[] = silencioso ? [] : [{
+    id: novoMovId(), em: new Date().toISOString(), tipo: "Liberação",
+    itemId, itemNome: item.nome, qtd, custoUnit: 0, custoTotal: 0, obraId, por: usuario,
+  }];
+  setState({ itens, necessidades, movimentos: [...movs, ...state.movimentos].slice(0, 2000) });
+  if (!silencioso) pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_liberacao", usuario, detalhe: `${itemId}: ${qtd}` });
+  return { ok: true };
+}
+
+// ============================================================================
+// DEVOLUÇÃO — retorno de material de obra ao estoque.
+// Usa o custo das saídas dessa obra/item (FIFO sobre Saídas) preservando o CM.
+// ============================================================================
+export function registrarDevolucaoObra(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+  obs?: string,
+): { ok: boolean; erro?: string; valor?: number } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return { ok: false, erro: "Item não encontrado." };
+
+  const saidas = state.movimentos
+    .filter((m) => m.tipo === "Saída" && m.obraId === obraId && m.itemId === itemId)
+    .slice().sort((a, b) => a.em.localeCompare(b.em));
+  const devolvidos = new Map<string, number>();
+  for (const d of state.movimentos.filter((m) => m.tipo === "Devolução" && m.obraId === obraId && m.itemId === itemId && m.refMovId)) {
+    devolvidos.set(d.refMovId!, (devolvidos.get(d.refMovId!) || 0) + d.qtd);
+  }
+  let restante = qtd;
+  let custoTotalDev = 0;
+  const movs: MovimentoEstoque[] = [];
+  const now = new Date().toISOString();
+  for (const s of saidas) {
+    if (restante <= 0) break;
+    const disp = s.qtd - (devolvidos.get(s.id) || 0);
+    if (disp <= 0) continue;
+    const usar = Math.min(disp, restante);
+    movs.push({
+      id: novoMovId(), em: now, tipo: "Devolução",
+      itemId: item.id, itemNome: item.nome, qtd: usar,
+      custoUnit: s.custoUnit, custoTotal: usar * s.custoUnit,
+      obraId, cliente: s.cliente, por: usuario, obs, refMovId: s.id,
+    });
+    custoTotalDev += usar * s.custoUnit;
+    restante -= usar;
+  }
+  if (restante > 0) return { ok: false, erro: `Sem saídas suficientes para devolver (faltam ${restante}).` };
+
+  const qAnt = item.qtdAtual || 0;
+  const cmAnt = item.custoMedio ?? 0;
+  const qNovo = qAnt + qtd;
+  const cmDev = custoTotalDev / qtd;
+  const cmNovo = qNovo > 0 ? (qAnt * cmAnt + qtd * cmDev) / qNovo : cmDev;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdAtual: qNovo, custoMedio: cmNovo, atualizadoEm: now, atualizadoPor: usuario } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : {
+          ...it,
+          qtdEntregue: Math.max(0, (it.qtdEntregue || 0) - qtd),
+          entregaCompleta: false,
+        },
+      ),
+      atualizadaEm: now,
+    },
+  );
+
+  setState({ itens, necessidades, movimentos: [...movs, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_devolucao", usuario, detalhe: `${itemId}: ${qtd} (R$ ${custoTotalDev.toFixed(2)})` });
+  return { ok: true, valor: custoTotalDev };
+}
+

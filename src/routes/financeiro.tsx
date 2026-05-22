@@ -94,7 +94,7 @@ function FinanceiroPage() {
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
           <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
-          <TabsTrigger value="dre">DRE</TabsTrigger>
+          <TabsTrigger value="cmv">CMV / Compras</TabsTrigger>
           <TabsTrigger value="cmv">CMV / Compras</TabsTrigger>
         </TabsList>
 

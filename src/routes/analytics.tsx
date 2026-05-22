@@ -279,12 +279,29 @@ function AnalyticsPage() {
           {isPrivado ? (
             <CFOTab
               receita={receitas}
+              custosObras={custosObras}
+              despAdmin={despAdmin}
               ebitda={ebitdaCalc.ebitda}
               margem={ebitdaCalc.margem}
+              margemLiq={margemLiq}
               alavancagem={alavancagem}
               cobertura={cobertura}
               capitalGiro={capitalGiro}
+              ativoCirc={ativoCirc}
+              passivoCirc={passivoCirc}
               roce={roce}
+              dividaTotal={dividaTotal}
+              parcelasMensais={parcelasMensais}
+              inadimplencia={inadimplencia}
+              vencidos={vencidos}
+              totalReceber={totalReceber}
+              conversaoPct={conversaoPct}
+              assinados={assinados}
+              totalContratos={totalContratos}
+              contratos={contratos}
+              obras={obras}
+              lancs={lancs as Lancamento[]}
+              fixasMensais={fixasMensais}
               pareceres={pareceres}
             />
           ) : (

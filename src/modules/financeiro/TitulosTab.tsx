@@ -140,10 +140,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             </DialogTrigger>
             <TituloDialog
               tipo={tipo}
-              fornecedores={fornecedores}
-              contas={contas}
-              naturezas={naturezas.map((n) => n.nome)}
-              centros={centros.map((c) => c.nome)}
+              cadastros={cadastros}
               onSave={(input) => { criarTitulo({ ...input, tipo, origem: "manual" }); toast.success("Título criado."); setCriarOpen(false); }}
               onCancel={() => setCriarOpen(false)}
             />

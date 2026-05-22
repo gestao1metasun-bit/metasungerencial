@@ -431,12 +431,14 @@ export type CmvObra = {
 export function cmvPorObra(): CmvObra[] {
   const map = new Map<string, CmvObra>();
   for (const m of state.movimentos) {
-    if (m.tipo !== "Saída" || !m.obraId) continue;
+    if (!m.obraId) continue;
+    if (m.tipo !== "Saída" && m.tipo !== "Devolução") continue;
+    const sinal = m.tipo === "Saída" ? 1 : -1;
     const cur = map.get(m.obraId) ?? {
       obraId: m.obraId, cliente: m.cliente ?? "", cmvTotal: 0, itens: 0, ultimaSaida: m.em,
     };
-    cur.cmvTotal += m.custoTotal;
-    cur.itens += 1;
+    cur.cmvTotal += sinal * m.custoTotal;
+    cur.itens += sinal;
     if (m.em > cur.ultimaSaida) cur.ultimaSaida = m.em;
     if (!cur.cliente && m.cliente) cur.cliente = m.cliente;
     map.set(m.obraId, cur);
@@ -446,9 +448,10 @@ export function cmvPorObra(): CmvObra[] {
 
 export function cmvDaObra(obraId: string): number {
   return state.movimentos
-    .filter((m) => m.tipo === "Saída" && m.obraId === obraId)
-    .reduce((s, m) => s + m.custoTotal, 0);
+    .filter((m) => m.obraId === obraId && (m.tipo === "Saída" || m.tipo === "Devolução"))
+    .reduce((s, m) => s + (m.tipo === "Saída" ? m.custoTotal : -m.custoTotal), 0);
 }
+
 
 export function valorEstoqueTotal(): number {
   return state.itens.reduce((s, i) => s + (i.qtdAtual || 0) * (i.custoMedio ?? 0), 0);

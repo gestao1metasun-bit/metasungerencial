@@ -44,9 +44,12 @@ export type Lancamento = {
   dataEmissao?: string;
 };
 
+export type OrigemRecorrente = "manual" | "aluguel" | "folha" | "assinatura" | "contrato" | "comissao" | "imposto" | "outro";
+
 export type DespesaRecorrente = {
   id: string;
   descricao: string;
+  tipo: Tipo;                // Entrada | Saída (default: Saída)
   valor: number;
   recorrencia: Recorrencia;
   diaVencimento: number;     // 1..28
@@ -56,6 +59,12 @@ export type DespesaRecorrente = {
   filial: string;
   responsavel?: string;
   ativa: boolean;
+  origem?: OrigemRecorrente; // origem operacional
+  vigenciaInicio?: string;   // YYYY-MM (default: mês atual quando vazio)
+  vigenciaFim?: string;      // YYYY-MM (opcional, sem limite quando vazio)
+  ultimaGeracao?: string;    // YYYY-MM da última vez que gerou lançamento
+  contratoVinculado?: string;
+  obraVinculada?: string;
 };
 
 export type CentroCusto = { id: string; nome: string; tipo: "Administrativo" | "Operacional" | "Comercial" | "Obra" };
@@ -129,14 +138,15 @@ const seedLanc: Lancamento[] = [
 ];
 
 const seedRec: DespesaRecorrente[] = [
-  { id: "R-001", descricao: "Aluguel sede", valor: 12000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Aluguel", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-002", descricao: "Folha de pagamento", valor: 178000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Folha de pagamento", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-003", descricao: "Pró-labore sócios", valor: 28000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Pró-labore", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-004", descricao: "Energia elétrica", valor: 4200, recorrencia: "Mensal", diaVencimento: 15, natureza: "Energia/Água", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-005", descricao: "Internet + telefonia", valor: 1800, recorrencia: "Mensal", diaVencimento: 12, natureza: "Internet/Telefonia", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-006", descricao: "Software CRM/ERP", valor: 2400, recorrencia: "Mensal", diaVencimento: 20, natureza: "Software/Licenças", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-007", descricao: "Contabilidade", valor: 3500, recorrencia: "Mensal", diaVencimento: 8, natureza: "Contabilidade", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-008", descricao: "Seguros frota", valor: 1900, recorrencia: "Mensal", diaVencimento: 18, natureza: "Veículos/Seguros", centroCusto: "Frota", empresa: "Meta Sun", filial: "Manaus", ativa: true },
+  { id: "R-001", descricao: "Aluguel sede", tipo: "Saída", valor: 12000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Aluguel", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "aluguel" },
+  { id: "R-002", descricao: "Folha de pagamento", tipo: "Saída", valor: 178000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Folha de pagamento", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "folha" },
+  { id: "R-003", descricao: "Pró-labore sócios", tipo: "Saída", valor: 28000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Pró-labore", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "folha" },
+  { id: "R-004", descricao: "Energia elétrica", tipo: "Saída", valor: 4200, recorrencia: "Mensal", diaVencimento: 15, natureza: "Energia/Água", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "manual" },
+  { id: "R-005", descricao: "Internet + telefonia", tipo: "Saída", valor: 1800, recorrencia: "Mensal", diaVencimento: 12, natureza: "Internet/Telefonia", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-006", descricao: "Software CRM/ERP", tipo: "Saída", valor: 2400, recorrencia: "Mensal", diaVencimento: 20, natureza: "Software/Licenças", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-007", descricao: "Contabilidade", tipo: "Saída", valor: 3500, recorrencia: "Mensal", diaVencimento: 8, natureza: "Contabilidade", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-008", descricao: "Seguros frota", tipo: "Saída", valor: 1900, recorrencia: "Mensal", diaVencimento: 18, natureza: "Veículos/Seguros", centroCusto: "Frota", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "manual" },
+  { id: "R-009", descricao: "Recebimento parcelas CT (carteira)", tipo: "Entrada", valor: 86000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Parcelas/Recorrentes", centroCusto: "Comercial", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "contrato" },
 ];
 
 // ---------- generic LS hook ----------
@@ -251,3 +261,91 @@ export const fmtBRLPrecise = (v: number) =>
 
 export const startOfWeek = (d: Date) => { const x = new Date(d); const day = x.getDay(); x.setDate(x.getDate() - day); x.setHours(0,0,0,0); return x; };
 export const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+// ============================================================================
+// Geração de lançamentos a partir das recorrentes
+// ============================================================================
+
+/** YYYY-MM atual. */
+export function mesAtual(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Lista todos meses YYYY-MM entre dois pontos (inclusivo). */
+function mesesEntre(deYM: string, ateYM: string): string[] {
+  const [y1, m1] = deYM.split("-").map(Number);
+  const [y2, m2] = ateYM.split("-").map(Number);
+  const out: string[] = [];
+  let y = y1, m = m1;
+  while (y < y2 || (y === y2 && m <= m2)) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+
+function recDevidaNoMes(r: DespesaRecorrente, ym: string): boolean {
+  if (!r.ativa) return false;
+  if (r.vigenciaInicio && r.vigenciaInicio > ym) return false;
+  if (r.vigenciaFim && r.vigenciaFim < ym) return false;
+  // só mensal e anual têm previsibilidade de "1 lançamento por mês" aqui;
+  // quinzenal/semanal/personalizada/única ficam fora da geração automática.
+  if (r.recorrencia === "Mensal") return true;
+  if (r.recorrencia === "Anual") {
+    // mês fixo de início = mês de aniversário
+    const baseMes = r.vigenciaInicio ? r.vigenciaInicio.slice(5, 7) : ym.slice(5, 7);
+    return ym.slice(5, 7) === baseMes;
+  }
+  return false;
+}
+
+/**
+ * Gera lançamentos das recorrentes para o mês informado (default = mês atual).
+ * Não duplica: pula recorrentes cujo `ultimaGeracao >= ym`.
+ * Camada/statusFin = "A realizar" / "Pagar" (para Saída) ou "Confirmado"/"Pagar" (Entrada).
+ * Retorna { gerados, recsAtualizadas }.
+ */
+export function gerarLancamentosRecorrentes(
+  recs: DespesaRecorrente[],
+  ym: string = mesAtual(),
+): { lancamentos: Lancamento[]; recs: DespesaRecorrente[] } {
+  const novos: Lancamento[] = [];
+  const out: DespesaRecorrente[] = recs.map((r) => {
+    if (!recDevidaNoMes(r, ym)) return r;
+    if (r.ultimaGeracao && r.ultimaGeracao >= ym) return r;
+    const dia = Math.min(28, Math.max(1, r.diaVencimento || 1));
+    const data = `${ym}-${String(dia).padStart(2, "0")}`;
+    const camada: Camada = r.tipo === "Entrada" ? "Confirmado" : "A realizar";
+    novos.push({
+      id: `L-REC-${r.id}-${ym}`,
+      data,
+      descricao: `${r.descricao} · ${ym}`,
+      tipo: r.tipo,
+      valor: r.valor,
+      camada,
+      statusFin: r.tipo === "Entrada" ? "Pagar" : "Pagar",
+      natureza: r.natureza,
+      centroCusto: r.centroCusto,
+      empresa: r.empresa,
+      filial: r.filial,
+      responsavel: r.responsavel,
+      contrato: r.contratoVinculado,
+      obra: r.obraVinculada,
+      competencia: ym,
+      obs: `Gerado automaticamente da recorrente ${r.id} (${r.origem ?? "manual"})`,
+    });
+    return { ...r, ultimaGeracao: ym };
+  });
+  if (novos.length > 0) {
+    appendLancamentos(novos);
+    try { localStorage.setItem(LS_REC, JSON.stringify(out)); } catch {}
+  }
+  return { lancamentos: novos, recs: out };
+}
+
+/** Quantas recorrentes ainda estão pendentes de geração no mês informado. */
+export function recorrentesPendentes(recs: DespesaRecorrente[], ym: string = mesAtual()): number {
+  return recs.filter((r) => recDevidaNoMes(r, ym) && (!r.ultimaGeracao || r.ultimaGeracao < ym)).length;
+}
+

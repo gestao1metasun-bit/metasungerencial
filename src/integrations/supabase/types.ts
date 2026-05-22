@@ -560,6 +560,7 @@ export type Database = {
           chave: string
           descricao: string | null
           id: string
+          setor: string | null
           updated_at: string
           updated_by: string | null
           valor: Json
@@ -569,6 +570,7 @@ export type Database = {
           chave: string
           descricao?: string | null
           id?: string
+          setor?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: Json
@@ -578,9 +580,52 @@ export type Database = {
           chave?: string
           descricao?: string | null
           id?: string
+          setor?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: Json
+        }
+        Relationships: []
+      }
+      gerencial_parametros_historico: {
+        Row: {
+          categoria: string | null
+          changed_by: string | null
+          changed_by_email: string | null
+          chave: string
+          created_at: string
+          descricao: string | null
+          id: string
+          motivo: string | null
+          setor: string | null
+          valor_anterior: Json | null
+          valor_novo: Json
+        }
+        Insert: {
+          categoria?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          chave: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          motivo?: string | null
+          setor?: string | null
+          valor_anterior?: Json | null
+          valor_novo: Json
+        }
+        Update: {
+          categoria?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          chave?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          motivo?: string | null
+          setor?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json
         }
         Relationships: []
       }

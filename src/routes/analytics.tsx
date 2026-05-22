@@ -46,7 +46,7 @@ import {
   fmtMeses,
   DEFAULT_BANDS,
 } from "@/lib/analytics-kpis";
-import { listarParametrosGerenciais, atualizarParametroGerencial } from "@/lib/parametros-gerenciais.functions";
+import { ParametrosGerenciaisTab } from "@/components/app/analytics/ParametrosGerenciaisTab";
 import { Lock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/analytics")({
@@ -527,57 +527,8 @@ function CFOTab(props: {
   );
 }
 
-function ParametrosGerenciaisTab() {
-  const qc = useQueryClient();
-  const { data: params = [], isLoading } = useQuery({
-    queryKey: ["gerencial_parametros"],
-    queryFn: () => listarParametrosGerenciais(),
-  });
-  const mut = useMutation({
-    mutationFn: (v: { chave: string; valor: Record<string, number> }) =>
-      atualizarParametroGerencial({ data: v }),
-    onSuccess: () => {
-      toast.success("Parâmetro atualizado.");
-      qc.invalidateQueries({ queryKey: ["gerencial_parametros"] });
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Erro"),
-  });
-  if (isLoading) return <Card className="p-6 text-sm text-muted-foreground">Carregando parâmetros...</Card>;
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Edite as faixas usadas pelos classificadores e capacidades operacionais. Alterações
-        impactam todos os indicadores automaticamente.
-      </p>
-      {params.map((p) => (
-        <ParametroCard key={p.id} chave={p.chave} descricao={p.descricao ?? p.chave} valor={p.valor as Record<string, number>} onSave={(novo) => mut.mutate({ chave: p.chave, valor: novo })} />
-      ))}
-    </div>
-  );
-}
 
-function ParametroCard({ chave, descricao, valor, onSave }: { chave: string; descricao: string; valor: Record<string, number>; onSave: (v: Record<string, number>) => void }) {
-  const [draft, setDraft] = useState<Record<string, number>>(valor);
-  return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{chave}</div>
-          <div className="text-sm">{descricao}</div>
-        </div>
-        <Button size="sm" onClick={() => onSave(draft)}>Salvar</Button>
-      </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-        {Object.entries(draft).map(([k, v]) => (
-          <div key={k}>
-            <Label className="text-[11px] uppercase">{k}</Label>
-            <Input type="number" step="0.1" value={v} onChange={(e) => setDraft({ ...draft, [k]: Number(e.target.value) })} />
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
+
 
 function DRETab({ lancs, fixas }: { lancs: Lancamento[]; fixas: number }) {
   const receitas = lancs.filter((l) => l.tipo === "Entrada" && (l.camada === "Realizado" || l.camada === "Confirmado")).reduce((s, l) => s + l.valor, 0);

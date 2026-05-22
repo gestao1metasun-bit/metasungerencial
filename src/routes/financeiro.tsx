@@ -33,6 +33,7 @@ import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
 import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
+import { CmvTab } from "@/modules/financeiro/CmvTab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({

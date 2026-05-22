@@ -187,7 +187,7 @@ function ObrasTab({ podeEntregar }: { podeEntregar: boolean }) {
         {obraSel ? (
           <ObraDetalhe obraId={obraSel} podeEntregar={podeEntregar} />
         ) : (
-          <div className="text-sm text-muted-foreground">Selecione uma obra à esquerda.</div>
+          <PainelCompraSelecao />
         )}
       </Card>
     </div>

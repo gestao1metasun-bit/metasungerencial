@@ -1,119 +1,74 @@
-## Aditivos Contratuais — Implementação Oficial
 
-Implementar módulo completo de aditivos para contratos assinados, com fluxo, trava operacional, consolidação automática e permissões.
+# Estoque operacional + Cronograma + Engenharia
 
-### 1. Store de Aditivos (`src/lib/aditivos-store.ts`)
+Objetivo: criar um módulo de Estoque que funcione como **controle operacional de entrega + necessidade visual de compra**, sem movimentação automática, alimentado pelas obras quando entram no **Cronograma**, e que reaja automaticamente a alterações técnicas da Engenharia.
 
-Novo store (localStorage, padrão do projeto) com:
+## 1. Estrutura de dados (store local `localStorage`, igual ao restante do ERP)
 
-**Tipo `Aditivo`:**
-- `id`, `contratoId`, `numero` (sequencial por contrato: ADT-001, ADT-002...)
-- `tipo`: `"acumulativo" | "substitutivo"`
-- `impactoFinanceiro`: `boolean`
-- `categoria`: `"troca_inversor" | "troca_modulo" | "troca_telhado" | "ajuste_tecnico" | "alteracao_operacional" | "financeiro" | "outro"`
-- `descricao`, `motivo`
-- `status`: `"CRIADO" | "AGUARDANDO_ASSINATURA" | "ASSINADO" | "AGUARDANDO_APROVACAO" | "APROVADO" | "REPROVADO" | "CANCELADO"`
-- `alteracoes`: objeto com deltas — `modulos?`, `inversores?`, `potenciaKwp?`, `valor?`, `endereco?`, `estruturaTecnica?`, `observacoesTecnicas?`
-- `distribuicaoProjetos`: `Array<{ projetoId, deltaModulos, deltaValor }>` (calculada automaticamente, editável)
-- `anexoAssinadoUrl?`, `dataCriacao`, `dataAssinatura?`, `dataAprovacao?`
-- `criadoPor`, `aprovadoPor?`, `reprovadoMotivo?`
+Arquivo novo `src/lib/estoque-store.ts`:
 
-**Funções:**
-- `criarAditivo(contratoId, dados)` → registra audit
-- `enviarParaAssinatura(id)`, `anexarAssinado(id, url)`, `enviarParaAprovacao(id)`
-- `aprovarAditivo(id, usuario)` → aplica alterações no contrato (consolidação automática) e distribui nos projetos
-- `reprovarAditivo(id, motivo)` → libera trava, descarta alterações pendentes
-- `getAditivosByContrato(contratoId)`, `getAditivoAtivo(contratoId)` (último substitutivo válido)
-- `temAditivoPendente(contratoId)` → boolean (qualquer status != APROVADO/REPROVADO/CANCELADO)
-- `getCamposBloqueados(contratoId)` → retorna áreas impactadas pelo aditivo pendente
+- **EstoqueItem** (catálogo): `id`, `nome`, `unidade` ("un" | "m" | "kg" | "pç"), `categoria` ("Módulo" | "Inversor" | "Cabo" | "Disjuntor" | "Estrutura" | "Outro"), `qtdAtual` (informada manual), `atualizadoEm`, `atualizadoPor`.
+- **NecessidadeObraItem**: `obraId`, `itemId`, `qtdNecessaria` (derivada da obra/engenharia), `qtdEntregue`, `entregaCompleta` (bool), `obs`.
+- **NecessidadeObra**: `obraId`, `contratoId`, `cliente`, `selecionadaCompra` (bool — seleção manual), `materialEntregueTotal` (derivado: todos itens completos), `itens: NecessidadeObraItem[]`.
+- Catálogo seed: módulo 550W, inversor padrão, cabo 6mm², disjuntor CC, estrutura cerâmico, etc.
 
-### 2. Consolidação Automática
+Helpers:
+- `sugerirItensDaObra(obra)` — gera itens baseados em `modulos`, `inversores`, `kwp`, `telhado` (regra simples: cabo = `modulos * 2 m`, estrutura = `modulos`, etc).
+- `recalcularNecessidade(obraId)` — re-deriva `qtdNecessaria` quando engenharia muda; preserva `qtdEntregue`. Item já entregue + aumento ⇒ falta só a diferença.
+- `marcarEntrega(obraId, itemId, qtd, completo?)` — apenas atualiza `qtdEntregue/entregaCompleta`, **não** mexe em `qtdAtual` do catálogo.
+- `setEstoqueAtual(itemId, qtd)` — atualização manual periódica.
+- `setSelecionadaCompra(obraId, bool)` — seleção manual para entrar no cálculo de compra.
+- `calcularNecessidadeCompra()` — soma das obras selecionadas, descontando entregas e estoque atual: `compra = max(0, Σ(necessidade - entregue) - estoqueAtual)`.
 
-Ao aprovar:
-- Soma deltas no `ContratoFull` (módulos, inversores, kWp, valor)
-- Se substitutivo: marca aditivos anteriores como `oculto: true` operacionalmente
-- Se acumulativo: soma sobre estado consolidado atual
-- Distribuição proporcional automática em projetos (regra de 3 sobre módulos atuais), com possibilidade de override manual antes de aprovar
-- Registra audit completo (campo, valor anterior, valor novo)
+## 2. Integração com Cronograma / Engenharia
 
-### 3. Trava Operacional Parcial
+Em `src/routes/engenharia.tsx`:
 
-Função `podeExecutarAcao(contratoId, acao)` onde `acao` ∈ `"finalizar_obra" | "liberar_estoque" | "faturar" | "gerar_financeiro" | "concluir_etapa_critica" | "consolidar"`.
+- Quando obra entra na fase elegível ao Cronograma (mesmo filtro `elegivelCronograma`), chamar `garantirNecessidadeObra(obra)` — cria entry de necessidade se não existir, com itens sugeridos.
+- Hook `useEffect` que observa alterações técnicas das obras (`modulos`, `inversores`, `potencia`, `telhadoTipo`) → dispara `recalcularNecessidade(obraId)`.
+- Obras **Finalizadas** ou retornadas ao Comercial → marcar necessidade como `arquivada` (sai da lista).
 
-- Se houver aditivo pendente que impacte a área → bloqueia
-- Áreas não impactadas continuam livres
-- Hook `useAditivoLock(contratoId)` para consumir em telas
+## 3. UI — novo módulo `/estoque`
 
-### 4. UI — Componentes Novos
+Rota `src/routes/estoque.tsx` + entrada na sidebar e em `route-tabs.ts`.
 
-**`src/components/app/AditivoBadge.tsx`**: badge vermelho "CONTRATO COM ADITIVO PENDENTE" reutilizável (contrato, projeto, obra, dashboard).
+Abas:
+1. **Painel** — KPIs: obras no cronograma, obras selecionadas, itens pendentes, valor estimado de compra (opcional).
+2. **Obras no cronograma** — tabela das obras elegíveis. Checkbox "Incluir na compra". Botão "Material entregue" colapsa itens. Badge **MATERIAL ENTREGUE** quando 100% ok.
+3. **Necessidade de compra** — agrega itens das obras selecionadas: `Necessidade total | Já entregue | Estoque atual | A comprar`. Coluna "A comprar" em destaque âmbar/vermelho.
+4. **Estoque atual** — catálogo editável (qtd manual, atualizado em/por).
+5. **Histórico de entregas** — log das ações de entrega.
 
-**`src/components/app/AditivoDialog.tsx`**: dialog multi-step:
-1. Tipo (acumulativo/substitutivo) + impacto financeiro (sim/não) + categoria
-2. Alterações (campos dinâmicos conforme categoria)
-3. Distribuição nos projetos (preview automático + edição manual)
-4. Revisão + criação
+Dialogs:
+- `EntregaItemDialog` — entrada de qtd entregue (completa ou parcial com restante calculado).
+- `EditarEstoqueDialog` — atualiza `qtdAtual` manual.
 
-**`src/components/app/AditivosPanel.tsx`**: lista de aditivos do contrato com timeline de status, ações conforme status:
-- CRIADO → "Enviar para assinatura"
-- AGUARDANDO_ASSINATURA → "Anexar assinado"
-- ASSINADO → "Enviar para aprovação"
-- AGUARDANDO_APROVACAO → "Aprovar" / "Reprovar" (só Financeiro/Diretoria)
+## 4. Permissões
 
-### 5. Integração com Telas Existentes
+- `usePodeEditarEstoque()` — só perfis com flag `estoque` (admin master + setor Estoque). Outros perfis: leitura.
+- Botões de entrega/edição desabilitados para outros.
 
-**`src/routes/comercial.tsx` (Contratos)**:
-- Botão "Novo aditivo" no detalhe do contrato (só visível para contratos APROVADOS/ASSINADOS)
-- Aba "Aditivos" mostrando AditivosPanel
-- Badge de aditivo pendente na lista e no detalhe
-- Exibir valores/módulos consolidados (não os originais)
+## 5. Sinalização cruzada
 
-**`src/routes/engenharia.tsx`**:
-- Badge de aditivo pendente em obras/projetos do contrato afetado
-- Bloquear botões "Finalizar etapa crítica" e "Liberar estoque" quando aditivo pendente impacta área
+- Card da obra no Kanban da Engenharia ganha micro-badge **"Material OK"** (verde) quando `materialEntregueTotal`.
+- Em Gestão de projetos (Comercial), apenas leitura — sem alterações.
 
-**`src/routes/financeiro.tsx`** + **`src/routes/financiamentos.tsx`**:
-- Bloquear "Faturar" / "Gerar financeiro" com tooltip explicativo
-- Badge na linha
+## 6. Detalhes técnicos
 
-**`src/routes/dashboard.tsx`**:
-- Card "Aditivos pendentes" com contagem e link
+- Tudo via `useSyncExternalStore` com cache `SERVER_SNAPSHOT` (mesmo padrão dos outros stores) para evitar loop.
+- Persistência `localStorage` key `ms.estoque.v1` + `ms.estoque.necessidades.v1`.
+- Sem migrations Supabase nesta entrega (mantém o padrão atual de stores locais).
+- Validações: qtd nunca negativa, entrega parcial não pode exceder necessidade (avisa, mas permite para casos de re-engenharia).
 
-### 6. Permissões
+## 7. Arquivos a criar/editar
 
-Em `src/lib/auth-store.ts`, helper `podeGerenciarAditivos()` → `true` para perfis Financeiro, Diretoria, Admin Master, Admin Geral. Botões de criar/aprovar/reprovar ficam ocultos para outros perfis.
+- novo: `src/lib/estoque-store.ts`
+- novo: `src/routes/estoque.tsx`
+- novo: `src/modules/estoque/components/EntregaItemDialog.tsx`
+- novo: `src/modules/estoque/components/EditarEstoqueDialog.tsx`
+- edit: `src/lib/route-tabs.ts` (entrada Estoque)
+- edit: `src/components/app/AppLayout.tsx` (sidebar)
+- edit: `src/routes/engenharia.tsx` (gatilhos: garantir necessidade ao entrar no cronograma; recalcular ao editar; arquivar ao finalizar/retornar; badge material)
+- edit: `src/lib/perfis-store.ts` (módulo `estoque` nas permissões)
 
-### 7. Regra: Contrato Assinado Não Volta
-
-Remover/desabilitar qualquer botão "voltar etapa" / "reabrir comercial" em contratos com status assinado. Substituir por CTA "Criar aditivo".
-
-### 8. Auditoria
-
-Toda ação de aditivo registra via `pushAudit()` com entidade `"contrato"` e detalhe descrevendo o aditivo (criação, assinatura, aprovação, reprovação, consolidação, distribuição).
-
----
-
-### Arquivos novos
-- `src/lib/aditivos-store.ts`
-- `src/components/app/AditivoBadge.tsx`
-- `src/components/app/AditivoDialog.tsx`
-- `src/components/app/AditivosPanel.tsx`
-
-### Arquivos editados
-- `src/lib/contratos-store.ts` (campo `aditivosConsolidados`, helpers de consolidação)
-- `src/lib/auth-store.ts` (permissão `podeGerenciarAditivos`)
-- `src/routes/comercial.tsx` (aba + botão + badge + bloqueio de "voltar")
-- `src/routes/engenharia.tsx` (badge + bloqueios)
-- `src/routes/financeiro.tsx` (bloqueios + badge)
-- `src/routes/financiamentos.tsx` (bloqueios + badge)
-- `src/routes/dashboard.tsx` (card de pendências)
-
-### Persistência
-
-Mantenho localStorage (padrão atual do ERP — alinhado com a auditoria, que recomenda migração futura para Supabase). Quando a migração para banco acontecer, este store entra no mesmo lote.
-
-### Confirmações que preciso antes de codar
-Vou seguir as regras como descritas, **a menos que** você queira ajustar:
-- Distribuição automática proporcional aos módulos **já existentes** em cada projeto (e não por área/potência). OK?
-- "Concluir etapas críticas" = últimas 3 etapas do kanban de engenharia (Vistoria final, Comissionamento, Entrega). OK?
-- Aditivo substitutivo oculta os anteriores **apenas operacionalmente** (continuam visíveis no histórico). OK?
+Sem mudanças em Comercial/Contratos/Aditivos/Financiamentos.

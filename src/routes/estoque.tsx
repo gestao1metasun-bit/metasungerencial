@@ -1,468 +1,594 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Fragment, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  Package, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Plus, Search,
-  Boxes, TrendingDown, RefreshCw, Truck, ChevronDown, ChevronRight,
+  Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock,
 } from "lucide-react";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, Legend,
-} from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
-import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { estoqueItens, movimentacoesEstoque, fmtBRL, obras as obrasSeed } from "@/lib/mock-data";
+import { useTabFromHash } from "@/lib/route-tabs";
+import { useIsAdmin } from "@/lib/auth-store";
+import {
+  useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
+  setSelecionadaCompra, marcarEntrega, isMaterialEntregueTotal,
+  calcularNecessidadeCompra, findItem,
+  type EstoqueItem, type Categoria, type Unidade,
+} from "@/lib/estoque-store";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),
   component: EstoquePage,
 });
 
-const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+function fmtDate(iso?: string) {
+  if (!iso) return "—";
+  try { const d = new Date(iso); return d.toLocaleString("pt-BR"); } catch { return "—"; }
+}
 
 function EstoquePage() {
   const [tab, setTab] = useTabFromHash("/estoque");
+  const isAdmin = useIsAdmin();
+  // Por padrão consideramos o usuário "Estoque" se for admin. Pode evoluir para
+  // checar um perfil específico (ex.: setor === "estoque").
+  const podeEntregar = isAdmin;
+  const podeAjustarEstoque = isAdmin;
+
   return (
     <>
-      <PageHeader title="Estoque" subtitle="Controle de produtos, movimentações e níveis mínimos." />
+      <PageHeader
+        title="Estoque"
+        subtitle="Necessidades de obra, compras e controle de entregas."
+      />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="obras">Obras</TabsTrigger>
+          <TabsTrigger value="compra">Compra</TabsTrigger>
           <TabsTrigger value="itens">Itens</TabsTrigger>
-          <TabsTrigger value="entregas">Entregas Realizadas</TabsTrigger>
+          <TabsTrigger value="entregas">Entregas</TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard" className="mt-5"><DashboardEst /></TabsContent>
-        <TabsContent value="itens" className="mt-5"><ItensTab /></TabsContent>
+        <TabsContent value="dashboard" className="mt-5"><DashboardTab /></TabsContent>
+        <TabsContent value="obras" className="mt-5"><ObrasTab podeEntregar={podeEntregar} /></TabsContent>
+        <TabsContent value="compra" className="mt-5"><CompraTab /></TabsContent>
+        <TabsContent value="itens" className="mt-5"><ItensTab podeAjustar={podeAjustarEstoque} /></TabsContent>
         <TabsContent value="entregas" className="mt-5"><EntregasTab /></TabsContent>
       </Tabs>
     </>
   );
 }
 
-function DashboardEst() {
-  const totalItens = estoqueItens.length;
-  const valorTotal = estoqueItens.reduce((s, i) => s + i.quantidade * i.custo, 0);
-  const baixos = estoqueItens.filter((i) => i.status === "Baixo").length;
-  const criticos = estoqueItens.filter((i) => i.status === "Crítico").length;
-  const entradas = movimentacoesEstoque.filter((m) => m.tipo === "Entrada").length;
-  const saidas = movimentacoesEstoque.filter((m) => m.tipo === "Saída").length;
+/* ─────────────────────────── DASHBOARD ─────────────────────────── */
 
-  const porCategoria = Object.entries(
-    estoqueItens.reduce<Record<string, number>>((acc, i) => {
-      acc[i.categoria] = (acc[i.categoria] ?? 0) + i.quantidade * i.custo;
-      return acc;
-    }, {})
-  ).map(([name, value]) => ({ name, value }));
-
-  const topConsumo = estoqueItens.slice(0, 6).map((i) => ({ nome: i.produto.split(" ").slice(0, 2).join(" "), qtd: i.quantidade }));
+function DashboardTab() {
+  const st = useEstoqueState();
+  const obrasAtivas = st.necessidades.filter((n) => !n.arquivada);
+  const selecionadas = obrasAtivas.filter((n) => n.selecionadaCompra);
+  const linhas = calcularNecessidadeCompra(st);
+  const aComprarTotal = linhas.reduce((s, l) => s + l.aComprar, 0);
+  const obrasMatOK = obrasAtivas.filter(isMaterialEntregueTotal).length;
+  const sku = st.itens.length;
 
   return (
-    <>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-6">
-        <StatCard label="Itens cadastrados" value={totalItens} icon={Package} tone="primary" />
-        <StatCard label="Valor em estoque" value={fmtBRL(valorTotal)} icon={Boxes} tone="info" />
-        <StatCard label="Itens baixos" value={baixos} icon={TrendingDown} tone="warning" />
-        <StatCard label="Itens críticos" value={criticos} icon={AlertTriangle} tone="destructive" />
-        <StatCard label="Entradas (mês)" value={entradas} icon={ArrowDownCircle} tone="success" />
-        <StatCard label="Saídas (mês)" value={saidas} icon={ArrowUpCircle} tone="info" />
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatCard label="Obras no fluxo" value={String(obrasAtivas.length)} hint="Em cronograma/elaboração" />
+        <StatCard label="Selecionadas p/ compra" value={String(selecionadas.length)} hint="Entram no cálculo" />
+        <StatCard label="Itens a comprar" value={String(aComprarTotal)} hint="Soma de unidades" />
+        <StatCard label="Obras com material entregue" value={`${obrasMatOK}/${obrasAtivas.length}`} hint="Entrega total concluída" />
       </div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-3 text-sm font-semibold">Valor por categoria</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie data={porCategoria} dataKey="value" nameKey="name" innerRadius={55} outerRadius={100} paddingAngle={2}>
-                {porCategoria.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="p-5 bg-[image:var(--gradient-card)]">
-          <div className="mb-3 text-sm font-semibold">Quantidade por produto</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={topConsumo}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="nome" stroke="var(--muted-foreground)" fontSize={11} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} />
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-              <Bar dataKey="qtd" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-    </>
-  );
-}
-
-type ItemEstoque = { id: string; produto: string; categoria: string; unidade: string; quantidade: number; minimo: number };
-
-const UNIDADES = ["UN", "PÇ", "M", "M²", "KG", "L", "PAR", "KIT", "CX"];
-const CATEGORIAS_PADRAO = ["MÓDULO", "INVERSOR", "ESTRUTURA", "CABO", "ACESSÓRIO", "PROTEÇÃO", "FERRAMENTA"];
-
-const seedItens: ItemEstoque[] = estoqueItens.map((i) => ({
-  id: i.id, produto: i.produto, categoria: i.categoria, unidade: "UN", quantidade: i.quantidade, minimo: i.minimo,
-}));
-
-function ItensTab({ onlyAlerts = false }: { onlyAlerts?: boolean }) {
-  const [items, setItems] = useState<ItemEstoque[]>(seedItens);
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState("todas");
-  const [openNovo, setOpenNovo] = useState(false);
-  const [openAtt, setOpenAtt] = useState(false);
-  const [novo, setNovo] = useState({ produto: "", categoria: "", unidade: "UN", quantidade: "" });
-  const [updates, setUpdates] = useState<Record<string, string>>({});
-
-  const cats = Array.from(new Set([...CATEGORIAS_PADRAO, ...items.map((i) => i.categoria.toUpperCase())]));
-  const filterCats = Array.from(new Set(items.map((i) => i.categoria)));
-  const list = items
-    .filter((i) => !onlyAlerts || i.quantidade <= i.minimo)
-    .filter((i) => cat === "todas" || i.categoria === cat)
-    .filter((i) => [i.produto, i.id].some((v) => v.toLowerCase().includes(q.toLowerCase())));
-
-  const addItem = () => {
-    if (!novo.produto.trim() || !novo.categoria.trim() || !novo.unidade.trim()) {
-      toast.error("Preencha nome, categoria e unidade");
-      return;
-    }
-    const id = `IT-${String(items.length + 1).padStart(3, "0")}`;
-    setItems([
-      { id, produto: novo.produto.toUpperCase(), categoria: novo.categoria.toUpperCase(), unidade: novo.unidade.toUpperCase(), quantidade: Number(novo.quantidade) || 0, minimo: 0 },
-      ...items,
-    ]);
-    setNovo({ produto: "", categoria: "", unidade: "UN", quantidade: "" });
-    setOpenNovo(false);
-    toast.success("Item cadastrado");
-  };
-
-  const openAttList = () => {
-    setUpdates({});
-    setOpenAtt(true);
-  };
-
-  const salvarUpdates = () => {
-    const changes = Object.entries(updates).filter(([, v]) => v !== "" && !Number.isNaN(Number(v)));
-    if (changes.length === 0) {
-      toast.error("Nenhuma quantidade alterada");
-      return;
-    }
-    const map = new Map(changes.map(([k, v]) => [k, Number(v)]));
-    setItems(items.map((i) => map.has(i.id) ? { ...i, quantidade: map.get(i.id)! } : i));
-    setUpdates({});
-    setOpenAtt(false);
-    toast.success(`${changes.length} item(ns) atualizado(s)`);
-  };
-
-  return (
-    <Card className="bg-[image:var(--gradient-card)]">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-        <div className="relative flex-1 min-w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar item" className="pl-9 bg-input/60" />
+      <Card className="p-4">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <ShoppingCart className="h-4 w-4 text-amber-600" /> Próximas compras (consolidado)
         </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as categorias</SelectItem>
-            {filterCats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={openAttList}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Atualizar estoque
-        </Button>
-        <Button onClick={() => setOpenNovo(true)} className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
-          <Plus className="mr-2 h-4 w-4" /> Novo item
-        </Button>
-      </div>
-      <Table>
-        <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>Nome do item</TableHead>
-          <TableHead>Categoria</TableHead>
-          <TableHead className="text-right">Quantidade atual</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {list.map((i) => (
-            <TableRow key={i.id}>
-              <TableCell className="font-medium">{i.produto}</TableCell>
-              <TableCell className="text-muted-foreground">{i.categoria}</TableCell>
-              <TableCell className="text-right font-medium">{i.quantidade}</TableCell>
-            </TableRow>
-          ))}
-          {list.length === 0 && (
-            <TableRow><TableCell colSpan={3} className="py-10 text-center text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
-          )}
-        </TableBody>
-      </Table>
-
-      <Dialog open={openNovo} onOpenChange={setOpenNovo}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Novo item</DialogTitle></DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="grid gap-1">
-              <Label>Nome do item</Label>
-              <Input value={novo.produto} onChange={(e) => setNovo({ ...novo, produto: e.target.value })} placeholder="Ex.: PAINEL 550W" />
-            </div>
-            <div className="grid gap-1">
-              <Label>Categoria</Label>
-              <Select value={novo.categoria} onValueChange={(v) => setNovo({ ...novo, categoria: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
-                <SelectContent>
-                  {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1">
-              <Label>Unidade de medida</Label>
-              <Select value={novo.unidade} onValueChange={(v) => setNovo({ ...novo, unidade: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1">
-              <Label>Quantidade inicial</Label>
-              <Input type="number" min={0} value={novo.quantidade} onChange={(e) => setNovo({ ...novo, quantidade: e.target.value })} />
-            </div>
+        {linhas.length === 0 ? (
+          <div className="text-sm text-muted-foreground">
+            Nenhuma obra selecionada para compra. Vá em <b>Obras (necessidade)</b> e marque as obras a comprar.
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenNovo(false)}>Cancelar</Button>
-            <Button onClick={addItem}>Cadastrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openAtt} onOpenChange={setOpenAtt}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>Atualizar estoque</DialogTitle></DialogHeader>
-          <div className="max-h-[60vh] overflow-auto">
-            <Table>
-              <TableHeader><TableRow className="hover:bg-transparent">
-                <TableHead>Nome do item</TableHead>
-                <TableHead>Unidade</TableHead>
-                <TableHead className="text-right">Quantidade atual</TableHead>
-                <TableHead className="text-right w-40">Quantidade a atualizar</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {items.map((i) => (
-                  <TableRow key={i.id}>
-                    <TableCell className="font-medium">{i.produto}</TableCell>
-                    <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
-                    <TableCell className="text-right">{i.quantidade}</TableCell>
-                    <TableCell className="text-right">
-                      <Input type="number" min={0} value={updates[i.id] ?? ""} placeholder="—"
-                        onChange={(e) => setUpdates({ ...updates, [i.id]: e.target.value })}
-                        className="h-8 text-right" />
-                    </TableCell>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item</TableHead>
+                <TableHead className="text-right">Necessidade</TableHead>
+                <TableHead className="text-right">Entregue</TableHead>
+                <TableHead className="text-right">Em estoque</TableHead>
+                <TableHead className="text-right">A comprar</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {linhas.map((l) => {
+                const item = findItem(st.itens, l.itemId);
+                return (
+                  <TableRow key={l.itemId}>
+                    <TableCell>{item?.nome ?? l.itemId}</TableCell>
+                    <TableCell className="text-right">{l.necessidadeTotal}</TableCell>
+                    <TableCell className="text-right">{l.jaEntregue}</TableCell>
+                    <TableCell className="text-right">{l.estoqueAtual}</TableCell>
+                    <TableCell className="text-right font-semibold text-amber-700">{l.aComprar}</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenAtt(false)}>Cancelar</Button>
-            <Button onClick={salvarUpdates}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+        <div className="mt-3 text-xs text-muted-foreground">SKUs cadastrados: {sku}</div>
+      </Card>
+    </div>
   );
 }
 
-function MovTab() {
+/* ─────────────────────────── OBRAS (NECESSIDADE) ─────────────────────────── */
+
+function ObrasTab({ podeEntregar }: { podeEntregar: boolean }) {
+  const st = useEstoqueState();
+  const obras = st.necessidades.filter((n) => !n.arquivada);
+  const [obraSel, setObraSel] = useState<string | null>(null);
+
+  if (obras.length === 0) {
+    return (
+      <Card className="p-6 text-sm text-muted-foreground">
+        Nenhuma obra elegível. Obras só aparecem aqui quando entram na fase de
+        cronograma na Engenharia.
+      </Card>
+    );
+  }
+
   return (
-    <Card className="bg-[image:var(--gradient-card)]">
-      <div className="flex items-center justify-between border-b border-border p-4">
-        <div className="text-sm font-semibold">Movimentações recentes</div>
-        <Button className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
-          <Plus className="mr-2 h-4 w-4" /> Nova movimentação
-        </Button>
-      </div>
-      <Table>
-        <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead>ID</TableHead><TableHead>Data</TableHead><TableHead>Produto</TableHead>
-          <TableHead>Tipo</TableHead><TableHead className="text-right">Qtd</TableHead>
-          <TableHead>Obra</TableHead><TableHead>Responsável</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {movimentacoesEstoque.map((m) => (
-            <TableRow key={m.id}>
-              <TableCell className="font-mono text-xs text-primary">{m.id}</TableCell>
-              <TableCell className="text-muted-foreground">{m.data}</TableCell>
-              <TableCell className="font-medium">{m.produto}</TableCell>
-              <TableCell><StatusBadge status={m.tipo} /></TableCell>
-              <TableCell className="text-right font-medium">{m.quantidade}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">{m.obra ?? "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{m.responsavel}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-[420px_1fr]">
+      <Card className="p-3">
+        <div className="mb-2 text-xs font-semibold text-muted-foreground">OBRAS ATIVAS</div>
+        <div className="space-y-1.5">
+          {obras.map((n) => {
+            const ok = isMaterialEntregueTotal(n);
+            return (
+              <button
+                key={n.obraId}
+                onClick={() => setObraSel(n.obraId)}
+                className={`flex w-full items-center justify-between rounded border p-2 text-left text-sm hover:bg-muted/50 ${obraSel === n.obraId ? "ring-1 ring-primary" : ""}`}
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{n.cliente}</div>
+                  <div className="text-[11px] text-muted-foreground">Contrato {n.contratoId}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {ok && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                  <Checkbox
+                    checked={n.selecionadaCompra}
+                    onCheckedChange={(v) => setSelecionadaCompra(n.obraId, !!v)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Selecionar para compra"
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-2 text-[11px] text-muted-foreground">
+          O checkbox define se a obra entra no cálculo de <b>Necessidade de Compra</b>.
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        {obraSel ? (
+          <ObraDetalhe obraId={obraSel} podeEntregar={podeEntregar} />
+        ) : (
+          <div className="text-sm text-muted-foreground">Selecione uma obra à esquerda.</div>
+        )}
+      </Card>
+    </div>
   );
 }
 
-// ===================== Entregas Realizadas =====================
-const STATUS_PRIO: Record<string, number> = {
-  "Executando instalação": 1,
-  "Aguardando instalação": 2,
-  "Em projeto/aprovação": 3,
-  "Standby": 4,
-  "Finalizado": 5,
-};
-
-const MATERIAIS = [
-  { key: "hook", label: "Hook", calc: (m: number) => m * 2 },
-  { key: "trilho", label: "Trilho", calc: (m: number) => m },
-  { key: "minitrilho", label: "Minitrilho", calc: (m: number) => Math.round(m * 2.2) },
-  { key: "solo", label: "Solo", calc: (m: number) => Math.round(m / 4) },
-  { key: "intermediario", label: "Intermediário", calc: (m: number) => m * 2 },
-  { key: "final", label: "Final", calc: (m: number) => m },
-  { key: "cabo", label: "Cabo (m)", calc: (m: number) => Math.round(m * 3.5) },
-  { key: "mc4", label: "MC4", calc: (m: number) => Math.ceil(m / 8) },
-] as const;
-
-function fmtDateBR(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const [y, mo, d] = iso.split("-");
-  return d && mo && y ? `${d}/${mo}/${y}` : iso;
-}
-
-function EntregasTab() {
-  const [realizado, setRealizado] = useState<Record<string, Record<string, string>>>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  const rows = [...obrasSeed].sort((a, b) => {
-    const pa = STATUS_PRIO[a.status] ?? 99;
-    const pb = STATUS_PRIO[b.status] ?? 99;
-    if (pa !== pb) return pa - pb;
-    if (!a.inicio && !b.inicio) return 0;
-    if (!a.inicio) return 1;
-    if (!b.inicio) return -1;
-    return a.inicio.localeCompare(b.inicio);
-  });
-
-  const setReal = (obraId: string, key: string, v: string) =>
-    setRealizado((s) => ({ ...s, [obraId]: { ...(s[obraId] ?? {}), [key]: v } }));
-
-  const toggle = (id: string) => setExpanded((s) => ({ ...s, [id]: !s[id] }));
-
-  const totalSugerido = (mods: number) => MATERIAIS.reduce((s, m) => s + m.calc(mods), 0);
-  const totalRealizado = (id: string) =>
-    MATERIAIS.reduce((s, m) => s + (Number(realizado[id]?.[m.key]) || 0), 0);
+function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: boolean }) {
+  const st = useEstoqueState();
+  const n = st.necessidades.find((x) => x.obraId === obraId);
+  const [open, setOpen] = useState<{ itemId: string; qtd: number; completa: boolean } | null>(null);
+  if (!n) return <div className="text-sm text-muted-foreground">Obra não encontrada.</div>;
 
   return (
-    <Card className="bg-[image:var(--gradient-card)]">
-      <div className="flex items-center gap-2 border-b border-border p-4">
-        <Truck className="h-4 w-4 text-primary" />
-        <div className="text-sm font-semibold">Entregas Realizadas</div>
-        <div className="ml-auto text-xs text-muted-foreground">
-          Fonte: Engenharia &gt; Gestão de projetos · {rows.length} obra(s)
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold">{n.cliente}</div>
+          <div className="text-[11px] text-muted-foreground">Contrato {n.contratoId} · Obra {n.obraId}</div>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Atualizado: {fmtDate(n.atualizadaEm)}
         </div>
       </div>
-      <div className="overflow-auto">
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-8" />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Item</TableHead>
+            <TableHead className="text-right">Necessidade</TableHead>
+            <TableHead className="text-right">Entregue</TableHead>
+            <TableHead className="text-right">Falta</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="text-right">Módulos</TableHead>
-            <TableHead className="text-right">kWp</TableHead>
-            <TableHead>INV1</TableHead>
-            <TableHead>INV2</TableHead>
-            <TableHead>INV3</TableHead>
-            <TableHead>Telhado</TableHead>
-            <TableHead>Equipe</TableHead>
-            <TableHead>Previsão inicial</TableHead>
-            <TableHead className="text-right">A entregar</TableHead>
-            <TableHead className="text-right">Entregue/Realizado</TableHead>
-          </TableRow></TableHeader>
+            <TableHead className="text-right w-28">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {n.itens.map((i) => {
+            const it = findItem(st.itens, i.itemId);
+            const falta = Math.max(0, i.qtdNecessaria - i.qtdEntregue);
+            const ok = i.entregaCompleta || falta === 0;
+            return (
+              <TableRow key={i.itemId}>
+                <TableCell>{it?.nome ?? i.itemId}</TableCell>
+                <TableCell className="text-right">{i.qtdNecessaria}</TableCell>
+                <TableCell className="text-right">{i.qtdEntregue}</TableCell>
+                <TableCell className="text-right">{falta}</TableCell>
+                <TableCell>
+                  {ok ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                      <CheckCircle2 className="h-3 w-3" /> Entregue
+                    </span>
+                  ) : i.qtdEntregue > 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                      Parcial
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      Pendente
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {podeEntregar ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setOpen({ itemId: i.itemId, qtd: i.qtdEntregue, completa: ok })}
+                    >
+                      <Truck className="mr-1 h-3.5 w-3.5" /> Entregar
+                    </Button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Lock className="h-3 w-3" /> Apenas Estoque
+                    </span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+
+      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar entrega</DialogTitle>
+          </DialogHeader>
+          {open && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                Item: <b>{findItem(st.itens, open.itemId)?.nome ?? open.itemId}</b>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Qtd. entregue (acumulado)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={open.qtd}
+                    onChange={(e) => setOpen({ ...open, qtd: Number(e.target.value || 0) })}
+                  />
+                </div>
+                <label className="flex items-end gap-2 pb-2">
+                  <Checkbox
+                    checked={open.completa}
+                    onCheckedChange={(v) => setOpen({ ...open, completa: !!v })}
+                  />
+                  <span className="text-sm">Marcar como entrega completa</span>
+                </label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (!open) return;
+                marcarEntrega(obraId, open.itemId, open.qtd, open.completa);
+                toast.success("Entrega registrada.");
+                setOpen(null);
+              }}
+            >
+              Confirmar entrega
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ─────────────────────────── NECESSIDADE DE COMPRA ─────────────────────────── */
+
+function CompraTab() {
+  const st = useEstoqueState();
+  const obrasSel = st.necessidades.filter((n) => n.selecionadaCompra && !n.arquivada);
+  const linhas = calcularNecessidadeCompra(st);
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <ShoppingCart className="h-4 w-4 text-amber-600" /> Cálculo de Compra
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Compra = Σ (Necessidade − Entregue) das obras <b>selecionadas</b> − Estoque atual.
+          Estoque atual é informado manualmente em <b>Estoque Atual</b>.
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+          Obras consideradas ({obrasSel.length})
+        </div>
+        {obrasSel.length === 0 ? (
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            Nenhuma obra marcada. Selecione obras na aba <b>Obras (necessidade)</b>.
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 gap-1 text-sm md:grid-cols-2">
+            {obrasSel.map((o) => (
+              <li key={o.obraId} className="rounded border bg-muted/30 px-2 py-1">
+                <span className="font-semibold">{o.cliente}</span>
+                <span className="ml-1 text-[11px] text-muted-foreground">· Contrato {o.contratoId}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="p-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Item</TableHead>
+              <TableHead className="text-right">Necessidade</TableHead>
+              <TableHead className="text-right">Já entregue</TableHead>
+              <TableHead className="text-right">Estoque atual</TableHead>
+              <TableHead className="text-right">A comprar</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
-            {rows.map((o) => {
-              const isOpen = !!expanded[o.id];
-              const sug = totalSugerido(o.modulos);
-              const real = totalRealizado(o.id);
-              return (
-                <Fragment key={o.id}>
-                  <TableRow key={o.id} className="cursor-pointer" onClick={() => toggle(o.id)}>
-                    <TableCell>
-                      {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </TableCell>
-                    <TableCell><StatusBadge status={o.status} /></TableCell>
-                    <TableCell className="font-medium">{o.cliente}</TableCell>
-                    <TableCell className="text-right">{o.modulos}</TableCell>
-                    <TableCell className="text-right">{o.potencia.toFixed(2)}</TableCell>
-                    <TableCell className="text-muted-foreground">{o.inversor || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                    <TableCell className="text-muted-foreground">{o.telhado}</TableCell>
-                    <TableCell className="text-muted-foreground">{o.equipe || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{fmtDateBR(o.inicio)}</TableCell>
-                    <TableCell className="text-right font-medium">{sug}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      <span className={real >= sug ? "text-success" : real > 0 ? "text-warning" : "text-muted-foreground"}>
-                        {real}
-                      </span>
+            {linhas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                  Sem necessidade pendente.
+                </TableCell>
+              </TableRow>
+            ) : (
+              linhas.map((l) => {
+                const it = findItem(st.itens, l.itemId);
+                return (
+                  <TableRow key={l.itemId}>
+                    <TableCell>{it?.nome ?? l.itemId}</TableCell>
+                    <TableCell className="text-right">{l.necessidadeTotal}</TableCell>
+                    <TableCell className="text-right">{l.jaEntregue}</TableCell>
+                    <TableCell className="text-right">{l.estoqueAtual}</TableCell>
+                    <TableCell className={`text-right font-semibold ${l.aComprar > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                      {l.aComprar}
                     </TableCell>
                   </TableRow>
-                  {isOpen && (
-                    <TableRow key={`${o.id}-det`} className="bg-muted/30 hover:bg-muted/30">
-                      <TableCell />
-                      <TableCell colSpan={12} className="py-3">
-                        <div className="rounded-md border border-border bg-background/50 p-3">
-                          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                            Materiais — {o.cliente} · {o.modulos} módulos
-                          </div>
-                          <Table>
-                            <TableHeader><TableRow className="hover:bg-transparent">
-                              <TableHead>Material</TableHead>
-                              <TableHead className="text-right">Sugerido</TableHead>
-                              <TableHead className="text-right w-40">Realizado</TableHead>
-                            </TableRow></TableHeader>
-                            <TableBody>
-                              {MATERIAIS.map((m) => {
-                                const s = m.calc(o.modulos);
-                                return (
-                                  <TableRow key={m.key}>
-                                    <TableCell className="font-medium">{m.label}</TableCell>
-                                    <TableCell className="text-right">{s}</TableCell>
-                                    <TableCell className="text-right">
-                                      <Input
-                                        type="number"
-                                        min={0}
-                                        value={realizado[o.id]?.[m.key] ?? ""}
-                                        placeholder={String(s)}
-                                        onChange={(e) => setReal(o.id, m.key, e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-8 text-right"
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              );
-            })}
+                );
+              })
+            )}
           </TableBody>
         </Table>
+      </Card>
+    </div>
+  );
+}
+
+/* ─────────────────────────── ESTOQUE ATUAL ─────────────────────────── */
+
+const CATEGORIAS: Categoria[] = ["Módulo", "Inversor", "Cabo", "Disjuntor", "Estrutura", "Conector", "Outro"];
+const UNIDADES: Unidade[] = ["un", "m", "kg", "pç", "kit"];
+
+function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
+  const st = useEstoqueState();
+  const [novo, setNovo] = useState<EstoqueItem | null>(null);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">
+          <Package className="mr-1 inline h-3.5 w-3.5" />
+          {st.itens.length} item(ns). Estoque informado manualmente.
+        </div>
+        {podeAjustar && (
+          <Button size="sm" onClick={() => setNovo({ id: "", nome: "", categoria: "Outro", unidade: "un", qtdAtual: 0 })}>
+            + Novo item
+          </Button>
+        )}
       </div>
-    </Card>
+      <Card className="p-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Código</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Unid.</TableHead>
+              <TableHead className="text-right">Qtd. em estoque</TableHead>
+              <TableHead>Atualizado</TableHead>
+              <TableHead className="text-right w-40">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {st.itens.map((i) => (
+              <TableRow key={i.id}>
+                <TableCell className="font-mono text-xs">{i.id}</TableCell>
+                <TableCell>{i.nome}</TableCell>
+                <TableCell>{i.categoria}</TableCell>
+                <TableCell>{i.unidade}</TableCell>
+                <TableCell className="text-right">
+                  {podeAjustar ? (
+                    <Input
+                      type="number"
+                      min={0}
+                      defaultValue={i.qtdAtual}
+                      onBlur={(e) => {
+                        const v = Number(e.target.value || 0);
+                        if (v !== i.qtdAtual) {
+                          setEstoqueAtual(i.id, v);
+                          toast.success("Estoque atualizado.");
+                        }
+                      }}
+                      className="h-8 w-24 text-right"
+                    />
+                  ) : (
+                    <span>{i.qtdAtual}</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(i.atualizadoEm)}</TableCell>
+                <TableCell className="text-right">
+                  {podeAjustar && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm(`Remover item "${i.nome}"?`)) {
+                          removeEstoqueItem(i.id);
+                          toast.success("Item removido.");
+                        }
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={!!novo} onOpenChange={(o) => !o && setNovo(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Novo item de estoque</DialogTitle></DialogHeader>
+          {novo && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Código</Label>
+                <Input value={novo.id} onChange={(e) => setNovo({ ...novo, id: e.target.value.toUpperCase() })} placeholder="EX: MOD-600" />
+              </div>
+              <div>
+                <Label>Nome</Label>
+                <Input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
+              </div>
+              <div>
+                <Label>Categoria</Label>
+                <Select value={novo.categoria} onValueChange={(v) => setNovo({ ...novo, categoria: v as Categoria })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Unidade</Label>
+                <Select value={novo.unidade} onValueChange={(v) => setNovo({ ...novo, unidade: v as Unidade })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Qtd. em estoque</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={novo.qtdAtual}
+                  onChange={(e) => setNovo({ ...novo, qtdAtual: Number(e.target.value || 0) })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNovo(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (!novo) return;
+                if (!novo.id || !novo.nome) { toast.error("Código e nome são obrigatórios."); return; }
+                upsertEstoqueItem({ ...novo, atualizadoEm: new Date().toISOString(), atualizadoPor: "Estoque" });
+                setNovo(null);
+                toast.success("Item cadastrado.");
+              }}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ─────────────────────────── ENTREGAS (LOG) ─────────────────────────── */
+
+function EntregasTab() {
+  const st = useEstoqueState();
+  const [q, setQ] = useState("");
+  const list = useMemo(() => {
+    const f = q.trim().toLowerCase();
+    return st.log.filter((l) =>
+      !f || l.cliente.toLowerCase().includes(f) || l.itemNome.toLowerCase().includes(f),
+    );
+  }, [st.log, q]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <Input placeholder="Buscar por cliente ou item…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
+        <span className="text-xs text-muted-foreground">{list.length} registro(s)</span>
+      </div>
+      <Card className="p-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Data</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead className="text-right">Qtd.</TableHead>
+              <TableHead>Completa?</TableHead>
+              <TableHead>Por</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground">Nenhuma entrega registrada.</TableCell></TableRow>
+            ) : (
+              list.map((l) => (
+                <TableRow key={l.id}>
+                  <TableCell className="text-xs">{fmtDate(l.em)}</TableCell>
+                  <TableCell>{l.cliente || "—"}</TableCell>
+                  <TableCell>{l.itemNome}</TableCell>
+                  <TableCell className="text-right">{l.qtd}</TableCell>
+                  <TableCell>{l.completa ? "Sim" : "Não"}</TableCell>
+                  <TableCell className="text-xs">{l.por}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
   );
 }

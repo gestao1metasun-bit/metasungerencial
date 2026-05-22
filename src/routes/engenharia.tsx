@@ -38,6 +38,14 @@ import {
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
+import { setObrasSnapshot, type ObraSnapshot } from "@/lib/obras-snapshot-store";
+import {
+  garantirNecessidadeObra,
+  recalcularNecessidade,
+  arquivarNecessidade,
+  useEstoqueState,
+  isMaterialEntregueTotal,
+} from "@/lib/estoque-store";
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";
@@ -235,6 +243,31 @@ function EngenhariaPage() {
     });
     // depende da lista de aguardando (proxy do estado de aprovações)
   }, [aguardandoIds.join(",")]);
+
+  // ───────── Integração com Estoque ─────────
+  // 1) Publica snapshot público das obras (consumido pelo módulo Estoque).
+  // 2) Para obras ELEGÍVEIS ao Cronograma, garante uma "necessidade" e recalcula
+  //    sempre que dados técnicos relevantes mudarem (módulos, inversores, telhado).
+  // 3) Obras Finalizadas / removidas → arquiva a necessidade.
+  useEffect(() => {
+    const snap: ObraSnapshot[] = obras.map((o) => ({
+      id: o.id, contrato: o.contrato, cliente: o.cliente, status: o.status,
+      modulos: o.modulos, potencia: o.potencia,
+      inversor: o.inversor, inv2: o.inv2, inv3: o.inv3,
+      telhadoTipo: o.telhadoTipo, equipe: o.equipe, tipo: o.tipo,
+      finalizacao: o.finalizacao,
+    }));
+    setObrasSnapshot(snap);
+    for (const o of snap) {
+      if (o.status === "Finalizado" || o.status === "Contrato cancelado") {
+        arquivarNecessidade(o.id);
+      } else if (elegivelCronograma(o.status)) {
+        garantirNecessidadeObra(o);
+        recalcularNecessidade(o);
+      }
+    }
+    // dep simples baseada em uma assinatura serializada das obras
+  }, [obras.map((o) => `${o.id}:${o.status}:${o.modulos}:${o.inversor}:${o.inv2}:${o.inv3}:${o.telhadoTipo}`).join("|")]);
 
   return (
     <>
@@ -2599,6 +2632,11 @@ function ObrasKanbanBlock({
   moveTo: (id: string, status: string) => void;
 }) {
   const [manage, setManage] = useState(false);
+  const est = useEstoqueState();
+  const materialOK = (id: string) => {
+    const n = est.necessidades.find((x) => x.obraId === id);
+    return !!n && isMaterialEntregueTotal(n);
+  };
   const { cols, setCols, assign, setAssign } = useKanbanColumns(
     "ms.engenharia.obras.kanban",
     OBRAS_KANBAN_DEFAULTS,
@@ -2634,6 +2672,11 @@ function ObrasKanbanBlock({
             {o.aguardandoLiberacaoFin ? (
               <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                 Aguardando liberação Financiamento
+              </div>
+            ) : null}
+            {materialOK(o.id) ? (
+              <div className="mt-1 inline-flex rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                Material entregue
               </div>
             ) : null}
             <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">

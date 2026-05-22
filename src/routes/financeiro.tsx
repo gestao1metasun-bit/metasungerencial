@@ -180,9 +180,6 @@ function FinanceiroPage() {
           <FechamentoTab />
         </TabsContent>
 
-        <TabsContent value="dre" className="mt-5">
-          <DRETab lancs={lancs} fixas={fixasMensais} />
-        </TabsContent>
 
         <TabsContent value="cmv" className="mt-5">
           <CmvTab />

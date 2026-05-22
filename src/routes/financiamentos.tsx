@@ -1378,6 +1378,10 @@ function EditContratoFinDialog({
               </SelectContent>
             </Select>
           </div>
+          <div><Label>Data de liberação (efetiva)</Label>
+            <Input type="date" value={form.financiamentoLiberacao || ""} onChange={(e) => setForm({ ...form, financiamentoLiberacao: e.target.value })} />
+            <div className="mt-1 text-[11px] text-muted-foreground">Preenchido quando o banco efetivar a liberação. Ao salvar com status "Liberado", gera AR automático no Financeiro.</div>
+          </div>
           <div className="col-span-2"><Label>Observações do financiamento</Label>
             <Textarea value={form.financiamentoObs} onChange={(e) => setForm({ ...form, financiamentoObs: e.target.value })} />
           </div>

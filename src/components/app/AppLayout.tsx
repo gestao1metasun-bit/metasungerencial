@@ -12,6 +12,7 @@ import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { useAuth, signOut } from "@/lib/auth-store";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
+import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 
 const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
@@ -234,6 +235,7 @@ export function AppLayout() {
             </Button>
           </div>
         </header>
+        <MaintenanceBanner />
 
         <main className="flex-1 overflow-x-hidden p-6">
           <Outlet />

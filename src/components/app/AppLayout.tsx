@@ -13,6 +13,7 @@ import { useAuth, signOut } from "@/lib/auth-store";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
+import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 
 type Tier = "operacao" | "controle" | "estrutura";
 const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [

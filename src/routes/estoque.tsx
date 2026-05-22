@@ -634,81 +634,10 @@ function PainelCompraSelecao() {
 
 
 function CompraTab() {
-  const st = useEstoqueState();
-  const obrasSel = st.necessidades.filter((n) => n.selecionadaCompra && !n.arquivada);
-  const linhas = calcularNecessidadeCompra(st);
-
   return (
-    <div className="space-y-4">
-      <Card className="p-4">
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <ShoppingCart className="h-4 w-4 text-amber-600" /> Cálculo de Compra
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Compra = Σ (Necessidade − Entregue) das obras <b>selecionadas</b> − Estoque atual.
-          Estoque atual é informado manualmente em <b>Estoque Atual</b>.
-        </div>
-      </Card>
-
-      <Card className="p-4">
-        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-          Obras consideradas ({obrasSel.length})
-        </div>
-        {obrasSel.length === 0 ? (
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            Nenhuma obra marcada. Selecione obras na aba <b>Obras (necessidade)</b>.
-          </div>
-        ) : (
-          <ul className="grid grid-cols-1 gap-1 text-sm md:grid-cols-2">
-            {obrasSel.map((o) => (
-              <li key={o.obraId} className="rounded border bg-muted/30 px-2 py-1">
-                <span className="font-semibold">{o.cliente}</span>
-                <span className="ml-1 text-[11px] text-muted-foreground">· Contrato {o.contratoId}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card className="p-2">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead className="text-right">Necessidade</TableHead>
-              <TableHead className="text-right">Já entregue</TableHead>
-              <TableHead className="text-right">Estoque atual</TableHead>
-              <TableHead className="text-right">A comprar</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {linhas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                  Sem necessidade pendente.
-                </TableCell>
-              </TableRow>
-            ) : (
-              linhas.map((l) => {
-                const it = findItem(st.itens, l.itemId);
-                return (
-                  <TableRow key={l.itemId}>
-                    <TableCell>{it?.nome ?? l.itemId}</TableCell>
-                    <TableCell className="text-right">{l.necessidadeTotal}</TableCell>
-                    <TableCell className="text-right">{l.jaEntregue}</TableCell>
-                    <TableCell className="text-right">{l.estoqueAtual}</TableCell>
-                    <TableCell className={`text-right font-semibold ${l.aComprar > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-                      {l.aComprar}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
+    <Card className="p-4">
+      <PainelCompraSelecao />
+    </Card>
   );
 }
 

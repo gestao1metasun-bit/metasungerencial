@@ -2,6 +2,8 @@
 // Persiste em localStorage e fornece hooks reativos.
 import { useEffect, useSyncExternalStore } from "react";
 import { contratos as contratosSeed } from "./mock-data";
+import { gerarARsDoContratoAssinado } from "@/lib/fin-titulos-store";
+
 
 export type ClienteFull = {
   nome: string;
@@ -768,14 +770,26 @@ export function aprovarContratoAssinado(contratoId: string, usuario: string): { 
     if (!c.financiamentoStatus) patch.financiamentoStatus = "Em análise";
   }
   updateContratoAudit(contratoId, patch, usuario);
+  // Gatilho Fase C: gera AR (parcelas não-financiamento) idempotentemente.
+  let geradosAR = 0;
+  try {
+    geradosAR = gerarARsDoContratoAssinado({
+      id: c.id, cliente: c.cliente,
+      dataAssinatura: c.dataAssinatura ?? new Date().toISOString().slice(0, 10),
+      pagamentoDetalhes: c.pagamentoDetalhes,
+      projetos: c.projetos,
+    }, usuario) || 0;
+  } catch { /* noop */ }
   pushAudit({
     entidade: "contrato", entidadeId: contratoId,
     acao: "APROVACAO_ASSINADO", usuario,
     campo: "assinadoAprovado", valorAnterior: "false", valorNovo: "true",
-    detalhe: `Contrato assinado aprovado. Liberado para Engenharia (Gestão de Projetos).${temFinanciamento ? ` Enviado para Financiamentos: ${fmtBRLLocal(valorFinanciado)}${bancoFin ? ` (${bancoFin})` : ""}.` : ""}`,
+    detalhe: `Contrato assinado aprovado. Liberado para Engenharia (Gestão de Projetos).${temFinanciamento ? ` Enviado para Financiamentos: ${fmtBRLLocal(valorFinanciado)}${bancoFin ? ` (${bancoFin})` : ""}.` : ""}${geradosAR > 0 ? ` ${geradosAR} título(s) AR gerado(s) no Financeiro.` : ""}`,
   });
+
   return { ok: true };
 }
+
 
 function fmtBRLLocal(v: number): string {
   try { return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); } catch { return `R$ ${v.toFixed(2)}`; }

@@ -29,6 +29,7 @@ import { useBancosAtivos } from "@/lib/bancos-store";
 import { useGerentesAtivos } from "@/lib/gerentes-store";
 import { useFinPendencias } from "@/lib/fin-pendencias";
 import { useContratos, updateContratoAudit, reativarContrato } from "@/lib/contratos-store";
+import { gerarARdeLiberacaoFinanciamento } from "@/lib/fin-titulos-store";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { OperacionalFinTable, type OpRow, PREVISAO_FAIXAS, previsaoFromDias } from "@/components/app/OperacionalFinTable";
@@ -1278,9 +1279,24 @@ function ContratosComercialFin() {
           onClose={() => setEditing(null)}
           onSave={(patch) => {
             updateContratoAudit(editing.id, patch);
+            // Gatilho Fase C: ao marcar "Liberado", gera AR de liberação bancária.
+            if (patch.financiamentoStatus === "Liberado") {
+              const valor = Number(patch.financiamentoValor) || Number(editing.financiamentoValor) || Number(editing.valor) || 0;
+              if (valor > 0) {
+                const t = gerarARdeLiberacaoFinanciamento({
+                  contratoId: editing.id,
+                  cliente: editing.cliente,
+                  valor,
+                  dataLiberacao: patch.financiamentoLiberacao || new Date().toISOString().slice(0, 10),
+                  banco: patch.financiamentoBanco || editing.financiamentoBanco,
+                });
+                if (t) toast.success("AR de liberação criado no Financeiro.");
+              }
+            }
             setEditing(null);
             toast.success("Operação atualizada");
           }}
+
         />
       )}
     </Card>
@@ -1303,8 +1319,10 @@ function EditContratoFinDialog({
     financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
     financiamentoObs: contrato.financiamentoObs ?? "",
     financiamentoPrevisao: contrato.financiamentoPrevisao ?? "",
+    financiamentoLiberacao: contrato.financiamentoLiberacao ?? "",
     obs: contrato.obs ?? "",
   });
+
   const previsaoDias = (() => {
     if (!form.financiamentoPrevisao) return "";
     const d = new Date(form.financiamentoPrevisao + "T00:00:00").getTime();
@@ -1359,6 +1377,10 @@ function EditContratoFinDialog({
                 {PREVISAO_FAIXAS.map((f) => <SelectItem key={f} value={String(f)}>{f} dias</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div><Label>Data de liberação (efetiva)</Label>
+            <Input type="date" value={form.financiamentoLiberacao || ""} onChange={(e) => setForm({ ...form, financiamentoLiberacao: e.target.value })} />
+            <div className="mt-1 text-[11px] text-muted-foreground">Preenchido quando o banco efetivar a liberação. Ao salvar com status "Liberado", gera AR automático no Financeiro.</div>
           </div>
           <div className="col-span-2"><Label>Observações do financiamento</Label>
             <Textarea value={form.financiamentoObs} onChange={(e) => setForm({ ...form, financiamentoObs: e.target.value })} />

@@ -455,8 +455,7 @@ function TituloDialog({
       obraId: obraId || undefined,
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
-      anexos: anexosPend.length ? anexosPend : undefined,
-    });
+    }, pendingFiles);
   };
 
   return (

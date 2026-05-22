@@ -16,21 +16,23 @@ export type EstoqueItem = {
   nome: string;
   categoria: Categoria;
   unidade: Unidade;
-  qtdAtual: number;        // informada manualmente OU derivada por movimentos
-  custoMedio?: number;     // custo médio ponderado (R$/unid) — atualizado por entradas
-  atualizadoEm?: string;   // ISO
+  qtdAtual: number;        // estoque físico total
+  qtdReservada?: number;   // reservado para obras (não disponível p/ outras)
+  custoMedio?: number;     // custo médio ponderado (R$/unid)
+  atualizadoEm?: string;
   atualizadoPor?: string;
 };
 
 export type MovimentoEstoque = {
   id: string;
   em: string;            // ISO
-  tipo: "Entrada" | "Saída" | "Ajuste";
+  tipo: "Entrada" | "Saída" | "Ajuste" | "Reserva" | "Liberação" | "Devolução";
   itemId: string;
   itemNome: string;
   qtd: number;           // sempre positivo
-  custoUnit: number;     // custo unitário no momento (0 para ajustes)
+  custoUnit: number;     // custo unitário no momento
   custoTotal: number;    // qtd * custoUnit
+  refMovId?: string;     // p/ Devolução: referência ao MOV de Saída original
   // Vínculos opcionais
   compraId?: string;     // entrada por compra
   obraId?: string;       // saída para obra (CMV)

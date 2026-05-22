@@ -48,6 +48,16 @@ export type Movimento = {
   estornoPor?: string;
 };
 
+export type Anexo = {
+  id: string;
+  nome: string;
+  mime: string;
+  tamanho: number;
+  dataUrl: string;          // base64 — armazenado inline
+  enviadoEm: string;
+  enviadoPor?: string;
+};
+
 export type Titulo = {
   id: string;
   tipo: TituloTipo;
@@ -56,14 +66,23 @@ export type Titulo = {
 
   descricao: string;
   valorOriginal: number;
-  valorPago: number;      // soma dos movimentos efetivos (não estornados)
-  saldo: number;          // valorOriginal - valorPago
+  valorPago: number;
+  saldo: number;
 
-  vencimento: string;     // YYYY-MM-DD
-  competencia?: string;   // YYYY-MM
+  vencimento: string;
+  competencia?: string;
   dataEmissao?: string;
   dataLiquidacao?: string;
 
+  // Plano de contas gerencial (Fase 3 — estruturado)
+  naturezaId?: string;
+  grupoId?: string;
+  subgrupoId?: string;
+  centroCustoId?: string;
+  tipoAplicacaoId?: string;
+  meioPagamentoId?: string;
+
+  // Strings legadas (compat com importações e telas antigas)
   natureza: string;
   centroCusto: string;
   contaFinanceira?: string;
@@ -77,12 +96,12 @@ export type Titulo = {
 
   comprovanteUrl?: string;
   observacao?: string;
+  anexos?: Anexo[];
 
   criadoPor?: string;
-  criadoEm: string;       // ISO
+  criadoEm: string;
 
-  // Bloqueios
-  bloqueadoFechamento?: boolean; // true quando o mês foi fechado
+  bloqueadoFechamento?: boolean;
 
   movimentos: Movimento[];
 };

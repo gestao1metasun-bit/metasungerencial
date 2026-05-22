@@ -34,6 +34,8 @@ import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
 import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
 import { CmvTab } from "@/modules/financeiro/CmvTab";
+import { ParametrosFinanceirosForm } from "@/components/app/financeiro/ParametrosFinanceirosForm";
+import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({

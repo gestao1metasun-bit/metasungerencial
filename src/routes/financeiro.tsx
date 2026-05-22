@@ -51,8 +51,8 @@ function FinanceiroPage() {
   const [tab, setTab] = useTabFromHash("/financeiro");
   const [lancs, setLancs] = useLancamentos();
   const [recs, setRecs] = useRecorrentes();
-  const [centros] = useCentrosCusto();
-  const [naturezas] = useNaturezas();
+  const [centros, setCentros] = useCentrosCusto();
+  const [naturezas, setNaturezas] = useNaturezas();
 
   // KPIs gerais
   const realizadoEntradas = lancs.filter(l => l.camada === "Realizado" && l.tipo === "Entrada").reduce((s, l) => s + l.valor, 0);

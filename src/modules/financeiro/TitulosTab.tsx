@@ -219,9 +219,15 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditar(t)} disabled={!!t.bloqueadoFechamento}>
                           <SquarePen className="h-4 w-4" />
                         </Button>
+                        <Button size="icon" variant="ghost" title="Renegociar" onClick={() => setRenegociar(t)} disabled={!!t.bloqueadoFechamento || t.statusRenegociacao === "renegociado"}>
+                          <Sparkles className="h-4 w-4 text-primary" />
+                        </Button>
                       </>
                     )}
                     {t.bloqueadoFechamento && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {t.statusRenegociacao === "renegociado" && (
+                      <span className="ml-1 text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-primary">{t.id}</TableCell>

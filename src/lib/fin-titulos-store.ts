@@ -49,11 +49,12 @@ export type Movimento = {
 };
 
 export type Anexo = {
-  id: string;
+  id: string;                 // ID do registro em anexos_titulos (UUID) OU id legado local
   nome: string;
   mime: string;
   tamanho: number;
-  dataUrl: string;          // base64 — armazenado inline
+  storagePath?: string;       // novo: caminho no bucket privado Supabase
+  dataUrl?: string;           // legado: base64 inline (apenas anexos antigos)
   enviadoEm: string;
   enviadoPor?: string;
 };
@@ -341,17 +342,25 @@ export function estornarMovimento(tituloId: string, movId: string, motivo: strin
 }
 
 // ---------------------------------------------------------------- anexos
-export function adicionarAnexo(tituloId: string, anexo: Omit<Anexo, "id" | "enviadoEm">, usuario = "Sistema"): Anexo {
+export function adicionarAnexo(
+  tituloId: string,
+  anexo: Partial<Anexo> & Pick<Anexo, "nome" | "mime" | "tamanho">,
+  usuario = "Sistema",
+): Anexo {
   const cur = read();
   const idx = cur.findIndex((t) => t.id === tituloId);
   if (idx < 0) throw new Error("Título não encontrado.");
   const before = cur[idx];
   if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
   const a: Anexo = {
-    ...anexo,
-    id: newId("ANX"),
-    enviadoEm: isoNow(),
-    enviadoPor: usuario,
+    id: anexo.id ?? newId("ANX"),
+    nome: anexo.nome,
+    mime: anexo.mime,
+    tamanho: anexo.tamanho,
+    storagePath: anexo.storagePath,
+    dataUrl: anexo.dataUrl, // só presente em anexos legados
+    enviadoEm: anexo.enviadoEm ?? isoNow(),
+    enviadoPor: anexo.enviadoPor ?? usuario,
   };
   const arr = [...cur];
   arr[idx] = { ...before, anexos: [...(before.anexos ?? []), a] };

@@ -67,6 +67,87 @@ export type Database = {
           },
         ]
       }
+      anexos_audit: {
+        Row: {
+          acao: string
+          anexo_id: string | null
+          created_at: string
+          detalhe: string | null
+          id: string
+          ip: string | null
+          nome: string | null
+          tamanho: number | null
+          titulo_id: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          anexo_id?: string | null
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          ip?: string | null
+          nome?: string | null
+          tamanho?: number | null
+          titulo_id?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          anexo_id?: string | null
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          ip?: string | null
+          nome?: string | null
+          tamanho?: number | null
+          titulo_id?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      anexos_titulos: {
+        Row: {
+          checksum: string | null
+          created_at: string
+          id: string
+          mime: string
+          nome: string
+          owner_id: string
+          storage_path: string
+          tamanho: number
+          titulo_id: string
+        }
+        Insert: {
+          checksum?: string | null
+          created_at?: string
+          id?: string
+          mime: string
+          nome: string
+          owner_id: string
+          storage_path: string
+          tamanho: number
+          titulo_id: string
+        }
+        Update: {
+          checksum?: string | null
+          created_at?: string
+          id?: string
+          mime?: string
+          nome?: string
+          owner_id?: string
+          storage_path?: string
+          tamanho?: number
+          titulo_id?: string
+        }
+        Relationships: []
+      }
       cidades_irradiacao: {
         Row: {
           ativo: boolean

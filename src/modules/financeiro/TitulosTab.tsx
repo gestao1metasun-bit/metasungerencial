@@ -1,6 +1,8 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
 // Importa o store fin-titulos-store e fornece tabelas + dialogs.
 import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
 import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +70,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const fornecedores = useFornecedores();
   const contas = useContasFinanceiras();
   const cadastros = { naturezas, grupos, subgrupos, centros, tiposAplic, meios, fornecedores, contas };
+  const uploadAnexoFn = useServerFn(uploadAnexo);
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");
   const [criarOpen, setCriarOpen] = useState(false);
@@ -141,7 +144,29 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             <TituloDialog
               tipo={tipo}
               cadastros={cadastros}
-              onSave={(input) => { criarTitulo({ ...input, tipo, origem: "manual" }); toast.success("Título criado."); setCriarOpen(false); }}
+              onSave={async (input, pendingFiles) => {
+                const novo = criarTitulo({ ...input, tipo, origem: "manual" });
+                setCriarOpen(false);
+                toast.success("Título criado.");
+                for (const file of pendingFiles) {
+                  try {
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    fd.append("tituloId", novo.id);
+                    const { anexo } = await uploadAnexoFn({ data: fd });
+                    adicionarAnexo(novo.id, {
+                      id: anexo.id,
+                      nome: anexo.nome,
+                      mime: anexo.mime,
+                      tamanho: anexo.tamanho,
+                      storagePath: anexo.storage_path,
+                      enviadoEm: anexo.created_at,
+                    });
+                  } catch (e: any) {
+                    toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
+                  }
+                }
+              }}
               onCancel={() => setCriarOpen(false)}
             />
           </Dialog>
@@ -341,7 +366,7 @@ function TituloDialog({
   tipo: TituloTipo;
   initial?: Titulo;
   cadastros: Cadastros;
-  onSave: (input: any) => void;
+  onSave: (input: any, pendingFiles: File[]) => void;
   onCancel: () => void;
   onCancelarTitulo?: (motivo: string) => void;
 }) {
@@ -373,8 +398,8 @@ function TituloDialog({
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
 
-  // Anexos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
-  const [anexosPend, setAnexosPend] = useState<Anexo[]>(initial?.anexos ?? []);
+  // Arquivos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Cascata: ao trocar a natureza, sugerir grupo/subgrupo/centro/aplicação padrão
@@ -391,22 +416,14 @@ function TituloDialog({
 
   const subgruposDisp = useMemo(() => subgrupos.filter((s) => s.grupoId === grupoId && s.ativo), [subgrupos, grupoId]);
 
-  const handleFiles = async (fs: FileList | null) => {
+  const handleFiles = (fs: FileList | null) => {
     if (!fs) return;
+    const aceitos: File[] = [];
     for (const file of Array.from(fs)) {
-      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
-      const dataUrl = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-      setAnexosPend((prev) => [...prev, {
-        id: `ANX-NEW-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        nome: file.name, mime: file.type || "application/octet-stream",
-        tamanho: file.size, dataUrl, enviadoEm: new Date().toISOString(),
-      }]);
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: máx. 10 MB`); continue; }
+      aceitos.push(file);
     }
+    if (aceitos.length) setPendingFiles((prev) => [...prev, ...aceitos]);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -438,8 +455,7 @@ function TituloDialog({
       obraId: obraId || undefined,
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
-      anexos: anexosPend.length ? anexosPend : undefined,
-    });
+    }, pendingFiles);
   };
 
   return (
@@ -536,38 +552,41 @@ function TituloDialog({
         <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
       </div>
 
-      {/* Anexos */}
-      <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
+      {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
+      {initial ? (
+        <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
+      ) : (
+        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
+            </div>
+            <div>
+              <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
+              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
+              </Button>
+            </div>
           </div>
-          <div>
-            <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
-              accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
-            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-              <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
-            </Button>
-          </div>
+          {pendingFiles.length === 0 ? (
+            <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 10 MB cada. O upload acontece ao salvar.</div>
+          ) : (
+            <div className="space-y-1">
+              {pendingFiles.map((f, idx) => (
+                <div key={`${f.name}-${idx}`} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <span className="text-muted-foreground">{Math.round(f.size / 1024)} KB</span>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPendingFiles((prev) => prev.filter((_, i) => i !== idx))}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {anexosPend.length === 0 ? (
-          <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 5 MB cada.</div>
-        ) : (
-          <div className="space-y-1">
-            {anexosPend.map((a) => (
-              <div key={a.id} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
-                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="flex-1 truncate">{a.nome}</span>
-                <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
-                <a href={a.dataUrl} download={a.nome}><Download className="h-3.5 w-3.5" /></a>
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setAnexosPend((prev) => prev.filter((x) => x.id !== a.id))}>
-                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {initial && onCancelarTitulo && (
         <div className="mt-3 rounded border border-rose-500/30 bg-rose-500/5 p-3">
@@ -594,22 +613,46 @@ function TituloDialog({
 function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }) {
   const anexos = titulo.anexos ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadAnexoFn = useServerFn(uploadAnexo);
+  const signedUrlAnexoFn = useServerFn(signedUrlAnexo);
+  const deleteAnexoFn = useServerFn(deleteAnexo);
 
   const handleFiles = async (fs: FileList | null) => {
     if (!fs) return;
     for (const file of Array.from(fs)) {
-      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
-      const dataUrl = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: máx. 10 MB`); continue; }
       try {
-        adicionarAnexo(titulo.id, { nome: file.name, mime: file.type || "application/octet-stream", tamanho: file.size, dataUrl });
-      } catch (e: any) { toast.error(e.message); }
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("tituloId", titulo.id);
+        const { anexo } = await uploadAnexoFn({ data: fd });
+        adicionarAnexo(titulo.id, {
+          id: anexo.id,
+          nome: anexo.nome,
+          mime: anexo.mime,
+          tamanho: anexo.tamanho,
+          storagePath: anexo.storage_path,
+          enviadoEm: anexo.created_at,
+        });
+      } catch (e: any) { toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`); }
     }
     if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const baixar = async (a: Anexo) => {
+    if (a.dataUrl) { window.open(a.dataUrl, "_blank"); return; }
+    if (!a.storagePath) { toast.error("Anexo sem caminho de Storage."); return; }
+    try {
+      const { url } = await signedUrlAnexoFn({ data: { anexoId: a.id } });
+      window.open(url, "_blank");
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao gerar URL."); }
+  };
+
+  const excluir = async (a: Anexo) => {
+    try {
+      if (a.storagePath) await deleteAnexoFn({ data: { anexoId: a.id } });
+      removerAnexo(titulo.id, a.id);
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao excluir."); }
   };
 
   return (
@@ -637,10 +680,11 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
               <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="flex-1 truncate">{a.nome}</span>
               <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
-              <a href={a.dataUrl} download={a.nome} title="Baixar"><Download className="h-3.5 w-3.5" /></a>
+              <Button size="icon" variant="ghost" className="h-6 w-6" title="Baixar" onClick={() => baixar(a)}>
+                <Download className="h-3.5 w-3.5" />
+              </Button>
               {editavel && (
-                <Button size="icon" variant="ghost" className="h-6 w-6"
-                  onClick={() => { try { removerAnexo(titulo.id, a.id); } catch (e: any) { toast.error(e.message); } }}>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => excluir(a)}>
                   <Trash2 className="h-3.5 w-3.5 text-rose-600" />
                 </Button>
               )}

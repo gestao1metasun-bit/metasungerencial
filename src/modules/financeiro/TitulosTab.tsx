@@ -594,8 +594,11 @@ function TituloDialog({
             </Select>
           </div>
         </div>
-        {natSel?.contaContabilFutura && (
-          <div className="mt-2 text-[10px] text-muted-foreground">Conta contábil: <span className="font-mono">{natSel.contaContabilFutura}</span></div>
+        {caminhoContabil && (
+          <div className="mt-3 rounded border border-primary/15 bg-background/60 px-2.5 py-1.5">
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-primary/70">Plano de contas</div>
+            <div className="mt-0.5 font-mono text-[11px] leading-snug text-foreground/90">{caminhoContabil}</div>
+          </div>
         )}
       </div>
 

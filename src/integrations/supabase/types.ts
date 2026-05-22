@@ -1125,6 +1125,8 @@ export type Database = {
         | "cadastros.editar"
         | "configuracoes.editar"
         | "workflow.pular_etapa"
+        | "analytics.amplo"
+        | "analytics.privado"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -1289,6 +1291,8 @@ export const Constants = {
         "cadastros.editar",
         "configuracoes.editar",
         "workflow.pular_etapa",
+        "analytics.amplo",
+        "analytics.privado",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },

@@ -524,6 +524,36 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           cliente_id: string | null
@@ -815,6 +845,87 @@ export type Database = {
         }
         Relationships: []
       }
+      system_flags: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      tarefas: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          due_date: string | null
+          id: string
+          modulo: string
+          origem: string
+          prioridade: string
+          related_entity: string | null
+          related_id: string | null
+          sector: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          due_date?: string | null
+          id?: string
+          modulo: string
+          origem?: string
+          prioridade?: string
+          related_entity?: string | null
+          related_id?: string | null
+          sector?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          due_date?: string | null
+          id?: string
+          modulo?: string
+          origem?: string
+          prioridade?: string
+          related_entity?: string | null
+          related_id?: string | null
+          sector?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tarifas_energia: {
         Row: {
           ativo: boolean
@@ -948,6 +1059,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      gerar_tarefas_automaticas: { Args: never; Returns: Json }
       has_permission: {
         Args: {
           _perm: Database["public"]["Enums"]["app_permission"]

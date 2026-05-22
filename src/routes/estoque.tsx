@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock,
+  Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
@@ -26,6 +26,9 @@ import {
   reservarMaterial, liberarReserva, registrarDevolucaoObra, disponivelParaReserva,
   type EstoqueItem, type Categoria, type Unidade,
 } from "@/lib/estoque-store";
+import {
+  useComprasTransito, addCompraTransito, removeCompraTransito, totalTransitoPorItem,
+} from "@/lib/compras-transito-store";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),
@@ -184,7 +187,7 @@ function ObrasTab({ podeEntregar }: { podeEntregar: boolean }) {
         {obraSel ? (
           <ObraDetalhe obraId={obraSel} podeEntregar={podeEntregar} />
         ) : (
-          <div className="text-sm text-muted-foreground">Selecione uma obra à esquerda.</div>
+          <PainelCompraSelecao />
         )}
       </Card>
     </div>
@@ -361,7 +364,269 @@ function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: b
   );
 }
 
+/* ─────────────────────── PAINEL DE COMPRA (seleção) ─────────────────────── */
+
+function PainelCompraSelecao() {
+  const st = useEstoqueState();
+  const transito = useComprasTransito();
+  const obrasSel = st.necessidades.filter((n) => n.selecionadaCompra && !n.arquivada && !isMaterialEntregueTotal(n));
+
+  // Itens escolhidos para análise. Padrão: todos os que aparecem nas obras selecionadas.
+  const itensPadrao = useMemo(() => {
+    const set = new Set<string>();
+    obrasSel.forEach((n) => n.itens.forEach((i) => set.add(i.itemId)));
+    return Array.from(set);
+  }, [obrasSel]);
+
+  const [itensEscolhidos, setItensEscolhidos] = useState<string[] | null>(null);
+  const itens = itensEscolhidos ?? itensPadrao;
+
+  const [dlgItens, setDlgItens] = useState(false);
+  const [novoMov, setNovoMov] = useState<{ itemId: string; qtd: number; fornecedor: string; obs: string } | null>(null);
+
+  type Linha = {
+    itemId: string;
+    nome: string;
+    necLiquida: number;     // Σ (nec - entregue) das obras selecionadas
+    saldoDisp: number;      // estoque - reservado
+    transito: number;       // compras feitas s/ entrada
+    aComprar: number;
+    porCliente: { cliente: string; nec: number; entregue: number; falta: number }[];
+  };
+
+  const linhas: Linha[] = useMemo(() => {
+    return itens.map((itemId) => {
+      const it = findItem(st.itens, itemId);
+      const saldoDisp = Math.max(0, (it?.qtdAtual || 0) - (it?.qtdReservada || 0));
+      const tr = totalTransitoPorItem(itemId, transito);
+      let necLiq = 0;
+      const porCliente: Linha["porCliente"] = [];
+      for (const n of obrasSel) {
+        const r = n.itens.find((x) => x.itemId === itemId);
+        if (!r) continue;
+        const falta = Math.max(0, r.qtdNecessaria - r.qtdEntregue);
+        if (falta <= 0 && r.qtdNecessaria === 0) continue;
+        necLiq += falta;
+        porCliente.push({ cliente: n.cliente, nec: r.qtdNecessaria, entregue: r.qtdEntregue, falta });
+      }
+      const aComprar = Math.max(0, necLiq - saldoDisp - tr);
+      return {
+        itemId,
+        nome: it?.nome ?? itemId,
+        necLiquida: necLiq,
+        saldoDisp,
+        transito: tr,
+        aComprar,
+        porCliente,
+      };
+    }).sort((a, b) => b.aComprar - a.aComprar);
+  }, [itens, st.itens, transito, obrasSel]);
+
+  const totalAComprar = linhas.reduce((s, l) => s + l.aComprar, 0);
+  const totalNec = linhas.reduce((s, l) => s + l.necLiquida, 0);
+
+  if (obrasSel.length === 0) {
+    return (
+      <div className="space-y-3 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          Marque ao menos um cliente à esquerda para montar a seleção de compra.
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Você pode também clicar em uma obra para ver os detalhes individuais (reservar, entregar, devolver).
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4 text-amber-600" /> Seleção de compra
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            {obrasSel.length} cliente(s) selecionado(s) · {linhas.length} item(ns) na análise
+          </div>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setDlgItens(true)}>
+          <ListChecks className="mr-1 h-4 w-4" /> Selecionar itens
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <StatCard label="Clientes" value={String(obrasSel.length)} />
+        <StatCard label="Itens analisados" value={String(linhas.length)} />
+        <StatCard label="Necessidade líquida" value={String(totalNec)} hint="− já entregue" />
+        <StatCard label="A comprar" value={String(totalAComprar)} hint="− saldo − trânsito" />
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Item</TableHead>
+            <TableHead className="text-right">Saldo disp.</TableHead>
+            <TableHead className="text-right">Em trânsito</TableHead>
+            <TableHead className="text-right">Nec. líquida</TableHead>
+            <TableHead className="text-right">A comprar</TableHead>
+            <TableHead className="text-right w-[120px]">+ Trânsito</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {linhas.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                Nenhum item selecionado para análise.
+              </TableCell>
+            </TableRow>
+          ) : linhas.map((l) => (
+            <TableRow key={l.itemId}>
+              <TableCell>
+                <div className="font-medium">{l.nome}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {l.porCliente.map((c) => `${c.cliente}: ${c.falta}`).join(" · ") || "—"}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">{l.saldoDisp}</TableCell>
+              <TableCell className="text-right">{l.transito || "—"}</TableCell>
+              <TableCell className="text-right">{l.necLiquida}</TableCell>
+              <TableCell className={`text-right font-semibold ${l.aComprar > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                {l.aComprar}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button size="sm" variant="ghost" onClick={() => setNovoMov({ itemId: l.itemId, qtd: l.aComprar || 1, fornecedor: "", obs: "" })}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {transito.length > 0 && (
+        <Card className="p-3">
+          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+            Compras em trânsito (sem entrada no estoque)
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead className="text-right">Qtd.</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead>Obs.</TableHead>
+                <TableHead className="text-right w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transito.map((c) => {
+                const it = findItem(st.itens, c.itemId);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell className="text-xs">{fmtDate(c.data)}</TableCell>
+                    <TableCell>{it?.nome ?? c.itemId}</TableCell>
+                    <TableCell className="text-right">{c.qtd}</TableCell>
+                    <TableCell className="text-xs">{c.fornecedor || "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{c.obs || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" onClick={() => { removeCompraTransito(c.id); toast.success("Lançamento removido."); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <div className="mt-2 text-[11px] text-muted-foreground">
+            Ao dar entrada da NF na aba <b>Estoque atual</b>, remova o lançamento daqui para evitar duplicidade.
+          </div>
+        </Card>
+      )}
+
+      {/* Dialog: selecionar itens */}
+      <Dialog open={dlgItens} onOpenChange={setDlgItens}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Itens na análise de compra</DialogTitle></DialogHeader>
+          <div className="max-h-[60vh] space-y-1 overflow-auto">
+            {st.itens.map((it) => {
+              const checked = itens.includes(it.id);
+              return (
+                <label key={it.id} className="flex items-center gap-2 rounded border p-2 text-sm hover:bg-muted/40">
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) => {
+                      const base = itensEscolhidos ?? itensPadrao;
+                      setItensEscolhidos(v ? Array.from(new Set([...base, it.id])) : base.filter((x) => x !== it.id));
+                    }}
+                  />
+                  <span className="font-mono text-[11px] text-muted-foreground">{it.id}</span>
+                  <span className="flex-1">{it.nome}</span>
+                  <span className="text-[11px] text-muted-foreground">{it.categoria}</span>
+                </label>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setItensEscolhidos(null); setDlgItens(false); }}>Restaurar padrão</Button>
+            <Button onClick={() => setDlgItens(false)}>Aplicar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: lançar compra em trânsito */}
+      <Dialog open={!!novoMov} onOpenChange={(o) => !o && setNovoMov(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Lançar compra em trânsito</DialogTitle></DialogHeader>
+          {novoMov && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label>Item</Label>
+                <div className="text-sm font-medium">{findItem(st.itens, novoMov.itemId)?.nome ?? novoMov.itemId}</div>
+              </div>
+              <div>
+                <Label>Quantidade</Label>
+                <Input type="number" min={1} value={novoMov.qtd} onChange={(e) => setNovoMov({ ...novoMov, qtd: Number(e.target.value || 0) })} />
+              </div>
+              <div>
+                <Label>Fornecedor</Label>
+                <Input value={novoMov.fornecedor} onChange={(e) => setNovoMov({ ...novoMov, fornecedor: e.target.value })} />
+              </div>
+              <div className="col-span-2">
+                <Label>Observação</Label>
+                <Input value={novoMov.obs} onChange={(e) => setNovoMov({ ...novoMov, obs: e.target.value })} placeholder="NF, previsão de chegada…" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNovoMov(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (!novoMov || novoMov.qtd <= 0) { toast.error("Informe a quantidade."); return; }
+                addCompraTransito({
+                  itemId: novoMov.itemId,
+                  qtd: novoMov.qtd,
+                  fornecedor: novoMov.fornecedor || undefined,
+                  obs: novoMov.obs || undefined,
+                  data: new Date().toISOString(),
+                });
+                setNovoMov(null);
+                toast.success("Compra em trânsito registrada.");
+              }}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 /* ─────────────────────────── NECESSIDADE DE COMPRA ─────────────────────────── */
+
 
 function CompraTab() {
   const st = useEstoqueState();

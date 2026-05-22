@@ -629,9 +629,58 @@ function TituloDialog({
             <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Obra (opcional)</Label><Input value={obraId} onChange={(e) => setObra(e.target.value)} /></div>
-        <div><Label>Contrato (opcional)</Label><Input value={contratoId} onChange={(e) => setContrato(e.target.value)} /></div>
         <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
+      </div>
+
+      {/* Bloco origem da operação — de onde veio este lançamento */}
+      <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-foreground/80">
+          <Link2 className="h-3.5 w-3.5" /> Origem da operação
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Tipo de origem *</Label>
+            <Select value={origem} onValueChange={setOrigem}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {origensDisp.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Contrato vinculado</Label>
+            <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— sem contrato —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem contrato —</SelectItem>
+                {contratosAll.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <Label>Obra vinculada</Label>
+            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— sem obra —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem obra —</SelectItem>
+                {obrasAll.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-2 text-[10px] text-muted-foreground">
+          {tipo === "AR"
+            ? "Vincule o contrato/obra para que este recebimento apareça no fluxo correto e na margem da obra."
+            : "Vincule a obra para que este custo seja contabilizado no CMV da obra (não como despesa administrativa)."}
+        </div>
       </div>
 
       {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}

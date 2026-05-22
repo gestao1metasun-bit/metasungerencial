@@ -8,8 +8,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { pushAudit } from "@/lib/audit-store";
 import {
-  getTitulos, getTitulo, criarTitulo,
-  type Titulo,
+  getTitulo, criarTitulo,
+  marcarTituloRenegociado, setTituloRenegociacaoOrigem,
 } from "@/lib/fin-titulos-store";
 import { getParametrosFinanceiros } from "@/lib/fin-parametros-financeiros-store";
 import { calcularEncargos, nivelAprovacaoDesconto } from "@/lib/fin-calculo-encargos";
@@ -62,15 +62,15 @@ export type SimulacaoRenegociacao = {
 
 export type RenegociarInput = {
   tituloId: string;
-  dataRef?: string;                      // YYYY-MM-DD, default hoje
-  jurosAplicado: number;                 // valor R$ final (já ajustado pelo usuário)
-  multaAplicada: number;                 // valor R$ final
-  desconto: number;                      // valor R$
+  dataRef?: string;
+  jurosAplicado: number;
+  multaAplicada: number;
+  desconto: number;
   parcelar: boolean;
-  numeroParcelas: number;                // >=1
-  primeiroVencimento: string;            // YYYY-MM-DD
-  intervaloDias: number;                 // 30 = mensal aprox.
-  motivo: string;                        // obrigatório
+  numeroParcelas: number;
+  primeiroVencimento: string;
+  intervaloDias: number;
+  motivo: string;
   observacao?: string;
   aprovadoPor?: string;
 };
@@ -126,10 +126,11 @@ function addDays(isoDate: string, days: number): string {
 }
 
 function distribuirParcelas(total: number, n: number): number[] {
+  if (n <= 1) return [round2(total)];
   const base = Math.floor((total * 100) / n) / 100;
   const arr = Array(n).fill(base);
-  const somaParciais = round2(base * n);
-  const resto = round2(total - somaParciais);
+  const soma = round2(base * n);
+  const resto = round2(total - soma);
   if (resto !== 0) arr[arr.length - 1] = round2(arr[arr.length - 1] + resto);
   return arr;
 }
@@ -138,7 +139,7 @@ function distribuirParcelas(total: number, n: number): number[] {
 export function simularRenegociacao(input: {
   tituloId: string;
   dataRef?: string;
-  jurosAplicado?: number;          // se undefined → usa sugerido
+  jurosAplicado?: number;
   multaAplicada?: number;
   desconto?: number;
   parcelar?: boolean;
@@ -152,8 +153,8 @@ export function simularRenegociacao(input: {
   const dataRef = input.dataRef ?? new Date().toISOString().slice(0, 10);
   const enc = calcularEncargos(titulo, dataRef, params);
 
-  const jurosAplicado = round2(input.jurosAplicado ?? enc.jurosSugerido);
-  const multaAplicada = round2(input.multaAplicada ?? enc.multaSugerida);
+  const jurosAplicado = round2(Math.max(0, input.jurosAplicado ?? enc.jurosSugerido));
+  const multaAplicada = round2(Math.max(0, input.multaAplicada ?? enc.multaSugerida));
   const desconto = Math.max(0, round2(input.desconto ?? 0));
 
   const valorBruto = round2(enc.saldoOriginal + jurosAplicado + multaAplicada);
@@ -187,31 +188,6 @@ export function simularRenegociacao(input: {
 }
 
 // ----------------------------------------------------------------- confirmação
-import { getTitulos as _ } from "@/lib/fin-titulos-store";
-import { atualizarTitulo as _atualizar } from "@/lib/fin-titulos-store";
-// (re-export to silence tree-shaking warning; we use direct imports below)
-
-// Marca o título original como renegociado (sem usar atualizarTitulo, que valida fechamento).
-// Acessamos via getter + reescrita do localStorage subjacente é complicado;
-// preferimos uma rota local: cancelar saldo via patch direto.
-const TITULOS_KEY = "ms.fin.titulos.v1";
-function rewriteTitulos(mutator: (arr: Titulo[]) => Titulo[]) {
-  try {
-    const raw = localStorage.getItem(TITULOS_KEY);
-    const cur: Titulo[] = raw ? JSON.parse(raw) : [];
-    const next = mutator(cur);
-    localStorage.setItem(TITULOS_KEY, JSON.stringify(next));
-    // Dispara um evento de storage manual para outras abas; o store já reage via cache,
-    // mas precisamos forçar refresh. A maneira mais simples é recarregar a página
-    // pelos consumidores; aqui apenas reescrevemos. As telas usam useTitulos que
-    // lê do mesmo cache singleton — então invalidamos o cache global recarregando.
-    // Como o store tem seu próprio cache, a tela só atualiza depois que um evento
-    // do próprio store dispara. Solução: chamar uma função pública do store.
-  } catch (e) {
-    console.error("rewriteTitulos", e);
-  }
-}
-
 export function confirmarRenegociacao(input: RenegociarInput, usuario = "Sistema"): Renegociacao {
   if (!input.motivo || input.motivo.trim().length < 5) {
     throw new Error("Motivo obrigatório (mínimo 5 caracteres).");
@@ -223,7 +199,7 @@ export function confirmarRenegociacao(input: RenegociarInput, usuario = "Sistema
   if (titulo.status === "pago" || titulo.status === "recebido") {
     throw new Error("Título já quitado — não é renegociável.");
   }
-  if ((titulo as any).statusRenegociacao === "renegociado") {
+  if (titulo.statusRenegociacao === "renegociado") {
     throw new Error("Título já foi renegociado.");
   }
 
@@ -246,7 +222,6 @@ export function confirmarRenegociacao(input: RenegociarInput, usuario = "Sistema
   const renegId = newId("RNG");
   const novosIds: string[] = [];
 
-  // Cria os novos títulos (mesmo tipo, mesmo fornecedor/cliente, etc.)
   sim.parcelas.forEach((p, i) => {
     const novo = criarTitulo({
       tipo: titulo.tipo,
@@ -272,32 +247,11 @@ export function confirmarRenegociacao(input: RenegociarInput, usuario = "Sistema
       parcelaLabel: sim.parcelas.length > 1 ? `${i + 1}/${sim.parcelas.length} (reneg.)` : "Renegociação",
       observacao: `Renegociação ${renegId}${input.observacao ? ` · ${input.observacao}` : ""}`,
     }, usuario);
-    // Marca vínculo no título recém-criado.
-    rewriteTitulos((arr) => arr.map((t) => t.id === novo.id ? ({ ...t, renegociacaoId: renegId } as Titulo) : t));
+    setTituloRenegociacaoOrigem(novo.id, renegId);
     novosIds.push(novo.id);
   });
 
-  // Marca o título original como renegociado (saldo zerado, status especial).
-  rewriteTitulos((arr) => arr.map((t) => {
-    if (t.id !== titulo.id) return t;
-    return {
-      ...t,
-      status: "cancelado",                      // remove dos abertos
-      saldo: 0,
-      valorPago: t.valorPago,                   // mantém histórico
-      observacao: `${t.observacao ? t.observacao + " · " : ""}Renegociado em ${new Date().toLocaleDateString("pt-BR")} — ${renegId}`,
-      // campos extras (cast — tipo já estendido)
-      renegociadoEm: new Date().toISOString(),
-      statusRenegociacao: "renegociado",
-    } as Titulo;
-  }));
-
-  // Força sincronização do cache do store (workaround: limpa o item e regrava
-  // não notifica os listeners — então usamos uma função "ping" abaixo).
-  try {
-    const ev = new Event("ms-fin-titulos-refresh");
-    window.dispatchEvent(ev);
-  } catch {}
+  marcarTituloRenegociado(titulo.id, renegId, usuario);
 
   const reneg: Renegociacao = {
     id: renegId,

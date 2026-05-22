@@ -14,21 +14,29 @@ import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 
-const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
-  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
-  { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard" },
+type Tier = "operacao" | "controle" | "estrutura";
+const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [
+  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
+  { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard", tier: "operacao" },
+  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial", tier: "operacao" },
+  { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro", tier: "operacao" },
+  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos", tier: "operacao" },
+  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia", tier: "operacao" },
+  { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda", tier: "operacao" },
+  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque", tier: "operacao" },
 
-  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
-  { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro" },
-  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
-  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
-  { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda" },
-  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
-  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics" },
-  { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },
-  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes" },
+  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics", tier: "controle" },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios", tier: "controle" },
+
+  { to: "/cadastros", label: "Cadastros Operacionais", icon: Database, key: "cadastros", tier: "estrutura" },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes", tier: "estrutura" },
 ];
+
+const TIER_META: Record<Tier, { label: string }> = {
+  operacao: { label: "Operação" },
+  controle: { label: "Controle" },
+  estrutura: { label: "Estrutura" },
+};
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });

@@ -78,6 +78,14 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "fechamento", label: "Fechamento", group: "Controle" },
     ],
   },
+  "/posvenda": {
+    default: "dashboard",
+    tabs: [
+      { value: "dashboard", label: "Dashboard" },
+      { value: "chamados", label: "Chamados" },
+      { value: "tipos", label: "Tipos de atendimento" },
+    ],
+  },
   "/analytics": {
     default: "dre",
     tabs: [

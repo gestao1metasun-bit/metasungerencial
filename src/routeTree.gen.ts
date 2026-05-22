@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PropostasRouteImport } from './routes/propostas'
+import { Route as PosvendaRouteImport } from './routes/posvenda'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
@@ -32,6 +33,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const PropostasRoute = PropostasRouteImport.update({
   id: '/propostas',
   path: '/propostas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosvendaRoute = PosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/financeiro': typeof FinanceiroRoute
   '/financiamentos': typeof FinanciamentosRoute
   '/login': typeof LoginRoute
+  '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/posvenda'
     | '/propostas'
     | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/posvenda'
     | '/propostas'
     | '/relatorios'
   id:
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/financiamentos'
     | '/login'
+    | '/posvenda'
     | '/propostas'
     | '/relatorios'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRoute
   FinanciamentosRoute: typeof FinanciamentosRoute
   LoginRoute: typeof LoginRoute
+  PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
   RelatoriosRoute: typeof RelatoriosRoute
 }
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/propostas'
       fullPath: '/propostas'
       preLoaderRoute: typeof PropostasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/posvenda': {
+      id: '/posvenda'
+      path: '/posvenda'
+      fullPath: '/posvenda'
+      preLoaderRoute: typeof PosvendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRoute,
   FinanciamentosRoute: FinanciamentosRoute,
   LoginRoute: LoginRoute,
+  PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,
   RelatoriosRoute: RelatoriosRoute,
 }

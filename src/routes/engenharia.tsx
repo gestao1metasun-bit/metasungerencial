@@ -10,6 +10,7 @@ import {
   aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,
   getLiberacao, registrarAlteracaoFinalizada,
 } from "@/lib/obras-finalizacao-store";
+import { garantirAtendimentosPorEncerramento } from "@/lib/posvenda-store";
 import { useHistorico } from "@/lib/audit-store";
 import { useIsAdmin } from "@/lib/auth-store";
 import {
@@ -225,10 +226,12 @@ function EngenhariaPage() {
   useEffect(() => {
     setObras((cur) => {
       let mudou = false;
+      const finalizadosAgora: { id: string; cliente: string; contratoId?: string; data: string }[] = [];
       const next = cur.map((o) => {
         if (o.status !== "Finalizado" && temAmbasAprovacoes(o.id)) {
           mudou = true;
           const hoje = new Date().toISOString().slice(0, 10);
+          finalizadosAgora.push({ id: o.id, cliente: o.cliente, contratoId: (o as any).contratoId, data: o.finalizacao ?? hoje });
           return {
             ...o,
             status: "Finalizado",
@@ -239,6 +242,15 @@ function EngenhariaPage() {
         }
         return o;
       });
+      // Gatilho de pós-venda — idempotente
+      for (const f of finalizadosAgora) {
+        try {
+          garantirAtendimentosPorEncerramento({
+            obraId: f.id, cliente: f.cliente, contratoId: f.contratoId,
+            dataFinalizacaoISO: f.data,
+          });
+        } catch {}
+      }
       return mudou ? next : cur;
     });
     // depende da lista de aguardando (proxy do estado de aprovações)

@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 
 export type ModuleKey =
   | "dashboard" | "comercial" | "propostas" | "financiamentos" | "engenharia"
-  | "estoque" | "cadastros" | "relatorios" | "configuracoes";
+  | "estoque" | "financeiro" | "cadastros" | "relatorios" | "configuracoes";
 
 export const MODULES: { key: ModuleKey; label: string; path: string }[] = [
   { key: "dashboard", label: "Dashboard Geral", path: "/dashboard" },
@@ -12,6 +12,7 @@ export const MODULES: { key: ModuleKey; label: string; path: string }[] = [
   { key: "financiamentos", label: "Financiamentos", path: "/financiamentos" },
   { key: "engenharia", label: "Engenharia", path: "/engenharia" },
   { key: "estoque", label: "Estoque", path: "/estoque" },
+  { key: "financeiro", label: "Financeiro", path: "/financeiro" },
   { key: "cadastros", label: "Cadastros", path: "/cadastros" },
   { key: "relatorios", label: "Relatórios", path: "/relatorios" },
   { key: "configuracoes", label: "Configurações", path: "/configuracoes" },

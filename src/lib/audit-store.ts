@@ -6,7 +6,21 @@
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
 
-export type AuditEntidade = "lead" | "proposta" | "contrato" | "obra";
+export type AuditEntidade =
+  | "lead"
+  | "proposta"
+  | "contrato"
+  | "obra"
+  | "aditivo"
+  | "cliente"
+  | "projeto"
+  | "user_role"
+  | "role_permission"
+  | "period_lock"
+  | "profile"
+  | "financeiro"
+  | "estoque"
+  | "financiamento";
 
 export type AuditEntry = {
   id: string;

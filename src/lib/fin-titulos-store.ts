@@ -104,6 +104,11 @@ export type Titulo = {
 
   bloqueadoFechamento?: boolean;
 
+  // Renegociação (Fase 31)
+  renegociacaoId?: string;                            // título-filho: id da renegociação que o gerou
+  renegociadoEm?: string;                             // título-pai: quando foi renegociado
+  statusRenegociacao?: "ativo" | "renegociado";       // pai marcado como renegociado
+
   movimentos: Movimento[];
 };
 

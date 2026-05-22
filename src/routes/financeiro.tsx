@@ -479,6 +479,12 @@ function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lanc
               <SelectContent>{CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
+          <Field label="Status financeiro">
+            <Select value={form.statusFin ?? derivarStatusFin(form.camada)} onValueChange={(v) => set("statusFin", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
           <Field label="Natureza">
             <Select value={form.natureza} onValueChange={(v) => set("natureza", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>

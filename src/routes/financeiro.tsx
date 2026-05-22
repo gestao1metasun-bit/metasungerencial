@@ -34,6 +34,8 @@ import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
 import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
 import { CmvTab } from "@/modules/financeiro/CmvTab";
+import { ParametrosFinanceirosForm } from "@/components/app/financeiro/ParametrosFinanceirosForm";
+import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -182,6 +184,14 @@ function FinanceiroPage() {
 
         <TabsContent value="cmv" className="mt-5">
           <CmvTab />
+        </TabsContent>
+
+        <TabsContent value="renegociacoes" className="mt-5">
+          <RenegociacaoHistoricoList />
+        </TabsContent>
+
+        <TabsContent value="parametros-fin" className="mt-5">
+          <ParametrosFinanceirosForm />
         </TabsContent>
       </Tabs>
     </>

@@ -22,7 +22,10 @@ export function PageHeader({
         {eyebrow && (
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">{eyebrow}</div>
         )}
-        <h1 className="font-display text-[2rem] leading-[1.1] font-bold tracking-tight text-foreground">{title}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-[2rem] leading-[1.1] font-bold tracking-tight text-foreground">{title}</h1>
+          <FavoritarPaginaButton title={title} />
+        </div>
         {subtitle && <p className="mt-2 text-sm text-muted-foreground max-w-2xl">{subtitle}</p>}
         <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/80 font-mono">
           <Clock className="h-3 w-3" />

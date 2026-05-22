@@ -25,7 +25,7 @@ const accentBar: Record<Tone, string> = {
 };
 
 export function StatCard({
-  label, value, hint, icon: Icon, tone = "primary", trend, onView,
+  label, value, hint, icon: Icon, tone = "primary", trend, onView, onClick,
 }: {
   label: string;
   value: string | number;
@@ -34,9 +34,13 @@ export function StatCard({
   tone?: Tone;
   trend?: { value: string; positive?: boolean };
   onView?: () => void;
+  onClick?: () => void;
 }) {
   return (
-    <Card className="group relative overflow-hidden border-border/70 bg-card p-5 shadow-elegant transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow">
+    <Card
+      onClick={onClick}
+      className={`group relative overflow-hidden border-border/70 bg-card p-5 shadow-elegant transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow ${onClick ? "cursor-pointer" : ""}`}
+    >
       {/* Left accent bar */}
       <span className={`absolute left-0 top-4 bottom-4 w-[3px] rounded-r ${accentBar[tone]} opacity-80`} />
       {/* Subtle corner glow */}

@@ -44,9 +44,12 @@ export type Lancamento = {
   dataEmissao?: string;
 };
 
+export type OrigemRecorrente = "manual" | "aluguel" | "folha" | "assinatura" | "contrato" | "comissao" | "imposto" | "outro";
+
 export type DespesaRecorrente = {
   id: string;
   descricao: string;
+  tipo: Tipo;                // Entrada | Saída (default: Saída)
   valor: number;
   recorrencia: Recorrencia;
   diaVencimento: number;     // 1..28
@@ -56,6 +59,12 @@ export type DespesaRecorrente = {
   filial: string;
   responsavel?: string;
   ativa: boolean;
+  origem?: OrigemRecorrente; // origem operacional
+  vigenciaInicio?: string;   // YYYY-MM (default: mês atual quando vazio)
+  vigenciaFim?: string;      // YYYY-MM (opcional, sem limite quando vazio)
+  ultimaGeracao?: string;    // YYYY-MM da última vez que gerou lançamento
+  contratoVinculado?: string;
+  obraVinculada?: string;
 };
 
 export type CentroCusto = { id: string; nome: string; tipo: "Administrativo" | "Operacional" | "Comercial" | "Obra" };

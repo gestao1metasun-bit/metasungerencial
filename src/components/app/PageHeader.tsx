@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Clock } from "lucide-react";
+import { FavoritarPaginaButton } from "@/components/app/FavoritosMenu";
 
 export function PageHeader({
   title, subtitle, actions, eyebrow,

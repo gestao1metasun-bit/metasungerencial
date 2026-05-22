@@ -340,6 +340,51 @@ export function estornarMovimento(tituloId: string, movId: string, motivo: strin
   });
 }
 
+// ---------------------------------------------------------------- anexos
+export function adicionarAnexo(tituloId: string, anexo: Omit<Anexo, "id" | "enviadoEm">, usuario = "Sistema"): Anexo {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) throw new Error("Título não encontrado.");
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  const a: Anexo = {
+    ...anexo,
+    id: newId("ANX"),
+    enviadoEm: isoNow(),
+    enviadoPor: usuario,
+  };
+  const arr = [...cur];
+  arr[idx] = { ...before, anexos: [...(before.anexos ?? []), a] };
+  write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: before.contratoId ?? before.id,
+    acao: "FIN_ANEXO_ADICIONADO",
+    usuario,
+    detalhe: `${a.nome} (${Math.round(a.tamanho / 1024)} KB)`,
+  });
+  return a;
+}
+
+export function removerAnexo(tituloId: string, anexoId: string, usuario = "Sistema") {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) return;
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  const removido = (before.anexos ?? []).find((x) => x.id === anexoId);
+  const arr = [...cur];
+  arr[idx] = { ...before, anexos: (before.anexos ?? []).filter((x) => x.id !== anexoId) };
+  write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: before.contratoId ?? before.id,
+    acao: "FIN_ANEXO_REMOVIDO",
+    usuario,
+    detalhe: removido?.nome ?? anexoId,
+  });
+}
+
 // ---------------------------------------------------- bloqueio por fechamento
 /** Recalcula a flag bloqueadoFechamento de cada título consultando o store de fechamentos.
  *  Import dinâmico para evitar ciclo com fin-fechamento-store. */

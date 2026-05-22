@@ -552,38 +552,41 @@ function TituloDialog({
         <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
       </div>
 
-      {/* Anexos */}
-      <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
+      {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
+      {initial ? (
+        <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
+      ) : (
+        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
+            </div>
+            <div>
+              <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
+              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
+              </Button>
+            </div>
           </div>
-          <div>
-            <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
-              accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
-            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-              <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
-            </Button>
-          </div>
+          {pendingFiles.length === 0 ? (
+            <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 10 MB cada. O upload acontece ao salvar.</div>
+          ) : (
+            <div className="space-y-1">
+              {pendingFiles.map((f, idx) => (
+                <div key={`${f.name}-${idx}`} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <span className="text-muted-foreground">{Math.round(f.size / 1024)} KB</span>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPendingFiles((prev) => prev.filter((_, i) => i !== idx))}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {anexosPend.length === 0 ? (
-          <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 5 MB cada.</div>
-        ) : (
-          <div className="space-y-1">
-            {anexosPend.map((a) => (
-              <div key={a.id} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
-                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="flex-1 truncate">{a.nome}</span>
-                <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
-                <a href={a.dataUrl} download={a.nome}><Download className="h-3.5 w-3.5" /></a>
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setAnexosPend((prev) => prev.filter((x) => x.id !== a.id))}>
-                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {initial && onCancelarTitulo && (
         <div className="mt-3 rounded border border-rose-500/30 bg-rose-500/5 p-3">

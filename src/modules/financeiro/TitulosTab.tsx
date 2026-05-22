@@ -366,7 +366,7 @@ function TituloDialog({
   tipo: TituloTipo;
   initial?: Titulo;
   cadastros: Cadastros;
-  onSave: (input: any) => void;
+  onSave: (input: any, pendingFiles: File[]) => void;
   onCancel: () => void;
   onCancelarTitulo?: (motivo: string) => void;
 }) {

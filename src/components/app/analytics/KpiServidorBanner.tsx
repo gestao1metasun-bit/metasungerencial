@@ -32,7 +32,7 @@ function Linha({ k, v }: { k: string; v: React.ReactNode }) {
 }
 
 export function KpiServidorBanner() {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useMyPermissions().isAdmin;
   const com = useKpiComercial();
   const eng = useKpiEngenharia();
   const con = useKpiConsultor();

@@ -53,11 +53,13 @@ const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map((c) => c.key);
 
 export function OperacionalFinTable({
-  storageKey, rows, onEdit,
+  storageKey, rows, onEdit, onVincular,
 }: {
   storageKey: string;
   rows: OpRow[];
   onEdit?: (id: string) => void;
+  /** Quando definido, exibe a ação "Vincular contrato" no menu de Ações. */
+  onVincular?: (id: string) => void;
 }) {
   const [order, setOrder] = useState<ColKey[]>(DEFAULT_ORDER);
 

@@ -314,3 +314,110 @@ export function calcularNecessidadeCompra(state_: State = state): LinhaCompra[] 
 export function findItem(itens: EstoqueItem[], id: string): EstoqueItem | undefined {
   return itens.find((x) => x.id === id);
 }
+
+// ============================================================================
+// Movimentos de Estoque — Entradas por Compra e Saídas para Obra (CMV)
+// ============================================================================
+
+function novoMovId(): string {
+  return `MOV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+}
+
+/** Entrada por compra: atualiza qtd e custo médio ponderado. */
+export function registrarEntradaCompra(
+  compraId: string,
+  linhas: Array<{ itemId: string; qtd: number; custoUnit: number }>,
+  usuario = "Estoque",
+) {
+  const itens = [...state.itens];
+  const novosMov: MovimentoEstoque[] = [];
+  const now = new Date().toISOString();
+  for (const l of linhas) {
+    const idx = itens.findIndex((i) => i.id === l.itemId);
+    if (idx < 0) continue;
+    const atual = itens[idx];
+    const qAnt = atual.qtdAtual || 0;
+    const cmAnt = atual.custoMedio ?? 0;
+    const qNova = qAnt + l.qtd;
+    // Custo médio ponderado
+    const cmNovo = qNova > 0 ? (qAnt * cmAnt + l.qtd * l.custoUnit) / qNova : l.custoUnit;
+    itens[idx] = { ...atual, qtdAtual: qNova, custoMedio: cmNovo, atualizadoEm: now, atualizadoPor: usuario };
+    novosMov.push({
+      id: novoMovId(), em: now, tipo: "Entrada",
+      itemId: atual.id, itemNome: atual.nome, qtd: l.qtd,
+      custoUnit: l.custoUnit, custoTotal: l.qtd * l.custoUnit,
+      compraId, por: usuario,
+    });
+  }
+  setState({ itens, movimentos: [...novosMov, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: compraId, acao: "estoque_entrada", usuario, detalhe: `${linhas.length} item(ns)` });
+}
+
+/** Saída para uma obra — registra CMV ao custo médio vigente. */
+export function registrarSaidaObra(
+  obraId: string,
+  cliente: string,
+  linhas: Array<{ itemId: string; qtd: number; obs?: string }>,
+  usuario = "Estoque",
+): { ok: boolean; cmvTotal: number; faltantes: string[] } {
+  const itens = [...state.itens];
+  const novosMov: MovimentoEstoque[] = [];
+  const faltantes: string[] = [];
+  const now = new Date().toISOString();
+  let cmvTotal = 0;
+  for (const l of linhas) {
+    const idx = itens.findIndex((i) => i.id === l.itemId);
+    if (idx < 0) { faltantes.push(l.itemId); continue; }
+    const atual = itens[idx];
+    if ((atual.qtdAtual || 0) < l.qtd) { faltantes.push(atual.nome); continue; }
+    const cm = atual.custoMedio ?? 0;
+    itens[idx] = { ...atual, qtdAtual: atual.qtdAtual - l.qtd, atualizadoEm: now, atualizadoPor: usuario };
+    const total = l.qtd * cm;
+    cmvTotal += total;
+    novosMov.push({
+      id: novoMovId(), em: now, tipo: "Saída",
+      itemId: atual.id, itemNome: atual.nome, qtd: l.qtd,
+      custoUnit: cm, custoTotal: total,
+      obraId, cliente, por: usuario, obs: l.obs,
+    });
+  }
+  if (novosMov.length === 0) return { ok: false, cmvTotal: 0, faltantes };
+  setState({ itens, movimentos: [...novosMov, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_saida", usuario, detalhe: `CMV=${cmvTotal.toFixed(2)} (${novosMov.length} itens)` });
+  return { ok: true, cmvTotal, faltantes };
+}
+
+// ----- Relatórios de CMV ---------------------------------------------------
+export type CmvObra = {
+  obraId: string;
+  cliente: string;
+  cmvTotal: number;
+  itens: number;
+  ultimaSaida: string;
+};
+
+export function cmvPorObra(): CmvObra[] {
+  const map = new Map<string, CmvObra>();
+  for (const m of state.movimentos) {
+    if (m.tipo !== "Saída" || !m.obraId) continue;
+    const cur = map.get(m.obraId) ?? {
+      obraId: m.obraId, cliente: m.cliente ?? "", cmvTotal: 0, itens: 0, ultimaSaida: m.em,
+    };
+    cur.cmvTotal += m.custoTotal;
+    cur.itens += 1;
+    if (m.em > cur.ultimaSaida) cur.ultimaSaida = m.em;
+    if (!cur.cliente && m.cliente) cur.cliente = m.cliente;
+    map.set(m.obraId, cur);
+  }
+  return [...map.values()].sort((a, b) => b.cmvTotal - a.cmvTotal);
+}
+
+export function cmvDaObra(obraId: string): number {
+  return state.movimentos
+    .filter((m) => m.tipo === "Saída" && m.obraId === obraId)
+    .reduce((s, m) => s + m.custoTotal, 0);
+}
+
+export function valorEstoqueTotal(): number {
+  return state.itens.reduce((s, i) => s + (i.qtdAtual || 0) * (i.custoMedio ?? 0), 0);
+}

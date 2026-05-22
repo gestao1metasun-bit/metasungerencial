@@ -504,9 +504,24 @@ function ContratoAssinadoRow({
             <HandCoins className="mr-2 h-4 w-4" /> Liberar comissão
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => setAditivosOpen(true)}
+            disabled={!aprovado}
+            title={!aprovado ? "Disponível após aprovação do contrato" : undefined}
+          >
+            <Layers className="mr-2 h-4 w-4" />
+            <span>Gerenciar aditivos</span>
+            {pendentesAditivos > 0 && (
+              <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-warning/15 text-warning border border-warning/30 px-1.5 text-[10px] font-semibold">
+                {pendentesAditivos}
+              </span>
+            )}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
             <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
           </DropdownMenuItem>
+
           <DropdownMenuItem onSelect={() => onImprimir(c)}>
             <Printer className="mr-2 h-4 w-4" /> Imprimir
           </DropdownMenuItem>

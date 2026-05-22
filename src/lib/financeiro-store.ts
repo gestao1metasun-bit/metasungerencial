@@ -138,14 +138,15 @@ const seedLanc: Lancamento[] = [
 ];
 
 const seedRec: DespesaRecorrente[] = [
-  { id: "R-001", descricao: "Aluguel sede", valor: 12000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Aluguel", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-002", descricao: "Folha de pagamento", valor: 178000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Folha de pagamento", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-003", descricao: "Pró-labore sócios", valor: 28000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Pró-labore", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-004", descricao: "Energia elétrica", valor: 4200, recorrencia: "Mensal", diaVencimento: 15, natureza: "Energia/Água", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-005", descricao: "Internet + telefonia", valor: 1800, recorrencia: "Mensal", diaVencimento: 12, natureza: "Internet/Telefonia", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-006", descricao: "Software CRM/ERP", valor: 2400, recorrencia: "Mensal", diaVencimento: 20, natureza: "Software/Licenças", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-007", descricao: "Contabilidade", valor: 3500, recorrencia: "Mensal", diaVencimento: 8, natureza: "Contabilidade", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true },
-  { id: "R-008", descricao: "Seguros frota", valor: 1900, recorrencia: "Mensal", diaVencimento: 18, natureza: "Veículos/Seguros", centroCusto: "Frota", empresa: "Meta Sun", filial: "Manaus", ativa: true },
+  { id: "R-001", descricao: "Aluguel sede", tipo: "Saída", valor: 12000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Aluguel", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "aluguel" },
+  { id: "R-002", descricao: "Folha de pagamento", tipo: "Saída", valor: 178000, recorrencia: "Mensal", diaVencimento: 5, natureza: "Folha de pagamento", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "folha" },
+  { id: "R-003", descricao: "Pró-labore sócios", tipo: "Saída", valor: 28000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Pró-labore", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "folha" },
+  { id: "R-004", descricao: "Energia elétrica", tipo: "Saída", valor: 4200, recorrencia: "Mensal", diaVencimento: 15, natureza: "Energia/Água", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "manual" },
+  { id: "R-005", descricao: "Internet + telefonia", tipo: "Saída", valor: 1800, recorrencia: "Mensal", diaVencimento: 12, natureza: "Internet/Telefonia", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-006", descricao: "Software CRM/ERP", tipo: "Saída", valor: 2400, recorrencia: "Mensal", diaVencimento: 20, natureza: "Software/Licenças", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-007", descricao: "Contabilidade", tipo: "Saída", valor: 3500, recorrencia: "Mensal", diaVencimento: 8, natureza: "Contabilidade", centroCusto: "Administrativo", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "assinatura" },
+  { id: "R-008", descricao: "Seguros frota", tipo: "Saída", valor: 1900, recorrencia: "Mensal", diaVencimento: 18, natureza: "Veículos/Seguros", centroCusto: "Frota", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "manual" },
+  { id: "R-009", descricao: "Recebimento parcelas CT (carteira)", tipo: "Entrada", valor: 86000, recorrencia: "Mensal", diaVencimento: 10, natureza: "Parcelas/Recorrentes", centroCusto: "Comercial", empresa: "Meta Sun", filial: "Manaus", ativa: true, origem: "contrato" },
 ];
 
 // ---------- generic LS hook ----------

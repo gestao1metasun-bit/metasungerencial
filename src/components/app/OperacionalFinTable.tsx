@@ -138,16 +138,22 @@ export function OperacionalFinTable({
       }
       case "acoes":
         return (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            title="Editar"
-            onClick={() => onEdit?.(r.id)}
-            disabled={!onEdit}
-          >
-            <SquarePen className="h-3.5 w-3.5" />
-          </Button>
+          <ActionsMenu label="Ações">
+            <DropdownMenuItem
+              disabled={!onEdit}
+              onClick={() => onEdit?.(r.id)}
+            >
+              <SquarePen className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            {onVincular && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onVincular(r.id)}>
+                  <Link2 className="mr-2 h-4 w-4" /> Vincular contrato
+                </DropdownMenuItem>
+              </>
+            )}
+          </ActionsMenu>
         );
     }
   };

@@ -62,9 +62,16 @@ export function ParametrosGerenciaisTab() {
     });
   }, [params, setorFiltro, busca]);
 
+  type UpsertInput = {
+    chave: string;
+    setor?: string | null;
+    categoria?: string;
+    descricao?: string;
+    valor: Record<string, number>;
+    motivo?: string;
+  };
   const upsert = useMutation({
-    mutationFn: (v: Parameters<typeof upsertParametroGerencial>[0]["data"]) =>
-      upsertParametroGerencial({ data: v }),
+    mutationFn: (v: UpsertInput) => upsertParametroGerencial({ data: v }),
     onSuccess: () => {
       toast.success("Parâmetro salvo.");
       qc.invalidateQueries({ queryKey: ["gerencial_parametros"] });

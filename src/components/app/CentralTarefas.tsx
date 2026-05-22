@@ -39,7 +39,7 @@ export function CentralTarefas() {
   });
 
   const mutGerar = useMutation({
-    mutationFn: () => fnGerar({ data: {} }),
+    mutationFn: () => fnGerar(),
     onSuccess: (r: any) => {
       toast.success(`Geradas: ${r?.obras_atrasadas ?? 0} obras atrasadas, ${r?.contratos_sem_obra ?? 0} contratos sem obra`);
       qc.invalidateQueries({ queryKey: ["tarefas"] });

@@ -293,6 +293,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   </Table>
                 )}
               </div>
+              <AnexosBlock titulo={verHist} editavel={!verHist.bloqueadoFechamento} />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setVerHist(null)}>Fechar</Button>

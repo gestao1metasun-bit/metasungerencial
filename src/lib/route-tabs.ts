@@ -70,6 +70,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "lancamentos", label: "Lançamentos" },
       { value: "recorrentes", label: "Despesas fixas" },
       { value: "fornecedores", label: "Fornecedores" },
+      { value: "conciliacao", label: "Conciliação" },
       { value: "centros", label: "Centros & Naturezas" },
       { value: "fechamento", label: "Fechamento" },
       { value: "dre", label: "DRE" },

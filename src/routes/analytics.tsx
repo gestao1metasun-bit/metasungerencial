@@ -46,7 +46,7 @@ import {
   fmtMeses,
   DEFAULT_BANDS,
 } from "@/lib/analytics-kpis";
-import { listarParametrosGerenciais, atualizarParametroGerencial } from "@/lib/parametros-gerenciais.functions";
+import { ParametrosGerenciaisTab } from "@/components/app/analytics/ParametrosGerenciaisTab";
 import { Lock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/analytics")({

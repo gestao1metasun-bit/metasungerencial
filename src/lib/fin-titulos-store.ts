@@ -353,12 +353,18 @@ export function gerarAPdeCompra(args: {
   }, usuario);
 }
 
-/** AP de comissão LIBERADA (manual — nunca automática a partir do contrato). */
+/** AP de comissão LIBERADA (manual — nunca automática a partir do contrato).
+ *  Idempotente quando `id` é informado. */
 export function gerarAPdeComissao(args: {
   contratoId: string; cliente: string; valor: number; vencimento: string;
-  beneficiario: string; parcelaLabel?: string;
+  beneficiario: string; parcelaLabel?: string; id?: string;
 }, usuario = "Comercial") {
+  if (args.id) {
+    const existente = read().find((t) => t.id === args.id);
+    if (existente) return existente;
+  }
   return criarTitulo({
+    id: args.id,
     tipo: "AP", origem: "comissao",
     descricao: `Comissão ${args.beneficiario} · contrato ${args.contratoId} · ${args.cliente}`,
     valorOriginal: args.valor,

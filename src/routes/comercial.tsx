@@ -4,7 +4,7 @@ import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
   DollarSign, TrendingUp, Users, AlertTriangle, Target, Trash2, Percent, BarChart3,
   Zap, Sun, Filter, Activity, Award, Gauge, SquarePen, Layers, History, MapPin, Undo2, Printer, PenLine,
-  Eye, Paperclip, ChevronDown, Ban, RotateCcw,
+  Eye, Paperclip, ChevronDown, Ban, RotateCcw, HandCoins,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
@@ -60,6 +60,7 @@ import {
   liberarContratoParaGerar, revogarLiberacaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
+import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
@@ -469,6 +470,33 @@ function ContratoAssinadoRow({
               <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            disabled={!aprovado || !(c.comissaoValor && c.comissaoValor > 0)}
+            title={
+              !aprovado ? "Disponível após aprovação do contrato"
+              : !(c.comissaoValor && c.comissaoValor > 0) ? "Contrato sem valor de comissão"
+              : undefined
+            }
+            onSelect={() => {
+              const apId = `AP-COM-${c.id}`;
+              const ja = getTitulos().find((t) => t.id === apId);
+              if (ja) { toast.info(`Comissão já liberada (${apId}).`); return; }
+              const beneficiario = c.vendedor || prompt("Beneficiário da comissão:") || "";
+              if (!beneficiario.trim()) { toast.error("Informe o beneficiário."); return; }
+              const vencDefault = new Date(); vencDefault.setDate(vencDefault.getDate() + 30);
+              const venc = prompt("Vencimento (AAAA-MM-DD):", vencDefault.toISOString().slice(0, 10)) || "";
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) { toast.error("Data inválida."); return; }
+              try {
+                gerarAPdeComissao({
+                  id: apId, contratoId: c.id, cliente: c.cliente,
+                  valor: c.comissaoValor!, vencimento: venc, beneficiario: beneficiario.trim(),
+                }, "Comercial");
+                toast.success(`Comissão liberada: AP gerada no Financeiro (${apId}).`);
+              } catch (e: any) { toast.error(e?.message ?? "Erro ao liberar comissão."); }
+            }}
+          >
+            <HandCoins className="mr-2 h-4 w-4" /> Liberar comissão
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
             <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos

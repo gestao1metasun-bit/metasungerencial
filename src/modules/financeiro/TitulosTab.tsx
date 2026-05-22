@@ -399,6 +399,48 @@ function TituloDialog({
   const [contratoId, setContrato] = useState(initial?.contratoId ?? "");
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
+  const [origem, setOrigem] = useState<string>(initial?.origem ?? "manual");
+
+  // Listas de origens reais (obras e contratos cadastrados no ERP)
+  const contratosAll = useContratos();
+  const obrasAll = useObrasSnapshot();
+
+  // Opções de origem permitidas por tipo
+  const origensDisp = useMemo(() => {
+    if (tipo === "AR") return [
+      { value: "manual",        label: "Manual" },
+      { value: "contrato",      label: "Contrato (parcela)" },
+      { value: "financiamento", label: "Financiamento (liberação)" },
+      { value: "manutencao",    label: "Manutenção / pós-venda" },
+    ];
+    return [
+      { value: "manual",     label: "Manual" },
+      { value: "compra",     label: "Compra de material" },
+      { value: "comissao",   label: "Comissão" },
+      { value: "mao_obra",   label: "Mão de obra" },
+      { value: "frete",      label: "Frete" },
+      { value: "manutencao", label: "Manutenção / pós-venda" },
+    ];
+  }, [tipo]);
+
+  // Auto-preenchimento ao escolher contrato
+  const aoEscolherContrato = (id: string) => {
+    setContrato(id);
+    const c = contratosAll.find((x) => x.id === id);
+    if (c) {
+      if (!cliente) setCliente(c.cliente);
+      if (tipo === "AR" && origem === "manual") setOrigem("contrato");
+    }
+  };
+  // Auto-preenchimento ao escolher obra (puxa contrato e cliente)
+  const aoEscolherObra = (id: string) => {
+    setObra(id);
+    const o = obrasAll.find((x) => x.id === id);
+    if (o) {
+      if (o.contrato && !contratoId) setContrato(o.contrato);
+      if (o.cliente && !cliente) setCliente(o.cliente);
+    }
+  };
 
   // Arquivos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);

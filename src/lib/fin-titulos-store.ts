@@ -1,0 +1,457 @@
+// ============================================================================
+// Títulos Financeiros — núcleo de Contas a Pagar (AP) / Contas a Receber (AR).
+// Suporta nascimento automático (a partir de Comercial/Estoque/Engenharia),
+// pagamento/recebimento parcial, estorno, vínculo com fechamento mensal,
+// e auditoria via pushAudit().
+//
+// Persistência: localStorage (sem Supabase nesta fase).
+// ============================================================================
+import { useEffect, useSyncExternalStore } from "react";
+import { pushAudit } from "@/lib/audit-store";
+
+export type TituloTipo = "AP" | "AR";
+
+export type TituloOrigem =
+  | "compra"        // AP: compra de material/estoque
+  | "comissao"      // AP: comissão liberada (manual)
+  | "mao_obra"      // AP: equipe de instalação
+  | "frete"         // AP: frete utilizado
+  | "manutencao"    // AP/AR: pós-venda
+  | "contrato"      // AR: parcela de contrato assinado
+  | "financiamento" // AR: liberação bancária
+  | "manual";       // qualquer um, lançamento manual
+
+export type TituloStatus =
+  | "previsto"
+  | "comprometido"
+  | "parcial"
+  | "a_pagar"
+  | "a_receber"
+  | "pago"
+  | "recebido"
+  | "cancelado";
+
+export type Movimento = {
+  id: string;
+  data: string;          // ISO
+  valor: number;
+  juros?: number;
+  multa?: number;
+  desconto?: number;
+  contaFinanceira?: string;
+  meioPagamento?: string;
+  observacao?: string;
+  usuario?: string;
+  estornado?: boolean;
+  estornoMotivo?: string;
+  estornoEm?: string;
+  estornoPor?: string;
+};
+
+export type Titulo = {
+  id: string;
+  tipo: TituloTipo;
+  origem: TituloOrigem;
+  status: TituloStatus;
+
+  descricao: string;
+  valorOriginal: number;
+  valorPago: number;      // soma dos movimentos efetivos (não estornados)
+  saldo: number;          // valorOriginal - valorPago
+
+  vencimento: string;     // YYYY-MM-DD
+  competencia?: string;   // YYYY-MM
+  dataEmissao?: string;
+  dataLiquidacao?: string;
+
+  natureza: string;
+  centroCusto: string;
+  contaFinanceira?: string;
+  meioPagamento?: string;
+
+  fornecedor?: string;    // AP
+  cliente?: string;       // AR
+  obraId?: string;
+  contratoId?: string;
+  parcelaLabel?: string;
+
+  comprovanteUrl?: string;
+  observacao?: string;
+
+  criadoPor?: string;
+  criadoEm: string;       // ISO
+
+  // Bloqueios
+  bloqueadoFechamento?: boolean; // true quando o mês foi fechado
+
+  movimentos: Movimento[];
+};
+
+const KEY = "ms.fin.titulos.v1";
+type Listener = () => void;
+const listeners = new Set<Listener>();
+let cache: Titulo[] | null = null;
+
+function read(): Titulo[] {
+  if (cache) return cache;
+  if (typeof window === "undefined") { cache = []; return cache; }
+  try {
+    const raw = localStorage.getItem(KEY);
+    cache = raw ? (JSON.parse(raw) as Titulo[]) : [];
+  } catch { cache = []; }
+  return cache!;
+}
+
+function write(next: Titulo[]) {
+  cache = next;
+  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+  listeners.forEach((l) => l());
+}
+
+function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
+function getSnapshot() { return read(); }
+const SERVER_SNAPSHOT: Titulo[] = [];
+function getServerSnapshot() { return SERVER_SNAPSHOT; }
+
+export function useTitulos(): Titulo[] {
+  const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEffect(() => { read(); }, []);
+  return list;
+}
+
+export function getTitulos(): Titulo[] { return read(); }
+export function getTitulo(id: string): Titulo | undefined { return read().find((t) => t.id === id); }
+
+// --------------------------------------------------------------------- helpers
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const isoNow = () => new Date().toISOString();
+const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+function statusInicialPara(tipo: TituloTipo, origem: TituloOrigem): TituloStatus {
+  if (origem === "contrato") return "previsto";
+  if (origem === "financiamento") return "comprometido";
+  return tipo === "AP" ? "a_pagar" : "a_receber";
+}
+
+function recomputarStatus(t: Titulo): TituloStatus {
+  if (t.status === "cancelado") return "cancelado";
+  if (t.valorPago <= 0) {
+    // mantém status corrente se for previsto/comprometido
+    if (t.status === "previsto" || t.status === "comprometido") return t.status;
+    return t.tipo === "AP" ? "a_pagar" : "a_receber";
+  }
+  if (t.valorPago + 0.001 >= t.valorOriginal) {
+    return t.tipo === "AP" ? "pago" : "recebido";
+  }
+  return "parcial";
+}
+
+// ---------------------------------------------------------------------- CRUD
+export type CriarTituloInput = Omit<
+  Titulo,
+  "id" | "valorPago" | "saldo" | "status" | "criadoEm" | "movimentos"
+> & {
+  id?: string;
+  status?: TituloStatus;
+  criadoEm?: string;
+  movimentos?: Movimento[];
+};
+
+export function criarTitulo(input: CriarTituloInput, usuario = "Sistema"): Titulo {
+  const id = input.id ?? newId(input.tipo === "AP" ? "AP" : "AR");
+  const t: Titulo = {
+    ...input,
+    id,
+    valorPago: 0,
+    saldo: round2(input.valorOriginal),
+    status: input.status ?? statusInicialPara(input.tipo, input.origem),
+    criadoEm: input.criadoEm ?? isoNow(),
+    criadoPor: input.criadoPor ?? usuario,
+    movimentos: input.movimentos ?? [],
+  };
+  // dedupe por id
+  const cur = read().filter((x) => x.id !== t.id);
+  write([t, ...cur]);
+  pushAudit({
+    entidade: "contrato", // reaproveita o enum existente
+    entidadeId: t.contratoId ?? t.id,
+    acao: "FIN_TITULO_CRIADO",
+    usuario,
+    detalhe: `${t.tipo} ${t.origem} · ${t.descricao} · R$ ${t.valorOriginal.toFixed(2)}`,
+  });
+  return t;
+}
+
+export function atualizarTitulo(id: string, patch: Partial<Titulo>, usuario = "Sistema", motivo?: string) {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === id);
+  if (idx < 0) return;
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  if (before.status === "pago" || before.status === "recebido") {
+    throw new Error("Título quitado — estorne antes de editar.");
+  }
+  const next: Titulo = { ...before, ...patch };
+  next.valorOriginal = round2(next.valorOriginal);
+  next.saldo = round2(next.valorOriginal - next.valorPago);
+  next.status = recomputarStatus(next);
+  const arr = [...cur]; arr[idx] = next; write(arr);
+
+  // auditoria por campo
+  (["valorOriginal", "vencimento", "natureza", "centroCusto", "observacao"] as const).forEach((k) => {
+    if (before[k] !== next[k]) {
+      pushAudit({
+        entidade: "contrato",
+        entidadeId: next.contratoId ?? next.id,
+        acao: "FIN_TITULO_EDITADO",
+        usuario, motivo, campo: k,
+        valorAnterior: String(before[k] ?? ""),
+        valorNovo: String(next[k] ?? ""),
+      });
+    }
+  });
+}
+
+export function cancelarTitulo(id: string, motivo: string, usuario = "Sistema") {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === id);
+  if (idx < 0) return;
+  const before = cur[idx];
+  if (before.valorPago > 0) throw new Error("Título já possui movimentos — estorne-os antes de cancelar.");
+  const next: Titulo = { ...before, status: "cancelado", observacao: motivo };
+  const arr = [...cur]; arr[idx] = next; write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: "FIN_TITULO_CANCELADO",
+    usuario, motivo,
+  });
+}
+
+// ---------------------------------------------------------------- movimentos
+export type BaixaInput = {
+  valor: number;
+  data?: string;          // YYYY-MM-DD; default hoje
+  juros?: number;
+  multa?: number;
+  desconto?: number;
+  contaFinanceira?: string;
+  meioPagamento?: string;
+  observacao?: string;
+};
+
+export function registrarBaixa(id: string, mov: BaixaInput, usuario = "Sistema"): Movimento {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === id);
+  if (idx < 0) throw new Error("Título não encontrado.");
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  if (before.status === "cancelado") throw new Error("Título cancelado.");
+  const valor = round2(mov.valor + (mov.juros ?? 0) + (mov.multa ?? 0) - (mov.desconto ?? 0));
+  if (valor <= 0) throw new Error("Valor da baixa deve ser positivo.");
+  if (before.valorPago + valor > before.valorOriginal + 0.01) {
+    throw new Error(`Baixa excede o saldo (R$ ${before.saldo.toFixed(2)}).`);
+  }
+
+  const m: Movimento = {
+    id: newId("MV"),
+    data: mov.data ?? new Date().toISOString().slice(0, 10),
+    valor,
+    juros: mov.juros,
+    multa: mov.multa,
+    desconto: mov.desconto,
+    contaFinanceira: mov.contaFinanceira ?? before.contaFinanceira,
+    meioPagamento: mov.meioPagamento ?? before.meioPagamento,
+    observacao: mov.observacao,
+    usuario,
+  };
+
+  const movs = [...before.movimentos, m];
+  const novoPago = round2(movs.filter((x) => !x.estornado).reduce((s, x) => s + x.valor, 0));
+  const next: Titulo = {
+    ...before,
+    movimentos: movs,
+    valorPago: novoPago,
+    saldo: round2(before.valorOriginal - novoPago),
+    contaFinanceira: m.contaFinanceira ?? before.contaFinanceira,
+    meioPagamento: m.meioPagamento ?? before.meioPagamento,
+    dataLiquidacao: novoPago + 0.001 >= before.valorOriginal ? m.data : before.dataLiquidacao,
+  };
+  next.status = recomputarStatus(next);
+  const arr = [...cur]; arr[idx] = next; write(arr);
+
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: before.tipo === "AP" ? "FIN_PAGAMENTO" : "FIN_RECEBIMENTO",
+    usuario,
+    detalhe: `R$ ${valor.toFixed(2)} em ${m.data}${m.meioPagamento ? ` via ${m.meioPagamento}` : ""}`,
+  });
+
+  return m;
+}
+
+export function estornarMovimento(tituloId: string, movId: string, motivo: string, usuario = "Sistema") {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) return;
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  const movs = before.movimentos.map((m) =>
+    m.id === movId && !m.estornado
+      ? { ...m, estornado: true, estornoMotivo: motivo, estornoEm: isoNow(), estornoPor: usuario }
+      : m,
+  );
+  const novoPago = round2(movs.filter((x) => !x.estornado).reduce((s, x) => s + x.valor, 0));
+  const next: Titulo = {
+    ...before,
+    movimentos: movs,
+    valorPago: novoPago,
+    saldo: round2(before.valorOriginal - novoPago),
+    dataLiquidacao: novoPago + 0.001 >= before.valorOriginal ? before.dataLiquidacao : undefined,
+  };
+  next.status = recomputarStatus(next);
+  const arr = [...cur]; arr[idx] = next; write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: "FIN_ESTORNO",
+    usuario, motivo,
+    detalhe: `Movimento ${movId} estornado`,
+  });
+}
+
+// ---------------------------------------------------- bloqueio por fechamento
+export function aplicarBloqueioFechamento(mesYYYYMM: string, bloquear: boolean) {
+  const cur = read();
+  const arr = cur.map((t) => {
+    const comp = t.competencia ?? t.vencimento.slice(0, 7);
+    return comp === mesYYYYMM ? { ...t, bloqueadoFechamento: bloquear } : t;
+  });
+  write(arr);
+}
+
+// ---------------------------------------------------------- helpers de origem
+
+/** AP automática de compra de material. */
+export function gerarAPdeCompra(args: {
+  descricao: string; valor: number; vencimento: string;
+  fornecedor?: string; obraId?: string; natureza?: string; centroCusto?: string;
+  meioPagamento?: string;
+}, usuario = "Estoque") {
+  return criarTitulo({
+    tipo: "AP", origem: "compra",
+    descricao: args.descricao,
+    valorOriginal: args.valor,
+    vencimento: args.vencimento,
+    competencia: args.vencimento.slice(0, 7),
+    natureza: args.natureza ?? "Material",
+    centroCusto: args.centroCusto ?? "Engenharia/Operação",
+    fornecedor: args.fornecedor,
+    obraId: args.obraId,
+    meioPagamento: args.meioPagamento,
+  }, usuario);
+}
+
+/** AP de comissão LIBERADA (manual — nunca automática a partir do contrato). */
+export function gerarAPdeComissao(args: {
+  contratoId: string; cliente: string; valor: number; vencimento: string;
+  beneficiario: string; parcelaLabel?: string;
+}, usuario = "Comercial") {
+  return criarTitulo({
+    tipo: "AP", origem: "comissao",
+    descricao: `Comissão ${args.beneficiario} · contrato ${args.contratoId} · ${args.cliente}`,
+    valorOriginal: args.valor,
+    vencimento: args.vencimento,
+    competencia: args.vencimento.slice(0, 7),
+    natureza: "Comissões",
+    centroCusto: "Comercial",
+    contratoId: args.contratoId,
+    fornecedor: args.beneficiario,
+    parcelaLabel: args.parcelaLabel,
+  }, usuario);
+}
+
+/** AR automática de contrato (uma parcela). */
+export function gerarARdeContratoParcela(args: {
+  contratoId: string; cliente: string; valor: number; vencimento: string;
+  parcelaLabel?: string; obraId?: string; meioPagamento?: string;
+}, usuario = "Comercial") {
+  return criarTitulo({
+    tipo: "AR", origem: "contrato",
+    descricao: `Parcela ${args.parcelaLabel ?? ""} · ${args.cliente} · contrato ${args.contratoId}`.trim(),
+    valorOriginal: args.valor,
+    vencimento: args.vencimento,
+    competencia: args.vencimento.slice(0, 7),
+    natureza: "Recebimento de cliente",
+    centroCusto: "Comercial",
+    cliente: args.cliente,
+    contratoId: args.contratoId,
+    obraId: args.obraId,
+    parcelaLabel: args.parcelaLabel,
+    meioPagamento: args.meioPagamento,
+    status: "previsto",
+  }, usuario);
+}
+
+/** AR de financiamento (liberação bancária). */
+export function gerarARdeFinanciamento(args: {
+  contratoId: string; cliente: string; valor: number; vencimento: string;
+  banco?: string;
+}, usuario = "Financiamentos") {
+  return criarTitulo({
+    tipo: "AR", origem: "financiamento",
+    descricao: `Liberação ${args.banco ?? "banco"} · ${args.cliente} · contrato ${args.contratoId}`,
+    valorOriginal: args.valor,
+    vencimento: args.vencimento,
+    competencia: args.vencimento.slice(0, 7),
+    natureza: "Liberação financiamento",
+    centroCusto: "Comercial",
+    cliente: args.cliente,
+    contratoId: args.contratoId,
+    status: "comprometido",
+  }, usuario);
+}
+
+/** Importa lançamentos legados (Previsto/A realizar) como títulos AR. */
+export function importarPrevisoesDoLegado(lancs: Array<{
+  id: string; data: string; descricao: string; tipo: "Entrada" | "Saída"; valor: number;
+  camada: string; natureza: string; centroCusto: string;
+  obra?: string; contrato?: string; cliente?: string; formaPagamento?: string; parcelaLabel?: string;
+  competencia?: string;
+}>) {
+  const existentes = new Set(read().map((t) => t.id));
+  const novos: Titulo[] = [];
+  for (const l of lancs) {
+    if (!(l.camada === "Previsto" || l.camada === "A realizar" || l.camada === "Confirmado")) continue;
+    const id = `IMP-${l.id}`;
+    if (existentes.has(id)) continue;
+    const tipo: TituloTipo = l.tipo === "Entrada" ? "AR" : "AP";
+    novos.push({
+      id, tipo,
+      origem: l.contrato ? "contrato" : "manual",
+      status: l.camada === "Confirmado"
+        ? (tipo === "AP" ? "a_pagar" : "a_receber")
+        : (tipo === "AP" ? "previsto" : "previsto"),
+      descricao: l.descricao,
+      valorOriginal: round2(l.valor),
+      valorPago: 0,
+      saldo: round2(l.valor),
+      vencimento: l.data,
+      competencia: l.competencia ?? l.data.slice(0, 7),
+      dataEmissao: l.data,
+      natureza: l.natureza,
+      centroCusto: l.centroCusto,
+      cliente: l.cliente,
+      contratoId: l.contrato,
+      obraId: l.obra,
+      parcelaLabel: l.parcelaLabel,
+      meioPagamento: l.formaPagamento,
+      criadoEm: isoNow(),
+      criadoPor: "Importação",
+      movimentos: [],
+    });
+  }
+  if (novos.length) write([...novos, ...read()]);
+  return novos.length;
+}

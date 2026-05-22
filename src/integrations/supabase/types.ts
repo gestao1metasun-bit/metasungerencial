@@ -148,6 +148,54 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          acao: string
+          campo: string | null
+          created_at: string
+          entidade: string
+          entidade_id: string
+          id: string
+          ip: string | null
+          modulo: string
+          motivo: string | null
+          user_email: string | null
+          user_id: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          acao: string
+          campo?: string | null
+          created_at?: string
+          entidade: string
+          entidade_id: string
+          id?: string
+          ip?: string | null
+          modulo: string
+          motivo?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          acao?: string
+          campo?: string | null
+          created_at?: string
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          ip?: string | null
+          modulo?: string
+          motivo?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: []
+      }
       cidades_irradiacao: {
         Row: {
           ativo: boolean
@@ -497,6 +545,36 @@ export type Database = {
           },
         ]
       }
+      period_locks: {
+        Row: {
+          ano: number
+          fechado_em: string
+          fechado_por: string | null
+          id: string
+          mes: number
+          modulo: string
+          motivo: string | null
+        }
+        Insert: {
+          ano: number
+          fechado_em?: string
+          fechado_por?: string | null
+          id?: string
+          mes: number
+          modulo: string
+          motivo?: string | null
+        }
+        Update: {
+          ano?: number
+          fechado_em?: string
+          fechado_por?: string | null
+          id?: string
+          mes?: number
+          modulo?: string
+          motivo?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -684,6 +762,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_operacional: {
+        Args: {
+          _data_ref: string
+          _modulo: string
+          _status: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -692,6 +779,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_period_closed: {
+        Args: { _data: string; _modulo: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin_master" | "admin_geral" | "usuario"

@@ -1,123 +1,102 @@
-# Plano estrutural ERP Meta Sun — próximas fases
+## Objetivo
 
-A Fase 1.1 já foi entregue (auditoria DB universal via triggers, enum `app_permission`, `role_permissions`, `has_permission()`, hook `useMyPermissions`, timeline unificada). Este plano organiza o restante do que você pediu em fases entregáveis, cada uma em 1–3 rodadas. Cada fase termina utilizável — nada de "tudo ou nada".
+Esconder a complexidade do ERP atrás de uma navegação enxuta, sem remover funcionalidades. O mesmo sistema continua robusto; o que muda é **como o menu é exibido**.
 
----
+## Diagnóstico atual
 
-## FASE 1.2 — Permissões granulares por usuário (extras / bloqueios)
+- Sidebar tem 11 módulos no mesmo nível (Dashboard, Comercial, Financeiro, Financiamentos, Engenharia, Pós-venda, Estoque, Analytics, Cadastros, Relatórios, Configurações).
+- Dentro de cada módulo (ex.: `/financeiro` tem 13 abas) tudo aparece achatado, misturando Visão / Operação / Cadastros / Controle.
+- Não existe distinção visual entre o que é **dia a dia** e o que é **estrutura/admin**.
+- Nomes genéricos ("Cadastros estruturais", "Parâmetros gerais") não comunicam.
+- Não há favoritos nem últimos acessos.
 
-Hoje as permissões vêm só do perfil (role). Vamos para o modelo que você descreveu:
+## Mudanças propostas (Fase 1 — só UI/navegação, zero impacto em dados)
 
-```text
-USUÁRIO → PERFIL BASE → + permissões extras → − permissões bloqueadas
+### 1. Sidebar em 3 camadas visuais
+
+```
+┌─ OPERAÇÃO ─────────────┐
+│  Dashboard             │
+│  Tarefas               │
+│  Comercial             │
+│  Financeiro            │
+│  Financiamentos        │
+│  Engenharia            │
+│  Pós-venda             │
+│  Estoque               │
+├─ CONTROLE ─────────────┤
+│  Analytics             │
+│  Relatórios            │
+├─ ESTRUTURA ────────────┤ (recolhido por padrão)
+│  Cadastros             │
+│  Configurações         │
+└────────────────────────┘
 ```
 
-**Banco**
-- Tabela `user_permission_overrides(user_id, permission, effect: 'grant'|'deny', motivo, granted_by, created_at)`.
-- Atualizar `has_permission()` para: admin → true; senão `(role tem) ∪ (overrides grant) ∖ (overrides deny)`.
-- Trigger de auditoria já cobre via `tg_audit_row`.
+- Cada camada vira um grupo com label discreto (uppercase, opacidade reduzida).
+- **Estrutura** começa **colapsada** — quem usa dia a dia não vê ruído administrativo.
+- Visual mais leve: espaçamento maior entre grupos, divisores sutis.
 
-**UI (Configurações → Usuários)**
-- Tela "Permissões do usuário": lista todas as permissões agrupadas por módulo, mostrando origem (perfil / extra / bloqueada) e permitindo + / − com motivo obrigatório.
-- Reaproveitar `useMyPermissions()` para gating de botões.
+### 2. Reorganização das abas internas (por módulo)
 
-**Preparação futura** (apenas colunas reservadas, sem UI ainda):
-- `filial_id`, `setor`, `carteira_id`, `escopo_jsonb` em `user_permission_overrides`.
+Reescrever `src/lib/route-tabs.ts` agrupando todas as abas em 4 grupos padronizados: **Visão**, **Operação**, **Controle**, **Estrutura**. Nada é removido — apenas reordenado e renomeado.
 
----
+Exemplo Financeiro (já tem grupos, só ajustar nomes/ordem):
+- Visão: Dashboard, Fluxo de Caixa, Visão Gerencial, CMV / Compras
+- Operação: Contas a Receber, Contas a Pagar, Lançamentos, Despesas Fixas
+- Controle: Conciliação, Fechamento
+- Estrutura: Fornecedores, Naturezas & Centros, Parâmetros financeiros
 
-## FASE 1.3 — Versionamento + soft-delete + motivo obrigatório
+Exemplo Configurações (hoje 17 abas no mesmo nível):
+- Empresa: Empresa, Parâmetros gerais
+- Acessos: Perfis, Permissões, Usuários, Consultores, Logs de sessão
+- Operacional: Dashboard, Comercial, Engenharia, Financeiro (cfg de módulos)
+- Orçamentos: Fórmulas, Cadastros
+- Sistema: Integrações, Sistema & Flags, Logs, Lixeira
 
-**Banco**
-- Tabela genérica `entidade_versoes(entidade, entidade_id, versao int, snapshot jsonb, motivo, user_id, created_at)`.
-- Trigger `tg_snapshot_version()` em `contratos`, `aditivos`, `obras`, `projetos`, `financeiro` (quando migrar), `estoque`.
-- Bloquear `DELETE` físico via RLS nas tabelas operacionais; criar coluna `deleted_at` + `deleted_reason` + políticas "arquivar/cancelar".
+No submenu lateral, grupos de **Estrutura** aparecem com cor mais apagada e ficam **após** Visão/Operação/Controle.
 
-**Regras de transição (trigger `tg_guard_estado`)**
-- Contrato `Assinado` → só altera via aditivo.
-- Financeiro `Pago` → só via estorno.
-- Obra `Finalizada` → imutável fora admin.
-- Já temos `tg_guard_operacional`; estender com mais estados.
+### 3. Renomeações para clareza
 
-**UI**
-- Aba "Versões" em contratos/obras/projetos com diff visual e botão "Restaurar" (cria nova versão a partir da antiga).
-- Modal "Informe o motivo" em ações críticas (cancelar, reabrir, alterar valor, alterar vencimento).
-- Lixeira operacional em Configurações (lista `deleted_at not null`, restaurar / excluir definitivamente só admin).
+- "Cadastros estruturais" → "Plano de Contas & Categorias"
+- "Centros & Naturezas (legado)" → remover do menu (mantém rota acessível, mas não exposta)
+- "Parâmetros gerais" → "Parâmetros do Sistema"
+- "Sistema & Flags" → "Feature Flags"
+- "Cadastros" (módulo) → "Cadastros Operacionais"
 
----
+### 4. Favoritos / acesso rápido (topbar)
 
-## FASE 1.4 — Logs de sessão e ações críticas
+- Novo botão **estrela** na topbar abre dropdown com:
+  - **Favoritos**: o usuário fixa qualquer aba (botão estrela ao lado do título da página).
+  - **Últimos acessos**: 5 últimas rotas/abas visitadas (localStorage por usuário).
+- Persistência: localStorage `ms:favs:{userId}` e `ms:recent:{userId}`.
 
-- Tabela `session_log(user_id, evento, ip, user_agent, created_at)`: login, logout, falha de login, troca de senha.
-- Hook no `__root.tsx` que escreve via server fn em `onAuthStateChange`.
-- Tela "Auditoria" em Configurações com filtros por usuário/módulo/entidade/data.
+### 5. Menu por perfil (refinamento do que já existe)
 
----
+Já existe `podeAcessarModulo(perfil, key)`. Adicionar mais granularidade:
+- **Financeiro operacional**: não vê grupo "Estrutura" do sidebar nem aba "CFO/Controladoria" do Analytics.
+- **Diretoria**: vê tudo, com Analytics em destaque.
+- **Engenharia**: só Operação + Estoque + Tarefas.
 
-## FASE 2 — Backup, restore e proteções
+Implementado adicionando flag `tier?: "operacao" | "controle" | "estrutura"` em cada item e filtrando por perfil.
 
-- Backup diário automático do Postgres já é feito pelo Lovable Cloud — vou expor isso na UI ("Último backup: …") e documentar política de retenção.
-- Exportações lógicas semanais (CSV/JSON) por módulo, salvas em bucket `backups/` (já temos storage).
-- Modo manutenção: flag global `system_flags.maintenance` → middleware bloqueia escrita para não-admin.
-- Confirmação dupla (senha) em: exclusão em lote, restauração, fechamento de período, alteração de permissão de admin.
-- Logs de backup/restore em `audit_log` com módulo `system`.
+## Detalhes técnicos
 
----
+Arquivos tocados (todos frontend, nenhuma migration):
 
-## FASE 3 — Performance (quando você liberar)
+- `src/components/app/AppLayout.tsx` — reorganizar `nav` em 3 grupos, render com section labels, colapsar "Estrutura" por padrão.
+- `src/lib/route-tabs.ts` — adicionar `group` em todas as abas, padronizar para Visão/Operação/Controle/Estrutura, renomear labels, esconder abas "legado".
+- `src/lib/favoritos-store.ts` (novo) — hook `useFavoritos()` e `useRecentes()` com localStorage.
+- `src/components/app/FavoritosMenu.tsx` (novo) — dropdown na topbar.
+- `src/components/app/PageHeader.tsx` — adicionar botão "favoritar esta aba".
+- `src/lib/perfis-store.ts` — adicionar helper `tierVisivel(perfil, tier)`.
 
-Você pediu para deixar para depois — mantenho aqui só como referência:
-- Migrar stores `localStorage` críticos (contratos, clientes, financeiro, obras) para Supabase + TanStack Query.
-- Invalidação cirúrgica por `queryKey` (sem recarregar dashboard inteira).
-- Índices em `contratos(consultor_id, status)`, `obras(status, data_inicio)`, `audit_log(entidade, entidade_id, created_at)`.
-- Paginação server-side em listas grandes; KPIs via views materializadas atualizadas por trigger.
-- Code-splitting por rota (TanStack já suporta).
+Sem mudança de rotas, sem mudança de banco, sem quebra de URLs existentes (hash `#tab=...` continua igual).
 
----
+## Fora de escopo desta fase
 
-## FASE 4 — Travas operacionais finas
+- Command palette (Ctrl+K) — fica para fase 2 se você quiser.
+- Breadcrumbs dinâmicos no header — fase 2.
+- Refazer visualmente o sidebar (mudar cores/tema) — só ajustes finos de espaçamento.
 
-Complemento da 1.3, focado em integridade referencial:
-- Bloquear delete de cliente com contrato/obra/financeiro vinculado.
-- Bloquear delete de contrato com financeiro/obra vinculado.
-- Bloquear delete de título financeiro conciliado.
-- "Modo exceção": admin pode forçar, gravando `audit_log.acao='OVERRIDE'` + motivo.
-
----
-
-## FASE 5 — Automações operacionais
-
-Disparadas por trigger ou cron (`pg_cron` + server route `/api/public/hooks/*`):
-- Contrato assinado → cria projeto + financeiro + previsão estoque + ordem engenharia.
-- Alertas/tarefas em tabela `tarefas(user_id, setor, tipo, prioridade, due_at, resolved_at)`.
-- Geradores automáticos:
-  - obra atrasada (data_prevista < hoje, status ≠ Finalizada)
-  - boleto vencendo em 3 dias
-  - estoque crítico (< mínimo)
-  - financiamento parado > 7 dias
-  - cliente inadimplente
-- Central de tarefas por setor/usuário em `/tarefas` com badge no menu.
-
----
-
-## FASE 6 — Ambientes, versões e feature flags
-
-- Tabela `feature_flags(chave, ativo, escopo_jsonb)` + hook `useFlag('nome')`.
-- Tela admin para ligar/desligar features por módulo/usuário/setor.
-- Changelog interno em `/configuracoes/versoes` lendo de `system_releases`.
-- Sobre "produção x homologação": no Lovable, **Preview** já é homologação e **Published** é produção — vou documentar o fluxo (testar em preview → publicar) e adicionar banner "AMBIENTE PREVIEW" quando `import.meta.env.DEV` ou hostname `id-preview-*`.
-
----
-
-## Ordem sugerida de execução
-
-1. **Fase 1.2** (1 rodada) — permissões extras/bloqueios por usuário + UI.
-2. **Fase 1.3** (2 rodadas) — versionamento, soft-delete, motivo obrigatório, lixeira.
-3. **Fase 1.4** (1 rodada) — log de sessão + tela de auditoria.
-4. **Fase 4** (1 rodada) — travas de integridade referencial.
-5. **Fase 2** (1–2 rodadas) — backup/restore/modo manutenção.
-6. **Fase 5** (2 rodadas) — automações e central de tarefas.
-7. **Fase 6** (1 rodada) — feature flags + changelog + banner de ambiente.
-8. **Fase 3** (3 rodadas) — performance (quando autorizar).
-
-Confirma esta ordem? Posso começar pela **Fase 1.2** já na próxima rodada.
+Confirma que sigo nessa direção, ou quer ajustar algum agrupamento antes?

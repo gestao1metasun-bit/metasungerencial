@@ -472,7 +472,10 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
               <TableHead>Item</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Unid.</TableHead>
-              <TableHead className="text-right">Qtd. em estoque</TableHead>
+              <TableHead className="text-right">Qtd.</TableHead>
+              <TableHead className="text-right">Reserv.</TableHead>
+              <TableHead className="text-right">Disp.</TableHead>
+              <TableHead className="text-right">CM (R$)</TableHead>
               <TableHead>Atualizado</TableHead>
               <TableHead className="text-right w-40">Ações</TableHead>
             </TableRow>

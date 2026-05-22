@@ -1,7 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export type SubTab = { value: string; label: string };
+export type SubTab = { value: string; label: string; group?: string };
 
 export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
   "/dashboard": {
@@ -63,17 +63,18 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
   "/financeiro": {
     default: "dashboard",
     tabs: [
-      { value: "dashboard", label: "Dashboard" },
-      { value: "fluxo", label: "Fluxo de Caixa" },
-      { value: "pagar", label: "Contas a Pagar" },
-      { value: "receber", label: "Contas a Receber" },
-      { value: "lancamentos", label: "Lançamentos" },
-      { value: "recorrentes", label: "Despesas fixas" },
-      { value: "fornecedores", label: "Fornecedores" },
-      { value: "conciliacao", label: "Conciliação" },
-      { value: "centros", label: "Centros & Naturezas" },
-      { value: "fechamento", label: "Fechamento" },
-      { value: "dre", label: "DRE" },
+      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "fluxo", label: "Fluxo de Caixa", group: "Visão" },
+      { value: "gerencial", label: "Visão gerencial", group: "Visão" },
+      { value: "dre", label: "DRE", group: "Visão" },
+      { value: "receber", label: "Contas a Receber", group: "Operação" },
+      { value: "pagar", label: "Contas a Pagar", group: "Operação" },
+      { value: "lancamentos", label: "Lançamentos", group: "Operação" },
+      { value: "recorrentes", label: "Despesas fixas", group: "Operação" },
+      { value: "fornecedores", label: "Fornecedores", group: "Cadastros" },
+      { value: "centros", label: "Centros & Naturezas", group: "Cadastros" },
+      { value: "conciliacao", label: "Conciliação", group: "Controle" },
+      { value: "fechamento", label: "Fechamento", group: "Controle" },
     ],
   },
   "/cadastros": {

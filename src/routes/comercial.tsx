@@ -443,7 +443,13 @@ function ContratoAssinadoRow({
   const enviados = total - pendentes;
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
+  const [aditivosOpen, setAditivosOpen] = useState(false);
+  const aditivosDoContrato = useAditivos((s) => s.filter((a) => a.contratoId === c.id));
+  const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
+  const podeGerenciarAditivos = usePodeGerenciarAditivos();
+  const { user: aditivoUser } = useAuthCurrent();
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
+
   return (
     <TableRow>
       <TableCell>

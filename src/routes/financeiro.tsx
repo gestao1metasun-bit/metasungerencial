@@ -140,22 +140,10 @@ function FinanceiroPage() {
 
         {/* CENTROS */}
         <TabsContent value="centros" className="mt-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4" /> Centros de custo</div>
-              <Table>
-                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
-                <TableBody>{centros.map(c => (<TableRow key={c.id}><TableCell>{c.nome}</TableCell><TableCell className="text-muted-foreground">{c.tipo}</TableCell></TableRow>))}</TableBody>
-              </Table>
-            </Card>
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4" /> Naturezas financeiras</div>
-              <Table>
-                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
-                <TableBody>{naturezas.map(n => (<TableRow key={n.id}><TableCell>{n.nome}</TableCell><TableCell><StatusBadge status={n.tipo} /></TableCell></TableRow>))}</TableBody>
-              </Table>
-            </Card>
-          </div>
+          <CentrosNaturezasTab
+            centros={centros} naturezas={naturezas}
+            setCentros={setCentros} setNaturezas={setNaturezas}
+          />
         </TabsContent>
 
         <TabsContent value="receber" className="mt-5">

@@ -59,10 +59,15 @@ function fmtDateBR(d?: string) {
  * ============================================================ */
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const todos = useTitulos();
-  const naturezas = useNaturezas()[0];
-  const centros = useCentrosCusto()[0];
+  const naturezas = useNaturezasFin();
+  const grupos = useGrupos();
+  const subgrupos = useSubgrupos();
+  const centros = useCentrosCustoFin();
+  const tiposAplic = useTiposAplicacao();
+  const meios = useMeiosPagamento();
   const fornecedores = useFornecedores();
   const contas = useContasFinanceiras();
+  const cadastros = { naturezas, grupos, subgrupos, centros, tiposAplic, meios, fornecedores, contas };
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");
   const [criarOpen, setCriarOpen] = useState(false);

@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      aditivos: {
+        Row: {
+          consultor_id: string | null
+          contrato_id: string
+          created_at: string
+          dados: Json
+          data_evento: string | null
+          descricao: string | null
+          id: string
+          numero: number
+          status: string
+          tipo: string
+          updated_at: string
+          valor_delta: number
+        }
+        Insert: {
+          consultor_id?: string | null
+          contrato_id: string
+          created_at?: string
+          dados?: Json
+          data_evento?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_delta?: number
+        }
+        Update: {
+          consultor_id?: string | null
+          contrato_id?: string
+          created_at?: string
+          dados?: Json
+          data_evento?: string | null
+          descricao?: string | null
+          id?: string
+          numero?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aditivos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cidades_irradiacao: {
         Row: {
           ativo: boolean
@@ -118,6 +171,66 @@ export type Database = {
           },
         ]
       }
+      clientes: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          consultor_id: string | null
+          created_at: string
+          doc: string | null
+          email: string | null
+          id: string
+          nome: string
+          numero: string | null
+          rua: string | null
+          status: string
+          telefone: string | null
+          telefone2: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          doc?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          numero?: string | null
+          rua?: string | null
+          status?: string
+          telefone?: string | null
+          telefone2?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          doc?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          numero?: string | null
+          rua?: string | null
+          status?: string
+          telefone?: string | null
+          telefone2?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       concessionarias: {
         Row: {
           ativo: boolean
@@ -147,6 +260,269 @@ export type Database = {
           uf?: string
         }
         Relationships: []
+      }
+      contratos: {
+        Row: {
+          cliente_id: string
+          codigo: string | null
+          consultor_id: string | null
+          created_at: string
+          dados: Json
+          data_assinatura: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          forma_pagamento: string | null
+          id: string
+          inversor: string | null
+          modulos_qtde: number | null
+          observacoes: string | null
+          potencia_kwp: number | null
+          status: string
+          updated_at: string
+          valor_entrada: number
+          valor_total: number
+        }
+        Insert: {
+          cliente_id: string
+          codigo?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_assinatura?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          inversor?: string | null
+          modulos_qtde?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          updated_at?: string
+          valor_entrada?: number
+          valor_total?: number
+        }
+        Update: {
+          cliente_id?: string
+          codigo?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_assinatura?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          inversor?: string | null
+          modulos_qtde?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          updated_at?: string
+          valor_entrada?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras: {
+        Row: {
+          cliente_id: string | null
+          codigo: string | null
+          consultor_id: string | null
+          contrato_id: string | null
+          created_at: string
+          dados: Json
+          data_finalizacao: string | null
+          data_inicio: string | null
+          equipe: string | null
+          id: string
+          inv2: string | null
+          inv3: string | null
+          inversor: string | null
+          modulos_qtde: number | null
+          observacoes: string | null
+          potencia_kwp: number | null
+          status: string
+          telhado_tipo: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_finalizacao?: string | null
+          data_inicio?: string | null
+          equipe?: string | null
+          id?: string
+          inv2?: string | null
+          inv3?: string | null
+          inversor?: string | null
+          modulos_qtde?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          telhado_tipo?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_finalizacao?: string | null
+          data_inicio?: string | null
+          equipe?: string | null
+          id?: string
+          inv2?: string | null
+          inv3?: string | null
+          inversor?: string | null
+          modulos_qtde?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          telhado_tipo?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projetos: {
+        Row: {
+          cidade: string | null
+          cliente_id: string | null
+          codigo: string | null
+          consultor_id: string | null
+          contrato_id: string | null
+          created_at: string
+          dados: Json
+          id: string
+          inversor: string | null
+          modulos_qtde: number | null
+          potencia_kwp: number | null
+          status: string
+          tipo: string
+          uf: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          cidade?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          inversor?: string | null
+          modulos_qtde?: number | null
+          potencia_kwp?: number | null
+          status?: string
+          tipo?: string
+          uf?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          cidade?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          inversor?: string | null
+          modulos_qtde?: number | null
+          potencia_kwp?: number | null
+          status?: string
+          tipo?: string
+          uf?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tarifas_energia: {
         Row: {

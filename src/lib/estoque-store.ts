@@ -247,38 +247,67 @@ export function setSelecionadaCompra(obraId: string, v: boolean) {
   });
 }
 
+/**
+ * Registra entrega para uma obra (acumulado).
+ * Faz baixa física + CMV pelo delta (qtdNova - qtdAnterior) consumindo
+ * reservas existentes da obra. Se delta < 0, registra Devolução.
+ */
 export function marcarEntrega(
   obraId: string,
   itemId: string,
   qtdEntregue: number,
   completa: boolean,
   usuario = "Estoque",
-) {
-  let itemNome = itemId;
-  let cliente = "";
+): { ok: boolean; erro?: string } {
+  const nec = state.necessidades.find((n) => n.obraId === obraId);
+  const necItem = nec?.itens.find((i) => i.itemId === itemId);
+  if (!nec || !necItem) return { ok: false, erro: "Obra/item não encontrado." };
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return { ok: false, erro: "Item de estoque não encontrado." };
+
+  const prev = necItem.qtdEntregue || 0;
+  const qtdCap = Math.max(0, Math.min(qtdEntregue, necItem.qtdNecessaria));
+  const delta = qtdCap - prev;
+
+  if (delta > 0) {
+    // Verifica disponibilidade considerando reservas de OUTRAS obras.
+    const reservaPropria = necItem.qtdReservada || 0;
+    const reservaOutras = (item.qtdReservada || 0) - reservaPropria;
+    const disponivel = (item.qtdAtual || 0) - Math.max(0, reservaOutras);
+    if (disponivel < delta) return { ok: false, erro: `Estoque disponível insuficiente para ${item.nome} (disp=${disponivel}, falta=${delta}).` };
+    const r = registrarSaidaObra(obraId, nec.cliente, [{ itemId, qtd: delta }], usuario);
+    if (!r.ok) return { ok: false, erro: `Falha na baixa: ${r.faltantes.join(", ")}` };
+    // consome reserva da própria obra
+    const consumirRes = Math.min(reservaPropria, delta);
+    if (consumirRes > 0) liberarReserva(obraId, itemId, consumirRes, usuario, true);
+  } else if (delta < 0) {
+    const r = registrarDevolucaoObra(obraId, itemId, -delta, usuario);
+    if (!r.ok) return { ok: false, erro: r.erro };
+  }
+
+  // Atualiza necessidade + log
+  const isCompleta = completa || qtdCap >= necItem.qtdNecessaria;
+  const itemNome = item.nome;
   const necessidades = state.necessidades.map((n) => {
     if (n.obraId !== obraId) return n;
-    cliente = n.cliente;
     return {
       ...n,
-      itens: n.itens.map((i) => {
-        if (i.itemId !== itemId) return i;
-        const qtdCap = Math.max(0, Math.min(qtdEntregue, i.qtdNecessaria));
-        const isCompleta = completa || qtdCap >= i.qtdNecessaria;
-        itemNome = state.itens.find((x) => x.id === itemId)?.nome || itemId;
-        return { ...i, qtdEntregue: qtdCap, entregaCompleta: isCompleta };
-      }),
+      itens: n.itens.map((i) =>
+        i.itemId !== itemId ? i : { ...i, qtdEntregue: qtdCap, entregaCompleta: isCompleta },
+      ),
       atualizadaEm: new Date().toISOString(),
     };
   });
   const log: EntregaLog = {
     id: `LOG-${Date.now().toString(36).toUpperCase()}`,
-    obraId, cliente, itemId, itemNome, qtd: qtdEntregue, completa,
+    obraId, cliente: nec.cliente, itemId, itemNome, qtd: qtdCap, completa: isCompleta,
     em: new Date().toISOString(), por: usuario,
   };
   setState({ necessidades, log: [log, ...state.log].slice(0, 500) });
-  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_entrega", usuario, detalhe: `${itemId}: qtd=${qtdEntregue}${completa ? " (completo)" : ""}` });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_entrega", usuario, detalhe: `${itemId}: qtd=${qtdCap}${isCompleta ? " (completo)" : ""}` });
+  return { ok: true };
 }
+
 
 // --------- Cálculo derivados ------------------------------------------------
 export function isMaterialEntregueTotal(n: NecessidadeObra): boolean {

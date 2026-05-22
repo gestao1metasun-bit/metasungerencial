@@ -899,9 +899,6 @@ function SemContratoTab() {
           <div className="text-xs text-muted-foreground">{lista.length} operações · {fmtBRL(lista.reduce((s, f) => s + f.valor, 0))} · arraste o cabeçalho para reordenar colunas</div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { if (vincularId === null && lista[0]) setVincularId(lista[0].id); }}>
-            <ArrowRight className="mr-2 h-4 w-4" /> Vincular contrato
-          </Button>
           <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setOpenNovo(true)}>
             <Plus className="mr-2 h-4 w-4" /> Novo financiamento avulso
           </Button>
@@ -914,6 +911,7 @@ function SemContratoTab() {
           const f = lista.find((x) => x.id === id);
           if (f) setEditingAvulso(f);
         }}
+        onVincular={(id) => setVincularId(id)}
       />
 
       {editingAvulso && (

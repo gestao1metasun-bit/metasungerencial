@@ -1,11 +1,12 @@
 // Tabela operacional de Financiamentos com colunas arrastáveis (persistidas em localStorage).
-// Visualização é somente leitura — edição acontece pelo botão Editar (lápis) na coluna AÇÕES.
+// Visualização é somente leitura — edição/vinculação acontecem pelo botão Opções (coluna 1).
 import { useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
+import { ActionsMenu } from "./ActionsMenu";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { fmtBRL } from "@/lib/mock-data";
-import { GripVertical, SquarePen } from "lucide-react";
+import { GripVertical, SquarePen, Link2 } from "lucide-react";
 
 export type OpRow = {
   id: string;
@@ -32,6 +33,7 @@ type ColKey =
   | "obs" | "liberacao" | "previsao" | "acoes";
 
 const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
+  { key: "acoes", label: "AÇÕES", align: "center" },
   { key: "ordem", label: "ORDEM" },
   { key: "contratante", label: "CONTRATANTE" },
   { key: "vendedor", label: "VENDEDOR" },
@@ -46,17 +48,18 @@ const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
   { key: "obs", label: "OBS" },
   { key: "liberacao", label: "LIBERAÇÃO" },
   { key: "previsao", label: "PREVISÃO", align: "center" },
-  { key: "acoes", label: "AÇÕES", align: "center" },
 ];
 
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map((c) => c.key);
 
 export function OperacionalFinTable({
-  storageKey, rows, onEdit,
+  storageKey, rows, onEdit, onVincular,
 }: {
   storageKey: string;
   rows: OpRow[];
   onEdit?: (id: string) => void;
+  /** Quando definido, exibe a ação "Vincular contrato" no menu de Ações. */
+  onVincular?: (id: string) => void;
 }) {
   const [order, setOrder] = useState<ColKey[]>(DEFAULT_ORDER);
 
@@ -135,16 +138,22 @@ export function OperacionalFinTable({
       }
       case "acoes":
         return (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            title="Editar"
-            onClick={() => onEdit?.(r.id)}
-            disabled={!onEdit}
-          >
-            <SquarePen className="h-3.5 w-3.5" />
-          </Button>
+          <ActionsMenu label="Ações">
+            <DropdownMenuItem
+              disabled={!onEdit}
+              onClick={() => onEdit?.(r.id)}
+            >
+              <SquarePen className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            {onVincular && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onVincular(r.id)}>
+                  <Link2 className="mr-2 h-4 w-4" /> Vincular contrato
+                </DropdownMenuItem>
+              </>
+            )}
+          </ActionsMenu>
         );
     }
   };

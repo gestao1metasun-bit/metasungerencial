@@ -25,7 +25,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fmtBRL, contasReceber, contasPagar } from "@/lib/mock-data";
 import {
   useLancamentos, useRecorrentes, useCentrosCusto, useNaturezas,
-  fmtBRLPrecise, type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia,
+  fmtBRLPrecise, derivarStatusFin, setStatusFin, STATUS_FIN,
+  type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia, type StatusFin,
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";

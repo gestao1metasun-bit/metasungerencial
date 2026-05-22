@@ -86,6 +86,7 @@ const SEED_ITENS: EstoqueItem[] = [
 const K_ITENS = "ms.estoque.itens.v1";
 const K_NEC = "ms.estoque.necessidades.v1";
 const K_LOG = "ms.estoque.log.v1";
+const K_MOV = "ms.estoque.mov.v1";
 
 function loadJSON<T>(k: string, def: T): T {
   if (typeof window === "undefined") return def;
@@ -96,12 +97,13 @@ function saveJSON(k: string, v: unknown) {
   try { window.localStorage.setItem(k, JSON.stringify(v)); } catch { /* noop */ }
 }
 
-type State = { itens: EstoqueItem[]; necessidades: NecessidadeObra[]; log: EntregaLog[] };
+type State = { itens: EstoqueItem[]; necessidades: NecessidadeObra[]; log: EntregaLog[]; movimentos: MovimentoEstoque[] };
 
 let state: State = {
   itens: loadJSON<EstoqueItem[]>(K_ITENS, SEED_ITENS),
   necessidades: loadJSON<NecessidadeObra[]>(K_NEC, []),
   log: loadJSON<EntregaLog[]>(K_LOG, []),
+  movimentos: loadJSON<MovimentoEstoque[]>(K_MOV, []),
 };
 
 const listeners = new Set<() => void>();
@@ -110,10 +112,11 @@ function persist() {
   saveJSON(K_ITENS, state.itens);
   saveJSON(K_NEC, state.necessidades);
   saveJSON(K_LOG, state.log);
+  saveJSON(K_MOV, state.movimentos);
 }
 function setState(p: Partial<State>) { state = { ...state, ...p }; persist(); emit(); }
 
-const SERVER_STATE: State = { itens: SEED_ITENS, necessidades: [], log: [] };
+const SERVER_STATE: State = { itens: SEED_ITENS, necessidades: [], log: [], movimentos: [] };
 export function useEstoqueState(): State {
   return useSyncExternalStore(
     (cb) => { listeners.add(cb); return () => { listeners.delete(cb); }; },
@@ -121,6 +124,11 @@ export function useEstoqueState(): State {
     () => SERVER_STATE,
   );
 }
+
+export function useMovimentos(): MovimentoEstoque[] {
+  return useEstoqueState().movimentos;
+}
+
 
 // --------- Catálogo (CRUD básico) -------------------------------------------
 export function setEstoqueAtual(itemId: string, qtd: number, usuario = "Estoque") {

@@ -455,3 +455,110 @@ export function importarPrevisoesDoLegado(lancs: Array<{
   if (novos.length) write([...novos, ...read()]);
   return novos.length;
 }
+
+// ===========================================================================
+// Gatilhos automáticos (Fase C)
+// ===========================================================================
+
+type PagamentoLinhaLite = {
+  id: string;
+  tipo: string;
+  momento?: string;
+  valor: number;
+  parcelas?: number;
+  banco?: string;
+  primeiroVencDias?: number;
+  intervaloDias?: number;
+};
+
+type ContratoLite = {
+  id: string;
+  cliente: string;
+  dataAssinatura?: string;
+  pagamentoDetalhes?: { formas?: PagamentoLinhaLite[] };
+  projetos?: Array<{ id: string }>;
+};
+
+function addDaysISO(baseISO: string, days: number): string {
+  const d = new Date(baseISO + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Gera (idempotentemente) os AR de um contrato assinado a partir da
+ * composição `pagamentoDetalhes.formas`. Ignora linhas "Financiamento"
+ * (essas viram AR apenas quando o financiamento for LIBERADO).
+ * IDs determinísticos: `AR-CT-{contratoId}-{linhaId}-p{n}`.
+ */
+export function gerarARsDoContratoAssinado(contrato: ContratoLite, usuario = "Comercial"): number {
+  const formas = contrato.pagamentoDetalhes?.formas ?? [];
+  if (formas.length === 0) return 0;
+  const base = contrato.dataAssinatura || new Date().toISOString().slice(0, 10);
+  const obraId = contrato.projetos?.[0]?.id;
+  const existentes = new Set(read().map((t) => t.id));
+  let criados = 0;
+
+  for (const linha of formas) {
+    if (linha.tipo === "Financiamento") continue;
+    const parcelas = Math.max(1, Number(linha.parcelas) || 1);
+    const valorParc = round2((Number(linha.valor) || 0) / parcelas);
+    if (valorParc <= 0) continue;
+    const primeiro = Number(linha.primeiroVencDias ?? 0);
+    const intervalo = Number(linha.intervaloDias ?? 30);
+
+    for (let n = 1; n <= parcelas; n++) {
+      const id = `AR-CT-${contrato.id}-${linha.id}-p${n}`;
+      if (existentes.has(id)) continue;
+      const dias = primeiro + (n - 1) * intervalo;
+      const venc = addDaysISO(base, dias);
+      criarTitulo({
+        id, tipo: "AR", origem: "contrato",
+        descricao: `${linha.tipo} ${parcelas > 1 ? `${n}/${parcelas}` : ""} · ${contrato.cliente} · contrato ${contrato.id}`.replace(/\s+/g, " ").trim(),
+        valorOriginal: valorParc,
+        vencimento: venc,
+        competencia: venc.slice(0, 7),
+        natureza: "Recebimento de cliente",
+        centroCusto: "Comercial",
+        cliente: contrato.cliente,
+        contratoId: contrato.id,
+        obraId,
+        parcelaLabel: parcelas > 1 ? `${n}/${parcelas}` : undefined,
+        meioPagamento: linha.tipo,
+        status: "previsto",
+      }, usuario);
+      criados++;
+    }
+  }
+  return criados;
+}
+
+/**
+ * Gera (idempotentemente) um AR único quando o financiamento é LIBERADO.
+ * ID determinístico: `AR-FIN-{contratoId}`.
+ * Reusa `vencimento` = data informada (ou hoje).
+ */
+export function gerarARdeLiberacaoFinanciamento(args: {
+  contratoId: string; cliente: string; valor: number;
+  dataLiberacao?: string; banco?: string;
+}, usuario = "Financiamentos"): Titulo | null {
+  if (!(args.valor > 0)) return null;
+  const id = `AR-FIN-${args.contratoId}`;
+  const ja = read().find((t) => t.id === id);
+  if (ja) return ja;
+  const venc = args.dataLiberacao || new Date().toISOString().slice(0, 10);
+  return criarTitulo({
+    id, tipo: "AR", origem: "financiamento",
+    descricao: `Liberação ${args.banco ?? "banco"} · ${args.cliente} · contrato ${args.contratoId}`,
+    valorOriginal: round2(args.valor),
+    vencimento: venc,
+    competencia: venc.slice(0, 7),
+    natureza: "Liberação financiamento",
+    centroCusto: "Comercial",
+    cliente: args.cliente,
+    contratoId: args.contratoId,
+    meioPagamento: "Financiamento",
+    status: "a_receber",
+  }, usuario);
+}
+

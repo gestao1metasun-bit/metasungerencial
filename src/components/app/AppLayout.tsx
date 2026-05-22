@@ -265,6 +265,7 @@ export function AppLayout() {
               <RefreshCw className="h-4 w-4" />
               Atualizar
             </Button>
+            <FavoritosMenu />
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold" />

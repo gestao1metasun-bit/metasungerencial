@@ -349,6 +349,13 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           />
         )}
       </Dialog>
+
+      {/* Renegociação */}
+      <RenegociarTituloDialog
+        titulo={renegociar}
+        open={!!renegociar}
+        onClose={() => setRenegociar(null)}
+      />
     </div>
   );
 }

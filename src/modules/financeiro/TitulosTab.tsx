@@ -1,6 +1,8 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
 // Importa o store fin-titulos-store e fornece tabelas + dialogs.
 import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
 import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

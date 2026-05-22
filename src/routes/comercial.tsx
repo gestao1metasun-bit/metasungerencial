@@ -60,6 +60,7 @@ import {
   liberarContratoParaGerar, revogarLiberacaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
+import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";

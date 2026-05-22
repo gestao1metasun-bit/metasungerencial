@@ -660,3 +660,44 @@ export function gerarARdeLiberacaoFinanciamento(args: {
   }, usuario);
 }
 
+// ===========================================================================
+// Renegociação — helpers de baixo nível usados por fin-renegociacao-store
+// ===========================================================================
+
+/** Marca o título-pai como renegociado: zera saldo, define status especial.
+ *  Preserva movimentos e valorPago — mantém histórico completo. */
+export function marcarTituloRenegociado(tituloId: string, renegociacaoId: string, usuario = "Sistema") {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) throw new Error("Título não encontrado.");
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  const next: Titulo = {
+    ...before,
+    status: "cancelado",
+    saldo: 0,
+    renegociadoEm: isoNow(),
+    statusRenegociacao: "renegociado",
+    observacao: `${before.observacao ? before.observacao + " · " : ""}Renegociado em ${new Date().toLocaleDateString("pt-BR")} — ${renegociacaoId}`,
+  };
+  const arr = [...cur]; arr[idx] = next; write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: "FIN_TITULO_RENEGOCIADO",
+    usuario,
+    detalhe: `Renegociação ${renegociacaoId}`,
+  });
+}
+
+/** Marca um título-filho como originado por uma renegociação. */
+export function setTituloRenegociacaoOrigem(tituloId: string, renegociacaoId: string) {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) return;
+  const arr = [...cur];
+  arr[idx] = { ...arr[idx], renegociacaoId };
+  write(arr);
+}
+
+

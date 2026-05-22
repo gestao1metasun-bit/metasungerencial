@@ -27,6 +27,9 @@ import {
   useLancamentos, useRecorrentes, useCentrosCusto, useNaturezas,
   fmtBRLPrecise, type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia,
 } from "@/lib/financeiro-store";
+import { TitulosTab } from "@/modules/financeiro/TitulosTab";
+import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
+import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -78,6 +81,8 @@ function FinanceiroPage() {
           <TabsTrigger value="centros">Centros & Naturezas</TabsTrigger>
           <TabsTrigger value="receber">A receber</TabsTrigger>
           <TabsTrigger value="pagar">A pagar</TabsTrigger>
+          <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+          <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
           <TabsTrigger value="dre">DRE</TabsTrigger>
         </TabsList>
 
@@ -147,49 +152,19 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="receber" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)]">
-            <Table>
-              <TableHeader><TableRow className="hover:bg-transparent">
-                <TableHead>ID</TableHead><TableHead>Descrição</TableHead><TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Valor</TableHead><TableHead>Vencimento</TableHead><TableHead>Status</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {contasReceber.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs text-primary">{c.id}</TableCell>
-                    <TableCell className="font-medium">{c.descricao}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.cliente}</TableCell>
-                    <TableCell className="text-right font-medium">{fmtBRL(c.valor)}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.vencimento}</TableCell>
-                    <TableCell><StatusBadge status={c.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <TitulosTab tipo="AR" />
         </TabsContent>
 
         <TabsContent value="pagar" className="mt-5">
-          <Card className="bg-[image:var(--gradient-card)]">
-            <Table>
-              <TableHeader><TableRow className="hover:bg-transparent">
-                <TableHead>ID</TableHead><TableHead>Descrição</TableHead><TableHead>Fornecedor</TableHead>
-                <TableHead className="text-right">Valor</TableHead><TableHead>Vencimento</TableHead><TableHead>Status</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {contasPagar.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs text-primary">{c.id}</TableCell>
-                    <TableCell className="font-medium">{c.descricao}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.fornecedor}</TableCell>
-                    <TableCell className="text-right font-medium">{fmtBRL(c.valor)}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.vencimento}</TableCell>
-                    <TableCell><StatusBadge status={c.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <TitulosTab tipo="AP" />
+        </TabsContent>
+
+        <TabsContent value="fornecedores" className="mt-5">
+          <FornecedoresTab />
+        </TabsContent>
+
+        <TabsContent value="fechamento" className="mt-5">
+          <FechamentoTab />
         </TabsContent>
 
         <TabsContent value="dre" className="mt-5">

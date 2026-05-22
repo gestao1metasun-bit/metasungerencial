@@ -125,34 +125,54 @@ export function AppLayout() {
                     )}
                   </div>
 
-                  {sub && isOpen && (
-                    <ul className="ml-7 mt-1 mb-1 space-y-0.5 border-l border-sidebar-border/70 pl-3">
-                      {sub.tabs.map((t) => {
-                        const tabActive = active && isHydrated && currentTab === t.value;
-                        const showRedDot = item.to === "/comercial" && t.value === "contrato-assinado" && pendentesAssinatura > 0;
-                        return (
-                          <li key={t.value}>
-                            <Link
-                              to={item.to}
-                              hash={`tab=${t.value}`}
-                              className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] transition ${
-                                tabActive
-                                  ? "bg-gold/15 text-gold font-semibold"
-                                  : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-sidebar-foreground"
-                              }`}
-                            >
-                              <span className="truncate">{t.label}</span>
-                              {showRedDot && (
-                                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                                  {pendentesAssinatura}
-                                </span>
-                              )}
-                            </Link>
+                  {sub && isOpen && (() => {
+                    const groups: { name: string | null; tabs: typeof sub.tabs }[] = [];
+                    sub.tabs.forEach((t) => {
+                      const g = t.group ?? null;
+                      const last = groups[groups.length - 1];
+                      if (last && last.name === g) last.tabs.push(t);
+                      else groups.push({ name: g, tabs: [t] });
+                    });
+                    return (
+                      <ul className="ml-7 mt-1 mb-1 space-y-0.5 border-l border-sidebar-border/70 pl-3">
+                        {groups.map((g, gi) => (
+                          <li key={`g-${gi}`}>
+                            {g.name && (
+                              <div className="mt-2 mb-0.5 px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+                                {g.name}
+                              </div>
+                            )}
+                            <ul className="space-y-0.5">
+                              {g.tabs.map((t) => {
+                                const tabActive = active && isHydrated && currentTab === t.value;
+                                const showRedDot = item.to === "/comercial" && t.value === "contrato-assinado" && pendentesAssinatura > 0;
+                                return (
+                                  <li key={t.value}>
+                                    <Link
+                                      to={item.to}
+                                      hash={`tab=${t.value}`}
+                                      className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] transition ${
+                                        tabActive
+                                          ? "bg-gold/15 text-gold font-semibold"
+                                          : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-sidebar-foreground"
+                                      }`}
+                                    >
+                                      <span className="truncate">{t.label}</span>
+                                      {showRedDot && (
+                                        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                          {pendentesAssinatura}
+                                        </span>
+                                      )}
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                        ))}
+                      </ul>
+                    );
+                  })()}
                 </li>
               );
             })}

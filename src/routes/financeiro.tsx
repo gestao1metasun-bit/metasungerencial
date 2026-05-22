@@ -91,14 +91,14 @@ function FinanceiroPage() {
         {/* DASHBOARD */}
         <TabsContent value="dashboard" className="mt-5">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="Saldo realizado" value={fmtBRL(saldo)} hint="Entradas − Saídas" icon={Wallet} tone={saldo >= 0 ? "success" : "destructive"} />
-            <StatCard label="Confirmado (líq.)" value={fmtBRL(confirmadoNet)} icon={ArrowDownCircle} tone="info" />
-            <StatCard label="Previsto + A realizar" value={fmtBRL(previstoNet)} icon={TrendingUp} tone="primary" />
-            <StatCard label="Despesas fixas/mês" value={fmtBRL(fixasMensais)} icon={Repeat} tone="warning" />
-            <StatCard label="Saídas obras" value={fmtBRL(obrasSaidas)} icon={ArrowUpCircle} tone="destructive" />
-            <StatCard label="Entradas obras" value={fmtBRL(obrasEntradas)} icon={ArrowDownCircle} tone="success" />
-            <StatCard label="Margem obras" value={fmtBRL(obrasEntradas - obrasSaidas)} icon={Wallet} tone={obrasEntradas - obrasSaidas >= 0 ? "success" : "destructive"} />
-            <StatCard label="Custo empresa (fixo)" value={fmtBRL(fixasMensais)} hint="Sem obras" icon={Building2} tone="muted" />
+            <StatCard label="Saldo realizado" value={fmtBRL(saldo)} hint="Entradas − Saídas · ir p/ Fluxo" icon={Wallet} tone={saldo >= 0 ? "success" : "destructive"} onClick={() => setTab("fluxo")} />
+            <StatCard label="Confirmado (líq.)" value={fmtBRL(confirmadoNet)} hint="ir p/ A receber" icon={ArrowDownCircle} tone="info" onClick={() => setTab("receber")} />
+            <StatCard label="Previsto + A realizar" value={fmtBRL(previstoNet)} hint="ir p/ Lançamentos" icon={TrendingUp} tone="primary" onClick={() => setTab("lancamentos")} />
+            <StatCard label="Despesas fixas/mês" value={fmtBRL(fixasMensais)} hint="ir p/ Despesas fixas" icon={Repeat} tone="warning" onClick={() => setTab("recorrentes")} />
+            <StatCard label="Saídas obras" value={fmtBRL(obrasSaidas)} hint="ir p/ A pagar" icon={ArrowUpCircle} tone="destructive" onClick={() => setTab("pagar")} />
+            <StatCard label="Entradas obras" value={fmtBRL(obrasEntradas)} hint="ir p/ A receber" icon={ArrowDownCircle} tone="success" onClick={() => setTab("receber")} />
+            <StatCard label="Margem obras" value={fmtBRL(obrasEntradas - obrasSaidas)} hint="ir p/ DRE" icon={Wallet} tone={obrasEntradas - obrasSaidas >= 0 ? "success" : "destructive"} onClick={() => setTab("dre")} />
+            <StatCard label="Custo empresa (fixo)" value={fmtBRL(fixasMensais)} hint="Sem obras · ir p/ Gerencial" icon={Building2} tone="muted" onClick={() => setTab("gerencial")} />
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">

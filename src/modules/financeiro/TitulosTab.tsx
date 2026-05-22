@@ -398,8 +398,8 @@ function TituloDialog({
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
 
-  // Anexos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
-  const [anexosPend, setAnexosPend] = useState<Anexo[]>(initial?.anexos ?? []);
+  // Arquivos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Cascata: ao trocar a natureza, sugerir grupo/subgrupo/centro/aplicação padrão
@@ -416,22 +416,14 @@ function TituloDialog({
 
   const subgruposDisp = useMemo(() => subgrupos.filter((s) => s.grupoId === grupoId && s.ativo), [subgrupos, grupoId]);
 
-  const handleFiles = async (fs: FileList | null) => {
+  const handleFiles = (fs: FileList | null) => {
     if (!fs) return;
+    const aceitos: File[] = [];
     for (const file of Array.from(fs)) {
-      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
-      const dataUrl = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-      setAnexosPend((prev) => [...prev, {
-        id: `ANX-NEW-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        nome: file.name, mime: file.type || "application/octet-stream",
-        tamanho: file.size, dataUrl, enviadoEm: new Date().toISOString(),
-      }]);
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: máx. 10 MB`); continue; }
+      aceitos.push(file);
     }
+    if (aceitos.length) setPendingFiles((prev) => [...prev, ...aceitos]);
     if (fileRef.current) fileRef.current.value = "";
   };
 

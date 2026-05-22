@@ -85,6 +85,7 @@ function ConfigPage() {
         <TabsContent value="cfg-financeiro" className="mt-5"><PlaceholderModuleConfig nome="Financeiro" /></TabsContent>
 
         <TabsContent value="perfis" className="mt-5"><PerfisTab /></TabsContent>
+        <TabsContent value="permissoes" className="mt-5"><PermissoesTab /></TabsContent>
         <TabsContent value="usuarios" className="mt-5"><UsuariosTab /></TabsContent>
         <TabsContent value="consultores" className="mt-5"><ConsultoresTab /></TabsContent>
 

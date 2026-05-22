@@ -46,6 +46,7 @@ export type NecessidadeItem = {
   itemId: string;
   qtdNecessaria: number;
   qtdEntregue: number;
+  qtdReservada?: number; // reservado p/ esta obra
   entregaCompleta: boolean;
   obs?: string;
 };

@@ -31,6 +31,7 @@ import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
+import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -84,7 +85,8 @@ function FinanceiroPage() {
           <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
           <TabsTrigger value="recorrentes">Despesas fixas</TabsTrigger>
           <TabsTrigger value="gerencial">Visão gerencial</TabsTrigger>
-          <TabsTrigger value="centros">Centros & Naturezas</TabsTrigger>
+          <TabsTrigger value="centros">Centros & Naturezas (legado)</TabsTrigger>
+          <TabsTrigger value="cadastros">Cadastros estruturais</TabsTrigger>
           <TabsTrigger value="receber">A receber</TabsTrigger>
           <TabsTrigger value="pagar">A pagar</TabsTrigger>
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
@@ -145,6 +147,11 @@ function FinanceiroPage() {
             setCentros={setCentros} setNaturezas={setNaturezas}
           />
         </TabsContent>
+
+        <TabsContent value="cadastros" className="mt-5">
+          <CadastrosTab />
+        </TabsContent>
+
 
         <TabsContent value="receber" className="mt-5">
           <TitulosTab tipo="AR" />

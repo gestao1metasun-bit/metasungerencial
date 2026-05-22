@@ -506,6 +506,9 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
                     <span>{i.qtdAtual}</span>
                   )}
                 </TableCell>
+                <TableCell className="text-right text-xs">{i.qtdReservada || 0}</TableCell>
+                <TableCell className="text-right text-xs font-semibold">{Math.max(0, (i.qtdAtual || 0) - (i.qtdReservada || 0))}</TableCell>
+                <TableCell className="text-right text-xs">{i.custoMedio ? i.custoMedio.toFixed(2) : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(i.atualizadoEm)}</TableCell>
                 <TableCell className="text-right">
                   {podeAjustar && (

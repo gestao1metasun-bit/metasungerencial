@@ -139,6 +139,28 @@ export function CmvTab() {
                         {c.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      {c.status === "Aberta" && (
+                        <>
+                          <Button size="sm" variant="outline" className="h-7 px-2"
+                            onClick={() => {
+                              if (estocarCompra(c.id)) toast.success(`Compra ${c.id} estocada`);
+                              else toast.error("Falha ao estocar");
+                            }}>
+                            <ArrowDownToLine className="h-3.5 w-3.5 mr-1" /> Estocar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
+                            onClick={() => { if (confirm(`Cancelar compra ${c.id}?`)) cancelarCompra(c.id); }}>
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        </>
+                      )}
+                      {c.status === "Estocada" && (
+                        <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> ok
+                        </span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}

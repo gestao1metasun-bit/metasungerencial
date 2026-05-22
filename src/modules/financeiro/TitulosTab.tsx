@@ -3,7 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload } from "lucide-react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2 } from "lucide-react";
+import { useContratos } from "@/lib/contratos-store";
+import { useObrasSnapshot } from "@/lib/obras-snapshot-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -397,6 +399,48 @@ function TituloDialog({
   const [contratoId, setContrato] = useState(initial?.contratoId ?? "");
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
+  const [origem, setOrigem] = useState<string>(initial?.origem ?? "manual");
+
+  // Listas de origens reais (obras e contratos cadastrados no ERP)
+  const contratosAll = useContratos();
+  const obrasAll = useObrasSnapshot();
+
+  // Opções de origem permitidas por tipo
+  const origensDisp = useMemo(() => {
+    if (tipo === "AR") return [
+      { value: "manual",        label: "Manual" },
+      { value: "contrato",      label: "Contrato (parcela)" },
+      { value: "financiamento", label: "Financiamento (liberação)" },
+      { value: "manutencao",    label: "Manutenção / pós-venda" },
+    ];
+    return [
+      { value: "manual",     label: "Manual" },
+      { value: "compra",     label: "Compra de material" },
+      { value: "comissao",   label: "Comissão" },
+      { value: "mao_obra",   label: "Mão de obra" },
+      { value: "frete",      label: "Frete" },
+      { value: "manutencao", label: "Manutenção / pós-venda" },
+    ];
+  }, [tipo]);
+
+  // Auto-preenchimento ao escolher contrato
+  const aoEscolherContrato = (id: string) => {
+    setContrato(id);
+    const c = contratosAll.find((x) => x.id === id);
+    if (c) {
+      if (!cliente) setCliente(c.cliente);
+      if (tipo === "AR" && origem === "manual") setOrigem("contrato");
+    }
+  };
+  // Auto-preenchimento ao escolher obra (puxa contrato e cliente)
+  const aoEscolherObra = (id: string) => {
+    setObra(id);
+    const o = obrasAll.find((x) => x.id === id);
+    if (o) {
+      if (o.contrato && !contratoId) setContrato(o.contrato);
+      if (o.cliente && !cliente) setCliente(o.cliente);
+    }
+  };
 
   // Arquivos pendentes (apenas em criação; em edição os anexos já existentes são gerenciados pelo AnexosBlock)
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -455,12 +499,47 @@ function TituloDialog({
       obraId: obraId || undefined,
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
+      origem, // ← origem explícita da operação
     }, pendingFiles);
   };
 
+  // Caminho contábil legível (Grupo › Subgrupo › Natureza › Conta)
+  const grupoSel = grupos.find((g) => g.id === grupoId);
+  const subgrupoSel = subgrupos.find((s) => s.id === subgrupoId);
+  const caminhoContabil = [
+    grupoSel && `${grupoSel.codigo} ${grupoSel.nome}`,
+    subgrupoSel && `${subgrupoSel.codigo} ${subgrupoSel.nome}`,
+    natSel && `${natSel.codigo} ${natSel.nome}`,
+    natSel?.contaContabilFutura,
+  ].filter(Boolean).join(" › ");
+
   return (
     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>{initial ? "Editar título" : `Novo título · ${tipo === "AP" ? "Contas a Pagar" : "Contas a Receber"}`}</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {tipo === "AR" ? (
+            <ArrowDownCircle className="h-5 w-5 text-success" />
+          ) : (
+            <ArrowUpCircle className="h-5 w-5 text-destructive" />
+          )}
+          <span>{initial ? "Editar título" : "Novo título"}</span>
+          <Badge
+            variant="outline"
+            className={
+              tipo === "AR"
+                ? "border-success/40 bg-success/10 text-success font-semibold"
+                : "border-destructive/40 bg-destructive/10 text-destructive font-semibold"
+            }
+          >
+            {tipo === "AR" ? "Entrada · Contas a Receber" : "Saída · Contas a Pagar"}
+          </Badge>
+        </DialogTitle>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {tipo === "AR"
+            ? "Lançamento de receita prevista/realizada. Vincule à origem (contrato, obra ou financiamento) para refletir corretamente nos relatórios."
+            : "Lançamento de despesa prevista/realizada. Vincule ao fornecedor e à obra/contrato quando aplicável."}
+        </div>
+      </DialogHeader>
 
       {/* Linha 1: identificação básica */}
       <div className="grid grid-cols-2 gap-3">
@@ -515,8 +594,11 @@ function TituloDialog({
             </Select>
           </div>
         </div>
-        {natSel?.contaContabilFutura && (
-          <div className="mt-2 text-[10px] text-muted-foreground">Conta contábil: <span className="font-mono">{natSel.contaContabilFutura}</span></div>
+        {caminhoContabil && (
+          <div className="mt-3 rounded border border-primary/15 bg-background/60 px-2.5 py-1.5">
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-primary/70">Plano de contas</div>
+            <div className="mt-0.5 font-mono text-[11px] leading-snug text-foreground/90">{caminhoContabil}</div>
+          </div>
         )}
       </div>
 
@@ -547,9 +629,58 @@ function TituloDialog({
             <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Obra (opcional)</Label><Input value={obraId} onChange={(e) => setObra(e.target.value)} /></div>
-        <div><Label>Contrato (opcional)</Label><Input value={contratoId} onChange={(e) => setContrato(e.target.value)} /></div>
         <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
+      </div>
+
+      {/* Bloco origem da operação — de onde veio este lançamento */}
+      <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-foreground/80">
+          <Link2 className="h-3.5 w-3.5" /> Origem da operação
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Tipo de origem *</Label>
+            <Select value={origem} onValueChange={setOrigem}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {origensDisp.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Contrato vinculado</Label>
+            <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— sem contrato —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem contrato —</SelectItem>
+                {contratosAll.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <Label>Obra vinculada</Label>
+            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— sem obra —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem obra —</SelectItem>
+                {obrasAll.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-2 text-[10px] text-muted-foreground">
+          {tipo === "AR"
+            ? "Vincule o contrato/obra para que este recebimento apareça no fluxo correto e na margem da obra."
+            : "Vincule a obra para que este custo seja contabilizado no CMV da obra (não como despesa administrativa)."}
+        </div>
       </div>
 
       {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}

@@ -499,8 +499,19 @@ function TituloDialog({
       obraId: obraId || undefined,
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
+      origem, // ← origem explícita da operação
     }, pendingFiles);
   };
+
+  // Caminho contábil legível (Grupo › Subgrupo › Natureza › Conta)
+  const grupoSel = grupos.find((g) => g.id === grupoId);
+  const subgrupoSel = subgrupos.find((s) => s.id === subgrupoId);
+  const caminhoContabil = [
+    grupoSel && `${grupoSel.codigo} ${grupoSel.nome}`,
+    subgrupoSel && `${subgrupoSel.codigo} ${subgrupoSel.nome}`,
+    natSel && `${natSel.codigo} ${natSel.nome}`,
+    natSel?.contaContabilFutura,
+  ].filter(Boolean).join(" › ");
 
   return (
     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

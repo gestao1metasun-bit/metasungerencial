@@ -37,6 +37,11 @@ const map: Record<string, string> = {
   "A pagar": "bg-warning/15 text-warning border-warning/30",
   "Pago": "bg-success/15 text-success border-success/30",
   "Vencido": "bg-destructive/15 text-destructive border-destructive/30",
+  // Status financeiro (Fase 2)
+  "Previsto": "bg-muted text-muted-foreground border-border",
+  "Comprometido": "bg-info/15 text-info border-info/30",
+  "Pagar": "bg-warning/15 text-warning border-warning/30",
+  "Parcial": "bg-primary/15 text-primary border-primary/30",
   // Estoque
   "OK": "bg-success/15 text-success border-success/30",
   "Baixo": "bg-warning/15 text-warning border-warning/30",

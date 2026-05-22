@@ -25,7 +25,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fmtBRL, contasReceber, contasPagar } from "@/lib/mock-data";
 import {
   useLancamentos, useRecorrentes, useCentrosCusto, useNaturezas,
-  fmtBRLPrecise, type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia,
+  fmtBRLPrecise, derivarStatusFin, setStatusFin, STATUS_FIN,
+  type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia, type StatusFin,
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
@@ -106,6 +107,10 @@ function FinanceiroPage() {
             <StatCard label="Entradas obras" value={fmtBRL(obrasEntradas)} hint="ir p/ A receber" icon={ArrowDownCircle} tone="success" onClick={() => setTab("receber")} />
             <StatCard label="Margem obras" value={fmtBRL(obrasEntradas - obrasSaidas)} hint="ir p/ DRE" icon={Wallet} tone={obrasEntradas - obrasSaidas >= 0 ? "success" : "destructive"} onClick={() => setTab("dre")} />
             <StatCard label="Custo empresa (fixo)" value={fmtBRL(fixasMensais)} hint="Sem obras · ir p/ Gerencial" icon={Building2} tone="muted" onClick={() => setTab("gerencial")} />
+          </div>
+
+          <div className="mt-5">
+            <StatusFinMatriz lancs={lancs} onJump={() => setTab("lancamentos")} />
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -237,6 +242,58 @@ function ProjecaoCaixa({ lancs }: { lancs: Lancamento[] }) {
 
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--primary)", "var(--info)", "var(--warning)"];
 
+/* ============== Matriz Status financeiro (Fase 2) ============== */
+const STATUS_BUCKETS: StatusFin[] = ["Previsto", "Comprometido", "Pagar", "Parcial", "Pago"];
+function StatusFinMatriz({ lancs, onJump }: { lancs: Lancamento[]; onJump?: () => void }) {
+  const matriz = useMemo(() => {
+    const init = () => Object.fromEntries(STATUS_BUCKETS.map(s => [s, 0])) as Record<StatusFin, number>;
+    const ent = init(); const sai = init();
+    for (const l of lancs) {
+      const sf = l.statusFin ?? derivarStatusFin(l.camada);
+      if (sf === "Cancelado") continue;
+      (l.tipo === "Entrada" ? ent : sai)[sf] = ((l.tipo === "Entrada" ? ent : sai)[sf] ?? 0) + l.valor;
+    }
+    return { ent, sai };
+  }, [lancs]);
+
+  const Row = ({ label, data, tone }: { label: string; data: Record<StatusFin, number>; tone: "success" | "destructive" }) => (
+    <div className="grid grid-cols-6 items-center gap-2 text-sm">
+      <div className="font-medium text-muted-foreground">{label}</div>
+      {STATUS_BUCKETS.map(s => (
+        <button
+          key={s}
+          onClick={onJump}
+          className="rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-right transition hover:border-primary/50 hover:bg-primary/5"
+        >
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{s}</div>
+          <div className={`font-mono text-xs font-semibold ${tone === "success" ? "text-success" : "text-destructive"}`}>
+            {fmtBRLPrecise(data[s] ?? 0)}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <Card className="p-5 bg-[image:var(--gradient-card)]">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-sm font-semibold">Status financeiro · Previsto → Comprometido → Pagar → Pago</div>
+        <div className="text-xs text-muted-foreground">Clique numa célula para abrir os lançamentos</div>
+      </div>
+      <div className="space-y-2">
+        <div className="grid grid-cols-6 gap-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <div></div>
+          {STATUS_BUCKETS.map(s => <div key={s} className="text-right">{s}</div>)}
+        </div>
+        <Row label="Entradas" data={matriz.ent} tone="success" />
+        <Row label="Saídas" data={matriz.sai} tone="destructive" />
+      </div>
+    </Card>
+  );
+}
+
+
+
 function PorNatureza({ lancs }: { lancs: Lancamento[] }) {
   const data = useMemo(() => {
     const map = new Map<string, number>();
@@ -348,9 +405,12 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
   const [busca, setBusca] = useState("");
   const [tipoF, setTipoF] = useState<"Todos" | Tipo>("Todos");
   const [camadaF, setCamadaF] = useState<"Todas" | Camada>("Todas");
+  const [statusF, setStatusF] = useState<"Todos" | StatusFin>("Todos");
   const filtered = lancs.filter((l: Lancamento) => {
     if (tipoF !== "Todos" && l.tipo !== tipoF) return false;
     if (camadaF !== "Todas" && l.camada !== camadaF) return false;
+    const sf = l.statusFin ?? derivarStatusFin(l.camada);
+    if (statusF !== "Todos" && sf !== statusF) return false;
     if (busca && !`${l.descricao} ${l.natureza} ${l.centroCusto} ${l.obra ?? ""}`.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
   });
@@ -374,6 +434,13 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
             {CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={statusF} onValueChange={(v) => setStatusF(v as any)}>
+          <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todos">Todos status fin.</SelectItem>
+            {STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="ml-auto">
           <NovoLancamentoDialog onSave={(l) => setLancs((p: Lancamento[]) => [l, ...p])} centros={centros} naturezas={naturezas} />
         </div>
@@ -384,10 +451,13 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
           <TableHeader><TableRow>
             <TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Natureza</TableHead>
             <TableHead>Centro</TableHead><TableHead>Obra</TableHead><TableHead>Camada</TableHead>
+            <TableHead>Status fin.</TableHead>
             <TableHead>Tipo</TableHead><TableHead className="text-right">Valor</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {filtered.map((l: Lancamento) => (
+            {filtered.map((l: Lancamento) => {
+              const sf = l.statusFin ?? derivarStatusFin(l.camada);
+              return (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{fmtBR(l.data)}</TableCell>
                 <TableCell className="font-medium">{l.descricao}</TableCell>
@@ -395,6 +465,22 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
                 <TableCell className="text-muted-foreground">{l.centroCusto}</TableCell>
                 <TableCell className="text-muted-foreground">{l.obra ?? "—"}</TableCell>
                 <TableCell><StatusBadge status={l.camada} /></TableCell>
+                <TableCell>
+                  <Select
+                    value={sf}
+                    onValueChange={(v) => {
+                      setStatusFin(l.id, v as StatusFin, "Operador");
+                      setLancs((p: Lancamento[]) => p.map(x => x.id === l.id ? { ...x, statusFin: v as StatusFin } : x));
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-[140px] border-0 bg-transparent p-0 [&>svg]:hidden">
+                      <StatusBadge status={sf} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
                 <TableCell><StatusBadge status={l.tipo} /></TableCell>
                 <TableCell className={`text-right font-semibold ${l.tipo === "Entrada" ? "text-success" : "text-destructive"}`}>
                   {l.tipo === "Entrada" ? "+" : "−"} {fmtBRLPrecise(l.valor)}
@@ -405,7 +491,8 @@ function LancamentosTab({ lancs, setLancs, centros, naturezas }: any) {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>
@@ -417,7 +504,7 @@ function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lanc
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Lancamento>({
     id: "", data: new Date().toISOString().slice(0, 10), descricao: "", tipo: "Saída", valor: 0,
-    camada: "Confirmado", natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
+    camada: "Confirmado", statusFin: "Pagar", natureza: naturezas[0]?.nome ?? "", centroCusto: centros[0]?.nome ?? "",
     obra: "", empresa: "Meta Sun", filial: "Manaus", responsavel: "", obs: "",
   });
   const set = (k: keyof Lancamento, v: any) => setForm(p => ({ ...p, [k]: v }));
@@ -446,6 +533,12 @@ function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lanc
             <Select value={form.camada} onValueChange={(v) => set("camada", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{CAMADAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Field label="Status financeiro">
+            <Select value={form.statusFin ?? derivarStatusFin(form.camada)} onValueChange={(v) => set("statusFin", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{STATUS_FIN.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
           <Field label="Natureza">

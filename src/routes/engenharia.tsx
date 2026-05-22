@@ -10,6 +10,7 @@ import {
   aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,
   getLiberacao, registrarAlteracaoFinalizada,
 } from "@/lib/obras-finalizacao-store";
+import { garantirAtendimentosPorEncerramento } from "@/lib/posvenda-store";
 import { useHistorico } from "@/lib/audit-store";
 import { useIsAdmin } from "@/lib/auth-store";
 import {

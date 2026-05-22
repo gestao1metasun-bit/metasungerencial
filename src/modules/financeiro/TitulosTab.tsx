@@ -613,22 +613,46 @@ function TituloDialog({
 function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }) {
   const anexos = titulo.anexos ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadAnexoFn = useServerFn(uploadAnexo);
+  const signedUrlAnexoFn = useServerFn(signedUrlAnexo);
+  const deleteAnexoFn = useServerFn(deleteAnexo);
 
   const handleFiles = async (fs: FileList | null) => {
     if (!fs) return;
     for (const file of Array.from(fs)) {
-      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx. 5 MB`); continue; }
-      const dataUrl = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: máx. 10 MB`); continue; }
       try {
-        adicionarAnexo(titulo.id, { nome: file.name, mime: file.type || "application/octet-stream", tamanho: file.size, dataUrl });
-      } catch (e: any) { toast.error(e.message); }
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("tituloId", titulo.id);
+        const { anexo } = await uploadAnexoFn({ data: fd });
+        adicionarAnexo(titulo.id, {
+          id: anexo.id,
+          nome: anexo.nome,
+          mime: anexo.mime,
+          tamanho: anexo.tamanho,
+          storagePath: anexo.storage_path,
+          enviadoEm: anexo.created_at,
+        });
+      } catch (e: any) { toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`); }
     }
     if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const baixar = async (a: Anexo) => {
+    if (a.dataUrl) { window.open(a.dataUrl, "_blank"); return; }
+    if (!a.storagePath) { toast.error("Anexo sem caminho de Storage."); return; }
+    try {
+      const { url } = await signedUrlAnexoFn({ data: { anexoId: a.id } });
+      window.open(url, "_blank");
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao gerar URL."); }
+  };
+
+  const excluir = async (a: Anexo) => {
+    try {
+      if (a.storagePath) await deleteAnexoFn({ data: { anexoId: a.id } });
+      removerAnexo(titulo.id, a.id);
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao excluir."); }
   };
 
   return (
@@ -656,10 +680,11 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
               <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="flex-1 truncate">{a.nome}</span>
               <span className="text-muted-foreground">{Math.round(a.tamanho / 1024)} KB</span>
-              <a href={a.dataUrl} download={a.nome} title="Baixar"><Download className="h-3.5 w-3.5" /></a>
+              <Button size="icon" variant="ghost" className="h-6 w-6" title="Baixar" onClick={() => baixar(a)}>
+                <Download className="h-3.5 w-3.5" />
+              </Button>
               {editavel && (
-                <Button size="icon" variant="ghost" className="h-6 w-6"
-                  onClick={() => { try { removerAnexo(titulo.id, a.id); } catch (e: any) { toast.error(e.message); } }}>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => excluir(a)}>
                   <Trash2 className="h-3.5 w-3.5 text-rose-600" />
                 </Button>
               )}

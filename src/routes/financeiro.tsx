@@ -33,6 +33,7 @@ import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
 import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
+import { CmvTab } from "@/modules/financeiro/CmvTab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -94,6 +95,7 @@ function FinanceiroPage() {
           <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
           <TabsTrigger value="dre">DRE</TabsTrigger>
+          <TabsTrigger value="cmv">CMV / Compras</TabsTrigger>
         </TabsList>
 
         {/* DASHBOARD */}
@@ -180,6 +182,10 @@ function FinanceiroPage() {
 
         <TabsContent value="dre" className="mt-5">
           <DRETab lancs={lancs} fixas={fixasMensais} />
+        </TabsContent>
+
+        <TabsContent value="cmv" className="mt-5">
+          <CmvTab />
         </TabsContent>
       </Tabs>
     </>

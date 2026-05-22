@@ -1,122 +1,123 @@
+# Plano estrutural ERP Meta Sun — próximas fases
 
-# Roadmap estrutural Meta Sun ERP
-
-Esta é uma transformação grande (semanas de trabalho), não cabe em uma única rodada. Proponho dividir em **5 fases entregáveis**, cada uma autocontida e testável. Vou pedir sua aprovação **fase por fase** antes de executar — assim você valida o resultado antes de a próxima começar.
-
-Hoje o sistema é majoritariamente **localStorage-first** (stores em `src/lib/*-store.ts`). Antes de virar "ERP robusto", precisamos migrar as entidades críticas para o **Lovable Cloud (Supabase)**, que já está conectado e tem várias tabelas prontas (`contratos`, `clientes`, `obras`, `aditivos`, `audit_log`, `period_locks`, `user_roles`, `profiles`). A maior parte do código ainda não usa essas tabelas — esse é o trabalho real por trás de "auditoria, multiempresa, BI".
+A Fase 1.1 já foi entregue (auditoria DB universal via triggers, enum `app_permission`, `role_permissions`, `has_permission()`, hook `useMyPermissions`, timeline unificada). Este plano organiza o restante do que você pediu em fases entregáveis, cada uma em 1–3 rodadas. Cada fase termina utilizável — nada de "tudo ou nada".
 
 ---
 
-## Fase 1 — Segurança, Auditoria e Versionamento (fundação)
+## FASE 1.2 — Permissões granulares por usuário (extras / bloqueios)
 
-**Por que primeiro:** sem isso, qualquer mudança nas próximas fases vira caixa-preta.
+Hoje as permissões vêm só do perfil (role). Vamos para o modelo que você descreveu:
 
-1. **Auditoria universal no banco**
-   - Já existe `public.audit_log` + função `tg_audit_row()`. Hoje **nenhuma tabela tem trigger ligado**. Vou anexar triggers AFTER INSERT/UPDATE/DELETE em: `contratos`, `aditivos`, `clientes`, `obras`, `projetos`, `user_roles`, `period_locks`.
-   - Capturar `user_id`, `user_email`, `valor_anterior`, `valor_novo`, `acao`, `entidade`, `entidade_id`, `created_at`. IP/User-Agent virão via header em server functions (não dá pra capturar dentro do trigger puro).
-   - Tela **Histórico/Timeline** por registro (já existe `HistoricoTimeline.tsx` consumindo store local — vou plugar no `audit_log` real).
+```text
+USUÁRIO → PERFIL BASE → + permissões extras → − permissões bloqueadas
+```
 
-2. **Versionamento de registros críticos**
-   - Tabela nova `entidade_versoes (entidade, entidade_id, versao, snapshot jsonb, autor, created_at)`.
-   - Aplicado em `contratos`, `aditivos`, `obras`, `titulos_financeiros` (quando migrarmos).
-   - UI: aba "Versões" com diff campo-a-campo e botão **Restaurar** (cria nova versão a partir da antiga, nunca sobrescreve histórico).
+**Banco**
+- Tabela `user_permission_overrides(user_id, permission, effect: 'grant'|'deny', motivo, granted_by, created_at)`.
+- Atualizar `has_permission()` para: admin → true; senão `(role tem) ∪ (overrides grant) ∖ (overrides deny)`.
+- Trigger de auditoria já cobre via `tg_audit_row`.
 
-3. **Permissões granulares**
-   - Hoje `user_roles` tem só enum `admin_master | admin_geral | usuario`. Vou criar:
-     - `app_permission` enum: `financeiro.visualizar`, `financeiro.editar`, `financeiro.excluir`, `engenharia.status`, `estoque.movimentar`, `comercial.aprovar`, ... (~30 chaves).
-     - Tabela `role_permissions (role, permission)` + função `has_permission(_user, _perm)`.
-     - RLS das tabelas operacionais passa a usar `has_permission()` em vez de só `is_admin()`.
-   - UI em **Configurações → Perfis** lista e edita as permissões por role (substituindo o mock atual em `perfis-store.ts`).
+**UI (Configurações → Usuários)**
+- Tela "Permissões do usuário": lista todas as permissões agrupadas por módulo, mostrando origem (perfil / extra / bloqueada) e permitindo + / − com motivo obrigatório.
+- Reaproveitar `useMyPermissions()` para gating de botões.
 
-4. **Soft-delete obrigatório**
-   - Adicionar `status` ou `deleted_at` onde faltar; bloquear `DELETE` para não-admin via RLS. Ações operacionais viram **Cancelar / Inativar / Arquivar**.
+**Preparação futura** (apenas colunas reservadas, sem UI ainda):
+- `filial_id`, `setor`, `carteira_id`, `escopo_jsonb` em `user_permission_overrides`.
 
 ---
 
-## Fase 2 — Estrutura Contábil/Fiscal e Multiempresa-ready
+## FASE 1.3 — Versionamento + soft-delete + motivo obrigatório
 
-1. **Plano de contas em camadas** (tabelas novas no Supabase):
-   ```text
-   empresas (id, razao_social, cnpj, ...)           ← multiempresa desde já
-   grupos_contabeis (codigo, nome)
-   subgrupos_contabeis (grupo_id, codigo, nome)
-   contas_contabeis (subgrupo_id, codigo, nome, natureza)
-   naturezas_financeiras (codigo, nome, tipo)
-   centros_custo (codigo, nome, tipo, empresa_id)
-   classificacao_fiscal (cfop, cst, ncm, ...)        ← schema preparado
-   ```
-   Migra o que hoje vive em `fin-centros-custo-store.ts`, `fin-naturezas-store.ts`, `fin-grupos-store.ts` para o banco, mantendo os hooks existentes como adaptadores.
+**Banco**
+- Tabela genérica `entidade_versoes(entidade, entidade_id, versao int, snapshot jsonb, motivo, user_id, created_at)`.
+- Trigger `tg_snapshot_version()` em `contratos`, `aditivos`, `obras`, `projetos`, `financeiro` (quando migrar), `estoque`.
+- Bloquear `DELETE` físico via RLS nas tabelas operacionais; criar coluna `deleted_at` + `deleted_reason` + políticas "arquivar/cancelar".
 
-2. **Toda movimentação carrega:** `empresa_id`, `natureza_id`, `centro_custo_id`, `origem` (Comercial/Engenharia/Estoque/Admin/Manutenção), `conta_contabil_id`, `classificacao_fiscal_id` (nullable por enquanto).
+**Regras de transição (trigger `tg_guard_estado`)**
+- Contrato `Assinado` → só altera via aditivo.
+- Financeiro `Pago` → só via estorno.
+- Obra `Finalizada` → imutável fora admin.
+- Já temos `tg_guard_operacional`; estender com mais estados.
 
-3. **Motor de contabilização (preparação)**
-   - Tabela `eventos_contabeis (evento, conta_debito, conta_credito, regra jsonb)`.
-   - Tabela `lancamentos_contabeis` gerada **shadow** a cada movimento financeiro (não exibida ainda, mas auditável). Quando Domínio/Alterdata/SPED entrarem, basta exportar.
-
-4. **`empresa_id` em todas as tabelas operacionais** + RLS adicional. Hoje não há filtro de empresa — adicionar agora evita refazer o banco depois.
+**UI**
+- Aba "Versões" em contratos/obras/projetos com diff visual e botão "Restaurar" (cria nova versão a partir da antiga).
+- Modal "Informe o motivo" em ações críticas (cancelar, reabrir, alterar valor, alterar vencimento).
+- Lixeira operacional em Configurações (lista `deleted_at not null`, restaurar / excluir definitivamente só admin).
 
 ---
 
-## Fase 3 — Performance e Escalabilidade
+## FASE 1.4 — Logs de sessão e ações críticas
 
-1. **Migrar stores `localStorage` → Supabase + TanStack Query**
-   Lista (ordem de prioridade): `contratos-store`, `clientes-store`, `aditivos-store`, `financeiro-store`, `fin-titulos-store`, `estoque-store`, `obras-snapshot-store`, `posvenda-store`. Cada migração:
-   - `createServerFn` + `requireSupabaseAuth`.
-   - `queryOptions` + `useSuspenseQuery` no componente.
-   - Invalidação **cirúrgica** por `queryKey` (ex.: `['contratos', id]` vs `['contratos','list']`) — resolve o "dashboard zerando".
-
-2. **Dashboard granular**
-   - Cada KPI/card vira um `queryKey` independente com seu próprio `staleTime`.
-   - Realtime via `supabase.channel(...)` invalidando **apenas** as chaves afetadas.
-   - Sem mais reload global.
-
-3. **Banco**
-   - Índices em FKs e colunas filtradas (`contratos.consultor_id`, `contratos.status`, `obras.contrato_id`, `aditivos.contrato_id`, `audit_log(entidade, entidade_id)`).
-   - Paginação server-side nas listagens longas (`range()` no Supabase).
-   - Views materializadas para KPIs pesados, refresh assíncrono via `pg_cron`.
-
-4. **Lazy-loading de rotas** (já que TanStack Start suporta) + code-splitting nos módulos pesados (financeiro, estoque).
+- Tabela `session_log(user_id, evento, ip, user_agent, created_at)`: login, logout, falha de login, troca de senha.
+- Hook no `__root.tsx` que escreve via server fn em `onAuthStateChange`.
+- Tela "Auditoria" em Configurações com filtros por usuário/módulo/entidade/data.
 
 ---
 
-## Fase 4 — Camada Executiva / CFO
+## FASE 2 — Backup, restore e proteções
 
-Novo módulo `/executivo` (rota separada, permissão própria `executivo.visualizar`):
-
-- **Financeiro:** EBITDA, margem líquida/operacional, fluxo projetado, aging, inadimplência, PMR, PMP, capital de giro, necessidade de caixa.
-- **Comercial:** funil lead→contrato→assinatura, ticket médio, ROI, ranking de vendedor, curva de fechamento.
-- **Engenharia:** produtividade/equipe, custo médio, retrabalho, prazo médio, obras atrasadas.
-- **Estoque:** giro, ruptura, parado, consumo médio.
-- **BI cruzado:** vendedor × margem, equipe × manutenção, fornecedor × problema, banco × demora liberação, obra × retrabalho.
-
-Implementação: views/materialized views no Postgres + `recharts` no front. Cada gráfico tem `queryKey` próprio (regra da Fase 3).
+- Backup diário automático do Postgres já é feito pelo Lovable Cloud — vou expor isso na UI ("Último backup: …") e documentar política de retenção.
+- Exportações lógicas semanais (CSV/JSON) por módulo, salvas em bucket `backups/` (já temos storage).
+- Modo manutenção: flag global `system_flags.maintenance` → middleware bloqueia escrita para não-admin.
+- Confirmação dupla (senha) em: exclusão em lote, restauração, fechamento de período, alteração de permissão de admin.
+- Logs de backup/restore em `audit_log` com módulo `system`.
 
 ---
 
-## Fase 5 — Workflow e Automações
+## FASE 3 — Performance (quando você liberar)
 
-1. **Máquina de estados** por entidade (`contrato`, `obra`, `titulo`), tabela `workflow_transicoes` definindo transições permitidas e quais permissões liberam "pular etapa". Trigger bloqueia transição inválida.
-
-2. **Automações em trigger / server fn:**
-   - Contrato assinado → cria `projeto`, `titulos_financeiros`, snapshot de estoque, `obra` em "Planejada".
-   - Já existe parte disso em `dev-seed.ts` e nos stores; vou centralizar em server functions e disparar via trigger Postgres quando possível.
-
-3. **Central de tarefas/alertas:**
-   - Tabela `tarefas (responsavel, tipo, entidade, prazo, status)`.
-   - Geradores automáticos: obra atrasada, boleto vencendo, estoque crítico, financiamento parado, inadimplência.
-   - Caixa de tarefas por usuário/setor (página `/tarefas` + badge no header).
+Você pediu para deixar para depois — mantenho aqui só como referência:
+- Migrar stores `localStorage` críticos (contratos, clientes, financeiro, obras) para Supabase + TanStack Query.
+- Invalidação cirúrgica por `queryKey` (sem recarregar dashboard inteira).
+- Índices em `contratos(consultor_id, status)`, `obras(status, data_inicio)`, `audit_log(entidade, entidade_id, created_at)`.
+- Paginação server-side em listas grandes; KPIs via views materializadas atualizadas por trigger.
+- Code-splitting por rota (TanStack já suporta).
 
 ---
 
-## Como vamos tocar isso
+## FASE 4 — Travas operacionais finas
 
-- Cada fase = **1 a 3 rodadas de chat**, com migrations + código + verificação no preview.
-- Tudo passa por aprovação de migration antes de rodar.
-- Funcionalidades existentes **continuam funcionando** durante a migração (adaptadores mantêm a API atual dos stores enquanto a fonte de verdade migra).
-- Nada é deletado: stores antigos viram fallback até a tela equivalente estar 100% no Supabase.
+Complemento da 1.3, focado em integridade referencial:
+- Bloquear delete de cliente com contrato/obra/financeiro vinculado.
+- Bloquear delete de contrato com financeiro/obra vinculado.
+- Bloquear delete de título financeiro conciliado.
+- "Modo exceção": admin pode forçar, gravando `audit_log.acao='OVERRIDE'` + motivo.
 
-## Próximo passo
+---
 
-Se aprovar o roadmap geral, **começo pela Fase 1** (auditoria + versionamento + permissões granulares + soft-delete). Posso também, se preferir, ajustar a ordem — por exemplo, priorizar **Fase 3 (performance)** antes, já que você está sentindo lentidão hoje.
+## FASE 5 — Automações operacionais
 
-**Quer começar pela Fase 1 ou pela Fase 3?**
+Disparadas por trigger ou cron (`pg_cron` + server route `/api/public/hooks/*`):
+- Contrato assinado → cria projeto + financeiro + previsão estoque + ordem engenharia.
+- Alertas/tarefas em tabela `tarefas(user_id, setor, tipo, prioridade, due_at, resolved_at)`.
+- Geradores automáticos:
+  - obra atrasada (data_prevista < hoje, status ≠ Finalizada)
+  - boleto vencendo em 3 dias
+  - estoque crítico (< mínimo)
+  - financiamento parado > 7 dias
+  - cliente inadimplente
+- Central de tarefas por setor/usuário em `/tarefas` com badge no menu.
+
+---
+
+## FASE 6 — Ambientes, versões e feature flags
+
+- Tabela `feature_flags(chave, ativo, escopo_jsonb)` + hook `useFlag('nome')`.
+- Tela admin para ligar/desligar features por módulo/usuário/setor.
+- Changelog interno em `/configuracoes/versoes` lendo de `system_releases`.
+- Sobre "produção x homologação": no Lovable, **Preview** já é homologação e **Published** é produção — vou documentar o fluxo (testar em preview → publicar) e adicionar banner "AMBIENTE PREVIEW" quando `import.meta.env.DEV` ou hostname `id-preview-*`.
+
+---
+
+## Ordem sugerida de execução
+
+1. **Fase 1.2** (1 rodada) — permissões extras/bloqueios por usuário + UI.
+2. **Fase 1.3** (2 rodadas) — versionamento, soft-delete, motivo obrigatório, lixeira.
+3. **Fase 1.4** (1 rodada) — log de sessão + tela de auditoria.
+4. **Fase 4** (1 rodada) — travas de integridade referencial.
+5. **Fase 2** (1–2 rodadas) — backup/restore/modo manutenção.
+6. **Fase 5** (2 rodadas) — automações e central de tarefas.
+7. **Fase 6** (1 rodada) — feature flags + changelog + banner de ambiente.
+8. **Fase 3** (3 rodadas) — performance (quando autorizar).
+
+Confirma esta ordem? Posso começar pela **Fase 1.2** já na próxima rodada.

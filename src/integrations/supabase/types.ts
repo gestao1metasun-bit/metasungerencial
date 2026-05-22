@@ -757,6 +757,51 @@ export type Database = {
           },
         ]
       }
+      user_permission_overrides: {
+        Row: {
+          carteira_id: string | null
+          created_at: string
+          effect: string
+          escopo: Json
+          filial_id: string | null
+          granted_by: string | null
+          id: string
+          motivo: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          setor: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carteira_id?: string | null
+          created_at?: string
+          effect: string
+          escopo?: Json
+          filial_id?: string | null
+          granted_by?: string | null
+          id?: string
+          motivo: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          setor?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carteira_id?: string | null
+          created_at?: string
+          effect?: string
+          escopo?: Json
+          filial_id?: string | null
+          granted_by?: string | null
+          id?: string
+          motivo?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          setor?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

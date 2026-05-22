@@ -67,7 +67,7 @@ import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
 import { AditivosPanel } from "@/components/app/AditivosPanel";
 import { AditivoBadge } from "@/components/app/AditivoBadge";
-import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
+import { useAditivos, useAditivosByContrato, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
 import { usePodeGerenciarAditivos } from "@/lib/auth-store";
 
 
@@ -443,7 +443,13 @@ function ContratoAssinadoRow({
   const enviados = total - pendentes;
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
+  const [aditivosOpen, setAditivosOpen] = useState(false);
+  const aditivosDoContrato = useAditivosByContrato(c.id);
+  const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
+  const podeGerenciarAditivos = usePodeGerenciarAditivos();
+  const { user: aditivoUser } = useAuthCurrent();
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
+
   return (
     <TableRow>
       <TableCell>
@@ -498,9 +504,24 @@ function ContratoAssinadoRow({
             <HandCoins className="mr-2 h-4 w-4" /> Liberar comissão
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => setAditivosOpen(true)}
+            disabled={!aprovado}
+            title={!aprovado ? "Disponível após aprovação do contrato" : undefined}
+          >
+            <Layers className="mr-2 h-4 w-4" />
+            <span>Gerenciar aditivos</span>
+            {pendentesAditivos > 0 && (
+              <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-warning/15 text-warning border border-warning/30 px-1.5 text-[10px] font-semibold">
+                {pendentesAditivos}
+              </span>
+            )}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
             <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
           </DropdownMenuItem>
+
           <DropdownMenuItem onSelect={() => onImprimir(c)}>
             <Printer className="mr-2 h-4 w-4" /> Imprimir
           </DropdownMenuItem>
@@ -527,6 +548,15 @@ function ContratoAssinadoRow({
           </DropdownMenuItem>
         </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
+        <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
+            </DialogHeader>
+            <AditivosPanel contrato={c} usuario={aditivoUser} podeGerenciar={podeGerenciarAditivos} />
+          </DialogContent>
+        </Dialog>
+
       </TableCell>
       <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>

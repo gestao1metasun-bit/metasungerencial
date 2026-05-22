@@ -88,7 +88,7 @@ const CENARIOS: Cenario[] = [
     telhadoTipo: "Cerâmica",
     pagamento: {
       descricao: "PIX à vista",
-      formas: [{ id: "L1", tipo: "PIX", momento: "assinatura", valor: 28000, parcelas: 1, primeiroVencDias: 0, intervaloDias: 30 }],
+      formas: [{ id: "L1", tipo: "PIX", momento: "ato", valor: 28000, parcelas: 1, primeiroVencDias: 0, intervaloDias: 30 }],
     },
     assinado: true, entregaPct: 1.0, selecionarParaCompra: false,
   },
@@ -132,7 +132,7 @@ const CENARIOS: Cenario[] = [
     telhadoTipo: "Cerâmica",
     pagamento: {
       descricao: "Cartão de crédito",
-      formas: [{ id: "L1", tipo: "Cartão de Crédito", momento: "assinatura", valor: 35500, parcelas: 1, jurosTipo: "empresa" }],
+      formas: [{ id: "L1", tipo: "Cartão de Crédito", momento: "ato", valor: 35500, parcelas: 1, jurosTipo: "empresa" }],
     },
     assinado: true, entregaPct: 0, selecionarParaCompra: true,
   },
@@ -147,7 +147,7 @@ const CENARIOS: Cenario[] = [
     pagamento: {
       descricao: "Entrada PIX + Boleto",
       formas: [
-        { id: "L1", tipo: "PIX", momento: "assinatura", valor: 12000, parcelas: 1, primeiroVencDias: 0, intervaloDias: 30 },
+        { id: "L1", tipo: "PIX", momento: "ato", valor: 12000, parcelas: 1, primeiroVencDias: 0, intervaloDias: 30 },
         { id: "L2", tipo: "Boleto", momento: "entrega-materiais", valor: 40000, parcelas: 8, primeiroVencDias: 30, intervaloDias: 30 },
       ],
     },

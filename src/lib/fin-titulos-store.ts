@@ -49,11 +49,12 @@ export type Movimento = {
 };
 
 export type Anexo = {
-  id: string;
+  id: string;                 // ID do registro em anexos_titulos (UUID) OU id legado local
   nome: string;
   mime: string;
   tamanho: number;
-  dataUrl: string;          // base64 — armazenado inline
+  storagePath?: string;       // novo: caminho no bucket privado Supabase
+  dataUrl?: string;           // legado: base64 inline (apenas anexos antigos)
   enviadoEm: string;
   enviadoPor?: string;
 };

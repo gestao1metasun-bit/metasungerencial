@@ -13,7 +13,7 @@
 // estoque físico inicial, entregas parciais, e 1 compra em trânsito.
 // ============================================================================
 import { addClienteFull, type ClienteRecord } from "@/lib/clientes-store";
-import { upsertContrato, type ContratoFull, type ProjetoVinculado } from "@/lib/contratos-store";
+import { upsertContrato, type ContratoFull, type ProjetoVinculado, type PagamentoLinha } from "@/lib/contratos-store";
 import { gerarARsDoContratoAssinado } from "@/lib/fin-titulos-store";
 import { setObrasSnapshot, type ObraSnapshot } from "@/lib/obras-snapshot-store";
 import {
@@ -62,10 +62,12 @@ type Cenario = {
   modulos: number;
   potencia: number; // kWp
   inversor: string;
+  // formas é o tipo das linhas de pagamento do contrato.
+  // Declarado abaixo via PagamentoLinha[].
   telhadoTipo: "Cerâmica" | "Metálico" | "Fibrocimento";
   pagamento: {
     descricao: string;
-    formas: ContratoFull["pagamentoDetalhes"]["formas"];
+    formas: PagamentoLinha[];
   };
   assinado: boolean;
   entregaPct: number; // 0..1 — fração do material total a entregar

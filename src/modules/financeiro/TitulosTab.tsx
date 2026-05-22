@@ -515,7 +515,31 @@ function TituloDialog({
 
   return (
     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>{initial ? "Editar título" : `Novo título · ${tipo === "AP" ? "Contas a Pagar" : "Contas a Receber"}`}</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {tipo === "AR" ? (
+            <ArrowDownCircle className="h-5 w-5 text-success" />
+          ) : (
+            <ArrowUpCircle className="h-5 w-5 text-destructive" />
+          )}
+          <span>{initial ? "Editar título" : "Novo título"}</span>
+          <Badge
+            variant="outline"
+            className={
+              tipo === "AR"
+                ? "border-success/40 bg-success/10 text-success font-semibold"
+                : "border-destructive/40 bg-destructive/10 text-destructive font-semibold"
+            }
+          >
+            {tipo === "AR" ? "Entrada · Contas a Receber" : "Saída · Contas a Pagar"}
+          </Badge>
+        </DialogTitle>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {tipo === "AR"
+            ? "Lançamento de receita prevista/realizada. Vincule à origem (contrato, obra ou financiamento) para refletir corretamente nos relatórios."
+            : "Lançamento de despesa prevista/realizada. Vincule ao fornecedor e à obra/contrato quando aplicável."}
+        </div>
+      </DialogHeader>
 
       {/* Linha 1: identificação básica */}
       <div className="grid grid-cols-2 gap-3">

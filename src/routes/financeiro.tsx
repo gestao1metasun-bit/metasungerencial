@@ -242,6 +242,58 @@ function ProjecaoCaixa({ lancs }: { lancs: Lancamento[] }) {
 
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--primary)", "var(--info)", "var(--warning)"];
 
+/* ============== Matriz Status financeiro (Fase 2) ============== */
+const STATUS_BUCKETS: StatusFin[] = ["Previsto", "Comprometido", "Pagar", "Parcial", "Pago"];
+function StatusFinMatriz({ lancs, onJump }: { lancs: Lancamento[]; onJump?: () => void }) {
+  const matriz = useMemo(() => {
+    const init = () => Object.fromEntries(STATUS_BUCKETS.map(s => [s, 0])) as Record<StatusFin, number>;
+    const ent = init(); const sai = init();
+    for (const l of lancs) {
+      const sf = l.statusFin ?? derivarStatusFin(l.camada);
+      if (sf === "Cancelado") continue;
+      (l.tipo === "Entrada" ? ent : sai)[sf] = ((l.tipo === "Entrada" ? ent : sai)[sf] ?? 0) + l.valor;
+    }
+    return { ent, sai };
+  }, [lancs]);
+
+  const Row = ({ label, data, tone }: { label: string; data: Record<StatusFin, number>; tone: "success" | "destructive" }) => (
+    <div className="grid grid-cols-6 items-center gap-2 text-sm">
+      <div className="font-medium text-muted-foreground">{label}</div>
+      {STATUS_BUCKETS.map(s => (
+        <button
+          key={s}
+          onClick={onJump}
+          className="rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-right transition hover:border-primary/50 hover:bg-primary/5"
+        >
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{s}</div>
+          <div className={`font-mono text-xs font-semibold ${tone === "success" ? "text-success" : "text-destructive"}`}>
+            {fmtBRLPrecise(data[s] ?? 0)}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <Card className="p-5 bg-[image:var(--gradient-card)]">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-sm font-semibold">Status financeiro · Previsto → Comprometido → Pagar → Pago</div>
+        <div className="text-xs text-muted-foreground">Clique numa célula para abrir os lançamentos</div>
+      </div>
+      <div className="space-y-2">
+        <div className="grid grid-cols-6 gap-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <div></div>
+          {STATUS_BUCKETS.map(s => <div key={s} className="text-right">{s}</div>)}
+        </div>
+        <Row label="Entradas" data={matriz.ent} tone="success" />
+        <Row label="Saídas" data={matriz.sai} tone="destructive" />
+      </div>
+    </Card>
+  );
+}
+
+
+
 function PorNatureza({ lancs }: { lancs: Lancamento[] }) {
   const data = useMemo(() => {
     const map = new Map<string, number>();

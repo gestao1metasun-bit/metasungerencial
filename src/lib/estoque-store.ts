@@ -16,21 +16,23 @@ export type EstoqueItem = {
   nome: string;
   categoria: Categoria;
   unidade: Unidade;
-  qtdAtual: number;        // informada manualmente OU derivada por movimentos
-  custoMedio?: number;     // custo médio ponderado (R$/unid) — atualizado por entradas
-  atualizadoEm?: string;   // ISO
+  qtdAtual: number;        // estoque físico total
+  qtdReservada?: number;   // reservado para obras (não disponível p/ outras)
+  custoMedio?: number;     // custo médio ponderado (R$/unid)
+  atualizadoEm?: string;
   atualizadoPor?: string;
 };
 
 export type MovimentoEstoque = {
   id: string;
   em: string;            // ISO
-  tipo: "Entrada" | "Saída" | "Ajuste";
+  tipo: "Entrada" | "Saída" | "Ajuste" | "Reserva" | "Liberação" | "Devolução";
   itemId: string;
   itemNome: string;
   qtd: number;           // sempre positivo
-  custoUnit: number;     // custo unitário no momento (0 para ajustes)
+  custoUnit: number;     // custo unitário no momento
   custoTotal: number;    // qtd * custoUnit
+  refMovId?: string;     // p/ Devolução: referência ao MOV de Saída original
   // Vínculos opcionais
   compraId?: string;     // entrada por compra
   obraId?: string;       // saída para obra (CMV)
@@ -44,6 +46,7 @@ export type NecessidadeItem = {
   itemId: string;
   qtdNecessaria: number;
   qtdEntregue: number;
+  qtdReservada?: number; // reservado p/ esta obra
   entregaCompleta: boolean;
   obs?: string;
 };
@@ -244,38 +247,67 @@ export function setSelecionadaCompra(obraId: string, v: boolean) {
   });
 }
 
+/**
+ * Registra entrega para uma obra (acumulado).
+ * Faz baixa física + CMV pelo delta (qtdNova - qtdAnterior) consumindo
+ * reservas existentes da obra. Se delta < 0, registra Devolução.
+ */
 export function marcarEntrega(
   obraId: string,
   itemId: string,
   qtdEntregue: number,
   completa: boolean,
   usuario = "Estoque",
-) {
-  let itemNome = itemId;
-  let cliente = "";
+): { ok: boolean; erro?: string } {
+  const nec = state.necessidades.find((n) => n.obraId === obraId);
+  const necItem = nec?.itens.find((i) => i.itemId === itemId);
+  if (!nec || !necItem) return { ok: false, erro: "Obra/item não encontrado." };
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return { ok: false, erro: "Item de estoque não encontrado." };
+
+  const prev = necItem.qtdEntregue || 0;
+  const qtdCap = Math.max(0, Math.min(qtdEntregue, necItem.qtdNecessaria));
+  const delta = qtdCap - prev;
+
+  if (delta > 0) {
+    // Verifica disponibilidade considerando reservas de OUTRAS obras.
+    const reservaPropria = necItem.qtdReservada || 0;
+    const reservaOutras = (item.qtdReservada || 0) - reservaPropria;
+    const disponivel = (item.qtdAtual || 0) - Math.max(0, reservaOutras);
+    if (disponivel < delta) return { ok: false, erro: `Estoque disponível insuficiente para ${item.nome} (disp=${disponivel}, falta=${delta}).` };
+    const r = registrarSaidaObra(obraId, nec.cliente, [{ itemId, qtd: delta }], usuario);
+    if (!r.ok) return { ok: false, erro: `Falha na baixa: ${r.faltantes.join(", ")}` };
+    // consome reserva da própria obra
+    const consumirRes = Math.min(reservaPropria, delta);
+    if (consumirRes > 0) liberarReserva(obraId, itemId, consumirRes, usuario, true);
+  } else if (delta < 0) {
+    const r = registrarDevolucaoObra(obraId, itemId, -delta, usuario);
+    if (!r.ok) return { ok: false, erro: r.erro };
+  }
+
+  // Atualiza necessidade + log
+  const isCompleta = completa || qtdCap >= necItem.qtdNecessaria;
+  const itemNome = item.nome;
   const necessidades = state.necessidades.map((n) => {
     if (n.obraId !== obraId) return n;
-    cliente = n.cliente;
     return {
       ...n,
-      itens: n.itens.map((i) => {
-        if (i.itemId !== itemId) return i;
-        const qtdCap = Math.max(0, Math.min(qtdEntregue, i.qtdNecessaria));
-        const isCompleta = completa || qtdCap >= i.qtdNecessaria;
-        itemNome = state.itens.find((x) => x.id === itemId)?.nome || itemId;
-        return { ...i, qtdEntregue: qtdCap, entregaCompleta: isCompleta };
-      }),
+      itens: n.itens.map((i) =>
+        i.itemId !== itemId ? i : { ...i, qtdEntregue: qtdCap, entregaCompleta: isCompleta },
+      ),
       atualizadaEm: new Date().toISOString(),
     };
   });
   const log: EntregaLog = {
     id: `LOG-${Date.now().toString(36).toUpperCase()}`,
-    obraId, cliente, itemId, itemNome, qtd: qtdEntregue, completa,
+    obraId, cliente: nec.cliente, itemId, itemNome, qtd: qtdCap, completa: isCompleta,
     em: new Date().toISOString(), por: usuario,
   };
   setState({ necessidades, log: [log, ...state.log].slice(0, 500) });
-  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_entrega", usuario, detalhe: `${itemId}: qtd=${qtdEntregue}${completa ? " (completo)" : ""}` });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_entrega", usuario, detalhe: `${itemId}: qtd=${qtdCap}${isCompleta ? " (completo)" : ""}` });
+  return { ok: true };
 }
+
 
 // --------- Cálculo derivados ------------------------------------------------
 export function isMaterialEntregueTotal(n: NecessidadeObra): boolean {
@@ -399,12 +431,14 @@ export type CmvObra = {
 export function cmvPorObra(): CmvObra[] {
   const map = new Map<string, CmvObra>();
   for (const m of state.movimentos) {
-    if (m.tipo !== "Saída" || !m.obraId) continue;
+    if (!m.obraId) continue;
+    if (m.tipo !== "Saída" && m.tipo !== "Devolução") continue;
+    const sinal = m.tipo === "Saída" ? 1 : -1;
     const cur = map.get(m.obraId) ?? {
       obraId: m.obraId, cliente: m.cliente ?? "", cmvTotal: 0, itens: 0, ultimaSaida: m.em,
     };
-    cur.cmvTotal += m.custoTotal;
-    cur.itens += 1;
+    cur.cmvTotal += sinal * m.custoTotal;
+    cur.itens += sinal;
     if (m.em > cur.ultimaSaida) cur.ultimaSaida = m.em;
     if (!cur.cliente && m.cliente) cur.cliente = m.cliente;
     map.set(m.obraId, cur);
@@ -414,10 +448,164 @@ export function cmvPorObra(): CmvObra[] {
 
 export function cmvDaObra(obraId: string): number {
   return state.movimentos
-    .filter((m) => m.tipo === "Saída" && m.obraId === obraId)
-    .reduce((s, m) => s + m.custoTotal, 0);
+    .filter((m) => m.obraId === obraId && (m.tipo === "Saída" || m.tipo === "Devolução"))
+    .reduce((s, m) => s + (m.tipo === "Saída" ? m.custoTotal : -m.custoTotal), 0);
 }
+
 
 export function valorEstoqueTotal(): number {
   return state.itens.reduce((s, i) => s + (i.qtdAtual || 0) * (i.custoMedio ?? 0), 0);
 }
+
+// ============================================================================
+// RESERVAS — bloqueio de estoque para uma obra (sem baixa física).
+// ============================================================================
+
+export function disponivelParaReserva(itemId: string, obraId?: string): number {
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return 0;
+  const totalReservado = item.qtdReservada || 0;
+  const propria = obraId
+    ? (state.necessidades.find((n) => n.obraId === obraId)?.itens.find((i) => i.itemId === itemId)?.qtdReservada || 0)
+    : 0;
+  const outras = Math.max(0, totalReservado - propria);
+  return Math.max(0, (item.qtdAtual || 0) - outras - propria);
+}
+
+export function reservarMaterial(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+): { ok: boolean; erro?: string } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const disp = disponivelParaReserva(itemId, obraId);
+  if (disp < qtd) return { ok: false, erro: `Sem estoque disponível (disp=${disp}).` };
+
+  const item = state.itens.find((x) => x.id === itemId)!;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdReservada: (i.qtdReservada || 0) + qtd } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : { ...it, qtdReservada: (it.qtdReservada || 0) + qtd },
+      ),
+      atualizadaEm: new Date().toISOString(),
+    },
+  );
+  const mov: MovimentoEstoque = {
+    id: novoMovId(), em: new Date().toISOString(), tipo: "Reserva",
+    itemId, itemNome: item.nome, qtd, custoUnit: item.custoMedio ?? 0,
+    custoTotal: qtd * (item.custoMedio ?? 0), obraId, por: usuario,
+  };
+  setState({ itens, necessidades, movimentos: [mov, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_reserva", usuario, detalhe: `${itemId}: ${qtd}` });
+  return { ok: true };
+}
+
+export function liberarReserva(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+  silencioso = false,
+): { ok: boolean; erro?: string } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const nec = state.necessidades.find((n) => n.obraId === obraId);
+  const necIt = nec?.itens.find((i) => i.itemId === itemId);
+  const reservada = necIt?.qtdReservada || 0;
+  if (reservada < qtd) return { ok: false, erro: `Reserva insuficiente (res=${reservada}).` };
+
+  const item = state.itens.find((x) => x.id === itemId)!;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdReservada: Math.max(0, (i.qtdReservada || 0) - qtd) } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : { ...it, qtdReservada: Math.max(0, (it.qtdReservada || 0) - qtd) },
+      ),
+      atualizadaEm: new Date().toISOString(),
+    },
+  );
+  const movs: MovimentoEstoque[] = silencioso ? [] : [{
+    id: novoMovId(), em: new Date().toISOString(), tipo: "Liberação",
+    itemId, itemNome: item.nome, qtd, custoUnit: 0, custoTotal: 0, obraId, por: usuario,
+  }];
+  setState({ itens, necessidades, movimentos: [...movs, ...state.movimentos].slice(0, 2000) });
+  if (!silencioso) pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_liberacao", usuario, detalhe: `${itemId}: ${qtd}` });
+  return { ok: true };
+}
+
+// ============================================================================
+// DEVOLUÇÃO — retorno de material de obra ao estoque.
+// Usa o custo das saídas dessa obra/item (FIFO sobre Saídas) preservando o CM.
+// ============================================================================
+export function registrarDevolucaoObra(
+  obraId: string,
+  itemId: string,
+  qtd: number,
+  usuario = "Estoque",
+  obs?: string,
+): { ok: boolean; erro?: string; valor?: number } {
+  if (qtd <= 0) return { ok: false, erro: "Quantidade inválida." };
+  const item = state.itens.find((x) => x.id === itemId);
+  if (!item) return { ok: false, erro: "Item não encontrado." };
+
+  const saidas = state.movimentos
+    .filter((m) => m.tipo === "Saída" && m.obraId === obraId && m.itemId === itemId)
+    .slice().sort((a, b) => a.em.localeCompare(b.em));
+  const devolvidos = new Map<string, number>();
+  for (const d of state.movimentos.filter((m) => m.tipo === "Devolução" && m.obraId === obraId && m.itemId === itemId && m.refMovId)) {
+    devolvidos.set(d.refMovId!, (devolvidos.get(d.refMovId!) || 0) + d.qtd);
+  }
+  let restante = qtd;
+  let custoTotalDev = 0;
+  const movs: MovimentoEstoque[] = [];
+  const now = new Date().toISOString();
+  for (const s of saidas) {
+    if (restante <= 0) break;
+    const disp = s.qtd - (devolvidos.get(s.id) || 0);
+    if (disp <= 0) continue;
+    const usar = Math.min(disp, restante);
+    movs.push({
+      id: novoMovId(), em: now, tipo: "Devolução",
+      itemId: item.id, itemNome: item.nome, qtd: usar,
+      custoUnit: s.custoUnit, custoTotal: usar * s.custoUnit,
+      obraId, cliente: s.cliente, por: usuario, obs, refMovId: s.id,
+    });
+    custoTotalDev += usar * s.custoUnit;
+    restante -= usar;
+  }
+  if (restante > 0) return { ok: false, erro: `Sem saídas suficientes para devolver (faltam ${restante}).` };
+
+  const qAnt = item.qtdAtual || 0;
+  const cmAnt = item.custoMedio ?? 0;
+  const qNovo = qAnt + qtd;
+  const cmDev = custoTotalDev / qtd;
+  const cmNovo = qNovo > 0 ? (qAnt * cmAnt + qtd * cmDev) / qNovo : cmDev;
+  const itens = state.itens.map((i) =>
+    i.id === itemId ? { ...i, qtdAtual: qNovo, custoMedio: cmNovo, atualizadoEm: now, atualizadoPor: usuario } : i,
+  );
+  const necessidades = state.necessidades.map((n) =>
+    n.obraId !== obraId ? n : {
+      ...n,
+      itens: n.itens.map((it) =>
+        it.itemId !== itemId ? it : {
+          ...it,
+          qtdEntregue: Math.max(0, (it.qtdEntregue || 0) - qtd),
+          entregaCompleta: false,
+        },
+      ),
+      atualizadaEm: now,
+    },
+  );
+
+  setState({ itens, necessidades, movimentos: [...movs, ...state.movimentos].slice(0, 2000) });
+  pushAudit({ entidade: "obra", entidadeId: obraId, acao: "estoque_devolucao", usuario, detalhe: `${itemId}: ${qtd} (R$ ${custoTotalDev.toFixed(2)})` });
+  return { ok: true, valor: custoTotalDev };
+}
+

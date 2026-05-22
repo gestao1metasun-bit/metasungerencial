@@ -23,6 +23,7 @@ import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
   setSelecionadaCompra, marcarEntrega, isMaterialEntregueTotal,
   calcularNecessidadeCompra, findItem,
+  reservarMaterial, liberarReserva, registrarDevolucaoObra, disponivelParaReserva,
   type EstoqueItem, type Categoria, type Unidade,
 } from "@/lib/estoque-store";
 
@@ -190,11 +191,19 @@ function ObrasTab({ podeEntregar }: { podeEntregar: boolean }) {
   );
 }
 
+type DlgEntrega = { kind: "entrega"; itemId: string; qtd: number; completa: boolean };
+type DlgReserva = { kind: "reserva"; itemId: string; qtd: number; max: number };
+type DlgLiberar = { kind: "liberar"; itemId: string; qtd: number; max: number };
+type DlgDevolver = { kind: "devolver"; itemId: string; qtd: number; max: number; obs: string };
+type Dlg = DlgEntrega | DlgReserva | DlgLiberar | DlgDevolver;
+
 function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: boolean }) {
   const st = useEstoqueState();
   const n = st.necessidades.find((x) => x.obraId === obraId);
-  const [open, setOpen] = useState<{ itemId: string; qtd: number; completa: boolean } | null>(null);
+  const [dlg, setDlg] = useState<Dlg | null>(null);
   if (!n) return <div className="text-sm text-muted-foreground">Obra não encontrada.</div>;
+
+  const itemNomeAtual = dlg ? (findItem(st.itens, dlg.itemId)?.nome ?? dlg.itemId) : "";
 
   return (
     <div className="space-y-3">
@@ -203,30 +212,35 @@ function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: b
           <div className="text-sm font-semibold">{n.cliente}</div>
           <div className="text-[11px] text-muted-foreground">Contrato {n.contratoId} · Obra {n.obraId}</div>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Atualizado: {fmtDate(n.atualizadaEm)}
-        </div>
+        <div className="text-xs text-muted-foreground">Atualizado: {fmtDate(n.atualizadaEm)}</div>
       </div>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Item</TableHead>
-            <TableHead className="text-right">Necessidade</TableHead>
-            <TableHead className="text-right">Entregue</TableHead>
+            <TableHead className="text-right">Nec.</TableHead>
+            <TableHead className="text-right">Reserv.</TableHead>
+            <TableHead className="text-right">Entreg.</TableHead>
             <TableHead className="text-right">Falta</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right w-28">Ações</TableHead>
+            <TableHead className="text-right w-[260px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {n.itens.map((i) => {
             const it = findItem(st.itens, i.itemId);
+            const reservada = i.qtdReservada || 0;
             const falta = Math.max(0, i.qtdNecessaria - i.qtdEntregue);
             const ok = i.entregaCompleta || falta === 0;
+            const disp = disponivelParaReserva(i.itemId, obraId);
             return (
               <TableRow key={i.itemId}>
-                <TableCell>{it?.nome ?? i.itemId}</TableCell>
+                <TableCell>
+                  {it?.nome ?? i.itemId}
+                  <div className="text-[10px] text-muted-foreground">disp: {disp}{it?.custoMedio ? ` · CM R$ ${it.custoMedio.toFixed(2)}` : ""}</div>
+                </TableCell>
                 <TableCell className="text-right">{i.qtdNecessaria}</TableCell>
+                <TableCell className="text-right">{reservada}</TableCell>
                 <TableCell className="text-right">{i.qtdEntregue}</TableCell>
                 <TableCell className="text-right">{falta}</TableCell>
                 <TableCell>
@@ -235,28 +249,29 @@ function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: b
                       <CheckCircle2 className="h-3 w-3" /> Entregue
                     </span>
                   ) : i.qtdEntregue > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                      Parcial
-                    </span>
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Parcial</span>
+                  ) : reservada > 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800">Reservado</span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                      Pendente
-                    </span>
+                    <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">Pendente</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
                   {podeEntregar ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setOpen({ itemId: i.itemId, qtd: i.qtdEntregue, completa: ok })}
-                    >
-                      <Truck className="mr-1 h-3.5 w-3.5" /> Entregar
-                    </Button>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      <Button size="sm" variant="outline" onClick={() => setDlg({ kind: "reserva", itemId: i.itemId, qtd: Math.min(disp, falta), max: disp })}>Reservar</Button>
+                      {reservada > 0 && (
+                        <Button size="sm" variant="ghost" onClick={() => setDlg({ kind: "liberar", itemId: i.itemId, qtd: reservada, max: reservada })}>Liberar</Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => setDlg({ kind: "entrega", itemId: i.itemId, qtd: i.qtdEntregue, completa: ok })}>
+                        <Truck className="mr-1 h-3.5 w-3.5" /> Entregar
+                      </Button>
+                      {i.qtdEntregue > 0 && (
+                        <Button size="sm" variant="ghost" onClick={() => setDlg({ kind: "devolver", itemId: i.itemId, qtd: i.qtdEntregue, max: i.qtdEntregue, obs: "" })}>Devolver</Button>
+                      )}
+                    </div>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Lock className="h-3 w-3" /> Apenas Estoque
-                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Lock className="h-3 w-3" /> Apenas Estoque</span>
                   )}
                 </TableCell>
               </TableRow>
@@ -265,47 +280,79 @@ function ObraDetalhe({ obraId, podeEntregar }: { obraId: string; podeEntregar: b
         </TableBody>
       </Table>
 
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+      <Dialog open={!!dlg} onOpenChange={(o) => !o && setDlg(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar entrega</DialogTitle>
+            <DialogTitle>
+              {dlg?.kind === "entrega" && "Registrar entrega"}
+              {dlg?.kind === "reserva" && "Reservar material"}
+              {dlg?.kind === "liberar" && "Liberar reserva"}
+              {dlg?.kind === "devolver" && "Devolver material"}
+            </DialogTitle>
           </DialogHeader>
-          {open && (
+          {dlg && (
             <div className="space-y-3">
-              <div className="text-sm">
-                Item: <b>{findItem(st.itens, open.itemId)?.nome ?? open.itemId}</b>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Qtd. entregue (acumulado)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={open.qtd}
-                    onChange={(e) => setOpen({ ...open, qtd: Number(e.target.value || 0) })}
-                  />
+              <div className="text-sm">Item: <b>{itemNomeAtual}</b></div>
+              {dlg.kind === "entrega" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Qtd. entregue (acumulado)</Label>
+                    <Input type="number" min={0} value={dlg.qtd} onChange={(e) => setDlg({ ...dlg, qtd: Number(e.target.value || 0) })} />
+                    <div className="text-[11px] text-muted-foreground mt-1">Aumentar dá baixa física + CMV; diminuir gera devolução.</div>
+                  </div>
+                  <label className="flex items-end gap-2 pb-2">
+                    <Checkbox checked={dlg.completa} onCheckedChange={(v) => setDlg({ ...dlg, completa: !!v })} />
+                    <span className="text-sm">Marcar como entrega completa</span>
+                  </label>
                 </div>
-                <label className="flex items-end gap-2 pb-2">
-                  <Checkbox
-                    checked={open.completa}
-                    onCheckedChange={(v) => setOpen({ ...open, completa: !!v })}
-                  />
-                  <span className="text-sm">Marcar como entrega completa</span>
-                </label>
-              </div>
+              )}
+              {(dlg.kind === "reserva" || dlg.kind === "liberar") && (
+                <div>
+                  <Label>Quantidade (máx {dlg.max})</Label>
+                  <Input type="number" min={0} max={dlg.max} value={dlg.qtd} onChange={(e) => setDlg({ ...dlg, qtd: Number(e.target.value || 0) })} />
+                </div>
+              )}
+              {dlg.kind === "devolver" && (
+                <>
+                  <div>
+                    <Label>Quantidade a devolver (máx {dlg.max})</Label>
+                    <Input type="number" min={1} max={dlg.max} value={dlg.qtd} onChange={(e) => setDlg({ ...dlg, qtd: Number(e.target.value || 0) })} />
+                  </div>
+                  <div>
+                    <Label>Observação</Label>
+                    <Input value={dlg.obs} onChange={(e) => setDlg({ ...dlg, obs: e.target.value })} placeholder="Motivo da devolução" />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">A devolução retorna ao estoque no custo das saídas (FIFO), preservando o custo médio.</div>
+                </>
+              )}
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(null)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setDlg(null)}>Cancelar</Button>
             <Button
               onClick={() => {
-                if (!open) return;
-                marcarEntrega(obraId, open.itemId, open.qtd, open.completa);
-                toast.success("Entrega registrada.");
-                setOpen(null);
+                if (!dlg) return;
+                if (dlg.kind === "entrega") {
+                  const r = marcarEntrega(obraId, dlg.itemId, dlg.qtd, dlg.completa);
+                  if (!r.ok) { toast.error(r.erro || "Falha ao registrar entrega."); return; }
+                  toast.success("Entrega registrada (baixa de estoque + CMV).");
+                } else if (dlg.kind === "reserva") {
+                  const r = reservarMaterial(obraId, dlg.itemId, dlg.qtd);
+                  if (!r.ok) { toast.error(r.erro || "Falha ao reservar."); return; }
+                  toast.success(`Reservado ${dlg.qtd} un.`);
+                } else if (dlg.kind === "liberar") {
+                  const r = liberarReserva(obraId, dlg.itemId, dlg.qtd);
+                  if (!r.ok) { toast.error(r.erro || "Falha ao liberar."); return; }
+                  toast.success(`Liberado ${dlg.qtd} un.`);
+                } else if (dlg.kind === "devolver") {
+                  const r = registrarDevolucaoObra(obraId, dlg.itemId, dlg.qtd, "Estoque", dlg.obs);
+                  if (!r.ok) { toast.error(r.erro || "Falha ao devolver."); return; }
+                  toast.success(`Devolvido ${dlg.qtd} un (R$ ${(r.valor ?? 0).toFixed(2)}).`);
+                }
+                setDlg(null);
               }}
             >
-              Confirmar entrega
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -425,7 +472,10 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
               <TableHead>Item</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Unid.</TableHead>
-              <TableHead className="text-right">Qtd. em estoque</TableHead>
+              <TableHead className="text-right">Qtd.</TableHead>
+              <TableHead className="text-right">Reserv.</TableHead>
+              <TableHead className="text-right">Disp.</TableHead>
+              <TableHead className="text-right">CM (R$)</TableHead>
               <TableHead>Atualizado</TableHead>
               <TableHead className="text-right w-40">Ações</TableHead>
             </TableRow>
@@ -456,6 +506,9 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
                     <span>{i.qtdAtual}</span>
                   )}
                 </TableCell>
+                <TableCell className="text-right text-xs">{i.qtdReservada || 0}</TableCell>
+                <TableCell className="text-right text-xs font-semibold">{Math.max(0, (i.qtdAtual || 0) - (i.qtdReservada || 0))}</TableCell>
+                <TableCell className="text-right text-xs">{i.custoMedio ? i.custoMedio.toFixed(2) : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(i.atualizadoEm)}</TableCell>
                 <TableCell className="text-right">
                   {podeAjustar && (

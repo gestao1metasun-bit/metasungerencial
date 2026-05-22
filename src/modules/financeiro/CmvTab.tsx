@@ -88,10 +88,14 @@ export function CmvTab() {
       </Card>
 
       <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-semibold">Compras &amp; vínculo com Financeiro</h3>
             <p className="text-xs text-muted-foreground">Lotes de compra (NF) — Aberta = aguardando entrada no estoque; Estocada = já compõe custo médio.</p>
+          </div>
+          <div className="flex gap-2">
+            <NovaCompraDialog />
+            <SaidaObraDialog />
           </div>
         </div>
         {compras.length === 0 ? (

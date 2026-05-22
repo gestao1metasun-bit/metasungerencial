@@ -2,6 +2,8 @@
 // Persiste em localStorage e fornece hooks reativos.
 import { useEffect, useSyncExternalStore } from "react";
 import { contratos as contratosSeed } from "./mock-data";
+import { gerarARsDoContratoAssinado } from "@/lib/fin-titulos-store";
+
 
 export type ClienteFull = {
   nome: string;

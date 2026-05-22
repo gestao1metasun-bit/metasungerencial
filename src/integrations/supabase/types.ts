@@ -683,6 +683,27 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       tarifas_energia: {
         Row: {
           ativo: boolean
@@ -771,6 +792,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_permission: {
+        Args: {
+          _perm: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -785,6 +813,42 @@ export type Database = {
       }
     }
     Enums: {
+      app_permission:
+        | "comercial.visualizar"
+        | "comercial.editar"
+        | "comercial.aprovar"
+        | "comercial.cancelar"
+        | "contrato.gerar"
+        | "contrato.assinar"
+        | "aditivo.criar"
+        | "financeiro.visualizar"
+        | "financeiro.editar"
+        | "financeiro.excluir"
+        | "financeiro.movimentar"
+        | "financeiro.conciliar"
+        | "financeiro.fechar_periodo"
+        | "engenharia.visualizar"
+        | "engenharia.editar"
+        | "engenharia.status"
+        | "engenharia.finalizar"
+        | "engenharia.cancelar"
+        | "estoque.visualizar"
+        | "estoque.movimentar"
+        | "estoque.ajustar"
+        | "estoque.comprar"
+        | "financiamento.visualizar"
+        | "financiamento.editar"
+        | "financiamento.aprovar"
+        | "posvenda.visualizar"
+        | "posvenda.atender"
+        | "posvenda.fechar"
+        | "executivo.visualizar"
+        | "seguranca.gerenciar_perfis"
+        | "seguranca.gerenciar_usuarios"
+        | "seguranca.ver_auditoria"
+        | "cadastros.editar"
+        | "configuracoes.editar"
+        | "workflow.pular_etapa"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -913,6 +977,43 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "comercial.visualizar",
+        "comercial.editar",
+        "comercial.aprovar",
+        "comercial.cancelar",
+        "contrato.gerar",
+        "contrato.assinar",
+        "aditivo.criar",
+        "financeiro.visualizar",
+        "financeiro.editar",
+        "financeiro.excluir",
+        "financeiro.movimentar",
+        "financeiro.conciliar",
+        "financeiro.fechar_periodo",
+        "engenharia.visualizar",
+        "engenharia.editar",
+        "engenharia.status",
+        "engenharia.finalizar",
+        "engenharia.cancelar",
+        "estoque.visualizar",
+        "estoque.movimentar",
+        "estoque.ajustar",
+        "estoque.comprar",
+        "financiamento.visualizar",
+        "financiamento.editar",
+        "financiamento.aprovar",
+        "posvenda.visualizar",
+        "posvenda.atender",
+        "posvenda.fechar",
+        "executivo.visualizar",
+        "seguranca.gerenciar_perfis",
+        "seguranca.gerenciar_usuarios",
+        "seguranca.ver_auditoria",
+        "cadastros.editar",
+        "configuracoes.editar",
+        "workflow.pular_etapa",
+      ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },
   },

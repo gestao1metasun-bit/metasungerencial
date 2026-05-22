@@ -119,6 +119,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "usuarios", label: "Usuários" },
       { value: "consultores", label: "Consultores" },
       { value: "integracoes", label: "Integrações" },
+      { value: "lixeira", label: "Lixeira" },
       { value: "logs", label: "Logs" },
     ],
   },

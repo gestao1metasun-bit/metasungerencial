@@ -21,6 +21,9 @@ export type Database = {
           created_at: string
           dados: Json
           data_evento: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           descricao: string | null
           id: string
           numero: number
@@ -35,6 +38,9 @@ export type Database = {
           created_at?: string
           dados?: Json
           data_evento?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           descricao?: string | null
           id?: string
           numero?: number
@@ -49,6 +55,9 @@ export type Database = {
           created_at?: string
           dados?: Json
           data_evento?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           descricao?: string | null
           id?: string
           numero?: number
@@ -308,6 +317,9 @@ export type Database = {
           complemento: string | null
           consultor_id: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           doc: string | null
           email: string | null
           id: string
@@ -327,6 +339,9 @@ export type Database = {
           complemento?: string | null
           consultor_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           doc?: string | null
           email?: string | null
           id?: string
@@ -346,6 +361,9 @@ export type Database = {
           complemento?: string | null
           consultor_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           doc?: string | null
           email?: string | null
           id?: string
@@ -400,6 +418,9 @@ export type Database = {
           data_assinatura: string | null
           data_fim: string | null
           data_inicio: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           forma_pagamento: string | null
           id: string
           inversor: string | null
@@ -420,6 +441,9 @@ export type Database = {
           data_assinatura?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           forma_pagamento?: string | null
           id?: string
           inversor?: string | null
@@ -440,6 +464,9 @@ export type Database = {
           data_assinatura?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           forma_pagamento?: string | null
           id?: string
           inversor?: string | null
@@ -461,6 +488,42 @@ export type Database = {
           },
         ]
       }
+      entidade_versoes: {
+        Row: {
+          created_at: string
+          entidade: string
+          entidade_id: string
+          id: string
+          motivo: string | null
+          snapshot: Json
+          user_email: string | null
+          user_id: string | null
+          versao: number
+        }
+        Insert: {
+          created_at?: string
+          entidade: string
+          entidade_id: string
+          id?: string
+          motivo?: string | null
+          snapshot: Json
+          user_email?: string | null
+          user_id?: string | null
+          versao: number
+        }
+        Update: {
+          created_at?: string
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          motivo?: string | null
+          snapshot?: Json
+          user_email?: string | null
+          user_id?: string | null
+          versao?: number
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           cliente_id: string | null
@@ -471,6 +534,9 @@ export type Database = {
           dados: Json
           data_finalizacao: string | null
           data_inicio: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           equipe: string | null
           id: string
           inv2: string | null
@@ -493,6 +559,9 @@ export type Database = {
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           equipe?: string | null
           id?: string
           inv2?: string | null
@@ -515,6 +584,9 @@ export type Database = {
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           equipe?: string | null
           id?: string
           inv2?: string | null
@@ -620,6 +692,9 @@ export type Database = {
           contrato_id: string | null
           created_at: string
           dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           id: string
           inversor: string | null
           modulos_qtde: number | null
@@ -638,6 +713,9 @@ export type Database = {
           contrato_id?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           id?: string
           inversor?: string | null
           modulos_qtde?: number | null
@@ -656,6 +734,9 @@ export type Database = {
           contrato_id?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           id?: string
           inversor?: string | null
           modulos_qtde?: number | null
@@ -855,6 +936,14 @@ export type Database = {
       is_period_closed: {
         Args: { _data: string; _modulo: string }
         Returns: boolean
+      }
+      restore_entidade: {
+        Args: { _id: string; _modulo: string; _motivo: string }
+        Returns: undefined
+      }
+      soft_delete_entidade: {
+        Args: { _id: string; _modulo: string; _motivo: string }
+        Returns: undefined
       }
     }
     Enums: {

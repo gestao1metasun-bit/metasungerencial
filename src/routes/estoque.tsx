@@ -187,7 +187,12 @@ function ObrasTab({ podeEntregar }: { podeEntregar: boolean }) {
         {obraSel ? (
           <ObraDetalhe obraId={obraSel} podeEntregar={podeEntregar} />
         ) : (
-          <PainelCompraSelecao />
+          <div className="text-sm text-muted-foreground">
+            Selecione uma obra à esquerda para ver itens, reservar, entregar e devolver material.
+            <div className="mt-1 text-[11px]">
+              Para a visão consolidada de compra (vários clientes), use a aba <b>Necessidade de Compra</b>.
+            </div>
+          </div>
         )}
       </Card>
     </div>

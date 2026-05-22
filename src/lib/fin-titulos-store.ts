@@ -322,6 +322,20 @@ export function estornarMovimento(tituloId: string, movId: string, motivo: strin
 }
 
 // ---------------------------------------------------- bloqueio por fechamento
+/** Recalcula a flag bloqueadoFechamento de cada título consultando o store de fechamentos.
+ *  Import dinâmico para evitar ciclo com fin-fechamento-store. */
+export async function recalcularBloqueiosFechamento() {
+  const { isMesFechado } = await import("@/lib/fin-fechamento-store");
+  const cur = read();
+  const arr = cur.map((t) => {
+    const comp = t.competencia ?? t.vencimento.slice(0, 7);
+    const fechado = isMesFechado(comp, t.contaFinanceira);
+    return t.bloqueadoFechamento === fechado ? t : { ...t, bloqueadoFechamento: fechado };
+  });
+  write(arr);
+}
+
+/** @deprecated mantido para compat — usa apenas o mês, ignora conta. */
 export function aplicarBloqueioFechamento(mesYYYYMM: string, bloquear: boolean) {
   const cur = read();
   const arr = cur.map((t) => {

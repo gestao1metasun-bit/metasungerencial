@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from "@/components/app/AppLayout";
+import { useEffect } from "react";
+import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 
 import appCss from "../styles.css?url";
 
@@ -119,6 +121,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const isAuth = path === "/login" || path === "/cadastrar";
+  useEffect(() => { bootstrapSeedIfPending(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

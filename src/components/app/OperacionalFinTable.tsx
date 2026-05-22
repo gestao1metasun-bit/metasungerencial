@@ -1,11 +1,12 @@
 // Tabela operacional de Financiamentos com colunas arrastáveis (persistidas em localStorage).
-// Visualização é somente leitura — edição acontece pelo botão Editar (lápis) na coluna AÇÕES.
+// Visualização é somente leitura — edição/vinculação acontecem pelo botão Opções (coluna 1).
 import { useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
+import { ActionsMenu } from "./ActionsMenu";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { fmtBRL } from "@/lib/mock-data";
-import { GripVertical, SquarePen } from "lucide-react";
+import { GripVertical, SquarePen, Link2 } from "lucide-react";
 
 export type OpRow = {
   id: string;

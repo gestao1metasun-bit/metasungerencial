@@ -282,7 +282,7 @@ function NovaCompraDialog() {
               <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
               <SelectContent>
                 {titulosAP.slice(0, 50).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.id} — {t.descricao} ({fmtBRLPrecise(t.valor)})</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>{t.id} — {t.descricao} ({fmtBRLPrecise(t.valorOriginal)})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

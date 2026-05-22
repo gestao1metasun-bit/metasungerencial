@@ -94,7 +94,6 @@ function FinanceiroPage() {
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
           <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
-          <TabsTrigger value="dre">DRE</TabsTrigger>
           <TabsTrigger value="cmv">CMV / Compras</TabsTrigger>
         </TabsList>
 
@@ -180,9 +179,6 @@ function FinanceiroPage() {
           <FechamentoTab />
         </TabsContent>
 
-        <TabsContent value="dre" className="mt-5">
-          <DRETab lancs={lancs} fixas={fixasMensais} />
-        </TabsContent>
 
         <TabsContent value="cmv" className="mt-5">
           <CmvTab />

@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package, FileText, Wallet,
-  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight,
+  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight, LineChart,
 } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +21,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
   { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro" },
+  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics" },
   { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes" },

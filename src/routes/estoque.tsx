@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock,
+  Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
@@ -26,6 +26,9 @@ import {
   reservarMaterial, liberarReserva, registrarDevolucaoObra, disponivelParaReserva,
   type EstoqueItem, type Categoria, type Unidade,
 } from "@/lib/estoque-store";
+import {
+  useComprasTransito, addCompraTransito, removeCompraTransito, totalTransitoPorItem,
+} from "@/lib/compras-transito-store";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),

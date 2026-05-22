@@ -28,6 +28,7 @@ import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, f
 import { FileText } from "lucide-react";
 import { PermissoesTab } from "@/components/app/PermissoesTab";
 import { LixeiraTab } from "@/components/app/LixeiraTab";
+import { SessionLogTab } from "@/components/app/SessionLogTab";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Meta Sun Gerencial" }] }),
@@ -114,6 +115,7 @@ function ConfigPage() {
         </TabsContent>
 
         <TabsContent value="lixeira" className="mt-5"><LixeiraTab /></TabsContent>
+        <TabsContent value="sessoes" className="mt-5"><SessionLogTab /></TabsContent>
 
         <TabsContent value="logs" className="mt-5">
           <Card className="bg-[image:var(--gradient-card)] p-6">

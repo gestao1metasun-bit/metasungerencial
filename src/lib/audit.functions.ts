@@ -4,6 +4,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [k: string]: Json }
+  | Json[];
+
 export type AuditDbEntry = {
   id: string;
   modulo: string;
@@ -11,8 +19,8 @@ export type AuditDbEntry = {
   entidadeId: string;
   acao: string;
   campo: string | null;
-  valorAnterior: unknown;
-  valorNovo: unknown;
+  valorAnterior: Json;
+  valorNovo: Json;
   motivo: string | null;
   userId: string | null;
   userEmail: string | null;

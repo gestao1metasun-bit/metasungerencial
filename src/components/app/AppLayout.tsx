@@ -69,6 +69,24 @@ export function AppLayout() {
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
+  const grouped: Record<Tier, typeof visibleNav> = { operacao: [], controle: [], estrutura: [] };
+  visibleNav.forEach((it) => grouped[it.tier].push(it));
+  const tierOrder: Tier[] = ["operacao", "controle", "estrutura"];
+
+  // Estrutura inicia colapsada; persiste preferência por sessão
+  const [collapsedTiers, setCollapsedTiers] = useState<Record<Tier, boolean>>(() => {
+    if (typeof window === "undefined") return { operacao: false, controle: false, estrutura: true };
+    try {
+      const raw = sessionStorage.getItem("ms:tiers");
+      if (raw) return { operacao: false, controle: false, estrutura: true, ...JSON.parse(raw) };
+    } catch { /* ignore */ }
+    return { operacao: false, controle: false, estrutura: true };
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("ms:tiers", JSON.stringify(collapsedTiers)); } catch { /* ignore */ }
+  }, [collapsedTiers]);
+
+  useRegisterRecente();
   const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
   const displayPerfil = auth.role === "admin_master"
     ? "Admin Master"

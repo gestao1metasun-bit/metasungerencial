@@ -177,6 +177,7 @@ function AnalyticsPage() {
         </TabsList>
 
         <TabsContent value="visao" className="mt-5">
+          <KpiServidorBanner />
           <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
             <KPICard titulo="Receita Operacional" valor={fmtBRLPrecise(receitas)} subtexto="Realizado + confirmado" />
             <KPICard titulo="EBITDA" valor={fmtBRLPrecise(ebitdaCalc.ebitda)} subtexto={`Margem ${fmtPct(ebitdaCalc.margem)}`} classificacao={classMargemEbitda(ebitdaCalc.margem)} />

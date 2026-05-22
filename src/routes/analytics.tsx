@@ -509,34 +509,267 @@ function ExpansaoTab({ receita, ebitda, capitalGiro, contratosMes }: { receita: 
 
 function CFOTab(props: {
   receita: number;
+  custosObras: number;
+  despAdmin: number;
   ebitda: number;
   margem: number;
+  margemLiq: number;
   alavancagem: number;
   cobertura: number;
   capitalGiro: number;
+  ativoCirc: number;
+  passivoCirc: number;
   roce: number;
+  dividaTotal: number;
+  parcelasMensais: number;
+  inadimplencia: number;
+  vencidos: number;
+  totalReceber: number;
+  conversaoPct: number;
+  assinados: number;
+  totalContratos: number;
+  contratos: ReturnType<typeof useContratos>;
+  obras: ReturnType<typeof useObrasSnapshot>;
+  lancs: Lancamento[];
+  fixasMensais: number;
   pareceres: ReturnType<typeof gerarParecer>;
 }) {
-  const { receita, ebitda, margem, alavancagem, cobertura, capitalGiro, roce, pareceres } = props;
+  const {
+    receita, custosObras, despAdmin, ebitda, margem, margemLiq, alavancagem, cobertura,
+    capitalGiro, ativoCirc, passivoCirc, roce, dividaTotal, parcelasMensais,
+    inadimplencia, vencidos, totalReceber, conversaoPct, assinados, totalContratos,
+    contratos, obras, lancs, fixasMensais, pareceres,
+  } = props;
+
+  // ---------- Camada Comercial ----------
+  const valorAssinado = contratos
+    .filter((c) => /assinad/i.test(c.status))
+    .reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  const valorPipeline = contratos
+    .filter((c) => !/(assinad|cancel)/i.test(c.status))
+    .reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  const ticketMedio = assinados > 0 ? valorAssinado / assinados : 0;
+  const kwpVendido = contratos
+    .filter((c) => /assinad/i.test(c.status))
+    .reduce((s, c) => s + (Number(c.kwp) || 0), 0);
+  const cancelados = contratos.filter((c) => /cancel/i.test(c.status)).length;
+  const cancelamentoPct = totalContratos > 0 ? (cancelados / totalContratos) * 100 : 0;
+
+  const vendMap = new Map<string, { qtd: number; valor: number }>();
+  contratos.forEach((c) => {
+    if (!c.vendedor) return;
+    const cur = vendMap.get(c.vendedor) || { qtd: 0, valor: 0 };
+    cur.qtd += 1;
+    cur.valor += Number(c.valor) || 0;
+    vendMap.set(c.vendedor, cur);
+  });
+  const topVendedores = Array.from(vendMap.entries())
+    .map(([nome, v]) => ({ nome, ...v }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 5);
+
+  const comFinanciamento = contratos.filter((c) => c.possuiFinanciamento).length;
+  const valorFinanciado = contratos
+    .filter((c) => c.possuiFinanciamento)
+    .reduce((s, c) => s + (Number(c.financiamentoValor) || 0), 0);
+  const pctFinanciados = totalContratos > 0 ? (comFinanciamento / totalContratos) * 100 : 0;
+
+  // ---------- Camada Engenharia / Operações ----------
+  const obrasPorStatus = obras.reduce<Record<string, number>>((acc, o) => {
+    const k = o.status || "—";
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
+  const obrasFinalizadas = obras.filter((o) => /finaliz/i.test(o.status)).length;
+  const obrasAndamento = obras.filter((o) => !/(finaliz|cancel)/i.test(o.status)).length;
+  const modulosInstalados = obras
+    .filter((o) => /finaliz/i.test(o.status))
+    .reduce((s, o) => s + (o.modulos || 0), 0);
+  const equipesAtivas = new Set(obras.map((o) => o.equipe).filter(Boolean)).size;
+  const hoje = new Date();
+  const obrasAtrasadas = obras.filter((o) => {
+    if (!o.finalizacao) return false;
+    if (/finaliz|cancel/i.test(o.status)) return false;
+    return new Date(o.finalizacao) < hoje;
+  }).length;
+  const taxaConclusao = obras.length > 0 ? (obrasFinalizadas / obras.length) * 100 : 0;
+
+  // ---------- Camada Financeira complementar ----------
+  const totalEntradas = lancs.filter((l) => l.tipo === "Entrada" && l.camada === "Realizado").reduce((s, l) => s + l.valor, 0);
+  const totalSaidas = lancs.filter((l) => l.tipo === "Saída" && l.camada === "Realizado").reduce((s, l) => s + l.valor, 0) + fixasMensais;
+  const saldoCaixa = totalEntradas - totalSaidas;
+  const saidasPrevistas = lancs.filter((l) => l.tipo === "Saída" && l.camada !== "Realizado").reduce((s, l) => s + l.valor, 0);
+  const burnRate = despAdmin + custosObras;
+  const runwayMeses = burnRate > 0 ? Math.max(0, saldoCaixa / (burnRate / 12)) : 999;
+
+  // ---------- Síntese estratégica ----------
+  const alertas: { titulo: string; tone: "critico" | "atencao" | "ok"; msg: string }[] = [];
+  if (margem < 10) alertas.push({ titulo: "Margem EBITDA baixa", tone: "critico", msg: `Margem ${fmtPct(margem)} abaixo do mínimo aceitável (10%).` });
+  if (alavancagem > 3) alertas.push({ titulo: "Endividamento alto", tone: "critico", msg: `Dívida/EBITDA = ${fmtNum(alavancagem)} — não tomar novo crédito.` });
+  if (cobertura < 1.5 && parcelasMensais > 0) alertas.push({ titulo: "Cobertura de dívida apertada", tone: "atencao", msg: `EBITDA/parcela = ${fmtNum(cobertura)} — risco em mês fraco.` });
+  if (capitalGiro < 0) alertas.push({ titulo: "Capital de giro negativo", tone: "critico", msg: `Passivo circulante (${fmtBRLPrecise(passivoCirc)}) supera ativo circulante.` });
+  if (inadimplencia > 5) alertas.push({ titulo: "Inadimplência elevada", tone: "atencao", msg: `${fmtPct(inadimplencia)} dos recebíveis vencidos (${fmtBRLPrecise(vencidos)}).` });
+  if (conversaoPct < 20) alertas.push({ titulo: "Conversão comercial baixa", tone: "atencao", msg: `${fmtPct(conversaoPct)} (${assinados}/${totalContratos}) — revisar pipeline.` });
+  if (cancelamentoPct > 10) alertas.push({ titulo: "Cancelamentos altos", tone: "atencao", msg: `${fmtPct(cancelamentoPct)} dos contratos cancelados.` });
+  if (obrasAtrasadas > 0) alertas.push({ titulo: "Obras atrasadas", tone: "atencao", msg: `${obrasAtrasadas} obra(s) com data de finalização vencida.` });
+  if (runwayMeses < 6 && burnRate > 0) alertas.push({ titulo: "Runway curto", tone: "critico", msg: `Saldo de caixa cobre apenas ${fmtNum(runwayMeses)} mês(es) de burn.` });
+  if (alertas.length === 0) alertas.push({ titulo: "Situação saudável", tone: "ok", msg: "Nenhum risco crítico detectado nas camadas analisadas." });
+
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-4">
-        <KPICard titulo="Receita Operacional" valor={fmtBRLPrecise(receita)} />
-        <KPICard titulo="EBITDA" valor={fmtBRLPrecise(ebitda)} subtexto={`Margem ${fmtPct(margem)}`} classificacao={classMargemEbitda(margem)} />
-        <KPICard titulo="ROCE" valor={fmtPct(roce)} classificacao={classROCE(roce)} />
-        <KPICard titulo="Capital de Giro" valor={fmtBRLPrecise(capitalGiro)} classificacao={classCapitalGiro(capitalGiro)} />
-        <KPICard titulo="Alavancagem" valor={fmtNum(alavancagem)} classificacao={classAlavancagem(alavancagem)} />
-        <KPICard titulo="Cobertura" valor={fmtNum(cobertura)} classificacao={classCobertura(cobertura)} />
-      </div>
+    <div className="space-y-6">
+      {/* ===== HERO EXECUTIVO ===== */}
+      <Card className="bg-[image:var(--gradient-card)] p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Painel CFO — Privado</div>
+            <h2 className="mt-1 text-xl font-semibold">Visão executiva consolidada</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Camadas Comercial, Financeira, Operacional e Estratégica.</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gold border border-gold/30">
+            <ShieldCheck className="h-3 w-3" /> Confidencial
+          </span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <KPICard titulo="Receita Operacional" valor={fmtBRLPrecise(receita)} />
+          <KPICard titulo="EBITDA" valor={fmtBRLPrecise(ebitda)} subtexto={`Margem ${fmtPct(margem)}`} classificacao={classMargemEbitda(margem)} />
+          <KPICard titulo="Margem Líquida" valor={fmtPct(margemLiq)} classificacao={classMargemLiquida(margemLiq)} />
+          <KPICard titulo="ROCE" valor={fmtPct(roce)} classificacao={classROCE(roce)} />
+          <KPICard titulo="Capital de Giro" valor={fmtBRLPrecise(capitalGiro)} classificacao={classCapitalGiro(capitalGiro)} />
+          <KPICard titulo="Saldo de Caixa" valor={fmtBRLPrecise(saldoCaixa)} subtexto={`Runway ~${fmtNum(runwayMeses)} m`} />
+        </div>
+      </Card>
+
+      {/* ===== ALERTAS ESTRATÉGICOS ===== */}
+      <Card className="p-5">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Alertas estratégicos</h3>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{alertas.length}</span>
+        </div>
+        <ul className="mt-3 grid gap-2 md:grid-cols-2">
+          {alertas.map((a, i) => {
+            const cor = a.tone === "critico" ? "border-destructive/40 bg-destructive/5"
+              : a.tone === "atencao" ? "border-amber-500/40 bg-amber-500/5"
+              : "border-success/40 bg-success/5";
+            const dot = a.tone === "critico" ? "bg-destructive"
+              : a.tone === "atencao" ? "bg-amber-500"
+              : "bg-success";
+            return (
+              <li key={i} className={`rounded-lg border p-3 text-sm ${cor}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${dot}`} />
+                  <span className="font-semibold">{a.titulo}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{a.msg}</p>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
+
+      {/* ===== CAMADA COMERCIAL ===== */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Camada Comercial</h3>
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <KPICard titulo="Contratos assinados" valor={String(assinados)} subtexto={`de ${totalContratos} no funil`} />
+          <KPICard titulo="Conversão" valor={fmtPct(conversaoPct)} classificacao={classConversao(conversaoPct)} />
+          <KPICard titulo="Ticket médio" valor={fmtBRLPrecise(ticketMedio)} />
+          <KPICard titulo="kWp vendidos (assinados)" valor={fmtNum(kwpVendido)} />
+          <KPICard titulo="Valor assinado" valor={fmtBRLPrecise(valorAssinado)} />
+          <KPICard titulo="Pipeline em aberto" valor={fmtBRLPrecise(valorPipeline)} subtexto={`${totalContratos - assinados - cancelados} contratos`} />
+          <KPICard titulo="Cancelamentos" valor={`${cancelados} (${fmtPct(cancelamentoPct)})`} />
+          <KPICard titulo="Com financiamento" valor={`${comFinanciamento} (${fmtPct(pctFinanciados)})`} subtexto={fmtBRLPrecise(valorFinanciado)} />
+        </div>
+        {topVendedores.length > 0 && (
+          <Card className="mt-3 p-4">
+            <h4 className="text-sm font-semibold">Top vendedores (por valor)</h4>
+            <div className="mt-3 space-y-2">
+              {topVendedores.map((v) => {
+                const pct = valorAssinado > 0 ? (v.valor / Math.max(valorAssinado, valorPipeline + valorAssinado)) * 100 : 0;
+                return (
+                  <div key={v.nome}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium">{v.nome}</span>
+                      <span className="text-muted-foreground">{v.qtd} contratos · {fmtBRLPrecise(v.valor)}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full bg-primary" style={{ width: `${Math.min(100, pct)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+      </section>
+
+      {/* ===== CAMADA FINANCEIRA ===== */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Camada Financeira</h3>
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <KPICard titulo="Receita Operacional" valor={fmtBRLPrecise(receita)} />
+          <KPICard titulo="Custos de obras" valor={fmtBRLPrecise(custosObras)} />
+          <KPICard titulo="Despesas administrativas" valor={fmtBRLPrecise(despAdmin)} subtexto={`Fixas: ${fmtBRLPrecise(fixasMensais)}`} />
+          <KPICard titulo="EBITDA" valor={fmtBRLPrecise(ebitda)} classificacao={classMargemEbitda(margem)} />
+          <KPICard titulo="Ativo circulante" valor={fmtBRLPrecise(ativoCirc)} />
+          <KPICard titulo="Passivo circulante" valor={fmtBRLPrecise(passivoCirc)} />
+          <KPICard titulo="Dívida total" valor={fmtBRLPrecise(dividaTotal)} subtexto={`Parcela ~${fmtBRLPrecise(parcelasMensais)}/mês`} />
+          <KPICard titulo="Alavancagem" valor={fmtNum(alavancagem)} classificacao={classAlavancagem(alavancagem)} />
+          <KPICard titulo="Cobertura (EBITDA/parc.)" valor={fmtNum(cobertura)} classificacao={classCobertura(cobertura)} />
+          <KPICard titulo="Inadimplência" valor={fmtPct(inadimplencia)} subtexto={`${fmtBRLPrecise(vencidos)} de ${fmtBRLPrecise(totalReceber)}`} classificacao={classInadimplencia(inadimplencia)} />
+          <KPICard titulo="Saídas previstas" valor={fmtBRLPrecise(saidasPrevistas)} subtexto="A pagar (não realizado)" />
+          <KPICard titulo="Saldo de caixa" valor={fmtBRLPrecise(saldoCaixa)} subtexto={`Runway ~${fmtNum(runwayMeses)} meses`} />
+        </div>
+      </section>
+
+      {/* ===== CAMADA ENGENHARIA / OPERAÇÕES ===== */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Camada Engenharia / Operações</h3>
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <KPICard titulo="Obras totais" valor={String(obras.length)} />
+          <KPICard titulo="Em andamento" valor={String(obrasAndamento)} />
+          <KPICard titulo="Finalizadas" valor={String(obrasFinalizadas)} subtexto={`Taxa ${fmtPct(taxaConclusao)}`} />
+          <KPICard titulo="Atrasadas" valor={String(obrasAtrasadas)} classificacao={obrasAtrasadas > 0 ? { label: "Atenção", tone: "atencao", cor: "text-amber-600" } : { label: "OK", tone: "bom", cor: "text-success" }} />
+          <KPICard titulo="Módulos instalados" valor={fmtNum(modulosInstalados)} />
+          <KPICard titulo="Equipes ativas" valor={String(equipesAtivas)} />
+        </div>
+        {Object.keys(obrasPorStatus).length > 0 && (
+          <Card className="mt-3 p-4">
+            <h4 className="text-sm font-semibold">Distribuição por status</h4>
+            <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(obrasPorStatus).map(([status, qtd]) => {
+                const pct = obras.length > 0 ? (qtd / obras.length) * 100 : 0;
+                return (
+                  <div key={status}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium">{status}</span>
+                      <span className="text-muted-foreground">{qtd} · {fmtPct(pct)}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full bg-info" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+      </section>
+
+      {/* ===== PARECER CONSOLIDADO ===== */}
       <Card className="p-5">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Parecer CFO automático</h3>
         <ParecerLista pareceres={pareceres} />
       </Card>
+
+      {/* ===== ATALHOS ===== */}
       <Card className="p-5 text-sm">
-        <h4 className="font-semibold">Atalhos</h4>
+        <h4 className="font-semibold">Atalhos do CFO</h4>
         <div className="mt-2 flex flex-wrap gap-2">
           <Link to="/analytics" hash="tab=financiamento"><Button size="sm" variant="outline">Simular financiamento</Button></Link>
           <Link to="/analytics" hash="tab=expansao"><Button size="sm" variant="outline">Análise de expansão</Button></Link>
+          <Link to="/analytics" hash="tab=dre"><Button size="sm" variant="outline">Ver DRE</Button></Link>
+          <Link to="/analytics" hash="tab=vendedores"><Button size="sm" variant="outline">Capacidade comercial</Button></Link>
+          <Link to="/analytics" hash="tab=equipes"><Button size="sm" variant="outline">Capacidade operacional</Button></Link>
           <Link to="/analytics" hash="tab=parametros"><Button size="sm" variant="outline">Editar parâmetros</Button></Link>
         </div>
       </Card>

@@ -47,6 +47,7 @@ import {
   DEFAULT_BANDS,
 } from "@/lib/analytics-kpis";
 import { ParametrosGerenciaisTab } from "@/components/app/analytics/ParametrosGerenciaisTab";
+import { KpiServidorBanner } from "@/components/app/analytics/KpiServidorBanner";
 import { Lock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/analytics")({

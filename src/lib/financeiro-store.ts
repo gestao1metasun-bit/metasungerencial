@@ -1,9 +1,25 @@
 // Financeiro — store local (localStorage) para fluxo de caixa completo
 import { useEffect, useState } from "react";
+import { pushAudit } from "@/lib/audit-store";
 
 export type Camada = "Realizado" | "Confirmado" | "Previsto" | "A realizar" | "Orçado futuro";
 export type Tipo = "Entrada" | "Saída";
 export type Recorrencia = "Única" | "Mensal" | "Quinzenal" | "Semanal" | "Anual" | "Personalizada";
+
+/** Status financeiro de 4 estágios (paralelo a Camada, prepara integração contábil). */
+export type StatusFin = "Previsto" | "Comprometido" | "Pagar" | "Pago" | "Parcial" | "Cancelado";
+export const STATUS_FIN: StatusFin[] = ["Previsto", "Comprometido", "Pagar", "Pago", "Parcial", "Cancelado"];
+
+/** Deriva statusFin padrão a partir da camada legada. */
+export function derivarStatusFin(camada: Camada): StatusFin {
+  switch (camada) {
+    case "Realizado": return "Pago";
+    case "Confirmado": return "Pagar";
+    case "Previsto": return "Comprometido";
+    case "A realizar": return "Pagar";
+    case "Orçado futuro": return "Previsto";
+  }
+}
 
 export type Lancamento = {
   id: string;
@@ -12,20 +28,20 @@ export type Lancamento = {
   tipo: Tipo;
   valor: number;
   camada: Camada;
-  natureza: string;        // ex: "Material", "Aluguel", "Folha"
-  centroCusto: string;     // ex: "Administrativo", "OB-0231"
-  obra?: string;           // vínculo opcional com obra/projeto
+  statusFin?: StatusFin;   // novo (Fase 2) — quando ausente, derivar de camada
+  natureza: string;
+  centroCusto: string;
+  obra?: string;
   empresa: string;
   filial: string;
   responsavel?: string;
   obs?: string;
-  // Novos vínculos para "A receber" detalhado
-  contrato?: string;       // ex. 088/2026
-  cliente?: string;        // nome do cliente
-  formaPagamento?: string; // Pix, Boleto, Cartão, etc.
-  parcelaLabel?: string;   // ex. "1/3"
-  competencia?: string;    // YYYY-MM
-  dataEmissao?: string;    // YYYY-MM-DD
+  contrato?: string;
+  cliente?: string;
+  formaPagamento?: string;
+  parcelaLabel?: string;
+  competencia?: string;
+  dataEmissao?: string;
 };
 
 export type DespesaRecorrente = {

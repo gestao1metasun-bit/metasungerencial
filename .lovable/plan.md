@@ -1,149 +1,121 @@
-## Objetivo
+# Plano — Evolução do Financeiro Meta Sun
 
-Transformar o `financeiro-store.ts` atual (lista simples de lançamentos por camada) em uma estrutura completa de **Contas a Pagar / Contas a Receber** com **nascimento automático** vindo dos demais módulos, mantendo o que já funciona (camadas, dashboard, conciliações simples) e somando o que falta.
+Objetivo: preparar a base do financeiro para integração futura com Alterdata/Domínio (contábil, fiscal, SPED, DRE), **sem** transformar o ERP em sistema contábil. Mantém velocidade operacional e simplicidade.
 
-Tudo continua em `localStorage` (sem Supabase nesta etapa), com `useSyncExternalStore` e auditoria via `pushAudit()`.
-
----
-
-## 1. Nova estrutura de dados
-
-### Stores novos / estendidos
-- `src/lib/fin-titulos-store.ts` (novo) — núcleo do AP/AR
-  - `TituloPagar` e `TituloReceber` com:
-    - `id`, `tipo` ("AP"|"AR"), `origem` ("compra"|"comissao"|"mao_obra"|"frete"|"manutencao"|"contrato"|"financiamento"|"manual")
-    - `status`: `previsto | comprometido | parcial | a_pagar | a_receber | pago | recebido | cancelado`
-    - `valorOriginal`, `valorPago`, `saldo`, `descontos`, `juros`, `multa`
-    - `vencimento`, `competencia`, `dataEmissao`, `dataLiquidacao?`
-    - `natureza`, `centroCusto`, `contaFinanceira`, `meioPagamento`
-    - `fornecedor?` / `cliente?`, `obraId?`, `contratoId?`, `parcelaLabel?`
-    - `comprovanteUrl?`, `observacao?`
-    - `criadoPor`, `criadoEm`, bloqueado por `fechamento?`
-  - `Pagamento` / `Recebimento` (movimentos parciais) com auditoria
-- `src/lib/fin-fornecedores-store.ts` (novo) — cadastro simples (nome, doc, contato)
-- `src/lib/fin-contas-store.ts` (novo) — contas bancárias / caixa
-- `src/lib/fin-fechamento-store.ts` (novo) — mês fechado + flag de reabertura (somente gerente)
-- `src/lib/financeiro-store.ts` (estender) — manter `Lancamento` legado como **view derivada** dos títulos (compat com Fluxo de Caixa atual)
-
-### Helpers de geração automática
-- `gerarAPdeCompra(compra)` — chamado ao registrar compra no Estoque
-- `gerarAPdeComissao(contratoId, valor, parcelas)` — chamado ao liberar comissão
-- `gerarAPdeMaoObra(obraId, sugestao)` — chamado quando Obra → Finalizada
-- `gerarAPdeFrete(...)` / `gerarAPdeManutencao(...)`
-- `gerarARdeContrato(contratoId)` — chamado ao assinar contrato (parcelamento)
-- `gerarARdeFinanciamento(contratoId)` — chamado quando liberação aprovada
-- `gerarARdeManutencao(obraId, valor)` — pós-venda paga
-
-Cada helper grava `pushAudit({ entidade: "titulo", acao: "CRIACAO_AUTO", ... })`.
+A entrega é dividida em **6 fases incrementais**. Cada fase é navegável e testável isoladamente, e nenhuma quebra o que já existe.
 
 ---
 
-## 2. Integrações com módulos existentes
+## Fase 1 — Cadastros estruturais (base de tudo)
 
-| Módulo | Gatilho | Ação no Financeiro |
-|---|---|---|
-| Comercial (`contratos-store.ts`) | contrato assinado | `gerarARdeContrato` (status `previsto`) |
-| Financiamentos (`fin-pendencias.ts`) | `liberarParaEngenharia` / aprovação banco | `gerarARdeFinanciamento` (status `comprometido` → `a_receber`) |
-| Estoque (novo — etapa de compras) | registrar compra | `gerarAPdeCompra` + entrada de estoque |
-| Engenharia (`engenharia.tsx`) | obra → Finalizada | sugerir `gerarAPdeMaoObra` (usuário confirma) |
-| Pós-venda / Obras finalizadas | manutenção registrada | `gerarAPdeManutencao` + opcional `gerarARdeManutencao` |
+Criar/expandir stores em `src/lib/` (LocalStorage, padrão do projeto):
 
-Comissão fica como **previsão** vinda do contrato; só vira AP quando usuário clica "Liberar comissão" na tela do contrato/financeiro.
+- **`fin-grupos-store.ts`** — Grupos e Subgrupos financeiros
+  - Grupos fixos (seed): `Receita`, `Custo Direto`, `Custo Indireto`, `Despesa Administrativa`, `Despesa Comercial`, `Imobilizado`, `Financeiro/Patrimonial`
+  - Subgrupos livres, vinculados a um grupo
+- **`fin-naturezas-store.ts`** — substitui `naturezas` do `financeiro-store.ts`
+  - Campos: `codigo`, `nome`, `grupoId`, `subgrupoId`, `tipo` (Pagar/Receber), `centroCustoPadrao`, `permiteVinculoObra`, `permiteVinculoEstoque`, `tipoAplicacaoPadrao`, `contaContabilFutura` (texto livre), `ativo`
+  - Migração automática das naturezas atuais → mapeadas para grupos
+- **`fin-centros-custo-store.ts`** — substitui `centros` atuais
+  - Seed novo: Engenharia, Comercial, Financeiro, Estoque, Administrativo, Diretoria, Marketing, Pós-venda
+- **`fin-meios-pagamento-store.ts`** (novo)
+  - Seed: PIX, Boleto, Cartão crédito, Cartão débito, Transferência, Dinheiro, Reembolso
+- **`fin-tipos-aplicacao-store.ts`** (novo)
+  - Seed: Instalação, Manutenção, Garantia, Adequação, Retorno técnico, Uso interno, Administrativo
+- **`fin-contas-store.ts`** (já existe) — adicionar seed: Sicredi, Basa, BB, Caixa interno, Cartão Itaú, Cartão Sicredi, Nubank PJ
 
----
-
-## 3. UI — refatorar `src/routes/financeiro.tsx`
-
-Tabs (substituem/expandem as atuais):
-
-1. **Dashboard** — cards: Previsto 30d, Comprometido, A Pagar, A Receber, Recebido mês, Pago mês, Inadimplência, Saldo bancos, Margem obras
-2. **Contas a Pagar** — tabela com filtros (status, natureza, fornecedor, obra, vencimento), ações: Editar (pré-pgto), Pagar (parcial/total), Cancelar, Estornar (pós-pgto)
-3. **Contas a Receber** — espelho do AP, com baixa parcial + juros/multa/desconto
-4. **Fluxo de Caixa** — manter view atual (alimentada agora pelos títulos)
-5. **Cadastros** — Fornecedores, Contas financeiras, Naturezas, Centros de custo
-6. **Conciliação** — banco, PIX, boleto, cartão (match manual)
-7. **Fechamento** — fechar/reabrir mês, lista de períodos travados
-
-Dialogs novos:
-- `TituloDialog` (criar/editar título AP ou AR)
-- `BaixaDialog` (pagar/receber com parcial, juros, multa, desconto, conta destino)
-- `EstornoDialog` (motivo obrigatório → registra auditoria, libera edição)
-- `LiberarComissaoDialog` (parcial/total) — disparado no Comercial e no Financeiro
-- `FechamentoMensalDialog`
+Aba **Cadastros** do Financeiro ganha 6 sub-abas: Grupos, Naturezas, Centros, Meios de Pagamento, Tipos de Aplicação, Contas. CRUD completo em cada.
 
 ---
 
-## 4. Regras de edição e auditoria
+## Fase 2 — Status financeiro de 4 estágios
 
-- **Antes do pagamento**: valor, vencimento, observação, natureza, centro custo livremente editáveis (auditado).
-- **Após o pagamento**: campos travados; só via **Estorno** (com motivo) → reabre para edição → nova baixa.
-- **Após fechamento mensal**: tudo travado, exceto para `role = admin_master` ou perfil "Gerente Financeiro".
-- Toda alteração chama `pushAudit({ entidade: "titulo", acao, campo, valorAnterior, valorNovo, motivo })`.
+Hoje o sistema tem `Camada` (Realizado/Confirmado/Previsto/A realizar/Orçado futuro). Vamos **adicionar** um campo paralelo `statusFin` no `Lancamento` e em `Titulo`:
 
-Permissões via `perfis-store.ts` — adicionar capability `financeiro.editar_pago` e `financeiro.fechar_mes`.
+`Previsto → Comprometido → Pagar → Pago` (+ `Parcial`, `Cancelado`)
 
----
+Regras:
+- **Previsto**: planejamento (orçamento de obra, recorrente futuro). Não gera obrigação.
+- **Comprometido**: obrigação assumida (pedido de compra aprovado, contrato assinado). Aparece em "compromissos".
+- **Pagar**: título existe, vencimento ativo. Aparece em "contas a pagar/receber".
+- **Pago**: quitado.
 
-## 5. Compatibilidade com o que já existe
-
-- `financeiro-store.ts` — manter `useLancamentos`, `appendLancamentos`, `readLancamentos`, `removeLancamentosDoContrato` como **shims**:
-  - `appendLancamentos` continua escrevendo a lista legada (para não quebrar Dashboard atual).
-  - Adicionalmente, sempre que um título for criado/baixado, escrevemos um `Lancamento` espelho na camada certa (`Realizado` no pago, `Confirmado` no a pagar/receber, `Previsto` no previsto).
-- Não mexer em: `contratos-store.ts`, `aditivos-store.ts`, `fin-pendencias.ts`, `estoque-store.ts`, exceto para **chamar** os novos helpers nos pontos certos.
+Transições registradas em `audit-store` automaticamente. UI: nova coluna + badge colorido na tabela de Lançamentos e Títulos. Dashboard ganha quadro **Previsto × Comprometido × Pagar × Pago** por categoria.
 
 ---
 
-## 6. Entregas em fases (mesma PR)
+## Fase 3 — Lançamento financeiro padronizado
 
-**Fase A — fundação (sem UI nova ainda)**
-- Criar `fin-titulos-store.ts`, `fin-fornecedores-store.ts`, `fin-contas-store.ts`, `fin-fechamento-store.ts`
-- Helpers de geração + shim para `financeiro-store.ts`
-- Audit hooks
+Refazer `NovoLancamentoDialog` para exigir todos os campos obrigatórios:
 
-**Fase B — UI Contas a Pagar / Receber**
-- Refatorar `financeiro.tsx` com novas tabs
-- `TituloDialog`, `BaixaDialog`, `EstornoDialog`
+`tipo` · `naturezaId` (puxa grupo/subgrupo) · `centroCustoId` · `contaFinanceiraId` · `meioPagamentoId` · `obra/projeto/contrato` (opcional, conforme natureza) · `fornecedor/cliente` · `valor` · `vencimento` · `statusFin` · `tipoAplicacaoId` · `observacao` · `anexo`
 
-**Fase C — Integrações automáticas**
-- Hook em `contratos-store` (assinatura → AR)
-- Hook em `fin-pendencias` (aprovação → AR)
-- Hook em `engenharia` (finalizada → sugestão AP mão de obra)
-- Botão "Liberar comissão" no contrato
-
-**Fase D — Cadastros, Conciliação, Fechamento**
-- Aba Cadastros (fornecedores/contas)
-- Conciliação manual
-- Fechamento mensal + permissões
+- Selects em cascata: Natureza → preenche grupo/subgrupo/centro padrão/tipo aplicação padrão.
+- Validação: natureza marcada como `permiteVinculoObra` exige obra.
+- Anexo: apenas referência (nome + base64 leve ou URL — padrão atual do projeto).
 
 ---
 
-## 7. Arquivos a criar / editar
+## Fase 4 — Fluxo Compra → Estoque → Obra → CMV
 
-**Criar**
-- `src/lib/fin-titulos-store.ts`
-- `src/lib/fin-fornecedores-store.ts`
-- `src/lib/fin-contas-store.ts`
-- `src/lib/fin-fechamento-store.ts`
-- `src/modules/financeiro/components/TituloDialog.tsx`
-- `src/modules/financeiro/components/BaixaDialog.tsx`
-- `src/modules/financeiro/components/EstornoDialog.tsx`
-- `src/modules/financeiro/components/LiberarComissaoDialog.tsx`
-- `src/modules/financeiro/components/FechamentoMensalDialog.tsx`
+Essa é a mudança conceitual mais importante. Hoje "Material OB-0231" é lançado direto como custo da obra. Vamos corrigir:
 
-**Editar**
-- `src/routes/financeiro.tsx` (reescrita das abas)
-- `src/lib/financeiro-store.ts` (shims para títulos)
-- `src/lib/contratos-store.ts` (gatilho AR ao assinar + liberar comissão)
-- `src/lib/fin-pendencias.ts` (gatilho AR ao aprovar/liberar)
-- `src/lib/estoque-store.ts` (gatilho AP ao registrar compra)
-- `src/routes/engenharia.tsx` (gatilho sugestão AP mão de obra na finalização)
-- `src/lib/perfis-store.ts` (capabilities financeiras)
-- `src/lib/route-tabs.ts` (novas abas do Financeiro)
+```text
+Compra Fornecedor
+   │
+   ├─► Título a Pagar (financeiro)
+   └─► Entrada de Estoque (não vira custo ainda)
+              │
+              ▼
+        Saída para Obra (gera CMV / custo real da obra)
+              │
+              ├─► Devolução → estorna custo + retorna estoque
+              └─► Entrega parcial permitida
+```
+
+Implementação:
+- Reuso de `estoque-store` (já existe). Adicionar tipos de movimento: `ENTRADA_COMPRA`, `SAIDA_OBRA`, `DEVOLUCAO_OBRA`, `RESERVA`, `LIBERA_RESERVA`.
+- **Reserva** reduz `disponível` mas não move `físico` nem gera custo.
+- **Saída para Obra** é o evento que escreve custo no painel da obra (`obras-snapshot-store`).
+- Compra cria automaticamente: 1 título a pagar + 1 entrada de estoque pendente.
+- Nova aba **Movimentações de Estoque** dentro de Estoque (não no financeiro).
+- Painel de obra mostra `Material comprometido` (reservado) × `Material consumido` (saída efetiva).
 
 ---
 
-## Perguntas antes de partir para a Fase A
+## Fase 5 — Manutenção/Pós-venda na mesma obra
 
-1. **Escopo desta rodada**: implemento as 4 fases de uma vez (PR grande) ou prefere que eu faça **apenas a Fase A + B** agora (fundação + UI de AP/AR), e as integrações automáticas (Fase C) e o fechamento (Fase D) em rodadas seguintes? Recomendo dividir para conseguir validar visualmente antes das integrações dispararem títulos automáticos em cima dos dados atuais.
-2. **Comissão**: confirma que **nunca** nasce automaticamente como contas a pagar — só quando o gerente clica "Liberar"? (no plano está assim)
-3. **Dados atuais**: posso manter os seeds atuais de `financeiro-store` como histórico e começar os títulos novos zerados, ou prefere que eu migre os seeds existentes para a nova estrutura de títulos?
+Regra: pós-venda **nunca** cria nova obra. Diferenciação ocorre por:
+- `tipoAplicacao` = Manutenção / Garantia / Retorno técnico
+- `natureza` = Material manutenção, Mão de obra manutenção, Frete manutenção, Receita manutenção (seed novo)
+
+Painel da obra ganha aba **Pós-venda** que filtra lançamentos por `tipoAplicacao ∈ {Manutenção, Garantia, Retorno}`. DRE da obra separa Instalação × Manutenção automaticamente.
+
+---
+
+## Fase 6 — Auditoria, fechamento, integração futura
+
+- **Fechamento mensal** (já existe por conta): adicionar capability `financeiro.fechar_mes` em `perfis-store` — só "Gerente Financeiro" / "Admin Master" reabrem. Bloqueio passa a valer também para movimentação de estoque com data dentro do mês fechado.
+- **Estoque entregue não edita**: forçar correção via Devolução/Estorno. Botão "Editar" da movimentação fica desabilitado quando `tipoMov ∈ {SAIDA_OBRA, ENTRADA_COMPRA}` e existe contrapartida financeira.
+- **Auditoria**: toda transição de status, fechamento, devolução e estorno → `pushAudit`.
+- **Export contábil** (preparação só): botão "Exportar para contábil" gera CSV/JSON normalizado com `contaContabilFutura`, `centroCusto`, `naturezaCodigo`, `valor`, `data`, `historico`. Formato pronto para Alterdata/Domínio importarem mais tarde — não é integração ao vivo agora.
+
+---
+
+## O que NÃO entra agora (decisão consciente)
+
+- Plano de contas completo BR-GAAP / SPED — só guardamos `contaContabilFutura` como texto.
+- DRE contábil — mantemos DRE gerencial atual; só melhora a classificação.
+- Integração API com Alterdata/Domínio — só preparamos o export.
+- Permanece em **LocalStorage** (padrão do projeto). Migração para Lovable Cloud pode ser fase 7 quando o usuário decidir.
+
+---
+
+## Confirmação necessária
+
+Esse é um trabalho grande — recomendo fortemente **fazer fase por fase**, validando cada uma antes de seguir. Comece por **Fase 1 (cadastros)** que é a fundação de tudo o que vem depois.
+
+**Responda confirmando:**
+1. Sigo fase a fase (recomendado) ou tudo de uma vez?
+2. Posso começar pela **Fase 1** agora?
+3. Algum cadastro/seed que listei está errado ou faltando algum item específico da Meta Sun?

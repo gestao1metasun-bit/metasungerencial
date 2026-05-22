@@ -13,22 +13,31 @@ import { useAuth, signOut } from "@/lib/auth-store";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
+import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 
-const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
-  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard" },
-  { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard" },
+type Tier = "operacao" | "controle" | "estrutura";
+const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [
+  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
+  { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard", tier: "operacao" },
+  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial", tier: "operacao" },
+  { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro", tier: "operacao" },
+  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos", tier: "operacao" },
+  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia", tier: "operacao" },
+  { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda", tier: "operacao" },
+  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque", tier: "operacao" },
 
-  { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial" },
-  { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro" },
-  { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
-  { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia" },
-  { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda" },
-  { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
-  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics" },
-  { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },
-  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes" },
+  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics", tier: "controle" },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios", tier: "controle" },
+
+  { to: "/cadastros", label: "Cadastros Operacionais", icon: Database, key: "cadastros", tier: "estrutura" },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, key: "configuracoes", tier: "estrutura" },
 ];
+
+const TIER_META: Record<Tier, { label: string }> = {
+  operacao: { label: "Operação" },
+  controle: { label: "Controle" },
+  estrutura: { label: "Estrutura" },
+};
 
 export function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -60,6 +69,24 @@ export function AppLayout() {
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
   const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
+  const grouped: Record<Tier, typeof visibleNav> = { operacao: [], controle: [], estrutura: [] };
+  visibleNav.forEach((it) => grouped[it.tier].push(it));
+  const tierOrder: Tier[] = ["operacao", "controle", "estrutura"];
+
+  // Estrutura inicia colapsada; persiste preferência por sessão
+  const [collapsedTiers, setCollapsedTiers] = useState<Record<Tier, boolean>>(() => {
+    if (typeof window === "undefined") return { operacao: false, controle: false, estrutura: true };
+    try {
+      const raw = sessionStorage.getItem("ms:tiers");
+      if (raw) return { operacao: false, controle: false, estrutura: true, ...JSON.parse(raw) };
+    } catch { /* ignore */ }
+    return { operacao: false, controle: false, estrutura: true };
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("ms:tiers", JSON.stringify(collapsedTiers)); } catch { /* ignore */ }
+  }, [collapsedTiers]);
+
+  useRegisterRecente();
   const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
   const displayPerfil = auth.role === "admin_master"
     ? "Admin Master"
@@ -91,97 +118,122 @@ export function AppLayout() {
           <div className="absolute bottom-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="px-3 pb-3 flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold/90">Menu</span>
-            <span className="h-px flex-1 bg-sidebar-border" />
-          </div>
-          <ul className="space-y-0.5">
-            {visibleNav.map((item) => {
-              const active = path === item.to || path.startsWith(item.to + "/");
-              const Icon = item.icon;
-              const sub = ROUTE_TABS[item.to];
-              const isOpen = openMenu === item.to;
-              return (
-                <li key={item.to}>
-                  <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent/60 ${active ? "nav-item-active" : "text-sidebar-foreground/85"}`}>
-                    <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2.5 min-w-0">
-                      <Icon className={`h-4 w-4 transition-colors ${active ? "text-gold" : "text-sidebar-foreground/60 group-hover:text-gold"}`} />
-                      <span className="flex-1 truncate tracking-tight">{item.label}</span>
-                      {item.to === "/comercial" && pendentesAssinatura > 0 && (
-                        <span
-                          title={`${pendentesAssinatura} contrato(s) pendente(s) de assinatura`}
-                          className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
-                        >
-                          {pendentesAssinatura}
-                        </span>
-                      )}
-                    </Link>
-                    {sub && (
-                      <button
-                        type="button"
-                        aria-label={isOpen ? "Recolher" : "Expandir"}
-                        onClick={() => setOpenMenu((cur) => (cur === item.to ? null : item.to))}
-                        className="flex h-7 w-7 items-center justify-center rounded hover:bg-white/5"
-                      >
-                        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-gold" : "text-sidebar-foreground/50"}`} />
-                      </button>
-                    )}
-                  </div>
-
-                  {sub && isOpen && (() => {
-                    const groups: { name: string | null; tabs: typeof sub.tabs }[] = [];
-                    sub.tabs.forEach((t) => {
-                      const g = t.group ?? null;
-                      const last = groups[groups.length - 1];
-                      if (last && last.name === g) last.tabs.push(t);
-                      else groups.push({ name: g, tabs: [t] });
-                    });
-                    return (
-                      <ul className="ml-7 mt-1 mb-1 space-y-0.5 border-l border-sidebar-border/70 pl-3">
-                        {groups.map((g, gi) => (
-                          <li key={`g-${gi}`}>
-                            {g.name && (
-                              <div className="mt-2 mb-0.5 px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
-                                {g.name}
-                              </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          {tierOrder.map((tier) => {
+            const items = grouped[tier];
+            if (items.length === 0) return null;
+            const meta = TIER_META[tier];
+            const collapsed = collapsedTiers[tier];
+            const hasActive = items.some((it) => path === it.to || path.startsWith(it.to + "/"));
+            // Se o tier tem rota ativa, força aberto
+            const showItems = !collapsed || hasActive;
+            return (
+              <div key={tier} className="mb-4 last:mb-0">
+                <button
+                  type="button"
+                  onClick={() => setCollapsedTiers((c) => ({ ...c, [tier]: !c[tier] }))}
+                  className="w-full px-3 pb-2 flex items-center gap-2 group"
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-[0.22em] transition ${tier === "estrutura" ? "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70" : "text-gold/80 group-hover:text-gold"}`}>
+                    {meta.label}
+                  </span>
+                  <span className="h-px flex-1 bg-sidebar-border/60" />
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showItems ? "" : "-rotate-90"} ${tier === "estrutura" ? "text-sidebar-foreground/40" : "text-gold/60"}`} />
+                </button>
+                {showItems && (
+                  <ul className="space-y-0.5">
+                    {items.map((item) => {
+                      const active = path === item.to || path.startsWith(item.to + "/");
+                      const Icon = item.icon;
+                      const sub = ROUTE_TABS[item.to];
+                      const isOpen = openMenu === item.to;
+                      const dimmed = tier === "estrutura" && !active;
+                      return (
+                        <li key={item.to}>
+                          <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent/60 ${active ? "nav-item-active" : dimmed ? "text-sidebar-foreground/60" : "text-sidebar-foreground/85"}`}>
+                            <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
+                              <Icon className={`h-4 w-4 transition-colors ${active ? "text-gold" : dimmed ? "text-sidebar-foreground/45 group-hover:text-gold" : "text-sidebar-foreground/60 group-hover:text-gold"}`} />
+                              <span className="flex-1 truncate tracking-tight">{item.label}</span>
+                              {item.to === "/comercial" && pendentesAssinatura > 0 && (
+                                <span
+                                  title={`${pendentesAssinatura} contrato(s) pendente(s) de assinatura`}
+                                  className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
+                                >
+                                  {pendentesAssinatura}
+                                </span>
+                              )}
+                            </Link>
+                            {sub && (
+                              <button
+                                type="button"
+                                aria-label={isOpen ? "Recolher" : "Expandir"}
+                                onClick={() => setOpenMenu((cur) => (cur === item.to ? null : item.to))}
+                                className="flex h-7 w-7 items-center justify-center rounded hover:bg-white/5"
+                              >
+                                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-gold" : "text-sidebar-foreground/50"}`} />
+                              </button>
                             )}
-                            <ul className="space-y-0.5">
-                              {g.tabs.map((t) => {
-                                const tabActive = active && isHydrated && currentTab === t.value;
-                                const showRedDot = item.to === "/comercial" && t.value === "contrato-assinado" && pendentesAssinatura > 0;
-                                return (
-                                  <li key={t.value}>
-                                    <Link
-                                      to={item.to}
-                                      hash={`tab=${t.value}`}
-                                      className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] transition ${
-                                        tabActive
-                                          ? "bg-gold/15 text-gold font-semibold"
-                                          : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-sidebar-foreground"
-                                      }`}
-                                    >
-                                      <span className="truncate">{t.label}</span>
-                                      {showRedDot && (
-                                        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                                          {pendentesAssinatura}
-                                        </span>
+                          </div>
+
+                          {sub && isOpen && (() => {
+                            const visibleTabs = sub.tabs.filter((t) => !t.hidden);
+                            const groups: { name: string | null; tabs: typeof visibleTabs }[] = [];
+                            visibleTabs.forEach((t) => {
+                              const g = t.group ?? null;
+                              const last = groups[groups.length - 1];
+                              if (last && last.name === g) last.tabs.push(t);
+                              else groups.push({ name: g, tabs: [t] });
+                            });
+                            return (
+                              <ul className="ml-7 mt-1 mb-1 space-y-0.5 border-l border-sidebar-border/70 pl-3">
+                                {groups.map((g, gi) => {
+                                  const isStructural = g.name === "Estrutura" || g.name === "Sistema";
+                                  return (
+                                    <li key={`g-${gi}`}>
+                                      {g.name && (
+                                        <div className={`mt-2 mb-0.5 px-3 text-[10px] font-bold uppercase tracking-wider ${isStructural ? "text-sidebar-foreground/30" : "text-sidebar-foreground/40"}`}>
+                                          {g.name}
+                                        </div>
                                       )}
-                                    </Link>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                  })()}
-                </li>
-              );
-            })}
-          </ul>
+                                      <ul className="space-y-0.5">
+                                        {g.tabs.map((t) => {
+                                          const tabActive = active && isHydrated && currentTab === t.value;
+                                          const tabDimmed = isStructural && !tabActive;
+                                          return (
+                                            <li key={t.value}>
+                                              <Link
+                                                to={item.to}
+                                                hash={`tab=${t.value}`}
+                                                className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] transition ${
+                                                  tabActive
+                                                    ? "bg-gold/15 text-gold font-semibold"
+                                                    : tabDimmed
+                                                    ? "text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground"
+                                                    : "text-sidebar-foreground/75 hover:bg-white/5 hover:text-sidebar-foreground"
+                                                }`}
+                                              >
+                                                <span className="truncate">{t.label}</span>
+                                              </Link>
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            );
+                          })()}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
         </nav>
+
 
         <div className="border-t border-sidebar-border p-4">
           <div className="rounded-lg bg-sidebar-accent/50 p-3 ring-1 ring-white/5">
@@ -213,6 +265,7 @@ export function AppLayout() {
               <RefreshCw className="h-4 w-4" />
               Atualizar
             </Button>
+            <FavoritosMenu />
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold" />

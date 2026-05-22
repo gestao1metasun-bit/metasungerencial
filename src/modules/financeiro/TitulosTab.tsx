@@ -21,7 +21,7 @@ import {
 import { useFornecedores } from "@/lib/fin-fornecedores-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useNaturezasFin } from "@/lib/fin-naturezas-store";
-import { useGruposFin, useSubgruposFin } from "@/lib/fin-grupos-store";
+import { useGrupos, useSubgrupos } from "@/lib/fin-grupos-store";
 import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
 import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";

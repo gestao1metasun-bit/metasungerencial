@@ -33,6 +33,7 @@ type ColKey =
   | "obs" | "liberacao" | "previsao" | "acoes";
 
 const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
+  { key: "acoes", label: "AÇÕES", align: "center" },
   { key: "ordem", label: "ORDEM" },
   { key: "contratante", label: "CONTRATANTE" },
   { key: "vendedor", label: "VENDEDOR" },
@@ -47,7 +48,6 @@ const ALL_COLS: { key: ColKey; label: string; align?: "right" | "center" }[] = [
   { key: "obs", label: "OBS" },
   { key: "liberacao", label: "LIBERAÇÃO" },
   { key: "previsao", label: "PREVISÃO", align: "center" },
-  { key: "acoes", label: "AÇÕES", align: "center" },
 ];
 
 const DEFAULT_ORDER: ColKey[] = ALL_COLS.map((c) => c.key);

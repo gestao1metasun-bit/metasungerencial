@@ -21,6 +21,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey }[] = [
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos" },
   { to: "/estoque", label: "Estoque", icon: Package, key: "estoque" },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro" },
+  { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda" },
   { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics" },
   { to: "/cadastros", label: "Cadastros", icon: Database, key: "cadastros" },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios" },

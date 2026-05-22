@@ -143,7 +143,29 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             <TituloDialog
               tipo={tipo}
               cadastros={cadastros}
-              onSave={(input) => { criarTitulo({ ...input, tipo, origem: "manual" }); toast.success("Título criado."); setCriarOpen(false); }}
+              onSave={async (input, pendingFiles) => {
+                const novo = criarTitulo({ ...input, tipo, origem: "manual" });
+                setCriarOpen(false);
+                toast.success("Título criado.");
+                for (const file of pendingFiles) {
+                  try {
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    fd.append("tituloId", novo.id);
+                    const { anexo } = await uploadAnexoFn({ data: fd });
+                    adicionarAnexo(novo.id, {
+                      id: anexo.id,
+                      nome: anexo.nome,
+                      mime: anexo.mime,
+                      tamanho: anexo.tamanho,
+                      storagePath: anexo.storage_path,
+                      enviadoEm: anexo.created_at,
+                    });
+                  } catch (e: any) {
+                    toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
+                  }
+                }
+              }}
               onCancel={() => setCriarOpen(false)}
             />
           </Dialog>

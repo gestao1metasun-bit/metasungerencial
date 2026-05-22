@@ -23,6 +23,7 @@ import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
   setSelecionadaCompra, marcarEntrega, isMaterialEntregueTotal,
   calcularNecessidadeCompra, findItem,
+  reservarMaterial, liberarReserva, registrarDevolucaoObra, disponivelParaReserva,
   type EstoqueItem, type Categoria, type Unidade,
 } from "@/lib/estoque-store";
 

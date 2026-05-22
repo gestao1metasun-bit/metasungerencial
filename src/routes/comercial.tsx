@@ -67,7 +67,7 @@ import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
 import { AditivosPanel } from "@/components/app/AditivosPanel";
 import { AditivoBadge } from "@/components/app/AditivoBadge";
-import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
+import { useAditivos, useAditivosByContrato, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
 import { usePodeGerenciarAditivos } from "@/lib/auth-store";
 
 

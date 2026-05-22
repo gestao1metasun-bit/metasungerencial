@@ -9,7 +9,7 @@ import {
 } from "@/lib/kpi-rpc";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { fmtPct, fmtNum } from "@/lib/analytics-kpis";
-import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useMyPermissions } from "@/hooks/use-permissions";
 
 function Bloco({ icon: Icon, titulo, children }: { icon: any; titulo: string; children: React.ReactNode }) {
   return (

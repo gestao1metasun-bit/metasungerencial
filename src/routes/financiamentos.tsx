@@ -1319,8 +1319,10 @@ function EditContratoFinDialog({
     financiamentoValor: contrato.financiamentoValor ?? contrato.valor ?? 0,
     financiamentoObs: contrato.financiamentoObs ?? "",
     financiamentoPrevisao: contrato.financiamentoPrevisao ?? "",
+    financiamentoLiberacao: contrato.financiamentoLiberacao ?? "",
     obs: contrato.obs ?? "",
   });
+
   const previsaoDias = (() => {
     if (!form.financiamentoPrevisao) return "";
     const d = new Date(form.financiamentoPrevisao + "T00:00:00").getTime();

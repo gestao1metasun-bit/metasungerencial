@@ -69,7 +69,12 @@ function FinanceiroPage() {
       <PageHeader
         title="Financeiro"
         subtitle="Fluxo de caixa operacional + estrutura fixa — obras, despesas, receitas e previsões consolidadas."
-        actions={<NovoLancamentoDialog onSave={(l) => setLancs(p => [l, ...p])} centros={centros} naturezas={naturezas} />}
+        actions={<HeaderActions
+          tab={tab}
+          centros={centros} naturezas={naturezas}
+          setLancs={setLancs} setRecs={setRecs}
+          setCentros={setCentros} setNaturezas={setNaturezas}
+        />}
       />
 
       <Tabs value={tab} onValueChange={setTab}>

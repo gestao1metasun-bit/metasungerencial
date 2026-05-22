@@ -67,6 +67,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "fluxo", label: "Fluxo de Caixa", group: "Visão" },
       { value: "gerencial", label: "Visão gerencial", group: "Visão" },
       { value: "dre", label: "DRE", group: "Visão" },
+      { value: "cmv", label: "CMV / Compras", group: "Visão" },
       { value: "receber", label: "Contas a Receber", group: "Operação" },
       { value: "pagar", label: "Contas a Pagar", group: "Operação" },
       { value: "lancamentos", label: "Lançamentos", group: "Operação" },

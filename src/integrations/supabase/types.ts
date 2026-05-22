@@ -554,6 +554,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gerencial_parametros: {
+        Row: {
+          categoria: string
+          chave: string
+          descricao: string | null
+          id: string
+          updated_at: string
+          updated_by: string | null
+          valor: Json
+        }
+        Insert: {
+          categoria?: string
+          chave: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor?: Json
+        }
+        Update: {
+          categoria?: string
+          chave?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor?: Json
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           cliente_id: string | null
@@ -646,6 +676,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parecer_executivo: {
+        Row: {
+          codigo: string
+          created_at: string
+          dados: Json
+          id: string
+          mensagem: string
+          modulo: string
+          privado: boolean
+          severidade: string
+          titulo: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          mensagem: string
+          modulo?: string
+          privado?: boolean
+          severidade?: string
+          titulo: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          mensagem?: string
+          modulo?: string
+          privado?: boolean
+          severidade?: string
+          titulo?: string
+        }
+        Relationships: []
       }
       period_locks: {
         Row: {
@@ -1125,6 +1191,8 @@ export type Database = {
         | "cadastros.editar"
         | "configuracoes.editar"
         | "workflow.pular_etapa"
+        | "analytics.amplo"
+        | "analytics.privado"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -1289,6 +1357,8 @@ export const Constants = {
         "cadastros.editar",
         "configuracoes.editar",
         "workflow.pular_etapa",
+        "analytics.amplo",
+        "analytics.privado",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },

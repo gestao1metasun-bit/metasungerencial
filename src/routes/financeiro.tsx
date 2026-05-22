@@ -30,6 +30,7 @@ import {
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
+import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -82,6 +83,7 @@ function FinanceiroPage() {
           <TabsTrigger value="receber">A receber</TabsTrigger>
           <TabsTrigger value="pagar">A pagar</TabsTrigger>
           <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+          <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
           <TabsTrigger value="fechamento">Fechamento</TabsTrigger>
           <TabsTrigger value="dre">DRE</TabsTrigger>
         </TabsList>
@@ -161,6 +163,10 @@ function FinanceiroPage() {
 
         <TabsContent value="fornecedores" className="mt-5">
           <FornecedoresTab />
+        </TabsContent>
+
+        <TabsContent value="conciliacao" className="mt-5">
+          <ConciliacaoTab />
         </TabsContent>
 
         <TabsContent value="fechamento" className="mt-5">

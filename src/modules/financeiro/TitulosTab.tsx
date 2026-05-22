@@ -218,10 +218,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           <TituloDialog
             tipo={tipo}
             initial={editar}
-            fornecedores={fornecedores}
-            contas={contas}
-            naturezas={naturezas.map((n) => n.nome)}
-            centros={centros.map((c) => c.nome)}
+            cadastros={cadastros}
             onSave={(patch) => {
               try {
                 atualizarTitulo(editar.id, patch);

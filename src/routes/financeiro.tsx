@@ -51,8 +51,8 @@ function FinanceiroPage() {
   const [tab, setTab] = useTabFromHash("/financeiro");
   const [lancs, setLancs] = useLancamentos();
   const [recs, setRecs] = useRecorrentes();
-  const [centros] = useCentrosCusto();
-  const [naturezas] = useNaturezas();
+  const [centros, setCentros] = useCentrosCusto();
+  const [naturezas, setNaturezas] = useNaturezas();
 
   // KPIs gerais
   const realizadoEntradas = lancs.filter(l => l.camada === "Realizado" && l.tipo === "Entrada").reduce((s, l) => s + l.valor, 0);
@@ -69,7 +69,12 @@ function FinanceiroPage() {
       <PageHeader
         title="Financeiro"
         subtitle="Fluxo de caixa operacional + estrutura fixa — obras, despesas, receitas e previsões consolidadas."
-        actions={<NovoLancamentoDialog onSave={(l) => setLancs(p => [l, ...p])} centros={centros} naturezas={naturezas} />}
+        actions={<HeaderActions
+          tab={tab}
+          centros={centros} naturezas={naturezas}
+          setLancs={setLancs} setRecs={setRecs}
+          setCentros={setCentros} setNaturezas={setNaturezas}
+        />}
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -135,22 +140,10 @@ function FinanceiroPage() {
 
         {/* CENTROS */}
         <TabsContent value="centros" className="mt-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4" /> Centros de custo</div>
-              <Table>
-                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
-                <TableBody>{centros.map(c => (<TableRow key={c.id}><TableCell>{c.nome}</TableCell><TableCell className="text-muted-foreground">{c.tipo}</TableCell></TableRow>))}</TableBody>
-              </Table>
-            </Card>
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4" /> Naturezas financeiras</div>
-              <Table>
-                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead></TableRow></TableHeader>
-                <TableBody>{naturezas.map(n => (<TableRow key={n.id}><TableCell>{n.nome}</TableCell><TableCell><StatusBadge status={n.tipo} /></TableCell></TableRow>))}</TableBody>
-              </Table>
-            </Card>
-          </div>
+          <CentrosNaturezasTab
+            centros={centros} naturezas={naturezas}
+            setCentros={setCentros} setNaturezas={setNaturezas}
+          />
         </TabsContent>
 
         <TabsContent value="receber" className="mt-5">
@@ -637,5 +630,175 @@ function DRETab({ lancs, fixas }: { lancs: Lancamento[]; fixas: number }) {
         ))}
       </div>
     </Card>
+  );
+}
+
+/* ============================================================ */
+/* HEADER ACTIONS — botão certo para cada aba                   */
+/* ============================================================ */
+function HeaderActions({
+  tab, centros, naturezas,
+  setLancs, setRecs, setCentros, setNaturezas,
+}: {
+  tab: string;
+  centros: any[]; naturezas: any[];
+  setLancs: any; setRecs: any;
+  setCentros: any; setNaturezas: any;
+}) {
+  switch (tab) {
+    case "lancamentos":
+    case "dashboard":
+    case "fluxo":
+    case "gerencial":
+      return <NovoLancamentoDialog onSave={(l) => setLancs((p: Lancamento[]) => [l, ...p])} centros={centros} naturezas={naturezas} />;
+    case "recorrentes":
+      return <NovaRecorrenteDialog onSave={(r) => setRecs((p: DespesaRecorrente[]) => [r, ...p])} centros={centros} naturezas={naturezas} />;
+    case "centros":
+      return (
+        <div className="flex gap-2">
+          <CentroCustoDialog onSave={(c) => setCentros((p: any[]) => [c, ...p])} />
+          <NaturezaDialog onSave={(n) => setNaturezas((p: any[]) => [n, ...p])} />
+        </div>
+      );
+    // conciliacao/receber/pagar/fornecedores/fechamento/dre: ações ficam dentro da aba
+    default:
+      return null;
+  }
+}
+
+/* ============================================================ */
+/* CENTROS & NATUREZAS — CRUD                                   */
+/* ============================================================ */
+function CentrosNaturezasTab({
+  centros, naturezas, setCentros, setNaturezas,
+}: {
+  centros: any[]; naturezas: any[];
+  setCentros: any; setNaturezas: any;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4" /> Centros de custo</div>
+          <CentroCustoDialog onSave={(c) => setCentros((p: any[]) => [c, ...p])} />
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
+          <TableBody>
+            {centros.length === 0 && <TableRow><TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">Nenhum centro cadastrado.</TableCell></TableRow>}
+            {centros.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell>{c.nome}</TableCell>
+                <TableCell className="text-muted-foreground">{c.tipo}</TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
+                    onClick={() => { if (confirm(`Remover centro "${c.nome}"?`)) setCentros((p: any[]) => p.filter((x) => x.id !== c.id)); }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4" /> Naturezas financeiras</div>
+          <NaturezaDialog onSave={(n) => setNaturezas((p: any[]) => [n, ...p])} />
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
+          <TableBody>
+            {naturezas.length === 0 && <TableRow><TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">Nenhuma natureza cadastrada.</TableCell></TableRow>}
+            {naturezas.map((n) => (
+              <TableRow key={n.id}>
+                <TableCell>{n.nome}</TableCell>
+                <TableCell><StatusBadge status={n.tipo} /></TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
+                    onClick={() => { if (confirm(`Remover natureza "${n.nome}"?`)) setNaturezas((p: any[]) => p.filter((x) => x.id !== n.id)); }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+function CentroCustoDialog({ onSave }: { onSave: (c: any) => void }) {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<"Administrativo" | "Operacional" | "Comercial" | "Obra">("Administrativo");
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Plus className="mr-1 h-4 w-4" />Novo centro</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Novo centro de custo</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <Field label="Nome"><Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Marketing" /></Field>
+          <Field label="Tipo">
+            <Select value={tipo} onValueChange={(v: any) => setTipo(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["Administrativo", "Operacional", "Comercial", "Obra"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!nome.trim()) return toast.error("Informe o nome.");
+            onSave({ id: `cc-${Date.now()}`, nome: nome.trim(), tipo });
+            toast.success("Centro criado.");
+            setNome(""); setOpen(false);
+          }}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NaturezaDialog({ onSave }: { onSave: (n: any) => void }) {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<Tipo>("Saída");
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><Plus className="mr-1 h-4 w-4" />Nova natureza</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Nova natureza financeira</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <Field label="Nome"><Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Manutenção predial" /></Field>
+          <Field label="Tipo">
+            <Select value={tipo} onValueChange={(v: any) => setTipo(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Entrada">Entrada</SelectItem>
+                <SelectItem value="Saída">Saída</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={() => {
+            if (!nome.trim()) return toast.error("Informe o nome.");
+            onSave({ id: `nat-${Date.now()}`, nome: nome.trim(), tipo });
+            toast.success("Natureza criada.");
+            setNome(""); setOpen(false);
+          }}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

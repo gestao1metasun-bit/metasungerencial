@@ -1,7 +1,7 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
 // Importa o store fin-titulos-store e fornece tabelas + dialogs.
-import { useMemo, useState } from "react";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Filter as FilterIcon, Lock } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,17 @@ import { toast } from "sonner";
 import {
   useTitulos, criarTitulo, atualizarTitulo, cancelarTitulo, registrarBaixa,
   estornarMovimento, importarPrevisoesDoLegado,
-  type Titulo, type TituloTipo, type TituloStatus,
+  adicionarAnexo, removerAnexo,
+  type Titulo, type TituloTipo, type TituloStatus, type Anexo,
 } from "@/lib/fin-titulos-store";
 import { useFornecedores } from "@/lib/fin-fornecedores-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
-import { useNaturezas, useCentrosCusto, readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
+import { useNaturezasFin } from "@/lib/fin-naturezas-store";
+import { useGruposFin, useSubgruposFin } from "@/lib/fin-grupos-store";
+import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
+import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
+import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
+import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
 
 const STATUS_TONE: Record<TituloStatus, string> = {
   previsto:     "bg-amber-500/15 text-amber-600 border-amber-500/30",

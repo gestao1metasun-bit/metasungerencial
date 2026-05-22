@@ -29,6 +29,7 @@ import {
 import {
   useComprasTransito, addCompraTransito, removeCompraTransito, totalTransitoPorItem,
 } from "@/lib/compras-transito-store";
+import { resetarESimular } from "@/lib/dev-seed";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({ meta: [{ title: "Estoque — Meta Sun Gerencial" }] }),
@@ -439,6 +440,25 @@ function PainelCompraSelecao() {
         </div>
         <div className="text-xs text-muted-foreground">
           Você pode também clicar em uma obra para ver os detalhes individuais (reservar, entregar, devolver).
+        </div>
+        <div className="mt-4 rounded-md border border-dashed p-4">
+          <div className="text-sm font-semibold">Sem dados ainda?</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Rode a simulação demo: <strong>apaga tudo</strong> e cria 5 clientes em estados
+            diferentes (assinado/não assinado, PIX, boleto, financiamento, cartão e misto),
+            com obras, financeiro, estoque inicial, entregas parciais e compra em trânsito.
+          </div>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="outline"
+            onClick={() => {
+              if (!confirm("Apagar TODOS os dados locais e gerar 5 clientes de simulação?")) return;
+              resetarESimular();
+            }}
+          >
+            Rodar simulação (5 clientes)
+          </Button>
         </div>
       </div>
     );

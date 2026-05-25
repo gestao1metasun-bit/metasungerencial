@@ -343,6 +343,11 @@ function NovaCompraDialog() {
 function SaidaObraDialog() {
   const [open, setOpen] = useState(false);
   const { itens } = useEstoqueState();
+  const obras = useObrasSnapshot();
+  const obrasAtivas = useMemo(
+    () => obras.filter((o) => o.status !== "Concluída" && o.status !== "Cancelada"),
+    [obras],
+  );
   const [obraId, setObraId] = useState("");
   const [cliente, setCliente] = useState("");
   const [linhas, setLinhas] = useState<Array<{ itemId: string; qtd: number }>>([
@@ -355,8 +360,14 @@ function SaidaObraDialog() {
     setLinhas(linhas.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
 
+  function onSelectObra(id: string) {
+    setObraId(id);
+    const o = obras.find((x) => x.id === id);
+    if (o?.cliente) setCliente(o.cliente);
+  }
+
   function salvar() {
-    if (!obraId.trim()) { toast.error("Informe o ID da obra"); return; }
+    if (!obraId.trim()) { toast.error("Selecione a obra"); return; }
     const valid = linhas.filter((l) => l.itemId && l.qtd > 0);
     if (valid.length === 0) { toast.error("Adicione ao menos um item"); return; }
     const r = registrarSaidaObra(obraId.trim(), cliente.trim(), valid);
@@ -376,8 +387,20 @@ function SaidaObraDialog() {
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Saída de material para obra (gera CMV)</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label>ID Obra</Label><Input value={obraId} onChange={(e) => setObraId(e.target.value)} placeholder="ex.: OB-2026-007" /></div>
-          <div><Label>Cliente</Label><Input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nome do cliente" /></div>
+          <div>
+            <Label>Obra</Label>
+            <Select value={obraId} onValueChange={onSelectObra}>
+              <SelectTrigger className="h-9"><SelectValue placeholder={obrasAtivas.length ? "Selecione a obra…" : "Nenhuma obra ativa"} /></SelectTrigger>
+              <SelectContent>
+                {obrasAtivas.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.id} · {o.cliente} {o.contrato ? `· ${o.contrato}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Cliente</Label><Input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Auto-preenchido pela obra" /></div>
         </div>
         <div className="mt-2">
           <div className="flex items-center justify-between mb-2">

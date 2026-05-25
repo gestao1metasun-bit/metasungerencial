@@ -434,52 +434,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       </div>
 
       {/* Chips de filtro rápido */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {([
-          { k: "aberto",            label: "Em aberto",            tone: "amber" },
-          { k: "vence_hoje",        label: "Vence hoje",           tone: "rose" },
-          { k: "vence_semana",      label: "Vence esta semana",    tone: "orange" },
-          { k: "vence_mes",         label: "Vence este mês",       tone: "orange" },
-          { k: "vencidos",          label: "Vencidos",             tone: "rose" },
-          { k: tipo === "AP" ? "baixado_hoje"   : "baixado_hoje",   label: tipo === "AP" ? "Pago hoje"           : "Recebido hoje",        tone: "emerald" },
-          { k: "baixado_semana",    label: tipo === "AP" ? "Pago esta semana"    : "Recebido esta semana", tone: "emerald" },
-          { k: "baixado_mes",       label: tipo === "AP" ? "Pago este mês"       : "Recebido este mês",    tone: "emerald" },
-          { k: "conciliados",       label: "Conciliados",          tone: "sky" },
-          { k: "nao_conciliados",   label: "Pendente conciliação", tone: "amber" },
-          { k: "conciliado_hoje",   label: "Conciliado hoje",      tone: "sky" },
-          { k: "conciliado_semana", label: "Conciliado esta semana", tone: "sky" },
-          { k: "conciliado_mes",    label: "Conciliado este mês",  tone: "sky" },
-          { k: "com_encargos",      label: "Com juros/multa",      tone: "rose" },
-          { k: "com_desconto",      label: "Com desconto",         tone: "emerald" },
-          { k: "renegociados",      label: "Renegociados",         tone: "violet" },
-          { k: "com_obra",          label: "Com obra",             tone: "orange" },
-          { k: "rateados",          label: "Rateados",             tone: "indigo" },
-        ] as { k: ChipKey; label: string; tone: string }[]).map((c) => {
-          const active = chips.has(c.k);
-          const toneCls = active
-            ? `bg-${c.tone}-500 text-white border-${c.tone}-500`
-            : `bg-${c.tone}-500/10 text-${c.tone}-700 border-${c.tone}-500/30 hover:bg-${c.tone}-500/20`;
-          return (
-            <button
-              key={c.k}
-              type="button"
-              onClick={() => toggleChip(c.k)}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition ${toneCls}`}
-            >
-              {c.label}
-            </button>
-          );
-        })}
-        {chips.size > 0 && (
-          <button
-            type="button"
-            onClick={() => setChips(new Set())}
-            className="ml-1 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            Limpar filtros ({chips.size})
-          </button>
-        )}
-      </div>
+      <ChipsFiltroRapido tipo={tipo} chips={chips} onToggle={toggleChip} onClear={() => setChips(new Set())} />
 
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -413,10 +413,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     {contrato ? (
                       <span
                         className="inline-flex items-center gap-0.5 rounded bg-sky-500/15 px-1 py-0.5 text-[10px] font-semibold text-sky-600"
-                        title={`Contrato ${contrato.codigo ?? contrato.id}${contrato.cliente ? " · " + contrato.cliente : ""}`}
+                        title={`Contrato ${contrato.id}${contrato.cliente ? " · " + contrato.cliente : ""}`}
                       >
                         <FileSignature className="h-3 w-3" />
-                        {contrato.codigo ?? contrato.id.slice(0, 6)}
+                        {contrato.id}
                       </span>
                     ) : t.contratoId ? (
                       <span className="inline-flex items-center gap-0.5 rounded bg-sky-500/10 px-1 py-0.5 text-[10px] text-sky-600" title={`Contrato ${t.contratoId}`}>

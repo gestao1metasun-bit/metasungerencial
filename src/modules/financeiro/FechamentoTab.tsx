@@ -204,6 +204,19 @@ export function FechamentoTab() {
             Ainda há {contas.filter((c) => !isMesFechado(mes, c.id)).length} conta(s) em aberto neste mês.
           </div>
         )}
+        {!globalFechado && titulosAbertosNoMes.total > 0 && (
+          <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div className="leading-relaxed">
+              <strong>{titulosAbertosNoMes.total} título(s) ainda abertos na competência {mes}:</strong>{" "}
+              {titulosAbertosNoMes.ap} AP (saldo {fmtBRL(titulosAbertosNoMes.saldoAP)}) ·{" "}
+              {titulosAbertosNoMes.ar} AR (saldo {fmtBRL(titulosAbertosNoMes.saldoAR)}).
+              <span className="ml-1 opacity-90">
+                Não bloqueia o fechamento, mas baixas/edições posteriores nesses títulos ficarão travadas.
+              </span>
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="bg-[image:var(--gradient-card)]">

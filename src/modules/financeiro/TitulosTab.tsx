@@ -1732,3 +1732,117 @@ function EstornoDialog({ onSave, onCancel }: { onSave: (motivo: string) => void;
     </DialogContent>
   );
 }
+
+// ───────────────────────── Filtros (drawer) ─────────────────────────
+type ChipKeyExt =
+  | "aberto" | "vence_hoje" | "vence_semana" | "vence_mes" | "vencidos"
+  | "baixado_hoje" | "baixado_semana" | "baixado_mes"
+  | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
+  | "conciliados" | "nao_conciliados"
+  | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+
+function CHIP_LABEL(k: ChipKeyExt, tipo: TituloTipo): string {
+  switch (k) {
+    case "aberto": return "Em aberto";
+    case "vence_hoje": return "Vence hoje";
+    case "vence_semana": return "Vence esta semana";
+    case "vence_mes": return "Vence este mês";
+    case "vencidos": return "Vencidos";
+    case "baixado_hoje": return tipo === "AP" ? "Pago hoje" : "Recebido hoje";
+    case "baixado_semana": return tipo === "AP" ? "Pago esta semana" : "Recebido esta semana";
+    case "baixado_mes": return tipo === "AP" ? "Pago este mês" : "Recebido este mês";
+    case "conciliado_hoje": return "Conciliado hoje";
+    case "conciliado_semana": return "Conciliado esta semana";
+    case "conciliado_mes": return "Conciliado este mês";
+    case "conciliados": return "Conciliados";
+    case "nao_conciliados": return "Pendente conciliação";
+    case "com_encargos": return "Com juros/multa";
+    case "com_desconto": return "Com desconto";
+    case "renegociados": return "Renegociados";
+    case "com_obra": return "Com obra";
+    case "rateados": return "Rateados";
+  }
+}
+
+type FiltrosSheetProps = {
+  chips: Set<ChipKeyExt>;
+  toggleChip: (k: ChipKeyExt) => void;
+  clearChips: () => void;
+  tipo: TituloTipo;
+};
+
+function FiltrosSheet({ chips, toggleChip, clearChips, tipo }: FiltrosSheetProps) {
+  const groups: { title: string; items: ChipKeyExt[] }[] = [
+    { title: "Vencimento", items: ["vence_hoje", "vence_semana", "vence_mes", "vencidos", "aberto"] },
+    { title: tipo === "AP" ? "Pagamento" : "Recebimento", items: ["baixado_hoje", "baixado_semana", "baixado_mes"] },
+    { title: "Conciliação", items: ["conciliados", "nao_conciliados", "conciliado_hoje", "conciliado_semana", "conciliado_mes"] },
+    { title: "Operacional", items: ["com_encargos", "com_desconto", "renegociados", "com_obra", "rateados"] },
+  ];
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtros
+          {chips.size > 0 && (
+            <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+              {chips.size}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Filtros</SheetTitle>
+          <SheetDescription>
+            Selecione um ou mais filtros para refinar a listagem.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-6 space-y-6">
+          {groups.map((g) => (
+            <div key={g.title} className="space-y-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {g.title}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {g.items.map((k) => {
+                  const active = chips.has(k);
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => toggleChip(k)}
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-transparent text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                      }`}
+                    >
+                      {CHIP_LABEL(k, tipo)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <SheetFooter className="mt-8 flex-row justify-between gap-2 sm:justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearChips}
+            disabled={chips.size === 0}
+          >
+            Limpar tudo
+          </Button>
+          <span className="self-center text-xs text-muted-foreground">
+            {chips.size} ativo{chips.size === 1 ? "" : "s"}
+          </span>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}

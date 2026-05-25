@@ -196,6 +196,18 @@ function FinanceiroPage() {
         <TabsContent value="parametros-fin" className="mt-5">
           <ParametrosFinanceirosForm />
         </TabsContent>
+
+        <TabsContent value="adiantamentos" className="mt-5">
+          <AdiantamentosTab />
+        </TabsContent>
+
+        <TabsContent value="rescisoes" className="mt-5">
+          <RescisoesTab />
+        </TabsContent>
+
+        <TabsContent value="fluxo-real" className="mt-5">
+          <FluxoCaixaRealTab />
+        </TabsContent>
       </Tabs>
     </>
   );

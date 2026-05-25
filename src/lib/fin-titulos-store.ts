@@ -390,6 +390,85 @@ export function apagarRateios(tituloId: string, usuario = "Sistema") {
   setRateios(tituloId, [], usuario);
 }
 
+/**
+ * Gera uma cópia do título (status "previsto"/"a_pagar"/"a_receber", sem movimentos,
+ * sem renegociação, com novo ID). Retorna o novo título criado.
+ */
+export function gerarCopiaTitulo(
+  tituloId: string,
+  overrides: Partial<Pick<Titulo, "vencimento" | "competencia" | "valorOriginal" | "descricao">> = {},
+  usuario = "Sistema",
+): Titulo {
+  const orig = getTitulo(tituloId);
+  if (!orig) throw new Error("Título original não encontrado.");
+  const novoId = newId(orig.tipo);
+  const copia: Titulo = {
+    ...orig,
+    id: novoId,
+    valorOriginal: round2(overrides.valorOriginal ?? orig.valorOriginal),
+    valorPago: 0,
+    saldo: round2(overrides.valorOriginal ?? orig.valorOriginal),
+    vencimento: overrides.vencimento ?? orig.vencimento,
+    competencia: overrides.competencia ?? orig.competencia,
+    descricao: overrides.descricao ?? `${orig.descricao} (cópia)`,
+    status: orig.tipo === "AP" ? "a_pagar" : "a_receber",
+    dataLiquidacao: undefined,
+    movimentos: [],
+    anexos: [],
+    rateios: orig.rateios ? orig.rateios.map((r) => ({ ...r, id: `${r.id}-c` })) : undefined,
+    renegociacaoId: undefined,
+    renegociadoEm: undefined,
+    statusRenegociacao: undefined,
+    criadoEm: isoNow(),
+    criadoPor: usuario,
+    bloqueadoFechamento: false,
+    origem: "manual",
+    documentoNumero: undefined,
+    duplicidadePermitidaPor: undefined,
+    duplicidadePermitidaEm: undefined,
+    duplicidadeMotivo: undefined,
+  };
+  const arr = [...read(), copia]; write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: orig.contratoId ?? orig.id,
+    acao: "FIN_TITULO_COPIADO",
+    usuario,
+    campo: "id",
+    valorAnterior: orig.id,
+    valorNovo: novoId,
+  });
+  return copia;
+}
+
+/** Registra dados de um cheque vinculado ao título (armazena em observacao). */
+export function cadastrarCheque(
+  tituloId: string,
+  cheque: { numero: string; banco?: string; agencia?: string; conta?: string; bom_para?: string; titular?: string },
+  usuario = "Sistema",
+) {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) throw new Error("Título não encontrado.");
+  const before = cur[idx];
+  const linha = `Cheque #${cheque.numero}${cheque.banco ? ` · ${cheque.banco}` : ""}${cheque.agencia ? ` ag.${cheque.agencia}` : ""}${cheque.conta ? ` cc.${cheque.conta}` : ""}${cheque.bom_para ? ` · Bom para ${cheque.bom_para}` : ""}${cheque.titular ? ` · ${cheque.titular}` : ""}`;
+  const next: Titulo = {
+    ...before,
+    observacao: before.observacao ? `${before.observacao}\n${linha}` : linha,
+  };
+  const arr = [...cur]; arr[idx] = next; write(arr);
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: "FIN_TITULO_CHEQUE_CADASTRADO",
+    usuario,
+    campo: "cheque",
+    valorAnterior: "",
+    valorNovo: cheque.numero,
+  });
+}
+
+
 
 export function cancelarTitulo(id: string, motivo: string, usuario = "Sistema") {
   const cur = read();

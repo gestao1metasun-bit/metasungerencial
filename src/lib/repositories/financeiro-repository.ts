@@ -37,7 +37,7 @@ import type {
   Compra, CriarCompraInput,
 } from "@/lib/fin-compras-store";
 import type {
-  ExtratoLancamento,
+  ExtratoLancamento, ExtratoStatus,
 } from "@/lib/fin-conciliacao-store";
 import type {
   FechamentoMes,
@@ -62,7 +62,7 @@ export type {
   Adiantamento, AdiantamentoTipo, Abatimento,
   RegistrarAdiantamentoInput, AbaterInput,
   Compra, CriarCompraInput,
-  ExtratoLancamento,
+  ExtratoLancamento, ExtratoStatus,
   FechamentoMes,
   FluxoPonto, UseFluxoArgs,
   Fornecedor, ContaFinanceira, NaturezaFin,
@@ -133,6 +133,13 @@ export type ImportPrevisaoLanc = {
 };
 
 export type AnexoInput = Partial<Anexo> & Pick<Anexo, "nome" | "mime" | "tamanho">;
+
+export type CandidatoConciliacao = {
+  titulo: Titulo;
+  dif: number;
+  exato: boolean;
+  score: number;
+};
 
 export type CopiaTituloOverrides = Partial<
   Pick<Titulo, "vencimento" | "competencia" | "valorOriginal" | "descricao">
@@ -268,7 +275,7 @@ export interface FinanceiroRepository {
   listarExtrato(): Promise<ExtratoLancamento[]>;
   adicionarLancamentoExtrato(input: Omit<ExtratoLancamento, "id" | "status" | "importadoEm">): Promise<ExtratoLancamento>;
   importarExtratoCSV(contaFinanceira: string, csv: string): Promise<number>;
-  sugerirCandidatosConciliacao(extratoId: string): Promise<Titulo[]>;
+  sugerirCandidatosConciliacao(extratoId: string): Promise<CandidatoConciliacao[]>;
   conciliar(args: { extratoId: string; tituloId: string; movimentoId?: string; motivo?: string }): Promise<void>;
   desfazerConciliacao(extratoId: string, motivo: string): Promise<void>;
   ignorarExtrato(extratoId: string, motivo: string): Promise<void>;

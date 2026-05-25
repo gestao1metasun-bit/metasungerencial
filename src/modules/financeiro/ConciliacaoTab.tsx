@@ -1,5 +1,5 @@
 // Conciliação Bancária: extrato importado x títulos AP/AR.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Upload, Link2, X, Undo2, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
-  useExtrato, adicionarLancamentoExtrato, importarExtratoCSV,
-  sugerirCandidatos, conciliar, ignorarExtrato, desfazerConciliacao, removerExtrato,
-  type ExtratoLancamento, type ExtratoStatus,
-} from "@/lib/fin-conciliacao-store";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
+  useFinanceiroRepo, useRepoExtrato, useRepoContas, useRepoTitulos,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  ExtratoLancamento, ExtratoStatus, ContaFinanceira, CandidatoConciliacao,
+} from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 const STATUS_TONE: Record<ExtratoStatus, string> = {
@@ -33,9 +32,10 @@ function fmtBR(d: string) {
 }
 
 export function ConciliacaoTab() {
-  const extrato = useExtrato();
-  const contas = useContasFinanceiras();
-  const titulos = useTitulos();
+  const repo = useFinanceiroRepo();
+  const extrato = useRepoExtrato();
+  const contas = useRepoContas();
+  const titulos = useRepoTitulos();
 
   const [contaSel, setContaSel] = useState<string>("todas");
   const [statusF, setStatusF] = useState<"todos" | ExtratoStatus>("pendente");
@@ -126,20 +126,20 @@ export function ConciliacaoTab() {
                       {e.status === "pendente" && (
                         <>
                           <ConciliarDialog extrato={e} />
-                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={async () => {
                             const m = prompt("Motivo para ignorar:");
-                            if (m) ignorarExtrato(e.id, m);
+                            if (m) { try { await repo.ignorarExtrato(e.id, m); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }
                           }}><X className="h-3.5 w-3.5" /></Button>
                         </>
                       )}
                       {e.status === "conciliado" && (
                         <Button size="sm" variant="ghost" className="h-7 px-2"
-                          onClick={() => { desfazerConciliacao(e.id); toast.info("Conciliação desfeita. Estorne a baixa no título se necessário."); }}>
+                          onClick={async () => { try { await repo.desfazerConciliacao(e.id, "Desfazer manual"); toast.info("Conciliação desfeita. Estorne a baixa no título se necessário."); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }}>
                           <Undo2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                        onClick={() => { if (confirm("Remover este lançamento do extrato?")) removerExtrato(e.id); }}>
+                        onClick={async () => { if (confirm("Remover este lançamento do extrato?")) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -175,7 +175,8 @@ export function ConciliacaoTab() {
 }
 
 /* ================ Importar CSV ================ */
-function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContasFinanceiras> }) {
+function ImportarExtratoDialog({ contas }: { contas: ContaFinanceira[] }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
   const [conta, setConta] = useState<string>(contas[0]?.id ?? "");
   const [csv, setCsv] = useState("");
@@ -204,11 +205,13 @@ function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContas
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => {
+          <Button onClick={async () => {
             if (!conta) { toast.error("Selecione a conta."); return; }
-            const n = importarExtratoCSV(conta, csv);
-            if (n > 0) { toast.success(`${n} lançamento(s) importado(s).`); setCsv(""); setOpen(false); }
-            else toast.error("Nenhuma linha válida encontrada.");
+            try {
+              const n = await repo.importarExtratoCSV(conta, csv);
+              if (n > 0) { toast.success(`${n} lançamento(s) importado(s).`); setCsv(""); setOpen(false); }
+              else toast.error("Nenhuma linha válida encontrada.");
+            } catch (err: any) { toast.error(err?.message ?? "Erro."); }
           }}>Importar</Button>
         </DialogFooter>
       </DialogContent>
@@ -217,7 +220,8 @@ function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContas
 }
 
 /* ================ Novo lançamento manual ================ */
-function NovoLancamentoExtratoDialog({ contas }: { contas: ReturnType<typeof useContasFinanceiras> }) {
+function NovoLancamentoExtratoDialog({ contas }: { contas: ContaFinanceira[] }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     conta: contas[0]?.id ?? "",
@@ -246,13 +250,15 @@ function NovoLancamentoExtratoDialog({ contas }: { contas: ReturnType<typeof use
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => {
+          <Button onClick={async () => {
             const valor = Number(form.valor);
             if (!form.conta || !form.descricao || !Number.isFinite(valor) || valor === 0) { toast.error("Preencha conta, descrição e valor."); return; }
-            adicionarLancamentoExtrato({ contaFinanceira: form.conta, data: form.data, descricao: form.descricao, valor, documento: form.documento || undefined });
-            toast.success("Lançamento adicionado.");
-            setOpen(false);
-            setForm({ ...form, descricao: "", valor: "", documento: "" });
+            try {
+              await repo.adicionarLancamentoExtrato({ contaFinanceira: form.conta, data: form.data, descricao: form.descricao, valor, documento: form.documento || undefined });
+              toast.success("Lançamento adicionado.");
+              setOpen(false);
+              setForm({ ...form, descricao: "", valor: "", documento: "" });
+            } catch (err: any) { toast.error(err?.message ?? "Erro."); }
           }}>Salvar</Button>
         </DialogFooter>
       </DialogContent>
@@ -262,10 +268,19 @@ function NovoLancamentoExtratoDialog({ contas }: { contas: ReturnType<typeof use
 
 /* ================ Conciliar (sugestões) ================ */
 function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
-  const titulos = useTitulos();
   const [tituloIdManual, setTituloIdManual] = useState("");
-  const candidatos = useMemo(() => sugerirCandidatos(extrato, titulos), [extrato, titulos]);
+  const [candidatos, setCandidatos] = useState<CandidatoConciliacao[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelado = false;
+    repo.sugerirCandidatosConciliacao(extrato.id)
+      .then((c) => { if (!cancelado) setCandidatos(c); })
+      .catch(() => { if (!cancelado) setCandidatos([]); });
+    return () => { cancelado = true; };
+  }, [open, extrato.id, repo]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -295,7 +310,7 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
             </div>
           ) : (
             <div className="max-h-[260px] space-y-2 overflow-auto">
-              {candidatos.map(({ t, dif, exato }) => (
+              {candidatos.map(({ titulo: t, dif, exato }) => (
                 <div key={t.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
                   <div>
                     <div className="font-medium">{t.id} · {t.descricao}</div>
@@ -304,8 +319,8 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
                       {!exato && <> · dif {fmtBRLPrecise(dif)}</>}
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => {
-                    try { conciliar(extrato.id, t.id); toast.success("Conciliado e baixa registrada."); setOpen(false); }
+                  <Button size="sm" onClick={async () => {
+                    try { await repo.conciliar({ extratoId: extrato.id, tituloId: t.id }); toast.success("Conciliado e baixa registrada."); setOpen(false); }
                     catch (err: any) { toast.error(err?.message ?? "Erro ao conciliar."); }
                   }}>Conciliar</Button>
                 </div>
@@ -318,8 +333,8 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
           <Label>Vincular por ID de título manualmente</Label>
           <div className="mt-1 flex gap-2">
             <Input placeholder="AR-… ou AP-…" value={tituloIdManual} onChange={(e) => setTituloIdManual(e.target.value.trim())} />
-            <Button variant="secondary" onClick={() => {
-              try { conciliar(extrato.id, tituloIdManual); toast.success("Conciliado."); setOpen(false); }
+            <Button variant="secondary" onClick={async () => {
+              try { await repo.conciliar({ extratoId: extrato.id, tituloId: tituloIdManual }); toast.success("Conciliado."); setOpen(false); }
               catch (err: any) { toast.error(err?.message ?? "Erro."); }
             }}>Vincular</Button>
           </div>

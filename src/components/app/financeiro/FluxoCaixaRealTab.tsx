@@ -10,8 +10,7 @@ import {
 import { TrendingUp, Wallet, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/app/StatCard";
-import { useFluxoCaixa } from "@/lib/fin-fluxo-caixa";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useRepoFluxoCaixa, useRepoContas } from "@/hooks/useRepoFinanceiro";
 import { useOrcamentoObras } from "@/lib/fin-orcamento-obras";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
@@ -21,7 +20,7 @@ function isoAddDays(base: Date, days: number) {
 }
 
 export function FluxoCaixaRealTab() {
-  const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const contas = useRepoContas().filter((c) => c.ativo);
   const [modoData, setModoData] = useState<"horizonte" | "manual">("horizonte");
   const [dias, setDias] = useState<number>(60);
   const [dataInicioManual, setDataInicioManual] = useState<string>(() => {
@@ -43,7 +42,7 @@ export function FluxoCaixaRealTab() {
     return { ini: isoAddDays(hoje, -Math.floor(dias / 3)), fim: isoAddDays(hoje, dias) };
   }, [modoData, dias, dataInicioManual, dataFimManual]);
 
-  const data = useFluxoCaixa({
+  const data = useRepoFluxoCaixa({
     dataInicio: ini,
     dataFim: fim,
     contaId: contaNome === "__all" ? undefined : contaNome,

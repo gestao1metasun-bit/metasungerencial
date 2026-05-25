@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEstoqueState, cmvPorObra, valorEstoqueTotal, registrarSaidaObra } from "@/lib/estoque-store";
-import { useCompras, criarCompra, estocarCompra, cancelarCompra, type ItemCompra } from "@/lib/fin-compras-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
-import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import {
+  useFinanceiroRepo, useRepoCompras, useRepoTitulos, useRepoFornecedores,
+} from "@/hooks/useRepoFinanceiro";
+import type { ItemCompra } from "@/lib/fin-compras-store";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { StatCard } from "@/components/app/StatCard";
 import { Boxes, TrendingDown, Package, ShoppingCart, Plus, CheckCircle2, XCircle, ArrowDownToLine } from "lucide-react";
@@ -27,9 +28,10 @@ function fmtDT(iso: string) {
 }
 
 export function CmvTab() {
+  const repo = useFinanceiroRepo();
   const { itens, movimentos } = useEstoqueState();
-  const compras = useCompras();
-  const titulos = useTitulos();
+  const compras = useRepoCompras();
+  const titulos = useRepoTitulos();
 
   const linhasCmv = useMemo(() => cmvPorObra(), [movimentos]);
   const valorEstoque = useMemo(() => valorEstoqueTotal(), [itens]);
@@ -143,14 +145,17 @@ export function CmvTab() {
                       {c.status === "Aberta" && (
                         <>
                           <Button size="sm" variant="outline" className="h-7 px-2"
-                            onClick={() => {
-                              if (estocarCompra(c.id)) toast.success(`Compra ${c.id} estocada`);
-                              else toast.error("Falha ao estocar");
+                            onClick={async () => {
+                              try {
+                                const ok = await repo.estocarCompra(c.id);
+                                if (ok) toast.success(`Compra ${c.id} estocada`);
+                                else toast.error("Falha ao estocar");
+                              } catch (e: any) { toast.error(e?.message ?? "Falha ao estocar"); }
                             }}>
                             <ArrowDownToLine className="h-3.5 w-3.5 mr-1" /> Estocar
                           </Button>
                           <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                            onClick={() => { if (confirm(`Cancelar compra ${c.id}?`)) cancelarCompra(c.id); }}>
+                            onClick={async () => { if (confirm(`Cancelar compra ${c.id}?`)) { try { await repo.cancelarCompra(c.id); } catch (e: any) { toast.error(e?.message ?? "Erro."); } } }}>
                             <XCircle className="h-3.5 w-3.5" />
                           </Button>
                         </>

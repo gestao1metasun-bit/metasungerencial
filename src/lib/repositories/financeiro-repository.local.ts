@@ -325,14 +325,17 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
     try { return storeImportarExtrato(contaFinanceira, csv); }
     catch (e) { throw toRepoError(e); }
   }
-  async sugerirCandidatosConciliacao(extratoId: string): Promise<Titulo[]> {
+  async sugerirCandidatosConciliacao(extratoId: string): Promise<import("./financeiro-repository").CandidatoConciliacao[]> {
     const ext = getExtrato().find((e) => e.id === extratoId);
     if (!ext) throw repoError("NOT_FOUND", "Lançamento de extrato não encontrado.");
     const titulos = getTitulos();
     const candidatos = storeSugerir(ext, titulos);
     return candidatos
-      .map((c) => titulos.find((t) => t.id === c.t.id))
-      .filter((t): t is Titulo => !!t);
+      .map((c) => {
+        const titulo = titulos.find((t) => t.id === c.t.id);
+        return titulo ? { titulo, dif: c.dif, exato: c.exato, score: c.score } : null;
+      })
+      .filter((c): c is import("./financeiro-repository").CandidatoConciliacao => !!c);
   }
   async conciliar(args: { extratoId: string; tituloId: string; movimentoId?: string; motivo?: string }): Promise<void> {
     try { storeConciliar(args.extratoId, args.tituloId, "Sistema", args.motivo); }

@@ -14,11 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/app/StatCard";
 import { toast } from "sonner";
 import {
-  useAdiantamentos, registrarAdiantamento, abaterAdiantamento, estornarAdiantamento,
-  type Adiantamento, type AdiantamentoTipo,
-} from "@/lib/fin-adiantamentos-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+  useFinanceiroRepo, useRepoAdiantamentos, useRepoTitulos, useRepoContas,
+} from "@/hooks/useRepoFinanceiro";
+import type { Adiantamento, AdiantamentoTipo } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }
@@ -29,7 +27,8 @@ const TIPO_TONE: Record<AdiantamentoTipo, string> = {
 };
 
 export function AdiantamentosTab() {
-  const lista = useAdiantamentos();
+  const repo = useFinanceiroRepo();
+  const lista = useRepoAdiantamentos();
   const [tipo, setTipo] = useState<AdiantamentoTipo>("cliente");
   const [filtro, setFiltro] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
@@ -132,10 +131,10 @@ export function AdiantamentosTab() {
                         {a.status === "ativo" && a.abatimentos.length === 0 && (
                           <Button
                             size="sm" variant="ghost"
-                            onClick={() => {
+                            onClick={async () => {
                               const m = prompt("Motivo do estorno (mín. 5 caracteres):");
                               if (m && m.length >= 5) {
-                                try { estornarAdiantamento(a.id, m, "Admin"); toast.success("Adiantamento estornado."); }
+                                try { await repo.estornarAdiantamento(a.id, m); toast.success("Adiantamento estornado."); }
                                 catch (e: any) { toast.error(e.message); }
                               }
                             }}
@@ -160,7 +159,8 @@ export function AdiantamentosTab() {
 
 // ----------------------------------------------------------- novo adiantamento
 function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onClose: () => void }) {
-  const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const repo = useFinanceiroRepo();
+  const contas = useRepoContas().filter((c) => c.ativo);
   const [contraparte, setContraparte] = useState("");
   const [valor, setValor] = useState("");
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
@@ -168,10 +168,10 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
   const [contratoId, setContratoId] = useState("");
   const [obs, setObs] = useState("");
 
-  function salvar() {
+  async function salvar() {
     try {
       const conta = contas.find((c) => c.id === contaId);
-      registrarAdiantamento({
+      await repo.registrarAdiantamento({
         tipo,
         contraparteNome: contraparte,
         valor: Number(valor),
@@ -179,7 +179,7 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
         contaFinanceira: conta?.nome,
         contratoId: contratoId || undefined,
         observacao: obs || undefined,
-      }, "Admin");
+      });
       toast.success("Adiantamento registrado.");
       onClose();
     } catch (e: any) { toast.error(e.message); }
@@ -237,7 +237,8 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
 
 // ----------------------------------------------------------- abater
 function AbaterDialog({ adiantamento, onClose }: { adiantamento: Adiantamento; onClose: () => void }) {
-  const titulos = useTitulos();
+  const repo = useFinanceiroRepo();
+  const titulos = useRepoTitulos();
   const candidatos = useMemo(() => {
     const tipoTit = adiantamento.tipo === "cliente" ? "AR" : "AP";
     return titulos.filter(
@@ -255,14 +256,14 @@ function AbaterDialog({ adiantamento, onClose }: { adiantamento: Adiantamento; o
   const [valor, setValor] = useState<string>(maxValor.toFixed(2));
   const [obs, setObs] = useState("");
 
-  function confirmar() {
+  async function confirmar() {
     try {
-      abaterAdiantamento({
+      await repo.abaterAdiantamento({
         adiantamentoId: adiantamento.id,
         tituloId,
         valor: Number(valor),
         observacao: obs || undefined,
-      }, "Admin");
+      });
       toast.success("Abatimento realizado.");
       onClose();
     } catch (e: any) { toast.error(e.message); }

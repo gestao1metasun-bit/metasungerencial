@@ -123,7 +123,7 @@ export class SupabaseFinanceiroAdapter implements FinanceiroRepository {
   async listarExtrato(): Promise<ExtratoLancamento[]> { return NOT_READY("listarExtrato"); }
   async adicionarLancamentoExtrato(_input: Parameters<FinanceiroRepository["adicionarLancamentoExtrato"]>[0]): Promise<ExtratoLancamento> { return NOT_READY("adicionarLancamentoExtrato"); }
   async importarExtratoCSV(_c: string, _csv: string): Promise<number> { return NOT_READY("importarExtratoCSV"); }
-  async sugerirCandidatosConciliacao(_e: string): Promise<Titulo[]> { return NOT_READY("sugerirCandidatosConciliacao"); }
+  async sugerirCandidatosConciliacao(_e: string): Promise<import("./financeiro-repository").CandidatoConciliacao[]> { return NOT_READY("sugerirCandidatosConciliacao"); }
   async conciliar(_a: { extratoId: string; tituloId: string; movimentoId?: string; motivo?: string }): Promise<void> { NOT_READY("conciliar"); }
   async desfazerConciliacao(_e: string, _m: string): Promise<void> { NOT_READY("desfazerConciliacao"); }
   async ignorarExtrato(_e: string, _m: string): Promise<void> { NOT_READY("ignorarExtrato"); }

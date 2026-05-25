@@ -386,15 +386,18 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
   async listarAnexos(tituloId: string): Promise<Anexo[]> {
     return getTitulo(tituloId)?.anexos ?? [];
   }
-  async anexar(): Promise<Anexo> {
-    throw repoError("NOT_IMPLEMENTED",
-      "Anexos passam pelo módulo de anexos (anexos.functions). " +
-      "Será unificado no SupabaseAdapter com Storage + tabela fin_titulo_anexos.");
+  async anexar(tituloId: string, anexo: Parameters<FinanceiroRepository["anexar"]>[1]): Promise<Anexo> {
+    // Hoje persiste apenas o registro de metadados do anexo (o upload físico
+    // continua via server function `uploadAnexo`). No SupabaseAdapter, será
+    // tudo unificado em fin_titulo_anexos + Storage.
+    try { return storeAdicionarAnexo(tituloId, anexo); }
+    catch (e) { throw toRepoError(e); }
   }
-  async removerAnexo(): Promise<void> {
-    throw repoError("NOT_IMPLEMENTED",
-      "Remoção de anexo passa pelo módulo de anexos. Unificação prevista na migração.");
+  async removerAnexo(tituloId: string, anexoId: string, _motivo?: string): Promise<void> {
+    try { storeRemoverAnexo(tituloId, anexoId); }
+    catch (e) { throw toRepoError(e); }
   }
+
 
   // -------- Histórico
   async historicoTitulo(tituloId: string): Promise<HistoricoEntrada[]> {

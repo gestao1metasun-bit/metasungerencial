@@ -41,6 +41,7 @@ export type { FinanceiroRepository } from "./financeiro-repository";
 export type {
   FiltroTitulos, BaixaInput, CriarTituloInput, RepoError, RepoErrorCode,
   HistoricoEntrada, CalcularEncargosInput,
+  ChequeInput, ImportPrevisaoLanc, AnexoInput, CopiaTituloOverrides,
   CadastrosRepository, ParametrosRepository,
   // Re-export de tipos de domínio para uso pelas telas (não importar do store!)
   Titulo, TituloTipo, TituloStatus, Movimento, Rateio, Anexo,

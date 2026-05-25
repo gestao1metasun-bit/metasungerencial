@@ -1,20 +1,19 @@
 /**
- * Fonte única de identidade/permissão (C4b).
+ * Fonte ÚNICA de identidade/permissão.
  *
- * Combina:
- *  - Sessão Supabase (auth-store)   → fonte oficial de PERMISSÕES críticas
- *  - Perfil local (perfis-store)    → fonte oficial de IDENTIDADE VISUAL no header
+ * Origem oficial (e exclusiva):
+ *  - Sessão:       supabase.auth.getSession() + onAuthStateChange (via auth-store)
+ *  - Usuário:      supabase.auth.getUser() (user_metadata.full_name / email)
+ *  - Role/perm:    public.user_roles (carregado pelo auth-store)
  *
- * Regras:
- *  - `isAdminMaster` (canônico) só é true quando a sessão Supabase está autenticada
- *    com role admin_master/admin_geral. Sem sessão = sem permissão crítica.
- *  - `divergencia` sinaliza quando o perfil local diz "admin" mas a sessão real não
- *    confirma (ou vice-versa). UI deve mostrar badge/aviso.
- *  - Tudo o que controla ação crítica deve ler daqui — nunca diretamente do
- *    perfis-store nem do auth-store.
+ * IMPORTANTE:
+ *  - `perfis-store` (localStorage) NÃO é mais fonte de identidade nem de
+ *    permissão. Permanece apenas como cadastro auxiliar exibido em
+ *    Configurações.
+ *  - Ações críticas DEVEM checar `isAdminMaster` daqui — nunca o perfil local.
+ *  - Sem sessão Supabase => sem permissão crítica.
  */
 import { useAuth } from "@/lib/auth-store";
-import { useUsuarioAtual } from "@/lib/perfis-store";
 
 export type MotivoBloqueio =
   | null
@@ -23,33 +22,47 @@ export type MotivoBloqueio =
   | "sem_permissao";
 
 export interface Identidade {
-  /** sessão Supabase ativa (fonte oficial) */
+  /** Sessão Supabase ativa */
   isAuthenticated: boolean;
-  /** sessão ainda inicializando */
+  /** Sessão ainda inicializando (não usar para bloquear ações antes de carregar) */
   sessionLoading: boolean;
-  /** email/nome da sessão real */
+  /** E-mail da sessão real */
   email: string | null;
-  /** role do banco (canônico) */
+  /** Role do banco (user_roles) */
   role: "admin_master" | "admin_geral" | "usuario" | null;
   /** PERMISSÃO CRÍTICA — só true com sessão Supabase autenticada como admin */
   isAdminMaster: boolean;
-  /** Identidade visual (vem do perfis-store local, p/ header e display) */
+  /** Identidade visual derivada da própria sessão Supabase */
   displayName: string;
   perfilNome: string;
   iniciais: string;
-  /** Indica que header (local) e permissão real (Supabase) divergem */
-  divergencia: boolean;
-  /** Motivo legível da divergência ou bloqueio (para tooltip/toast) */
-  motivoDivergencia: string | null;
+  /**
+   * Compat: sempre `false`. Mantido para não quebrar consumidores antigos.
+   * Com fonte única não existe "divergência" — ou tem sessão, ou não tem.
+   */
+  divergencia: false;
+  motivoDivergencia: null;
   /** Razão pela qual uma ação crítica está bloqueada (null = liberada) */
   motivoBloqueio: MotivoBloqueio;
   /** Texto pronto para tooltip/toast ao tentar ação crítica sem permissão */
   mensagemBloqueio: string | null;
 }
 
+function calcIniciais(nome: string): string {
+  return (
+    String(nome)
+      .trim()
+      .split(/\s+/)
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "??"
+  );
+}
+
 export function useIdentidade(): Identidade {
   const auth = useAuth();
-  const { user: localUser, perfil } = useUsuarioAtual();
 
   const isAuthenticated = !!auth.session && !!auth.user;
   const sessionLoading = auth.loading;
@@ -57,11 +70,16 @@ export function useIdentidade(): Identidade {
   const isAdminMaster =
     isAuthenticated && (role === "admin_master" || role === "admin_geral");
 
-  const displayName =
-    auth.user?.user_metadata?.full_name ||
-    auth.user?.email ||
-    localUser?.nome ||
-    "—";
+  const email = auth.user?.email ?? null;
+  const metaName =
+    (auth.user?.user_metadata?.full_name as string | undefined) ||
+    (auth.user?.user_metadata?.nome as string | undefined) ||
+    null;
+
+  const displayName = !isAuthenticated
+    ? "Visitante"
+    : metaName || email || "Usuário";
+
   const perfilNome =
     role === "admin_master"
       ? "Admin Master"
@@ -69,30 +87,11 @@ export function useIdentidade(): Identidade {
       ? "Admin Geral"
       : role === "usuario"
       ? "Usuário"
-      : perfil?.nome ?? "Sem perfil";
-  const iniciais =
-    String(displayName)
-      .split(" ")
-      .map((p) => p[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "??";
+      : !isAuthenticated
+      ? "Sem sessão"
+      : "Sem perfil";
 
-  const localEhAdmin = !!perfil?.isAdminMaster;
-  let divergencia = false;
-  let motivoDivergencia: string | null = null;
-  if (!sessionLoading) {
-    if (localEhAdmin && !isAdminMaster) {
-      divergencia = true;
-      motivoDivergencia = isAuthenticated
-        ? "Perfil local indica Admin Master, mas a sessão autenticada não possui essa permissão."
-        : "Perfil local indica Admin Master, mas não há sessão autenticada. Faça login para habilitar ações administrativas.";
-    } else if (!localEhAdmin && isAdminMaster) {
-      divergencia = true;
-      motivoDivergencia =
-        "Sessão autenticada possui permissão administrativa, mas o perfil local exibido não.";
-    }
-  }
+  const iniciais = !isAuthenticated ? "—" : calcIniciais(displayName);
 
   let motivoBloqueio: MotivoBloqueio = null;
   let mensagemBloqueio: string | null = null;
@@ -112,15 +111,39 @@ export function useIdentidade(): Identidade {
   return {
     isAuthenticated,
     sessionLoading,
-    email: auth.user?.email ?? null,
+    email,
     role,
     isAdminMaster,
     displayName,
     perfilNome,
     iniciais,
-    divergencia,
-    motivoDivergencia,
+    divergencia: false,
+    motivoDivergencia: null,
     motivoBloqueio,
     mensagemBloqueio,
   };
+}
+
+/**
+ * Visibilidade de módulo derivada APENAS da role do banco.
+ * Admin vê tudo. Usuário comum vê apenas operacional (sem Controle/Estrutura).
+ */
+const MODULOS_OPERACIONAIS = new Set([
+  "dashboard",
+  "comercial",
+  "propostas",
+  "financiamentos",
+  "engenharia",
+  "estoque",
+  "financeiro",
+  "posvenda",
+]);
+
+export function canAccessModule(
+  role: Identidade["role"],
+  moduleKey: string,
+): boolean {
+  if (role === "admin_master" || role === "admin_geral") return true;
+  if (role === "usuario") return MODULOS_OPERACIONAIS.has(moduleKey);
+  return false;
 }

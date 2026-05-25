@@ -56,14 +56,15 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
 
   async atualizarTitulo(id: string, patch: Partial<Titulo>, motivo: string): Promise<Titulo> {
     try {
-      const r = storeAtualizar(id, patch, motivo);
-      if (!r) throw repoError("NOT_FOUND", "Título não encontrado.");
-      return r;
+      storeAtualizar(id, patch, "Sistema", motivo);
     } catch (e) {
       const err = e as Error;
       if (/fechamento/i.test(err.message)) throw repoError("PERIOD_LOCKED", err.message);
       throw repoError("VALIDATION", err.message);
     }
+    const r = getTitulo(id);
+    if (!r) throw repoError("NOT_FOUND", "Título não encontrado.");
+    return r;
   }
 
   async cancelarTitulo(id: string, motivo: string): Promise<void> {

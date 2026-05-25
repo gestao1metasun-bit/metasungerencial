@@ -193,7 +193,55 @@ export type CriarTituloInput = Omit<
   movimentos?: Movimento[];
 };
 
-export function criarTitulo(input: CriarTituloInput, usuario = "Sistema"): Titulo {
+export type CriarTituloOptions = {
+  usuario?: string;
+  /** Permite criar mesmo se houver duplicata candidata. Auditado. */
+  permitirDuplicidade?: boolean;
+  /** Motivo obrigatório quando permitirDuplicidade=true. */
+  motivoDuplicidade?: string;
+  /** Pula validação de centro de custo (uso interno: gatilhos automáticos). */
+  pularValidacaoCentroCusto?: boolean;
+};
+
+export function criarTitulo(
+  input: CriarTituloInput,
+  usuarioOrOptions: string | CriarTituloOptions = "Sistema",
+): Titulo {
+  const opts: CriarTituloOptions =
+    typeof usuarioOrOptions === "string" ? { usuario: usuarioOrOptions } : usuarioOrOptions;
+  const usuario = opts.usuario ?? "Sistema";
+
+  // ---- #18: centro de custo obrigatório por natureza
+  if (!opts.pularValidacaoCentroCusto && input.naturezaId) {
+    try {
+      // Import síncrono (mesmo bundle); evita ciclo via dynamic require alternativo
+      // — naturezas-store não importa este arquivo, então é seguro.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getNaturezas } = require("@/lib/fin-naturezas-store") as typeof import("@/lib/fin-naturezas-store");
+      const nat = getNaturezas?.().find((n) => n.id === input.naturezaId);
+      if (nat?.centroCustoObrigatorio && !input.centroCustoId && !input.centroCusto) {
+        throw new Error(`Natureza "${nat.nome}" exige centro de custo.`);
+      }
+    } catch (e) {
+      // Se require falhar, não bloqueia (estamos em ambiente sem CJS) — silencioso.
+      if (e instanceof Error && e.message.startsWith("Natureza")) throw e;
+    }
+  }
+
+  // ---- #12: detecção de duplicidade
+  if (!opts.permitirDuplicidade) {
+    const dups = detectarDuplicidade(input);
+    if (dups.length > 0) {
+      const ids = dups.slice(0, 3).map((d) => d.id).join(", ");
+      throw new Error(
+        `Possível duplicidade detectada (${dups.length}): ${ids}. ` +
+        `Confirme a operação reenviando com permitirDuplicidade=true e motivoDuplicidade.`,
+      );
+    }
+  } else if (!opts.motivoDuplicidade) {
+    throw new Error("Override de duplicidade exige motivo.");
+  }
+
   const id = input.id ?? newId(input.tipo === "AP" ? "AP" : "AR");
   const t: Titulo = {
     ...input,
@@ -204,18 +252,58 @@ export function criarTitulo(input: CriarTituloInput, usuario = "Sistema"): Titul
     criadoEm: input.criadoEm ?? isoNow(),
     criadoPor: input.criadoPor ?? usuario,
     movimentos: input.movimentos ?? [],
+    duplicidadePermitidaPor: opts.permitirDuplicidade ? usuario : undefined,
+    duplicidadePermitidaEm: opts.permitirDuplicidade ? isoNow() : undefined,
+    duplicidadeMotivo: opts.permitirDuplicidade ? opts.motivoDuplicidade : undefined,
   };
   // dedupe por id
   const cur = read().filter((x) => x.id !== t.id);
   write([t, ...cur]);
   pushAudit({
-    entidade: "contrato", // reaproveita o enum existente
+    entidade: "contrato",
     entidadeId: t.contratoId ?? t.id,
-    acao: "FIN_TITULO_CRIADO",
+    acao: opts.permitirDuplicidade ? "FIN_TITULO_CRIADO_DUPLICIDADE" : "FIN_TITULO_CRIADO",
     usuario,
+    motivo: opts.motivoDuplicidade,
     detalhe: `${t.tipo} ${t.origem} · ${t.descricao} · R$ ${t.valorOriginal.toFixed(2)}`,
   });
   return t;
+}
+
+/** #12 — Detecta títulos potencialmente duplicados ao input.
+ *  Critérios (qualquer um disparar): mesmo documentoTipo+documentoNumero não vazios;
+ *  OU mesmo (tipo + contraparte + valor + vencimento ±3 dias). Ignora cancelados. */
+export function detectarDuplicidade(input: Partial<Titulo>): Titulo[] {
+  const all = read().filter((t) => t.status !== "cancelado" && t.id !== input.id);
+  const out: Titulo[] = [];
+  const contraparte = (t: Pick<Titulo, "fornecedor" | "cliente" | "tipo">) =>
+    (t.tipo === "AP" ? t.fornecedor : t.cliente)?.trim().toLowerCase() ?? "";
+  const inContraparte = contraparte(input as Titulo);
+  const inDocNum = input.documentoNumero?.trim();
+  const inDocTipo = input.documentoTipo;
+  const inVenc = input.vencimento ? new Date(input.vencimento + "T00:00:00").getTime() : null;
+  const inVal = input.valorOriginal != null ? round2(input.valorOriginal) : null;
+
+  for (const t of all) {
+    // 1) mesmo documento
+    if (inDocNum && inDocTipo && t.documentoNumero?.trim() === inDocNum && t.documentoTipo === inDocTipo) {
+      out.push(t);
+      continue;
+    }
+    // 2) mesma contraparte + valor + vencimento próximo
+    if (
+      inContraparte &&
+      contraparte(t) === inContraparte &&
+      t.tipo === input.tipo &&
+      inVal != null && round2(t.valorOriginal) === inVal &&
+      inVenc != null
+    ) {
+      const tVenc = new Date(t.vencimento + "T00:00:00").getTime();
+      const diffDias = Math.abs(tVenc - inVenc) / 86_400_000;
+      if (diffDias <= 3) out.push(t);
+    }
+  }
+  return out;
 }
 
 export function atualizarTitulo(id: string, patch: Partial<Titulo>, usuario = "Sistema", motivo?: string) {

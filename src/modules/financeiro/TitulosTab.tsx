@@ -226,7 +226,15 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         </Button>
                       </>
                     )}
+                    <Button size="icon" variant="ghost" title="Ratear" onClick={() => setRatear(t)} disabled={!!t.bloqueadoFechamento || t.status === "cancelado"}>
+                      <Split className="h-4 w-4 text-indigo-600" />
+                    </Button>
                     {t.bloqueadoFechamento && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {t.rateios && t.rateios.length > 0 && (
+                      <span className="ml-1 rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600" title={`${t.rateios.length} rateios`}>
+                        R{t.rateios.length}
+                      </span>
+                    )}
                     {t.statusRenegociacao === "renegociado" && (
                       <span className="ml-1 text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
                     )}

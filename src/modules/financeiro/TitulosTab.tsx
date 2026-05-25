@@ -1249,21 +1249,37 @@ function BaixaDialog({
         <div className="text-xs text-muted-foreground">Saldo atual: {fmtBRLPrecise(titulo.saldo)} de {fmtBRLPrecise(titulo.valorOriginal)}</div>
       </div>
       {sugestao && sugestao.diasAtraso > 0 && (
-        <div className="mb-2 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700">
-          Título com <strong>{sugestao.diasAtraso} dia(s)</strong> de atraso ({sugestao.diasCobraveis} cobráveis).
-          Juros e multa pré-preenchidos pelos parâmetros financeiros — você pode ajustar.
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700">
+          <span>
+            Título com <strong>{sugestao.diasAtraso} dia(s)</strong> de atraso ({sugestao.diasCobraveis} cobráveis).
+            Juros e multa calculados pelos parâmetros financeiros (R$, % já aplicado).
+          </span>
+          <div className="flex gap-1">
+            <Button
+              size="sm" variant="outline" className="h-6 text-[10px] px-2"
+              onClick={() => { setEncargosTocados(true); setJuros(0); setMulta(0); }}
+              title="Zera juros e multa para negociação amigável"
+            >Zerar juros + multa</Button>
+            <Button
+              size="sm" variant="ghost" className="h-6 text-[10px] px-2"
+              onClick={() => { setEncargosTocados(false); setJuros(sugestao.jurosSugerido); setMulta(sugestao.multaSugerida); }}
+              title="Recalcula encargos a partir dos parâmetros"
+            >Restaurar sugestão</Button>
+          </div>
         </div>
       )}
       <div className="grid grid-cols-2 gap-3">
         <div><Label>Valor (principal)</Label><Input type="number" step="0.01" value={valor} onChange={(e) => setValor(Number(e.target.value))} /></div>
         <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
         <div>
-          <Label>Juros {sugestao && sugestao.jurosSugerido > 0 && <span className="text-[10px] text-muted-foreground">(sugerido {fmtBRLPrecise(sugestao.jurosSugerido)})</span>}</Label>
+          <Label>Juros (R$) {sugestao && sugestao.jurosSugerido > 0 && <span className="text-[10px] text-muted-foreground">— sugerido {fmtBRLPrecise(sugestao.jurosSugerido)}</span>}</Label>
           <Input type="number" step="0.01" value={juros} onChange={(e) => { setEncargosTocados(true); setJuros(Number(e.target.value)); }} />
+          <div className="text-[10px] text-muted-foreground mt-0.5">Valor em reais já calculado a partir do % configurado.</div>
         </div>
         <div>
-          <Label>Multa {sugestao && sugestao.multaSugerida > 0 && <span className="text-[10px] text-muted-foreground">(sugerida {fmtBRLPrecise(sugestao.multaSugerida)})</span>}</Label>
+          <Label>Multa (R$) {sugestao && sugestao.multaSugerida > 0 && <span className="text-[10px] text-muted-foreground">— sugerida {fmtBRLPrecise(sugestao.multaSugerida)}</span>}</Label>
           <Input type="number" step="0.01" value={multa} onChange={(e) => { setEncargosTocados(true); setMulta(Number(e.target.value)); }} />
+          <div className="text-[10px] text-muted-foreground mt-0.5">Valor em reais já calculado a partir do % configurado.</div>
         </div>
         <div><Label>Desconto</Label><Input type="number" step="0.01" value={desconto} onChange={(e) => setDesconto(Number(e.target.value))} /></div>
         <div>

@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { ContratoRow, ContratoUpsertPayload } from "./contratos-mapper";
+import type { ContratoRow } from "./contratos-mapper";
 
 const COLUMNS = "id, codigo, cliente_id, consultor_id, status, valor_total, valor_entrada, data_assinatura, data_inicio, data_fim, potencia_kwp, modulos_qtde, inversor, forma_pagamento, observacoes, dados, vendedor, comissao_pct, comissao_valor, possui_financiamento, financiamento_banco, financiamento_valor, financiamento_status, financiamento_liberado_eng, proposta_id, lead_id, assinado_aprovado, assinado_aprovado_em, assinado_aprovado_por, liberado_para_contrato, liberado_em, liberado_por, liberacao_obs, contrato_redigido, cancelado, motivo_cancelamento, created_at, updated_at, deleted_at";
 

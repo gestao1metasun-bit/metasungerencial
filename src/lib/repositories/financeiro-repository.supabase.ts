@@ -84,6 +84,9 @@ export class SupabaseFinanceiroAdapter implements FinanceiroRepository {
   async atualizarTitulo(_id: string, _patch: Partial<Titulo>, _motivo: string): Promise<Titulo> { return NOT_READY("atualizarTitulo"); }
   async cancelarTitulo(_id: string, _motivo: string): Promise<void> { NOT_READY("cancelarTitulo"); }
   async detectarDuplicidade(_input: Partial<Titulo>): Promise<Titulo[]> { return NOT_READY("detectarDuplicidade"); }
+  async gerarCopiaTitulo(_id: string, _o?: unknown, _m?: string): Promise<Titulo> { return NOT_READY("gerarCopiaTitulo"); }
+  async cadastrarCheque(_id: string, _c: unknown): Promise<void> { NOT_READY("cadastrarCheque"); }
+  async importarPrevisoesDoLegado(_l: unknown): Promise<number> { return NOT_READY("importarPrevisoesDoLegado"); }
 
   // Baixas
   async registrarBaixa(_input: BaixaInput): Promise<Movimento> { return NOT_READY("registrarBaixa"); }
@@ -139,7 +142,7 @@ export class SupabaseFinanceiroAdapter implements FinanceiroRepository {
 
   // Anexos
   async listarAnexos(_t: string): Promise<Anexo[]> { return NOT_READY("listarAnexos"); }
-  async anexar(_t: string, _a: Omit<Anexo, "id" | "enviadoEm">): Promise<Anexo> { return NOT_READY("anexar"); }
+  async anexar(_t: string, _a: unknown): Promise<Anexo> { return NOT_READY("anexar"); }
   async removerAnexo(_t: string, _a: string, _m: string): Promise<void> { NOT_READY("removerAnexo"); }
 
   // Histórico

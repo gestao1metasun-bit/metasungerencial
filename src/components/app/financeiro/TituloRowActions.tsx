@@ -17,10 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  cancelarTitulo, estornarMovimento, gerarCopiaTitulo, cadastrarCheque,
-  type Titulo,
-} from "@/lib/fin-titulos-store";
+import { useFinanceiroRepo } from "@/hooks/useRepoFinanceiro";
+import type { Titulo } from "@/lib/repositories/financeiro-repository";
 
 export type TituloRowActionsProps = {
   titulo: Titulo;
@@ -39,6 +37,7 @@ function fmtBRL(v: number) {
 
 export function TituloRowActions(p: TituloRowActionsProps) {
   const t = p.titulo;
+  const repo = useFinanceiroRepo();
   const bloqueado = !!t.bloqueadoFechamento;
   const quitado = t.status === "pago" || t.status === "recebido";
   const cancelado = t.status === "cancelado";
@@ -93,9 +92,9 @@ export function TituloRowActions(p: TituloRowActionsProps) {
     w.document.close();
   }
 
-  function handleGerarCopia() {
+  async function handleGerarCopia() {
     try {
-      const nova = gerarCopiaTitulo(t.id, {
+      const nova = await repo.gerarCopiaTitulo(t.id, {
         vencimento: copia.vencimento,
         valorOriginal: Number(copia.valor),
         descricao: copia.descricao,
@@ -105,35 +104,36 @@ export function TituloRowActions(p: TituloRowActionsProps) {
     } catch (e: any) { toast.error(e?.message ?? "Falha ao gerar cópia."); }
   }
 
-  function handleCadastrarCheque() {
+  async function handleCadastrarCheque() {
     try {
       if (!cheque.numero.trim()) { toast.error("Número do cheque é obrigatório."); return; }
-      cadastrarCheque(t.id, cheque);
+      await repo.cadastrarCheque(t.id, cheque);
       toast.success("Cheque cadastrado.");
       setChequeOpen(false);
       setCheque({ numero: "", banco: "", agencia: "", conta: "", bom_para: "", titular: "" });
     } catch (e: any) { toast.error(e?.message ?? "Falha ao cadastrar cheque."); }
   }
 
-  function handleExcluir() {
+  async function handleExcluir() {
     try {
       if (motivoExcluir.trim().length < 3) { toast.error("Motivo precisa ter ao menos 3 caracteres."); return; }
-      cancelarTitulo(t.id, motivoExcluir);
+      await repo.cancelarTitulo(t.id, motivoExcluir);
       toast.success("Título cancelado.");
       setExcluirOpen(false);
     } catch (e: any) { toast.error(e?.message ?? "Falha ao excluir."); }
   }
 
-  function handleEstornar() {
+  async function handleEstornar() {
     try {
       if (!movSel) { toast.error("Selecione o movimento."); return; }
       if (motivoEstorno.trim().length < 3) { toast.error("Motivo precisa ter ao menos 3 caracteres."); return; }
-      estornarMovimento(t.id, movSel, motivoEstorno);
+      await repo.estornarBaixa(t.id, movSel, motivoEstorno);
       toast.success("Movimento estornado.");
       setEstornarOpen(false);
       setMovSel(""); setMotivoEstorno("");
     } catch (e: any) { toast.error(e?.message ?? "Falha ao estornar."); }
   }
+
 
   return (
     <>

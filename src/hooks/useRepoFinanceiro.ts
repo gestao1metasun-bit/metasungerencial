@@ -23,12 +23,33 @@ import { useExtrato } from "@/lib/fin-conciliacao-store";
 import { useFechamentos } from "@/lib/fin-fechamento-store";
 import { useFluxoCaixa } from "@/lib/fin-fluxo-caixa";
 import { useParametrosFinanceiros } from "@/lib/fin-parametros-financeiros-store";
+import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useNaturezasFin } from "@/lib/fin-naturezas-store";
+import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
+import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
+import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
+import { useGrupos, useSubgrupos } from "@/lib/fin-grupos-store";
+import { getFinanceiroRepository } from "@/lib/repositories";
 
 import type {
+  FinanceiroRepository,
   Titulo, FiltroTitulos, Renegociacao, Rescisao, Adiantamento,
   Compra, ExtratoLancamento, FechamentoMes, FluxoPonto, UseFluxoArgs,
   ParametrosFinanceiros,
+  Fornecedor, ContaFinanceira, NaturezaFin,
+  CentroCustoFin, MeioPagamento, TipoAplicacao,
+  GrupoFinanceiro, SubgrupoFinanceiro,
 } from "@/lib/repositories/financeiro-repository";
+
+/**
+ * Hook canônico para acessar o repositório financeiro nos handlers de UI.
+ * Use sempre que precisar disparar uma mutação (criar/atualizar/baixar/…)
+ * sem importar diretamente de `@/lib/fin-*-store`.
+ */
+export function useFinanceiroRepo(): FinanceiroRepository {
+  return getFinanceiroRepository();
+}
 
 function aplicar(filtro: FiltroTitulos | undefined, lista: Titulo[]): Titulo[] {
   if (!filtro) return lista;
@@ -72,3 +93,13 @@ export function useRepoExtrato(): ExtratoLancamento[] { return useExtrato(); }
 export function useRepoFechamentos(): FechamentoMes[] { return useFechamentos(); }
 export function useRepoFluxoCaixa(args: UseFluxoArgs): FluxoPonto[] { return useFluxoCaixa(args); }
 export function useRepoParametros(): ParametrosFinanceiros { return useParametrosFinanceiros(); }
+
+// ---- Cadastros auxiliares (leituras reativas via stores; mutações via repo) ----
+export function useRepoFornecedores(): Fornecedor[] { return useFornecedores(); }
+export function useRepoContas(): ContaFinanceira[] { return useContasFinanceiras(); }
+export function useRepoNaturezas(): NaturezaFin[] { return useNaturezasFin(); }
+export function useRepoCentrosCusto(): CentroCustoFin[] { return useCentrosCustoFin(); }
+export function useRepoMeiosPagamento(): MeioPagamento[] { return useMeiosPagamento(); }
+export function useRepoTiposAplicacao(): TipoAplicacao[] { return useTiposAplicacao(); }
+export function useRepoGrupos(): GrupoFinanceiro[] { return useGrupos(); }
+export function useRepoSubgrupos(): SubgrupoFinanceiro[] { return useSubgrupos(); }

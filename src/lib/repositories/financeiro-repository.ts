@@ -106,6 +106,38 @@ export type CalcularEncargosInput = {
   multaPct?: number;
 };
 
+export type ChequeInput = {
+  numero: string;
+  banco?: string;
+  agencia?: string;
+  conta?: string;
+  bom_para?: string;
+  titular?: string;
+};
+
+export type ImportPrevisaoLanc = {
+  id: string;
+  data: string;
+  descricao: string;
+  tipo: "Entrada" | "Saída";
+  valor: number;
+  camada: string;
+  natureza: string;
+  centroCusto: string;
+  obra?: string;
+  contrato?: string;
+  cliente?: string;
+  formaPagamento?: string;
+  parcelaLabel?: string;
+  competencia?: string;
+};
+
+export type AnexoInput = Partial<Anexo> & Pick<Anexo, "nome" | "mime" | "tamanho">;
+
+export type CopiaTituloOverrides = Partial<
+  Pick<Titulo, "vencimento" | "competencia" | "valorOriginal" | "descricao">
+>;
+
 export type RepoErrorCode =
   | "PERIOD_LOCKED"
   | "FORBIDDEN"
@@ -181,10 +213,18 @@ export interface FinanceiroRepository {
   atualizarTitulo(id: string, patch: Partial<Titulo>, motivo: string): Promise<Titulo>;
   cancelarTitulo(id: string, motivo: string): Promise<void>;
   detectarDuplicidade(input: Partial<Titulo>): Promise<Titulo[]>;
+  gerarCopiaTitulo(
+    tituloId: string,
+    overrides?: CopiaTituloOverrides,
+    motivo?: string,
+  ): Promise<Titulo>;
+  cadastrarCheque(tituloId: string, cheque: ChequeInput): Promise<void>;
+  importarPrevisoesDoLegado(lancs: ImportPrevisaoLanc[]): Promise<number>;
 
   // ---------- Baixas
   registrarBaixa(input: BaixaInput): Promise<Movimento>;
   estornarBaixa(tituloId: string, movimentoId: string, motivo: string): Promise<void>;
+
 
   // ---------- Rateios
   setRateios(tituloId: string, rateios: Rateio[], motivo?: string): Promise<void>;
@@ -247,7 +287,7 @@ export interface FinanceiroRepository {
 
   // ---------- Anexos
   listarAnexos(tituloId: string): Promise<Anexo[]>;
-  anexar(tituloId: string, anexo: Omit<Anexo, "id" | "enviadoEm">): Promise<Anexo>;
+  anexar(tituloId: string, anexo: AnexoInput): Promise<Anexo>;
   removerAnexo(tituloId: string, anexoId: string, motivo: string): Promise<void>;
 
   // ---------- Histórico / Auditoria

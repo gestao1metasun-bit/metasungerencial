@@ -27,6 +27,11 @@ import {
   setRateios as storeSetRateios,
   apagarRateios as storeApagarRateios,
   detectarDuplicidade as storeDetectarDup,
+  gerarCopiaTitulo as storeGerarCopia,
+  cadastrarCheque as storeCadastrarCheque,
+  adicionarAnexo as storeAdicionarAnexo,
+  removerAnexo as storeRemoverAnexo,
+  importarPrevisoesDoLegado as storeImportarPrevisoes,
 } from "@/lib/fin-titulos-store";
 import {
   getRenegociacoes, getRenegociacoesPorTitulo,
@@ -212,6 +217,23 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
   async detectarDuplicidade(input: Partial<Titulo>): Promise<Titulo[]> {
     return storeDetectarDup(input);
   }
+  async gerarCopiaTitulo(
+    tituloId: string,
+    overrides?: Parameters<FinanceiroRepository["gerarCopiaTitulo"]>[1],
+    _motivo?: string,
+  ): Promise<Titulo> {
+    try { return storeGerarCopia(tituloId, overrides ?? {}); }
+    catch (e) { throw toRepoError(e); }
+  }
+  async cadastrarCheque(tituloId: string, cheque: Parameters<FinanceiroRepository["cadastrarCheque"]>[1]): Promise<void> {
+    try { storeCadastrarCheque(tituloId, cheque); }
+    catch (e) { throw toRepoError(e); }
+  }
+  async importarPrevisoesDoLegado(lancs: Parameters<FinanceiroRepository["importarPrevisoesDoLegado"]>[0]): Promise<number> {
+    try { return storeImportarPrevisoes(lancs); }
+    catch (e) { throw toRepoError(e); }
+  }
+
 
   // -------- Baixas
   async registrarBaixa(input: BaixaInput): Promise<Movimento> {
@@ -364,15 +386,18 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
   async listarAnexos(tituloId: string): Promise<Anexo[]> {
     return getTitulo(tituloId)?.anexos ?? [];
   }
-  async anexar(): Promise<Anexo> {
-    throw repoError("NOT_IMPLEMENTED",
-      "Anexos passam pelo módulo de anexos (anexos.functions). " +
-      "Será unificado no SupabaseAdapter com Storage + tabela fin_titulo_anexos.");
+  async anexar(tituloId: string, anexo: Parameters<FinanceiroRepository["anexar"]>[1]): Promise<Anexo> {
+    // Hoje persiste apenas o registro de metadados do anexo (o upload físico
+    // continua via server function `uploadAnexo`). No SupabaseAdapter, será
+    // tudo unificado em fin_titulo_anexos + Storage.
+    try { return storeAdicionarAnexo(tituloId, anexo); }
+    catch (e) { throw toRepoError(e); }
   }
-  async removerAnexo(): Promise<void> {
-    throw repoError("NOT_IMPLEMENTED",
-      "Remoção de anexo passa pelo módulo de anexos. Unificação prevista na migração.");
+  async removerAnexo(tituloId: string, anexoId: string, _motivo?: string): Promise<void> {
+    try { storeRemoverAnexo(tituloId, anexoId); }
+    catch (e) { throw toRepoError(e); }
   }
+
 
   // -------- Histórico
   async historicoTitulo(tituloId: string): Promise<HistoricoEntrada[]> {

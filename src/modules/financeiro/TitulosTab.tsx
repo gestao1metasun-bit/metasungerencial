@@ -1,5 +1,5 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
-// Importa o store fin-titulos-store e fornece tabelas + dialogs.
+// Consome FinanceiroRepository via useRepoTitulos/useFinanceiroRepo (Onda 2).
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
@@ -20,11 +20,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  useTitulos, criarTitulo, atualizarTitulo, cancelarTitulo, registrarBaixa,
-  estornarMovimento, importarPrevisoesDoLegado,
-  adicionarAnexo, removerAnexo,
-  type Titulo, type TituloTipo, type TituloStatus, type Anexo,
-} from "@/lib/fin-titulos-store";
+  useRepoTitulos, useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  Titulo, TituloTipo, TituloStatus, Anexo,
+} from "@/lib/repositories/financeiro-repository";
 import { useFornecedores, upsertFornecedor, newFornecedorId } from "@/lib/fin-fornecedores-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useNaturezasFin } from "@/lib/fin-naturezas-store";
@@ -170,7 +170,8 @@ function ContraparteCombo({
  * ============================================================ */
 
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
-  const todos = useTitulos();
+  const todos = useRepoTitulos();
+  const repo = useFinanceiroRepo();
   const naturezas = useNaturezasFin();
   const grupos = useGrupos();
   const subgrupos = useSubgrupos();
@@ -241,9 +242,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              const n = importarPrevisoesDoLegado(readLancamentos());
-              toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+            onClick={async () => {
+              try {
+                const n = await repo.importarPrevisoesDoLegado(readLancamentos());
+                toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+              } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
             }}
             title="Importa Previsto/A realizar/Confirmado do fluxo de caixa para títulos"
           >
@@ -262,9 +265,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 const criados: Titulo[] = [];
                 try {
                   if (parcelas && parcelas.length > 1) {
-                    parcelas.forEach((p, idx) => {
+                    for (let idx = 0; idx < parcelas.length; idx++) {
+                      const p = parcelas[idx];
                       const label = `${idx + 1}/${parcelas.length}`;
-                      criados.push(criarTitulo({
+                      criados.push(await repo.criarTitulo({
                         ...input,
                         tipo, origem: input.origem ?? "manual",
                         descricao: `${input.descricao} (${label})`,
@@ -273,10 +277,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         competencia: p.competencia,
                         parcelaLabel: label,
                       }));
-                    });
+                    }
                     toast.success(`${parcelas.length} parcelas criadas.`);
                   } else {
-                    criados.push(criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
+                    criados.push(await repo.criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
                     toast.success("Título criado.");
                   }
                 } catch (e: any) {
@@ -291,7 +295,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     fd.append("file", file);
                     fd.append("tituloId", alvo.id);
                     const { anexo } = await uploadAnexoFn({ data: fd });
-                    adicionarAnexo(alvo.id, {
+                    await repo.anexar(alvo.id, {
                       id: anexo.id,
                       nome: anexo.nome,
                       mime: anexo.mime,
@@ -407,16 +411,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             tipo={tipo}
             initial={editar}
             cadastros={cadastros}
-            onSave={(patch) => {
+            onSave={async (patch) => {
               try {
-                atualizarTitulo(editar.id, patch);
+                await repo.atualizarTitulo(editar.id, patch, "Edição manual");
                 toast.success("Título atualizado.");
                 setEditar(null);
               } catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setEditar(null)}
-            onCancelarTitulo={(motivo) => {
-              try { cancelarTitulo(editar.id, motivo); toast.success("Título cancelado."); setEditar(null); }
+            onCancelarTitulo={async (motivo) => {
+              try { await repo.cancelarTitulo(editar.id, motivo); toast.success("Título cancelado."); setEditar(null); }
               catch (e: any) { toast.error(e.message); }
             }}
           />
@@ -429,8 +433,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           <BaixaDialog
             titulo={baixar}
             contas={contas}
-            onSave={(b) => {
-              try { registrarBaixa(baixar.id, b); toast.success(tipo === "AP" ? "Pagamento registrado." : "Recebimento registrado."); setBaixar(null); }
+            onSave={async (b) => {
+              try { await repo.registrarBaixa({ ...b, tituloId: baixar.id }); toast.success(tipo === "AP" ? "Pagamento registrado." : "Recebimento registrado."); setBaixar(null); }
               catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setBaixar(null)}
@@ -494,8 +498,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       <Dialog open={!!estornar} onOpenChange={(o) => !o && setEstornar(null)}>
         {estornar && (
           <EstornoDialog
-            onSave={(motivo) => {
-              try { estornarMovimento(estornar.titulo.id, estornar.movId, motivo); toast.success("Movimento estornado."); setEstornar(null); setVerHist(null); }
+            onSave={async (motivo) => {
+              try { await repo.estornarBaixa(estornar.titulo.id, estornar.movId, motivo); toast.success("Movimento estornado."); setEstornar(null); setVerHist(null); }
               catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setEstornar(null)}
@@ -1137,6 +1141,7 @@ function TituloDialog({
 function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }) {
   const anexos = titulo.anexos ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
+  const repo = useFinanceiroRepo();
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const signedUrlAnexoFn = useServerFn(signedUrlAnexo);
   const deleteAnexoFn = useServerFn(deleteAnexo);
@@ -1150,7 +1155,7 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
         fd.append("file", file);
         fd.append("tituloId", titulo.id);
         const { anexo } = await uploadAnexoFn({ data: fd });
-        adicionarAnexo(titulo.id, {
+        await repo.anexar(titulo.id, {
           id: anexo.id,
           nome: anexo.nome,
           mime: anexo.mime,
@@ -1175,7 +1180,7 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
   const excluir = async (a: Anexo) => {
     try {
       if (a.storagePath) await deleteAnexoFn({ data: { anexoId: a.id } });
-      removerAnexo(titulo.id, a.id);
+      await repo.removerAnexo(titulo.id, a.id, "Exclusão pelo usuário");
     } catch (e: any) { toast.error(e?.message ?? "Falha ao excluir."); }
   };
 

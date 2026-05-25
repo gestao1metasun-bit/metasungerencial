@@ -1224,17 +1224,33 @@ function KanbanView({
                     </div>
                     <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
-                      {!l.bloqueado && (
-                        <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
-                          <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                            <Eye className="mr-2 h-4 w-4" /> Abrir lead
-                          </DropdownMenuItem>
-                          {l.status === "CANCELADA" && (
-                            <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                              <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                              <span className="text-success">Reativar última proposta</span>
+                      <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
+                        <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                          <Eye className="mr-2 h-4 w-4" /> Abrir lead
+                        </DropdownMenuItem>
+                        {!l.bloqueado && onAprovar && (() => {
+                          const alvo = propostaAprovavelDoLead(l);
+                          return alvo ? (
+                            <DropdownMenuItem onSelect={() => onAprovar(alvo)}>
+                              <Check className="mr-2 h-4 w-4 text-success" />
+                              <span className="text-success">Aprovar e gerar contrato</span>
                             </DropdownMenuItem>
-                          )}
+                          ) : null;
+                        })()}
+                        {l.bloqueado && (
+                          <DropdownMenuItem onSelect={irParaContratos}>
+                            <FileText className="mr-2 h-4 w-4 text-primary" />
+                            <span className="text-primary">Ver contrato no Comercial</span>
+                            <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                          </DropdownMenuItem>
+                        )}
+                        {!l.bloqueado && l.status === "CANCELADA" && (
+                          <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                            <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                            <span className="text-success">Reativar última proposta</span>
+                          </DropdownMenuItem>
+                        )}
+                        {!l.bloqueado && (
                           <DropdownMenuItem
                             onSelect={() => {
                               const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
@@ -1245,8 +1261,8 @@ function KanbanView({
                             <Ban className="mr-2 h-4 w-4 text-destructive" />
                             <span className="text-destructive">Cancelar última proposta</span>
                           </DropdownMenuItem>
-                        </ActionsMenu>
-                      )}
+                        )}
+                      </ActionsMenu>
                     </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">

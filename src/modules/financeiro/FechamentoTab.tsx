@@ -32,6 +32,25 @@ export function FechamentoTab() {
   const globalFechado = useMemo(() => isMesGlobalFechado(mes), [mes, fechs]);
   const todasFechadas = contas.length > 0 && contas.every((c) => isMesFechado(mes, c.id));
 
+  // Item 3 — títulos ainda abertos no mês (competência) para alertar antes do fechamento global.
+  const titulos = useRepoTitulos();
+  const titulosAbertosNoMes = useMemo(() => {
+    const abertos = titulos.filter((t) => {
+      const comp = (t.competencia ?? t.vencimento ?? "").slice(0, 7);
+      if (comp !== mes) return false;
+      return t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado";
+    });
+    const ap = abertos.filter((t) => t.tipo === "AP");
+    const ar = abertos.filter((t) => t.tipo === "AR");
+    return {
+      total: abertos.length,
+      ap: ap.length,
+      ar: ar.length,
+      saldoAP: ap.reduce((s, t) => s + (t.saldo ?? 0), 0),
+      saldoAR: ar.reduce((s, t) => s + (t.saldo ?? 0), 0),
+    };
+  }, [titulos, mes]);
+
   return (
     <div className="space-y-4">
       <Card className="p-5 bg-[image:var(--gradient-card)]">

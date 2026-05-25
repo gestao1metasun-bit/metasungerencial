@@ -372,14 +372,23 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   {t.obraId && <div className="text-[10px] text-muted-foreground">Obra: {t.obraId}</div>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{tipo === "AP" ? (t.fornecedor ?? "—") : (t.cliente ?? "—")}</TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell>
                   {t.vencimentoReal && t.vencimentoReal !== t.vencimento ? (
-                    <div className="flex flex-col leading-tight">
-                      <span className="font-medium text-foreground">{fmtDateBR(t.vencimentoReal)}</span>
-                      <span className="text-[10px] text-muted-foreground line-through">{fmtDateBR(t.vencimento)}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] leading-tight w-fit">
+                        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">Nominal</span>
+                        <span className="font-mono text-muted-foreground line-through">{fmtDateBR(t.vencimento)}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] leading-tight w-fit">
+                        <span className="text-[9px] uppercase tracking-wide text-primary/80">Real</span>
+                        <span className="font-mono font-semibold text-foreground">{fmtDateBR(t.vencimentoReal)}</span>
+                      </span>
                     </div>
                   ) : (
-                    fmtDateBR(t.vencimento)
+                    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] leading-tight w-fit">
+                      <span className="text-[9px] uppercase tracking-wide text-muted-foreground">Nominal / Real</span>
+                      <span className="font-mono font-semibold text-foreground">{fmtDateBR(t.vencimento)}</span>
+                    </span>
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium">{fmtBRLPrecise(t.valorOriginal)}</TableCell>

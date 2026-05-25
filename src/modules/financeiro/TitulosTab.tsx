@@ -563,6 +563,13 @@ function TituloDialog({
   // Listas de origens reais (obras e contratos cadastrados no ERP)
   const contratosAll = useContratos();
   const obrasAll = useObrasSnapshot();
+  const clientesAll = useClientesFull();
+
+  // Obras filtradas pelo contrato selecionado (quando houver)
+  const obrasDoContrato = useMemo(
+    () => obrasAll.filter((o) => !contratoId || o.contrato === contratoId),
+    [obrasAll, contratoId],
+  );
 
   // Opções de origem permitidas por tipo
   const origensDisp = useMemo(() => {
@@ -582,9 +589,13 @@ function TituloDialog({
     ];
   }, [tipo]);
 
-  // Auto-preenchimento ao escolher contrato
+  // Auto-preenchimento ao escolher contrato (e reseta obra se não pertencer mais)
   const aoEscolherContrato = (id: string) => {
     setContrato(id);
+    if (id && obraId) {
+      const o = obrasAll.find((x) => x.id === obraId);
+      if (o && o.contrato !== id) setObra("");
+    }
     const c = contratosAll.find((x) => x.id === id);
     if (c) {
       if (!cliente) setCliente(c.cliente);
@@ -598,6 +609,23 @@ function TituloDialog({
     if (o) {
       if (o.contrato && !contratoId) setContrato(o.contrato);
       if (o.cliente && !cliente) setCliente(o.cliente);
+    }
+  };
+
+  // Adicionar contraparte inline
+  const adicionarFornecedorInline = (nome: string) => {
+    try {
+      upsertFornecedor({ id: newFornecedorId(), nome, ativo: true });
+      toast.success(`Fornecedor "${nome}" cadastrado.`);
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao cadastrar."); }
+  };
+  const adicionarClienteInline = (nome: string) => {
+    try {
+      addClienteFull({ nome, doc: "", telefone: "", cidade: "", uf: "" });
+      toast.success(`Cliente "${nome}" cadastrado.`);
+    } catch (e: any) {
+      if (e instanceof DuplicateClienteError) toast.info("Cliente já existia — usando o cadastro existente.");
+      else toast.error(e?.message ?? "Falha ao cadastrar.");
     }
   };
 

@@ -20,6 +20,8 @@ const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", cur
 export function FechamentoTab() {
   const fechs = useFechamentos();
   const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const { can, isAdmin } = useMyPermissions();
+  const podeReabrir = isAdmin || can("financeiro.reabrir_periodo");
   const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
   const [saldos, setSaldos] = useState<Record<string, string>>({});
   const [motivos, setMotivos] = useState<Record<string, string>>({});

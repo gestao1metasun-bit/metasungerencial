@@ -306,7 +306,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}

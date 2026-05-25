@@ -136,6 +136,10 @@ export type Titulo = {
   statusRenegociacao?: "ativo" | "renegociado";       // pai marcado como renegociado
 
   movimentos: Movimento[];
+
+  // Rateio do título entre múltiplos centros de custo / naturezas / O.S.
+  // Quando presente, a soma de rateios[].valor deve igualar valorOriginal.
+  rateios?: Rateio[];
 };
 
 const KEY = "ms.fin.titulos.v1";

@@ -366,6 +366,13 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         open={!!renegociar}
         onClose={() => setRenegociar(null)}
       />
+
+      {/* Edição de rateio */}
+      <EdicaoRateioDialog
+        titulo={ratear}
+        open={!!ratear}
+        onOpenChange={(o) => !o && setRatear(null)}
+      />
     </div>
   );
 }

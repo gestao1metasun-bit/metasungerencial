@@ -53,3 +53,4 @@ export function upsertFornecedor(f: Fornecedor) {
 }
 export function removeFornecedor(id: string) { write(read().filter((x) => x.id !== id)); }
 export function newFornecedorId() { return `F-${String(read().length + 1).padStart(3, "0")}`; }
+export function getFornecedores(): Fornecedor[] { return read(); }

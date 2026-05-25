@@ -887,6 +887,14 @@ function TituloDialog({
                     <Button type="button" variant="ghost" onClick={() => setParcelas([])}>Limpar</Button>
                   )}
                 </div>
+                <label className="col-span-2 flex items-center gap-1.5 text-xs">
+                  <input type="checkbox" checked={mesmoVencimento} onChange={(e) => setMesmoVenc(e.target.checked)} />
+                  Mesma data de vencimento em todas as parcelas
+                </label>
+                <label className="col-span-2 flex items-center gap-1.5 text-xs">
+                  <input type="checkbox" checked={mesmaCompetencia} onChange={(e) => setMesmaComp(e.target.checked)} />
+                  Mesmo mês de competência em todas
+                </label>
               </div>
 
               {parcelas.length > 0 && (

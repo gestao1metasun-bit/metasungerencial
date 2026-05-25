@@ -159,7 +159,8 @@ export function AdiantamentosTab() {
 
 // ----------------------------------------------------------- novo adiantamento
 function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onClose: () => void }) {
-  const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const repo = useFinanceiroRepo();
+  const contas = useRepoContas().filter((c) => c.ativo);
   const [contraparte, setContraparte] = useState("");
   const [valor, setValor] = useState("");
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
@@ -167,10 +168,10 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
   const [contratoId, setContratoId] = useState("");
   const [obs, setObs] = useState("");
 
-  function salvar() {
+  async function salvar() {
     try {
       const conta = contas.find((c) => c.id === contaId);
-      registrarAdiantamento({
+      await repo.registrarAdiantamento({
         tipo,
         contraparteNome: contraparte,
         valor: Number(valor),
@@ -178,7 +179,7 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
         contaFinanceira: conta?.nome,
         contratoId: contratoId || undefined,
         observacao: obs || undefined,
-      }, "Admin");
+      });
       toast.success("Adiantamento registrado.");
       onClose();
     } catch (e: any) { toast.error(e.message); }

@@ -127,7 +127,7 @@ export function EdicaoRateioDialog({
 
   function handleSalvar() {
     try {
-      setRateios(titulo.id, rows);
+      setRateios(titulo!.id, rows);
       toast.success("Rateio salvo.");
       onOpenChange(false);
     } catch (e: any) {

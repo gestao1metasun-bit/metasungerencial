@@ -13,6 +13,7 @@ import {
 } from "@/lib/fin-fechamento-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useMyPermissions } from "@/hooks/use-permissions";
+import { useRepoTitulos } from "@/hooks/useRepoFinanceiro";
 import { toast } from "sonner";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

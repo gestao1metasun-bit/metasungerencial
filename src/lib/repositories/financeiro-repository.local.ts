@@ -217,6 +217,23 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
   async detectarDuplicidade(input: Partial<Titulo>): Promise<Titulo[]> {
     return storeDetectarDup(input);
   }
+  async gerarCopiaTitulo(
+    tituloId: string,
+    overrides?: Parameters<FinanceiroRepository["gerarCopiaTitulo"]>[1],
+    _motivo?: string,
+  ): Promise<Titulo> {
+    try { return storeGerarCopia(tituloId, overrides ?? {}); }
+    catch (e) { throw toRepoError(e); }
+  }
+  async cadastrarCheque(tituloId: string, cheque: Parameters<FinanceiroRepository["cadastrarCheque"]>[1]): Promise<void> {
+    try { storeCadastrarCheque(tituloId, cheque); }
+    catch (e) { throw toRepoError(e); }
+  }
+  async importarPrevisoesDoLegado(lancs: Parameters<FinanceiroRepository["importarPrevisoesDoLegado"]>[0]): Promise<number> {
+    try { return storeImportarPrevisoes(lancs); }
+    catch (e) { throw toRepoError(e); }
+  }
+
 
   // -------- Baixas
   async registrarBaixa(input: BaixaInput): Promise<Movimento> {

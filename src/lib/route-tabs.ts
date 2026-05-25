@@ -84,6 +84,8 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "conciliacao", label: "Conciliação", group: "Controle" },
       { value: "fechamento", label: "Fechamento", group: "Controle" },
       { value: "renegociacoes", label: "Renegociações", group: "Controle" },
+      { value: "adiantamentos", label: "Adiantamentos", group: "Operação" },
+      { value: "rescisoes", label: "Rescisões", group: "Controle" },
       { value: "fornecedores", label: "Fornecedores", group: "Estrutura" },
       { value: "cadastros", label: "Plano de Contas & Categorias", group: "Estrutura" },
       { value: "parametros-fin", label: "Parâmetros Financeiros", group: "Estrutura" },

@@ -713,17 +713,15 @@ function TituloDialog({
           </div>
           <div>
             <Label>Grupo</Label>
-            <Select value={grupoId} onValueChange={setGrupoId}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{grupos.filter((g) => g.ativo).map((g) => <SelectItem key={g.id} value={g.id}>{g.codigo} · {g.nome}</SelectItem>)}</SelectContent>
-            </Select>
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+              {grupoSel ? `${grupoSel.codigo} · ${grupoSel.nome}` : "— (definido pela natureza)"}
+            </div>
           </div>
           <div>
             <Label>Subgrupo</Label>
-            <Select value={subgrupoId} onValueChange={setSubgrupoId}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{subgruposDisp.map((s) => <SelectItem key={s.id} value={s.id}>{s.codigo} · {s.nome}</SelectItem>)}</SelectContent>
-            </Select>
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+              {subgrupoSel ? `${subgrupoSel.codigo} · ${subgrupoSel.nome}` : "— (definido pela natureza)"}
+            </div>
           </div>
           <div>
             <Label>Centro de custo *</Label>

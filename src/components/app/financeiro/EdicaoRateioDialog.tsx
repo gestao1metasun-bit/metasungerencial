@@ -11,9 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
-import { useNaturezasFin } from "@/lib/fin-naturezas-store";
-import { setRateios, apagarRateios, type Rateio, type Titulo } from "@/lib/fin-titulos-store";
+import { useRepoCentrosCusto, useRepoNaturezas, useFinanceiroRepo } from "@/hooks/useRepoFinanceiro";
+import type { Rateio, Titulo } from "@/lib/repositories/financeiro-repository";
 
 type Modo = "Normal" | "Importação";
 

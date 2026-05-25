@@ -32,6 +32,7 @@ import {
 import {
   useContasFinanceiras, upsertConta, removeConta, newContaId, type ContaFinanceira,
 } from "@/lib/fin-contas-store";
+import { confirmDialog } from "@/components/app/confirm-dialog";
 
 export function CadastrosTab() {
   const [sub, setSub] = useState("naturezas");

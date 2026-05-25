@@ -785,7 +785,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
   const hoje = new Date().toISOString().slice(0, 10);
   const validade = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   return {
-    id: `PRID-${Date.now()}`,
+    id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, "0")}`,
     numero,
     status: "RASCUNHO",
     criadoEm: hoje,

@@ -1,6 +1,6 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
 // Consome FinanceiroRepository via useRepoTitulos/useFinanceiroRepo (Onda 2).
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
 import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown } from "lucide-react";

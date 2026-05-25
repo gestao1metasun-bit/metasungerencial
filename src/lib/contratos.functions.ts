@@ -65,9 +65,11 @@ export const upsertContratoFn = createServerFn({ method: "POST" })
     if (!data.cliente_id) {
       throw new Error("cliente_id obrigatório para subir contrato ao Supabase.");
     }
-    const payload: Record<string, unknown> = {
-      ...(data as ContratoUpsertPayload),
+    const payload = {
+      ...data,
+      cliente_id: data.cliente_id, // narrow para non-nullable
       consultor_id: userId,
+      dados: data.dados as never, // jsonb aceita qualquer JSON; tipo gerado é estrito
     };
     const { data: row, error } = await supabase
       .from("contratos")
@@ -75,7 +77,7 @@ export const upsertContratoFn = createServerFn({ method: "POST" })
       .select("id, codigo")
       .single();
     if (error) throw new Error(error.message);
-    return { id: row.id as string, codigo: row.codigo as string };
+    return { id: row.id as string, codigo: (row.codigo ?? "") as string };
   });
 
 export const softDeleteContratoFn = createServerFn({ method: "POST" })

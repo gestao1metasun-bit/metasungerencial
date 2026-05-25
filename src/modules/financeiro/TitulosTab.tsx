@@ -548,6 +548,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               const contaShow = baixaConta ?? t.contaFinanceira;
               const meioShow = baixaMeio ?? t.meioPagamento;
               const conciliado = movs.length > 0 && !!baixaConta;
+              const ultimoMov = movs.length > 0 ? movs[movs.length - 1] : null;
+              const dataBaixa = ultimoMov?.data;
+              const pagoOuRecebidoRow = t.status === "pago" || t.status === "recebido";
+              const pendenteConciliacao = pagoOuRecebidoRow && !conciliado;
               const temAnexos = (t.anexos?.length ?? 0) > 0;
               const temHistorico = movs.length > 0 || hasEstorno || !!t.statusRenegociacao || !!t.renegociacaoId;
               const origemKey = (t.statusRenegociacao === "renegociado" || t.renegociacaoId) ? "renegociacao" : (t.origem ?? "manual");

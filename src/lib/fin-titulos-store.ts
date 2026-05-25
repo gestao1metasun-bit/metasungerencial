@@ -214,18 +214,9 @@ export function criarTitulo(
 
   // ---- #18: centro de custo obrigatório por natureza
   if (!opts.pularValidacaoCentroCusto && input.naturezaId) {
-    try {
-      // Import síncrono (mesmo bundle); evita ciclo via dynamic require alternativo
-      // — naturezas-store não importa este arquivo, então é seguro.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getNaturezas } = require("@/lib/fin-naturezas-store") as typeof import("@/lib/fin-naturezas-store");
-      const nat = getNaturezas?.().find((n) => n.id === input.naturezaId);
-      if (nat?.centroCustoObrigatorio && !input.centroCustoId && !input.centroCusto) {
-        throw new Error(`Natureza "${nat.nome}" exige centro de custo.`);
-      }
-    } catch (e) {
-      // Se require falhar, não bloqueia (estamos em ambiente sem CJS) — silencioso.
-      if (e instanceof Error && e.message.startsWith("Natureza")) throw e;
+    const nat = getNaturezas().find((n) => n.id === input.naturezaId);
+    if (nat?.centroCustoObrigatorio && !input.centroCustoId && !input.centroCusto) {
+      throw new Error(`Natureza "${nat.nome}" exige centro de custo.`);
     }
   }
 

@@ -384,16 +384,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead className="w-[100px]">Venc. Nominal</TableHead>
               <TableHead className="w-[100px]">Venc. Real</TableHead>
               <TableHead className="w-[110px] text-right">Valor</TableHead>
-              <TableHead className="w-[90px] text-right">Juros</TableHead>
-              <TableHead className="w-[90px] text-right">Multa</TableHead>
-              <TableHead className="w-[90px] text-right">Desconto</TableHead>
+              {showEncargos && <TableHead className="w-[90px] text-right">Juros</TableHead>}
+              {showEncargos && <TableHead className="w-[90px] text-right">Multa</TableHead>}
+              {showEncargos && <TableHead className="w-[90px] text-right">Desconto</TableHead>}
               <TableHead className="w-[130px] text-right">Total</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={showEncargos ? 11 : 8} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}

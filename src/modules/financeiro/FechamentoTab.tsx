@@ -96,7 +96,7 @@ export function FechamentoTab() {
                         onClick={() => {
                           const v = Number(saldos[c.id] ?? "");
                           if (!Number.isFinite(v)) return toast.error("Saldo inválido.");
-                          fecharContaMes({ mes, contaId: c.id, saldoFinal: v, usuario: "Admin" });
+                          fecharContaMes({ mes, contaId: c.id, saldoFinal: v, usuario: usuarioAtual });
                           setSaldos((s) => ({ ...s, [c.id]: "" }));
                           toast.success(`${c.nome} fechada em ${mes}.`);
                         }}
@@ -117,7 +117,7 @@ export function FechamentoTab() {
                             if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
                             const m = (motivos[c.id] ?? "").trim();
                             if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
-                            reabrirContaMes({ mes, contaId: c.id, usuario: "Admin", motivo: m });
+                            reabrirContaMes({ mes, contaId: c.id, usuario: usuarioAtual, motivo: m });
                             setMotivos((s) => ({ ...s, [c.id]: "" }));
                             toast.success("Conta reaberta.");
                           }}
@@ -143,7 +143,7 @@ export function FechamentoTab() {
           {!globalFechado ? (
             <Button
               disabled={!todasFechadas}
-              onClick={() => { fecharMesGlobal(mes, "Admin", obsGlobal); setObsGlobal(""); toast.success(`Mês ${mes} fechado.`); }}
+              onClick={() => { fecharMesGlobal(mes, usuarioAtual, obsGlobal); setObsGlobal(""); toast.success(`Mês ${mes} fechado.`); }}
             ><Lock className="mr-1 h-4 w-4" />Fechar mês {mes}</Button>
           ) : (
             <Button
@@ -154,7 +154,7 @@ export function FechamentoTab() {
                 if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
                 const m = obsGlobal.trim();
                 if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
-                reabrirMesGlobal(mes, "Admin", m);
+                reabrirMesGlobal(mes, usuarioAtual, m);
                 setObsGlobal("");
                 toast.success("Mês reaberto.");
               }}

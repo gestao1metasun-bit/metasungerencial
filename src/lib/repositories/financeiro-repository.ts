@@ -266,6 +266,7 @@ export interface FinanceiroRepository {
 
   // ---------- Conciliação
   listarExtrato(): Promise<ExtratoLancamento[]>;
+  adicionarLancamentoExtrato(input: Omit<ExtratoLancamento, "id" | "status" | "importadoEm">): Promise<ExtratoLancamento>;
   importarExtratoCSV(contaFinanceira: string, csv: string): Promise<number>;
   sugerirCandidatosConciliacao(extratoId: string): Promise<Titulo[]>;
   conciliar(args: { extratoId: string; tituloId: string; movimentoId?: string; motivo?: string }): Promise<void>;

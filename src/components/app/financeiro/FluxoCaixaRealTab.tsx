@@ -69,13 +69,17 @@ export function FluxoCaixaRealTab() {
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <Label className="text-xs">Horizonte</Label>
-              <Select value={String(dias)} onValueChange={(v) => setDias(Number(v) as any)}>
-                <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+              <Select value={String(dias)} onValueChange={(v) => setDias(Number(v))}>
+                <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">Próximos 30 dias</SelectItem>
                   <SelectItem value="60">Próximos 60 dias</SelectItem>
                   <SelectItem value="90">Próximos 90 dias</SelectItem>
-                  <SelectItem value="180">Próximos 180 dias</SelectItem>
+                  <SelectItem value="180">Próximos 6 meses</SelectItem>
+                  <SelectItem value="365">Próximos 12 meses</SelectItem>
+                  <SelectItem value="730">Próximos 2 anos</SelectItem>
+                  <SelectItem value="1095">Próximos 3 anos</SelectItem>
+                  <SelectItem value="1825">Próximos 5 anos</SelectItem>
                 </SelectContent>
               </Select>
             </div>

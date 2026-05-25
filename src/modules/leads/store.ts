@@ -2,7 +2,7 @@
 // Store de Leads — primeira etapa da cadeia comercial:
 // Lead → Proposta → Contrato → Engenharia.
 // ============================================================================
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { LEAD_STATUS, type LeadStatus, type OrigemLead } from "@/lib/status-catalog";
 import { pushAudit } from "@/lib/audit-store";
 
@@ -27,32 +27,40 @@ export type Lead = {
 const KEY = "ms.leads.v1";
 type Listener = () => void;
 const listeners = new Set<Listener>();
+const EMPTY: Lead[] = Object.freeze([]) as unknown as Lead[];
 let cache: Lead[] | null = null;
+let hydrated = false;
 
 function read(): Lead[] {
   if (cache) return cache;
-  if (typeof window === "undefined") { cache = []; return cache; }
+  if (typeof window === "undefined") return EMPTY;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { cache = JSON.parse(raw) as Lead[]; return cache!; }
+    if (raw) { cache = JSON.parse(raw) as Lead[]; hydrated = true; return cache!; }
   } catch {}
   cache = [];
+  hydrated = true;
   return cache;
 }
 function write(next: Lead[]) {
   cache = next;
+  hydrated = true;
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
   listeners.forEach((l) => l());
 }
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
-function getSnap() { return read(); }
-function getServerSnap(): Lead[] { return []; }
+function getSnap(): Lead[] {
+  // Mesma referência enquanto não houver mutações → seguro para useSyncExternalStore.
+  if (typeof window === "undefined") return EMPTY;
+  if (!hydrated) return read();
+  return cache ?? EMPTY;
+}
+function getServerSnap(): Lead[] { return EMPTY; }
 
 export function useLeads(): Lead[] {
-  const list = useSyncExternalStore(subscribe, getSnap, getServerSnap);
-  useEffect(() => { read(); }, []);
-  return list;
+  return useSyncExternalStore(subscribe, getSnap, getServerSnap);
 }
+
 export function getLeads(): Lead[] { return read(); }
 export function getLead(id: string): Lead | undefined {
   return read().find((x) => x.id === id);

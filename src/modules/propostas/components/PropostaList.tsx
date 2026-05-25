@@ -1627,6 +1627,17 @@ export function PropostaList({
     return { total, aprovadas, enviadas, valorTotalAprovado, leads: leadsAll.length };
   }, [propostas, leadsAll]);
 
+  // Reabrir lead atualizado quando propostas mudam (após gerar nova etc.)
+  // IMPORTANTE: precisa ficar ANTES de qualquer early return para não violar a
+  // ordem dos hooks (React quebra com "Rendered fewer hooks than expected").
+  useEffect(() => {
+    if (!leadAberto) return;
+    const atual = leadsAll.find((l) => l.key === leadAberto.key);
+    if (atual && atual !== leadAberto) setLeadAberto(atual);
+    if (!atual) setLeadAberto(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadsAll]);
+
   if (!propostas.length) {
     return (
       <Card className="p-12 text-center">
@@ -1642,14 +1653,7 @@ export function PropostaList({
     );
   }
 
-  // Reabrir lead atualizado quando propostas mudam (após gerar nova etc.)
-  useEffect(() => {
-    if (!leadAberto) return;
-    const atual = leadsAll.find((l) => l.key === leadAberto.key);
-    if (atual && atual !== leadAberto) setLeadAberto(atual);
-    if (!atual) setLeadAberto(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leadsAll]);
+
 
   return (
     <div className="space-y-4">

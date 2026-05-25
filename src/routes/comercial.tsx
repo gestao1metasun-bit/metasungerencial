@@ -2238,6 +2238,15 @@ function DashboardComercial({
           </div>
         </div>
 
+        <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-warning-foreground">
+          <span className="font-semibold uppercase tracking-wider">Dados de demonstração</span>
+          {" — "}
+          Os KPIs deste painel ainda usam a base mock <code className="rounded bg-background/60 px-1">mock-data.ts</code> (volume mensal, série histórica e seed de contratos).
+          A lista de propostas (aba <b>Propostas</b>) já reflete o estado real do sistema. Divergências entre o painel e a lista são esperadas até a unificação da fonte.
+        </div>
+
+
+
         {/* Linha 1 — KPIs primários */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard label="Faturamento Total" value={fmtBRL(valorAssinado)} hint={`${assinados.length} contratos`} icon={DollarSign} tone="success" trend={metaTotal > 0 ? { value: `${metaPct.toFixed(0)}% da meta`, positive: metaPct >= 100 } : undefined} />

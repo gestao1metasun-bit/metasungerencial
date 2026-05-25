@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
   Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
-  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw,
+  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw, FileText, ArrowRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import {
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
+  propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
 import { findClienteByDoc } from "@/lib/clientes-store";
 
@@ -115,7 +116,18 @@ export function reativarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} reativada.`);
 }
 
-// fmtInversorNumero importado de @/lib/inversor-fmt no topo do arquivo
+/** Retorna a proposta aprovável mais recente do lead (RASCUNHO/GERADA/ENVIADA). */
+export function propostaAprovavelDoLead(l: { propostas: PropostaFV[] }): PropostaFV | undefined {
+  return [...l.propostas]
+    .reverse()
+    .find((p) => ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status));
+}
+
+/** Navega para o Comercial → aba Contratos. */
+export function irParaContratos() {
+  if (typeof window === "undefined") return;
+  window.location.assign("/comercial#tab=contratos");
+}
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas
@@ -1093,7 +1105,7 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
 /* ===================== KANBAN VIEW ===================== */
 
 function KanbanView({
-  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign,
+  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign, onAprovar,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1102,6 +1114,7 @@ function KanbanView({
   setCols: (fn: (c: KCol[]) => KCol[]) => void;
   assign: Record<string, string>;
   setAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onAprovar?: (p: PropostaFV) => void;
 }) {
   const [dragLead, setDragLead] = useState<string | null>(null);
   const [dragCol, setDragCol] = useState<string | null>(null);
@@ -1211,17 +1224,33 @@ function KanbanView({
                     </div>
                     <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
-                      {!l.bloqueado && (
-                        <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
-                          <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                            <Eye className="mr-2 h-4 w-4" /> Abrir lead
-                          </DropdownMenuItem>
-                          {l.status === "CANCELADA" && (
-                            <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                              <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                              <span className="text-success">Reativar última proposta</span>
+                      <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
+                        <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
+                          <Eye className="mr-2 h-4 w-4" /> Abrir lead
+                        </DropdownMenuItem>
+                        {!l.bloqueado && onAprovar && (() => {
+                          const alvo = propostaAprovavelDoLead(l);
+                          return alvo ? (
+                            <DropdownMenuItem onSelect={() => onAprovar(alvo)}>
+                              <Check className="mr-2 h-4 w-4 text-success" />
+                              <span className="text-success">Aprovar e gerar contrato</span>
                             </DropdownMenuItem>
-                          )}
+                          ) : null;
+                        })()}
+                        {l.bloqueado && (
+                          <DropdownMenuItem onSelect={irParaContratos}>
+                            <FileText className="mr-2 h-4 w-4 text-primary" />
+                            <span className="text-primary">Ver contrato no Comercial</span>
+                            <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                          </DropdownMenuItem>
+                        )}
+                        {!l.bloqueado && l.status === "CANCELADA" && (
+                          <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
+                            <RotateCcw className="mr-2 h-4 w-4 text-success" />
+                            <span className="text-success">Reativar última proposta</span>
+                          </DropdownMenuItem>
+                        )}
+                        {!l.bloqueado && (
                           <DropdownMenuItem
                             onSelect={() => {
                               const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
@@ -1232,8 +1261,8 @@ function KanbanView({
                             <Ban className="mr-2 h-4 w-4 text-destructive" />
                             <span className="text-destructive">Cancelar última proposta</span>
                           </DropdownMenuItem>
-                        </ActionsMenu>
-                      )}
+                        )}
+                      </ActionsMenu>
                     </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
@@ -1286,7 +1315,7 @@ const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign,
+  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign, onAprovar,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1295,6 +1324,7 @@ function TabelaView({
   setMgrOpen: (v: boolean) => void;
   cols: KCol[];
   assign: Record<string, string>;
+  onAprovar?: (p: PropostaFV) => void;
 }) {
   const colsByKey = useMemo(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c])) as Record<TabelaColKey, TabelaColDef>,
@@ -1385,12 +1415,26 @@ function TabelaView({
       case "opcoes": {
         const podeReativar = l.status === "CANCELADA";
         const podeCancelar = !l.bloqueado && l.status !== "CANCELADA" && l.status !== "APROVADA";
+        const alvoAprovar = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : undefined;
         return (
           <div onClick={(e) => e.stopPropagation()} className="inline-flex">
             <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
               <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
                 <Eye className="mr-2 h-4 w-4" /> Abrir lead
               </DropdownMenuItem>
+              {alvoAprovar && onAprovar && (
+                <DropdownMenuItem onSelect={() => onAprovar(alvoAprovar)}>
+                  <Check className="mr-2 h-4 w-4 text-success" />
+                  <span className="text-success">Aprovar e gerar contrato</span>
+                </DropdownMenuItem>
+              )}
+              {l.bloqueado && (
+                <DropdownMenuItem onSelect={irParaContratos}>
+                  <FileText className="mr-2 h-4 w-4 text-primary" />
+                  <span className="text-primary">Ver contrato no Comercial</span>
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
+              )}
               {podeReativar && (
                 <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
                   <RotateCcw className="mr-2 h-4 w-4 text-success" />
@@ -1590,6 +1634,7 @@ export function PropostaList({
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
+  const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();
@@ -1760,8 +1805,8 @@ export function PropostaList({
       </Card>
 
       {view === "tabela"
-        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} />
-        : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} />}
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} />
+        : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} onAprovar={setAprovandoLista} />}
 
       <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />
 
@@ -1771,6 +1816,13 @@ export function PropostaList({
         onVisualizar={(id) => { onVisualizar(id); setLeadAberto(null); }}
         onNova={(preset) => { onNova(preset); setLeadAberto(null); }}
         onEditar={(p) => onEditar(p)}
+      />
+
+      <AprovarPropostaDialog
+        proposta={aprovandoLista}
+        open={!!aprovandoLista}
+        onOpenChange={(o) => { if (!o) setAprovandoLista(null); }}
+        onAprovado={() => setAprovandoLista(null)}
       />
     </div>
   );

@@ -262,6 +262,24 @@ export function AppLayout() {
               Atualizar
             </Button>
             <FavoritosMenu />
+            {!identidade.sessionLoading && !identidade.isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => void navigate({ to: "/login" })}
+                title="Faça login para habilitar ações administrativas (criar/liberar contratos, etc.)."
+                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
+              >
+                <LogIn className="h-3 w-3" /> Sem sessão
+              </button>
+            )}
+            {identidade.divergencia && (
+              <span
+                title={identidade.motivoDivergencia ?? undefined}
+                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-rose-400/60 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700"
+              >
+                <AlertTriangle className="h-3 w-3" /> Divergência de permissão
+              </span>
+            )}
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold" />

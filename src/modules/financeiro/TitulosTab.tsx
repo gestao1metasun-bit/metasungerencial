@@ -611,6 +611,16 @@ function TituloDialog({
     if (!vencimento) return toast.error("Vencimento obrigatório.");
     if (!naturezaId) return toast.error("Selecione a natureza financeira.");
     if (!centroCustoId) return toast.error("Selecione o centro de custo.");
+    if (parcelarOn) {
+      if (parcelas.length < 2) return toast.error("Gere ao menos 2 parcelas ou desligue o parcelamento.");
+      if (Math.abs(somaParcelas - round2(valorOriginal)) >= 0.01) {
+        return toast.error(`Soma das parcelas (${somaParcelas.toFixed(2)}) difere do total (${valorOriginal.toFixed(2)}).`);
+      }
+      if (parcelas.some((p) => !p.vencimento || !(p.valor > 0))) {
+        return toast.error("Cada parcela exige vencimento e valor > 0.");
+      }
+    }
+
 
     const nat = naturezas.find((n) => n.id === naturezaId);
     const cc = centros.find((c) => c.id === centroCustoId);

@@ -128,7 +128,7 @@ export function ConciliacaoTab() {
                         <>
                           <ConciliarDialog extrato={e} />
                           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={async () => {
-                            const m = prompt("Motivo para ignorar:");
+                            const m = await promptDialog({ title: "Ignorar lançamento", description: "Informe o motivo para ignorar este lançamento do extrato.", label: "Motivo", multiline: true, minLength: 3, confirmText: "Ignorar" });
                             if (m) { try { await repo.ignorarExtrato(e.id, m); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }
                           }}><X className="h-3.5 w-3.5" /></Button>
                         </>

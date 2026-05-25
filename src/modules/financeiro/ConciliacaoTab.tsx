@@ -12,12 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
-  useExtrato, adicionarLancamentoExtrato, importarExtratoCSV,
-  sugerirCandidatos, conciliar, ignorarExtrato, desfazerConciliacao, removerExtrato,
-  type ExtratoLancamento, type ExtratoStatus,
-} from "@/lib/fin-conciliacao-store";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
+  useFinanceiroRepo, useRepoExtrato, useRepoContas, useRepoTitulos,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  ExtratoLancamento, ExtratoStatus, ContaFinanceira, CandidatoConciliacao,
+} from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 const STATUS_TONE: Record<ExtratoStatus, string> = {

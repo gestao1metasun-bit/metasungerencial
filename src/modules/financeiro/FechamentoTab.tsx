@@ -163,7 +163,20 @@ export function FechamentoTab() {
           {!globalFechado ? (
             <Button
               disabled={!todasFechadas}
-              onClick={() => { fecharMesGlobal(mes, usuarioAtual, obsGlobal); setObsGlobal(""); toast.success(`Mês ${mes} fechado.`); }}
+              onClick={() => {
+                if (titulosAbertosNoMes.total > 0) {
+                  const ok = window.confirm(
+                    `Há ${titulosAbertosNoMes.total} título(s) ainda em aberto na competência ${mes} ` +
+                    `(${titulosAbertosNoMes.ap} AP · R$ ${titulosAbertosNoMes.saldoAP.toFixed(2)} · ` +
+                    `${titulosAbertosNoMes.ar} AR · R$ ${titulosAbertosNoMes.saldoAR.toFixed(2)}). ` +
+                    `Após o fechamento global, baixas e edições nesses títulos ficarão bloqueadas. Confirmar?`,
+                  );
+                  if (!ok) return;
+                }
+                fecharMesGlobal(mes, usuarioAtual, obsGlobal);
+                setObsGlobal("");
+                toast.success(`Mês ${mes} fechado.`);
+              }}
             ><Lock className="mr-1 h-4 w-4" />Fechar mês {mes}</Button>
           ) : (
             <Button

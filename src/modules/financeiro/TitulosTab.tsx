@@ -433,8 +433,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           <BaixaDialog
             titulo={baixar}
             contas={contas}
-            onSave={(b) => {
-              try { registrarBaixa(baixar.id, b); toast.success(tipo === "AP" ? "Pagamento registrado." : "Recebimento registrado."); setBaixar(null); }
+            onSave={async (b) => {
+              try { await repo.registrarBaixa({ ...b, tituloId: baixar.id }); toast.success(tipo === "AP" ? "Pagamento registrado." : "Recebimento registrado."); setBaixar(null); }
               catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setBaixar(null)}

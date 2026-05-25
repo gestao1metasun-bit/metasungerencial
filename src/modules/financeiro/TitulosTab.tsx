@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles } from "lucide-react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split } from "lucide-react";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
+import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";
 import { useContratos } from "@/lib/contratos-store";
 import { useObrasSnapshot } from "@/lib/obras-snapshot-store";
 import { Card } from "@/components/ui/card";
@@ -82,6 +83,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [estornar, setEstornar] = useState<{ titulo: Titulo; movId: string } | null>(null);
   const [verHist, setVerHist] = useState<Titulo | null>(null);
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
+  const [ratear, setRatear] = useState<Titulo | null>(null);
 
   const lista = useMemo(() => {
     let arr = todos.filter((t) => t.tipo === tipo);
@@ -224,7 +226,15 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         </Button>
                       </>
                     )}
+                    <Button size="icon" variant="ghost" title="Ratear" onClick={() => setRatear(t)} disabled={!!t.bloqueadoFechamento || t.status === "cancelado"}>
+                      <Split className="h-4 w-4 text-indigo-600" />
+                    </Button>
                     {t.bloqueadoFechamento && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {t.rateios && t.rateios.length > 0 && (
+                      <span className="ml-1 rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600" title={`${t.rateios.length} rateios`}>
+                        R{t.rateios.length}
+                      </span>
+                    )}
                     {t.statusRenegociacao === "renegociado" && (
                       <span className="ml-1 text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
                     )}
@@ -355,6 +365,13 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         titulo={renegociar}
         open={!!renegociar}
         onClose={() => setRenegociar(null)}
+      />
+
+      {/* Edição de rateio */}
+      <EdicaoRateioDialog
+        titulo={ratear}
+        open={!!ratear}
+        onOpenChange={(o) => !o && setRatear(null)}
       />
     </div>
   );

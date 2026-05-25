@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { TrendingUp, Wallet } from "lucide-react";
+import { TrendingUp, Wallet, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/app/StatCard";
 import { useFluxoCaixa } from "@/lib/fin-fluxo-caixa";
@@ -22,14 +22,26 @@ function isoAddDays(base: Date, days: number) {
 
 export function FluxoCaixaRealTab() {
   const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const [modoData, setModoData] = useState<"horizonte" | "manual">("horizonte");
   const [dias, setDias] = useState<number>(60);
+  const [dataInicioManual, setDataInicioManual] = useState<string>(() => {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    return isoAddDays(hoje, -20);
+  });
+  const [dataFimManual, setDataFimManual] = useState<string>(() => {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    return isoAddDays(hoje, 60);
+  });
   const [contaNome, setContaNome] = useState<string>("__all");
   const [saldoInicial, setSaldoInicial] = useState<string>("0");
 
   const { ini, fim } = useMemo(() => {
+    if (modoData === "manual") {
+      return { ini: dataInicioManual, fim: dataFimManual };
+    }
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     return { ini: isoAddDays(hoje, -Math.floor(dias / 3)), fim: isoAddDays(hoje, dias) };
-  }, [dias]);
+  }, [modoData, dias, dataInicioManual, dataFimManual]);
 
   const data = useFluxoCaixa({
     dataInicio: ini,
@@ -68,21 +80,46 @@ export function FluxoCaixaRealTab() {
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <Label className="text-xs">Horizonte</Label>
-              <Select value={String(dias)} onValueChange={(v) => setDias(Number(v))}>
-                <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+              <Label className="text-xs">Modo período</Label>
+              <Select value={modoData} onValueChange={(v) => setModoData(v as "horizonte" | "manual")}>
+                <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30">Próximos 30 dias</SelectItem>
-                  <SelectItem value="60">Próximos 60 dias</SelectItem>
-                  <SelectItem value="90">Próximos 90 dias</SelectItem>
-                  <SelectItem value="180">Próximos 6 meses</SelectItem>
-                  <SelectItem value="365">Próximos 12 meses</SelectItem>
-                  <SelectItem value="730">Próximos 2 anos</SelectItem>
-                  <SelectItem value="1095">Próximos 3 anos</SelectItem>
-                  <SelectItem value="1825">Próximos 5 anos</SelectItem>
+                  <SelectItem value="horizonte">Horizonte</SelectItem>
+                  <SelectItem value="manual">Datas manual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {modoData === "horizonte" ? (
+              <div>
+                <Label className="text-xs">Horizonte</Label>
+                <Select value={String(dias)} onValueChange={(v) => setDias(Number(v))}>
+                  <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">Próximos 30 dias</SelectItem>
+                    <SelectItem value="60">Próximos 60 dias</SelectItem>
+                    <SelectItem value="90">Próximos 90 dias</SelectItem>
+                    <SelectItem value="180">Próximos 6 meses</SelectItem>
+                    <SelectItem value="365">Próximos 12 meses</SelectItem>
+                    <SelectItem value="730">Próximos 2 anos</SelectItem>
+                    <SelectItem value="1095">Próximos 3 anos</SelectItem>
+                    <SelectItem value="1825">Próximos 5 anos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-xs flex items-center gap-1"><Calendar className="h-3 w-3" /> Início</Label>
+                  <Input type="date" value={dataInicioManual} onChange={(e) => setDataInicioManual(e.target.value)} className="h-9 w-40" />
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1"><Calendar className="h-3 w-3" /> Fim</Label>
+                  <Input type="date" value={dataFimManual} onChange={(e) => setDataFimManual(e.target.value)} className="h-9 w-40" />
+                </div>
+              </>
+            )}
+
             <div>
               <Label className="text-xs">Conta</Label>
               <Select value={contaNome} onValueChange={setContaNome}>

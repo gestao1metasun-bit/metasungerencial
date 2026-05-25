@@ -20,8 +20,8 @@ const NIVEL_LABEL: Record<string, string> = {
 };
 
 export function RenegociacaoHistoricoList() {
-  const renegs = useRenegociacoes();
-  const titulos = useTitulos();
+  const renegs = useRepoRenegociacoes();
+  const titulos = useRepoTitulos();
   const [q, setQ] = useState("");
 
   const tituloPorId = useMemo(() => {

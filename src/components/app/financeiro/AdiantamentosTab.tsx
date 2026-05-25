@@ -237,7 +237,8 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
 
 // ----------------------------------------------------------- abater
 function AbaterDialog({ adiantamento, onClose }: { adiantamento: Adiantamento; onClose: () => void }) {
-  const titulos = useTitulos();
+  const repo = useFinanceiroRepo();
+  const titulos = useRepoTitulos();
   const candidatos = useMemo(() => {
     const tipoTit = adiantamento.tipo === "cliente" ? "AR" : "AP";
     return titulos.filter(
@@ -255,14 +256,14 @@ function AbaterDialog({ adiantamento, onClose }: { adiantamento: Adiantamento; o
   const [valor, setValor] = useState<string>(maxValor.toFixed(2));
   const [obs, setObs] = useState("");
 
-  function confirmar() {
+  async function confirmar() {
     try {
-      abaterAdiantamento({
+      await repo.abaterAdiantamento({
         adiantamentoId: adiantamento.id,
         tituloId,
         valor: Number(valor),
         observacao: obs || undefined,
-      }, "Admin");
+      });
       toast.success("Abatimento realizado.");
       onClose();
     } catch (e: any) { toast.error(e.message); }

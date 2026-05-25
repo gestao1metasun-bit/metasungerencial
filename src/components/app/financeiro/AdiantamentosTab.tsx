@@ -172,6 +172,13 @@ export function AdiantamentosTab() {
 function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onClose: () => void }) {
   const repo = useFinanceiroRepo();
   const contas = useRepoContas().filter((c) => c.ativo);
+  const clientes = useClientesAll();
+  const fornecedores = useFornecedores();
+  const opcoes: ContraparteOption[] = useMemo(() => (
+    tipo === "cliente"
+      ? clientes.map((c) => ({ id: c.id, nome: c.nome }))
+      : fornecedores.map((f) => ({ id: f.id, nome: f.nome, sub: f.cnpj || undefined }))
+  ), [tipo, clientes, fornecedores]);
   const [contraparte, setContraparte] = useState("");
   const [valor, setValor] = useState("");
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
@@ -206,7 +213,12 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
       <div className="space-y-3 text-sm">
         <div>
           <Label className="text-xs">{tipo === "cliente" ? "Cliente" : "Fornecedor"}</Label>
-          <Input value={contraparte} onChange={(e) => setContraparte(e.target.value)} placeholder="Nome completo / razão social" />
+          <ContraparteCombo
+            value={contraparte}
+            onChange={setContraparte}
+            options={opcoes}
+            placeholder={tipo === "cliente" ? "Selecione o cliente…" : "Selecione o fornecedor…"}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

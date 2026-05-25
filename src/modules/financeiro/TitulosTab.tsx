@@ -260,6 +260,28 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             </SelectContent>
           </Select>
         </div>
+        <div className="grid gap-1">
+          <Label className="text-xs text-muted-foreground">Visão</Label>
+          <div className="inline-flex h-9 items-center rounded-md border bg-background p-0.5 text-xs">
+            {([
+              { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
+              { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
+              { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão (sem encargos detalhados)" },
+              { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
+              { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico detalhado" },
+            ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
+              <button
+                key={p.k}
+                type="button"
+                onClick={() => setPreset(p.k)}
+                title={p.hint}
+                className={`rounded px-2 py-1 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

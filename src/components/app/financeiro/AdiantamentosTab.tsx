@@ -131,10 +131,10 @@ export function AdiantamentosTab() {
                         {a.status === "ativo" && a.abatimentos.length === 0 && (
                           <Button
                             size="sm" variant="ghost"
-                            onClick={() => {
+                            onClick={async () => {
                               const m = prompt("Motivo do estorno (mín. 5 caracteres):");
                               if (m && m.length >= 5) {
-                                try { estornarAdiantamento(a.id, m, "Admin"); toast.success("Adiantamento estornado."); }
+                                try { await repo.estornarAdiantamento(a.id, m); toast.success("Adiantamento estornado."); }
                                 catch (e: any) { toast.error(e.message); }
                               }
                             }}

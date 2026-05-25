@@ -234,6 +234,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
                   }
                 }
+                // Reabre o título recém-criado para anexar comprovantes e/ou fazer rateio.
+                if (alvo) setEditar(alvo);
               }}
 
               onCancel={() => setCriarOpen(false)}
@@ -478,7 +480,9 @@ function TituloDialog({
 
   const [descricao, setDescricao] = useState(initial?.descricao ?? "");
   const [valorOriginal, setValor] = useState<number>(initial?.valorOriginal ?? 0);
-  const [vencimento, setVenc] = useState(initial?.vencimento ?? new Date().toISOString().slice(0, 10));
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [dataEmissao, setDataEmissao] = useState(initial?.dataEmissao ?? hoje);
+  const [vencimento, setVenc] = useState(initial?.vencimento ?? hoje);
   const [fornecedor, setFornecedor] = useState(initial?.fornecedor ?? "");
   const [cliente, setCliente] = useState(initial?.cliente ?? "");
   const [obraId, setObra] = useState(initial?.obraId ?? "");
@@ -536,6 +540,8 @@ function TituloDialog({
   const [parcelarOn, setParcelarOn] = useState<boolean>(false);
   const [numParcelas, setNumParcelas] = useState<number>(2);
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
+  const [mesmoVencimento, setMesmoVenc] = useState<boolean>(false);
+  const [mesmaCompetencia, setMesmaComp] = useState<boolean>(false);
   const [parcelas, setParcelas] = useState<ParcelaPlano[]>([]);
 
   // Gera/redistribui parcelas respeitando fixadoData e fixadoValor.
@@ -545,10 +551,14 @@ function TituloDialog({
     if (!(valorOriginal > 0)) { toast.error("Defina o valor total."); return; }
     const base: ParcelaPlano[] = Array.from({ length: n }, (_, i) => {
       const prev = parcelas[i];
+      const venc = prev?.fixadoData
+        ? prev.vencimento
+        : (mesmoVencimento ? vencimento : proximoVencimento(vencimento, i, periodicidade));
+      const comp = mesmaCompetencia ? vencimento.slice(0, 7) : venc.slice(0, 7);
       return {
-        vencimento: prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade),
+        vencimento: venc,
         valor: prev?.fixadoValor ? prev.valor : 0,
-        competencia: (prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade)).slice(0, 7),
+        competencia: comp,
         fixadoData: prev?.fixadoData,
         fixadoValor: prev?.fixadoValor,
       };
@@ -628,6 +638,7 @@ function TituloDialog({
 
     onSave({
       descricao, valorOriginal: Number(valorOriginal), vencimento,
+      dataEmissao,
       competencia: vencimento.slice(0, 7),
       // IDs estruturais
       naturezaId, grupoId, subgrupoId: subgrupoId || undefined,
@@ -687,126 +698,79 @@ function TituloDialog({
         </div>
       </DialogHeader>
 
-      {/* Linha 1: identificação básica */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
-        <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
-        <div><Label>Vencimento *</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
+      {/* Passo 1 — Contraparte */}
+      <div className="mt-3 rounded-lg border bg-muted/20 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          1 · {tipo === "AP" ? "Fornecedor" : "Cliente"}
+        </div>
+        {tipo === "AP" ? (
+          <Select value={fornecedor} onValueChange={setFornecedor}>
+            <SelectTrigger><SelectValue placeholder="Selecione o fornecedor…" /></SelectTrigger>
+            <SelectContent>{fornecedores.map((f) => <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>)}</SelectContent>
+          </Select>
+        ) : (
+          <Input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nome do cliente" />
+        )}
       </div>
 
-      {/* Bloco classificação contábil (cascata) */}
+      {/* Passo 2 — Valor, emissão, vencimento + descrição */}
+      <div className="mt-3 rounded-lg border bg-muted/20 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          2 · Valor e datas
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
+          <div><Label>Data de emissão</Label><Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} /></div>
+          <div><Label>Vencimento *</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
+          <div className="col-span-3"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
+        </div>
+      </div>
+
+      {/* Passo 3 — Natureza (grupo/subgrupo derivam automaticamente) */}
       <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary/80">Classificação gerencial</div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <Label>Natureza financeira *</Label>
-            <Select value={naturezaId} onValueChange={aoTrocarNatureza}>
-              <SelectTrigger><SelectValue placeholder="Selecione a natureza…" /></SelectTrigger>
-              <SelectContent>
-                {naturezasDisp.map((n) => (
-                  <SelectItem key={n.id} value={n.id}>
-                    <span className="font-mono text-xs text-muted-foreground">{n.codigo}</span> · {n.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary/80">
+          3 · Natureza financeira
+        </div>
+        <Select value={naturezaId} onValueChange={aoTrocarNatureza}>
+          <SelectTrigger><SelectValue placeholder="Selecione a natureza…" /></SelectTrigger>
+          <SelectContent>
+            {naturezasDisp.map((n) => (
+              <SelectItem key={n.id} value={n.id}>
+                <span className="font-mono text-xs text-muted-foreground">{n.codigo}</span> · {n.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="mt-2 grid grid-cols-2 gap-3">
           <div>
-            <Label>Grupo</Label>
+            <Label className="text-xs">Grupo (auto)</Label>
             <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-              {grupoSel ? `${grupoSel.codigo} · ${grupoSel.nome}` : "— (definido pela natureza)"}
+              {grupoSel ? `${grupoSel.codigo} · ${grupoSel.nome}` : "—"}
             </div>
           </div>
           <div>
-            <Label>Subgrupo</Label>
+            <Label className="text-xs">Subgrupo (auto)</Label>
             <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-              {subgrupoSel ? `${subgrupoSel.codigo} · ${subgrupoSel.nome}` : "— (definido pela natureza)"}
+              {subgrupoSel ? `${subgrupoSel.codigo} · ${subgrupoSel.nome}` : "—"}
             </div>
-          </div>
-          <div>
-            <Label>Centro de custo *</Label>
-            <Select value={centroCustoId} onValueChange={setCentroCustoId}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{centros.filter((c) => c.ativo).map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} · {c.nome}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Tipo de aplicação</Label>
-            <Select value={tipoAplicacaoId} onValueChange={setTipoAplicacaoId}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{tiposAplic.filter((t) => t.ativo).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}{t.posVenda ? " (pós-venda)" : ""}</SelectItem>)}</SelectContent>
-            </Select>
           </div>
         </div>
         {caminhoContabil && (
-          <div className="mt-3 rounded border border-primary/15 bg-background/60 px-2.5 py-1.5">
+          <div className="mt-2 rounded border border-primary/15 bg-background/60 px-2.5 py-1.5">
             <div className="text-[9px] font-semibold uppercase tracking-wider text-primary/70">Plano de contas</div>
             <div className="mt-0.5 font-mono text-[11px] leading-snug text-foreground/90">{caminhoContabil}</div>
           </div>
         )}
       </div>
 
-      {/* Bloco partes + pagamento */}
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        {tipo === "AP" ? (
-          <div>
-            <Label>Fornecedor</Label>
-            <Select value={fornecedor} onValueChange={setFornecedor}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{fornecedores.map((f) => <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        ) : (
-          <div><Label>Cliente</Label><Input value={cliente} onChange={(e) => setCliente(e.target.value)} /></div>
-        )}
-        <div>
-          <Label>Meio de pagamento</Label>
-          <Select value={meioPagamentoId} onValueChange={setMeioPagamentoId}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{meios.filter((m) => m.ativo).map((m) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Conta financeira</Label>
-          <Select value={contaFinanceiraNome} onValueChange={setContaNome}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
-      </div>
-
-      {/* Bloco origem da operação — de onde veio este lançamento */}
+      {/* Passo 4 — Obra / Projeto */}
       <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-foreground/80">
-          <Link2 className="h-3.5 w-3.5" /> Origem da operação
+          <Link2 className="h-3.5 w-3.5" /> 4 · Obra / Projeto vinculado
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Tipo de origem *</Label>
-            <Select value={origem} onValueChange={setOrigem}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {origensDisp.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Contrato vinculado</Label>
-            <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="— sem contrato —" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— sem contrato —</SelectItem>
-                {contratosAll.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2">
-            <Label>Obra vinculada</Label>
+            <Label>Obra</Label>
             <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="— sem obra —" /></SelectTrigger>
               <SelectContent>
@@ -819,11 +783,67 @@ function TituloDialog({
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Contrato</Label>
+            <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="— sem contrato —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem contrato —</SelectItem>
+                {contratosAll.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Tipo de origem *</Label>
+            <Select value={origem} onValueChange={setOrigem}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {origensDisp.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Tipo de aplicação</Label>
+            <Select value={tipoAplicacaoId} onValueChange={setTipoAplicacaoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{tiposAplic.filter((t) => t.ativo).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}{t.posVenda ? " (pós-venda)" : ""}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="mt-2 text-[10px] text-muted-foreground">
-          {tipo === "AR"
-            ? "Vincule o contrato/obra para que este recebimento apareça no fluxo correto e na margem da obra."
-            : "Vincule a obra para que este custo seja contabilizado no CMV da obra (não como despesa administrativa)."}
+      </div>
+
+      {/* Passo 5 — Centro de custo (puxado da natureza) + meio/conta */}
+      <div className="mt-3 rounded-lg border bg-muted/20 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          5 · Centro de custo e pagamento
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <Label>Centro de custo * <span className="text-[10px] text-muted-foreground">(sugerido pela natureza)</span></Label>
+            <Select value={centroCustoId} onValueChange={setCentroCustoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{centros.filter((c) => c.ativo).map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} · {c.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Meio de pagamento</Label>
+            <Select value={meioPagamentoId} onValueChange={setMeioPagamentoId}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{meios.filter((m) => m.ativo).map((m) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Conta financeira</Label>
+            <Select value={contaFinanceiraNome} onValueChange={setContaNome}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Observação</Label><Textarea value={observacao} onChange={(e) => setObs(e.target.value)} rows={2} /></div>
         </div>
       </div>
 
@@ -832,7 +852,7 @@ function TituloDialog({
         <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-              Parcelamento {parcelarOn && parcelas.length > 0 && (
+              6 · Parcelamento {parcelarOn && parcelas.length > 0 && (
                 <span className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${parcelasValidas ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}`}>
                   Soma {fmtBRLPrecise(somaParcelas)} de {fmtBRLPrecise(valorOriginal)}
                 </span>
@@ -853,7 +873,7 @@ function TituloDialog({
                 </div>
                 <div>
                   <Label className="text-xs">Periodicidade</Label>
-                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)}>
+                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)} disabled={mesmoVencimento}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="mensal">Mensal</SelectItem>
@@ -869,6 +889,14 @@ function TituloDialog({
                     <Button type="button" variant="ghost" onClick={() => setParcelas([])}>Limpar</Button>
                   )}
                 </div>
+                <label className="col-span-2 flex items-center gap-1.5 text-xs">
+                  <input type="checkbox" checked={mesmoVencimento} onChange={(e) => setMesmoVenc(e.target.checked)} />
+                  Mesma data de vencimento em todas as parcelas
+                </label>
+                <label className="col-span-2 flex items-center gap-1.5 text-xs">
+                  <input type="checkbox" checked={mesmaCompetencia} onChange={(e) => setMesmaComp(e.target.checked)} />
+                  Mesmo mês de competência em todas
+                </label>
               </div>
 
               {parcelas.length > 0 && (
@@ -922,40 +950,13 @@ function TituloDialog({
         </div>
       )}
 
-      {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
-
+      {/* Anexos — em edição usamos AnexosBlock (Storage). Na criação, o anexo + rateio são feitos ao reabrir o título após salvar. */}
       {initial ? (
         <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
       ) : (
-        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
-            </div>
-            <div>
-              <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
-              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-                <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
-              </Button>
-            </div>
-          </div>
-          {pendingFiles.length === 0 ? (
-            <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 10 MB cada. O upload acontece ao salvar.</div>
-          ) : (
-            <div className="space-y-1">
-              {pendingFiles.map((f, idx) => (
-                <div key={`${f.name}-${idx}`} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
-                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">{f.name}</span>
-                  <span className="text-muted-foreground">{Math.round(f.size / 1024)} KB</span>
-                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPendingFiles((prev) => prev.filter((_, i) => i !== idx))}>
-                    <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="mt-3 rounded-lg border border-dashed bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+          <Paperclip className="mr-1 inline h-3.5 w-3.5" />
+          Após salvar, o título reabrirá automaticamente para anexar comprovantes e fazer rateio (se houver).
         </div>
       )}
 

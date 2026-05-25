@@ -57,7 +57,18 @@ const STATUS_LABEL: Record<TituloStatus, string> = {
   parcial: "Parcial", pago: "Pago", recebido: "Recebido", cancelado: "Cancelado",
 };
 
-function StatusPill({ s }: { s: TituloStatus }) {
+function StatusPill({ s, renegociado }: { s: TituloStatus; renegociado?: boolean }) {
+  if (renegociado) {
+    return (
+      <Badge
+        variant="outline"
+        className="bg-violet-500/15 text-violet-700 border-violet-500/30 border text-[10px] font-semibold"
+        title="Título encerrado por renegociação — sem movimento de caixa. Saldo zero."
+      >
+        Renegociado
+      </Badge>
+    );
+  }
   return <Badge variant="outline" className={`${STATUS_TONE[s]} border text-[10px] font-semibold`}>{STATUS_LABEL[s]}</Badge>;
 }
 

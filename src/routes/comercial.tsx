@@ -768,6 +768,7 @@ function ContratosTab({
   const [previewGeracao, setPreviewGeracao] = useState<Contrato | null>(null);
   const [gerarAssinado, setGerarAssinado] = useState<Contrato | null>(null);
   const [dataAssinaturaInput, setDataAssinaturaInput] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [completarDados, setCompletarDados] = useState<Contrato | null>(null);
 
   function retornarParaOrcamento(c: Contrato) {
     const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);
@@ -886,27 +887,52 @@ function ContratosTab({
                 const temDoc = docDig.length === 11 || docDig.length === 14;
                 const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
                 const liberado = !!c.liberadoParaContrato;
+                const faltando: string[] = [];
+                if (!temDoc) faltando.push("CPF/CNPJ");
+                if (!temEndereco) faltando.push("Endereço");
+                const dadosOk = faltando.length === 0;
+                const motivoPendente = `Dados pendentes: ${faltando.join(" e ")}. Use "Completar dados do cliente" para preencher.`;
                 return (
-                  <TableRow key={c.id} className={!liberado ? "bg-warning/5" : undefined}>
+                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined}>
                     <TableCell>
                       <ActionsMenu label={c.id}>
+                        {!dadosOk && (
+                          <>
+                            <DropdownMenuItem
+                              onSelect={() => setCompletarDados(c)}
+                              className="text-primary focus:text-primary"
+                              title="Preencher CPF/CNPJ e endereço para liberar a geração do contrato"
+                            >
+                              <PenLine className="mr-2 h-4 w-4" /> Completar dados do cliente
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                         <DropdownMenuItem
-                          onSelect={() => {
-                            if (!liberado) { toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
+                          onSelect={(e) => {
+                            if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                            if (!liberado) { e.preventDefault(); toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
                             setAberto(c);
                           }}
-                          disabled={!liberado}
-                          title={liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato."}
+                          disabled={!liberado || !dadosOk}
+                          title={!dadosOk ? motivoPendente : (liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato.")}
                         >
                           <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {!liberado ? (
                           <DropdownMenuItem
-                            onSelect={() => liberarParaGerar(c)}
-                            disabled={!isAdmin}
-                            title={isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria"}
-                            className={isAdmin ? "text-success focus:text-success" : undefined}
+                            onSelect={(e) => {
+                              if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                              liberarParaGerar(c);
+                            }}
+                            disabled={!isAdmin || !dadosOk}
+                            title={
+                              !dadosOk
+                                ? motivoPendente
+                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria")
+                            }
+                            className={isAdmin && dadosOk ? "text-success focus:text-success" : undefined}
                           >
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Liberar para gerar contrato
                           </DropdownMenuItem>
@@ -1005,6 +1031,18 @@ function ContratosTab({
           </Table>
         )}
       </Card>
+      )}
+
+      {completarDados && (
+        <CompletarDadosClienteDialog
+          contrato={completarDados}
+          onClose={() => setCompletarDados(null)}
+          onSaved={(novoCF) => {
+            updateContratoAudit(completarDados.id, { clienteFull: novoCF, cliente: novoCF.nome }, "Comercial");
+            toast.success(`Dados do cliente atualizados para ${completarDados.id}.`);
+            setCompletarDados(null);
+          }}
+        />
       )}
 
       {aberto && (
@@ -1217,6 +1255,147 @@ function ModeloBaseContratoDialog() {
     </>
   );
 }
+
+/* ---------------- DIALOG: Completar dados do cliente (CPF/CNPJ + endereço) ---------------- */
+function CompletarDadosClienteDialog({
+  contrato, onClose, onSaved,
+}: { contrato: Contrato; onClose: () => void; onSaved: (cf: NonNullable<Contrato["clienteFull"]>) => void }) {
+  const cf = contrato.clienteFull;
+  const [f, setF] = useState({
+    nome: cf?.nome ?? contrato.cliente ?? "",
+    doc: maskDoc(cf?.doc ?? ""),
+    telefone: maskTel(cf?.telefone ?? ""),
+    email: cf?.email ?? "",
+    cep: cf?.cep ?? "",
+    rua: cf?.rua ?? "",
+    numero: cf?.numero ?? "",
+    bairro: cf?.bairro ?? "",
+    complemento: cf?.complemento ?? "",
+    cidade: cf?.cidade ?? "",
+    uf: cf?.uf ?? "",
+  });
+  const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
+
+  const lookupCEP = async (cep: string) => {
+    set("cep", cep);
+    if (cep.replace(/\D/g, "").length !== 8) return;
+    const r = await buscarCEP(cep);
+    if (r) setF((p) => ({
+      ...p,
+      rua: r.rua ?? p.rua, bairro: r.bairro ?? p.bairro,
+      cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf,
+    }));
+  };
+
+  const docDig = onlyDigits(f.doc);
+  const docOk = docDig.length === 11 || docDig.length === 14;
+  const enderecoOk = !!(onlyDigits(f.cep).length === 8 && f.rua.trim() && f.numero.trim());
+  const podeSalvar = !!f.nome.trim() && docOk && enderecoOk;
+
+  const salvar = () => {
+    if (!f.nome.trim()) { toast.error("Informe o nome / razão social"); return; }
+    if (!docOk) { toast.error("CPF/CNPJ inválido"); return; }
+    if (f.telefone && !isTelValid(f.telefone)) { toast.error("Telefone inválido"); return; }
+    if (!enderecoOk) { toast.error("Endereço incompleto (CEP, rua e número são obrigatórios)"); return; }
+    onSaved({
+      nome: f.nome.trim(),
+      doc: f.doc,
+      telefone: f.telefone,
+      email: f.email,
+      cep: f.cep,
+      rua: f.rua,
+      numero: f.numero,
+      bairro: f.bairro,
+      complemento: f.complemento,
+      cidade: f.cidade,
+      uf: f.uf,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden p-0 gap-0">
+        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <PenLine className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Completar dados do cliente</DialogTitle>
+                <DialogDescription className="text-xs">
+                  Contrato <span className="font-mono">{contrato.id}</span> — preencha CPF/CNPJ e endereço para liberar a geração.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="overflow-y-auto px-6 py-5 space-y-4" style={{ maxHeight: "calc(92vh - 150px)" }}>
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b pb-3">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Identificação</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
+                <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>CPF / CNPJ *</Label>
+                <Input value={f.doc} onChange={(e) => set("doc", maskDoc(e.target.value))} maxLength={18} placeholder="000.000.000-00" />
+              </div>
+              <div className="space-y-1.5"><Label>Telefone</Label>
+                <Input value={f.telefone} onChange={(e) => set("telefone", maskTel(e.target.value))} maxLength={15} placeholder="(00) 00000-0000" />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>E-mail</Label>
+                <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b pb-3">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Endereço</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-6">
+              <div className="space-y-1.5 md:col-span-2"><Label>CEP *</Label>
+                <Input value={f.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={9} placeholder="00000-000" />
+              </div>
+              <div className="space-y-1.5 md:col-span-3"><Label>Rua / Logradouro *</Label>
+                <Input value={f.rua} onChange={(e) => set("rua", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>Número *</Label>
+                <Input value={f.numero} onChange={(e) => set("numero", e.target.value)} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Bairro</Label>
+                <Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Complemento</Label>
+                <Input value={f.complemento} onChange={(e) => set("complemento", e.target.value)} />
+              </div>
+              <div className="space-y-1.5 md:col-span-2"><Label>Cidade</Label>
+                <Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} />
+              </div>
+              <div className="space-y-1.5"><Label>UF</Label>
+                <Input value={f.uf} onChange={(e) => set("uf", e.target.value.toUpperCase().slice(0, 2))} maxLength={2} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="border-t bg-muted/30 px-6 py-3">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={salvar} disabled={!podeSalvar} className="gap-1.5">
+            <CheckCircle2 className="h-4 w-4" /> Salvar dados do cliente
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
 function mapTipoTopo(t?: PagamentoLinha["tipo"]): Contrato["pagamentoTipo"] | undefined {
   if (!t) return undefined;

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown, FileSignature, Hammer, History, Wallet, CreditCard, AlertTriangle, CalendarDays, CheckCheck, Hash } from "lucide-react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown, FileSignature, Hammer, History, Wallet, CreditCard, AlertTriangle, CalendarDays, CheckCheck, Hash, Copy } from "lucide-react";
 import { ContraparteCombo } from "@/components/app/financeiro/ContraparteCombo";
 import { PeriodoFechadoBanner } from "@/components/app/financeiro/PeriodoFechadoBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";

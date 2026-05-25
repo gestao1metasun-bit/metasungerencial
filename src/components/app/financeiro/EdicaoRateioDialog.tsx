@@ -70,6 +70,40 @@ export function EdicaoRateioDialog({
   const valorTitulo = titulo?.valorOriginal ?? 0;
   const diff = Math.round((total - valorTitulo) * 100) / 100;
 
+  // Juros e multa do título: valores já realizados em movimentos não estornados.
+  // Se ainda não há baixa, busca a sugestão dos parâmetros financeiros (read-only).
+  const jurosPago = useMemo(
+    () => (titulo?.movimentos ?? []).filter((m) => !m.estornado).reduce((s, m) => s + (m.juros ?? 0), 0),
+    [titulo],
+  );
+  const multaPago = useMemo(
+    () => (titulo?.movimentos ?? []).filter((m) => !m.estornado).reduce((s, m) => s + (m.multa ?? 0), 0),
+    [titulo],
+  );
+  const [sugestao, setSugestao] = useState<{ juros: number; multa: number } | null>(null);
+  useEffect(() => {
+    if (!titulo) { setSugestao(null); return; }
+    if (jurosPago > 0 || multaPago > 0) { setSugestao(null); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const r = await repo.calcularEncargos({
+          saldo: titulo.saldo,
+          vencimento: titulo.vencimentoReal ?? titulo.vencimento,
+          dataRef: new Date().toISOString().slice(0, 10),
+        });
+        if (!cancel) setSugestao({ juros: r.jurosSugerido, multa: r.multaSugerida });
+      } catch { /* silencioso */ }
+    })();
+    return () => { cancel = true; };
+  }, [titulo?.id, jurosPago, multaPago, repo]);
+
+  const jurosShow = jurosPago > 0 ? jurosPago : (sugestao?.juros ?? 0);
+  const multaShow = multaPago > 0 ? multaPago : (sugestao?.multa ?? 0);
+  const jurosTag = jurosPago > 0 ? "pago" : (sugestao && sugestao.juros > 0 ? "previsto" : "");
+  const multaTag = multaPago > 0 ? "pago" : (sugestao && sugestao.multa > 0 ? "previsto" : "");
+  const totalTitulo = valorTitulo + jurosShow + multaShow;
+
   if (!titulo) return null;
 
   function updateRow(idx: number, patch: Partial<Rateio>) {

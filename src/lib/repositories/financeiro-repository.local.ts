@@ -57,6 +57,7 @@ import {
 } from "@/lib/fin-compras-store";
 import {
   getExtrato,
+  adicionarLancamentoExtrato as storeAdicionarLancExtrato,
   importarExtratoCSV as storeImportarExtrato,
   sugerirCandidatos as storeSugerir,
   conciliar as storeConciliar,

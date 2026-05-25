@@ -21,8 +21,8 @@ import { fmtBRLPrecise } from "@/lib/financeiro-store";
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }
 
 export function RescisoesTab() {
-  const rescs = useRescisoes();
-  const titulos = useTitulos();
+  const rescs = useRepoRescisoes();
+  const titulos = useRepoTitulos();
   const [open, setOpen] = useState(false);
 
   // Contratos disponíveis = qualquer contratoId presente nos títulos

@@ -298,13 +298,14 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Juros</TableHead>
               <TableHead className="text-right">Multa</TableHead>
+              <TableHead className="text-right">Desconto</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -313,7 +314,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               const enc = aberto
                 ? calcularEncargos(t, hojeISO, parametrosFin)
                 : { jurosSugerido: 0, multaSugerida: 0, diasAtraso: 0, valorComEncargos: t.saldo };
-              const total = aberto ? enc.valorComEncargos : t.saldo;
+              const desconto = t.desconto ?? 0;
+              const total = aberto ? round2(enc.valorComEncargos - desconto) : t.saldo;
               const emAtraso = aberto && enc.diasAtraso > 0;
               return (
               <TableRow key={t.id}>
@@ -378,6 +380,12 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
                 >
                   {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
+                </TableCell>
+                <TableCell
+                  className={`text-right tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}`}
+                  title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
+                >
+                  {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">{fmtBRLPrecise(total)}</TableCell>
                 <TableCell><StatusPill s={t.status} /></TableCell>

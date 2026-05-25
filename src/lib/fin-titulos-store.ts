@@ -137,6 +137,9 @@ export type Titulo = {
   renegociadoEm?: string;                             // título-pai: quando foi renegociado
   statusRenegociacao?: "ativo" | "renegociado";       // pai marcado como renegociado
 
+  // Desconto concedido sobre o título (ex: desconto de multa e juros para negociação)
+  desconto?: number;
+
   movimentos: Movimento[];
 
   // Rateio do título entre múltiplos centros de custo / naturezas / O.S.

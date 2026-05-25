@@ -170,7 +170,8 @@ function ContraparteCombo({
  * ============================================================ */
 
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
-  const todos = useTitulos();
+  const todos = useRepoTitulos();
+  const repo = useFinanceiroRepo();
   const naturezas = useNaturezasFin();
   const grupos = useGrupos();
   const subgrupos = useSubgrupos();

@@ -136,7 +136,14 @@ export function AdiantamentosTab() {
                           <Button
                             size="sm" variant="ghost"
                             onClick={async () => {
-                              const m = prompt("Motivo do estorno (mín. 5 caracteres):");
+                              const m = await promptDialog({
+                                title: "Estornar adiantamento",
+                                description: `Adiantamento ${a.id} — ${a.contraparteNome}. Informe o motivo (mín. 5 caracteres).`,
+                                label: "Motivo do estorno",
+                                multiline: true,
+                                minLength: 5,
+                                confirmText: "Estornar",
+                              });
                               if (m && m.length >= 5) {
                                 try { await repo.estornarAdiantamento(a.id, m); toast.success("Adiantamento estornado."); }
                                 catch (e: any) { toast.error(e.message); }

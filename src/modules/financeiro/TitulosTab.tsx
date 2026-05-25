@@ -37,6 +37,8 @@ import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
 import { useClientesFull, addClienteFull, DuplicateClienteError } from "@/lib/clientes-store";
 import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
+import { calcularEncargos } from "@/lib/fin-calculo-encargos";
+import { useParametrosFinanceiros } from "@/lib/fin-parametros-financeiros-store";
 
 const STATUS_TONE: Record<TituloStatus, string> = {
   previsto:     "bg-amber-500/15 text-amber-600 border-amber-500/30",

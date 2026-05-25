@@ -370,6 +370,15 @@ function SaidaObraDialog() {
     if (!obraId.trim()) { toast.error("Selecione a obra"); return; }
     const valid = linhas.filter((l) => l.itemId && l.qtd > 0);
     if (valid.length === 0) { toast.error("Adicione ao menos um item"); return; }
+    // Item 2 — bloquear saída sem custo médio válido (evita CMV zerado/subestimado).
+    const semCM = valid
+      .map((l) => itens.find((x) => x.id === l.itemId))
+      .filter((it) => !it || !(it.custoMedio && it.custoMedio > 0));
+    if (semCM.length > 0) {
+      const nomes = semCM.map((it) => it?.nome ?? "?").join(", ");
+      toast.error(`Itens sem custo médio: ${nomes}. Registre uma compra antes da saída para apurar o CMV.`);
+      return;
+    }
     const r = registrarSaidaObra(obraId.trim(), cliente.trim(), valid);
     if (!r.ok) { toast.error(`Saída falhou. Faltam: ${r.faltantes.join(", ")}`); return; }
     toast.success(`Saída registrada — CMV ${fmtBRLPrecise(r.cmvTotal)}`);

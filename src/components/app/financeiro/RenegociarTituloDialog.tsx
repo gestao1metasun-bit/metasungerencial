@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertTriangle, ShieldCheck, Sparkles } from "lucide-react";
 import {
-  simularRenegociacao, confirmarRenegociacao,
-  type SimulacaoRenegociacao,
-} from "@/lib/fin-renegociacao-store";
-import type { Titulo } from "@/lib/fin-titulos-store";
+  useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  Titulo, SimulacaoRenegociacao,
+} from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) {

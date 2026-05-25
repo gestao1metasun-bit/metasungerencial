@@ -768,6 +768,7 @@ function ContratosTab({
   const [previewGeracao, setPreviewGeracao] = useState<Contrato | null>(null);
   const [gerarAssinado, setGerarAssinado] = useState<Contrato | null>(null);
   const [dataAssinaturaInput, setDataAssinaturaInput] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [completarDados, setCompletarDados] = useState<Contrato | null>(null);
 
   function retornarParaOrcamento(c: Contrato) {
     const motivo = prompt(`Retornar contrato ${c.id} para Orçamentos?\n\nMotivo (obrigatório):`);

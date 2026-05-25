@@ -745,7 +745,8 @@ function ContratosTab({
   contratos, setContratos, filtroStatus = "ambos",
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; filtroStatus?: "geracao" | "assinatura" | "ambos" }) {
   const [busca, setBusca] = useState("");
-  const isAdmin = useIsAdmin();
+  const identidade = useIdentidade();
+  const isAdmin = identidade.isAdminMaster;
   // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {
     const q = busca.trim().toLowerCase();

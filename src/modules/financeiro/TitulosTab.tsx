@@ -170,6 +170,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
 
   return (
     <div className="space-y-4">
+      <PeriodoFechadoBanner />
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1">
           <Label className="text-xs text-muted-foreground">Buscar</Label>

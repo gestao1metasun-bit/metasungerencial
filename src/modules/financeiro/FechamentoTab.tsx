@@ -164,14 +164,18 @@ export function FechamentoTab() {
           {!globalFechado ? (
             <Button
               disabled={!todasFechadas}
-              onClick={() => {
+              onClick={async () => {
                 if (titulosAbertosNoMes.total > 0) {
-                  const ok = window.confirm(
-                    `Há ${titulosAbertosNoMes.total} título(s) ainda em aberto na competência ${mes} ` +
-                    `(${titulosAbertosNoMes.ap} AP · R$ ${titulosAbertosNoMes.saldoAP.toFixed(2)} · ` +
-                    `${titulosAbertosNoMes.ar} AR · R$ ${titulosAbertosNoMes.saldoAR.toFixed(2)}). ` +
-                    `Após o fechamento global, baixas e edições nesses títulos ficarão bloqueadas. Confirmar?`,
-                  );
+                  const ok = await confirmDialog({
+                    title: `Fechar ${mes} com títulos em aberto?`,
+                    description:
+                      `Há ${titulosAbertosNoMes.total} título(s) ainda em aberto na competência ${mes} ` +
+                      `(${titulosAbertosNoMes.ap} AP · ${fmtBRL(titulosAbertosNoMes.saldoAP)} · ` +
+                      `${titulosAbertosNoMes.ar} AR · ${fmtBRL(titulosAbertosNoMes.saldoAR)}). ` +
+                      `Após o fechamento global, baixas e edições nesses títulos ficarão bloqueadas.`,
+                    confirmText: "Fechar mesmo assim",
+                    destructive: true,
+                  });
                   if (!ok) return;
                 }
                 fecharMesGlobal(mes, usuarioAtual, obsGlobal);

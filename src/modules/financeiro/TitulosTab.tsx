@@ -498,8 +498,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       <Dialog open={!!estornar} onOpenChange={(o) => !o && setEstornar(null)}>
         {estornar && (
           <EstornoDialog
-            onSave={(motivo) => {
-              try { estornarMovimento(estornar.titulo.id, estornar.movId, motivo); toast.success("Movimento estornado."); setEstornar(null); setVerHist(null); }
+            onSave={async (motivo) => {
+              try { await repo.estornarBaixa(estornar.titulo.id, estornar.movId, motivo); toast.success("Movimento estornado."); setEstornar(null); setVerHist(null); }
               catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setEstornar(null)}

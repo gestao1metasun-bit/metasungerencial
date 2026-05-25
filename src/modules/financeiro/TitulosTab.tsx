@@ -184,6 +184,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");
+  type PresetView = "operacional" | "cobranca" | "diretoria" | "fiscal" | "auditoria";
+  const [preset, setPreset] = useState<PresetView>("operacional");
+  const showEncargos = preset !== "diretoria";
+  const showFiscal = preset === "fiscal";
+  const showAuditoria = preset === "auditoria";
   const [criarOpen, setCriarOpen] = useState(false);
   const [editar, setEditar] = useState<Titulo | null>(null);
   const [baixar, setBaixar] = useState<Titulo | null>(null);
@@ -205,8 +210,21 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.obraId ?? "").toLowerCase().includes(b),
       );
     }
+    if (preset === "cobranca") {
+      // Cobrança: apenas títulos em aberto, priorizando vencidos
+      arr = arr.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
+      const hoje = hojeISO;
+      return arr.sort((a, b) => {
+        const va = a.vencimentoReal ?? a.vencimento;
+        const vb = b.vencimentoReal ?? b.vencimento;
+        const aAtraso = va < hoje;
+        const bAtraso = vb < hoje;
+        if (aAtraso !== bAtraso) return aAtraso ? -1 : 1;
+        return va.localeCompare(vb);
+      });
+    }
     return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
-  }, [todos, tipo, fStatus, busca]);
+  }, [todos, tipo, fStatus, busca, preset, hojeISO]);
 
   const totais = useMemo(() => {
     const aberto = lista.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
@@ -241,6 +259,28 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="grid gap-1">
+          <Label className="text-xs text-muted-foreground">Visão</Label>
+          <div className="inline-flex h-9 items-center rounded-md border bg-background p-0.5 text-xs">
+            {([
+              { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
+              { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
+              { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão (sem encargos detalhados)" },
+              { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
+              { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico detalhado" },
+            ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
+              <button
+                key={p.k}
+                type="button"
+                onClick={() => setPreset(p.k)}
+                title={p.hint}
+                className={`rounded px-2 py-1 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
@@ -344,16 +384,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead className="w-[100px]">Venc. Nominal</TableHead>
               <TableHead className="w-[100px]">Venc. Real</TableHead>
               <TableHead className="w-[110px] text-right">Valor</TableHead>
-              <TableHead className="w-[90px] text-right">Juros</TableHead>
-              <TableHead className="w-[90px] text-right">Multa</TableHead>
-              <TableHead className="w-[90px] text-right">Desconto</TableHead>
+              {showEncargos && <TableHead className="w-[90px] text-right">Juros</TableHead>}
+              {showEncargos && <TableHead className="w-[90px] text-right">Multa</TableHead>}
+              {showEncargos && <TableHead className="w-[90px] text-right">Desconto</TableHead>}
               <TableHead className="w-[130px] text-right">Total</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={showEncargos ? 11 : 8} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -419,7 +459,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                       <button
                         type="button"
                         onClick={() => { navigator.clipboard?.writeText(t.id).then(() => toast.success("ID copiado")).catch(() => {}); }}
-                        className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70 opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                        className={`mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70 transition-opacity hover:text-primary ${showAuditoria ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                         title={`ID: ${t.id} (clique para copiar)`}
                       >
                         <Hash className="h-2.5 w-2.5" />
@@ -516,6 +556,19 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                           {fmtCompetenciaBR(t.competencia)}
                         </span>
                       )}
+                      {showFiscal && t.documentoTipo && (
+                        <span
+                          className="inline-flex items-center gap-0.5 rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-700"
+                          title={`Documento: ${t.documentoTipo}${t.documentoNumero ? " · " + t.documentoNumero : ""}`}
+                        >
+                          {t.documentoTipo}{t.documentoNumero ? ` ${t.documentoNumero}` : ""}
+                        </span>
+                      )}
+                      {showAuditoria && t.criadoPor && (
+                        <span className="inline-flex items-center gap-0.5 text-muted-foreground" title={`Criado por ${t.criadoPor} em ${t.criadoEm?.slice(0, 10)}`}>
+                          por {t.criadoPor}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </TableCell>
@@ -535,24 +588,30 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   )}
                 </TableCell>
                 <TableCell className="text-right text-sm tabular-nums text-muted-foreground">{fmtBRLPrecise(t.saldo)}</TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${enc.jurosSugerido > 0 ? "text-amber-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={emAtraso ? `${enc.diasAtraso} dia(s) de atraso · ${parametrosFin.jurosValor}% ${parametrosFin.jurosModo === "mensal" ? "a.m." : "a.d."}` : "Sem atraso"}
-                >
-                  {enc.jurosSugerido > 0 ? fmtBRLPrecise(enc.jurosSugerido) : "—"}
-                </TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${enc.multaSugerida > 0 ? "text-rose-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
-                >
-                  {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
-                </TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
-                >
-                  {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
-                </TableCell>
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${enc.jurosSugerido > 0 ? "text-amber-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={emAtraso ? `${enc.diasAtraso} dia(s) de atraso · ${parametrosFin.jurosValor}% ${parametrosFin.jurosModo === "mensal" ? "a.m." : "a.d."}` : "Sem atraso"}
+                  >
+                    {enc.jurosSugerido > 0 ? fmtBRLPrecise(enc.jurosSugerido) : "—"}
+                  </TableCell>
+                )}
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${enc.multaSugerida > 0 ? "text-rose-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
+                  >
+                    {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
+                  </TableCell>
+                )}
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
+                  >
+                    {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className={`text-base font-bold tabular-nums ${aberto ? "text-foreground" : "text-emerald-700"}`}>
                     {fmtBRLPrecise(total)}

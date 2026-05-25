@@ -2,7 +2,7 @@
 // Store de Leads — primeira etapa da cadeia comercial:
 // Lead → Proposta → Contrato → Engenharia.
 // ============================================================================
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { LEAD_STATUS, type LeadStatus, type OrigemLead } from "@/lib/status-catalog";
 import { pushAudit } from "@/lib/audit-store";
 

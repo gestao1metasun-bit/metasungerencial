@@ -1033,6 +1033,18 @@ function ContratosTab({
       </Card>
       )}
 
+      {completarDados && (
+        <CompletarDadosClienteDialog
+          contrato={completarDados}
+          onClose={() => setCompletarDados(null)}
+          onSaved={(novoCF) => {
+            updateContratoAudit(completarDados.id, { clienteFull: novoCF, cliente: novoCF.nome }, "Comercial");
+            toast.success(`Dados do cliente atualizados para ${completarDados.id}.`);
+            setCompletarDados(null);
+          }}
+        />
+      )}
+
       {aberto && (
         <RedigirContratoDialog
           contrato={aberto}

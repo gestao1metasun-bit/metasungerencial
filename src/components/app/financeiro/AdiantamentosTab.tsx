@@ -27,7 +27,8 @@ const TIPO_TONE: Record<AdiantamentoTipo, string> = {
 };
 
 export function AdiantamentosTab() {
-  const lista = useAdiantamentos();
+  const repo = useFinanceiroRepo();
+  const lista = useRepoAdiantamentos();
   const [tipo, setTipo] = useState<AdiantamentoTipo>("cliente");
   const [filtro, setFiltro] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);

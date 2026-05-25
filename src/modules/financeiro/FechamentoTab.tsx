@@ -103,15 +103,19 @@ export function FechamentoTab() {
                     ) : (
                       <div className="flex gap-2">
                         <Input
-                          placeholder="Motivo da reabertura"
+                          placeholder={podeReabrir ? "Motivo da reabertura (mín. 5)" : "Sem permissão para reabrir"}
                           value={motivos[c.id] ?? ""}
                           onChange={(e) => setMotivos((m) => ({ ...m, [c.id]: e.target.value }))}
+                          disabled={!podeReabrir}
                         />
                         <Button
                           size="sm" variant="destructive"
+                          disabled={!podeReabrir}
+                          title={!podeReabrir ? "Requer permissão financeiro.reabrir_periodo" : undefined}
                           onClick={() => {
+                            if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
                             const m = (motivos[c.id] ?? "").trim();
-                            if (!m) return toast.error("Informe o motivo.");
+                            if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
                             reabrirContaMes({ mes, contaId: c.id, usuario: "Admin", motivo: m });
                             setMotivos((s) => ({ ...s, [c.id]: "" }));
                             toast.success("Conta reaberta.");

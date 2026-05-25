@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
   Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
-  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw,
+  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw, FileText, ArrowRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

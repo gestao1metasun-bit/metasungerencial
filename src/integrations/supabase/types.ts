@@ -1338,6 +1338,7 @@ export type Database = {
         | "workflow.pular_etapa"
         | "analytics.amplo"
         | "analytics.privado"
+        | "financeiro.reabrir_periodo"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -1504,6 +1505,7 @@ export const Constants = {
         "workflow.pular_etapa",
         "analytics.amplo",
         "analytics.privado",
+        "financeiro.reabrir_periodo",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },

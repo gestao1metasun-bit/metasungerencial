@@ -42,7 +42,7 @@ export function FluxoCaixaRealTab() {
     return { ini: isoAddDays(hoje, -Math.floor(dias / 3)), fim: isoAddDays(hoje, dias) };
   }, [modoData, dias, dataInicioManual, dataFimManual]);
 
-  const data = useFluxoCaixa({
+  const data = useRepoFluxoCaixa({
     dataInicio: ini,
     dataFim: fim,
     contaId: contaNome === "__all" ? undefined : contaNome,

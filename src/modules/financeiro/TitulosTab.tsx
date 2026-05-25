@@ -242,9 +242,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              const n = importarPrevisoesDoLegado(readLancamentos());
-              toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+            onClick={async () => {
+              try {
+                const n = await repo.importarPrevisoesDoLegado(readLancamentos());
+                toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+              } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
             }}
             title="Importa Previsto/A realizar/Confirmado do fluxo de caixa para títulos"
           >

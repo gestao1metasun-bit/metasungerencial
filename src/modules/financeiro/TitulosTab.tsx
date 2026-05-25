@@ -411,16 +411,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             tipo={tipo}
             initial={editar}
             cadastros={cadastros}
-            onSave={(patch) => {
+            onSave={async (patch) => {
               try {
-                atualizarTitulo(editar.id, patch);
+                await repo.atualizarTitulo(editar.id, patch, "Edição manual");
                 toast.success("Título atualizado.");
                 setEditar(null);
               } catch (e: any) { toast.error(e.message); }
             }}
             onCancel={() => setEditar(null)}
-            onCancelarTitulo={(motivo) => {
-              try { cancelarTitulo(editar.id, motivo); toast.success("Título cancelado."); setEditar(null); }
+            onCancelarTitulo={async (motivo) => {
+              try { await repo.cancelarTitulo(editar.id, motivo); toast.success("Título cancelado."); setEditar(null); }
               catch (e: any) { toast.error(e.message); }
             }}
           />

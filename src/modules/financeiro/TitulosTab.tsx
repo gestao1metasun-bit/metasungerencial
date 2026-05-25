@@ -850,7 +850,7 @@ function TituloDialog({
         <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-              Parcelamento {parcelarOn && parcelas.length > 0 && (
+              6 · Parcelamento {parcelarOn && parcelas.length > 0 && (
                 <span className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${parcelasValidas ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}`}>
                   Soma {fmtBRLPrecise(somaParcelas)} de {fmtBRLPrecise(valorOriginal)}
                 </span>

@@ -175,7 +175,8 @@ export function ConciliacaoTab() {
 }
 
 /* ================ Importar CSV ================ */
-function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContasFinanceiras> }) {
+function ImportarExtratoDialog({ contas }: { contas: ContaFinanceira[] }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
   const [conta, setConta] = useState<string>(contas[0]?.id ?? "");
   const [csv, setCsv] = useState("");
@@ -204,11 +205,13 @@ function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContas
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => {
+          <Button onClick={async () => {
             if (!conta) { toast.error("Selecione a conta."); return; }
-            const n = importarExtratoCSV(conta, csv);
-            if (n > 0) { toast.success(`${n} lançamento(s) importado(s).`); setCsv(""); setOpen(false); }
-            else toast.error("Nenhuma linha válida encontrada.");
+            try {
+              const n = await repo.importarExtratoCSV(conta, csv);
+              if (n > 0) { toast.success(`${n} lançamento(s) importado(s).`); setCsv(""); setOpen(false); }
+              else toast.error("Nenhuma linha válida encontrada.");
+            } catch (err: any) { toast.error(err?.message ?? "Erro."); }
           }}>Importar</Button>
         </DialogFooter>
       </DialogContent>

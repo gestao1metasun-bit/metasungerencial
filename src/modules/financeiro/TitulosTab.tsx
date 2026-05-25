@@ -532,6 +532,54 @@ function TituloDialog({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Parcelamento (somente na criação)
+  const [parcelarOn, setParcelarOn] = useState<boolean>(false);
+  const [numParcelas, setNumParcelas] = useState<number>(2);
+  const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
+  const [parcelas, setParcelas] = useState<ParcelaPlano[]>([]);
+
+  // Gera/redistribui parcelas respeitando fixadoData e fixadoValor.
+  const gerarParcelas = () => {
+    const n = Math.max(1, Math.min(120, Math.floor(numParcelas)));
+    if (!vencimento) { toast.error("Defina o vencimento da 1ª parcela."); return; }
+    if (!(valorOriginal > 0)) { toast.error("Defina o valor total."); return; }
+    const base: ParcelaPlano[] = Array.from({ length: n }, (_, i) => {
+      const prev = parcelas[i];
+      return {
+        vencimento: prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade),
+        valor: prev?.fixadoValor ? prev.valor : 0,
+        competencia: (prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade)).slice(0, 7),
+        fixadoData: prev?.fixadoData,
+        fixadoValor: prev?.fixadoValor,
+      };
+    });
+    // Distribui o restante (após fixos) igualmente; última parcela absorve o resíduo.
+    const totalFixo = base.reduce((s, p) => s + (p.fixadoValor ? p.valor : 0), 0);
+    const livres = base.filter((p) => !p.fixadoValor).length;
+    const restante = round2(valorOriginal - totalFixo);
+    if (livres > 0) {
+      const cota = round2(restante / livres);
+      let acumLivre = 0;
+      let idxUltimoLivre = -1;
+      base.forEach((p, i) => { if (!p.fixadoValor) idxUltimoLivre = i; });
+      base.forEach((p, i) => {
+        if (!p.fixadoValor) {
+          if (i === idxUltimoLivre) {
+            p.valor = round2(restante - acumLivre);
+          } else {
+            p.valor = cota;
+            acumLivre = round2(acumLivre + cota);
+          }
+        }
+      });
+    }
+    setParcelas(base);
+  };
+
+  const somaParcelas = useMemo(() => round2(parcelas.reduce((s, p) => s + (Number(p.valor) || 0), 0)), [parcelas]);
+  const parcelasValidas = parcelarOn && parcelas.length >= 2 && Math.abs(somaParcelas - round2(valorOriginal)) < 0.01;
+
+
   // Cascata: ao trocar a natureza, sugerir grupo/subgrupo/centro/aplicação padrão
   const aoTrocarNatureza = (id: string) => {
     setNaturezaId(id);

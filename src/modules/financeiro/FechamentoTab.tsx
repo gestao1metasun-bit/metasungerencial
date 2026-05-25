@@ -147,10 +147,24 @@ export function FechamentoTab() {
           ) : (
             <Button
               variant="destructive"
-              onClick={() => { reabrirMesGlobal(mes, "Admin", obsGlobal || "Reabertura"); setObsGlobal(""); toast.success("Mês reaberto."); }}
+              disabled={!podeReabrir}
+              title={!podeReabrir ? "Requer permissão financeiro.reabrir_periodo" : undefined}
+              onClick={() => {
+                if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
+                const m = obsGlobal.trim();
+                if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
+                reabrirMesGlobal(mes, "Admin", m);
+                setObsGlobal("");
+                toast.success("Mês reaberto.");
+              }}
             ><Unlock className="mr-1 h-4 w-4" />Reabrir mês</Button>
           )}
         </div>
+        {globalFechado && !podeReabrir && (
+          <div className="mt-2 text-xs text-rose-700">
+            Você não tem permissão para reabrir o fechamento global. Solicite à diretoria/controladoria.
+          </div>
+        )}
         {!todasFechadas && !globalFechado && (
           <div className="mt-2 text-xs text-amber-700">
             Ainda há {contas.filter((c) => !isMesFechado(mes, c.id)).length} conta(s) em aberto neste mês.

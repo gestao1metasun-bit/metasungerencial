@@ -27,6 +27,11 @@ import {
   setRateios as storeSetRateios,
   apagarRateios as storeApagarRateios,
   detectarDuplicidade as storeDetectarDup,
+  gerarCopiaTitulo as storeGerarCopia,
+  cadastrarCheque as storeCadastrarCheque,
+  adicionarAnexo as storeAdicionarAnexo,
+  removerAnexo as storeRemoverAnexo,
+  importarPrevisoesDoLegado as storeImportarPrevisoes,
 } from "@/lib/fin-titulos-store";
 import {
   getRenegociacoes, getRenegociacoesPorTitulo,

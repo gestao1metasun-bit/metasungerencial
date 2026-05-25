@@ -287,7 +287,7 @@ export interface FinanceiroRepository {
 
   // ---------- Anexos
   listarAnexos(tituloId: string): Promise<Anexo[]>;
-  anexar(tituloId: string, anexo: Omit<Anexo, "id" | "enviadoEm">): Promise<Anexo>;
+  anexar(tituloId: string, anexo: AnexoInput): Promise<Anexo>;
   removerAnexo(tituloId: string, anexoId: string, motivo: string): Promise<void>;
 
   // ---------- Histórico / Auditoria

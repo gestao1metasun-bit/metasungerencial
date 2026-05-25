@@ -25,13 +25,17 @@ import {
   adicionarAnexo, removerAnexo,
   type Titulo, type TituloTipo, type TituloStatus, type Anexo,
 } from "@/lib/fin-titulos-store";
-import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import { useFornecedores, upsertFornecedor, newFornecedorId } from "@/lib/fin-fornecedores-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useNaturezasFin } from "@/lib/fin-naturezas-store";
 import { useGrupos, useSubgrupos } from "@/lib/fin-grupos-store";
 import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
 import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
+import { useClientesFull, addClienteFull, DuplicateClienteError } from "@/lib/clientes-store";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
 
 const STATUS_TONE: Record<TituloStatus, string> = {
@@ -87,6 +91,17 @@ function addDaysISO(iso: string, n: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
+/** Se a data cair em sábado/domingo, avança para a próxima segunda-feira. */
+function proximoDiaUtilISO(iso: string): string {
+  if (!iso) return iso;
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay(); // 0=dom, 6=sáb
+  if (dow === 6) return addDaysISO(iso, 2);
+  if (dow === 0) return addDaysISO(iso, 1);
+  return iso;
+}
+
 type Periodicidade = "mensal" | "quinzenal" | "semanal" | "anual";
 function proximoVencimento(base: string, idx: number, p: Periodicidade): string {
   if (idx === 0) return base;
@@ -94,6 +109,60 @@ function proximoVencimento(base: string, idx: number, p: Periodicidade): string 
   if (p === "anual")  return addMonthsISO(base, idx * 12);
   if (p === "quinzenal") return addDaysISO(base, idx * 15);
   return addDaysISO(base, idx * 7);
+}
+
+/* ============================================================
+ * Combobox de contraparte (cliente/fornecedor) — buscável + adicionar inline
+ * ============================================================ */
+function ContraparteCombo({
+  value, onChange, options, placeholder, onAdd, addLabel,
+}: {
+  value: string;
+  onChange: (nome: string) => void;
+  options: { id: string; nome: string; sub?: string }[];
+  placeholder: string;
+  onAdd: (nome: string) => void;
+  addLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [busca, setBusca] = useState("");
+  const buscaTrim = busca.trim();
+  const existe = options.some((o) => o.nome.toLowerCase() === buscaTrim.toLowerCase());
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+          <span className={value ? "" : "text-muted-foreground"}>{value || placeholder}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command shouldFilter={true}>
+          <CommandInput placeholder="Buscar…" value={busca} onValueChange={setBusca} />
+          <CommandList>
+            <CommandEmpty>Nenhum encontrado.</CommandEmpty>
+            <CommandGroup>
+              {options.map((o) => (
+                <CommandItem key={o.id} value={o.nome} onSelect={() => { onChange(o.nome); setOpen(false); }}>
+                  <Check className={`mr-2 h-4 w-4 ${value === o.nome ? "opacity-100" : "opacity-0"}`} />
+                  <div className="flex flex-col">
+                    <span>{o.nome}</span>
+                    {o.sub && <span className="text-[10px] text-muted-foreground">{o.sub}</span>}
+                  </div>
+                </CommandItem>
+              ))}
+              {buscaTrim && !existe && (
+                <CommandItem value={`__add__${buscaTrim}`} onSelect={() => { onAdd(buscaTrim); onChange(buscaTrim); setBusca(""); setOpen(false); }}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  <span>{addLabel}: <strong>{buscaTrim}</strong></span>
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /* ============================================================
@@ -443,7 +512,7 @@ type Cadastros = {
   centros: ReturnType<typeof useCentrosCustoFin>;
   tiposAplic: ReturnType<typeof useTiposAplicacao>;
   meios: ReturnType<typeof useMeiosPagamento>;
-  fornecedores: { id: string; nome: string }[];
+  fornecedores: ReturnType<typeof useFornecedores>;
   contas: { id: string; nome: string }[];
 };
 
@@ -494,6 +563,13 @@ function TituloDialog({
   // Listas de origens reais (obras e contratos cadastrados no ERP)
   const contratosAll = useContratos();
   const obrasAll = useObrasSnapshot();
+  const clientesAll = useClientesFull();
+
+  // Obras filtradas pelo contrato selecionado (quando houver)
+  const obrasDoContrato = useMemo(
+    () => obrasAll.filter((o) => !contratoId || o.contrato === contratoId),
+    [obrasAll, contratoId],
+  );
 
   // Opções de origem permitidas por tipo
   const origensDisp = useMemo(() => {
@@ -513,9 +589,13 @@ function TituloDialog({
     ];
   }, [tipo]);
 
-  // Auto-preenchimento ao escolher contrato
+  // Auto-preenchimento ao escolher contrato (e reseta obra se não pertencer mais)
   const aoEscolherContrato = (id: string) => {
     setContrato(id);
+    if (id && obraId) {
+      const o = obrasAll.find((x) => x.id === obraId);
+      if (o && o.contrato !== id) setObra("");
+    }
     const c = contratosAll.find((x) => x.id === id);
     if (c) {
       if (!cliente) setCliente(c.cliente);
@@ -529,6 +609,23 @@ function TituloDialog({
     if (o) {
       if (o.contrato && !contratoId) setContrato(o.contrato);
       if (o.cliente && !cliente) setCliente(o.cliente);
+    }
+  };
+
+  // Adicionar contraparte inline
+  const adicionarFornecedorInline = (nome: string) => {
+    try {
+      upsertFornecedor({ id: newFornecedorId(), nome, ativo: true });
+      toast.success(`Fornecedor "${nome}" cadastrado.`);
+    } catch (e: any) { toast.error(e?.message ?? "Falha ao cadastrar."); }
+  };
+  const adicionarClienteInline = (nome: string) => {
+    try {
+      addClienteFull({ nome, doc: "", telefone: "", cidade: "", uf: "" });
+      toast.success(`Cliente "${nome}" cadastrado.`);
+    } catch (e: any) {
+      if (e instanceof DuplicateClienteError) toast.info("Cliente já existia — usando o cadastro existente.");
+      else toast.error(e?.message ?? "Falha ao cadastrar.");
     }
   };
 
@@ -638,6 +735,7 @@ function TituloDialog({
 
     onSave({
       descricao, valorOriginal: Number(valorOriginal), vencimento,
+      vencimentoReal: proximoDiaUtilISO(vencimento),
       dataEmissao,
       competencia: vencimento.slice(0, 7),
       // IDs estruturais
@@ -698,18 +796,29 @@ function TituloDialog({
         </div>
       </DialogHeader>
 
-      {/* Passo 1 — Contraparte */}
+      {/* Passo 1 — Contraparte (buscável + cadastro inline) */}
       <div className="mt-3 rounded-lg border bg-muted/20 p-3">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           1 · {tipo === "AP" ? "Fornecedor" : "Cliente"}
         </div>
         {tipo === "AP" ? (
-          <Select value={fornecedor} onValueChange={setFornecedor}>
-            <SelectTrigger><SelectValue placeholder="Selecione o fornecedor…" /></SelectTrigger>
-            <SelectContent>{fornecedores.map((f) => <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>)}</SelectContent>
-          </Select>
+          <ContraparteCombo
+            value={fornecedor}
+            onChange={setFornecedor}
+            options={fornecedores.filter((f) => f.ativo).map((f) => ({ id: f.id, nome: f.nome, sub: f.documento }))}
+            placeholder="Buscar fornecedor…"
+            onAdd={adicionarFornecedorInline}
+            addLabel="+ Cadastrar fornecedor"
+          />
         ) : (
-          <Input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nome do cliente" />
+          <ContraparteCombo
+            value={cliente}
+            onChange={setCliente}
+            options={clientesAll.map((c) => ({ id: c.id, nome: c.nome, sub: [c.doc, c.cidade && `${c.cidade}/${c.uf}`].filter(Boolean).join(" · ") }))}
+            placeholder="Buscar cliente…"
+            onAdd={adicionarClienteInline}
+            addLabel="+ Cadastrar cliente"
+          />
         )}
       </div>
 
@@ -721,7 +830,15 @@ function TituloDialog({
         <div className="grid grid-cols-3 gap-3">
           <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
           <div><Label>Data de emissão</Label><Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} /></div>
-          <div><Label>Vencimento *</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
+          <div>
+            <Label>Vencimento *</Label>
+            <Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} />
+            {vencimento && proximoDiaUtilISO(vencimento) !== vencimento && (
+              <div className="mt-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-700">
+                Cai em fim de semana — vencimento real ajustado para <strong>{fmtDateBR(proximoDiaUtilISO(vencimento))}</strong>
+              </div>
+            )}
+          </div>
           <div className="col-span-3"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
         </div>
       </div>
@@ -763,26 +880,12 @@ function TituloDialog({
         )}
       </div>
 
-      {/* Passo 4 — Obra / Projeto */}
+      {/* Passo 4 — Contrato primeiro, depois Obra (filtrada pelo contrato) */}
       <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-foreground/80">
-          <Link2 className="h-3.5 w-3.5" /> 4 · Obra / Projeto vinculado
+          <Link2 className="h-3.5 w-3.5" /> 4 · Contrato / Obra vinculados
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Obra</Label>
-            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="— sem obra —" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— sem obra —</SelectItem>
-                {obrasAll.map((o) => (
-                  <SelectItem key={o.id} value={o.id}>
-                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div>
             <Label>Contrato</Label>
             <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
@@ -792,6 +895,23 @@ function TituloDialog({
                 {contratosAll.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>
+              Obra / Projeto
+              {contratoId && <span className="ml-1 text-[10px] text-muted-foreground">({obrasDoContrato.length} no contrato)</span>}
+            </Label>
+            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder={contratoId ? "— escolher obra do contrato —" : "— sem obra —"} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem obra —</SelectItem>
+                {obrasDoContrato.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
                   </SelectItem>
                 ))}
               </SelectContent>

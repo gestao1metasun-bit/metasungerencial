@@ -86,6 +86,8 @@ export type Titulo = {
   saldo: number;
 
   vencimento: string;
+  /** Vencimento ajustado para o próximo dia útil quando o vencimento cai em sábado/domingo. */
+  vencimentoReal?: string;
   competencia?: string;
   dataEmissao?: string;
   dataLiquidacao?: string;

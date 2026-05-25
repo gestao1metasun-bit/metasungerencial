@@ -10,8 +10,7 @@ import {
 import { TrendingUp, Wallet, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/app/StatCard";
-import { useFluxoCaixa } from "@/lib/fin-fluxo-caixa";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useRepoFluxoCaixa, useRepoContas } from "@/hooks/useRepoFinanceiro";
 import { useOrcamentoObras } from "@/lib/fin-orcamento-obras";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 

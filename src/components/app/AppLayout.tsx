@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
-import { useAuth, signOut } from "@/lib/auth-store";
+import { signOut } from "@/lib/auth-store";
+import { useIdentidade } from "@/lib/identidade";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
+import { AlertTriangle, LogIn } from "lucide-react";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 

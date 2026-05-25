@@ -644,7 +644,9 @@ function TituloDialog({
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
       origem, // ← origem explícita da operação
+      _parcelas: parcelarOn ? parcelas : undefined,
     }, pendingFiles);
+
   };
 
   // Caminho contábil legível (Grupo › Subgrupo › Natureza › Conta)

@@ -314,7 +314,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               const enc = aberto
                 ? calcularEncargos(t, hojeISO, parametrosFin)
                 : { jurosSugerido: 0, multaSugerida: 0, diasAtraso: 0, valorComEncargos: t.saldo };
-              const total = aberto ? enc.valorComEncargos : t.saldo;
+              const desconto = t.desconto ?? 0;
+              const total = aberto ? round2(enc.valorComEncargos - desconto) : t.saldo;
               const emAtraso = aberto && enc.diasAtraso > 0;
               return (
               <TableRow key={t.id}>

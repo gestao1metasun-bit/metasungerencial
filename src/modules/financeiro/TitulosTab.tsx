@@ -592,6 +592,7 @@ function TituloDialog({
   const [observacao, setObs] = useState(initial?.observacao ?? "");
   const [cancelMotivo, setCancelMotivo] = useState("");
   const [origem, setOrigem] = useState<string>(initial?.origem ?? "manual");
+  const [maisOpcoes, setMaisOpcoes] = useState<boolean>(!!(initial?.dataEmissao || initial?.tipoAplicacaoId));
 
   // Listas de origens reais (obras e contratos cadastrados no ERP)
   const contratosAll = useContratos();

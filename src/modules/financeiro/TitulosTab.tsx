@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
 import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown } from "lucide-react";
+import { ContraparteCombo } from "@/components/app/financeiro/ContraparteCombo";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
 import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";

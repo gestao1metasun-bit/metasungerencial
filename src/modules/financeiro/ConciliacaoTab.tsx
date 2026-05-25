@@ -126,20 +126,20 @@ export function ConciliacaoTab() {
                       {e.status === "pendente" && (
                         <>
                           <ConciliarDialog extrato={e} />
-                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => {
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={async () => {
                             const m = prompt("Motivo para ignorar:");
-                            if (m) ignorarExtrato(e.id, m);
+                            if (m) { try { await repo.ignorarExtrato(e.id, m); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }
                           }}><X className="h-3.5 w-3.5" /></Button>
                         </>
                       )}
                       {e.status === "conciliado" && (
                         <Button size="sm" variant="ghost" className="h-7 px-2"
-                          onClick={() => { desfazerConciliacao(e.id); toast.info("Conciliação desfeita. Estorne a baixa no título se necessário."); }}>
+                          onClick={async () => { try { await repo.desfazerConciliacao(e.id, "Desfazer manual"); toast.info("Conciliação desfeita. Estorne a baixa no título se necessário."); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }}>
                           <Undo2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                        onClick={() => { if (confirm("Remover este lançamento do extrato?")) removerExtrato(e.id); }}>
+                        onClick={async () => { if (confirm("Remover este lançamento do extrato?")) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

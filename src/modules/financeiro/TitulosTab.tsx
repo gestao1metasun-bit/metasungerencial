@@ -350,6 +350,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <FiltrosSheet chips={chips} toggleChip={toggleChip} clearChips={() => setChips(new Set())} tipo={tipo} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">

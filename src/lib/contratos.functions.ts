@@ -18,8 +18,9 @@ export const listarContratos = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(2000);
     if (error) throw new Error(error.message);
-    // JSON round-trip garante shape serializável (TanStack server-fn guard).
-    return JSON.parse(JSON.stringify(data ?? [])) as ContratoRow[];
+    // Retorna como string JSON para evitar guard de serialização do TanStack
+    // (campo `dados` é Record<string, unknown>). O cliente faz JSON.parse.
+    return JSON.stringify(data ?? []);
   });
 
 const upsertSchema = z.object({

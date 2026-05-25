@@ -1804,8 +1804,8 @@ export function PropostaList({
       </Card>
 
       {view === "tabela"
-        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} />
-        : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} />}
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} />
+        : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} onAprovar={setAprovandoLista} />}
 
       <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />
 
@@ -1815,6 +1815,13 @@ export function PropostaList({
         onVisualizar={(id) => { onVisualizar(id); setLeadAberto(null); }}
         onNova={(preset) => { onNova(preset); setLeadAberto(null); }}
         onEditar={(p) => onEditar(p)}
+      />
+
+      <AprovarPropostaDialog
+        proposta={aprovandoLista}
+        open={!!aprovandoLista}
+        onOpenChange={(o) => { if (!o) setAprovandoLista(null); }}
+        onAprovado={() => setAprovandoLista(null)}
       />
     </div>
   );

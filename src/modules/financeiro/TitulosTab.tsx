@@ -512,7 +512,7 @@ type Cadastros = {
   centros: ReturnType<typeof useCentrosCustoFin>;
   tiposAplic: ReturnType<typeof useTiposAplicacao>;
   meios: ReturnType<typeof useMeiosPagamento>;
-  fornecedores: { id: string; nome: string }[];
+  fornecedores: ReturnType<typeof useFornecedores>;
   contas: { id: string; nome: string }[];
 };
 

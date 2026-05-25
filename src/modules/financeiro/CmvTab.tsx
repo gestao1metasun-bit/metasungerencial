@@ -28,9 +28,10 @@ function fmtDT(iso: string) {
 }
 
 export function CmvTab() {
+  const repo = useFinanceiroRepo();
   const { itens, movimentos } = useEstoqueState();
-  const compras = useCompras();
-  const titulos = useTitulos();
+  const compras = useRepoCompras();
+  const titulos = useRepoTitulos();
 
   const linhasCmv = useMemo(() => cmvPorObra(), [movimentos]);
   const valorEstoque = useMemo(() => valorEstoqueTotal(), [itens]);

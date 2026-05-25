@@ -346,6 +346,51 @@ export function atualizarTitulo(id: string, patch: Partial<Titulo>, usuario = "S
   });
 }
 
+export function setRateios(
+  tituloId: string,
+  rateios: Rateio[],
+  usuario = "Sistema",
+) {
+  const cur = read();
+  const idx = cur.findIndex((t) => t.id === tituloId);
+  if (idx < 0) throw new Error("Título não encontrado.");
+  const before = cur[idx];
+  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
+  if (before.status === "cancelado") throw new Error("Título cancelado não aceita rateio.");
+
+  // Normaliza valores e valida total
+  const norm = rateios.map((r) => ({ ...r, valor: round2(r.valor || 0) }));
+  const total = round2(norm.reduce((s, r) => s + r.valor, 0));
+  if (norm.length > 0 && Math.abs(total - round2(before.valorOriginal)) > 0.01) {
+    throw new Error(
+      `Total dos rateios (${total.toFixed(2)}) difere do valor do título (${before.valorOriginal.toFixed(2)}).`,
+    );
+  }
+  // Pelo menos os obrigatórios em modo Normal
+  for (const r of norm) {
+    if (!r.centroCustoId && !r.centroCusto) throw new Error("Cada rateio precisa de Centro de custo.");
+    if (!r.naturezaId && !r.natureza) throw new Error("Cada rateio precisa de Natureza.");
+  }
+
+  const next: Titulo = { ...before, rateios: norm.length > 0 ? norm : undefined };
+  const arr = [...cur]; arr[idx] = next; write(arr);
+
+  pushAudit({
+    entidade: "contrato",
+    entidadeId: next.contratoId ?? next.id,
+    acao: norm.length > 0 ? "FIN_TITULO_RATEADO" : "FIN_TITULO_RATEIO_APAGADO",
+    usuario,
+    campo: "rateios",
+    valorAnterior: String(before.rateios?.length ?? 0),
+    valorNovo: String(norm.length),
+  });
+}
+
+export function apagarRateios(tituloId: string, usuario = "Sistema") {
+  setRateios(tituloId, [], usuario);
+}
+
+
 export function cancelarTitulo(id: string, motivo: string, usuario = "Sistema") {
   const cur = read();
   const idx = cur.findIndex((t) => t.id === id);

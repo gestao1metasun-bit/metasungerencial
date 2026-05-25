@@ -186,6 +186,14 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [busca, setBusca] = useState("");
   type PresetView = "operacional" | "cobranca" | "diretoria" | "fiscal" | "auditoria";
   const [preset, setPreset] = useState<PresetView>("operacional");
+  type ChipKey =
+    | "aberto" | "vence_hoje" | "vence_semana" | "vence_mes" | "vencidos"
+    | "baixado_hoje" | "baixado_semana" | "baixado_mes"
+    | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
+    | "conciliados" | "nao_conciliados"
+    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+  const [chips, setChips] = useState<Set<ChipKey>>(new Set());
+  const toggleChip = (k: ChipKey) => setChips((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const showEncargos = preset !== "diretoria";
   const showFiscal = preset === "fiscal";
   const showAuditoria = preset === "auditoria";
@@ -196,6 +204,22 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [verHist, setVerHist] = useState<Titulo | null>(null);
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
   const [ratear, setRatear] = useState<Titulo | null>(null);
+
+  const dateHelpers = useMemo(() => {
+    const today = hojeISO;
+    const d = new Date(today + "T00:00:00");
+    const dow = d.getDay(); // 0=dom
+    const monday = new Date(d); monday.setDate(d.getDate() - ((dow + 6) % 7));
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const inicioSemana = monday.toISOString().slice(0, 10);
+    const fimSemana = sunday.toISOString().slice(0, 10);
+    const inicioMes = today.slice(0, 7) + "-01";
+    const fimMes = (() => {
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      return end.toISOString().slice(0, 10);
+    })();
+    return { today, inicioSemana, fimSemana, inicioMes, fimMes };
+  }, [hojeISO]);
 
   const lista = useMemo(() => {
     let arr = todos.filter((t) => t.tipo === tipo);
@@ -209,6 +233,48 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.contratoId ?? "").toLowerCase().includes(b) ||
         (t.obraId ?? "").toLowerCase().includes(b),
       );
+    }
+    if (chips.size > 0) {
+      const { today, inicioSemana, fimSemana, inicioMes, fimMes } = dateHelpers;
+      const inRange = (iso: string | undefined, a: string, b: string) => !!iso && iso >= a && iso <= b;
+      arr = arr.filter((t) => {
+        const aberto = t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado";
+        const venc = t.vencimentoReal ?? t.vencimento;
+        const movs = (t.movimentos ?? []).filter((m) => !m.estornado);
+        const ultMov = movs.length > 0 ? movs[movs.length - 1] : null;
+        const baixadoData = ultMov?.data;
+        const conciliado = movs.length > 0 && movs.some((m) => !!m.contaFinanceira);
+        const pagoOuRecebido = t.status === "pago" || t.status === "recebido";
+        const rateios = t.rateios ?? [];
+        const renegociado = t.statusRenegociacao === "renegociado" || !!t.renegociacaoId;
+        const enc = aberto ? calcularEncargos(t, today, parametrosFin) : { jurosSugerido: 0, multaSugerida: 0, diasAtraso: 0, valorComEncargos: t.saldo };
+        const temEncargos = enc.jurosSugerido > 0 || enc.multaSugerida > 0;
+        for (const c of chips) {
+          let ok = false;
+          switch (c) {
+            case "aberto": ok = aberto; break;
+            case "vence_hoje": ok = aberto && venc === today; break;
+            case "vence_semana": ok = aberto && inRange(venc, inicioSemana, fimSemana); break;
+            case "vence_mes": ok = aberto && inRange(venc, inicioMes, fimMes); break;
+            case "vencidos": ok = aberto && venc < today; break;
+            case "baixado_hoje": ok = pagoOuRecebido && baixadoData === today; break;
+            case "baixado_semana": ok = pagoOuRecebido && inRange(baixadoData, inicioSemana, fimSemana); break;
+            case "baixado_mes": ok = pagoOuRecebido && inRange(baixadoData, inicioMes, fimMes); break;
+            case "conciliado_hoje": ok = conciliado && baixadoData === today; break;
+            case "conciliado_semana": ok = conciliado && inRange(baixadoData, inicioSemana, fimSemana); break;
+            case "conciliado_mes": ok = conciliado && inRange(baixadoData, inicioMes, fimMes); break;
+            case "conciliados": ok = conciliado; break;
+            case "nao_conciliados": ok = pagoOuRecebido && !conciliado; break;
+            case "com_encargos": ok = temEncargos; break;
+            case "com_desconto": ok = (t.desconto ?? 0) > 0; break;
+            case "renegociados": ok = renegociado; break;
+            case "com_obra": ok = !!t.obraId; break;
+            case "rateados": ok = rateios.length > 0; break;
+          }
+          if (!ok) return false;
+        }
+        return true;
+      });
     }
     if (preset === "cobranca") {
       // Cobrança: apenas títulos em aberto, priorizando vencidos
@@ -224,7 +290,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       });
     }
     return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
-  }, [todos, tipo, fStatus, busca, preset, hojeISO]);
+  }, [todos, tipo, fStatus, busca, preset, hojeISO, chips, dateHelpers, parametrosFin]);
 
   const totais = useMemo(() => {
     const aberto = lista.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
@@ -367,6 +433,73 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         </div>
       </div>
 
+      {/* Chips de filtro rápido */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(() => {
+          const TONE_ACTIVE: Record<string, string> = {
+            amber:   "bg-amber-500 text-white border-amber-500",
+            rose:    "bg-rose-500 text-white border-rose-500",
+            orange:  "bg-orange-500 text-white border-orange-500",
+            emerald: "bg-emerald-500 text-white border-emerald-500",
+            sky:     "bg-sky-500 text-white border-sky-500",
+            violet:  "bg-violet-500 text-white border-violet-500",
+            indigo:  "bg-indigo-500 text-white border-indigo-500",
+          };
+          const TONE_INACTIVE: Record<string, string> = {
+            amber:   "bg-amber-500/10 text-amber-700 border-amber-500/30 hover:bg-amber-500/20",
+            rose:    "bg-rose-500/10 text-rose-700 border-rose-500/30 hover:bg-rose-500/20",
+            orange:  "bg-orange-500/10 text-orange-700 border-orange-500/30 hover:bg-orange-500/20",
+            emerald: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20",
+            sky:     "bg-sky-500/10 text-sky-700 border-sky-500/30 hover:bg-sky-500/20",
+            violet:  "bg-violet-500/10 text-violet-700 border-violet-500/30 hover:bg-violet-500/20",
+            indigo:  "bg-indigo-500/10 text-indigo-700 border-indigo-500/30 hover:bg-indigo-500/20",
+          };
+          const items: { k: ChipKey; label: string; tone: keyof typeof TONE_ACTIVE }[] = [
+            { k: "aberto",            label: "Em aberto",              tone: "amber" },
+            { k: "vence_hoje",        label: "Vence hoje",             tone: "rose" },
+            { k: "vence_semana",      label: "Vence esta semana",      tone: "orange" },
+            { k: "vence_mes",         label: "Vence este mês",         tone: "orange" },
+            { k: "vencidos",          label: "Vencidos",               tone: "rose" },
+            { k: "baixado_hoje",      label: tipo === "AP" ? "Pago hoje" : "Recebido hoje",                tone: "emerald" },
+            { k: "baixado_semana",    label: tipo === "AP" ? "Pago esta semana" : "Recebido esta semana", tone: "emerald" },
+            { k: "baixado_mes",       label: tipo === "AP" ? "Pago este mês" : "Recebido este mês",       tone: "emerald" },
+            { k: "conciliados",       label: "Conciliados",            tone: "sky" },
+            { k: "nao_conciliados",   label: "Pendente conciliação",   tone: "amber" },
+            { k: "conciliado_hoje",   label: "Conciliado hoje",        tone: "sky" },
+            { k: "conciliado_semana", label: "Conciliado esta semana", tone: "sky" },
+            { k: "conciliado_mes",    label: "Conciliado este mês",    tone: "sky" },
+            { k: "com_encargos",      label: "Com juros/multa",        tone: "rose" },
+            { k: "com_desconto",      label: "Com desconto",           tone: "emerald" },
+            { k: "renegociados",      label: "Renegociados",           tone: "violet" },
+            { k: "com_obra",          label: "Com obra",               tone: "orange" },
+            { k: "rateados",          label: "Rateados",               tone: "indigo" },
+          ];
+          return items.map((c) => {
+            const active = chips.has(c.k);
+            return (
+              <button
+                key={c.k}
+                type="button"
+                onClick={() => toggleChip(c.k)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition ${active ? TONE_ACTIVE[c.tone] : TONE_INACTIVE[c.tone]}`}
+              >
+                {c.label}
+              </button>
+            );
+          });
+        })()}
+        {chips.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setChips(new Set())}
+            className="ml-1 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Limpar filtros ({chips.size})
+          </button>
+        )}
+      </div>
+
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className="p-3"><div className="text-xs text-muted-foreground">Total títulos</div><div className="text-lg font-semibold">{totais.qtd}</div></Card>
         <Card className="p-3"><div className="text-xs text-muted-foreground">Em aberto</div><div className="text-lg font-semibold">{totais.aberto}</div></Card>
@@ -415,6 +548,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               const contaShow = baixaConta ?? t.contaFinanceira;
               const meioShow = baixaMeio ?? t.meioPagamento;
               const conciliado = movs.length > 0 && !!baixaConta;
+              const ultimoMov = movs.length > 0 ? movs[movs.length - 1] : null;
+              const dataBaixa = ultimoMov?.data;
+              const pagoOuRecebidoRow = t.status === "pago" || t.status === "recebido";
+              const pendenteConciliacao = pagoOuRecebidoRow && !conciliado;
               const temAnexos = (t.anexos?.length ?? 0) > 0;
               const temHistorico = movs.length > 0 || hasEstorno || !!t.statusRenegociacao || !!t.renegociacaoId;
               const origemKey = (t.statusRenegociacao === "renegociado" || t.renegociacaoId) ? "renegociacao" : (t.origem ?? "manual");
@@ -546,8 +683,21 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         </span>
                       )}
                       {conciliado && (
-                        <span title="Conciliado" className="inline-flex text-emerald-600">
-                          <CheckCheck className="h-3 w-3" />
+                        <span
+                          title={dataBaixa ? `Conciliado em ${fmtDateBR(dataBaixa)}${baixaConta ? " · " + baixaConta : ""}` : "Conciliado"}
+                          className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                        >
+                          <CheckCheck className="h-2.5 w-2.5" />
+                          Conciliado{dataBaixa ? ` ${fmtDateBR(dataBaixa).slice(0, 5)}` : ""}
+                        </span>
+                      )}
+                      {pendenteConciliacao && (
+                        <span
+                          title={dataBaixa ? `${tipo === "AP" ? "Pago" : "Recebido"} em ${fmtDateBR(dataBaixa)} · aguarda conciliação` : "Aguarda conciliação"}
+                          className="inline-flex items-center gap-0.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          Pendente conciliação
                         </span>
                       )}
                       {t.competencia && (

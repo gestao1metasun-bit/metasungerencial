@@ -575,24 +575,30 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   )}
                 </TableCell>
                 <TableCell className="text-right text-sm tabular-nums text-muted-foreground">{fmtBRLPrecise(t.saldo)}</TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${enc.jurosSugerido > 0 ? "text-amber-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={emAtraso ? `${enc.diasAtraso} dia(s) de atraso · ${parametrosFin.jurosValor}% ${parametrosFin.jurosModo === "mensal" ? "a.m." : "a.d."}` : "Sem atraso"}
-                >
-                  {enc.jurosSugerido > 0 ? fmtBRLPrecise(enc.jurosSugerido) : "—"}
-                </TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${enc.multaSugerida > 0 ? "text-rose-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
-                >
-                  {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
-                </TableCell>
-                <TableCell
-                  className={`text-right text-sm tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground/60"}`}
-                  title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
-                >
-                  {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
-                </TableCell>
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${enc.jurosSugerido > 0 ? "text-amber-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={emAtraso ? `${enc.diasAtraso} dia(s) de atraso · ${parametrosFin.jurosValor}% ${parametrosFin.jurosModo === "mensal" ? "a.m." : "a.d."}` : "Sem atraso"}
+                  >
+                    {enc.jurosSugerido > 0 ? fmtBRLPrecise(enc.jurosSugerido) : "—"}
+                  </TableCell>
+                )}
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${enc.multaSugerida > 0 ? "text-rose-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
+                  >
+                    {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
+                  </TableCell>
+                )}
+                {showEncargos && (
+                  <TableCell
+                    className={`text-right text-sm tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground/60"}`}
+                    title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
+                  >
+                    {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className={`text-base font-bold tabular-nums ${aberto ? "text-foreground" : "text-emerald-700"}`}>
                     {fmtBRLPrecise(total)}

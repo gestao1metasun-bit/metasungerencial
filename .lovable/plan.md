@@ -1,139 +1,78 @@
-## Reestruturação Arquitetural — Fundação Transacional ERP Meta Sun
+## Onda 1.5 — Migração `contratos-store` → Supabase
 
-Esta é uma fase de fundação, não um ajuste pontual. Vou executar em **8 ondas sequenciais**, cada uma gerando entregáveis verificáveis e mantendo o sistema funcional entre ondas. Nenhuma onda é "só visual": cada uma encerra com persistência real, RLS, auditoria e regras transacionais.
+### Diagnóstico
 
----
+- `src/lib/contratos-store.ts`: 1104 linhas, persistência em `localStorage` (`ms.contratos.v2`).
+- Tipo `ContratoFull`: ~70 campos (cliente completo, projetos vinculados, auditoria, composição de pagamento, cláusulas custom, financiamento bancário, cadeia comercial lead→proposta→contrato).
+- Tabela `public.contratos` atual: ~15 colunas tipadas + `dados jsonb`. Cobre só núcleo (cliente_id, valor, kwp, status, datas, forma_pagamento).
+- 21 arquivos consumidores: rotas (comercial, financiamentos, engenharia, posvenda, dashboard, analytics), módulos (propostas, leads, financeiro), componentes (Aditivos, ContratoImpressao), lib (dev-seed, contrato-template, contrato-base-store, fin-orcamento-obras, aditivos-store, fin-pendencias).
+- **Incompatibilidade de ID**: store usa string `"088/2026"`; Supabase usa `uuid`. Os 21 consumidores tratam `id` como string em todo lugar.
 
-### Princípios inegociáveis (válidos para todas as ondas)
+### Princípio
 
-- **Origem do financeiro**: SOMENTE via `gerar_titulos_do_pv(pv_id)`, idempotente. Nunca direto de contrato/projeto.
-- **1 contrato = 1 PV consolidado** por padrão; PVs adicionais só com justificativa registrada (forma de pagamento distinta, faturamento separado, etc.).
-- **Projetos são operacionais**; **PV é financeiro/comercial**; **Contrato é o acordo**.
-- **Status principal ≠ gates**: campos separados (`status`, `financeiro_status`, `engenharia_status`, `diretoria_status`).
-- **Toda mutação crítica**: trigger `tg_audit_row` + `tg_snapshot_version` + soft delete + RLS por consultor/admin.
-- **Edição pós-aprovação**: proibida; exige reabertura com motivo (mín. 3 chars), nova versão.
-- **Validações no banco** (RPC/trigger), não só no frontend.
+Migrar em **3 sub-ondas** preservando a API atual do store. Os consumidores não mudam de assinatura — apenas trocam de fonte de dados. Isso evita refator gigante em 21 arquivos e mantém a UI funcionando durante a transição.
 
----
+### Sub-onda 1.5.A — Schema (migration)
 
-### Onda 1 — Projetos do Contrato (Prioridade 2 do briefing)
+Estender `public.contratos` para acomodar `ContratoFull`:
 
-**Tabela `projetos_contrato`** (nova, separada de `projetos` legado para não quebrar engenharia/propostas):
-- `id`, `contrato_id` (FK), `cliente_id`, `consultor_id`, `ordem`, `descricao`, `valor`, `endereco` (jsonb: cep/rua/numero/bairro/cidade/uf), `potencia_kwp`, `modulos_qtd`, `inv1`/`inv2`/`inv3`, `telhado_tipo`, `dados` (jsonb), `status` (enum: `RASCUNHO`,`PENDENTE_APROVACAO`,`APROVADO`,`ENVIADO_ENGENHARIA`,`EM_EXECUCAO`,`FINALIZADO`,`CANCELADO`), `obra_id`, `pv_id`, soft-delete, auditoria.
+- Adicionar coluna `codigo_externo text unique` (recebe os "088/2026" antigos como chave estável legível; `id uuid` continua sendo PK).
+- Adicionar colunas tipadas que já são usadas em filtros/joins:
+  - `vendedor text`, `comissao_pct numeric`, `comissao_valor numeric`
+  - `possui_financiamento boolean default false`, `financiamento_banco text`, `financiamento_valor numeric`, `financiamento_status text`, `financiamento_liberado_eng boolean default false`
+  - `proposta_id uuid`, `lead_id uuid`
+  - `assinado_aprovado boolean default false`, `assinado_aprovado_em timestamptz`, `assinado_aprovado_por uuid`
+  - `liberado_para_contrato boolean default false`, `liberado_em timestamptz`, `liberado_por uuid`
+  - `contrato_redigido boolean default false`, `cancelado boolean default false`, `motivo_cancelamento text`
+- Manter `dados jsonb` para o resto (clienteFull, auditoria local, parcelasPagto legado, composicaoPagto, clausulasCustom, pagamentoDetalhes, financiamento operacional, projetos legados embarcados).
+- Snapshot de versão (`tg_snapshot_version`) e auditoria de linha (`tg_audit_row`) já existem — apenas confirmar attach.
+- RLS: consultor enxerga onde `consultor_id = auth.uid()`; admin enxerga tudo; DELETE só admin (soft delete via `deleted_at`).
+- Índices: `codigo_externo`, `(consultor_id, status)`, `proposta_id`, `lead_id`.
 
-**RPCs**:
-- `criar_projetos_do_contrato(contrato_id, projetos[])`
-- `aprovar_projeto(projeto_id)` — valida soma ≤ valor_contrato
-- `enviar_projeto_para_engenharia(projeto_id)` — cria `obra` vinculada
-- `recalcular_saldo_contrato(contrato_id)` — retorna `{total, somado, saldo}`
-- `validar_integridade_contrato_projetos(contrato_id)`
+### Sub-onda 1.5.B — Adapter no store (mesma API, fonte Supabase)
 
-**Trigger**: `tg_projetos_contrato_audit`, `tg_snapshot_version`, `tg_valida_soma_projetos` (BEFORE INSERT/UPDATE).
+Reescrever internamente `src/lib/contratos-store.ts` mantendo **as mesmas exports**:
 
-**RLS**: consultor vê seus contratos; admin vê tudo.
+- `useContratos()`, `setContratos`, `upsertContrato`, `updateContratoAudit`, `addProjeto`, `updateProjeto`, `removeProjeto`, `getAllProjetos`, `nextProjetoId`, `solicitarAlteracaoContrato`, `validateContratoCompleto`, `buscarCEP` (puros — sem mudança).
+- Fonte de verdade passa a ser Supabase via `createServerFn` + `requireSupabaseAuth`. Lista é cacheada com TanStack Query (`['contratos']`).
+- `useContratos()` vira wrapper de `useQuery({ queryKey: ['contratos'] })`, mantendo retorno `ContratoFull[]` para zero impacto nos 21 consumidores.
+- Mutações chamam serverFns (`upsertContratoFn`, `updateContratoAuditFn`, etc.) e invalidam a query.
+- Função `contratoFromRow(row)` reconstrói `ContratoFull` a partir das colunas tipadas + `dados jsonb`. Função inversa `rowFromContrato(c)` serializa.
+- `id` continua sendo a string `"088/2026"` na superfície (campo `codigo_externo` no banco). Internamente o adapter resolve `codigo_externo → uuid` quando precisa cruzar com tabelas que referenciam `contratos.id` (ex.: futuros `projetos_contrato`).
+- `localStorage` mantido como cache de leitura otimista por 1 sub-onda, com flag `MIGRATION_SOURCE='supabase'|'local'` para rollback rápido se algo quebrar.
 
-**UI**:
-- Card de contrato assinado → botões "Cadastrar Projetos" / "Ver Projetos" / "Ver PV" + chips "N projetos pendentes" / "Financeiro gerado".
-- Tela `/projetos-contrato/:contratoId`: lista projetos, valor contrato, somado, saldo, ação "Criar projeto residual", aprovação individual, envio Engenharia.
-- Repo `projetos-contrato-repo.ts` (mesmo padrão de `leads-repo`/`propostas-repo`).
+### Sub-onda 1.5.C — Seeding e cleanup
 
----
+- Migrar dados existentes do `localStorage` na primeira carga autenticada via `migrateLocalToSupabase()` (idempotente, marca flag `ms.contratos.migrated=true`).
+- `dev-seed.ts` passa a inserir via serverFn em vez de `localStorage`.
+- Remover `KEY = "ms.contratos.v2"` e `localStorage.setItem` após 1 versão de convivência.
+- Atualizar `contrato-base-store.ts` e `aditivos-store.ts` na mesma linha (eles compartilham padrão).
 
-### Onda 2 — Pedido de Venda consolidado (Prioridades 3 e 4)
+### Fora de escopo desta onda
 
-**Tabelas**:
-- `pedidos_venda`: `id`, `contrato_id`, `cliente_id`, `consultor_id`, `numero`, `versao`, `valor_total`, `composicao` (jsonb), `forma_pagamento`, `entrada`, `parcelas` (jsonb), `financiamento` (jsonb), `permuta` (jsonb), `banco`, `previsao_recebimento`, `centro_receita`, `natureza_fin`, `status` (`RASCUNHO`,`EM_APROVACAO`,`APROVADO`,`FINANCEIRO_GERADO`,`EM_EXECUCAO`,`FINALIZADO`,`REPROVADO`,`CANCELADO`), `financeiro_status`, `engenharia_status`, `diretoria_status`, `financeiro_gerado_em`, `financeiro_gerado_por`, `motivo_reabertura`, snapshot, soft-delete, auditoria.
-- `pedido_venda_projetos` (N:N): `pv_id`, `projeto_id`, `valor_alocado`.
-- `pedido_venda_pagamentos`: parcelas/títulos previstos.
-- `pedido_venda_aprovacoes`: `pv_id`, `gate` (financeiro/diretoria/engenharia), `status`, `user_id`, `motivo`, `created_at`.
-- `pedido_venda_eventos`: timeline.
+- Migrar `propostas`/`leads` (já estão em Supabase).
+- Refator dos 21 consumidores (acontece naturalmente conforme adapter cobre tudo).
+- Criar `projetos_contrato` UI (Onda 2, já desbloqueada quando `codigo_externo↔uuid` existir).
+- Migrar `aditivos-store`, `fin-titulos-store`, `fin-orcamento-obras` (Ondas 3+).
 
-**RPCs**:
-- `gerar_pv_do_contrato(contrato_id)` — cria PV consolidado idempotente (1 por contrato; PV adicional só com flag `permitir_pv_adicional` + motivo).
-- `vincular_projetos_ao_pv(pv_id, projeto_ids[])`
-- `aprovar_gate_pv(pv_id, gate, decisao, motivo)`
-- `aprovar_pv(pv_id)` — só se todos gates OK
-- `gerar_titulos_do_pv(pv_id)` — **idempotente** via `financeiro_gerado_em IS NOT NULL` guard; cria N títulos AR em `fin_titulos` com `tipo_origem='pedido_venda'`, `origem_id=pv.id`, `contrato_id`, `pv_id`, `cliente_id`, natureza, centro_receita, banco, competência, vencimento por parcela.
-- `reabrir_pv(pv_id, motivo)` — incrementa versão, snapshot, cancela títulos não-baixados, preserva recebidos.
-- `cancelar_pv(pv_id, motivo)`.
+### Riscos
 
-**Validações em trigger**:
-- PV aprovado não pode ser editado direto.
-- Soma `valor_alocado` dos projetos = `valor_total` do PV.
-- Títulos com movimentos não estornados não são apagados pela reabertura.
+- **Performance**: 1 query por mount de `useContratos()` em 21 lugares. Mitigação: TanStack Query com `staleTime: 30s` e invalidação por mutation.
+- **Compatibilidade de tipos**: `ParcelaPagto.id`, `AuditEntry.id` são gerados client-side hoje (`A-${Date.now()}`). Mantemos esse formato no `dados jsonb` — sem schema para sub-coleções nesta onda.
+- **Auditoria duplicada**: hoje o store grava `auditoria[]` no objeto; o banco também tem `tg_audit_row`. Mantemos ambos por enquanto (UI lê de `auditoria[]`, banco é fonte forense).
 
-**UI**:
-- Tela `/pedidos-venda` (lista) + `/pedidos-venda/:id` (detalhe com timeline, projetos vinculados, composição, parcelas, aprovações, títulos gerados).
-- Botão "Gerar PV" no contrato (visível quando ≥1 projeto aprovado).
-- Botão "Aprovar PV" e "Gerar financeiro" gated por permissão.
+### Entregáveis desta sub-onda (1.5.A apenas, para começar)
 
----
+1. Migration estendendo `public.contratos` com colunas tipadas + índices.
+2. Confirmar triggers `tg_audit_row`, `tg_snapshot_version`, `tg_set_updated_at` ligados.
+3. Validar RLS.
 
-### Onda 3 — Financeiro com origem rastreável (Prioridade 4 hardening)
+Após 1.5.A aprovada e aplicada, abro PR de 1.5.B (adapter no store) sem tocar nos 21 consumidores. 1.5.C entra como housekeeping.
 
-- Migrar `fin_titulos` (hoje localStorage) ao Supabase, com colunas: `tipo_origem`, `origem_id`, `contrato_id`, `pv_id`, `projeto_id` (nullable), `cliente_id`, `natureza_id`, `centro_id`, `conta_id`, `competencia`, `vencimento`, `valor`, `saldo`, `status`, `forma_pagamento`, `banco_id`.
-- Trigger: bloqueia `DELETE` se há movimento não estornado; soft delete obrigatório.
-- RPC `baixar_titulo(titulo_id, movimento)`, `estornar_movimento(mov_id, motivo)`.
-- Adapter `SupabaseFinanceiroAdapter` (já existe esqueleto) — completar implementação contra novo schema.
-- Flag `fin.repository.source` para alternar local↔supabase.
+### Pergunta de decisão
 
----
+Confirmar 3 pontos antes de migrar:
 
-### Onda 4 — Engenharia integrada (Prioridade 5)
-
-- `obras` ganha `projeto_contrato_id` e `pv_id` (FKs).
-- RPC `aprovar_projeto` cria obra automaticamente, status inicial `EM_PROJETO_APROVACAO`.
-- Trigger limpa `equipe` quando status sai de `AGUARDANDO_INSTALACAO`/`EXECUTANDO_INSTALACAO`.
-- UI engenharia: passa a listar obras por `projeto_contrato_id` (e exibir contrato/projeto/PV).
-
----
-
-### Onda 5 — Auditoria, versionamento, reabertura (Prioridade 6)
-
-- Aplicar `tg_audit_row` + `tg_snapshot_version` em: `projetos_contrato`, `pedidos_venda`, `pedido_venda_pagamentos`, `obras` (já tem parcial), `fin_titulos`.
-- `HistoricoTimeline` já consome `audit_log` — adicionar entidades novas no enum `AuditEntidade`.
-- Reabertura: padronizar via RPCs (`reabrir_pv`, `reabrir_projeto` se necessário) com `motivo` obrigatório, registrado em `audit_log.motivo`.
-
----
-
-### Onda 6 — Permissões + RLS hardening (Prioridade 6)
-
-Adicionar ao enum `app_permission`:
-`contrato.criar`, `contrato.editar`, `contrato.assinar`, `contrato.cancelar`, `projeto.criar`, `projeto.aprovar`, `projeto.cancelar`, `pv.criar`, `pv.aprovar.financeiro`, `pv.aprovar.diretoria`, `pv.aprovar.engenharia`, `pv.reabrir`, `pv.cancelar`, `financeiro.gerar`, `financeiro.baixar`, `financeiro.cancelar`, `engenharia.editar`, `engenharia.aprovar`, `estoque.editar`.
-
-Gates de UI via `useMyPermissions().can(...)`. RLS já segue padrão `consultor_id = auth.uid() OR is_admin(...)`; estender para projetos/PV.
-
----
-
-### Onda 7 — Estoque preparado (Prioridade 7)
-
-- Tabela `projeto_materiais_previstos` (sugestão calculada de módulos/inversores/cabos/MC4/estrutura por projeto).
-- Função `sugerir_materiais_projeto(projeto_id)` baseada em potência/módulos/telhado.
-- Sem baixa automática nesta onda — apenas estrutura + UI de consulta.
-
----
-
-### Onda 8 — Dashboards reais (Prioridade 8)
-
-- MVs novas: `mv_kpi_pv`, `mv_kpi_projetos_contrato`, `mv_kpi_financeiro_pv`.
-- Adicionar ao `refresh_mv_kpis()`.
-- Telas analytics consomem novas RPCs `kpi_pv()`, `kpi_projetos()`.
-
----
-
-### Ordem de execução proposta nesta sessão
-
-Vou começar pela **Onda 1 (Projetos do Contrato)** completa: migration + RPCs + triggers + RLS + repo + tela + integração com contrato. É a base sem a qual nada mais faz sentido (Engenharia precisa de projeto aprovado; PV precisa consolidar projetos).
-
-**Critério de aceite Onda 1**:
-1. Migration aplicada (tabela, triggers, RPCs, RLS, permissões).
-2. Contrato assinado mostra botão "Cadastrar Projetos".
-3. Posso criar 3 projetos somando = valor contrato (soma > valor rejeitada).
-4. Aprovar projeto individualmente funciona e cria obra em engenharia.
-5. Auditoria registra cada ação em `audit_log`.
-6. Build limpo, RLS testada com consultor não-admin.
-
-Após sua aprovação, prossigo onda por onda, com relatório curto entre cada uma e parada para revisão antes de avançar.
-
-### Nota técnica
-Cada onda toca: 1 migration SQL (schema + RPCs + RLS + triggers), 1 repo TS, 1–2 telas, integração no fluxo existente. Mantenho `leads`/`propostas` no padrão atual (já migrado) e introduzo `projetos_contrato`/`pedidos_venda` seguindo o mesmo padrão.
+1. **Manter `codigo_externo` (`"088/2026"`) como chave visível** e `id uuid` interno? (recomendado — zero impacto nos 21 consumidores)
+2. **Estratégia de dados existentes em `localStorage`**: migrar automaticamente na primeira carga (recomendado) ou descartar (mais limpo, mas perde estado dev)?
+3. **Convivência localStorage↔Supabase**: 1 versão de transição com flag de rollback (recomendado) ou cut-over direto?

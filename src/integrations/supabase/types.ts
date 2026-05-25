@@ -410,9 +410,16 @@ export type Database = {
       }
       contratos: {
         Row: {
+          assinado_aprovado: boolean
+          assinado_aprovado_em: string | null
+          assinado_aprovado_por: string | null
+          cancelado: boolean
           cliente_id: string
           codigo: string | null
+          comissao_pct: number | null
+          comissao_valor: number | null
           consultor_id: string | null
+          contrato_redigido: boolean
           created_at: string
           dados: Json
           data_assinatura: string | null
@@ -421,21 +428,41 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
+          financiamento_banco: string | null
+          financiamento_liberado_eng: boolean
+          financiamento_status: string | null
+          financiamento_valor: number | null
           forma_pagamento: string | null
           id: string
           inversor: string | null
+          lead_id: string | null
+          liberacao_obs: string | null
+          liberado_em: string | null
+          liberado_para_contrato: boolean
+          liberado_por: string | null
           modulos_qtde: number | null
+          motivo_cancelamento: string | null
           observacoes: string | null
+          possui_financiamento: boolean
           potencia_kwp: number | null
+          proposta_id: string | null
           status: string
           updated_at: string
           valor_entrada: number
           valor_total: number
+          vendedor: string | null
         }
         Insert: {
+          assinado_aprovado?: boolean
+          assinado_aprovado_em?: string | null
+          assinado_aprovado_por?: string | null
+          cancelado?: boolean
           cliente_id: string
           codigo?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
           consultor_id?: string | null
+          contrato_redigido?: boolean
           created_at?: string
           dados?: Json
           data_assinatura?: string | null
@@ -444,21 +471,41 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          financiamento_banco?: string | null
+          financiamento_liberado_eng?: boolean
+          financiamento_status?: string | null
+          financiamento_valor?: number | null
           forma_pagamento?: string | null
           id?: string
           inversor?: string | null
+          lead_id?: string | null
+          liberacao_obs?: string | null
+          liberado_em?: string | null
+          liberado_para_contrato?: boolean
+          liberado_por?: string | null
           modulos_qtde?: number | null
+          motivo_cancelamento?: string | null
           observacoes?: string | null
+          possui_financiamento?: boolean
           potencia_kwp?: number | null
+          proposta_id?: string | null
           status?: string
           updated_at?: string
           valor_entrada?: number
           valor_total?: number
+          vendedor?: string | null
         }
         Update: {
+          assinado_aprovado?: boolean
+          assinado_aprovado_em?: string | null
+          assinado_aprovado_por?: string | null
+          cancelado?: boolean
           cliente_id?: string
           codigo?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
           consultor_id?: string | null
+          contrato_redigido?: boolean
           created_at?: string
           dados?: Json
           data_assinatura?: string | null
@@ -467,16 +514,29 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          financiamento_banco?: string | null
+          financiamento_liberado_eng?: boolean
+          financiamento_status?: string | null
+          financiamento_valor?: number | null
           forma_pagamento?: string | null
           id?: string
           inversor?: string | null
+          lead_id?: string | null
+          liberacao_obs?: string | null
+          liberado_em?: string | null
+          liberado_para_contrato?: boolean
+          liberado_por?: string | null
           modulos_qtde?: number | null
+          motivo_cancelamento?: string | null
           observacoes?: string | null
+          possui_financiamento?: boolean
           potencia_kwp?: number | null
+          proposta_id?: string | null
           status?: string
           updated_at?: string
           valor_entrada?: number
           valor_total?: number
+          vendedor?: string | null
         }
         Relationships: [
           {

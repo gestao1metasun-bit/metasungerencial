@@ -61,9 +61,45 @@ function fmtDateBR(d?: string) {
   return `${dd}/${m}/${y}`;
 }
 
+/* Plano de parcelamento usado no cadastro de título com múltiplas parcelas. */
+type ParcelaPlano = {
+  vencimento: string;       // YYYY-MM-DD
+  valor: number;
+  competencia: string;      // YYYY-MM
+  fixadoData?: boolean;     // não recalcular vencimento ao redistribuir
+  fixadoValor?: boolean;    // não recalcular valor ao redistribuir
+};
+
+function round2(n: number) { return Math.round(n * 100) / 100; }
+
+function addMonthsISO(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const base = new Date(Date.UTC(y, (m - 1) + n, 1));
+  const lastDay = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  const dt = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), day));
+  return dt.toISOString().slice(0, 10);
+}
+function addDaysISO(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+
+type Periodicidade = "mensal" | "quinzenal" | "semanal" | "anual";
+function proximoVencimento(base: string, idx: number, p: Periodicidade): string {
+  if (idx === 0) return base;
+  if (p === "mensal") return addMonthsISO(base, idx);
+  if (p === "anual")  return addMonthsISO(base, idx * 12);
+  if (p === "quinzenal") return addDaysISO(base, idx * 15);
+  return addDaysISO(base, idx * 7);
+}
+
 /* ============================================================
  * Tabela principal (AP ou AR)
  * ============================================================ */
+
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const todos = useTitulos();
   const naturezas = useNaturezasFin();
@@ -152,16 +188,41 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               tipo={tipo}
               cadastros={cadastros}
               onSave={async (input, pendingFiles) => {
-                const novo = criarTitulo({ ...input, tipo, origem: "manual" });
+                const parcelas: ParcelaPlano[] | undefined = input._parcelas;
+                delete input._parcelas;
+                const criados: Titulo[] = [];
+                try {
+                  if (parcelas && parcelas.length > 1) {
+                    parcelas.forEach((p, idx) => {
+                      const label = `${idx + 1}/${parcelas.length}`;
+                      criados.push(criarTitulo({
+                        ...input,
+                        tipo, origem: input.origem ?? "manual",
+                        descricao: `${input.descricao} (${label})`,
+                        valorOriginal: p.valor,
+                        vencimento: p.vencimento,
+                        competencia: p.competencia,
+                        parcelaLabel: label,
+                      }));
+                    });
+                    toast.success(`${parcelas.length} parcelas criadas.`);
+                  } else {
+                    criados.push(criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
+                    toast.success("Título criado.");
+                  }
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Falha ao criar título(s).");
+                  return;
+                }
                 setCriarOpen(false);
-                toast.success("Título criado.");
-                for (const file of pendingFiles) {
+                const alvo = criados[0];
+                if (alvo) for (const file of pendingFiles) {
                   try {
                     const fd = new FormData();
                     fd.append("file", file);
-                    fd.append("tituloId", novo.id);
+                    fd.append("tituloId", alvo.id);
                     const { anexo } = await uploadAnexoFn({ data: fd });
-                    adicionarAnexo(novo.id, {
+                    adicionarAnexo(alvo.id, {
                       id: anexo.id,
                       nome: anexo.nome,
                       mime: anexo.mime,
@@ -174,6 +235,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   }
                 }
               }}
+
               onCancel={() => setCriarOpen(false)}
             />
           </Dialog>
@@ -470,6 +532,54 @@ function TituloDialog({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Parcelamento (somente na criação)
+  const [parcelarOn, setParcelarOn] = useState<boolean>(false);
+  const [numParcelas, setNumParcelas] = useState<number>(2);
+  const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
+  const [parcelas, setParcelas] = useState<ParcelaPlano[]>([]);
+
+  // Gera/redistribui parcelas respeitando fixadoData e fixadoValor.
+  const gerarParcelas = () => {
+    const n = Math.max(1, Math.min(120, Math.floor(numParcelas)));
+    if (!vencimento) { toast.error("Defina o vencimento da 1ª parcela."); return; }
+    if (!(valorOriginal > 0)) { toast.error("Defina o valor total."); return; }
+    const base: ParcelaPlano[] = Array.from({ length: n }, (_, i) => {
+      const prev = parcelas[i];
+      return {
+        vencimento: prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade),
+        valor: prev?.fixadoValor ? prev.valor : 0,
+        competencia: (prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade)).slice(0, 7),
+        fixadoData: prev?.fixadoData,
+        fixadoValor: prev?.fixadoValor,
+      };
+    });
+    // Distribui o restante (após fixos) igualmente; última parcela absorve o resíduo.
+    const totalFixo = base.reduce((s, p) => s + (p.fixadoValor ? p.valor : 0), 0);
+    const livres = base.filter((p) => !p.fixadoValor).length;
+    const restante = round2(valorOriginal - totalFixo);
+    if (livres > 0) {
+      const cota = round2(restante / livres);
+      let acumLivre = 0;
+      let idxUltimoLivre = -1;
+      base.forEach((p, i) => { if (!p.fixadoValor) idxUltimoLivre = i; });
+      base.forEach((p, i) => {
+        if (!p.fixadoValor) {
+          if (i === idxUltimoLivre) {
+            p.valor = round2(restante - acumLivre);
+          } else {
+            p.valor = cota;
+            acumLivre = round2(acumLivre + cota);
+          }
+        }
+      });
+    }
+    setParcelas(base);
+  };
+
+  const somaParcelas = useMemo(() => round2(parcelas.reduce((s, p) => s + (Number(p.valor) || 0), 0)), [parcelas]);
+  const parcelasValidas = parcelarOn && parcelas.length >= 2 && Math.abs(somaParcelas - round2(valorOriginal)) < 0.01;
+
+
   // Cascata: ao trocar a natureza, sugerir grupo/subgrupo/centro/aplicação padrão
   const aoTrocarNatureza = (id: string) => {
     setNaturezaId(id);
@@ -501,6 +611,16 @@ function TituloDialog({
     if (!vencimento) return toast.error("Vencimento obrigatório.");
     if (!naturezaId) return toast.error("Selecione a natureza financeira.");
     if (!centroCustoId) return toast.error("Selecione o centro de custo.");
+    if (parcelarOn) {
+      if (parcelas.length < 2) return toast.error("Gere ao menos 2 parcelas ou desligue o parcelamento.");
+      if (Math.abs(somaParcelas - round2(valorOriginal)) >= 0.01) {
+        return toast.error(`Soma das parcelas (${somaParcelas.toFixed(2)}) difere do total (${valorOriginal.toFixed(2)}).`);
+      }
+      if (parcelas.some((p) => !p.vencimento || !(p.valor > 0))) {
+        return toast.error("Cada parcela exige vencimento e valor > 0.");
+      }
+    }
+
 
     const nat = naturezas.find((n) => n.id === naturezaId);
     const cc = centros.find((c) => c.id === centroCustoId);
@@ -524,7 +644,9 @@ function TituloDialog({
       contratoId: contratoId || undefined,
       observacao: observacao || undefined,
       origem, // ← origem explícita da operação
+      _parcelas: parcelarOn ? parcelas : undefined,
     }, pendingFiles);
+
   };
 
   // Caminho contábil legível (Grupo › Subgrupo › Natureza › Conta)
@@ -707,7 +829,103 @@ function TituloDialog({
         </div>
       </div>
 
+      {/* Parcelamento — somente na criação */}
+      {!initial && (
+        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+              Parcelamento {parcelarOn && parcelas.length > 0 && (
+                <span className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${parcelasValidas ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}`}>
+                  Soma {fmtBRLPrecise(somaParcelas)} de {fmtBRLPrecise(valorOriginal)}
+                </span>
+              )}
+            </div>
+            <label className="flex items-center gap-1.5 text-xs">
+              <input type="checkbox" checked={parcelarOn} onChange={(e) => { setParcelarOn(e.target.checked); if (!e.target.checked) setParcelas([]); }} />
+              Dividir em parcelas
+            </label>
+          </div>
+
+          {parcelarOn && (
+            <>
+              <div className="grid grid-cols-4 gap-2">
+                <div>
+                  <Label className="text-xs">Qtd. parcelas</Label>
+                  <Input type="number" min={2} max={120} value={numParcelas} onChange={(e) => setNumParcelas(Number(e.target.value) || 2)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Periodicidade</Label>
+                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mensal">Mensal</SelectItem>
+                      <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                      <SelectItem value="semanal">Semanal</SelectItem>
+                      <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2 flex items-end gap-2">
+                  <Button type="button" variant="outline" onClick={gerarParcelas}>Gerar parcelas</Button>
+                  {parcelas.length > 0 && (
+                    <Button type="button" variant="ghost" onClick={() => setParcelas([])}>Limpar</Button>
+                  )}
+                </div>
+              </div>
+
+              {parcelas.length > 0 && (
+                <div className="mt-3 max-h-72 overflow-y-auto rounded border bg-background/60">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-[10px] uppercase text-muted-foreground">
+                      <tr>
+                        <th className="px-2 py-1 text-left">#</th>
+                        <th className="px-2 py-1 text-left">Vencimento</th>
+                        <th className="px-2 py-1 text-center" title="Fixar data (não recalcular)">🔒D</th>
+                        <th className="px-2 py-1 text-right">Valor</th>
+                        <th className="px-2 py-1 text-center" title="Fixar valor (não recalcular)">🔒V</th>
+                        <th className="px-2 py-1 text-left">Competência</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parcelas.map((p, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="px-2 py-1 font-mono">{i + 1}/{parcelas.length}</td>
+                          <td className="px-2 py-1">
+                            <Input type="date" value={p.vencimento} className="h-7"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, vencimento: e.target.value, competencia: e.target.value.slice(0, 7) } : x))} />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!p.fixadoData}
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, fixadoData: e.target.checked } : x))} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input type="number" step="0.01" value={p.valor} className="h-7 text-right"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, valor: Number(e.target.value) } : x))} />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!p.fixadoValor}
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, fixadoValor: e.target.checked } : x))} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input type="month" value={p.competencia} className="h-7"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, competencia: e.target.value } : x))} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Marque 🔒 para preservar a data ou valor de uma parcela ao clicar em <strong>Gerar parcelas</strong> novamente. A última parcela livre absorve a diferença de centavos.
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
+
       {initial ? (
         <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
       ) : (

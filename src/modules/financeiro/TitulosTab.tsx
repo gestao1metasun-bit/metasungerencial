@@ -845,19 +845,33 @@ function TituloDialog({
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           2 · Valor e datas
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
           <div><Label>Data de emissão</Label><Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} /></div>
           <div>
-            <Label>Vencimento *</Label>
+            <Label>Vencimento nominal *</Label>
             <Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} />
-            {vencimento && proximoDiaUtilISO(vencimento) !== vencimento && (
-              <div className="mt-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-700">
-                Cai em fim de semana — vencimento real ajustado para <strong>{fmtDateBR(proximoDiaUtilISO(vencimento))}</strong>
-              </div>
-            )}
           </div>
-          <div className="col-span-3"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
+          <div>
+            <Label>Vencimento real</Label>
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm">
+              {vencimento ? (
+                proximoDiaUtilISO(vencimento) !== vencimento ? (
+                  <span className="font-mono font-semibold text-primary">{fmtDateBR(proximoDiaUtilISO(vencimento))}</span>
+                ) : (
+                  <span className="font-mono text-muted-foreground">{fmtDateBR(vencimento)} <span className="ml-1 text-[10px]">(igual)</span></span>
+                )
+              ) : (
+                <span className="text-muted-foreground text-xs">—</span>
+              )}
+            </div>
+          </div>
+          {vencimento && proximoDiaUtilISO(vencimento) !== vencimento && (
+            <div className="col-span-4 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700">
+              Vencimento nominal cai em fim de semana — vencimento real ajustado automaticamente para o próximo dia útil.
+            </div>
+          )}
+          <div className="col-span-4"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
         </div>
       </div>
 

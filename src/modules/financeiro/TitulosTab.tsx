@@ -234,25 +234,34 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
-              {(["previsto","comprometido","a_pagar","a_receber","parcial","pago","recebido","cancelado"] as TituloStatus[]).map((s) => (
+              {((tipo === "AP"
+                ? ["previsto","comprometido","a_pagar","parcial","pago","cancelado"]
+                : ["previsto","comprometido","a_receber","parcial","recebido","cancelado"]) as TituloStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                const n = await repo.importarPrevisoesDoLegado(readLancamentos());
-                toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
-              } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
-            }}
-            title="Importa Previsto/A realizar/Confirmado do fluxo de caixa para títulos"
-          >
-            Importar previsões
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Mais ações <ChevronDown className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem
+                onClick={async () => {
+                  try {
+                    const n = await repo.importarPrevisoesDoLegado(readLancamentos());
+                    toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+                  } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
+                }}
+              >
+                Importar previsões do fluxo de caixa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-1.5 h-4 w-4" /> Novo título</Button>

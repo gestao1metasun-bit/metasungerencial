@@ -9,6 +9,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { pushAudit } from "@/lib/audit-store";
 import { getNaturezas } from "@/lib/fin-naturezas-store";
+import { isMesFechado } from "@/lib/fin-fechamento-store";
 
 export type TituloTipo = "AP" | "AR";
 

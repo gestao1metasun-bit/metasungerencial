@@ -342,6 +342,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead>ID</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>{tipo === "AP" ? "Fornecedor" : "Cliente"}</TableHead>
+              <TableHead className="w-[110px]">Vínculos</TableHead>
               <TableHead>Venc. Nominal</TableHead>
               <TableHead>Venc. Real</TableHead>
               <TableHead className="text-right">Valor</TableHead>
@@ -349,12 +350,13 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead className="text-right">Multa</TableHead>
               <TableHead className="text-right">Desconto</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              <TableHead className="w-[140px]">Controle</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={14} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -366,6 +368,21 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               const desconto = t.desconto ?? 0;
               const total = aberto ? round2(enc.valorComEncargos - desconto) : t.saldo;
               const emAtraso = aberto && enc.diasAtraso > 0;
+              const contrato = t.contratoId ? contratosAll.find((c) => c.id === t.contratoId) : null;
+              const obra = t.obraId ? obrasAll.find((o: any) => o.id === t.obraId) : null;
+              const rateios = t.rateios ?? [];
+              const movs = (t.movimentos ?? []).filter((m) => !m.estornado);
+              const hasEstorno = (t.movimentos ?? []).some((m) => m.estornado);
+              const baixaConta = movs.find((m) => m.contaFinanceira)?.contaFinanceira;
+              const baixaMeio = movs.find((m) => m.meioPagamento)?.meioPagamento;
+              const contaShow = baixaConta ?? t.contaFinanceira;
+              const meioShow = baixaMeio ?? t.meioPagamento;
+              const conciliado = movs.length > 0 && !!baixaConta;
+              const temAnexos = (t.anexos?.length ?? 0) > 0;
+              const temHistorico = movs.length > 0 || hasEstorno || !!t.statusRenegociacao || !!t.renegociacaoId;
+              const origemKey = (t.statusRenegociacao === "renegociado" ? "renegociacao" : t.renegociacaoId ? "renegociacao" : t.origem) ?? "manual";
+              const origemLabel = ORIGEM_LABEL[origemKey] ?? origemKey;
+              const origemTone = ORIGEM_TONE[origemKey] ?? ORIGEM_TONE.manual;
               return (
               <TableRow key={t.id}>
                 <TableCell>
@@ -381,23 +398,63 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                       onRenegociar={setRenegociar}
                     />
                     {t.bloqueadoFechamento && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                    {t.rateios && t.rateios.length > 0 && (
-                      <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600" title={`${t.rateios.length} rateios`}>
-                        R{t.rateios.length}
-                      </span>
-                    )}
-                    {t.statusRenegociacao === "renegociado" && (
-                      <span className="text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-primary">{t.id}</TableCell>
                 <TableCell className="font-medium">
                   {t.descricao}
                   {t.parcelaLabel && <span className="ml-1 text-xs text-muted-foreground">({t.parcelaLabel})</span>}
-                  {t.obraId && <div className="text-[10px] text-muted-foreground">Obra: {t.obraId}</div>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{tipo === "AP" ? (t.fornecedor ?? "—") : (t.cliente ?? "—")}</TableCell>
+
+                {/* Vínculos: contrato / obra / rateio */}
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    {contrato ? (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded bg-sky-500/15 px-1 py-0.5 text-[10px] font-semibold text-sky-600"
+                        title={`Contrato ${contrato.codigo ?? contrato.id}${contrato.cliente ? " · " + contrato.cliente : ""}`}
+                      >
+                        <FileSignature className="h-3 w-3" />
+                        {contrato.codigo ?? contrato.id.slice(0, 6)}
+                      </span>
+                    ) : t.contratoId ? (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-sky-500/10 px-1 py-0.5 text-[10px] text-sky-600" title={`Contrato ${t.contratoId}`}>
+                        <FileSignature className="h-3 w-3" />
+                      </span>
+                    ) : null}
+                    {obra ? (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded bg-orange-500/15 px-1 py-0.5 text-[10px] font-semibold text-orange-600"
+                        title={`Obra ${(obra as any).codigo ?? obra.id}${(obra as any).cliente ? " · " + (obra as any).cliente : ""}`}
+                      >
+                        <Hammer className="h-3 w-3" />
+                        {(obra as any).codigo ?? obra.id.slice(0, 6)}
+                      </span>
+                    ) : t.obraId ? (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-orange-500/10 px-1 py-0.5 text-[10px] text-orange-600" title={`Obra ${t.obraId}`}>
+                        <Hammer className="h-3 w-3" />
+                      </span>
+                    ) : null}
+                    {rateios.length > 0 && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded bg-indigo-500/15 px-1 py-0.5 text-[10px] font-semibold text-indigo-600"
+                        title={`Rateio (${rateios.length}):\n` + rateios.map((r) => {
+                          const cc = r.centroCusto ?? r.centroCustoId ?? "—";
+                          const pct = t.valorOriginal > 0 ? ((r.valor / t.valorOriginal) * 100).toFixed(1) + "%" : "";
+                          return `• ${cc} ${pct} · ${fmtBRLPrecise(r.valor)}`;
+                        }).join("\n")}
+                      >
+                        <Split className="h-3 w-3" />
+                        {rateios.length}
+                      </span>
+                    )}
+                    {!contrato && !t.contratoId && !obra && !t.obraId && rateios.length === 0 && (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </TableCell>
+
                 <TableCell className="tabular-nums">
                   <span className={`font-mono text-xs ${t.vencimentoReal && t.vencimentoReal !== t.vencimento ? "text-muted-foreground line-through" : "text-foreground"}`}>
                     {fmtDateBR(t.vencimento)}
@@ -432,6 +489,52 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">{fmtBRLPrecise(total)}</TableCell>
+
+                {/* Controle: origem / competência / conta / meio / conciliação / anexos / histórico / atraso */}
+                <TableCell>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Badge variant="outline" className={`${origemTone} border text-[9px] font-semibold px-1 py-0`} title={`Origem: ${origemLabel}`}>
+                      {origemLabel}
+                    </Badge>
+                    {t.competencia && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground" title={`Competência ${fmtCompetenciaBR(t.competencia)}`}>
+                        <CalendarDays className="h-3 w-3" />
+                        {fmtCompetenciaBR(t.competencia)}
+                      </span>
+                    )}
+                    {contaShow && (
+                      <Wallet className="h-3 w-3 text-muted-foreground" aria-label="Conta" title={`Conta: ${contaShow}`} />
+                    )}
+                    {meioShow && (
+                      <CreditCard className="h-3 w-3 text-muted-foreground" aria-label="Meio" title={`Meio de pagamento: ${meioShow}`} />
+                    )}
+                    {conciliado ? (
+                      <CheckCheck className="h-3 w-3 text-emerald-600" aria-label="Conciliado" title="Conciliado" />
+                    ) : aberto ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Conciliação pendente" />
+                    ) : null}
+                    {temAnexos && (
+                      <Paperclip className="h-3 w-3 text-sky-600" aria-label="Anexos" title={`${t.anexos!.length} anexo(s)`} />
+                    )}
+                    {temHistorico && (
+                      <History
+                        className={`h-3 w-3 ${hasEstorno ? "text-rose-600" : t.statusRenegociacao ? "text-violet-600" : "text-muted-foreground"}`}
+                        aria-label="Histórico"
+                        title={`Histórico: ${movs.length} baixa(s)${hasEstorno ? " · com estorno" : ""}${t.statusRenegociacao ? " · renegociado" : ""}`}
+                      />
+                    )}
+                    {emAtraso && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded bg-rose-500/15 px-1 py-0.5 text-[10px] font-semibold text-rose-600"
+                        title={`${enc.diasAtraso} dia(s) em atraso`}
+                      >
+                        <AlertTriangle className="h-3 w-3" />
+                        {enc.diasAtraso}d
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+
                 <TableCell><StatusPill s={t.status} renegociado={t.statusRenegociacao === "renegociado"} /></TableCell>
               </TableRow>
               );

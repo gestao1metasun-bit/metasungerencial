@@ -84,6 +84,7 @@ export function useNaturezasFin(): NaturezaFin[] {
   useEffect(() => { read(); }, []);
   return list;
 }
+export function getNaturezas(): NaturezaFin[] { return read(); }
 export function upsertNatureza(n: NaturezaFin) {
   const cur = read();
   const idx = cur.findIndex((x) => x.id === n.id);

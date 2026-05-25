@@ -40,8 +40,9 @@ export function EdicaoRateioDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const centros = useCentrosCustoFin();
-  const naturezas = useNaturezasFin();
+  const centros = useRepoCentrosCusto();
+  const naturezas = useRepoNaturezas();
+  const repo = useFinanceiroRepo();
 
   const [modo, setModo] = useState<Modo>("Normal");
   const [rows, setRows] = useState<Rateio[]>([]);

@@ -37,6 +37,7 @@ function fmtBRL(v: number) {
 
 export function TituloRowActions(p: TituloRowActionsProps) {
   const t = p.titulo;
+  const repo = useFinanceiroRepo();
   const bloqueado = !!t.bloqueadoFechamento;
   const quitado = t.status === "pago" || t.status === "recebido";
   const cancelado = t.status === "cancelado";

@@ -50,6 +50,19 @@ export type Movimento = {
   estornoPor?: string;
 };
 
+export type Rateio = {
+  id: string;
+  valor: number;
+  centroCustoId?: string;
+  centroCusto?: string;       // label legado
+  naturezaId?: string;
+  natureza?: string;          // label legado
+  tipoTitulo?: string;        // ex: "BOLETO BANCÁRIO", "PIX"
+  ordemServico?: string;      // O.S — código/descritivo livre
+  codigoProjeto?: string;
+  observacao?: string;
+};
+
 export type Anexo = {
   id: string;                 // ID do registro em anexos_titulos (UUID) OU id legado local
   nome: string;

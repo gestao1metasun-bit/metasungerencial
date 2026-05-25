@@ -1,13 +1,22 @@
 // ============================================================================
 // Store de Leads — primeira etapa da cadeia comercial:
 // Lead → Proposta → Contrato → Engenharia.
+//
+// FONTE DE VERDADE: Supabase (tabela `public.leads`, RLS por consultor).
+// Cache síncrono em memória mantém compat com `useSyncExternalStore` e
+// chamadas síncronas (`getLeads`, `findLeadByDoc`, etc).
+//
+// Hidratação acontece via `hydrateLeads()` chamado pelo auth-store ao
+// detectar sessão Supabase.
 // ============================================================================
 import { useSyncExternalStore } from "react";
 import { LEAD_STATUS, type LeadStatus, type OrigemLead } from "@/lib/status-catalog";
 import { pushAudit } from "@/lib/audit-store";
+import { fetchAllLeads, upsertLeads, deleteLeads } from "@/lib/repositories/leads-repo";
+import { toast } from "@/hooks/use-toast";
 
 export type Lead = {
-  id: string;
+  id: string;                 // UUID gerado client-side
   numero: string;             // LD-0001
   nome: string;
   telefone: string;
@@ -24,36 +33,18 @@ export type Lead = {
   doc?: string;               // CPF/CNPJ (mascarado)
 };
 
-const KEY = "ms.leads.v1";
 type Listener = () => void;
 const listeners = new Set<Listener>();
 const EMPTY: Lead[] = Object.freeze([]) as unknown as Lead[];
-let cache: Lead[] | null = null;
+let cache: Lead[] = [];
 let hydrated = false;
 
-function read(): Lead[] {
-  if (cache) return cache;
-  if (typeof window === "undefined") return EMPTY;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) { cache = JSON.parse(raw) as Lead[]; hydrated = true; return cache!; }
-  } catch {}
-  cache = [];
-  hydrated = true;
-  return cache;
-}
-function write(next: Lead[]) {
-  cache = next;
-  hydrated = true;
-  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
-  listeners.forEach((l) => l());
-}
+function emit() { listeners.forEach((l) => l()); }
+
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnap(): Lead[] {
-  // Mesma referência enquanto não houver mutações → seguro para useSyncExternalStore.
   if (typeof window === "undefined") return EMPTY;
-  if (!hydrated) return read();
-  return cache ?? EMPTY;
+  return cache;
 }
 function getServerSnap(): Lead[] { return EMPTY; }
 
@@ -61,14 +52,71 @@ export function useLeads(): Lead[] {
   return useSyncExternalStore(subscribe, getSnap, getServerSnap);
 }
 
-export function getLeads(): Lead[] { return read(); }
+export function getLeads(): Lead[] { return cache; }
 export function getLead(id: string): Lead | undefined {
-  return read().find((x) => x.id === id);
+  return cache.find((x) => x.id === id);
+}
+
+/** Hidrata o cache lendo do Supabase. Chamado pelo auth-store após login. */
+export async function hydrateLeads(): Promise<void> {
+  try {
+    const list = await fetchAllLeads();
+    cache = list;
+    hydrated = true;
+    emit();
+  } catch (e) {
+    console.error("[leads] hydrate falhou", e);
+  }
+}
+
+export function resetLeadsCache(): void {
+  cache = [];
+  hydrated = false;
+  emit();
+}
+
+export function isLeadsHydrated(): boolean { return hydrated; }
+
+/** Diff e sincroniza com Supabase. Fire-and-forget; em erro, mostra toast. */
+async function syncWrite(prev: Lead[], next: Lead[]) {
+  const prevMap = new Map(prev.map((x) => [x.id, x]));
+  const nextMap = new Map(next.map((x) => [x.id, x]));
+  const upserts: Lead[] = [];
+  const deletes: string[] = [];
+  for (const [id, item] of nextMap) {
+    const old = prevMap.get(id);
+    if (!old || JSON.stringify(old) !== JSON.stringify(item)) upserts.push(item);
+  }
+  for (const [id] of prevMap) {
+    if (!nextMap.has(id)) deletes.push(id);
+  }
+  const errs: string[] = [];
+  if (upserts.length) {
+    const { error } = await upsertLeads(upserts);
+    if (error) errs.push(error);
+  }
+  if (deletes.length) {
+    const { error } = await deleteLeads(deletes);
+    if (error) errs.push(error);
+  }
+  if (errs.length) {
+    toast({
+      title: "Falha ao sincronizar lead com o servidor",
+      description: errs.join(" • "),
+      variant: "destructive",
+    });
+  }
+}
+
+function write(next: Lead[]) {
+  const prev = cache;
+  cache = next;
+  emit();
+  void syncWrite(prev, next);
 }
 
 function nextNumero(): string {
-  const cur = read();
-  const n = cur.length + 1;
+  const n = cache.length + 1;
   return `LD-${String(n).padStart(4, "0")}`;
 }
 
@@ -88,7 +136,7 @@ export type NovoLeadInput = {
 export function findLeadByDoc(doc: string): Lead | undefined {
   const d = (doc ?? "").replace(/\D/g, "");
   if (!d) return undefined;
-  return read().find((l) => (l.doc ?? "").replace(/\D/g, "") === d);
+  return cache.find((l) => (l.doc ?? "").replace(/\D/g, "") === d);
 }
 
 /** Procura lead com mesmo telefone criado nos últimos `dias` (default 90). */
@@ -96,7 +144,7 @@ export function findLeadByTelefoneRecent(telefone: string, dias = 90): Lead | un
   const d = (telefone ?? "").replace(/\D/g, "");
   if (!d) return undefined;
   const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
-  return read().find((l) => {
+  return cache.find((l) => {
     const td = (l.telefone ?? "").replace(/\D/g, "");
     if (td !== d) return false;
     const t = new Date(l.criadoEm).getTime();
@@ -104,10 +152,18 @@ export function findLeadByTelefoneRecent(telefone: string, dias = 90): Lead | un
   });
 }
 
+function newUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback (tests, SSR): pseudo-UUID v4-ish
+  return "00000000-0000-4000-8000-" + Date.now().toString(16).padStart(12, "0");
+}
+
 export function criarLead(input: NovoLeadInput): Lead {
   const now = new Date().toISOString();
   const lead: Lead = {
-    id: `LEAD-${Date.now()}`,
+    id: newUUID(),
     numero: nextNumero(),
     nome: input.nome.trim(),
     telefone: input.telefone.trim(),
@@ -122,7 +178,7 @@ export function criarLead(input: NovoLeadInput): Lead {
     clienteId: input.clienteId,
     doc: input.doc?.trim() || undefined,
   };
-  write([lead, ...read()]);
+  write([lead, ...cache]);
   pushAudit({
     entidade: "lead", entidadeId: lead.id,
     acao: "CRIACAO", usuario: input.criadoPor,
@@ -132,12 +188,11 @@ export function criarLead(input: NovoLeadInput): Lead {
 }
 
 export function setLeadStatus(id: string, status: LeadStatus, usuario?: string, motivo?: string) {
-  const cur = read();
-  const idx = cur.findIndex((x) => x.id === id);
+  const idx = cache.findIndex((x) => x.id === id);
   if (idx < 0) return;
-  const old = cur[idx];
+  const old = cache[idx];
   if (old.status === status) return;
-  const next = [...cur];
+  const next = [...cache];
   next[idx] = { ...old, status, atualizadoEm: new Date().toISOString() };
   write(next);
   pushAudit({
@@ -150,12 +205,11 @@ export function setLeadStatus(id: string, status: LeadStatus, usuario?: string, 
 export function trocarOrigemLead(
   id: string, novaOrigem: OrigemLead, usuario: string, motivo: string,
 ) {
-  const cur = read();
-  const idx = cur.findIndex((x) => x.id === id);
+  const idx = cache.findIndex((x) => x.id === id);
   if (idx < 0) return;
-  const old = cur[idx];
+  const old = cache[idx];
   if (old.origem === novaOrigem) return;
-  const next = [...cur];
+  const next = [...cache];
   next[idx] = { ...old, origem: novaOrigem, atualizadoEm: new Date().toISOString() };
   write(next);
   pushAudit({
@@ -168,12 +222,11 @@ export function trocarOrigemLead(
 export function trocarConsultorLead(
   id: string, novoConsultorId: string, usuario: string, motivo: string,
 ) {
-  const cur = read();
-  const idx = cur.findIndex((x) => x.id === id);
+  const idx = cache.findIndex((x) => x.id === id);
   if (idx < 0) return;
-  const old = cur[idx];
+  const old = cache[idx];
   if (old.consultorId === novoConsultorId) return;
-  const next = [...cur];
+  const next = [...cache];
   next[idx] = { ...old, consultorId: novoConsultorId, atualizadoEm: new Date().toISOString() };
   write(next);
   pushAudit({
@@ -187,12 +240,11 @@ export function atualizarLead(
   id: string, patch: Partial<Pick<Lead, "nome" | "telefone" | "consumoKwh" | "observacao">>,
   usuario?: string,
 ) {
-  const cur = read();
-  const idx = cur.findIndex((x) => x.id === id);
+  const idx = cache.findIndex((x) => x.id === id);
   if (idx < 0) return;
-  const old = cur[idx];
+  const old = cache[idx];
   const merged = { ...old, ...patch, atualizadoEm: new Date().toISOString() };
-  const next = [...cur];
+  const next = [...cache];
   next[idx] = merged;
   write(next);
   for (const k of Object.keys(patch) as (keyof typeof patch)[]) {

@@ -234,6 +234,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
                   }
                 }
+                // Reabre o título recém-criado para anexar comprovantes e/ou fazer rateio.
+                if (alvo) setEditar(alvo);
               }}
 
               onCancel={() => setCriarOpen(false)}

@@ -370,6 +370,15 @@ function SaidaObraDialog() {
     if (!obraId.trim()) { toast.error("Selecione a obra"); return; }
     const valid = linhas.filter((l) => l.itemId && l.qtd > 0);
     if (valid.length === 0) { toast.error("Adicione ao menos um item"); return; }
+    // Item 2 — bloquear saída sem custo médio válido (evita CMV zerado/subestimado).
+    const semCM = valid
+      .map((l) => itens.find((x) => x.id === l.itemId))
+      .filter((it) => !it || !(it.custoMedio && it.custoMedio > 0));
+    if (semCM.length > 0) {
+      const nomes = semCM.map((it) => it?.nome ?? "?").join(", ");
+      toast.error(`Itens sem custo médio: ${nomes}. Registre uma compra antes da saída para apurar o CMV.`);
+      return;
+    }
     const r = registrarSaidaObra(obraId.trim(), cliente.trim(), valid);
     if (!r.ok) { toast.error(`Saída falhou. Faltam: ${r.faltantes.join(", ")}`); return; }
     toast.success(`Saída registrada — CMV ${fmtBRLPrecise(r.cmvTotal)}`);
@@ -412,15 +421,19 @@ function SaidaObraDialog() {
               const it = itens.find((x) => x.id === l.itemId);
               const cm = it?.custoMedio ?? 0;
               const disp = it?.qtdAtual ?? 0;
+              const semCM = !!it && !(it.custoMedio && it.custoMedio > 0);
               return (
                 <div key={i} className="grid grid-cols-[1fr_80px_120px_36px] gap-2 items-end">
                   <div>
                     <Select value={l.itemId} onValueChange={(v) => upd(i, { itemId: v })}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className={`h-9 ${semCM ? "border-rose-400 text-rose-700" : ""}`}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {itens.map((it) => <SelectItem key={it.id} value={it.id}>{it.nome} (est. {it.qtdAtual})</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    {semCM && (
+                      <div className="text-[10px] text-rose-600 mt-0.5">Sem custo médio — registre uma compra primeiro.</div>
+                    )}
                   </div>
                   <Input type="number" min={0} max={disp} value={l.qtd} onChange={(e) => upd(i, { qtd: Number(e.target.value) || 0 })} />
                   <div className="text-xs text-muted-foreground h-9 flex items-center">

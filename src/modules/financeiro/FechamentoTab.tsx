@@ -13,6 +13,8 @@ import {
 } from "@/lib/fin-fechamento-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useMyPermissions } from "@/hooks/use-permissions";
+import { useRepoTitulos } from "@/hooks/useRepoFinanceiro";
+import { confirmDialog } from "@/components/app/confirm-dialog";
 import { toast } from "sonner";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -30,6 +32,25 @@ export function FechamentoTab() {
 
   const globalFechado = useMemo(() => isMesGlobalFechado(mes), [mes, fechs]);
   const todasFechadas = contas.length > 0 && contas.every((c) => isMesFechado(mes, c.id));
+
+  // Item 3 — títulos ainda abertos no mês (competência) para alertar antes do fechamento global.
+  const titulos = useRepoTitulos();
+  const titulosAbertosNoMes = useMemo(() => {
+    const abertos = titulos.filter((t) => {
+      const comp = (t.competencia ?? t.vencimento ?? "").slice(0, 7);
+      if (comp !== mes) return false;
+      return t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado";
+    });
+    const ap = abertos.filter((t) => t.tipo === "AP");
+    const ar = abertos.filter((t) => t.tipo === "AR");
+    return {
+      total: abertos.length,
+      ap: ap.length,
+      ar: ar.length,
+      saldoAP: ap.reduce((s, t) => s + (t.saldo ?? 0), 0),
+      saldoAR: ar.reduce((s, t) => s + (t.saldo ?? 0), 0),
+    };
+  }, [titulos, mes]);
 
   return (
     <div className="space-y-4">
@@ -143,7 +164,24 @@ export function FechamentoTab() {
           {!globalFechado ? (
             <Button
               disabled={!todasFechadas}
-              onClick={() => { fecharMesGlobal(mes, usuarioAtual, obsGlobal); setObsGlobal(""); toast.success(`Mês ${mes} fechado.`); }}
+              onClick={async () => {
+                if (titulosAbertosNoMes.total > 0) {
+                  const ok = await confirmDialog({
+                    title: `Fechar ${mes} com títulos em aberto?`,
+                    description:
+                      `Há ${titulosAbertosNoMes.total} título(s) ainda em aberto na competência ${mes} ` +
+                      `(${titulosAbertosNoMes.ap} AP · ${fmtBRL(titulosAbertosNoMes.saldoAP)} · ` +
+                      `${titulosAbertosNoMes.ar} AR · ${fmtBRL(titulosAbertosNoMes.saldoAR)}). ` +
+                      `Após o fechamento global, baixas e edições nesses títulos ficarão bloqueadas.`,
+                    confirmText: "Fechar mesmo assim",
+                    destructive: true,
+                  });
+                  if (!ok) return;
+                }
+                fecharMesGlobal(mes, usuarioAtual, obsGlobal);
+                setObsGlobal("");
+                toast.success(`Mês ${mes} fechado.`);
+              }}
             ><Lock className="mr-1 h-4 w-4" />Fechar mês {mes}</Button>
           ) : (
             <Button
@@ -169,6 +207,19 @@ export function FechamentoTab() {
         {!todasFechadas && !globalFechado && (
           <div className="mt-2 text-xs text-amber-700">
             Ainda há {contas.filter((c) => !isMesFechado(mes, c.id)).length} conta(s) em aberto neste mês.
+          </div>
+        )}
+        {!globalFechado && titulosAbertosNoMes.total > 0 && (
+          <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div className="leading-relaxed">
+              <strong>{titulosAbertosNoMes.total} título(s) ainda abertos na competência {mes}:</strong>{" "}
+              {titulosAbertosNoMes.ap} AP (saldo {fmtBRL(titulosAbertosNoMes.saldoAP)}) ·{" "}
+              {titulosAbertosNoMes.ar} AR (saldo {fmtBRL(titulosAbertosNoMes.saldoAR)}).
+              <span className="ml-1 opacity-90">
+                Não bloqueia o fechamento, mas baixas/edições posteriores nesses títulos ficarão travadas.
+              </span>
+            </div>
           </div>
         )}
       </Card>

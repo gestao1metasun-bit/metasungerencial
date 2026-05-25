@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
 import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown } from "lucide-react";
 import { ContraparteCombo } from "@/components/app/financeiro/ContraparteCombo";
+import { PeriodoFechadoBanner } from "@/components/app/financeiro/PeriodoFechadoBanner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
 import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";
@@ -169,6 +170,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
 
   return (
     <div className="space-y-4">
+      <PeriodoFechadoBanner />
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1">
           <Label className="text-xs text-muted-foreground">Buscar</Label>

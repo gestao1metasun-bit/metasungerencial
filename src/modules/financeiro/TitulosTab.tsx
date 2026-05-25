@@ -1180,7 +1180,7 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
   const excluir = async (a: Anexo) => {
     try {
       if (a.storagePath) await deleteAnexoFn({ data: { anexoId: a.id } });
-      removerAnexo(titulo.id, a.id);
+      await repo.removerAnexo(titulo.id, a.id, "Exclusão pelo usuário");
     } catch (e: any) { toast.error(e?.message ?? "Falha ao excluir."); }
   };
 

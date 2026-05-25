@@ -18,6 +18,7 @@ import type {
   ExtratoLancamento, ExtratoStatus, ContaFinanceira, CandidatoConciliacao,
 } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
+import { confirmDialog, promptDialog } from "@/components/app/confirm-dialog";
 
 const STATUS_TONE: Record<ExtratoStatus, string> = {
   pendente:   "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -127,7 +128,7 @@ export function ConciliacaoTab() {
                         <>
                           <ConciliarDialog extrato={e} />
                           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={async () => {
-                            const m = prompt("Motivo para ignorar:");
+                            const m = await promptDialog({ title: "Ignorar lançamento", description: "Informe o motivo para ignorar este lançamento do extrato.", label: "Motivo", multiline: true, minLength: 3, confirmText: "Ignorar" });
                             if (m) { try { await repo.ignorarExtrato(e.id, m); } catch (err: any) { toast.error(err?.message ?? "Erro."); } }
                           }}><X className="h-3.5 w-3.5" /></Button>
                         </>
@@ -139,7 +140,7 @@ export function ConciliacaoTab() {
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                        onClick={async () => { if (confirm("Remover este lançamento do extrato?")) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
+                        onClick={async () => { const ok = await confirmDialog({ title: "Remover lançamento?", description: "Remover este lançamento do extrato? Esta ação não pode ser desfeita.", destructive: true, confirmText: "Remover" }); if (ok) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

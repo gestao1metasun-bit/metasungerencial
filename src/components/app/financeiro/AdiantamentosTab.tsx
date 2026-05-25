@@ -18,6 +18,10 @@ import {
 } from "@/hooks/useRepoFinanceiro";
 import type { Adiantamento, AdiantamentoTipo } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
+import { ContraparteCombo, type ContraparteOption } from "@/components/app/financeiro/ContraparteCombo";
+import { useClientesAll } from "@/lib/clientes-store";
+import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import { promptDialog } from "@/components/app/confirm-dialog";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }
 
@@ -132,7 +136,14 @@ export function AdiantamentosTab() {
                           <Button
                             size="sm" variant="ghost"
                             onClick={async () => {
-                              const m = prompt("Motivo do estorno (mín. 5 caracteres):");
+                              const m = await promptDialog({
+                                title: "Estornar adiantamento",
+                                description: `Adiantamento ${a.id} — ${a.contraparteNome}. Informe o motivo (mín. 5 caracteres).`,
+                                label: "Motivo do estorno",
+                                multiline: true,
+                                minLength: 5,
+                                confirmText: "Estornar",
+                              });
                               if (m && m.length >= 5) {
                                 try { await repo.estornarAdiantamento(a.id, m); toast.success("Adiantamento estornado."); }
                                 catch (e: any) { toast.error(e.message); }
@@ -161,6 +172,13 @@ export function AdiantamentosTab() {
 function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onClose: () => void }) {
   const repo = useFinanceiroRepo();
   const contas = useRepoContas().filter((c) => c.ativo);
+  const clientes = useClientesAll();
+  const fornecedores = useFornecedores();
+  const opcoes: ContraparteOption[] = useMemo(() => (
+    tipo === "cliente"
+      ? clientes.map((c) => ({ id: c.id, nome: c.nome }))
+      : fornecedores.map((f) => ({ id: f.id, nome: f.nome, sub: f.documento || undefined }))
+  ), [tipo, clientes, fornecedores]);
   const [contraparte, setContraparte] = useState("");
   const [valor, setValor] = useState("");
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
@@ -195,7 +213,12 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
       <div className="space-y-3 text-sm">
         <div>
           <Label className="text-xs">{tipo === "cliente" ? "Cliente" : "Fornecedor"}</Label>
-          <Input value={contraparte} onChange={(e) => setContraparte(e.target.value)} placeholder="Nome completo / razão social" />
+          <ContraparteCombo
+            value={contraparte}
+            onChange={setContraparte}
+            options={opcoes}
+            placeholder={tipo === "cliente" ? "Selecione o cliente…" : "Selecione o fornecedor…"}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

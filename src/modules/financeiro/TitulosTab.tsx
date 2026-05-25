@@ -205,19 +205,6 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
   const [ratear, setRatear] = useState<Titulo | null>(null);
 
-  const lista = useMemo(() => {
-    let arr = todos.filter((t) => t.tipo === tipo);
-    if (fStatus !== "todos") arr = arr.filter((t) => t.status === fStatus);
-    if (busca.trim()) {
-      const b = busca.toLowerCase();
-      arr = arr.filter((t) =>
-        t.descricao.toLowerCase().includes(b) ||
-        (t.fornecedor ?? "").toLowerCase().includes(b) ||
-        (t.cliente ?? "").toLowerCase().includes(b) ||
-        (t.contratoId ?? "").toLowerCase().includes(b) ||
-        (t.obraId ?? "").toLowerCase().includes(b),
-      );
-    }
   const dateHelpers = useMemo(() => {
     const today = hojeISO;
     const d = new Date(today + "T00:00:00");

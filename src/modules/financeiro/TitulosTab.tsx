@@ -948,40 +948,13 @@ function TituloDialog({
         </div>
       )}
 
-      {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
-
+      {/* Anexos — em edição usamos AnexosBlock (Storage). Na criação, o anexo + rateio são feitos ao reabrir o título após salvar. */}
       {initial ? (
         <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
       ) : (
-        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <Paperclip className="mr-1 inline h-3.5 w-3.5" /> Anexos / Comprovantes
-            </div>
-            <div>
-              <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)}
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.xml" />
-              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-                <Upload className="mr-1 h-3.5 w-3.5" /> Adicionar
-              </Button>
-            </div>
-          </div>
-          {pendingFiles.length === 0 ? (
-            <div className="rounded border border-dashed p-2 text-center text-xs text-muted-foreground">Nenhum anexo. PDF, imagens ou XML — máx. 10 MB cada. O upload acontece ao salvar.</div>
-          ) : (
-            <div className="space-y-1">
-              {pendingFiles.map((f, idx) => (
-                <div key={`${f.name}-${idx}`} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1 text-xs">
-                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">{f.name}</span>
-                  <span className="text-muted-foreground">{Math.round(f.size / 1024)} KB</span>
-                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPendingFiles((prev) => prev.filter((_, i) => i !== idx))}>
-                    <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="mt-3 rounded-lg border border-dashed bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+          <Paperclip className="mr-1 inline h-3.5 w-3.5" />
+          Após salvar, o título reabrirá automaticamente para anexar comprovantes e fazer rateio (se houver).
         </div>
       )}
 

@@ -1,5 +1,5 @@
 // UI dos novos módulos de Títulos Financeiros (AP / AR).
-// Importa o store fin-titulos-store e fornece tabelas + dialogs.
+// Consome FinanceiroRepository via useRepoTitulos/useFinanceiroRepo (Onda 2).
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";

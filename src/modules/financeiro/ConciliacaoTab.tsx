@@ -268,10 +268,19 @@ function NovoLancamentoExtratoDialog({ contas }: { contas: ContaFinanceira[] }) 
 
 /* ================ Conciliar (sugestões) ================ */
 function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
-  const titulos = useTitulos();
   const [tituloIdManual, setTituloIdManual] = useState("");
-  const candidatos = useMemo(() => sugerirCandidatos(extrato, titulos), [extrato, titulos]);
+  const [candidatos, setCandidatos] = useState<CandidatoConciliacao[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelado = false;
+    repo.sugerirCandidatosConciliacao(extrato.id)
+      .then((c) => { if (!cancelado) setCandidatos(c); })
+      .catch(() => { if (!cancelado) setCandidatos([]); });
+    return () => { cancelado = true; };
+  }, [open, extrato.id, repo]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -301,7 +310,7 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
             </div>
           ) : (
             <div className="max-h-[260px] space-y-2 overflow-auto">
-              {candidatos.map(({ t, dif, exato }) => (
+              {candidatos.map(({ titulo: t, dif, exato }) => (
                 <div key={t.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
                   <div>
                     <div className="font-medium">{t.id} · {t.descricao}</div>
@@ -310,8 +319,8 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
                       {!exato && <> · dif {fmtBRLPrecise(dif)}</>}
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => {
-                    try { conciliar(extrato.id, t.id); toast.success("Conciliado e baixa registrada."); setOpen(false); }
+                  <Button size="sm" onClick={async () => {
+                    try { await repo.conciliar({ extratoId: extrato.id, tituloId: t.id }); toast.success("Conciliado e baixa registrada."); setOpen(false); }
                     catch (err: any) { toast.error(err?.message ?? "Erro ao conciliar."); }
                   }}>Conciliar</Button>
                 </div>
@@ -324,8 +333,8 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
           <Label>Vincular por ID de título manualmente</Label>
           <div className="mt-1 flex gap-2">
             <Input placeholder="AR-… ou AP-…" value={tituloIdManual} onChange={(e) => setTituloIdManual(e.target.value.trim())} />
-            <Button variant="secondary" onClick={() => {
-              try { conciliar(extrato.id, tituloIdManual); toast.success("Conciliado."); setOpen(false); }
+            <Button variant="secondary" onClick={async () => {
+              try { await repo.conciliar({ extratoId: extrato.id, tituloId: tituloIdManual }); toast.success("Conciliado."); setOpen(false); }
               catch (err: any) { toast.error(err?.message ?? "Erro."); }
             }}>Vincular</Button>
           </div>

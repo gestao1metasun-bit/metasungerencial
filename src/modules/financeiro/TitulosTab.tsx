@@ -683,8 +683,21 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         </span>
                       )}
                       {conciliado && (
-                        <span title="Conciliado" className="inline-flex text-emerald-600">
-                          <CheckCheck className="h-3 w-3" />
+                        <span
+                          title={dataBaixa ? `Conciliado em ${fmtDateBR(dataBaixa)}${baixaConta ? " · " + baixaConta : ""}` : "Conciliado"}
+                          className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                        >
+                          <CheckCheck className="h-2.5 w-2.5" />
+                          Conciliado{dataBaixa ? ` ${fmtDateBR(dataBaixa).slice(0, 5)}` : ""}
+                        </span>
+                      )}
+                      {pendenteConciliacao && (
+                        <span
+                          title={dataBaixa ? `${tipo === "AP" ? "Pago" : "Recebido"} em ${fmtDateBR(dataBaixa)} · aguarda conciliação` : "Aguarda conciliação"}
+                          className="inline-flex items-center gap-0.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          Pendente conciliação
                         </span>
                       )}
                       {t.competencia && (

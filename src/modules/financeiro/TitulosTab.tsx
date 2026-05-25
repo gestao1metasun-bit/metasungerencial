@@ -459,7 +459,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                       <button
                         type="button"
                         onClick={() => { navigator.clipboard?.writeText(t.id).then(() => toast.success("ID copiado")).catch(() => {}); }}
-                        className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70 opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                        className={`mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground/70 transition-opacity hover:text-primary ${showAuditoria ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                         title={`ID: ${t.id} (clique para copiar)`}
                       >
                         <Hash className="h-2.5 w-2.5" />

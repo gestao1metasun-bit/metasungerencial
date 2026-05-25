@@ -1,5 +1,5 @@
 // Aba de Rescisões contratuais — simulador + histórico.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, FileSearch, Receipt, Scissors } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/app/StatCard";
 import { toast } from "sonner";
 import {
-  useRescisoes, simularRescisao, confirmarRescisao,
-  type SimulacaoRescisao,
-} from "@/lib/fin-rescisao-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
+  useRepoRescisoes, useRepoTitulos, useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type { SimulacaoRescisao } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }
 
 export function RescisoesTab() {
-  const rescs = useRescisoes();
-  const titulos = useTitulos();
+  const rescs = useRepoRescisoes();
+  const titulos = useRepoTitulos();
   const [open, setOpen] = useState(false);
 
   // Contratos disponíveis = qualquer contratoId presente nos títulos
@@ -131,6 +130,7 @@ function RescindirDialog({
   contratos: { id: string; cliente?: string; aberto: number; total: number }[];
   onClose: () => void;
 }) {
+  const repo = useFinanceiroRepo();
   const [contratoId, setContratoId] = useState<string>(contratos[0]?.id ?? "");
   const [multaTipo, setMultaTipo] = useState<"percentual" | "fixo">("percentual");
   const [multaValor, setMultaValor] = useState<string>("10");
@@ -141,17 +141,24 @@ function RescindirDialog({
     const d = new Date(); d.setDate(d.getDate() + 30);
     return d.toISOString().slice(0, 10);
   });
+  const [sim, setSim] = useState<SimulacaoRescisao | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const sim: SimulacaoRescisao | null = useMemo(() => {
-    if (!contratoId) return null;
-    try {
-      return simularRescisao({ contratoId, multaTipo, multaValor: Number(multaValor) || 0 });
-    } catch { return null; }
+  useEffect(() => {
+    let cancelled = false;
+    if (!contratoId) { setSim(null); return; }
+    repo.simularRescisao({ contratoId, multaTipo, multaValor: Number(multaValor) || 0 })
+      .then((r) => { if (!cancelled) setSim(r); })
+      .catch(() => { if (!cancelled) setSim(null); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contratoId, multaTipo, multaValor]);
 
-  function confirmar() {
+  async function confirmar() {
+    if (enviando) return;
+    setEnviando(true);
     try {
-      confirmarRescisao({
+      await repo.confirmarRescisao({
         contratoId,
         multaTipo,
         multaValor: Number(multaValor) || 0,
@@ -159,10 +166,11 @@ function RescindirDialog({
         responsavel: responsavel || undefined,
         vencimentoDevolucao: vencDev,
         observacao: obs || undefined,
-      }, "Admin");
+      });
       toast.success("Rescisão concluída.");
       onClose();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message ?? "Erro ao rescindir"); }
+    finally { setEnviando(false); }
   }
 
   return (
@@ -275,7 +283,7 @@ function RescindirDialog({
           <Button
             variant="destructive"
             onClick={confirmar}
-            disabled={!sim || motivo.trim().length < 5}
+            disabled={enviando || !sim || motivo.trim().length < 5}
           >Confirmar rescisão</Button>
         </DialogFooter>
       </DialogContent>

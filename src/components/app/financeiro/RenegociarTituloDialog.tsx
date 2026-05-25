@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertTriangle, ShieldCheck, Sparkles } from "lucide-react";
 import {
-  simularRenegociacao, confirmarRenegociacao,
-  type SimulacaoRenegociacao,
-} from "@/lib/fin-renegociacao-store";
-import type { Titulo } from "@/lib/fin-titulos-store";
+  useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  Titulo, SimulacaoRenegociacao,
+} from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) {
@@ -35,6 +36,7 @@ export function RenegociarTituloDialog({
   onClose: () => void;
   onSuccess?: () => void;
 }) {
+  const repo = useFinanceiroRepo();
   const [dataRef] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [jurosManual, setJurosManual] = useState<string>("");
@@ -53,33 +55,42 @@ export function RenegociarTituloDialog({
   const [aprovador, setAprovador] = useState("");
   const [obs, setObs] = useState("");
 
-  const sim: SimulacaoRenegociacao | null = useMemo(() => {
-    if (!titulo) return null;
-    try {
-      return simularRenegociacao({
-        tituloId: titulo.id,
-        dataRef,
-        jurosAplicado: jurosManual === "" ? undefined : Number(jurosManual),
-        multaAplicada: multaManual === "" ? undefined : Number(multaManual),
-        desconto: Number(desconto) || 0,
-        parcelar,
-        numeroParcelas: numParcelas,
-        primeiroVencimento: primeiroVenc,
-        intervaloDias: intervalo,
-      });
-    } catch {
-      return null;
-    }
-  }, [titulo, dataRef, jurosManual, multaManual, desconto, parcelar, numParcelas, primeiroVenc, intervalo]);
+  const [sim, setSim] = useState<SimulacaoRenegociacao | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  // Simulação centralizada no repositório — async, sem regras na UI.
+  const simKey = useMemo(
+    () => `${titulo?.id ?? ""}|${dataRef}|${jurosManual}|${multaManual}|${desconto}|${parcelar}|${numParcelas}|${primeiroVenc}|${intervalo}`,
+    [titulo, dataRef, jurosManual, multaManual, desconto, parcelar, numParcelas, primeiroVenc, intervalo],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    if (!titulo) { setSim(null); return; }
+    repo.simularRenegociacao({
+      tituloId: titulo.id,
+      dataRef,
+      jurosAplicado: jurosManual === "" ? undefined : Number(jurosManual),
+      multaAplicada: multaManual === "" ? undefined : Number(multaManual),
+      desconto: Number(desconto) || 0,
+      parcelar,
+      numeroParcelas: numParcelas,
+      primeiroVencimento: primeiroVenc,
+      intervaloDias: intervalo,
+    }).then((r) => { if (!cancelled) setSim(r); })
+      .catch(() => { if (!cancelled) setSim(null); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simKey]);
 
   if (!titulo) return null;
 
   const NivelChip = sim ? NIVEL_LABEL[sim.nivelAprovacao] : null;
 
-  function confirmar() {
-    if (!titulo || !sim) return;
+  async function confirmar() {
+    if (!titulo || !sim || enviando) return;
+    setEnviando(true);
     try {
-      confirmarRenegociacao({
+      await repo.confirmarRenegociacao({
         tituloId: titulo.id,
         dataRef,
         jurosAplicado: sim.jurosAplicado,
@@ -97,7 +108,9 @@ export function RenegociarTituloDialog({
       onSuccess?.();
       onClose();
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao renegociar");
+      toast.error(e?.message ?? "Erro ao renegociar");
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -293,7 +306,7 @@ export function RenegociarTituloDialog({
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button
             onClick={confirmar}
-            disabled={!sim || motivo.trim().length < 5 || (sim?.nivelAprovacao === "diretoria" && !aprovador.trim())}
+            disabled={enviando || !sim || motivo.trim().length < 5 || (sim?.nivelAprovacao === "diretoria" && !aprovador.trim())}
           >
             Confirmar renegociação
           </Button>

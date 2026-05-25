@@ -4,8 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search, FileSearch } from "lucide-react";
-import { useRenegociacoes } from "@/lib/fin-renegociacao-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
+import { useRepoRenegociacoes, useRepoTitulos } from "@/hooks/useRepoFinanceiro";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { StatCard } from "@/components/app/StatCard";
 
@@ -21,8 +20,8 @@ const NIVEL_LABEL: Record<string, string> = {
 };
 
 export function RenegociacaoHistoricoList() {
-  const renegs = useRenegociacoes();
-  const titulos = useTitulos();
+  const renegs = useRepoRenegociacoes();
+  const titulos = useRepoTitulos();
   const [q, setQ] = useState("");
 
   const tituloPorId = useMemo(() => {

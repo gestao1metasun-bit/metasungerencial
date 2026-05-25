@@ -204,7 +204,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.obraId ?? "").toLowerCase().includes(b),
       );
     }
-    return arr.sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+    return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
   }, [todos, tipo, fStatus, busca]);
 
   const totais = useMemo(() => {

@@ -11,6 +11,8 @@ export type NaturezaFin = {
   subgrupoId?: string;
   tipo: "Pagar" | "Receber";
   centroCustoPadraoId?: string;
+  /** Se true, criar título com essa natureza exige centro de custo (#18). */
+  centroCustoObrigatorio?: boolean;
   permiteVinculoObra: boolean;
   permiteVinculoEstoque: boolean;
   tipoAplicacaoPadraoId?: string;
@@ -82,6 +84,7 @@ export function useNaturezasFin(): NaturezaFin[] {
   useEffect(() => { read(); }, []);
   return list;
 }
+export function getNaturezas(): NaturezaFin[] { return read(); }
 export function upsertNatureza(n: NaturezaFin) {
   const cur = read();
   const idx = cur.findIndex((x) => x.id === n.id);

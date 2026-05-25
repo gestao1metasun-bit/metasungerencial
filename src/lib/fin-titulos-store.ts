@@ -8,6 +8,8 @@
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
 import { pushAudit } from "@/lib/audit-store";
+import { getNaturezas } from "@/lib/fin-naturezas-store";
+import { isMesFechado } from "@/lib/fin-fechamento-store";
 
 export type TituloTipo = "AP" | "AR";
 
@@ -95,6 +97,15 @@ export type Titulo = {
   contratoId?: string;
   parcelaLabel?: string;
 
+  // Identificação de documento (#12 — duplicidade)
+  documentoTipo?: "NF" | "Boleto" | "Recibo" | "Contrato" | "Outros";
+  documentoNumero?: string;       // número da NF, código de barras boleto, etc.
+
+  // Override controlado de duplicidade (#12)
+  duplicidadePermitidaPor?: string;
+  duplicidadePermitidaEm?: string;
+  duplicidadeMotivo?: string;
+
   comprovanteUrl?: string;
   observacao?: string;
   anexos?: Anexo[];
@@ -102,6 +113,8 @@ export type Titulo = {
   criadoPor?: string;
   criadoEm: string;
 
+  /** Bloqueio para EDIÇÃO/ESTORNO/CANCEL — baseado na competência do título.
+   *  NÃO bloqueia registro de baixa, que é validado pela DATA DO PAGAMENTO. */
   bloqueadoFechamento?: boolean;
 
   // Renegociação (Fase 31)
@@ -182,7 +195,46 @@ export type CriarTituloInput = Omit<
   movimentos?: Movimento[];
 };
 
-export function criarTitulo(input: CriarTituloInput, usuario = "Sistema"): Titulo {
+export type CriarTituloOptions = {
+  usuario?: string;
+  /** Permite criar mesmo se houver duplicata candidata. Auditado. */
+  permitirDuplicidade?: boolean;
+  /** Motivo obrigatório quando permitirDuplicidade=true. */
+  motivoDuplicidade?: string;
+  /** Pula validação de centro de custo (uso interno: gatilhos automáticos). */
+  pularValidacaoCentroCusto?: boolean;
+};
+
+export function criarTitulo(
+  input: CriarTituloInput,
+  usuarioOrOptions: string | CriarTituloOptions = "Sistema",
+): Titulo {
+  const opts: CriarTituloOptions =
+    typeof usuarioOrOptions === "string" ? { usuario: usuarioOrOptions } : usuarioOrOptions;
+  const usuario = opts.usuario ?? "Sistema";
+
+  // ---- #18: centro de custo obrigatório por natureza
+  if (!opts.pularValidacaoCentroCusto && input.naturezaId) {
+    const nat = getNaturezas().find((n) => n.id === input.naturezaId);
+    if (nat?.centroCustoObrigatorio && !input.centroCustoId && !input.centroCusto) {
+      throw new Error(`Natureza "${nat.nome}" exige centro de custo.`);
+    }
+  }
+
+  // ---- #12: detecção de duplicidade
+  if (!opts.permitirDuplicidade) {
+    const dups = detectarDuplicidade(input);
+    if (dups.length > 0) {
+      const ids = dups.slice(0, 3).map((d) => d.id).join(", ");
+      throw new Error(
+        `Possível duplicidade detectada (${dups.length}): ${ids}. ` +
+        `Confirme a operação reenviando com permitirDuplicidade=true e motivoDuplicidade.`,
+      );
+    }
+  } else if (!opts.motivoDuplicidade) {
+    throw new Error("Override de duplicidade exige motivo.");
+  }
+
   const id = input.id ?? newId(input.tipo === "AP" ? "AP" : "AR");
   const t: Titulo = {
     ...input,
@@ -193,18 +245,58 @@ export function criarTitulo(input: CriarTituloInput, usuario = "Sistema"): Titul
     criadoEm: input.criadoEm ?? isoNow(),
     criadoPor: input.criadoPor ?? usuario,
     movimentos: input.movimentos ?? [],
+    duplicidadePermitidaPor: opts.permitirDuplicidade ? usuario : undefined,
+    duplicidadePermitidaEm: opts.permitirDuplicidade ? isoNow() : undefined,
+    duplicidadeMotivo: opts.permitirDuplicidade ? opts.motivoDuplicidade : undefined,
   };
   // dedupe por id
   const cur = read().filter((x) => x.id !== t.id);
   write([t, ...cur]);
   pushAudit({
-    entidade: "contrato", // reaproveita o enum existente
+    entidade: "contrato",
     entidadeId: t.contratoId ?? t.id,
-    acao: "FIN_TITULO_CRIADO",
+    acao: opts.permitirDuplicidade ? "FIN_TITULO_CRIADO_DUPLICIDADE" : "FIN_TITULO_CRIADO",
     usuario,
+    motivo: opts.motivoDuplicidade,
     detalhe: `${t.tipo} ${t.origem} · ${t.descricao} · R$ ${t.valorOriginal.toFixed(2)}`,
   });
   return t;
+}
+
+/** #12 — Detecta títulos potencialmente duplicados ao input.
+ *  Critérios (qualquer um disparar): mesmo documentoTipo+documentoNumero não vazios;
+ *  OU mesmo (tipo + contraparte + valor + vencimento ±3 dias). Ignora cancelados. */
+export function detectarDuplicidade(input: Partial<Titulo>): Titulo[] {
+  const all = read().filter((t) => t.status !== "cancelado" && t.id !== input.id);
+  const out: Titulo[] = [];
+  const contraparte = (t: Pick<Titulo, "fornecedor" | "cliente" | "tipo">) =>
+    (t.tipo === "AP" ? t.fornecedor : t.cliente)?.trim().toLowerCase() ?? "";
+  const inContraparte = contraparte(input as Titulo);
+  const inDocNum = input.documentoNumero?.trim();
+  const inDocTipo = input.documentoTipo;
+  const inVenc = input.vencimento ? new Date(input.vencimento + "T00:00:00").getTime() : null;
+  const inVal = input.valorOriginal != null ? round2(input.valorOriginal) : null;
+
+  for (const t of all) {
+    // 1) mesmo documento
+    if (inDocNum && inDocTipo && t.documentoNumero?.trim() === inDocNum && t.documentoTipo === inDocTipo) {
+      out.push(t);
+      continue;
+    }
+    // 2) mesma contraparte + valor + vencimento próximo
+    if (
+      inContraparte &&
+      contraparte(t) === inContraparte &&
+      t.tipo === input.tipo &&
+      inVal != null && round2(t.valorOriginal) === inVal &&
+      inVenc != null
+    ) {
+      const tVenc = new Date(t.vencimento + "T00:00:00").getTime();
+      const diffDias = Math.abs(tVenc - inVenc) / 86_400_000;
+      if (diffDias <= 3) out.push(t);
+    }
+  }
+  return out;
 }
 
 export function atualizarTitulo(id: string, patch: Partial<Titulo>, usuario = "Sistema", motivo?: string) {
@@ -270,8 +362,17 @@ export function registrarBaixa(id: string, mov: BaixaInput, usuario = "Sistema")
   const idx = cur.findIndex((t) => t.id === id);
   if (idx < 0) throw new Error("Título não encontrado.");
   const before = cur[idx];
-  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
   if (before.status === "cancelado") throw new Error("Título cancelado.");
+  const dataPag = mov.data ?? new Date().toISOString().slice(0, 10);
+
+  // ---- Fase A: o que bloqueia a baixa é o MÊS DO PAGAMENTO estar fechado,
+  // não a competência do título. Conta vencida em abril e paga em maio é OK
+  // enquanto maio estiver aberto.
+  const mesPag = dataPag.slice(0, 7);
+  if (isMesFechado(mesPag, mov.contaFinanceira ?? before.contaFinanceira)) {
+    throw new Error(`Mês de pagamento (${mesPag}) está fechado. Reabra o período ou ajuste a data.`);
+  }
+
   const valor = round2(mov.valor + (mov.juros ?? 0) + (mov.multa ?? 0) - (mov.desconto ?? 0));
   if (valor <= 0) throw new Error("Valor da baixa deve ser positivo.");
   if (before.valorPago + valor > before.valorOriginal + 0.01) {

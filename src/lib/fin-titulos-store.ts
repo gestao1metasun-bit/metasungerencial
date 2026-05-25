@@ -95,6 +95,15 @@ export type Titulo = {
   contratoId?: string;
   parcelaLabel?: string;
 
+  // Identificação de documento (#12 — duplicidade)
+  documentoTipo?: "NF" | "Boleto" | "Recibo" | "Contrato" | "Outros";
+  documentoNumero?: string;       // número da NF, código de barras boleto, etc.
+
+  // Override controlado de duplicidade (#12)
+  duplicidadePermitidaPor?: string;
+  duplicidadePermitidaEm?: string;
+  duplicidadeMotivo?: string;
+
   comprovanteUrl?: string;
   observacao?: string;
   anexos?: Anexo[];
@@ -102,6 +111,8 @@ export type Titulo = {
   criadoPor?: string;
   criadoEm: string;
 
+  /** Bloqueio para EDIÇÃO/ESTORNO/CANCEL — baseado na competência do título.
+   *  NÃO bloqueia registro de baixa, que é validado pela DATA DO PAGAMENTO. */
   bloqueadoFechamento?: boolean;
 
   // Renegociação (Fase 31)

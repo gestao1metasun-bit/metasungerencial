@@ -11,6 +11,8 @@ export type NaturezaFin = {
   subgrupoId?: string;
   tipo: "Pagar" | "Receber";
   centroCustoPadraoId?: string;
+  /** Se true, criar título com essa natureza exige centro de custo (#18). */
+  centroCustoObrigatorio?: boolean;
   permiteVinculoObra: boolean;
   permiteVinculoEstoque: boolean;
   tipoAplicacaoPadraoId?: string;

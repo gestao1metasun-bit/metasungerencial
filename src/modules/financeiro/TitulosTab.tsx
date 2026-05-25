@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles } from "lucide-react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split } from "lucide-react";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
+import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";
 import { useContratos } from "@/lib/contratos-store";
 import { useObrasSnapshot } from "@/lib/obras-snapshot-store";
 import { Card } from "@/components/ui/card";

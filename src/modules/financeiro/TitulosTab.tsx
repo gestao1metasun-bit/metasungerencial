@@ -942,7 +942,7 @@ function TituloDialog({
             </Select>
           </div>
           <div>
-            <Label>Tipo de origem *</Label>
+            <Label>Tipo de origem</Label>
             <Select value={origem} onValueChange={setOrigem}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

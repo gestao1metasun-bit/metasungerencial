@@ -57,7 +57,42 @@ const STATUS_LABEL: Record<TituloStatus, string> = {
   parcial: "Parcial", pago: "Pago", recebido: "Recebido", cancelado: "Cancelado",
 };
 
-function StatusPill({ s, renegociado }: { s: TituloStatus; renegociado?: boolean }) {
+const ORIGEM_LABEL: Record<string, string> = {
+  manual: "Manual",
+  contrato: "Contrato",
+  financiamento: "Financiamento",
+  compra: "Compra",
+  comissao: "Comissão",
+  mao_obra: "Mão de obra",
+  frete: "Frete",
+  manutencao: "Manutenção",
+  rescisao: "Rescisão",
+  adiantamento: "Adiantamento",
+  renegociacao: "Renegociação",
+};
+
+const ORIGEM_TONE: Record<string, string> = {
+  manual:        "bg-zinc-500/15 text-zinc-600 border-zinc-500/30",
+  contrato:      "bg-sky-500/15 text-sky-600 border-sky-500/30",
+  financiamento: "bg-blue-500/15 text-blue-600 border-blue-500/30",
+  compra:        "bg-amber-500/15 text-amber-600 border-amber-500/30",
+  comissao:      "bg-pink-500/15 text-pink-600 border-pink-500/30",
+  mao_obra:      "bg-orange-500/15 text-orange-600 border-orange-500/30",
+  frete:         "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
+  manutencao:    "bg-teal-500/15 text-teal-600 border-teal-500/30",
+  rescisao:      "bg-red-500/15 text-red-600 border-red-500/30",
+  adiantamento:  "bg-cyan-500/15 text-cyan-600 border-cyan-500/30",
+  renegociacao:  "bg-violet-500/15 text-violet-700 border-violet-500/30",
+};
+
+function fmtCompetenciaBR(c?: string) {
+  if (!c) return "—";
+  const [y, m] = c.split("-");
+  if (!y || !m) return c;
+  return `${m}/${y}`;
+}
+
+
   if (renegociado) {
     return (
       <Badge

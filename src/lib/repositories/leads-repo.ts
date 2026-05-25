@@ -19,7 +19,7 @@ type Row = {
   observacao: string | null;
   status: string;
   cliente_id: string | null;
-  dados: Record<string, unknown>;
+  dados: any;
   created_at: string;
   updated_at: string;
 };

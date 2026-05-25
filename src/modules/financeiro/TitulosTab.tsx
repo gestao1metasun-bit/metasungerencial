@@ -210,8 +210,21 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.obraId ?? "").toLowerCase().includes(b),
       );
     }
+    if (preset === "cobranca") {
+      // Cobrança: apenas títulos em aberto, priorizando vencidos
+      arr = arr.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
+      const hoje = hojeISO;
+      return arr.sort((a, b) => {
+        const va = a.vencimentoReal ?? a.vencimento;
+        const vb = b.vencimentoReal ?? b.vencimento;
+        const aAtraso = va < hoje;
+        const bAtraso = vb < hoje;
+        if (aAtraso !== bAtraso) return aAtraso ? -1 : 1;
+        return va.localeCompare(vb);
+      });
+    }
     return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
-  }, [todos, tipo, fStatus, busca]);
+  }, [todos, tipo, fStatus, busca, preset, hojeISO]);
 
   const totais = useMemo(() => {
     const aberto = lista.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");

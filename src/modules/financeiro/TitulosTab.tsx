@@ -735,6 +735,7 @@ function TituloDialog({
 
     onSave({
       descricao, valorOriginal: Number(valorOriginal), vencimento,
+      vencimentoReal: proximoDiaUtilISO(vencimento),
       dataEmissao,
       competencia: vencimento.slice(0, 7),
       // IDs estruturais

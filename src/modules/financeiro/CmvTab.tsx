@@ -15,11 +15,13 @@ import { useEstoqueState, cmvPorObra, valorEstoqueTotal, registrarSaidaObra } fr
 import {
   useFinanceiroRepo, useRepoCompras, useRepoTitulos, useRepoFornecedores,
 } from "@/hooks/useRepoFinanceiro";
+import { useObrasSnapshot } from "@/lib/obras-snapshot-store";
 import type { ItemCompra } from "@/lib/fin-compras-store";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { StatCard } from "@/components/app/StatCard";
 import { Boxes, TrendingDown, Package, ShoppingCart, Plus, CheckCircle2, XCircle, ArrowDownToLine } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/app/confirm-dialog";
 
 function fmtDT(iso: string) {
   if (!iso) return "—";

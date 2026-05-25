@@ -54,3 +54,4 @@ export function upsertCentroCusto(c: CentroCustoFin) {
 }
 export function removeCentroCusto(id: string) { write(read().filter((x) => x.id !== id)); }
 export function newCentroCustoId() { return `CC-${String(read().length + 1).padStart(2, "0")}`; }
+export function getCentrosCustoFin(): CentroCustoFin[] { return read(); }

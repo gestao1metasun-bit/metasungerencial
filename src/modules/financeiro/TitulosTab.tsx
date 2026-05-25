@@ -549,10 +549,14 @@ function TituloDialog({
     if (!(valorOriginal > 0)) { toast.error("Defina o valor total."); return; }
     const base: ParcelaPlano[] = Array.from({ length: n }, (_, i) => {
       const prev = parcelas[i];
+      const venc = prev?.fixadoData
+        ? prev.vencimento
+        : (mesmoVencimento ? vencimento : proximoVencimento(vencimento, i, periodicidade));
+      const comp = mesmaCompetencia ? vencimento.slice(0, 7) : venc.slice(0, 7);
       return {
-        vencimento: prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade),
+        vencimento: venc,
         valor: prev?.fixadoValor ? prev.valor : 0,
-        competencia: (prev?.fixadoData ? prev.vencimento : proximoVencimento(vencimento, i, periodicidade)).slice(0, 7),
+        competencia: comp,
         fixadoData: prev?.fixadoData,
         fixadoValor: prev?.fixadoValor,
       };

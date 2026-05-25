@@ -965,6 +965,99 @@ export type Database = {
           },
         ]
       }
+      projetos_contrato: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          cancelado_em: string | null
+          cliente_id: string | null
+          consultor_id: string | null
+          contrato_id: string
+          created_at: string
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          descricao: string
+          endereco: Json
+          id: string
+          inv1: string | null
+          inv2: string | null
+          inv3: string | null
+          modulos_qtd: number | null
+          motivo_aprovacao: string | null
+          motivo_cancelamento: string | null
+          obra_id: string | null
+          ordem: number
+          potencia_kwp: number | null
+          pv_id: string | null
+          status: string
+          telhado_tipo: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          cliente_id?: string | null
+          consultor_id?: string | null
+          contrato_id: string
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string
+          endereco?: Json
+          id?: string
+          inv1?: string | null
+          inv2?: string | null
+          inv3?: string | null
+          modulos_qtd?: number | null
+          motivo_aprovacao?: string | null
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          ordem?: number
+          potencia_kwp?: number | null
+          pv_id?: string | null
+          status?: string
+          telhado_tipo?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          cliente_id?: string | null
+          consultor_id?: string | null
+          contrato_id?: string
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string
+          endereco?: Json
+          id?: string
+          inv1?: string | null
+          inv2?: string | null
+          inv3?: string | null
+          modulos_qtd?: number | null
+          motivo_aprovacao?: string | null
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          ordem?: number
+          potencia_kwp?: number | null
+          pv_id?: string | null
+          status?: string
+          telhado_tipo?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       propostas: {
         Row: {
           cliente_doc: string | null
@@ -1339,6 +1432,10 @@ export type Database = {
       }
     }
     Functions: {
+      aprovar_projeto: {
+        Args: { _motivo?: string; _projeto_id: string }
+        Returns: string
+      }
       can_edit_operacional: {
         Args: {
           _data_ref: string
@@ -1347,6 +1444,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      cancelar_projeto: {
+        Args: { _motivo: string; _projeto_id: string }
+        Returns: undefined
+      }
+      enviar_projeto_para_engenharia: {
+        Args: { _projeto_id: string }
+        Returns: string
       }
       gerar_tarefas_automaticas: { Args: never; Returns: Json }
       has_permission: {
@@ -1427,6 +1532,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      recalcular_saldo_contrato: {
+        Args: { _contrato_id: string }
+        Returns: Json
+      }
       refresh_mv_kpis: { Args: never; Returns: Json }
       restore_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }
@@ -1477,6 +1586,9 @@ export type Database = {
         | "analytics.amplo"
         | "analytics.privado"
         | "financeiro.reabrir_periodo"
+        | "projeto.criar"
+        | "projeto.aprovar"
+        | "projeto.cancelar"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -1644,6 +1756,9 @@ export const Constants = {
         "analytics.amplo",
         "analytics.privado",
         "financeiro.reabrir_periodo",
+        "projeto.criar",
+        "projeto.aprovar",
+        "projeto.cancelar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },

@@ -186,6 +186,14 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [busca, setBusca] = useState("");
   type PresetView = "operacional" | "cobranca" | "diretoria" | "fiscal" | "auditoria";
   const [preset, setPreset] = useState<PresetView>("operacional");
+  type ChipKey =
+    | "aberto" | "vence_hoje" | "vence_semana" | "vence_mes" | "vencidos"
+    | "baixado_hoje" | "baixado_semana" | "baixado_mes"
+    | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
+    | "conciliados" | "nao_conciliados"
+    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+  const [chips, setChips] = useState<Set<ChipKey>>(new Set());
+  const toggleChip = (k: ChipKey) => setChips((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const showEncargos = preset !== "diretoria";
   const showFiscal = preset === "fiscal";
   const showAuditoria = preset === "auditoria";

@@ -926,13 +926,14 @@ function ContratosTab({
                           <DropdownMenuItem
                             onSelect={(e) => {
                               if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
                               liberarParaGerar(c);
                             }}
                             disabled={!isAdmin || !dadosOk}
                             title={
                               !dadosOk
                                 ? motivoPendente
-                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria")
+                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria"))
                             }
                             className={isAdmin && dadosOk ? "text-success focus:text-success" : undefined}
                           >
@@ -940,9 +941,12 @@ function ContratosTab({
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
-                            onSelect={() => revogarLiberacao(c)}
+                            onSelect={(e) => {
+                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
+                              revogarLiberacao(c);
+                            }}
                             disabled={!isAdmin}
-                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : "Disponível apenas para Admin Master/Diretoria"}
+                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria")}
                           >
                             <Undo2 className="mr-2 h-4 w-4" /> Revogar liberação
                           </DropdownMenuItem>

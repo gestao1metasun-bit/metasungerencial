@@ -384,7 +384,7 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
     return (t.movimentos ?? []).map((m) => ({
       data: m.data,
       usuario: m.usuario ?? "Sistema",
-      acao: m.tipo === "baixa" ? "BAIXA" : m.tipo === "estorno" ? "ESTORNO" : (m.tipo ?? "MOV"),
+      acao: m.estornado ? "ESTORNO" : "BAIXA",
       detalhes: m.observacao,
       valorNovo: m.valor,
     }));

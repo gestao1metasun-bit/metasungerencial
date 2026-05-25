@@ -20,7 +20,7 @@ function isoAddDays(base: Date, days: number) {
 }
 
 export function FluxoCaixaRealTab() {
-  const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const contas = useRepoContas().filter((c) => c.ativo);
   const [modoData, setModoData] = useState<"horizonte" | "manual">("horizonte");
   const [dias, setDias] = useState<number>(60);
   const [dataInicioManual, setDataInicioManual] = useState<string>(() => {

@@ -213,10 +213,18 @@ export interface FinanceiroRepository {
   atualizarTitulo(id: string, patch: Partial<Titulo>, motivo: string): Promise<Titulo>;
   cancelarTitulo(id: string, motivo: string): Promise<void>;
   detectarDuplicidade(input: Partial<Titulo>): Promise<Titulo[]>;
+  gerarCopiaTitulo(
+    tituloId: string,
+    overrides?: CopiaTituloOverrides,
+    motivo?: string,
+  ): Promise<Titulo>;
+  cadastrarCheque(tituloId: string, cheque: ChequeInput): Promise<void>;
+  importarPrevisoesDoLegado(lancs: ImportPrevisaoLanc[]): Promise<number>;
 
   // ---------- Baixas
   registrarBaixa(input: BaixaInput): Promise<Movimento>;
   estornarBaixa(tituloId: string, movimentoId: string, motivo: string): Promise<void>;
+
 
   // ---------- Rateios
   setRateios(tituloId: string, rateios: Rateio[], motivo?: string): Promise<void>;

@@ -294,7 +294,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead>ID</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>{tipo === "AP" ? "Fornecedor" : "Cliente"}</TableHead>
-              <TableHead>Vencimento</TableHead>
+              <TableHead>Venc. Nominal</TableHead>
+              <TableHead>Venc. Real</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Juros</TableHead>
               <TableHead className="text-right">Multa</TableHead>
@@ -305,7 +306,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -349,23 +350,18 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   {t.obraId && <div className="text-[10px] text-muted-foreground">Obra: {t.obraId}</div>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{tipo === "AP" ? (t.fornecedor ?? "—") : (t.cliente ?? "—")}</TableCell>
-                <TableCell>
+                <TableCell className="tabular-nums">
+                  <span className={`font-mono text-xs ${t.vencimentoReal && t.vencimentoReal !== t.vencimento ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                    {fmtDateBR(t.vencimento)}
+                  </span>
+                </TableCell>
+                <TableCell className="tabular-nums">
                   {t.vencimentoReal && t.vencimentoReal !== t.vencimento ? (
-                    <div className="flex flex-col gap-1">
-                      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] leading-tight w-fit">
-                        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">Nominal</span>
-                        <span className="font-mono text-muted-foreground line-through">{fmtDateBR(t.vencimento)}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] leading-tight w-fit">
-                        <span className="text-[9px] uppercase tracking-wide text-primary/80">Real</span>
-                        <span className="font-mono font-semibold text-foreground">{fmtDateBR(t.vencimentoReal)}</span>
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] leading-tight w-fit">
-                      <span className="text-[9px] uppercase tracking-wide text-muted-foreground">Nominal / Real</span>
-                      <span className="font-mono font-semibold text-foreground">{fmtDateBR(t.vencimento)}</span>
+                    <span className="font-mono text-xs font-semibold text-foreground" title="Vencimento ajustado (dia útil/renegociação)">
+                      {fmtDateBR(t.vencimentoReal)}
                     </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{fmtBRLPrecise(t.saldo)}</TableCell>

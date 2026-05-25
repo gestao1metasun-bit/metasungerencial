@@ -8,6 +8,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
 import { getPropostaConfig } from "./proposta-config-store";
+import { fetchAllPropostas, upsertPropostas, deletePropostas } from "@/lib/repositories/propostas-repo";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* =============== Tipos =============== */
 

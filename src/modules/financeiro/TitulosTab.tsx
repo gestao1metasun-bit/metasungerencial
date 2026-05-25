@@ -538,6 +538,8 @@ function TituloDialog({
   const [parcelarOn, setParcelarOn] = useState<boolean>(false);
   const [numParcelas, setNumParcelas] = useState<number>(2);
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
+  const [mesmoVencimento, setMesmoVenc] = useState<boolean>(false);
+  const [mesmaCompetencia, setMesmaComp] = useState<boolean>(false);
   const [parcelas, setParcelas] = useState<ParcelaPlano[]>([]);
 
   // Gera/redistribui parcelas respeitando fixadoData e fixadoValor.

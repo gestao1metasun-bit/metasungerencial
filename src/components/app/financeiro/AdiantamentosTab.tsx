@@ -14,11 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/app/StatCard";
 import { toast } from "sonner";
 import {
-  useAdiantamentos, registrarAdiantamento, abaterAdiantamento, estornarAdiantamento,
-  type Adiantamento, type AdiantamentoTipo,
-} from "@/lib/fin-adiantamentos-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+  useFinanceiroRepo, useRepoAdiantamentos, useRepoTitulos, useRepoContas,
+} from "@/hooks/useRepoFinanceiro";
+import type { Adiantamento, AdiantamentoTipo } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }

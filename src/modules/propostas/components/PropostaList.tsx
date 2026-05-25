@@ -38,6 +38,7 @@ import {
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
+  propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
 import { findClienteByDoc } from "@/lib/clientes-store";
 

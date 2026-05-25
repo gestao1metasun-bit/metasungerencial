@@ -18,6 +18,10 @@ import {
 } from "@/hooks/useRepoFinanceiro";
 import type { Adiantamento, AdiantamentoTipo } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
+import { ContraparteCombo, type ContraparteOption } from "@/components/app/financeiro/ContraparteCombo";
+import { useClientesAll } from "@/lib/clientes-store";
+import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import { promptDialog } from "@/components/app/confirm-dialog";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }
 

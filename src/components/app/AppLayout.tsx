@@ -66,7 +66,7 @@ export function AppLayout() {
   }, [hash]);
 
   const { perfil } = useUsuarioAtual();
-  const auth = useAuth();
+  const identidade = useIdentidade();
   const navigate = useNavigate();
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
@@ -89,15 +89,9 @@ export function AppLayout() {
   }, [collapsedTiers]);
 
   useRegisterRecente();
-  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
-  const displayPerfil = auth.role === "admin_master"
-    ? "Admin Master"
-    : auth.role === "admin_geral"
-    ? "Admin Geral"
-    : auth.role === "usuario"
-    ? "Usuário"
-    : (perfil?.nome ?? "Sem perfil");
-  const initials = String(displayName).split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "??";
+  const displayName = identidade.displayName;
+  const displayPerfil = identidade.perfilNome;
+  const initials = identidade.iniciais;
 
   async function handleLogout() {
     try {

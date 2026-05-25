@@ -1415,12 +1415,26 @@ function TabelaView({
       case "opcoes": {
         const podeReativar = l.status === "CANCELADA";
         const podeCancelar = !l.bloqueado && l.status !== "CANCELADA" && l.status !== "APROVADA";
+        const alvoAprovar = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : undefined;
         return (
           <div onClick={(e) => e.stopPropagation()} className="inline-flex">
             <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
               <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
                 <Eye className="mr-2 h-4 w-4" /> Abrir lead
               </DropdownMenuItem>
+              {alvoAprovar && onAprovar && (
+                <DropdownMenuItem onSelect={() => onAprovar(alvoAprovar)}>
+                  <Check className="mr-2 h-4 w-4 text-success" />
+                  <span className="text-success">Aprovar e gerar contrato</span>
+                </DropdownMenuItem>
+              )}
+              {l.bloqueado && (
+                <DropdownMenuItem onSelect={irParaContratos}>
+                  <FileText className="mr-2 h-4 w-4 text-primary" />
+                  <span className="text-primary">Ver contrato no Comercial</span>
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
+              )}
               {podeReativar && (
                 <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
                   <RotateCcw className="mr-2 h-4 w-4 text-success" />

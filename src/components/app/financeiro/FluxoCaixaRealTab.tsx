@@ -122,6 +122,76 @@ export function FluxoCaixaRealTab() {
           Caixa real = baixas efetivamente registradas. Caixa previsto = real + saldos em aberto projetados pelo vencimento (AR soma, AP subtrai).
         </div>
       </Card>
+
+      <Card className="p-5 bg-[image:var(--gradient-card)]">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-primary" />
+            <div className="text-sm font-semibold">Orçado de obras × consumido</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Saldo orçamentário total</div>
+            <div className="text-lg font-bold tabular-nums">{fmtBRLPrecise(orc.totalRestante)}</div>
+          </div>
+        </div>
+        <div className="mb-4">
+          <Progress value={pctConsumidoTotal * 100} className="h-2" />
+          <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+            <span>Consumido {fmtBRLPrecise(orc.totalConsumido)} ({(pctConsumidoTotal * 100).toFixed(1)}%)</span>
+            <span>Orçado {fmtBRLPrecise(orc.totalOrcado)}</span>
+          </div>
+        </div>
+
+        {orc.itens.length === 0 ? (
+          <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
+            Nenhuma obra com orçado definido. Defina o campo "Orçado" no cadastro do projeto/obra (Contratos → Projetos).
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-muted-foreground">
+                  <th className="py-1.5 font-medium">Obra</th>
+                  <th className="py-1.5 font-medium">Status</th>
+                  <th className="py-1.5 text-right font-medium">Orçado</th>
+                  <th className="py-1.5 text-right font-medium">Consumido (real)</th>
+                  <th className="py-1.5 text-right font-medium">Em aberto (AP)</th>
+                  <th className="py-1.5 text-right font-medium">Restante</th>
+                  <th className="py-1.5 w-32 font-medium">Uso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orc.itens.map((o) => {
+                  const estourou = o.consumido > o.orcado + 0.01;
+                  return (
+                    <tr key={o.obraId} className="border-t border-border/60">
+                      <td className="py-2 pr-2">
+                        <div className="font-medium text-foreground">{o.obraId}</div>
+                        <div className="text-[10px] text-muted-foreground">{o.descricao}</div>
+                      </td>
+                      <td className="py-2 pr-2 text-muted-foreground">{o.statusObra}</td>
+                      <td className="py-2 pr-2 text-right tabular-nums">{fmtBRLPrecise(o.orcado)}</td>
+                      <td className="py-2 pr-2 text-right tabular-nums">{fmtBRLPrecise(o.consumidoReal)}</td>
+                      <td className="py-2 pr-2 text-right tabular-nums">{fmtBRLPrecise(o.emAberto)}</td>
+                      <td className={`py-2 pr-2 text-right font-semibold tabular-nums ${estourou ? "text-destructive" : "text-success"}`}>
+                        {fmtBRLPrecise(o.restante)}
+                        {estourou && <div className="text-[10px] font-normal">estouro {fmtBRLPrecise(o.consumido - o.orcado)}</div>}
+                      </td>
+                      <td className="py-2">
+                        <Progress value={o.pctConsumido * 100} className={`h-1.5 ${estourou ? "[&>div]:bg-destructive" : ""}`} />
+                        <div className="mt-0.5 text-[10px] text-muted-foreground">{(o.pctConsumido * 100).toFixed(0)}%</div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="mt-3 text-[11px] text-muted-foreground">
+          Consumido = baixas reais de AP + AP em aberto vinculadas à obra (obraId). Orçado vem do campo "Orçado" cadastrado em cada projeto/obra do contrato.
+        </div>
+      </Card>
     </div>
   );
 }

@@ -152,16 +152,41 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               tipo={tipo}
               cadastros={cadastros}
               onSave={async (input, pendingFiles) => {
-                const novo = criarTitulo({ ...input, tipo, origem: "manual" });
+                const parcelas: ParcelaPlano[] | undefined = input._parcelas;
+                delete input._parcelas;
+                const criados: Titulo[] = [];
+                try {
+                  if (parcelas && parcelas.length > 1) {
+                    parcelas.forEach((p, idx) => {
+                      const label = `${idx + 1}/${parcelas.length}`;
+                      criados.push(criarTitulo({
+                        ...input,
+                        tipo, origem: input.origem ?? "manual",
+                        descricao: `${input.descricao} (${label})`,
+                        valorOriginal: p.valor,
+                        vencimento: p.vencimento,
+                        competencia: p.competencia,
+                        parcelaLabel: label,
+                      }));
+                    });
+                    toast.success(`${parcelas.length} parcelas criadas.`);
+                  } else {
+                    criados.push(criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
+                    toast.success("Título criado.");
+                  }
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Falha ao criar título(s).");
+                  return;
+                }
                 setCriarOpen(false);
-                toast.success("Título criado.");
-                for (const file of pendingFiles) {
+                const alvo = criados[0];
+                if (alvo) for (const file of pendingFiles) {
                   try {
                     const fd = new FormData();
                     fd.append("file", file);
-                    fd.append("tituloId", novo.id);
+                    fd.append("tituloId", alvo.id);
                     const { anexo } = await uploadAnexoFn({ data: fd });
-                    adicionarAnexo(novo.id, {
+                    adicionarAnexo(alvo.id, {
                       id: anexo.id,
                       nome: anexo.nome,
                       mime: anexo.mime,
@@ -174,6 +199,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   }
                 }
               }}
+
               onCancel={() => setCriarOpen(false)}
             />
           </Dialog>

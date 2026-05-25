@@ -177,7 +177,7 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
   const opcoes: ContraparteOption[] = useMemo(() => (
     tipo === "cliente"
       ? clientes.map((c) => ({ id: c.id, nome: c.nome }))
-      : fornecedores.map((f) => ({ id: f.id, nome: f.nome, sub: f.cnpj || undefined }))
+      : fornecedores.map((f) => ({ id: f.id, nome: f.nome, sub: f.documento || undefined }))
   ), [tipo, clientes, fornecedores]);
   const [contraparte, setContraparte] = useState("");
   const [valor, setValor] = useState("");

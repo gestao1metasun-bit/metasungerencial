@@ -131,6 +131,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const fornecedores = useFornecedores();
   const contas = useContasFinanceiras();
   const cadastros = { naturezas, grupos, subgrupos, centros, tiposAplic, meios, fornecedores, contas };
+  const parametrosFin = useParametrosFinanceiros();
+  const hojeISO = new Date().toISOString().slice(0, 10);
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");

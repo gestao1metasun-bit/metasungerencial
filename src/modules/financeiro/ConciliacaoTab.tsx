@@ -220,7 +220,8 @@ function ImportarExtratoDialog({ contas }: { contas: ContaFinanceira[] }) {
 }
 
 /* ================ Novo lançamento manual ================ */
-function NovoLancamentoExtratoDialog({ contas }: { contas: ReturnType<typeof useContasFinanceiras> }) {
+function NovoLancamentoExtratoDialog({ contas }: { contas: ContaFinanceira[] }) {
+  const repo = useFinanceiroRepo();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     conta: contas[0]?.id ?? "",
@@ -249,13 +250,15 @@ function NovoLancamentoExtratoDialog({ contas }: { contas: ReturnType<typeof use
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={() => {
+          <Button onClick={async () => {
             const valor = Number(form.valor);
             if (!form.conta || !form.descricao || !Number.isFinite(valor) || valor === 0) { toast.error("Preencha conta, descrição e valor."); return; }
-            adicionarLancamentoExtrato({ contaFinanceira: form.conta, data: form.data, descricao: form.descricao, valor, documento: form.documento || undefined });
-            toast.success("Lançamento adicionado.");
-            setOpen(false);
-            setForm({ ...form, descricao: "", valor: "", documento: "" });
+            try {
+              await repo.adicionarLancamentoExtrato({ contaFinanceira: form.conta, data: form.data, descricao: form.descricao, valor, documento: form.documento || undefined });
+              toast.success("Lançamento adicionado.");
+              setOpen(false);
+              setForm({ ...form, descricao: "", valor: "", documento: "" });
+            } catch (err: any) { toast.error(err?.message ?? "Erro."); }
           }}>Salvar</Button>
         </DialogFooter>
       </DialogContent>

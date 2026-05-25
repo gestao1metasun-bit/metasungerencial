@@ -22,7 +22,7 @@ function isoAddDays(base: Date, days: number) {
 
 export function FluxoCaixaRealTab() {
   const contas = useContasFinanceiras().filter((c) => c.ativo);
-  const [dias, setDias] = useState<30 | 60 | 90 | 180>(60);
+  const [dias, setDias] = useState<number>(60);
   const [contaNome, setContaNome] = useState<string>("__all");
   const [saldoInicial, setSaldoInicial] = useState<string>("0");
 

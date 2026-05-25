@@ -7,13 +7,13 @@ import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
+import type { ModuleKey } from "@/lib/perfis-store";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { signOut } from "@/lib/auth-store";
-import { useIdentidade } from "@/lib/identidade";
+import { useIdentidade, canAccessModule } from "@/lib/identidade";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
-import { AlertTriangle, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 
@@ -65,12 +65,18 @@ export function AppLayout() {
     setCurrentTab(parseHash(hash));
   }, [hash]);
 
-  const { perfil } = useUsuarioAtual();
   const identidade = useIdentidade();
   const navigate = useNavigate();
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
-  const visibleNav = nav.filter((item) => podeAcessarModulo(perfil, item.key));
+  // Visibilidade de módulo agora é derivada APENAS da role Supabase.
+  // Enquanto a sessão carrega, exibimos os módulos para não piscar a UI;
+  // qualquer ação crítica continua bloqueada por `identidade.isAdminMaster`.
+  const visibleNav = nav.filter((item) =>
+    identidade.sessionLoading
+      ? true
+      : canAccessModule(identidade.role, item.key),
+  );
   const grouped: Record<Tier, typeof visibleNav> = { operacao: [], controle: [], estrutura: [] };
   visibleNav.forEach((it) => grouped[it.tier].push(it));
   const tierOrder: Tier[] = ["operacao", "controle", "estrutura"];
@@ -273,14 +279,6 @@ export function AppLayout() {
               >
                 <LogIn className="h-3 w-3" /> Sem sessão
               </button>
-            )}
-            {identidade.divergencia && (
-              <span
-                title={identidade.motivoDivergencia ?? undefined}
-                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-rose-400/60 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700"
-              >
-                <AlertTriangle className="h-3 w-3" /> Divergência de permissão
-              </span>
             )}
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />

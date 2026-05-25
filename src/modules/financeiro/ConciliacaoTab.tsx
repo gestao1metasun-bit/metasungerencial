@@ -140,7 +140,7 @@ export function ConciliacaoTab() {
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                        onClick={async () => { if (confirm("Remover este lançamento do extrato?")) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
+                        onClick={async () => { const ok = await confirmDialog({ title: "Remover lançamento?", description: "Remover este lançamento do extrato? Esta ação não pode ser desfeita.", destructive: true, confirmText: "Remover" }); if (ok) { try { await repo.removerExtrato(e.id); } catch (err: any) { toast.error(err?.message ?? "Erro."); } } }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

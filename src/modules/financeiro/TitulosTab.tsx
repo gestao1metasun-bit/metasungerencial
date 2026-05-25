@@ -1141,6 +1141,7 @@ function TituloDialog({
 function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }) {
   const anexos = titulo.anexos ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
+  const repo = useFinanceiroRepo();
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const signedUrlAnexoFn = useServerFn(signedUrlAnexo);
   const deleteAnexoFn = useServerFn(deleteAnexo);

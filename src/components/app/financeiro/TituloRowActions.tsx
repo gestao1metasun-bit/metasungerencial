@@ -17,10 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  cancelarTitulo, estornarMovimento, gerarCopiaTitulo, cadastrarCheque,
-  type Titulo,
-} from "@/lib/fin-titulos-store";
+import { useFinanceiroRepo } from "@/hooks/useRepoFinanceiro";
+import type { Titulo } from "@/lib/repositories/financeiro-repository";
 
 export type TituloRowActionsProps = {
   titulo: Titulo;

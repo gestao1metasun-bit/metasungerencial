@@ -184,6 +184,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");
+  type PresetView = "operacional" | "cobranca" | "diretoria" | "fiscal" | "auditoria";
+  const [preset, setPreset] = useState<PresetView>("operacional");
+  const showEncargos = preset !== "diretoria";
+  const showFiscal = preset === "fiscal";
+  const showAuditoria = preset === "auditoria";
   const [criarOpen, setCriarOpen] = useState(false);
   const [editar, setEditar] = useState<Titulo | null>(null);
   const [baixar, setBaixar] = useState<Titulo | null>(null);

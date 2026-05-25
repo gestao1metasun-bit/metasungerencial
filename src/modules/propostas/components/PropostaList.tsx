@@ -1634,6 +1634,7 @@ export function PropostaList({
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
+  const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();

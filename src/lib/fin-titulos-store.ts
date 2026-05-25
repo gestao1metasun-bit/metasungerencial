@@ -368,11 +368,8 @@ export function registrarBaixa(id: string, mov: BaixaInput, usuario = "Sistema")
   // ---- Fase A: o que bloqueia a baixa é o MÊS DO PAGAMENTO estar fechado,
   // não a competência do título. Conta vencida em abril e paga em maio é OK
   // enquanto maio estiver aberto.
-  // Import dinâmico para evitar ciclo com fin-fechamento-store.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const fech = require("@/lib/fin-fechamento-store") as typeof import("@/lib/fin-fechamento-store");
   const mesPag = dataPag.slice(0, 7);
-  if (fech.isMesFechado(mesPag, mov.contaFinanceira ?? before.contaFinanceira)) {
+  if (isMesFechado(mesPag, mov.contaFinanceira ?? before.contaFinanceira)) {
     throw new Error(`Mês de pagamento (${mesPag}) está fechado. Reabra o período ou ajuste a data.`);
   }
 

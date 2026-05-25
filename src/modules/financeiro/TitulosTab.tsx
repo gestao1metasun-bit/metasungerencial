@@ -795,18 +795,29 @@ function TituloDialog({
         </div>
       </DialogHeader>
 
-      {/* Passo 1 — Contraparte */}
+      {/* Passo 1 — Contraparte (buscável + cadastro inline) */}
       <div className="mt-3 rounded-lg border bg-muted/20 p-3">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           1 · {tipo === "AP" ? "Fornecedor" : "Cliente"}
         </div>
         {tipo === "AP" ? (
-          <Select value={fornecedor} onValueChange={setFornecedor}>
-            <SelectTrigger><SelectValue placeholder="Selecione o fornecedor…" /></SelectTrigger>
-            <SelectContent>{fornecedores.map((f) => <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>)}</SelectContent>
-          </Select>
+          <ContraparteCombo
+            value={fornecedor}
+            onChange={setFornecedor}
+            options={fornecedores.filter((f) => f.ativo).map((f) => ({ id: f.id, nome: f.nome, sub: f.documento }))}
+            placeholder="Buscar fornecedor…"
+            onAdd={adicionarFornecedorInline}
+            addLabel="+ Cadastrar fornecedor"
+          />
         ) : (
-          <Input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nome do cliente" />
+          <ContraparteCombo
+            value={cliente}
+            onChange={setCliente}
+            options={clientesAll.map((c) => ({ id: c.id, nome: c.nome, sub: [c.doc, c.cidade && `${c.cidade}/${c.uf}`].filter(Boolean).join(" · ") }))}
+            placeholder="Buscar cliente…"
+            onAdd={adicionarClienteInline}
+            addLabel="+ Cadastrar cliente"
+          />
         )}
       </div>
 
@@ -818,7 +829,15 @@ function TituloDialog({
         <div className="grid grid-cols-3 gap-3">
           <div><Label>Valor *</Label><Input type="number" step="0.01" value={valorOriginal} onChange={(e) => setValor(Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} /></div>
           <div><Label>Data de emissão</Label><Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)} /></div>
-          <div><Label>Vencimento *</Label><Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} /></div>
+          <div>
+            <Label>Vencimento *</Label>
+            <Input type="date" value={vencimento} onChange={(e) => setVenc(e.target.value)} />
+            {vencimento && proximoDiaUtilISO(vencimento) !== vencimento && (
+              <div className="mt-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-700">
+                Cai em fim de semana — vencimento real ajustado para <strong>{fmtDateBR(proximoDiaUtilISO(vencimento))}</strong>
+              </div>
+            )}
+          </div>
           <div className="col-span-3"><Label>Descrição *</Label><Input value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
         </div>
       </div>
@@ -860,26 +879,12 @@ function TituloDialog({
         )}
       </div>
 
-      {/* Passo 4 — Obra / Projeto */}
+      {/* Passo 4 — Contrato primeiro, depois Obra (filtrada pelo contrato) */}
       <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-foreground/80">
-          <Link2 className="h-3.5 w-3.5" /> 4 · Obra / Projeto vinculado
+          <Link2 className="h-3.5 w-3.5" /> 4 · Contrato / Obra vinculados
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Obra</Label>
-            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="— sem obra —" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— sem obra —</SelectItem>
-                {obrasAll.map((o) => (
-                  <SelectItem key={o.id} value={o.id}>
-                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div>
             <Label>Contrato</Label>
             <Select value={contratoId || "__none__"} onValueChange={(v) => aoEscolherContrato(v === "__none__" ? "" : v)}>
@@ -889,6 +894,23 @@ function TituloDialog({
                 {contratosAll.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     <span className="font-mono text-xs text-muted-foreground">{c.id}</span> · {c.cliente}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>
+              Obra / Projeto
+              {contratoId && <span className="ml-1 text-[10px] text-muted-foreground">({obrasDoContrato.length} no contrato)</span>}
+            </Label>
+            <Select value={obraId || "__none__"} onValueChange={(v) => aoEscolherObra(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder={contratoId ? "— escolher obra do contrato —" : "— sem obra —"} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— sem obra —</SelectItem>
+                {obrasDoContrato.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    <span className="font-mono text-xs text-muted-foreground">{o.id}</span> · {o.cliente} <span className="text-muted-foreground">({o.status})</span>
                   </SelectItem>
                 ))}
               </SelectContent>

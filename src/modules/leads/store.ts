@@ -100,10 +100,8 @@ async function syncWrite(prev: Lead[], next: Lead[]) {
     if (error) errs.push(error);
   }
   if (errs.length) {
-    toast({
-      title: "Falha ao sincronizar lead com o servidor",
+    toast.error("Falha ao sincronizar lead com o servidor", {
       description: errs.join(" • "),
-      variant: "destructive",
     });
   }
 }

@@ -636,6 +636,7 @@ function TituloDialog({
 
     onSave({
       descricao, valorOriginal: Number(valorOriginal), vencimento,
+      dataEmissao,
       competencia: vencimento.slice(0, 7),
       // IDs estruturais
       naturezaId, grupoId, subgrupoId: subgrupoId || undefined,

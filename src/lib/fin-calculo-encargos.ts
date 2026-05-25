@@ -31,7 +31,7 @@ function diasEntre(a: Date, b: Date): number {
 }
 
 export function calcularEncargos(
-  titulo: Pick<Titulo, "saldo" | "valorOriginal" | "vencimento" | "status">,
+  titulo: Pick<Titulo, "saldo" | "valorOriginal" | "vencimento" | "vencimentoReal" | "status">,
   dataRefISO: string,
   p: ParametrosFinanceiros,
 ): EncargosCalculados {

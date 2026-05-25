@@ -503,25 +503,26 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                       </span>
                     )}
                     {contaShow && (
-                      <Wallet className="h-3 w-3 text-muted-foreground" aria-label="Conta" title={`Conta: ${contaShow}`} />
+                      <span title={`Conta: ${contaShow}`} className="inline-flex"><Wallet className="h-3 w-3 text-muted-foreground" aria-label="Conta" /></span>
                     )}
                     {meioShow && (
-                      <CreditCard className="h-3 w-3 text-muted-foreground" aria-label="Meio" title={`Meio de pagamento: ${meioShow}`} />
+                      <span title={`Meio de pagamento: ${meioShow}`} className="inline-flex"><CreditCard className="h-3 w-3 text-muted-foreground" aria-label="Meio" /></span>
                     )}
                     {conciliado ? (
-                      <CheckCheck className="h-3 w-3 text-emerald-600" aria-label="Conciliado" title="Conciliado" />
+                      <span title="Conciliado" className="inline-flex"><CheckCheck className="h-3 w-3 text-emerald-600" aria-label="Conciliado" /></span>
                     ) : aberto ? (
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Conciliação pendente" />
                     ) : null}
                     {temAnexos && (
-                      <Paperclip className="h-3 w-3 text-sky-600" aria-label="Anexos" title={`${t.anexos!.length} anexo(s)`} />
+                      <span title={`${t.anexos!.length} anexo(s)`} className="inline-flex"><Paperclip className="h-3 w-3 text-sky-600" aria-label="Anexos" /></span>
                     )}
                     {temHistorico && (
-                      <History
-                        className={`h-3 w-3 ${hasEstorno ? "text-rose-600" : t.statusRenegociacao ? "text-violet-600" : "text-muted-foreground"}`}
-                        aria-label="Histórico"
-                        title={`Histórico: ${movs.length} baixa(s)${hasEstorno ? " · com estorno" : ""}${t.statusRenegociacao ? " · renegociado" : ""}`}
-                      />
+                      <span title={`Histórico: ${movs.length} baixa(s)${hasEstorno ? " · com estorno" : ""}${t.statusRenegociacao ? " · renegociado" : ""}`} className="inline-flex">
+                        <History
+                          className={`h-3 w-3 ${hasEstorno ? "text-rose-600" : t.statusRenegociacao ? "text-violet-600" : "text-muted-foreground"}`}
+                          aria-label="Histórico"
+                        />
+                      </span>
                     )}
                     {emAtraso && (
                       <span

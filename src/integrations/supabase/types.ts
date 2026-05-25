@@ -629,6 +629,66 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          cliente_id: string | null
+          consultor_id: string | null
+          consumo_kwh: number
+          created_at: string
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          doc: string | null
+          id: string
+          nome: string
+          numero: string | null
+          observacao: string | null
+          origem: string | null
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          consultor_id?: string | null
+          consumo_kwh?: number
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          doc?: string | null
+          id?: string
+          nome: string
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string | null
+          consultor_id?: string | null
+          consumo_kwh?: number
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          doc?: string | null
+          id?: string
+          nome?: string
+          numero?: string | null
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           cliente_id: string | null
@@ -904,6 +964,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      propostas: {
+        Row: {
+          cliente_doc: string | null
+          cliente_id: string | null
+          cliente_nome: string | null
+          consultor_id: string | null
+          contrato_id: string | null
+          created_at: string
+          dados: Json
+          data_aprovacao: string | null
+          data_envio: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          id: string
+          lead_id: string | null
+          modulos_qtd: number | null
+          motivo_status: string | null
+          numero: string | null
+          potencia_kwp: number | null
+          status: string
+          updated_at: string
+          validade: string | null
+          valor_final: number | null
+          versao: string | null
+        }
+        Insert: {
+          cliente_doc?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_aprovacao?: string | null
+          data_envio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          lead_id?: string | null
+          modulos_qtd?: number | null
+          motivo_status?: string | null
+          numero?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          updated_at?: string
+          validade?: string | null
+          valor_final?: number | null
+          versao?: string | null
+        }
+        Update: {
+          cliente_doc?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          consultor_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          dados?: Json
+          data_aprovacao?: string | null
+          data_envio?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          lead_id?: string | null
+          modulos_qtd?: number | null
+          motivo_status?: string | null
+          numero?: string | null
+          potencia_kwp?: number | null
+          status?: string
+          updated_at?: string
+          validade?: string | null
+          valor_final?: number | null
+          versao?: string | null
+        }
+        Relationships: []
       }
       role_permissions: {
         Row: {

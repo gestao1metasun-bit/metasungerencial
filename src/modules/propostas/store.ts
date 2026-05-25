@@ -8,6 +8,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { BASE_CIDADES, BASE_CONCESSIONARIAS } from "./base-real-cidades";
 import { getPropostaConfig } from "./proposta-config-store";
+import { fetchAllPropostas, upsertPropostas, deletePropostas } from "@/lib/repositories/propostas-repo";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* =============== Tipos =============== */
 
@@ -400,9 +403,83 @@ const invsS    = makeStore<InversorFV>("ms.fv.inversores.v2", () => SEED_INVERSO
 const distsS   = makeStore<DistribuidorFV>("ms.fv.distribs.v1", () => SEED_DISTRIBUIDORES);
 const paramsS  = makeStore<ParametroFV>("ms.fv.params.v1", () => SEED_PARAMETROS);
 const custosS  = makeStore<CustoFV>("ms.fv.custos.v1", () => SEED_CUSTOS);
-const propsS   = makeStore<PropostaFV>("ms.fv.propostas.v1", () => []);
+const propsS = makeSupabasePropostasStore();
 const tarifasS = makeStore<TarifaEnergia>("ms.fv.tarifas.v1", () => SEED_TARIFAS);
 const histIrrS = makeStore<HistoricoIrradiacao>("ms.fv.hist_irradiacao.v1", () => []);
+
+/* =============== Store de Propostas com backend Supabase ===================
+ * Mantém a mesma interface { read, write, useList } dos demais stores locais,
+ * mas usa Supabase como fonte de verdade. Cache síncrono permite que toda a
+ * lógica de cálculo síncrona existente continue funcionando.
+ * Hidratação acontece via `hydratePropostas()` no auth-store.
+ * ============================================================================ */
+function makeSupabasePropostasStore() {
+  const listeners = new Set<() => void>();
+  let cache: PropostaFV[] = [];
+  let hydrated = false;
+  function emit() { listeners.forEach((l) => l()); }
+  function subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; }
+  function read(): PropostaFV[] { return cache; }
+  function getSnap() { return cache; }
+  function getServerSnap(): PropostaFV[] { return []; }
+
+  async function syncWrite(prev: PropostaFV[], next: PropostaFV[]) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const consultorId = sessionData.session?.user?.id ?? null;
+    const prevMap = new Map(prev.map((x) => [x.id, x]));
+    const nextMap = new Map(next.map((x) => [x.id, x]));
+    const upserts: PropostaFV[] = [];
+    const deletes: string[] = [];
+    for (const [id, item] of nextMap) {
+      const old = prevMap.get(id);
+      if (!old || JSON.stringify(old) !== JSON.stringify(item)) upserts.push(item);
+    }
+    for (const [id] of prevMap) if (!nextMap.has(id)) deletes.push(id);
+    const errs: string[] = [];
+    if (upserts.length) {
+      const { error } = await upsertPropostas(upserts, consultorId);
+      if (error) errs.push(error);
+    }
+    if (deletes.length) {
+      const { error } = await deletePropostas(deletes);
+      if (error) errs.push(error);
+    }
+    if (errs.length) {
+      toast.error("Falha ao sincronizar proposta com o servidor", { description: errs.join(" • ") });
+    }
+  }
+
+  function write(next: PropostaFV[]) {
+    const prev = cache;
+    cache = next;
+    emit();
+    void syncWrite(prev, next);
+  }
+
+  async function hydrate() {
+    try {
+      const list = await fetchAllPropostas();
+      cache = list;
+      hydrated = true;
+      emit();
+    } catch (e) {
+      console.error("[propostas] hydrate falhou", e);
+    }
+  }
+
+  function reset() { cache = []; hydrated = false; emit(); }
+  function isHydrated() { return hydrated; }
+
+  function useList(): PropostaFV[] {
+    return useSyncExternalStore(subscribe, getSnap, getServerSnap);
+  }
+
+  return { read, write, useList, hydrate, reset, isHydrated };
+}
+
+export const hydratePropostas = () => propsS.hydrate();
+export const resetPropostasCache = () => propsS.reset();
+export const isPropostasHydrated = () => propsS.isHydrated();
 
 export const useCidadesFV       = cidadesS.useList;
 export const useConcessionarias = concsS.useList;
@@ -708,7 +785,7 @@ export function novaPropostaVazia(numero: string): PropostaFV {
   const hoje = new Date().toISOString().slice(0, 10);
   const validade = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   return {
-    id: `PRID-${Date.now()}`,
+    id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, "0")}`,
     numero,
     status: "RASCUNHO",
     criadoEm: hoje,

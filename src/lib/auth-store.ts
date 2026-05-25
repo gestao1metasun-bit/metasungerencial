@@ -41,11 +41,30 @@ async function refresh() {
   const session = data.session;
   if (!session?.user) {
     _state = { session: null, user: null, role: null, loading: false };
+    void hydrateFunnel(false);
   } else {
     const role = await loadRole(session.user.id);
     _state = { session, user: session.user, role, loading: false };
+    void hydrateFunnel(true);
   }
   emit();
+}
+
+async function hydrateFunnel(loggedIn: boolean) {
+  try {
+    const [{ hydrateLeads, resetLeadsCache }, { hydratePropostas, resetPropostasCache }] = await Promise.all([
+      import("@/modules/leads/store"),
+      import("@/modules/propostas/store"),
+    ]);
+    if (loggedIn) {
+      await Promise.all([hydrateLeads(), hydratePropostas()]);
+    } else {
+      resetLeadsCache();
+      resetPropostasCache();
+    }
+  } catch (e) {
+    console.error("[auth] hydrateFunnel falhou", e);
+  }
 }
 
 let _initialized = false;
@@ -57,6 +76,7 @@ function ensureInit() {
     if (!session?.user) {
       _state = { session: null, user: null, role: null, loading: false };
       emit();
+      void hydrateFunnel(false);
       return;
     }
     // Defer role load to avoid potential deadlock inside auth callback
@@ -64,6 +84,7 @@ function ensureInit() {
       void loadRole(session.user.id).then((role) => {
         _state = { session, user: session.user, role, loading: false };
         emit();
+        void hydrateFunnel(true);
       });
     }, 0);
   });

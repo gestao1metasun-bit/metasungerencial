@@ -36,7 +36,7 @@ export function calcularEncargos(
   p: ParametrosFinanceiros,
 ): EncargosCalculados {
   const saldo = round2(titulo.saldo ?? titulo.valorOriginal);
-  const venc = parseISO(titulo.vencimento);
+  const venc = parseISO(titulo.vencimentoReal ?? titulo.vencimento);
   const ref = parseISO(dataRefISO);
   const diasAtraso = Math.max(0, diasEntre(venc, ref));
 

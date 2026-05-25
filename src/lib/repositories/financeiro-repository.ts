@@ -62,7 +62,7 @@ export type {
   Adiantamento, AdiantamentoTipo, Abatimento,
   RegistrarAdiantamentoInput, AbaterInput,
   Compra, CriarCompraInput,
-  ExtratoLancamento,
+  ExtratoLancamento, ExtratoStatus,
   FechamentoMes,
   FluxoPonto, UseFluxoArgs,
   Fornecedor, ContaFinanceira, NaturezaFin,

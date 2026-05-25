@@ -277,7 +277,7 @@ export function AprovarPropostaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
             <DialogTitle className="text-lg">Aprovar proposta {p.numero}</DialogTitle>
@@ -674,7 +674,7 @@ function ColunasManager({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Columns3 className="h-5 w-5" /> Gerenciar colunas do Kanban
@@ -775,7 +775,7 @@ function LeadDetail({
 
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{lead.clienteNome}</span>
@@ -1520,7 +1520,7 @@ function TabelaView({
       </Card>
 
       <Dialog open={mgrOpen} onOpenChange={setMgrOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Colunas da Tabela</DialogTitle>
           </DialogHeader>

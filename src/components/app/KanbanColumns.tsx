@@ -107,7 +107,7 @@ export function ColunasManager({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Columns3 className="h-5 w-5" /> Gerenciar colunas do Kanban

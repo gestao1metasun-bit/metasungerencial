@@ -186,7 +186,7 @@ function NovoAdiantamentoDialog({ tipo, onClose }: { tipo: AdiantamentoTipo; onC
   }
 
   return (
-    <DialogContent className="max-w-lg">
+    <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>
           Novo adiantamento {tipo === "cliente" ? "de cliente" : "a fornecedor"}
@@ -270,7 +270,7 @@ function AbaterDialog({ adiantamento, onClose }: { adiantamento: Adiantamento; o
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wallet className="h-4 w-4 text-primary" />

@@ -262,7 +262,7 @@ function PerfilEditor({ perfil, trigger }: { perfil?: Perfil; trigger: React.Rea
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? `Editar perfil · ${perfil?.nome}` : "Novo perfil de acesso"}</DialogTitle>
           <DialogDescription>
@@ -439,7 +439,7 @@ function UsuarioEditor({ usuario, trigger }: { usuario?: Usuario; trigger: React
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? `Editar usuário · ${usuario?.nome}` : "Novo usuário"}</DialogTitle>
           <DialogDescription>Defina perfil de acesso e dados de login.</DialogDescription>
@@ -663,7 +663,7 @@ function ConsultoresTab() {
       </div>
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{edit && lista.some((x) => x.id === edit.id) ? "Editar consultor" : "Novo consultor"}</DialogTitle>
           </DialogHeader>

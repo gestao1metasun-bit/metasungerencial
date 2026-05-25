@@ -309,7 +309,7 @@ function NaturezaDialog({ natureza, grupos, subs, centros, aplics, onSave }: {
           ? <Button size="icon" variant="ghost" className="h-7 w-7"><SquarePen className="h-3.5 w-3.5" /></Button>
           : <Button size="sm" className="gap-2"><Plus className="h-4 w-4" />Nova natureza</Button>}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{natureza ? "Editar natureza" : "Nova natureza"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
           <div className="grid grid-cols-3 gap-3">

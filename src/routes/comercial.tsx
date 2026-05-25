@@ -549,7 +549,7 @@ function ContratoAssinadoRow({
         </ActionsMenu>
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
         <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
             </DialogHeader>
@@ -1084,7 +1084,7 @@ function ContratosTab({
       {imprimir && <ContratoImpressao contrato={imprimir} onClose={() => setImprimir(null)} />}
 
       <Dialog open={!!gerarAssinado} onOpenChange={(o) => { if (!o) setGerarAssinado(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Assinar contrato {gerarAssinado?.id}</DialogTitle>
             <DialogDescription className="text-xs">
@@ -1145,7 +1145,7 @@ function ModeloBaseContratoDialog() {
         )}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0">
+        <DialogContent className="sm:max-w-6xl max-h-[92vh] flex flex-col p-0">
           <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>Modelo base de contrato</DialogTitle>
             <DialogDescription className="text-xs">
@@ -1432,7 +1432,7 @@ function RedigirContratoDialog({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+      <DialogContent className="sm:max-w-6xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
             <DialogTitle className="text-lg">Redigir contrato {contrato.id}</DialogTitle>
@@ -2626,7 +2626,7 @@ function DetailContratosModal({
 
   return (
     <Dialog open={open} onOpenChange={(v)=>!v && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -2891,7 +2891,7 @@ function NovoVolumeDialog({ onSave }: { onSave: (v: VolumeMes) => void }) {
       <DialogTrigger asChild>
         <Button className="bg-primary text-primary-foreground hover:opacity-90"><Plus className="mr-2 h-4 w-4" /> Lançar mês</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Lançar volume do mês</DialogTitle><DialogDescription>Cadastre quantidade total de propostas e o valor total do mês.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5"><Label>Mês</Label>
@@ -3034,7 +3034,7 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
   };
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">
@@ -3306,8 +3306,7 @@ function CadastrarContratoTab({
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent
-          className="max-w-5xl max-h-[92vh] overflow-hidden p-0 gap-0"
+        <DialogContent className="max-w-[1400px] max-h-[92vh] overflow-hidden p-0 gap-0"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -3629,7 +3628,7 @@ function SolicitarAlteracaoButton({ contrato }: { contrato: Contrato }) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 text-xs"><History className="mr-1 h-3.5 w-3.5" /> Solicitar alteração</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Solicitar alteração — {contrato.id}</DialogTitle>
           <DialogDescription>O contrato está aprovado. Informe o motivo da alteração; ficará registrado na auditoria com data, hora e usuário.</DialogDescription>
@@ -3687,7 +3686,7 @@ function AprovarContratoButton({ contrato }: { contrato: Contrato }) {
           <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprovar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
@@ -3800,7 +3799,7 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar"><SquarePen className="h-3.5 w-3.5" /></Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-[1400px] max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar contrato <span className="font-mono text-primary">{contrato.id}</span></DialogTitle>
           <DialogDescription>Edite dados, cliente, desdobre em projetos e veja auditoria.</DialogDescription>
@@ -4061,7 +4060,7 @@ function AprovarEnviarDialog({ contrato }: { contrato: Contrato }) {
           <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aprovar contrato {contrato.id}</DialogTitle>
           <DialogDescription>
@@ -4592,7 +4591,7 @@ function HistoricoVendedorDialog({ vendedor, contratos }: { vendedor: string; co
           <FileText className="mr-2 h-3.5 w-3.5" /> Histórico de vendas ({contratos.length})
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico de vendas — {vendedor}</DialogTitle>
           <DialogDescription>
@@ -4646,7 +4645,7 @@ function NovoVendedorDialog({ onSave, nextId }: { onSave: (v: Vendedor) => void;
       <DialogTrigger asChild>
         <Button className="bg-primary text-primary-foreground hover:opacity-90"><Plus className="mr-2 h-4 w-4" /> Novo Vendedor</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Novo Vendedor</DialogTitle><DialogDescription>Cadastre um novo vendedor da equipe comercial.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2 space-y-1.5"><Label>Nome completo</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
@@ -4899,7 +4898,7 @@ export function IndicadoresTab({
       </div>
 
       <Dialog open={openKpi !== null} onOpenChange={(v) => !v && setOpenKpi(null)}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{openKpi ? titlesKpi[openKpi] : ""}</DialogTitle>
             <DialogDescription>
@@ -5350,7 +5349,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       </Card>
 
       <Dialog open={!!contratoAberto} onOpenChange={(v) => { if (!v) setOpenId(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Aditivos — contrato {contratoAberto?.id} · {contratoAberto?.cliente}</DialogTitle>
           </DialogHeader>

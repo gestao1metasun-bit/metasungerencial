@@ -551,7 +551,7 @@ function DetailFinModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[1500px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -737,7 +737,7 @@ function EditOpDialog({
 
   return (
     <Dialog open={!!op} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar operação {op.id}</DialogTitle>
           <DialogDescription>{op.cliente}{op.contrato ? ` · ${fmtContrato(op.contrato)}` : ""}</DialogDescription>
@@ -931,7 +931,7 @@ function SemContratoTab() {
 
       {/* Novo financiamento avulso */}
       <Dialog open={openNovo} onOpenChange={(v) => { setOpenNovo(v); if (!v) reset(); }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo financiamento avulso</DialogTitle>
             <DialogDescription>Cadastre uma operação sem contrato vinculado. Você poderá vincular a um contrato existente depois.</DialogDescription>
@@ -1003,7 +1003,7 @@ function VincularContratoDialog({
   useEffect(() => { if (!open) setSel(""); }, [open]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Vincular a contrato existente</DialogTitle>
           <DialogDescription>Selecione um contrato do Comercial.</DialogDescription>
@@ -1333,7 +1333,7 @@ function EditContratoFinDialog({
   })();
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar operação — {contrato.id}</DialogTitle>
           <DialogDescription>{contrato.cliente}</DialogDescription>
@@ -1418,7 +1418,7 @@ function EditFinAvulsoDialog({
   })();
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar operação — {fin.id}</DialogTitle>
           <DialogDescription>{fin.cliente}</DialogDescription>

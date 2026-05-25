@@ -329,7 +329,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Lead</DialogTitle>
           <DialogDescription>
@@ -463,7 +463,7 @@ function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{lead.nome} — {lead.numero}</DialogTitle>
           <DialogDescription>
@@ -718,7 +718,7 @@ function SolicitarPropostaDialog({
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Solicitar proposta</DialogTitle>
           <DialogDescription>

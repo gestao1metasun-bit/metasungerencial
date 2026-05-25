@@ -262,7 +262,7 @@ function NovaCompraDialog() {
       <DialogTrigger asChild>
         <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" /> Nova compra</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Nova compra de material</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div><Label>NF</Label><Input value={numeroNF} onChange={(e) => setNumeroNF(e.target.value)} placeholder="ex.: 1234" /></div>
@@ -364,7 +364,7 @@ function SaidaObraDialog() {
       <DialogTrigger asChild>
         <Button size="sm" variant="outline"><TrendingDown className="h-4 w-4 mr-1" /> Saída p/ obra</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Saída de material para obra (gera CMV)</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div><Label>ID Obra</Label><Input value={obraId} onChange={(e) => setObraId(e.target.value)} placeholder="ex.: OB-2026-007" /></div>

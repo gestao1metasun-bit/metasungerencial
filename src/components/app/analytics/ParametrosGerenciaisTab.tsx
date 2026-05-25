@@ -289,7 +289,7 @@ function NovoOverrideDialog({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" /> Novo / Override</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Novo parâmetro / override por setor</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
@@ -358,7 +358,7 @@ function HistoricoDialog() {
       <DialogTrigger asChild>
         <Button size="sm" variant="outline"><History className="h-4 w-4 mr-1" /> Histórico</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Histórico de alterações</DialogTitle></DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto space-y-2 text-xs">
           {isLoading && <p className="text-muted-foreground">Carregando…</p>}

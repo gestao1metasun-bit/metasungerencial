@@ -232,7 +232,7 @@ export function CrudTarifas() {
       {/* Modal de edição (admin) */}
       {ehAdmin && (
         <Dialog open={!!edit} onOpenChange={(o) => { if (!o) setEdit(null); }}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{edit && list.some((x) => x.id === edit.id) ? "Editar tarifa" : "Nova tarifa"}</DialogTitle>
             </DialogHeader>

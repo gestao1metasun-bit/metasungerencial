@@ -286,7 +286,7 @@ function DetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{titles[modal]}</DialogTitle>
           <DialogDescription>

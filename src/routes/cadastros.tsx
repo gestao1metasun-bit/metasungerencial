@@ -129,7 +129,7 @@ function BancoDialog({ open, initial, onClose, onSave }: { open: boolean; initia
   useEffect(() => { if (open) setForm(initial ?? makeNew()); }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ function GerenteDialog({ open, initial, bancos, onClose, onSave }: { open: boole
   useEffect(() => { if (open) setForm(initial ?? makeNew()); }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ function EquipeDialog({ open, initial, onClose, onSave }: { open: boolean; initi
   useEffect(() => { if (open) setForm(initial ?? makeNew()); }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">
@@ -385,7 +385,7 @@ function ConsultorDialog({ open, initial, onClose, onSave }: { open: boolean; in
   useEffect(() => { if (open) setForm(initial ?? novoConsultorVazio()); }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">
@@ -469,7 +469,7 @@ function UsuarioDialog({ open, initial, onClose, onSave }: { open: boolean; init
   useEffect(() => { if (open) setForm(initial ?? makeNew()); }, [open, initial]);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-3">

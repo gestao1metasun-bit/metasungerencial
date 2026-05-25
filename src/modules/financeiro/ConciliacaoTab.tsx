@@ -185,7 +185,7 @@ function ImportarExtratoDialog({ contas }: { contas: ReturnType<typeof useContas
       <DialogTrigger asChild>
         <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4" />Importar CSV</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Importar extrato bancário</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
@@ -272,7 +272,7 @@ function ConciliarDialog({ extrato }: { extrato: ExtratoLancamento }) {
       <DialogTrigger asChild>
         <Button size="sm" variant="default" className="h-7 px-2"><Link2 className="h-3.5 w-3.5" /></Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Conciliar lançamento bancário</DialogTitle></DialogHeader>
         <div className="rounded-md border bg-muted/30 p-3 text-sm">
           <div className="flex justify-between">

@@ -289,7 +289,7 @@ function NovoChamadoDialog({ usuario, onClose }: { usuario: string; onClose: () 
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo chamado de pós-venda</DialogTitle>
           <DialogDescription>Abra um atendimento para garantia, manutenção ou suporte.</DialogDescription>
@@ -390,7 +390,7 @@ function ChamadoDetalheDialog({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             #{String(chamado.numero).padStart(4, "0")} — {chamado.titulo}
@@ -530,7 +530,7 @@ function TiposTab() {
 
       {editing && (
         <Dialog open onOpenChange={(v) => !v && setEditing(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{state.tipos.some((x) => x.id === editing.id) ? "Editar tipo" : "Novo tipo"}</DialogTitle>
             </DialogHeader>

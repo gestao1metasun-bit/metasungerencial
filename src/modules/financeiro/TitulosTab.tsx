@@ -61,7 +61,41 @@ function fmtDateBR(d?: string) {
   return `${dd}/${m}/${y}`;
 }
 
-/* ============================================================
+/* Plano de parcelamento usado no cadastro de título com múltiplas parcelas. */
+type ParcelaPlano = {
+  vencimento: string;       // YYYY-MM-DD
+  valor: number;
+  competencia: string;      // YYYY-MM
+  fixadoData?: boolean;     // não recalcular vencimento ao redistribuir
+  fixadoValor?: boolean;    // não recalcular valor ao redistribuir
+};
+
+function round2(n: number) { return Math.round(n * 100) / 100; }
+
+function addMonthsISO(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const base = new Date(Date.UTC(y, (m - 1) + n, 1));
+  const lastDay = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  const dt = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), day));
+  return dt.toISOString().slice(0, 10);
+}
+function addDaysISO(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+
+type Periodicidade = "mensal" | "quinzenal" | "semanal" | "anual";
+function proximoVencimento(base: string, idx: number, p: Periodicidade): string {
+  if (idx === 0) return base;
+  if (p === "mensal") return addMonthsISO(base, idx);
+  if (p === "anual")  return addMonthsISO(base, idx * 12);
+  if (p === "quinzenal") return addDaysISO(base, idx * 15);
+  return addDaysISO(base, idx * 7);
+}
+
  * Tabela principal (AP ou AR)
  * ============================================================ */
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {

@@ -32,9 +32,10 @@ function fmtBR(d: string) {
 }
 
 export function ConciliacaoTab() {
-  const extrato = useExtrato();
-  const contas = useContasFinanceiras();
-  const titulos = useTitulos();
+  const repo = useFinanceiroRepo();
+  const extrato = useRepoExtrato();
+  const contas = useRepoContas();
+  const titulos = useRepoTitulos();
 
   const [contaSel, setContaSel] = useState<string>("todas");
   const [statusF, setStatusF] = useState<"todos" | ExtratoStatus>("pendente");

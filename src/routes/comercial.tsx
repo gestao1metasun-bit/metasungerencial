@@ -15,6 +15,7 @@ import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR
 import { PropostasPage } from "@/modules/propostas";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { useIsAdmin } from "@/lib/auth-store";
+import { useIdentidade } from "@/lib/identidade";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -744,7 +745,8 @@ function ContratosTab({
   contratos, setContratos, filtroStatus = "ambos",
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; filtroStatus?: "geracao" | "assinatura" | "ambos" }) {
   const [busca, setBusca] = useState("");
-  const isAdmin = useIsAdmin();
+  const identidade = useIdentidade();
+  const isAdmin = identidade.isAdminMaster;
   // Aprovados pelo orçamento e ainda sem o contrato redigido.
   const aRedigir = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -781,19 +783,19 @@ function ContratosTab({
   }
 
   function liberarParaGerar(c: Contrato) {
-    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode liberar o contrato para geração."); return; }
+    if (!isAdmin) { toast.error(identidade.mensagemBloqueio ?? "Apenas Admin Master/Diretoria pode liberar o contrato para geração."); return; }
     const obs = prompt(`Liberar contrato ${c.id} (${c.cliente}) para geração no Comercial?\n\nObservação (opcional):`);
     if (obs === null) return; // cancelado
-    const r = liberarContratoParaGerar(c.id, "Admin Master", obs || undefined);
+    const r = liberarContratoParaGerar(c.id, identidade.email ?? "Admin Master", obs || undefined);
     if (!r.ok) { toast.error(r.motivo || "Não foi possível liberar."); return; }
     toast.success(`Contrato ${c.id} liberado para geração.`);
   }
 
   function revogarLiberacao(c: Contrato) {
-    if (!isAdmin) { toast.error("Apenas Admin Master/Diretoria pode revogar a liberação."); return; }
+    if (!isAdmin) { toast.error(identidade.mensagemBloqueio ?? "Apenas Admin Master/Diretoria pode revogar a liberação."); return; }
     const motivo = prompt(`Revogar liberação do contrato ${c.id}?\n\nMotivo (obrigatório):`);
     if (!motivo || !motivo.trim()) { toast.error("Informe o motivo da revogação."); return; }
-    const r = revogarLiberacaoContrato(c.id, "Admin Master", motivo.trim());
+    const r = revogarLiberacaoContrato(c.id, identidade.email ?? "Admin Master", motivo.trim());
     if (!r.ok) { toast.error(r.motivo || "Não foi possível revogar."); return; }
     toast.success(`Liberação do contrato ${c.id} revogada.`);
   }
@@ -801,7 +803,7 @@ function ContratosTab({
 
   function reabrirRedigido(c: Contrato) {
     if (!isAdmin) {
-      toast.error("Apenas Admin Master pode retroceder um contrato já gerado. Solicite ao administrador.");
+      toast.error(identidade.mensagemBloqueio ?? "Apenas Admin Master pode retroceder um contrato já gerado. Solicite ao administrador.");
       return;
     }
     const motivo = prompt(`Reabrir cadastro do contrato ${c.id}?\n\nMotivo (obrigatório):`);
@@ -924,13 +926,14 @@ function ContratosTab({
                           <DropdownMenuItem
                             onSelect={(e) => {
                               if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
                               liberarParaGerar(c);
                             }}
                             disabled={!isAdmin || !dadosOk}
                             title={
                               !dadosOk
                                 ? motivoPendente
-                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria")
+                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria"))
                             }
                             className={isAdmin && dadosOk ? "text-success focus:text-success" : undefined}
                           >
@@ -938,9 +941,12 @@ function ContratosTab({
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
-                            onSelect={() => revogarLiberacao(c)}
+                            onSelect={(e) => {
+                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
+                              revogarLiberacao(c);
+                            }}
                             disabled={!isAdmin}
-                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : "Disponível apenas para Admin Master/Diretoria"}
+                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria")}
                           >
                             <Undo2 className="mr-2 h-4 w-4" /> Revogar liberação
                           </DropdownMenuItem>

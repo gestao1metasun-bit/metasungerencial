@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUsuarioAtual, podeAcessarModulo, type ModuleKey } from "@/lib/perfis-store";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
-import { useAuth, signOut } from "@/lib/auth-store";
+import { signOut } from "@/lib/auth-store";
+import { useIdentidade } from "@/lib/identidade";
 import { useContratos } from "@/lib/contratos-store";
 import { toast } from "sonner";
+import { AlertTriangle, LogIn } from "lucide-react";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 
@@ -64,7 +66,7 @@ export function AppLayout() {
   }, [hash]);
 
   const { perfil } = useUsuarioAtual();
-  const auth = useAuth();
+  const identidade = useIdentidade();
   const navigate = useNavigate();
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;
@@ -87,15 +89,9 @@ export function AppLayout() {
   }, [collapsedTiers]);
 
   useRegisterRecente();
-  const displayName = auth.user?.user_metadata?.full_name || auth.user?.email || "—";
-  const displayPerfil = auth.role === "admin_master"
-    ? "Admin Master"
-    : auth.role === "admin_geral"
-    ? "Admin Geral"
-    : auth.role === "usuario"
-    ? "Usuário"
-    : (perfil?.nome ?? "Sem perfil");
-  const initials = String(displayName).split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "??";
+  const displayName = identidade.displayName;
+  const displayPerfil = identidade.perfilNome;
+  const initials = identidade.iniciais;
 
   async function handleLogout() {
     try {
@@ -266,6 +262,24 @@ export function AppLayout() {
               Atualizar
             </Button>
             <FavoritosMenu />
+            {!identidade.sessionLoading && !identidade.isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => void navigate({ to: "/login" })}
+                title="Faça login para habilitar ações administrativas (criar/liberar contratos, etc.)."
+                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
+              >
+                <LogIn className="h-3 w-3" /> Sem sessão
+              </button>
+            )}
+            {identidade.divergencia && (
+              <span
+                title={identidade.motivoDivergencia ?? undefined}
+                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-rose-400/60 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700"
+              >
+                <AlertTriangle className="h-3 w-3" /> Divergência de permissão
+              </span>
+            )}
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
               <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold" />

@@ -1228,13 +1228,15 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
  * Dialog: baixa (parcial/total)
  * ============================================================ */
 function BaixaDialog({
-  titulo, contas, onSave, onCancel,
+  titulo, contas, meios, onSave, onCancel,
 }: {
   titulo: Titulo;
   contas: { id: string; nome: string }[];
+  meios: ReturnType<typeof useMeiosPagamento>;
   onSave: (b: any) => void;
   onCancel: () => void;
 }) {
+  const repo = useFinanceiroRepo();
   const [valor, setValor] = useState<number>(titulo.saldo);
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
   const [juros, setJuros] = useState<number>(0);
@@ -1243,6 +1245,39 @@ function BaixaDialog({
   const [meioPagamento, setMeio] = useState(titulo.meioPagamento ?? "");
   const [contaFinanceira, setConta] = useState(titulo.contaFinanceira ?? "");
   const [observacao, setObs] = useState("");
+  const [sugestao, setSugestao] = useState<{ jurosSugerido: number; multaSugerida: number; diasAtraso: number; diasCobraveis: number } | null>(null);
+  const [encargosTocados, setEncargosTocados] = useState(false);
+
+  // Pré-preenche juros/multa via repo.calcularEncargos (sugestão editável).
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const r = await repo.calcularEncargos({
+          saldo: titulo.saldo,
+          vencimento: titulo.vencimentoReal ?? titulo.vencimento,
+          dataRef: data,
+        });
+        if (cancel) return;
+        setSugestao({
+          jurosSugerido: r.jurosSugerido,
+          multaSugerida: r.multaSugerida,
+          diasAtraso: r.diasAtraso,
+          diasCobraveis: r.diasCobraveis,
+        });
+        if (!encargosTocados) {
+          setJuros(r.jurosSugerido);
+          setMulta(r.multaSugerida);
+        }
+      } catch { /* silencioso — campos ficam zerados */ }
+    })();
+    return () => { cancel = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  const meiosAtivos = meios.filter((m) => m.ativo);
+  const meioInicialAtivo = meiosAtivos.some((m) => m.nome === meioPagamento);
+  const podeConfirmar = valor > 0 && !!contaFinanceira;
 
   return (
     <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
@@ -1255,19 +1290,45 @@ function BaixaDialog({
         <div><strong>{titulo.descricao}</strong></div>
         <div className="text-xs text-muted-foreground">Saldo atual: {fmtBRLPrecise(titulo.saldo)} de {fmtBRLPrecise(titulo.valorOriginal)}</div>
       </div>
+      {sugestao && sugestao.diasAtraso > 0 && (
+        <div className="mb-2 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700">
+          Título com <strong>{sugestao.diasAtraso} dia(s)</strong> de atraso ({sugestao.diasCobraveis} cobráveis).
+          Juros e multa pré-preenchidos pelos parâmetros financeiros — você pode ajustar.
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div><Label>Valor (principal)</Label><Input type="number" step="0.01" value={valor} onChange={(e) => setValor(Number(e.target.value))} /></div>
         <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-        <div><Label>Juros</Label><Input type="number" step="0.01" value={juros} onChange={(e) => setJuros(Number(e.target.value))} /></div>
-        <div><Label>Multa</Label><Input type="number" step="0.01" value={multa} onChange={(e) => setMulta(Number(e.target.value))} /></div>
+        <div>
+          <Label>Juros {sugestao && sugestao.jurosSugerido > 0 && <span className="text-[10px] text-muted-foreground">(sugerido {fmtBRLPrecise(sugestao.jurosSugerido)})</span>}</Label>
+          <Input type="number" step="0.01" value={juros} onChange={(e) => { setEncargosTocados(true); setJuros(Number(e.target.value)); }} />
+        </div>
+        <div>
+          <Label>Multa {sugestao && sugestao.multaSugerida > 0 && <span className="text-[10px] text-muted-foreground">(sugerida {fmtBRLPrecise(sugestao.multaSugerida)})</span>}</Label>
+          <Input type="number" step="0.01" value={multa} onChange={(e) => { setEncargosTocados(true); setMulta(Number(e.target.value)); }} />
+        </div>
         <div><Label>Desconto</Label><Input type="number" step="0.01" value={desconto} onChange={(e) => setDesconto(Number(e.target.value))} /></div>
-        <div><Label>Meio</Label><Input value={meioPagamento} onChange={(e) => setMeio(e.target.value)} placeholder="PIX, Boleto…" /></div>
-        <div className="col-span-2">
-          <Label>Conta financeira</Label>
-          <Select value={contaFinanceira} onValueChange={setConta}>
+        <div>
+          <Label>Meio de pagamento</Label>
+          <Select value={meioPagamento} onValueChange={setMeio}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              {!meioInicialAtivo && meioPagamento && (
+                <SelectItem value={meioPagamento}>{meioPagamento} (legado)</SelectItem>
+              )}
+              {meiosAtivos.map((m) => <SelectItem key={m.id} value={m.nome}>{m.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="col-span-2">
+          <Label>Conta financeira <span className="text-destructive">*</span></Label>
+          <Select value={contaFinanceira} onValueChange={setConta}>
+            <SelectTrigger><SelectValue placeholder="Selecione a conta de origem/destino…" /></SelectTrigger>
             <SelectContent>{contas.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
           </Select>
+          {!contaFinanceira && (
+            <div className="mt-1 text-[11px] text-rose-600">Obrigatório: selecione a conta financeira da baixa.</div>
+          )}
         </div>
         <div className="col-span-2"><Label>Observação</Label><Textarea rows={2} value={observacao} onChange={(e) => setObs(e.target.value)} /></div>
       </div>
@@ -1276,7 +1337,13 @@ function BaixaDialog({
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel}>Voltar</Button>
-        <Button onClick={() => onSave({ valor, data, juros, multa, desconto, meioPagamento, contaFinanceira, observacao })}>
+        <Button
+          disabled={!podeConfirmar}
+          onClick={() => {
+            if (!contaFinanceira) { toast.error("Selecione a conta financeira."); return; }
+            onSave({ valor, data, juros, multa, desconto, meioPagamento, contaFinanceira, observacao });
+          }}
+        >
           Confirmar
         </Button>
       </DialogFooter>

@@ -265,9 +265,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 const criados: Titulo[] = [];
                 try {
                   if (parcelas && parcelas.length > 1) {
-                    parcelas.forEach((p, idx) => {
+                    for (let idx = 0; idx < parcelas.length; idx++) {
+                      const p = parcelas[idx];
                       const label = `${idx + 1}/${parcelas.length}`;
-                      criados.push(criarTitulo({
+                      criados.push(await repo.criarTitulo({
                         ...input,
                         tipo, origem: input.origem ?? "manual",
                         descricao: `${input.descricao} (${label})`,
@@ -276,10 +277,10 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                         competencia: p.competencia,
                         parcelaLabel: label,
                       }));
-                    });
+                    }
                     toast.success(`${parcelas.length} parcelas criadas.`);
                   } else {
-                    criados.push(criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
+                    criados.push(await repo.criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
                     toast.success("Título criado.");
                   }
                 } catch (e: any) {
@@ -294,7 +295,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     fd.append("file", file);
                     fd.append("tituloId", alvo.id);
                     const { anexo } = await uploadAnexoFn({ data: fd });
-                    adicionarAnexo(alvo.id, {
+                    await repo.anexar(alvo.id, {
                       id: anexo.id,
                       nome: anexo.nome,
                       mime: anexo.mime,

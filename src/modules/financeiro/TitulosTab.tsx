@@ -92,7 +92,7 @@ function fmtCompetenciaBR(c?: string) {
   return `${m}/${y}`;
 }
 
-
+function StatusPill({ s, renegociado }: { s: TituloStatus; renegociado?: boolean }) {
   if (renegociado) {
     return (
       <Badge

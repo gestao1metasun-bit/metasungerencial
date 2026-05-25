@@ -209,34 +209,25 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             {lista.map((t) => (
               <TableRow key={t.id}>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" title="Histórico" onClick={() => setVerHist(t)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" && (
-                      <>
-                        <Button size="icon" variant="ghost" title="Baixar / pagar" onClick={() => setBaixar(t)} disabled={!!t.bloqueadoFechamento}>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        </Button>
-                        <Button size="icon" variant="ghost" title="Editar" onClick={() => setEditar(t)} disabled={!!t.bloqueadoFechamento}>
-                          <SquarePen className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" title="Renegociar" onClick={() => setRenegociar(t)} disabled={!!t.bloqueadoFechamento || t.statusRenegociacao === "renegociado"}>
-                          <Sparkles className="h-4 w-4 text-primary" />
-                        </Button>
-                      </>
-                    )}
-                    <Button size="icon" variant="ghost" title="Ratear" onClick={() => setRatear(t)} disabled={!!t.bloqueadoFechamento || t.status === "cancelado"}>
-                      <Split className="h-4 w-4 text-indigo-600" />
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <TituloRowActions
+                      titulo={t}
+                      onEditar={setEditar}
+                      onBaixar={setBaixar}
+                      onRatear={setRatear}
+                      onDetalhar={setVerHist}
+                      onArquivos={setVerHist}
+                      onHistorico={setVerHist}
+                      onRenegociar={setRenegociar}
+                    />
                     {t.bloqueadoFechamento && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
                     {t.rateios && t.rateios.length > 0 && (
-                      <span className="ml-1 rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600" title={`${t.rateios.length} rateios`}>
+                      <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600" title={`${t.rateios.length} rateios`}>
                         R{t.rateios.length}
                       </span>
                     )}
                     {t.statusRenegociacao === "renegociado" && (
-                      <span className="ml-1 text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
+                      <span className="text-[10px] font-semibold text-primary" title="Título renegociado">REN</span>
                     )}
                   </div>
                 </TableCell>

@@ -218,6 +218,77 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.obraId ?? "").toLowerCase().includes(b),
       );
     }
+  const dateHelpers = useMemo(() => {
+    const today = hojeISO;
+    const d = new Date(today + "T00:00:00");
+    const dow = d.getDay(); // 0=dom
+    const monday = new Date(d); monday.setDate(d.getDate() - ((dow + 6) % 7));
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const inicioSemana = monday.toISOString().slice(0, 10);
+    const fimSemana = sunday.toISOString().slice(0, 10);
+    const inicioMes = today.slice(0, 7) + "-01";
+    const fimMes = (() => {
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      return end.toISOString().slice(0, 10);
+    })();
+    return { today, inicioSemana, fimSemana, inicioMes, fimMes };
+  }, [hojeISO]);
+
+  const lista = useMemo(() => {
+    let arr = todos.filter((t) => t.tipo === tipo);
+    if (fStatus !== "todos") arr = arr.filter((t) => t.status === fStatus);
+    if (busca.trim()) {
+      const b = busca.toLowerCase();
+      arr = arr.filter((t) =>
+        t.descricao.toLowerCase().includes(b) ||
+        (t.fornecedor ?? "").toLowerCase().includes(b) ||
+        (t.cliente ?? "").toLowerCase().includes(b) ||
+        (t.contratoId ?? "").toLowerCase().includes(b) ||
+        (t.obraId ?? "").toLowerCase().includes(b),
+      );
+    }
+    if (chips.size > 0) {
+      const { today, inicioSemana, fimSemana, inicioMes, fimMes } = dateHelpers;
+      const inRange = (iso: string | undefined, a: string, b: string) => !!iso && iso >= a && iso <= b;
+      arr = arr.filter((t) => {
+        const aberto = t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado";
+        const venc = t.vencimentoReal ?? t.vencimento;
+        const movs = (t.movimentos ?? []).filter((m) => !m.estornado);
+        const ultMov = movs.length > 0 ? movs[movs.length - 1] : null;
+        const baixadoData = ultMov?.data;
+        const conciliado = movs.length > 0 && movs.some((m) => !!m.contaFinanceira);
+        const pagoOuRecebido = t.status === "pago" || t.status === "recebido";
+        const rateios = t.rateios ?? [];
+        const renegociado = t.statusRenegociacao === "renegociado" || !!t.renegociacaoId;
+        const enc = aberto ? calcularEncargos(t, today, parametrosFin) : { jurosSugerido: 0, multaSugerida: 0, diasAtraso: 0, valorComEncargos: t.saldo };
+        const temEncargos = enc.jurosSugerido > 0 || enc.multaSugerida > 0;
+        for (const c of chips) {
+          let ok = false;
+          switch (c) {
+            case "aberto": ok = aberto; break;
+            case "vence_hoje": ok = aberto && venc === today; break;
+            case "vence_semana": ok = aberto && inRange(venc, inicioSemana, fimSemana); break;
+            case "vence_mes": ok = aberto && inRange(venc, inicioMes, fimMes); break;
+            case "vencidos": ok = aberto && venc < today; break;
+            case "baixado_hoje": ok = pagoOuRecebido && baixadoData === today; break;
+            case "baixado_semana": ok = pagoOuRecebido && inRange(baixadoData, inicioSemana, fimSemana); break;
+            case "baixado_mes": ok = pagoOuRecebido && inRange(baixadoData, inicioMes, fimMes); break;
+            case "conciliado_hoje": ok = conciliado && baixadoData === today; break;
+            case "conciliado_semana": ok = conciliado && inRange(baixadoData, inicioSemana, fimSemana); break;
+            case "conciliado_mes": ok = conciliado && inRange(baixadoData, inicioMes, fimMes); break;
+            case "conciliados": ok = conciliado; break;
+            case "nao_conciliados": ok = pagoOuRecebido && !conciliado; break;
+            case "com_encargos": ok = temEncargos; break;
+            case "com_desconto": ok = (t.desconto ?? 0) > 0; break;
+            case "renegociados": ok = renegociado; break;
+            case "com_obra": ok = !!t.obraId; break;
+            case "rateados": ok = rateios.length > 0; break;
+          }
+          if (!ok) return false;
+        }
+        return true;
+      });
+    }
     if (preset === "cobranca") {
       // Cobrança: apenas títulos em aberto, priorizando vencidos
       arr = arr.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
@@ -232,7 +303,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       });
     }
     return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
-  }, [todos, tipo, fStatus, busca, preset, hojeISO]);
+  }, [todos, tipo, fStatus, busca, preset, hojeISO, chips, dateHelpers, parametrosFin]);
 
   const totais = useMemo(() => {
     const aberto = lista.filter((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");

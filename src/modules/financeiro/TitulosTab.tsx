@@ -478,7 +478,9 @@ function TituloDialog({
 
   const [descricao, setDescricao] = useState(initial?.descricao ?? "");
   const [valorOriginal, setValor] = useState<number>(initial?.valorOriginal ?? 0);
-  const [vencimento, setVenc] = useState(initial?.vencimento ?? new Date().toISOString().slice(0, 10));
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [dataEmissao, setDataEmissao] = useState(initial?.dataEmissao ?? hoje);
+  const [vencimento, setVenc] = useState(initial?.vencimento ?? hoje);
   const [fornecedor, setFornecedor] = useState(initial?.fornecedor ?? "");
   const [cliente, setCliente] = useState(initial?.cliente ?? "");
   const [obraId, setObra] = useState(initial?.obraId ?? "");

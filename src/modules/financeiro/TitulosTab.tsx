@@ -37,6 +37,8 @@ import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
 import { useClientesFull, addClienteFull, DuplicateClienteError } from "@/lib/clientes-store";
 import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
+import { calcularEncargos } from "@/lib/fin-calculo-encargos";
+import { useParametrosFinanceiros } from "@/lib/fin-parametros-financeiros-store";
 
 const STATUS_TONE: Record<TituloStatus, string> = {
   previsto:     "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -129,6 +131,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const fornecedores = useFornecedores();
   const contas = useContasFinanceiras();
   const cadastros = { naturezas, grupos, subgrupos, centros, tiposAplic, meios, fornecedores, contas };
+  const parametrosFin = useParametrosFinanceiros();
+  const hojeISO = new Date().toISOString().slice(0, 10);
   const uploadAnexoFn = useServerFn(uploadAnexo);
   const [fStatus, setFStatus] = useState<TituloStatus | "todos">("todos");
   const [busca, setBusca] = useState("");
@@ -292,17 +296,26 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead>{tipo === "AP" ? "Fornecedor" : "Cliente"}</TableHead>
               <TableHead>Vencimento</TableHead>
               <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Saldo</TableHead>
+              <TableHead className="text-right">Juros</TableHead>
+              <TableHead className="text-right">Multa</TableHead>
+              <TableHead className="text-right">Total</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
-            {lista.map((t) => (
+            {lista.map((t) => {
+              const aberto = t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado";
+              const enc = aberto
+                ? calcularEncargos(t, hojeISO, parametrosFin)
+                : { jurosSugerido: 0, multaSugerida: 0, diasAtraso: 0, valorComEncargos: t.saldo };
+              const total = aberto ? enc.valorComEncargos : t.saldo;
+              const emAtraso = aberto && enc.diasAtraso > 0;
+              return (
               <TableRow key={t.id}>
                 <TableCell>
                   <div className="flex items-center gap-1.5">
@@ -353,11 +366,24 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-right font-medium">{fmtBRLPrecise(t.valorOriginal)}</TableCell>
-                <TableCell className="text-right">{fmtBRLPrecise(t.saldo)}</TableCell>
+                <TableCell className="text-right font-medium tabular-nums">{fmtBRLPrecise(t.saldo)}</TableCell>
+                <TableCell
+                  className={`text-right tabular-nums ${enc.jurosSugerido > 0 ? "text-amber-600 font-medium" : "text-muted-foreground"}`}
+                  title={emAtraso ? `${enc.diasAtraso} dia(s) de atraso · ${parametrosFin.jurosValor}% ${parametrosFin.jurosModo === "mensal" ? "a.m." : "a.d."}` : "Sem atraso"}
+                >
+                  {enc.jurosSugerido > 0 ? fmtBRLPrecise(enc.jurosSugerido) : "—"}
+                </TableCell>
+                <TableCell
+                  className={`text-right tabular-nums ${enc.multaSugerida > 0 ? "text-rose-600 font-medium" : "text-muted-foreground"}`}
+                  title={emAtraso ? `Multa ${parametrosFin.multaTipo === "percentual" ? parametrosFin.multaValor + "%" : "R$ " + parametrosFin.multaValor} sobre o saldo` : "Sem multa"}
+                >
+                  {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">{fmtBRLPrecise(total)}</TableCell>
                 <TableCell><StatusPill s={t.status} /></TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>

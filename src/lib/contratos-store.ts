@@ -341,12 +341,19 @@ export function useContratos(): ContratoFull[] {
 
 export function setContratos(next: ContratoFull[]) { write(next); }
 
+/** Helper interno: push best-effort de um contrato por id. */
+function pushById(id: string) {
+  const c = read().find((x) => x.id === id);
+  if (c) void pushToSupabase(c);
+}
+
 export function upsertContrato(novo: ContratoFull) {
   const cur = read();
   const idx = cur.findIndex((c) => c.id === novo.id);
   if (idx >= 0) {
     const merged = [...cur]; merged[idx] = novo; write(merged);
   } else { write([novo, ...cur]); }
+  void pushToSupabase(novo);
 }
 
 export function updateContratoAudit(
@@ -379,6 +386,7 @@ export function updateContratoAudit(
   const next = [...cur];
   next[idx] = { ...atual, ...patch, auditoria: audit };
   write(next);
+  pushById(id);
 }
 
 export function nextProjetoId(contratoId: string): string {
@@ -401,6 +409,7 @@ export function addProjeto(contratoId: string, projeto: Omit<ProjetoVinculado, "
   };
   next[idx] = { ...next[idx], projetos, auditoria: [...(next[idx].auditoria ?? []), audit] };
   write(next);
+  pushById(contratoId);
 }
 
 export function updateProjeto(contratoId: string, projetoId: string, patch: Partial<ProjetoVinculado>) {
@@ -411,6 +420,7 @@ export function updateProjeto(contratoId: string, projetoId: string, patch: Part
   const next = [...cur];
   next[idx] = { ...next[idx], projetos };
   write(next);
+  pushById(contratoId);
 }
 
 export function removeProjeto(contratoId: string, projetoId: string) {
@@ -421,6 +431,7 @@ export function removeProjeto(contratoId: string, projetoId: string) {
   const next = [...cur];
   next[idx] = { ...next[idx], projetos };
   write(next);
+  pushById(contratoId);
 }
 
 /** Lista plana de todos os projetos vinculados a contratos (para Engenharia). */

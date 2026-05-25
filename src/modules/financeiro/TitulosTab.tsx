@@ -1155,7 +1155,7 @@ function AnexosBlock({ titulo, editavel }: { titulo: Titulo; editavel: boolean }
         fd.append("file", file);
         fd.append("tituloId", titulo.id);
         const { anexo } = await uploadAnexoFn({ data: fd });
-        adicionarAnexo(titulo.id, {
+        await repo.anexar(titulo.id, {
           id: anexo.id,
           nome: anexo.nome,
           mime: anexo.mime,

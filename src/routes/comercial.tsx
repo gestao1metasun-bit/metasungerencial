@@ -15,6 +15,7 @@ import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR
 import { PropostasPage } from "@/modules/propostas";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { useIsAdmin } from "@/lib/auth-store";
+import { useIdentidade } from "@/lib/identidade";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

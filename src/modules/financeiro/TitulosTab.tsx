@@ -35,9 +35,6 @@ import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
 import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
 import { useClientesFull, addClienteFull, DuplicateClienteError } from "@/lib/clientes-store";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
 
 const STATUS_TONE: Record<TituloStatus, string> = {

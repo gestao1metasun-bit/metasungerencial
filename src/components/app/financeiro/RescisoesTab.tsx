@@ -1,5 +1,5 @@
 // Aba de Rescisões contratuais — simulador + histórico.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, FileSearch, Receipt, Scissors } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/app/StatCard";
 import { toast } from "sonner";
 import {
-  useRescisoes, simularRescisao, confirmarRescisao,
-  type SimulacaoRescisao,
-} from "@/lib/fin-rescisao-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
+  useRepoRescisoes, useRepoTitulos, useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type { SimulacaoRescisao } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function fmtBR(d: string) { const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; }

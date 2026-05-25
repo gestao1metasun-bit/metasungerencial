@@ -142,7 +142,7 @@ export class SupabaseFinanceiroAdapter implements FinanceiroRepository {
 
   // Anexos
   async listarAnexos(_t: string): Promise<Anexo[]> { return NOT_READY("listarAnexos"); }
-  async anexar(_t: string, _a: Omit<Anexo, "id" | "enviadoEm">): Promise<Anexo> { return NOT_READY("anexar"); }
+  async anexar(_t: string, _a: unknown): Promise<Anexo> { return NOT_READY("anexar"); }
   async removerAnexo(_t: string, _a: string, _m: string): Promise<void> { NOT_READY("removerAnexo"); }
 
   // Histórico

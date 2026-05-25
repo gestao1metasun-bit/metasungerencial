@@ -223,8 +223,9 @@ export function CmvTab() {
 function NovaCompraDialog() {
   const [open, setOpen] = useState(false);
   const { itens } = useEstoqueState();
-  const fornecedores = useFornecedores();
-  const titulos = useTitulos();
+  const repo = useFinanceiroRepo();
+  const fornecedores = useRepoFornecedores();
+  const titulos = useRepoTitulos();
   const titulosAP = titulos.filter((t) => t.tipo === "AP");
 
   const [numeroNF, setNumeroNF] = useState("");
@@ -241,12 +242,12 @@ function NovaCompraDialog() {
     setLinhas(linhas.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
 
-  function salvar(estocarAgora: boolean) {
+  async function salvar(estocarAgora: boolean) {
     const valid = linhas.filter((l) => l.itemId && l.qtd > 0);
     if (valid.length === 0) { toast.error("Adicione ao menos um item"); return; }
     const f = fornecedores.find((x) => x.id === fornecedorId);
     const t = titulosAP.find((x) => x.id === tituloId);
-    const c = criarCompra({
+    const c = await repo.criarCompra({
       numeroNF: numeroNF || undefined,
       fornecedorId: fornecedorId || undefined,
       fornecedorNome: f?.nome,
@@ -255,12 +256,13 @@ function NovaCompraDialog() {
       itens: valid,
       observacao: t ? `Vinculada ao título ${t.id}` : undefined,
     });
-    if (estocarAgora) estocarCompra(c.id);
+    if (estocarAgora) await repo.estocarCompra(c.id);
     toast.success(`Compra ${c.id} criada${estocarAgora ? " e estocada" : ""}`);
     setOpen(false);
     setLinhas([{ itemId: itens[0]?.id ?? "", qtd: 1, custoUnit: 0 }]);
     setNumeroNF(""); setFornecedorId(""); setTituloId("");
   }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

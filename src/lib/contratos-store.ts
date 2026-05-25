@@ -239,9 +239,12 @@ export type ContratoFull = {
 };
 
 const KEY = "ms.contratos.v2";
+const SYNC_FLAG_KEY = "ms.contratos.lastSync";
 type Listener = () => void;
 const listeners = new Set<Listener>();
 let cache: ContratoFull[] | null = null;
+let syncInFlight = false;
+let lastSyncAt = 0;
 
 function seedAll(): ContratoFull[] {
   return contratosSeed.map((c) => ({
@@ -272,6 +275,55 @@ function write(next: ContratoFull[]) {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Sincronização com Supabase (Onda 1.5.B — convivência localStorage↔Supabase).
+ * - Hidrata cache local a partir do banco (merge: banco vence em conflito de codigo).
+ * - Push best-effort: contratos sem clienteId ficam só local.
+ * - Reentrante: evita múltiplos fetches simultâneos.
+ */
+async function syncFromSupabase(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (syncInFlight) return;
+  if (Date.now() - lastSyncAt < 5000) return; // throttle 5s
+  syncInFlight = true;
+  try {
+    const mod = await import("./contratos.functions");
+    const json = await mod.listarContratos();
+    const rows = JSON.parse(json) as import("./contratos-mapper").ContratoRow[];
+    const mapper = await import("./contratos-mapper");
+    const remote = rows.map(mapper.contratoFromRow);
+    const local = read();
+    // Merge por `id` (codigo). Remoto sobrescreve local; locais sem par remoto são preservados.
+    const byId = new Map<string, ContratoFull>();
+    for (const c of local) byId.set(c.id, c);
+    for (const c of remote) byId.set(c.id, c);
+    const merged = Array.from(byId.values());
+    lastSyncAt = Date.now();
+    try { localStorage.setItem(SYNC_FLAG_KEY, String(lastSyncAt)); } catch {}
+    write(merged);
+  } catch (e) {
+    // Sync falhou (provavelmente sem sessão) — segue com cache local.
+    console.debug("[contratos-store] sync skipped:", (e as Error).message);
+  } finally {
+    syncInFlight = false;
+  }
+}
+
+/** Push best-effort de um contrato para o Supabase. Falhas são silenciosas. */
+async function pushToSupabase(c: ContratoFull): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (!c.clienteId) return; // banco exige cliente_id NOT NULL
+  try {
+    const mapper = await import("./contratos-mapper");
+    const payload = mapper.rowFromContrato(c);
+    if (!payload) return;
+    const mod = await import("./contratos.functions");
+    await mod.upsertContratoFn({ data: payload });
+  } catch (e) {
+    console.debug("[contratos-store] push skipped:", (e as Error).message);
+  }
+}
+
 function subscribe(l: Listener) { listeners.add(l); return () => { listeners.delete(l); }; }
 function getSnapshot() { return read(); }
 const SERVER_SNAPSHOT = seedAll();
@@ -279,8 +331,11 @@ function getServerSnapshot() { return SERVER_SNAPSHOT; }
 
 export function useContratos(): ContratoFull[] {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // hidrata após mount caso server snapshot tenha sido usado
-  useEffect(() => { read(); }, []);
+  // hidrata após mount (sync com Supabase + fallback para cache local)
+  useEffect(() => {
+    read();
+    void syncFromSupabase();
+  }, []);
   return list;
 }
 

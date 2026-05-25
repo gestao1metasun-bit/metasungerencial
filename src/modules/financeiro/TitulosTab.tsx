@@ -829,7 +829,103 @@ function TituloDialog({
         </div>
       </div>
 
+      {/* Parcelamento — somente na criação */}
+      {!initial && (
+        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+              Parcelamento {parcelarOn && parcelas.length > 0 && (
+                <span className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${parcelasValidas ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}`}>
+                  Soma {fmtBRLPrecise(somaParcelas)} de {fmtBRLPrecise(valorOriginal)}
+                </span>
+              )}
+            </div>
+            <label className="flex items-center gap-1.5 text-xs">
+              <input type="checkbox" checked={parcelarOn} onChange={(e) => { setParcelarOn(e.target.checked); if (!e.target.checked) setParcelas([]); }} />
+              Dividir em parcelas
+            </label>
+          </div>
+
+          {parcelarOn && (
+            <>
+              <div className="grid grid-cols-4 gap-2">
+                <div>
+                  <Label className="text-xs">Qtd. parcelas</Label>
+                  <Input type="number" min={2} max={120} value={numParcelas} onChange={(e) => setNumParcelas(Number(e.target.value) || 2)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Periodicidade</Label>
+                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mensal">Mensal</SelectItem>
+                      <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                      <SelectItem value="semanal">Semanal</SelectItem>
+                      <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2 flex items-end gap-2">
+                  <Button type="button" variant="outline" onClick={gerarParcelas}>Gerar parcelas</Button>
+                  {parcelas.length > 0 && (
+                    <Button type="button" variant="ghost" onClick={() => setParcelas([])}>Limpar</Button>
+                  )}
+                </div>
+              </div>
+
+              {parcelas.length > 0 && (
+                <div className="mt-3 max-h-72 overflow-y-auto rounded border bg-background/60">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-[10px] uppercase text-muted-foreground">
+                      <tr>
+                        <th className="px-2 py-1 text-left">#</th>
+                        <th className="px-2 py-1 text-left">Vencimento</th>
+                        <th className="px-2 py-1 text-center" title="Fixar data (não recalcular)">🔒D</th>
+                        <th className="px-2 py-1 text-right">Valor</th>
+                        <th className="px-2 py-1 text-center" title="Fixar valor (não recalcular)">🔒V</th>
+                        <th className="px-2 py-1 text-left">Competência</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parcelas.map((p, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="px-2 py-1 font-mono">{i + 1}/{parcelas.length}</td>
+                          <td className="px-2 py-1">
+                            <Input type="date" value={p.vencimento} className="h-7"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, vencimento: e.target.value, competencia: e.target.value.slice(0, 7) } : x))} />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!p.fixadoData}
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, fixadoData: e.target.checked } : x))} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input type="number" step="0.01" value={p.valor} className="h-7 text-right"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, valor: Number(e.target.value) } : x))} />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!p.fixadoValor}
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, fixadoValor: e.target.checked } : x))} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input type="month" value={p.competencia} className="h-7"
+                              onChange={(e) => setParcelas((prev) => prev.map((x, j) => j === i ? { ...x, competencia: e.target.value } : x))} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Marque 🔒 para preservar a data ou valor de uma parcela ao clicar em <strong>Gerar parcelas</strong> novamente. A última parcela livre absorve a diferença de centavos.
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Anexos — em edição usamos AnexosBlock (Storage); em criação, lista de arquivos pendentes que serão enviados após salvar */}
+
       {initial ? (
         <AnexosBlock titulo={initial} editavel={!initial.bloqueadoFechamento} />
       ) : (

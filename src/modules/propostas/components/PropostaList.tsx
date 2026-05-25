@@ -116,7 +116,18 @@ export function reativarProposta(p: PropostaFV) {
   toast.success(`Proposta ${p.numero} reativada.`);
 }
 
-// fmtInversorNumero importado de @/lib/inversor-fmt no topo do arquivo
+/** Retorna a proposta aprovável mais recente do lead (RASCUNHO/GERADA/ENVIADA). */
+export function propostaAprovavelDoLead(l: { propostas: PropostaFV[] }): PropostaFV | undefined {
+  return [...l.propostas]
+    .reverse()
+    .find((p) => ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status));
+}
+
+/** Navega para o Comercial → aba Contratos. */
+export function irParaContratos() {
+  if (typeof window === "undefined") return;
+  window.location.assign("/comercial#tab=contratos");
+}
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas

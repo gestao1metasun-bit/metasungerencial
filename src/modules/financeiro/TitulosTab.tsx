@@ -871,7 +871,7 @@ function TituloDialog({
                 </div>
                 <div>
                   <Label className="text-xs">Periodicidade</Label>
-                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)}>
+                  <Select value={periodicidade} onValueChange={(v) => setPeriodicidade(v as Periodicidade)} disabled={mesmoVencimento}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="mensal">Mensal</SelectItem>

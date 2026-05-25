@@ -361,8 +361,20 @@ export function registrarBaixa(id: string, mov: BaixaInput, usuario = "Sistema")
   const idx = cur.findIndex((t) => t.id === id);
   if (idx < 0) throw new Error("Título não encontrado.");
   const before = cur[idx];
-  if (before.bloqueadoFechamento) throw new Error("Título bloqueado por fechamento mensal.");
   if (before.status === "cancelado") throw new Error("Título cancelado.");
+  const dataPag = mov.data ?? new Date().toISOString().slice(0, 10);
+
+  // ---- Fase A: o que bloqueia a baixa é o MÊS DO PAGAMENTO estar fechado,
+  // não a competência do título. Conta vencida em abril e paga em maio é OK
+  // enquanto maio estiver aberto.
+  // Import dinâmico para evitar ciclo com fin-fechamento-store.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fech = require("@/lib/fin-fechamento-store") as typeof import("@/lib/fin-fechamento-store");
+  const mesPag = dataPag.slice(0, 7);
+  if (fech.isMesFechado(mesPag, mov.contaFinanceira ?? before.contaFinanceira)) {
+    throw new Error(`Mês de pagamento (${mesPag}) está fechado. Reabra o período ou ajuste a data.`);
+  }
+
   const valor = round2(mov.valor + (mov.juros ?? 0) + (mov.multa ?? 0) - (mov.desconto ?? 0));
   if (valor <= 0) throw new Error("Valor da baixa deve ser positivo.");
   if (before.valorPago + valor > before.valorOriginal + 0.01) {

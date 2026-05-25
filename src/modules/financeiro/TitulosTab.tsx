@@ -434,7 +434,70 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       </div>
 
       {/* Chips de filtro rápido */}
-      <ChipsFiltroRapido tipo={tipo} chips={chips} onToggle={toggleChip} onClear={() => setChips(new Set())} />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(() => {
+          const TONE_ACTIVE: Record<string, string> = {
+            amber:   "bg-amber-500 text-white border-amber-500",
+            rose:    "bg-rose-500 text-white border-rose-500",
+            orange:  "bg-orange-500 text-white border-orange-500",
+            emerald: "bg-emerald-500 text-white border-emerald-500",
+            sky:     "bg-sky-500 text-white border-sky-500",
+            violet:  "bg-violet-500 text-white border-violet-500",
+            indigo:  "bg-indigo-500 text-white border-indigo-500",
+          };
+          const TONE_INACTIVE: Record<string, string> = {
+            amber:   "bg-amber-500/10 text-amber-700 border-amber-500/30 hover:bg-amber-500/20",
+            rose:    "bg-rose-500/10 text-rose-700 border-rose-500/30 hover:bg-rose-500/20",
+            orange:  "bg-orange-500/10 text-orange-700 border-orange-500/30 hover:bg-orange-500/20",
+            emerald: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20",
+            sky:     "bg-sky-500/10 text-sky-700 border-sky-500/30 hover:bg-sky-500/20",
+            violet:  "bg-violet-500/10 text-violet-700 border-violet-500/30 hover:bg-violet-500/20",
+            indigo:  "bg-indigo-500/10 text-indigo-700 border-indigo-500/30 hover:bg-indigo-500/20",
+          };
+          const items: { k: ChipKey; label: string; tone: keyof typeof TONE_ACTIVE }[] = [
+            { k: "aberto",            label: "Em aberto",              tone: "amber" },
+            { k: "vence_hoje",        label: "Vence hoje",             tone: "rose" },
+            { k: "vence_semana",      label: "Vence esta semana",      tone: "orange" },
+            { k: "vence_mes",         label: "Vence este mês",         tone: "orange" },
+            { k: "vencidos",          label: "Vencidos",               tone: "rose" },
+            { k: "baixado_hoje",      label: tipo === "AP" ? "Pago hoje" : "Recebido hoje",                tone: "emerald" },
+            { k: "baixado_semana",    label: tipo === "AP" ? "Pago esta semana" : "Recebido esta semana", tone: "emerald" },
+            { k: "baixado_mes",       label: tipo === "AP" ? "Pago este mês" : "Recebido este mês",       tone: "emerald" },
+            { k: "conciliados",       label: "Conciliados",            tone: "sky" },
+            { k: "nao_conciliados",   label: "Pendente conciliação",   tone: "amber" },
+            { k: "conciliado_hoje",   label: "Conciliado hoje",        tone: "sky" },
+            { k: "conciliado_semana", label: "Conciliado esta semana", tone: "sky" },
+            { k: "conciliado_mes",    label: "Conciliado este mês",    tone: "sky" },
+            { k: "com_encargos",      label: "Com juros/multa",        tone: "rose" },
+            { k: "com_desconto",      label: "Com desconto",           tone: "emerald" },
+            { k: "renegociados",      label: "Renegociados",           tone: "violet" },
+            { k: "com_obra",          label: "Com obra",               tone: "orange" },
+            { k: "rateados",          label: "Rateados",               tone: "indigo" },
+          ];
+          return items.map((c) => {
+            const active = chips.has(c.k);
+            return (
+              <button
+                key={c.k}
+                type="button"
+                onClick={() => toggleChip(c.k)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition ${active ? TONE_ACTIVE[c.tone] : TONE_INACTIVE[c.tone]}`}
+              >
+                {c.label}
+              </button>
+            );
+          });
+        })()}
+        {chips.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setChips(new Set())}
+            className="ml-1 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Limpar filtros ({chips.size})
+          </button>
+        )}
+      </div>
 
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

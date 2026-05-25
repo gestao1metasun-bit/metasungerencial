@@ -1105,7 +1105,7 @@ function DadosEditaveis({ lead }: { lead: Lead }) {
 /* ===================== KANBAN VIEW ===================== */
 
 function KanbanView({
-  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign,
+  leads, onAbrirLead, onNovaPreset, cols, setCols, assign, setAssign, onAprovar,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1114,6 +1114,7 @@ function KanbanView({
   setCols: (fn: (c: KCol[]) => KCol[]) => void;
   assign: Record<string, string>;
   setAssign: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onAprovar?: (p: PropostaFV) => void;
 }) {
   const [dragLead, setDragLead] = useState<string | null>(null);
   const [dragCol, setDragCol] = useState<string | null>(null);

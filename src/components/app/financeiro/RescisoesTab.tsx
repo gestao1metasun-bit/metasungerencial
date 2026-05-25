@@ -283,7 +283,7 @@ function RescindirDialog({
           <Button
             variant="destructive"
             onClick={confirmar}
-            disabled={!sim || motivo.trim().length < 5}
+            disabled={enviando || !sim || motivo.trim().length < 5}
           >Confirmar rescisão</Button>
         </DialogFooter>
       </DialogContent>

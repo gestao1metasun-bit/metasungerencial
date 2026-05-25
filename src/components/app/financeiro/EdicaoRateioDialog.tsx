@@ -185,16 +185,38 @@ export function EdicaoRateioDialog({
           <DialogTitle>Edição de rateio</DialogTitle>
         </DialogHeader>
 
-        {/* Informações do título */}
-        <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Informações do título</div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 md:grid-cols-3">
-            <div><span className="text-muted-foreground">Número:</span> <span className="font-mono">{titulo.id}</span></div>
-            <div><span className="text-muted-foreground">Valor:</span> <span className="font-semibold">{brl(titulo.valorOriginal)}</span></div>
-            <div><span className="text-muted-foreground">Vencimento:</span> {titulo.vencimento}</div>
-            <div><span className="text-muted-foreground">Centro de custo:</span> {titulo.centroCusto || "—"}</div>
-            <div><span className="text-muted-foreground">Natureza:</span> {titulo.natureza || "—"}</div>
-            <div><span className="text-muted-foreground">{titulo.tipo === "AP" ? "Fornecedor" : "Cliente"}:</span> {titulo.fornecedor ?? titulo.cliente ?? "—"}</div>
+        {/* Cabeçalho compacto do título */}
+        <div className="rounded-lg border bg-muted/30 px-4 py-2 text-xs text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-1">
+          <span><span className="opacity-70">Nº</span> <span className="font-mono text-foreground">{titulo.id}</span></span>
+          <span><span className="opacity-70">Vencimento:</span> <span className="text-foreground">{titulo.vencimento}</span></span>
+          <span><span className="opacity-70">{titulo.tipo === "AP" ? "Fornecedor:" : "Cliente:"}</span> <span className="text-foreground">{titulo.fornecedor ?? titulo.cliente ?? "—"}</span></span>
+          {titulo.centroCusto && <span><span className="opacity-70">CC:</span> <span className="text-foreground">{titulo.centroCusto}</span></span>}
+          {titulo.natureza && <span><span className="opacity-70">Natureza:</span> <span className="text-foreground">{titulo.natureza}</span></span>}
+        </div>
+
+        {/* KPIs travados — Valor / Juros / Multa / Total */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="rounded-lg border bg-background px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor (principal)</div>
+            <div className="text-lg font-semibold tabular-nums">{brl(valorTitulo)}</div>
+          </div>
+          <div className="rounded-lg border bg-muted/40 px-3 py-2" title="Calculado pelos parâmetros financeiros — somente leitura.">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center justify-between">
+              <span>Juros</span>
+              {jurosTag && <span className="text-[9px] font-semibold opacity-70">{jurosTag}</span>}
+            </div>
+            <div className="text-lg font-semibold tabular-nums text-muted-foreground">{brl(jurosShow)}</div>
+          </div>
+          <div className="rounded-lg border bg-muted/40 px-3 py-2" title="Calculado pelos parâmetros financeiros — somente leitura.">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center justify-between">
+              <span>Multa</span>
+              {multaTag && <span className="text-[9px] font-semibold opacity-70">{multaTag}</span>}
+            </div>
+            <div className="text-lg font-semibold tabular-nums text-muted-foreground">{brl(multaShow)}</div>
+          </div>
+          <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wide text-primary/80">Total</div>
+            <div className="text-lg font-semibold tabular-nums text-primary">{brl(totalTitulo)}</div>
           </div>
         </div>
 

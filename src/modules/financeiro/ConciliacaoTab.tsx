@@ -18,6 +18,7 @@ import type {
   ExtratoLancamento, ExtratoStatus, ContaFinanceira, CandidatoConciliacao,
 } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
+import { confirmDialog, promptDialog } from "@/components/app/confirm-dialog";
 
 const STATUS_TONE: Record<ExtratoStatus, string> = {
   pendente:   "bg-amber-500/15 text-amber-600 border-amber-500/30",

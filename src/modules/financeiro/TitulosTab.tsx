@@ -381,6 +381,12 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 >
                   {enc.multaSugerida > 0 ? fmtBRLPrecise(enc.multaSugerida) : "—"}
                 </TableCell>
+                <TableCell
+                  className={`text-right tabular-nums ${desconto > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}`}
+                  title={desconto > 0 ? `Desconto concedido: ${fmtBRLPrecise(desconto)}` : "Sem desconto"}
+                >
+                  {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
+                </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">{fmtBRLPrecise(total)}</TableCell>
                 <TableCell><StatusPill s={t.status} /></TableCell>
               </TableRow>

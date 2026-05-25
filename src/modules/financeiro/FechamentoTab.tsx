@@ -14,6 +14,7 @@ import {
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useMyPermissions } from "@/hooks/use-permissions";
 import { useRepoTitulos } from "@/hooks/useRepoFinanceiro";
+import { confirmDialog } from "@/components/app/confirm-dialog";
 import { toast } from "sonner";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

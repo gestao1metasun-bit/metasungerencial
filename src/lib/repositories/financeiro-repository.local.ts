@@ -317,6 +317,10 @@ export class LocalStorageFinanceiroAdapter implements FinanceiroRepository {
 
   // -------- Conciliação
   async listarExtrato(): Promise<ExtratoLancamento[]> { return getExtrato(); }
+  async adicionarLancamentoExtrato(input: Parameters<FinanceiroRepository["adicionarLancamentoExtrato"]>[0]): Promise<ExtratoLancamento> {
+    try { return storeAdicionarLancExtrato(input); }
+    catch (e) { throw toRepoError(e); }
+  }
   async importarExtratoCSV(contaFinanceira: string, csv: string): Promise<number> {
     try { return storeImportarExtrato(contaFinanceira, csv); }
     catch (e) { throw toRepoError(e); }

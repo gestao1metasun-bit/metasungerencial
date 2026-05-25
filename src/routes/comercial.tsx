@@ -887,27 +887,52 @@ function ContratosTab({
                 const temDoc = docDig.length === 11 || docDig.length === 14;
                 const temEndereco = !!(cf?.cep && cf?.rua && cf?.numero);
                 const liberado = !!c.liberadoParaContrato;
+                const faltando: string[] = [];
+                if (!temDoc) faltando.push("CPF/CNPJ");
+                if (!temEndereco) faltando.push("Endereço");
+                const dadosOk = faltando.length === 0;
+                const motivoPendente = `Dados pendentes: ${faltando.join(" e ")}. Use "Completar dados do cliente" para preencher.`;
                 return (
-                  <TableRow key={c.id} className={!liberado ? "bg-warning/5" : undefined}>
+                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined}>
                     <TableCell>
                       <ActionsMenu label={c.id}>
+                        {!dadosOk && (
+                          <>
+                            <DropdownMenuItem
+                              onSelect={() => setCompletarDados(c)}
+                              className="text-primary focus:text-primary"
+                              title="Preencher CPF/CNPJ e endereço para liberar a geração do contrato"
+                            >
+                              <PenLine className="mr-2 h-4 w-4" /> Completar dados do cliente
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                         <DropdownMenuItem
-                          onSelect={() => {
-                            if (!liberado) { toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
+                          onSelect={(e) => {
+                            if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                            if (!liberado) { e.preventDefault(); toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
                             setAberto(c);
                           }}
-                          disabled={!liberado}
-                          title={liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato."}
+                          disabled={!liberado || !dadosOk}
+                          title={!dadosOk ? motivoPendente : (liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato.")}
                         >
                           <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {!liberado ? (
                           <DropdownMenuItem
-                            onSelect={() => liberarParaGerar(c)}
-                            disabled={!isAdmin}
-                            title={isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria"}
-                            className={isAdmin ? "text-success focus:text-success" : undefined}
+                            onSelect={(e) => {
+                              if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
+                              liberarParaGerar(c);
+                            }}
+                            disabled={!isAdmin || !dadosOk}
+                            title={
+                              !dadosOk
+                                ? motivoPendente
+                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : "Disponível apenas para Admin Master/Diretoria")
+                            }
+                            className={isAdmin && dadosOk ? "text-success focus:text-success" : undefined}
                           >
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Liberar para gerar contrato
                           </DropdownMenuItem>

@@ -13,7 +13,7 @@ import { useSyncExternalStore } from "react";
 import { LEAD_STATUS, type LeadStatus, type OrigemLead } from "@/lib/status-catalog";
 import { pushAudit } from "@/lib/audit-store";
 import { fetchAllLeads, upsertLeads, deleteLeads } from "@/lib/repositories/leads-repo";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export type Lead = {
   id: string;                 // UUID gerado client-side

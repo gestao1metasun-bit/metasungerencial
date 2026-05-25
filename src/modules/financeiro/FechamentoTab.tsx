@@ -12,6 +12,7 @@ import {
   fecharMesGlobal, reabrirMesGlobal, isMesFechado, isMesGlobalFechado,
 } from "@/lib/fin-fechamento-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useMyPermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -19,6 +20,8 @@ const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", cur
 export function FechamentoTab() {
   const fechs = useFechamentos();
   const contas = useContasFinanceiras().filter((c) => c.ativo);
+  const { can, isAdmin } = useMyPermissions();
+  const podeReabrir = isAdmin || can("financeiro.reabrir_periodo");
   const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
   const [saldos, setSaldos] = useState<Record<string, string>>({});
   const [motivos, setMotivos] = useState<Record<string, string>>({});
@@ -100,15 +103,19 @@ export function FechamentoTab() {
                     ) : (
                       <div className="flex gap-2">
                         <Input
-                          placeholder="Motivo da reabertura"
+                          placeholder={podeReabrir ? "Motivo da reabertura (mín. 5)" : "Sem permissão para reabrir"}
                           value={motivos[c.id] ?? ""}
                           onChange={(e) => setMotivos((m) => ({ ...m, [c.id]: e.target.value }))}
+                          disabled={!podeReabrir}
                         />
                         <Button
                           size="sm" variant="destructive"
+                          disabled={!podeReabrir}
+                          title={!podeReabrir ? "Requer permissão financeiro.reabrir_periodo" : undefined}
                           onClick={() => {
+                            if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
                             const m = (motivos[c.id] ?? "").trim();
-                            if (!m) return toast.error("Informe o motivo.");
+                            if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
                             reabrirContaMes({ mes, contaId: c.id, usuario: "Admin", motivo: m });
                             setMotivos((s) => ({ ...s, [c.id]: "" }));
                             toast.success("Conta reaberta.");
@@ -140,10 +147,24 @@ export function FechamentoTab() {
           ) : (
             <Button
               variant="destructive"
-              onClick={() => { reabrirMesGlobal(mes, "Admin", obsGlobal || "Reabertura"); setObsGlobal(""); toast.success("Mês reaberto."); }}
+              disabled={!podeReabrir}
+              title={!podeReabrir ? "Requer permissão financeiro.reabrir_periodo" : undefined}
+              onClick={() => {
+                if (!podeReabrir) return toast.error("Sem permissão para reabrir período.");
+                const m = obsGlobal.trim();
+                if (m.length < 5) return toast.error("Motivo obrigatório (mín. 5 caracteres).");
+                reabrirMesGlobal(mes, "Admin", m);
+                setObsGlobal("");
+                toast.success("Mês reaberto.");
+              }}
             ><Unlock className="mr-1 h-4 w-4" />Reabrir mês</Button>
           )}
         </div>
+        {globalFechado && !podeReabrir && (
+          <div className="mt-2 text-xs text-rose-700">
+            Você não tem permissão para reabrir o fechamento global. Solicite à diretoria/controladoria.
+          </div>
+        )}
         {!todasFechadas && !globalFechado && (
           <div className="mt-2 text-xs text-amber-700">
             Ainda há {contas.filter((c) => !isMesFechado(mes, c.id)).length} conta(s) em aberto neste mês.

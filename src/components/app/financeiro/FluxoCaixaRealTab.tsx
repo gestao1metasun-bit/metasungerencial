@@ -38,18 +38,26 @@ export function FluxoCaixaRealTab() {
     saldoInicial: Number(saldoInicial) || 0,
   });
 
+  const orc = useOrcamentoObras();
   const ultimoReal = data[data.length - 1]?.caixaReal ?? 0;
   const ultimoPrev = data[data.length - 1]?.caixaPrevisto ?? 0;
   const totalEntradaPrev = data.reduce((s, d) => s + d.entradaPrevista, 0);
   const totalSaidaPrev = data.reduce((s, d) => s + d.saidaPrevista, 0);
+  const pctConsumidoTotal = orc.totalOrcado > 0 ? Math.min(1, orc.totalConsumido / orc.totalOrcado) : 0;
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         <StatCard label="Caixa real (acumulado)" value={fmtBRLPrecise(ultimoReal)} tone={ultimoReal >= 0 ? "success" : "destructive"} />
         <StatCard label="Caixa previsto (acumulado)" value={fmtBRLPrecise(ultimoPrev)} tone={ultimoPrev >= 0 ? "primary" : "destructive"} />
         <StatCard label="Entradas previstas" value={fmtBRLPrecise(totalEntradaPrev)} tone="success" />
         <StatCard label="Saídas previstas" value={fmtBRLPrecise(totalSaidaPrev)} tone="warning" />
+        <StatCard
+          label="Orçado restante (obras)"
+          value={fmtBRLPrecise(orc.totalRestante)}
+          tone={orc.totalRestante > 0 ? "primary" : "destructive"}
+          hint={`Orçado ${fmtBRLPrecise(orc.totalOrcado)} · Consumido ${fmtBRLPrecise(orc.totalConsumido)}`}
+        />
       </div>
 
       <Card className="p-5 bg-[image:var(--gradient-card)]">

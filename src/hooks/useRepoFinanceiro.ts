@@ -93,3 +93,13 @@ export function useRepoExtrato(): ExtratoLancamento[] { return useExtrato(); }
 export function useRepoFechamentos(): FechamentoMes[] { return useFechamentos(); }
 export function useRepoFluxoCaixa(args: UseFluxoArgs): FluxoPonto[] { return useFluxoCaixa(args); }
 export function useRepoParametros(): ParametrosFinanceiros { return useParametrosFinanceiros(); }
+
+// ---- Cadastros auxiliares (leituras reativas via stores; mutações via repo) ----
+export function useRepoFornecedores(): Fornecedor[] { return useFornecedores(); }
+export function useRepoContas(): ContaFinanceira[] { return useContasFinanceiras(); }
+export function useRepoNaturezas(): NaturezaFin[] { return useNaturezasFin(); }
+export function useRepoCentrosCusto(): CentroCustoFin[] { return useCentrosCustoFin(); }
+export function useRepoMeiosPagamento(): MeioPagamento[] { return useMeiosPagamento(); }
+export function useRepoTiposAplicacao(): TipoAplicacao[] { return useTiposAplicacao(); }
+export function useRepoGrupos(): GrupoFinanceiro[] { return useGrupos(); }
+export function useRepoSubgrupos(): SubgrupoFinanceiro[] { return useSubgrupos(); }

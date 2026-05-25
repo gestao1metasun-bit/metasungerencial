@@ -157,7 +157,7 @@ export function CmvTab() {
                             <ArrowDownToLine className="h-3.5 w-3.5 mr-1" /> Estocar
                           </Button>
                           <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                            onClick={async () => { if (confirm(`Cancelar compra ${c.id}?`)) { try { await repo.cancelarCompra(c.id); } catch (e: any) { toast.error(e?.message ?? "Erro."); } } }}>
+                            onClick={async () => { const ok = await confirmDialog({ title: "Cancelar compra?", description: `Cancelar compra ${c.id}? Esta ação não pode ser desfeita.`, confirmText: "Cancelar compra", cancelText: "Voltar", destructive: true }); if (ok) { try { await repo.cancelarCompra(c.id); } catch (e: any) { toast.error(e?.message ?? "Erro."); } } }}>
                             <XCircle className="h-3.5 w-3.5" />
                           </Button>
                         </>

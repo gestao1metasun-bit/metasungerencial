@@ -8,6 +8,7 @@
 // ============================================================================
 import { useEffect, useSyncExternalStore } from "react";
 import { pushAudit } from "@/lib/audit-store";
+import { getNaturezas } from "@/lib/fin-naturezas-store";
 
 export type TituloTipo = "AP" | "AR";
 

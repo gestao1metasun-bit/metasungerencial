@@ -125,18 +125,18 @@ export function EdicaoRateioDialog({
     toast.success(`${next.length} rateio(s) importado(s).`);
   }
 
-  function handleSalvar() {
+  async function handleSalvar() {
     try {
-      setRateios(titulo!.id, rows);
+      await repo.setRateios(titulo!.id, rows);
       toast.success("Rateio salvo.");
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao salvar rateio.");
     }
   }
-  function handleApagar() {
+  async function handleApagar() {
     try {
-      apagarRateios(titulo!.id);
+      await repo.apagarRateios(titulo!.id);
       toast.success("Rateio removido.");
       onOpenChange(false);
     } catch (e: any) {

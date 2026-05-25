@@ -275,7 +275,7 @@ export interface FinanceiroRepository {
   listarExtrato(): Promise<ExtratoLancamento[]>;
   adicionarLancamentoExtrato(input: Omit<ExtratoLancamento, "id" | "status" | "importadoEm">): Promise<ExtratoLancamento>;
   importarExtratoCSV(contaFinanceira: string, csv: string): Promise<number>;
-  sugerirCandidatosConciliacao(extratoId: string): Promise<Titulo[]>;
+  sugerirCandidatosConciliacao(extratoId: string): Promise<CandidatoConciliacao[]>;
   conciliar(args: { extratoId: string; tituloId: string; movimentoId?: string; motivo?: string }): Promise<void>;
   desfazerConciliacao(extratoId: string, motivo: string): Promise<void>;
   ignorarExtrato(extratoId: string, motivo: string): Promise<void>;

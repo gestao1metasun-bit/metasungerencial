@@ -395,7 +395,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   {desconto > 0 ? fmtBRLPrecise(desconto) : "—"}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">{fmtBRLPrecise(total)}</TableCell>
-                <TableCell><StatusPill s={t.status} /></TableCell>
+                <TableCell><StatusPill s={t.status} renegociado={t.statusRenegociacao === "renegociado"} /></TableCell>
               </TableRow>
               );
             })}

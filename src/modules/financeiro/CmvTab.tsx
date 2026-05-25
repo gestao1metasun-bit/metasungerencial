@@ -145,14 +145,17 @@ export function CmvTab() {
                       {c.status === "Aberta" && (
                         <>
                           <Button size="sm" variant="outline" className="h-7 px-2"
-                            onClick={() => {
-                              if (estocarCompra(c.id)) toast.success(`Compra ${c.id} estocada`);
-                              else toast.error("Falha ao estocar");
+                            onClick={async () => {
+                              try {
+                                const ok = await repo.estocarCompra(c.id);
+                                if (ok) toast.success(`Compra ${c.id} estocada`);
+                                else toast.error("Falha ao estocar");
+                              } catch (e: any) { toast.error(e?.message ?? "Falha ao estocar"); }
                             }}>
                             <ArrowDownToLine className="h-3.5 w-3.5 mr-1" /> Estocar
                           </Button>
                           <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive"
-                            onClick={() => { if (confirm(`Cancelar compra ${c.id}?`)) cancelarCompra(c.id); }}>
+                            onClick={async () => { if (confirm(`Cancelar compra ${c.id}?`)) { try { await repo.cancelarCompra(c.id); } catch (e: any) { toast.error(e?.message ?? "Erro."); } } }}>
                             <XCircle className="h-3.5 w-3.5" />
                           </Button>
                         </>

@@ -306,7 +306,7 @@ export function RenegociarTituloDialog({
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button
             onClick={confirmar}
-            disabled={!sim || motivo.trim().length < 5 || (sim?.nivelAprovacao === "diretoria" && !aprovador.trim())}
+            disabled={enviando || !sim || motivo.trim().length < 5 || (sim?.nivelAprovacao === "diretoria" && !aprovador.trim())}
           >
             Confirmar renegociação
           </Button>

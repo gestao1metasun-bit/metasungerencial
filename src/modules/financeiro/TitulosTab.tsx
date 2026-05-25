@@ -556,6 +556,19 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                           {fmtCompetenciaBR(t.competencia)}
                         </span>
                       )}
+                      {showFiscal && t.documentoTipo && (
+                        <span
+                          className="inline-flex items-center gap-0.5 rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-700"
+                          title={`Documento: ${t.documentoTipo}${t.documentoNumero ? " · " + t.documentoNumero : ""}`}
+                        >
+                          {t.documentoTipo}{t.documentoNumero ? ` ${t.documentoNumero}` : ""}
+                        </span>
+                      )}
+                      {showAuditoria && t.criadoPor && (
+                        <span className="inline-flex items-center gap-0.5 text-muted-foreground" title={`Criado por ${t.criadoPor} em ${t.criadoEm?.slice(0, 10)}`}>
+                          por {t.criadoPor}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </TableCell>

@@ -83,6 +83,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [estornar, setEstornar] = useState<{ titulo: Titulo; movId: string } | null>(null);
   const [verHist, setVerHist] = useState<Titulo | null>(null);
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
+  const [ratear, setRatear] = useState<Titulo | null>(null);
 
   const lista = useMemo(() => {
     let arr = todos.filter((t) => t.tipo === tipo);

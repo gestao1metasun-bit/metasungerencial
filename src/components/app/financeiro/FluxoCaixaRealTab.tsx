@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Wallet } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/app/StatCard";
 import { useFluxoCaixa } from "@/lib/fin-fluxo-caixa";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useOrcamentoObras } from "@/lib/fin-orcamento-obras";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 
 function isoAddDays(base: Date, days: number) {

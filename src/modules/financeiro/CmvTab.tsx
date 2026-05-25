@@ -421,15 +421,19 @@ function SaidaObraDialog() {
               const it = itens.find((x) => x.id === l.itemId);
               const cm = it?.custoMedio ?? 0;
               const disp = it?.qtdAtual ?? 0;
+              const semCM = !!it && !(it.custoMedio && it.custoMedio > 0);
               return (
                 <div key={i} className="grid grid-cols-[1fr_80px_120px_36px] gap-2 items-end">
                   <div>
                     <Select value={l.itemId} onValueChange={(v) => upd(i, { itemId: v })}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className={`h-9 ${semCM ? "border-rose-400 text-rose-700" : ""}`}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {itens.map((it) => <SelectItem key={it.id} value={it.id}>{it.nome} (est. {it.qtdAtual})</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    {semCM && (
+                      <div className="text-[10px] text-rose-600 mt-0.5">Sem custo médio — registre uma compra primeiro.</div>
+                    )}
                   </div>
                   <Input type="number" min={0} max={disp} value={l.qtd} onChange={(e) => upd(i, { qtd: Number(e.target.value) || 0 })} />
                   <div className="text-xs text-muted-foreground h-9 flex items-center">

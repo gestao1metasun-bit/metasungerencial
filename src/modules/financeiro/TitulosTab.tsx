@@ -969,13 +969,15 @@ function TituloDialog({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Tipo de aplicação</Label>
-            <Select value={tipoAplicacaoId} onValueChange={setTipoAplicacaoId}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>{tiposAplic.filter((t) => t.ativo).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}{t.posVenda ? " (pós-venda)" : ""}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          {maisOpcoes && (
+            <div>
+              <Label>Tipo de aplicação</Label>
+              <Select value={tipoAplicacaoId} onValueChange={setTipoAplicacaoId}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>{tiposAplic.filter((t) => t.ativo).map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}{t.posVenda ? " (pós-venda)" : ""}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

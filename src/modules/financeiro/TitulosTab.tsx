@@ -294,7 +294,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               <TableHead>ID</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>{tipo === "AP" ? "Fornecedor" : "Cliente"}</TableHead>
-              <TableHead>Vencimento</TableHead>
+              <TableHead>Venc. Nominal</TableHead>
+              <TableHead>Venc. Real</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Juros</TableHead>
               <TableHead className="text-right">Multa</TableHead>

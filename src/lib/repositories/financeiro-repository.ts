@@ -106,6 +106,38 @@ export type CalcularEncargosInput = {
   multaPct?: number;
 };
 
+export type ChequeInput = {
+  numero: string;
+  banco?: string;
+  agencia?: string;
+  conta?: string;
+  bom_para?: string;
+  titular?: string;
+};
+
+export type ImportPrevisaoLanc = {
+  id: string;
+  data: string;
+  descricao: string;
+  tipo: "Entrada" | "Saída";
+  valor: number;
+  camada: string;
+  natureza: string;
+  centroCusto: string;
+  obra?: string;
+  contrato?: string;
+  cliente?: string;
+  formaPagamento?: string;
+  parcelaLabel?: string;
+  competencia?: string;
+};
+
+export type AnexoInput = Partial<Anexo> & Pick<Anexo, "nome" | "mime" | "tamanho">;
+
+export type CopiaTituloOverrides = Partial<
+  Pick<Titulo, "vencimento" | "competencia" | "valorOriginal" | "descricao">
+>;
+
 export type RepoErrorCode =
   | "PERIOD_LOCKED"
   | "FORBIDDEN"

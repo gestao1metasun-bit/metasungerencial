@@ -72,7 +72,7 @@ export function calcularFluxo(titulos: Titulo[], args: UseFluxoArgs): FluxoPonto
 
     // PREVISTO: saldo aberto projetado pelo vencimento + também conta o realizado já ocorrido
     if (matchConta(t.contaFinanceira)) {
-      const venc = t.vencimento;
+      const venc = t.vencimentoReal ?? t.vencimento;
       if (t.saldo > 0.001 && map.has(venc)) {
         const b = map.get(venc)!;
         if (t.tipo === "AR") b.entradaPrevista += t.saldo;

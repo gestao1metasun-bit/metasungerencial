@@ -204,7 +204,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         (t.obraId ?? "").toLowerCase().includes(b),
       );
     }
-    return arr.sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+    return arr.sort((a, b) => (a.vencimentoReal ?? a.vencimento).localeCompare(b.vencimentoReal ?? b.vencimento));
   }, [todos, tipo, fStatus, busca]);
 
   const totais = useMemo(() => {
@@ -372,7 +372,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   {t.obraId && <div className="text-[10px] text-muted-foreground">Obra: {t.obraId}</div>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{tipo === "AP" ? (t.fornecedor ?? "—") : (t.cliente ?? "—")}</TableCell>
-                <TableCell className="text-muted-foreground">{fmtDateBR(t.vencimento)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {t.vencimentoReal && t.vencimentoReal !== t.vencimento ? (
+                    <div className="flex flex-col leading-tight">
+                      <span className="font-medium text-foreground">{fmtDateBR(t.vencimentoReal)}</span>
+                      <span className="text-[10px] text-muted-foreground line-through">{fmtDateBR(t.vencimento)}</span>
+                    </div>
+                  ) : (
+                    fmtDateBR(t.vencimento)
+                  )}
+                </TableCell>
                 <TableCell className="text-right font-medium">{fmtBRLPrecise(t.valorOriginal)}</TableCell>
                 <TableCell className="text-right">{fmtBRLPrecise(t.saldo)}</TableCell>
                 <TableCell><StatusPill s={t.status} /></TableCell>

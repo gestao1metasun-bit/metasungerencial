@@ -87,7 +87,7 @@ function GruposPanel() {
                   <div className="inline-flex gap-1">
                     <GrupoDialog grupo={g} onSave={(x) => { upsertGrupo(x); toast.success("Grupo atualizado."); }} />
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                      if (confirm(`Excluir grupo "${g.nome}" e seus subgrupos?`)) { removeGrupo(g.id); toast.success("Grupo removido."); }
+                      confirmDialog({ title: "Excluir grupo?", description: `Excluir grupo "${g.nome}" e seus subgrupos?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeGrupo(g.id); toast.success("Grupo removido."); } });
                     }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                   </div>
                 </TableCell>
@@ -124,7 +124,7 @@ function GruposPanel() {
                     <div className="inline-flex gap-1">
                       <SubgrupoDialog grupos={grupos} sub={s} onSave={(x) => { upsertSubgrupo(x); toast.success("Subgrupo atualizado."); }} />
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                        if (confirm(`Excluir subgrupo "${s.nome}"?`)) { removeSubgrupo(s.id); toast.success("Subgrupo removido."); }
+                        confirmDialog({ title: "Excluir subgrupo?", description: `Excluir subgrupo "${s.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeSubgrupo(s.id); toast.success("Subgrupo removido."); } });
                       }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                     </div>
                   </TableCell>
@@ -275,7 +275,7 @@ function NaturezasPanel() {
                   <div className="inline-flex gap-1">
                     <NaturezaDialog natureza={n} grupos={grupos} subs={subs} centros={centros} aplics={aplics} onSave={(x) => { upsertNatureza(x); toast.success("Natureza atualizada."); }} />
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                      if (confirm(`Excluir natureza "${n.nome}"?`)) { removeNatureza(n.id); toast.success("Natureza removida."); }
+                      confirmDialog({ title: "Excluir natureza?", description: `Excluir natureza "${n.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeNatureza(n.id); toast.success("Natureza removida."); } });
                     }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                   </div>
                 </TableCell>
@@ -407,7 +407,7 @@ function CentrosPanel() {
                 <div className="inline-flex gap-1">
                   <CentroDialog centro={c} onSave={(x) => { upsertCentroCusto(x); toast.success("Centro atualizado."); }} />
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                    if (confirm(`Excluir centro "${c.nome}"?`)) { removeCentroCusto(c.id); toast.success("Centro removido."); }
+                    confirmDialog({ title: "Excluir centro de custo?", description: `Excluir centro "${c.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeCentroCusto(c.id); toast.success("Centro removido."); } });
                   }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </div>
               </TableCell>
@@ -486,7 +486,7 @@ function MeiosPanel() {
                 <div className="inline-flex gap-1">
                   <MeioDialog meio={m} onSave={(x) => { upsertMeio(x); toast.success("Meio atualizado."); }} />
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                    if (confirm(`Excluir meio "${m.nome}"?`)) { removeMeio(m.id); toast.success("Meio removido."); }
+                    confirmDialog({ title: "Excluir meio de pagamento?", description: `Excluir meio "${m.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeMeio(m.id); toast.success("Meio removido."); } });
                   }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </div>
               </TableCell>
@@ -562,7 +562,7 @@ function AplicacoesPanel() {
                 <div className="inline-flex gap-1">
                   <AplicacaoDialog aplic={a} onSave={(x) => { upsertTipoAplicacao(x); toast.success("Tipo atualizado."); }} />
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                    if (confirm(`Excluir "${a.nome}"?`)) { removeTipoAplicacao(a.id); toast.success("Tipo removido."); }
+                    confirmDialog({ title: "Excluir tipo de aplicação?", description: `Excluir "${a.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeTipoAplicacao(a.id); toast.success("Tipo removido."); } });
                   }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </div>
               </TableCell>
@@ -634,7 +634,7 @@ function ContasPanel() {
                 <div className="inline-flex gap-1">
                   <ContaDialog conta={c} onSave={(x) => { upsertConta(x); toast.success("Conta atualizada."); }} />
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                    if (confirm(`Excluir conta "${c.nome}"?`)) { removeConta(c.id); toast.success("Conta removida."); }
+                    confirmDialog({ title: "Excluir conta financeira?", description: `Excluir conta "${c.nome}"?`, destructive: true, confirmText: "Excluir" }).then((ok) => { if (ok) { removeConta(c.id); toast.success("Conta removida."); } });
                   }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </div>
               </TableCell>

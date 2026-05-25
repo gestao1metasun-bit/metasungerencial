@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEstoqueState, cmvPorObra, valorEstoqueTotal, registrarSaidaObra } from "@/lib/estoque-store";
-import { useCompras, criarCompra, estocarCompra, cancelarCompra, type ItemCompra } from "@/lib/fin-compras-store";
-import { useTitulos } from "@/lib/fin-titulos-store";
-import { useFornecedores } from "@/lib/fin-fornecedores-store";
+import {
+  useFinanceiroRepo, useRepoCompras, useRepoTitulos, useRepoFornecedores,
+} from "@/hooks/useRepoFinanceiro";
+import type { ItemCompra } from "@/lib/fin-compras-store";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { StatCard } from "@/components/app/StatCard";
 import { Boxes, TrendingDown, Package, ShoppingCart, Plus, CheckCircle2, XCircle, ArrowDownToLine } from "lucide-react";

@@ -134,6 +134,13 @@ export type ImportPrevisaoLanc = {
 
 export type AnexoInput = Partial<Anexo> & Pick<Anexo, "nome" | "mime" | "tamanho">;
 
+export type CandidatoConciliacao = {
+  titulo: Titulo;
+  dif: number;
+  exato: boolean;
+  score: number;
+};
+
 export type CopiaTituloOverrides = Partial<
   Pick<Titulo, "vencimento" | "competencia" | "valorOriginal" | "descricao">
 >;

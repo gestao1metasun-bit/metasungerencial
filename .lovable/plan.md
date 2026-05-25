@@ -1,97 +1,139 @@
+## Reestruturação Arquitetural — Fundação Transacional ERP Meta Sun
 
-# Prioridade 2 — Persistência real do funil comercial
+Esta é uma fase de fundação, não um ajuste pontual. Vou executar em **8 ondas sequenciais**, cada uma gerando entregáveis verificáveis e mantendo o sistema funcional entre ondas. Nenhuma onda é "só visual": cada uma encerra com persistência real, RLS, auditoria e regras transacionais.
 
-## Diagnóstico antes do plano
+---
 
-Investiguei o estado atual dos stores:
+### Princípios inegociáveis (válidos para todas as ondas)
 
-- `src/modules/leads/store.ts` (209 linhas) — 100% localStorage (`ms.leads.v1`).
-- `src/modules/propostas/store.ts` (1.155 linhas) — 100% localStorage. Carrega cidades, concessionárias, módulos, inversores, distribuidores, parâmetros, custos, propostas, tarifas, histórico. As propostas vivem em `ms.fv.propostas.v1` junto com helpers pesados de cálculo síncronos.
-- `src/lib/contratos-store.ts` (1.104 linhas) — também 100% localStorage. `criarContratoPendenteDeProposta` é chamado por `PropostaList.tsx` no fluxo "Aprovar e gerar contrato".
-- `src/lib/clientes-store.ts` (136 linhas) — também 100% localStorage, apesar da tabela `clientes` já existir no Supabase.
-- Tabelas Supabase **já existentes** com RLS por `consultor_id`: `clientes`, `contratos`, `projetos`, `obras`, `aditivos`. **Não existe** tabela `leads` nem `propostas`.
+- **Origem do financeiro**: SOMENTE via `gerar_titulos_do_pv(pv_id)`, idempotente. Nunca direto de contrato/projeto.
+- **1 contrato = 1 PV consolidado** por padrão; PVs adicionais só com justificativa registrada (forma de pagamento distinta, faturamento separado, etc.).
+- **Projetos são operacionais**; **PV é financeiro/comercial**; **Contrato é o acordo**.
+- **Status principal ≠ gates**: campos separados (`status`, `financeiro_status`, `engenharia_status`, `diretoria_status`).
+- **Toda mutação crítica**: trigger `tg_audit_row` + `tg_snapshot_version` + soft delete + RLS por consultor/admin.
+- **Edição pós-aprovação**: proibida; exige reabertura com motivo (mín. 3 chars), nova versão.
+- **Validações no banco** (RPC/trigger), não só no frontend.
 
-Conclusão: o "funil comercial" inteiro (Lead → Proposta → Contrato → Cliente) hoje vive em `localStorage`. As tabelas Supabase de Contratos/Clientes existem mas **não são lidas/escritas em lugar nenhum** — são órfãs.
+---
 
-## Escopo desta fase (o que ENTRA)
+### Onda 1 — Projetos do Contrato (Prioridade 2 do briefing)
 
-Persistir o trecho mínimo do funil que desbloqueia o Cenário 1:
+**Tabela `projetos_contrato`** (nova, separada de `projetos` legado para não quebrar engenharia/propostas):
+- `id`, `contrato_id` (FK), `cliente_id`, `consultor_id`, `ordem`, `descricao`, `valor`, `endereco` (jsonb: cep/rua/numero/bairro/cidade/uf), `potencia_kwp`, `modulos_qtd`, `inv1`/`inv2`/`inv3`, `telhado_tipo`, `dados` (jsonb), `status` (enum: `RASCUNHO`,`PENDENTE_APROVACAO`,`APROVADO`,`ENVIADO_ENGENHARIA`,`EM_EXECUCAO`,`FINALIZADO`,`CANCELADO`), `obra_id`, `pv_id`, soft-delete, auditoria.
 
-1. Criar tabela `leads` no Supabase (com RLS por consultor).
-2. Criar tabela `propostas` no Supabase com colunas operacionais + `dados jsonb` para o snapshot técnico/comercial pesado (1.155 linhas de tipos não cabem em colunas individuais sem refactor de meses).
-3. Substituir backend de `leads/store.ts` e da fatia de **propostas** dentro de `propostas/store.ts` por um repositório Supabase, mantendo a mesma API (`useLeads`, `usePropostas`, `criarLead`, `upsertProposta`, etc.) para não tocar nos ~30 consumidores.
-4. Os outros stores dentro de `propostas/store.ts` (cidades, módulos, inversores, custos, tarifas, parâmetros, distribuidores) **continuam locais** — são catálogo/configuração, não funil, e fogem do escopo declarado.
-5. Validar que `aprovarPropostaDoLead` + `criarContratoPendenteDeProposta` continuam funcionando — mas **contratos seguem em localStorage** (1.104 linhas, fora do escopo "Lead/Proposta" pedido).
+**RPCs**:
+- `criar_projetos_do_contrato(contrato_id, projetos[])`
+- `aprovar_projeto(projeto_id)` — valida soma ≤ valor_contrato
+- `enviar_projeto_para_engenharia(projeto_id)` — cria `obra` vinculada
+- `recalcular_saldo_contrato(contrato_id)` — retorna `{total, somado, saldo}`
+- `validar_integridade_contrato_projetos(contrato_id)`
 
-## Escopo fora desta fase (NÃO entra)
+**Trigger**: `tg_projetos_contrato_audit`, `tg_snapshot_version`, `tg_valida_soma_projetos` (BEFORE INSERT/UPDATE).
 
-- Migração de `contratos-store.ts` para Supabase (precisa ser sua próxima frente).
-- Migração de `clientes-store.ts` (já tem tabela mas não está sendo usada).
-- Catálogos da proposta (módulos/inversores/custos/cidades/tarifas).
-- Onda 4 financeira, estoque, engenharia, analytics.
+**RLS**: consultor vê seus contratos; admin vê tudo.
 
-Implicação operacional importante: como contratos ainda vivem em localStorage, o **contrato gerado pela aprovação não persistirá entre sessões** mesmo depois desta fase. Apenas o Lead e a Proposta sobreviverão. Para o Cenário 1 ser 100% ponta a ponta entre sessões, contratos precisarão de uma Prioridade 3.
+**UI**:
+- Card de contrato assinado → botões "Cadastrar Projetos" / "Ver Projetos" / "Ver PV" + chips "N projetos pendentes" / "Financeiro gerado".
+- Tela `/projetos-contrato/:contratoId`: lista projetos, valor contrato, somado, saldo, ação "Criar projeto residual", aprovação individual, envio Engenharia.
+- Repo `projetos-contrato-repo.ts` (mesmo padrão de `leads-repo`/`propostas-repo`).
 
-## Arquitetura
+---
 
-```text
-UI (LeadsPage, PropostaList, etc.)
-        │  imports inalterados
-        ▼
-src/modules/leads/store.ts                 src/modules/propostas/store.ts
-  useLeads / criarLead / ...                  usePropostas / upsertProposta / ...
-        │                                                 │
-        ▼                                                 ▼
-src/lib/repositories/leads-repo.ts        src/lib/repositories/propostas-repo.ts
-  hydrate(): Promise<Lead[]>                hydrate(): Promise<PropostaFV[]>
-  insert / update / patch                   insert / update / patch
-        │                                                 │
-        └─────────► supabase.from("leads") / .from("propostas")
-                    (browser client, RLS aplica como o usuário logado)
-```
+### Onda 2 — Pedido de Venda consolidado (Prioridades 3 e 4)
 
-Padrão: **cache síncrono em memória** (mantém `useSyncExternalStore` e os helpers de cálculo síncronos funcionando) + **hidratação assíncrona** no primeiro acesso via `supabase.auth.onAuthStateChange` + **write-through assíncrono** após cada mutação. `localStorage` deixa de ser fonte oficial; passa a ser apenas fallback de leitura inicial enquanto a hidratação termina (evita flash de tela vazia).
+**Tabelas**:
+- `pedidos_venda`: `id`, `contrato_id`, `cliente_id`, `consultor_id`, `numero`, `versao`, `valor_total`, `composicao` (jsonb), `forma_pagamento`, `entrada`, `parcelas` (jsonb), `financiamento` (jsonb), `permuta` (jsonb), `banco`, `previsao_recebimento`, `centro_receita`, `natureza_fin`, `status` (`RASCUNHO`,`EM_APROVACAO`,`APROVADO`,`FINANCEIRO_GERADO`,`EM_EXECUCAO`,`FINALIZADO`,`REPROVADO`,`CANCELADO`), `financeiro_status`, `engenharia_status`, `diretoria_status`, `financeiro_gerado_em`, `financeiro_gerado_por`, `motivo_reabertura`, snapshot, soft-delete, auditoria.
+- `pedido_venda_projetos` (N:N): `pv_id`, `projeto_id`, `valor_alocado`.
+- `pedido_venda_pagamentos`: parcelas/títulos previstos.
+- `pedido_venda_aprovacoes`: `pv_id`, `gate` (financeiro/diretoria/engenharia), `status`, `user_id`, `motivo`, `created_at`.
+- `pedido_venda_eventos`: timeline.
 
-## Etapas de execução
+**RPCs**:
+- `gerar_pv_do_contrato(contrato_id)` — cria PV consolidado idempotente (1 por contrato; PV adicional só com flag `permitir_pv_adicional` + motivo).
+- `vincular_projetos_ao_pv(pv_id, projeto_ids[])`
+- `aprovar_gate_pv(pv_id, gate, decisao, motivo)`
+- `aprovar_pv(pv_id)` — só se todos gates OK
+- `gerar_titulos_do_pv(pv_id)` — **idempotente** via `financeiro_gerado_em IS NOT NULL` guard; cria N títulos AR em `fin_titulos` com `tipo_origem='pedido_venda'`, `origem_id=pv.id`, `contrato_id`, `pv_id`, `cliente_id`, natureza, centro_receita, banco, competência, vencimento por parcela.
+- `reabrir_pv(pv_id, motivo)` — incrementa versão, snapshot, cancela títulos não-baixados, preserva recebidos.
+- `cancelar_pv(pv_id, motivo)`.
 
-1. **Migração SQL** (`supabase--migration`):
-   - Tabela `public.leads`: campos do tipo `Lead` mapeados para colunas tipadas + `dados jsonb` para extras + `consultor_id`, `cliente_id`, `created_at`, `updated_at`, `deleted_at`.
-   - Tabela `public.propostas`: colunas operacionais (`numero`, `status`, `cliente_id`, `consultor_id`, `lead_id`, `valor_final`, `contrato_id`, datas, `versao`) + `dados jsonb` com a `PropostaFV` completa.
-   - Índices em `(consultor_id, status)`, `(lead_id)`, `(cliente_id)`.
-   - RLS espelhando o padrão existente: `select/insert/update` se `consultor_id = auth.uid() OR is_admin(auth.uid())`, `delete` só admin.
-   - Triggers `tg_set_updated_at_generic` em ambas as tabelas.
+**Validações em trigger**:
+- PV aprovado não pode ser editado direto.
+- Soma `valor_alocado` dos projetos = `valor_total` do PV.
+- Títulos com movimentos não estornados não são apagados pela reabertura.
 
-2. **Repositórios novos**:
-   - `src/lib/repositories/leads-repo.ts` — `listAll()`, `insert(row)`, `updatePatch(id, patch)`, mapeadores Lead ↔ row.
-   - `src/lib/repositories/propostas-repo.ts` — idem, com serialização `PropostaFV` → colunas + `dados`.
+**UI**:
+- Tela `/pedidos-venda` (lista) + `/pedidos-venda/:id` (detalhe com timeline, projetos vinculados, composição, parcelas, aprovações, títulos gerados).
+- Botão "Gerar PV" no contrato (visível quando ≥1 projeto aprovado).
+- Botão "Aprovar PV" e "Gerar financeiro" gated por permissão.
 
-3. **Refactor dos stores existentes** (mantendo a API pública):
-   - `src/modules/leads/store.ts`: `read()` continua síncrono retornando cache; adicionar `hydrateFromSupabase()` chamado no boot; `criarLead`/`setLeadStatus`/`atualizarLead`/`trocarOrigemLead`/`trocarConsultorLead` viram async (com versão síncrona otimista que atualiza cache imediatamente e dispara `await` ao Supabase em background; em caso de erro, reverte cache e dispara toast).
-   - Fatia de propostas em `src/modules/propostas/store.ts`: substituir `propsS = makeStore(...)` por uma variante "supabase-backed" do `makeStore`, deixando os outros catálogos intactos.
+---
 
-4. **Boot/hidratação**:
-   - Adicionar listener `onAuthStateChange` em `src/components/app/AppLayout.tsx` (ou hook dedicado `useFunnelHydration`) que chama `hydrateLeads()` + `hydratePropostas()` quando há sessão e limpa o cache no logout.
+### Onda 3 — Financeiro com origem rastreável (Prioridade 4 hardening)
 
-5. **Validação manual**:
-   - Criar lead → refresh → lead persiste.
-   - Criar proposta → refresh → proposta persiste.
-   - Aprovar proposta → contrato é gerado (em localStorage por ora) e proposta muda status no Supabase.
-   - Login com outro consultor → não vê leads/propostas do primeiro.
-   - Admin → vê tudo.
+- Migrar `fin_titulos` (hoje localStorage) ao Supabase, com colunas: `tipo_origem`, `origem_id`, `contrato_id`, `pv_id`, `projeto_id` (nullable), `cliente_id`, `natureza_id`, `centro_id`, `conta_id`, `competencia`, `vencimento`, `valor`, `saldo`, `status`, `forma_pagamento`, `banco_id`.
+- Trigger: bloqueia `DELETE` se há movimento não estornado; soft delete obrigatório.
+- RPC `baixar_titulo(titulo_id, movimento)`, `estornar_movimento(mov_id, motivo)`.
+- Adapter `SupabaseFinanceiroAdapter` (já existe esqueleto) — completar implementação contra novo schema.
+- Flag `fin.repository.source` para alternar local↔supabase.
 
-6. **Relatório final** com:
-   - Tabelas criadas e RLS aplicada.
-   - Stores migradas vs. ainda em localStorage.
-   - Resultado dos testes de permissão.
-   - Status do build.
-   - Recomendação sobre Cenário 1 (vai precisar de Prioridade 3 para contratos antes de teste ponta a ponta completo).
+---
 
-## Riscos / decisões a confirmar
+### Onda 4 — Engenharia integrada (Prioridade 5)
 
-- **Contratos seguem em localStorage** nesta fase. Você confirmou que o foco é "Lead + Proposta". Mantenho assim, mas o Cenário 1 ainda terá uma quebra na etapa de Contrato/Assinatura entre sessões.
-- **Otimismo nas mutações**: vou aplicar otimismo (cache primeiro, Supabase em background) para não introduzir latência perceptível nem refatorar 30+ call sites. Se uma escrita falhar (ex.: RLS rejeitou), reverto e mostro toast. Alternativa seria tornar todas as APIs assíncronas — refactor grande, mais lento, fora do escopo desta sessão.
-- **`PropostaFV` em `jsonb`**: aceita evolução de schema sem migração, mas perde filtros SQL tipados. Adequado para esta fase; depois pode-se promover campos quentes para colunas.
+- `obras` ganha `projeto_contrato_id` e `pv_id` (FKs).
+- RPC `aprovar_projeto` cria obra automaticamente, status inicial `EM_PROJETO_APROVACAO`.
+- Trigger limpa `equipe` quando status sai de `AGUARDANDO_INSTALACAO`/`EXECUTANDO_INSTALACAO`.
+- UI engenharia: passa a listar obras por `projeto_contrato_id` (e exibir contrato/projeto/PV).
 
-## Próximo passo após aprovação
+---
 
-Executar a migração SQL como primeiro passo (precisa da sua aprovação no diálogo da migração) e seguir com os repositórios e refactor de stores na mesma sessão.
+### Onda 5 — Auditoria, versionamento, reabertura (Prioridade 6)
+
+- Aplicar `tg_audit_row` + `tg_snapshot_version` em: `projetos_contrato`, `pedidos_venda`, `pedido_venda_pagamentos`, `obras` (já tem parcial), `fin_titulos`.
+- `HistoricoTimeline` já consome `audit_log` — adicionar entidades novas no enum `AuditEntidade`.
+- Reabertura: padronizar via RPCs (`reabrir_pv`, `reabrir_projeto` se necessário) com `motivo` obrigatório, registrado em `audit_log.motivo`.
+
+---
+
+### Onda 6 — Permissões + RLS hardening (Prioridade 6)
+
+Adicionar ao enum `app_permission`:
+`contrato.criar`, `contrato.editar`, `contrato.assinar`, `contrato.cancelar`, `projeto.criar`, `projeto.aprovar`, `projeto.cancelar`, `pv.criar`, `pv.aprovar.financeiro`, `pv.aprovar.diretoria`, `pv.aprovar.engenharia`, `pv.reabrir`, `pv.cancelar`, `financeiro.gerar`, `financeiro.baixar`, `financeiro.cancelar`, `engenharia.editar`, `engenharia.aprovar`, `estoque.editar`.
+
+Gates de UI via `useMyPermissions().can(...)`. RLS já segue padrão `consultor_id = auth.uid() OR is_admin(...)`; estender para projetos/PV.
+
+---
+
+### Onda 7 — Estoque preparado (Prioridade 7)
+
+- Tabela `projeto_materiais_previstos` (sugestão calculada de módulos/inversores/cabos/MC4/estrutura por projeto).
+- Função `sugerir_materiais_projeto(projeto_id)` baseada em potência/módulos/telhado.
+- Sem baixa automática nesta onda — apenas estrutura + UI de consulta.
+
+---
+
+### Onda 8 — Dashboards reais (Prioridade 8)
+
+- MVs novas: `mv_kpi_pv`, `mv_kpi_projetos_contrato`, `mv_kpi_financeiro_pv`.
+- Adicionar ao `refresh_mv_kpis()`.
+- Telas analytics consomem novas RPCs `kpi_pv()`, `kpi_projetos()`.
+
+---
+
+### Ordem de execução proposta nesta sessão
+
+Vou começar pela **Onda 1 (Projetos do Contrato)** completa: migration + RPCs + triggers + RLS + repo + tela + integração com contrato. É a base sem a qual nada mais faz sentido (Engenharia precisa de projeto aprovado; PV precisa consolidar projetos).
+
+**Critério de aceite Onda 1**:
+1. Migration aplicada (tabela, triggers, RPCs, RLS, permissões).
+2. Contrato assinado mostra botão "Cadastrar Projetos".
+3. Posso criar 3 projetos somando = valor contrato (soma > valor rejeitada).
+4. Aprovar projeto individualmente funciona e cria obra em engenharia.
+5. Auditoria registra cada ação em `audit_log`.
+6. Build limpo, RLS testada com consultor não-admin.
+
+Após sua aprovação, prossigo onda por onda, com relatório curto entre cada uma e parada para revisão antes de avançar.
+
+### Nota técnica
+Cada onda toca: 1 migration SQL (schema + RPCs + RLS + triggers), 1 repo TS, 1–2 telas, integração no fluxo existente. Mantenho `leads`/`propostas` no padrão atual (já migrado) e introduzo `projetos_contrato`/`pedidos_venda` seguindo o mesmo padrão.

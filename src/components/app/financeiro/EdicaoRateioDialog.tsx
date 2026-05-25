@@ -136,7 +136,7 @@ export function EdicaoRateioDialog({
   }
   function handleApagar() {
     try {
-      apagarRateios(titulo.id);
+      apagarRateios(titulo!.id);
       toast.success("Rateio removido.");
       onOpenChange(false);
     } catch (e: any) {

@@ -37,7 +37,7 @@ import type {
   Compra, CriarCompraInput,
 } from "@/lib/fin-compras-store";
 import type {
-  ExtratoLancamento,
+  ExtratoLancamento, ExtratoStatus,
 } from "@/lib/fin-conciliacao-store";
 import type {
   FechamentoMes,

@@ -96,7 +96,7 @@ export function AditivoDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo aditivo — contrato {contrato.id}</DialogTitle>
           <DialogDescription>

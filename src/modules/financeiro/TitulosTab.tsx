@@ -352,7 +352,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       {/* Histórico + estorno */}
       <Dialog open={!!verHist} onOpenChange={(o) => !o && setVerHist(null)}>
         {verHist && (
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{verHist.id} — Movimentos & Auditoria</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="text-sm">
@@ -660,7 +660,7 @@ function TituloDialog({
   ].filter(Boolean).join(" › ");
 
   return (
-    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           {tipo === "AR" ? (
@@ -1090,7 +1090,7 @@ function BaixaDialog({
   const [observacao, setObs] = useState("");
 
   return (
-    <DialogContent className="max-w-xl">
+    <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>
           {titulo.tipo === "AP" ? "Registrar pagamento" : "Registrar recebimento"} · {titulo.id}
@@ -1135,7 +1135,7 @@ function BaixaDialog({
 function EstornoDialog({ onSave, onCancel }: { onSave: (motivo: string) => void; onCancel: () => void }) {
   const [motivo, setMotivo] = useState("");
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Estornar movimento</DialogTitle></DialogHeader>
       <div className="space-y-2">
         <Label>Motivo do estorno (obrigatório)</Label>

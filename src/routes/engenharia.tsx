@@ -526,7 +526,7 @@ function ObrasModal({
 }: { open: boolean; onClose: () => void; title: string; obras: Obra[]; onUpdateStatus: (id: string, status: string) => void }) {
   return (
     <Dialog open={open} onOpenChange={(v)=>!v && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{obras.length} obra(s) · {obras.reduce((s,o)=>s+o.modulos,0)} módulos · {obras.reduce((s,o)=>s+o.potencia,0).toFixed(1)} kWp</DialogDescription>
@@ -842,7 +842,7 @@ function EditObraDialog({
 
   return (
     <Dialog open={!!obra} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar obra · {obra.cliente}</DialogTitle>
           <DialogDescription>Contrato {fmtContrato(obra.contrato)} · #{obra.ordem}</DialogDescription>
@@ -1014,7 +1014,7 @@ function EditObraDialog({
       </DialogContent>
 
       <Dialog open={confirmRet} onOpenChange={setConfirmRet}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Retornar obra para o Comercial</DialogTitle>
             <DialogDescription>
@@ -1029,7 +1029,7 @@ function EditObraDialog({
       </Dialog>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Confirmar alteração</DialogTitle>
             <DialogDescription>
@@ -1400,7 +1400,7 @@ function EditPendenciaDialog({
 
   return (
     <Dialog open={!!pend} onOpenChange={(v) => { if (!v) { onClose(); setForm({}); setConfirming(false); } }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar pendência</DialogTitle>
           <DialogDescription>{pend.cliente} · {pend.equipe}</DialogDescription>
@@ -1430,7 +1430,7 @@ function EditPendenciaDialog({
         </DialogFooter>
       </DialogContent>
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Confirmar alteração</DialogTitle>
             <DialogDescription>Tem certeza que deseja salvar esta alteração?</DialogDescription>
@@ -1692,7 +1692,7 @@ function HistoricoObraDialog({ obra, onClose }: { obra: Obra | null; onClose: ()
   if (!obra) return null;
   return (
     <Dialog open={!!obra} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico — {obra.cliente}</DialogTitle>
           <DialogDescription>{obra.id} · {historico.length} registro(s)</DialogDescription>
@@ -2287,7 +2287,7 @@ function NovoProjetoDialog({ contrato, onClose }: { contrato: ContratoFull; onCl
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo projeto — {contrato.id}</DialogTitle>
           <DialogDescription>
@@ -2364,7 +2364,7 @@ function EditProjetoDialog({ contrato, projeto, onClose }: { contrato: ContratoF
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar projeto — {projeto.id}</DialogTitle>
           <DialogDescription>

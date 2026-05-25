@@ -194,7 +194,7 @@ export function TituloRowActions(p: TituloRowActionsProps) {
 
       {/* Excluir */}
       <Dialog open={excluirOpen} onOpenChange={setExcluirOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Excluir título {t.id}</DialogTitle></DialogHeader>
           <div className="space-y-2 text-sm">
             <p className="text-muted-foreground">A exclusão cancela o título. Informe o motivo:</p>
@@ -209,7 +209,7 @@ export function TituloRowActions(p: TituloRowActionsProps) {
 
       {/* Estornar */}
       <Dialog open={estornarOpen} onOpenChange={setEstornarOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Estornar movimento — título {t.id}</DialogTitle></DialogHeader>
           <div className="space-y-3 text-sm">
             <div>
@@ -235,7 +235,7 @@ export function TituloRowActions(p: TituloRowActionsProps) {
 
       {/* Cheque */}
       <Dialog open={chequeOpen} onOpenChange={setChequeOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Cadastrar cheque — título {t.id}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
@@ -272,7 +272,7 @@ export function TituloRowActions(p: TituloRowActionsProps) {
 
       {/* Gerar cópia */}
       <Dialog open={copiaOpen} onOpenChange={setCopiaOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Gerar cópia do título {t.id}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="col-span-2">

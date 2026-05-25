@@ -544,7 +544,7 @@ function NovoLancamentoDialog({ onSave, centros, naturezas }: { onSave: (l: Lanc
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Novo lançamento</Button></DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Novo lançamento financeiro</DialogTitle></DialogHeader>
         <div className="grid gap-3 md:grid-cols-2">
           <Field label="Data"><Input type="date" value={form.data} onChange={(e) => set("data", e.target.value)} /></Field>
@@ -725,7 +725,7 @@ function NovaRecorrenteDialog({ onSave, centros, naturezas }: { onSave: (r: Desp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button><Repeat className="mr-2 h-4 w-4" /> Nova recorrente</Button></DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Lançamento recorrente</DialogTitle>
           <div className="mt-1 text-xs text-muted-foreground">Entradas (aluguéis, parcelas, assinaturas recebidas) e saídas (folha, contas fixas) com geração automática mês a mês.</div>

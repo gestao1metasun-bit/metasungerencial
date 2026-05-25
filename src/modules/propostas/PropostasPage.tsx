@@ -453,7 +453,7 @@ function LeadModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onCancel(); }}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -676,7 +676,7 @@ function ConsultorRapidoModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Cadastrar Consultor</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div>

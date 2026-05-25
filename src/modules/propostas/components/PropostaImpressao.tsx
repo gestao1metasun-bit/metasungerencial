@@ -30,7 +30,7 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] max-w-7xl overflow-y-auto">
         <DialogHeader className="no-print">
           <DialogTitle>Visualização — {proposta.numero}</DialogTitle>
         </DialogHeader>

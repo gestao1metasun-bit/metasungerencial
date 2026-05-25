@@ -76,17 +76,19 @@ export function AppLayout() {
   const tierOrder: Tier[] = ["operacao", "controle", "estrutura"];
 
   // Estrutura inicia colapsada; persiste preferência por sessão
-  const [collapsedTiers, setCollapsedTiers] = useState<Record<Tier, boolean>>(() => {
-    if (typeof window === "undefined") return { operacao: false, controle: false, estrutura: true };
+  const [collapsedTiers, setCollapsedTiers] = useState<Record<Tier, boolean>>({ operacao: false, controle: false, estrutura: true });
+  const [tiersHydrated, setTiersHydrated] = useState(false);
+  useEffect(() => {
     try {
       const raw = sessionStorage.getItem("ms:tiers");
-      if (raw) return { operacao: false, controle: false, estrutura: true, ...JSON.parse(raw) };
+      if (raw) setCollapsedTiers((p) => ({ ...p, ...JSON.parse(raw) }));
     } catch { /* ignore */ }
-    return { operacao: false, controle: false, estrutura: true };
-  });
+    setTiersHydrated(true);
+  }, []);
   useEffect(() => {
+    if (!tiersHydrated) return;
     try { sessionStorage.setItem("ms:tiers", JSON.stringify(collapsedTiers)); } catch { /* ignore */ }
-  }, [collapsedTiers]);
+  }, [collapsedTiers, tiersHydrated]);
 
   useRegisterRecente();
   const displayName = identidade.displayName;

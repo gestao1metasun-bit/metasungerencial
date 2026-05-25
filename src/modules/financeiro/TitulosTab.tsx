@@ -20,11 +20,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  useTitulos, criarTitulo, atualizarTitulo, cancelarTitulo, registrarBaixa,
-  estornarMovimento, importarPrevisoesDoLegado,
-  adicionarAnexo, removerAnexo,
-  type Titulo, type TituloTipo, type TituloStatus, type Anexo,
-} from "@/lib/fin-titulos-store";
+  useRepoTitulos, useFinanceiroRepo,
+} from "@/hooks/useRepoFinanceiro";
+import type {
+  Titulo, TituloTipo, TituloStatus, Anexo,
+} from "@/lib/repositories/financeiro-repository";
 import { useFornecedores, upsertFornecedor, newFornecedorId } from "@/lib/fin-fornecedores-store";
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 import { useNaturezasFin } from "@/lib/fin-naturezas-store";

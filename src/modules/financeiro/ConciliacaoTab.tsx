@@ -1,5 +1,5 @@
 // Conciliação Bancária: extrato importado x títulos AP/AR.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Upload, Link2, X, Undo2, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

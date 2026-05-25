@@ -119,3 +119,5 @@ export function upsertSubgrupo(s: SubgrupoFinanceiro) {
 export function removeSubgrupo(id: string) { writeS(readS().filter((x) => x.id !== id)); }
 export function newGrupoId() { return `G-${String(readG().length + 1).padStart(2, "0")}`; }
 export function newSubgrupoId() { return `S-${String(readS().length + 1).padStart(4, "0")}`; }
+export function getGrupos(): GrupoFinanceiro[] { return readG(); }
+export function getSubgrupos(): SubgrupoFinanceiro[] { return readS(); }

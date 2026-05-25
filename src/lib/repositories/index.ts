@@ -39,5 +39,20 @@ export function getFinanceiroRepositorySource(): RepositorySource {
 
 export type { FinanceiroRepository } from "./financeiro-repository";
 export type {
-  FiltroTitulos, BaixaInput, CriarTituloInput, RepoError,
+  FiltroTitulos, BaixaInput, CriarTituloInput, RepoError, RepoErrorCode,
+  HistoricoEntrada, CalcularEncargosInput,
+  CadastrosRepository, ParametrosRepository,
+  // Re-export de tipos de domínio para uso pelas telas (não importar do store!)
+  Titulo, TituloTipo, TituloStatus, Movimento, Rateio, Anexo,
+  Renegociacao, RenegociarInput, SimulacaoRenegociacao,
+  Rescisao, SimularRescisaoInput, ConfirmarRescisaoInput, SimulacaoRescisao,
+  Adiantamento, AdiantamentoTipo, Abatimento,
+  RegistrarAdiantamentoInput, AbaterInput,
+  Compra, CriarCompraInput,
+  ExtratoLancamento, FechamentoMes,
+  FluxoPonto, UseFluxoArgs,
+  Fornecedor, ContaFinanceira, NaturezaFin,
+  GrupoFinanceiro, SubgrupoFinanceiro,
+  CentroCustoFin, MeioPagamento, TipoAplicacao,
+  ParametrosFinanceiros, EncargosCalculados,
 } from "./financeiro-repository";

@@ -52,3 +52,4 @@ export function upsertMeio(m: MeioPagamento) {
 }
 export function removeMeio(id: string) { write(read().filter((x) => x.id !== id)); }
 export function newMeioId() { return `MP-${String(read().length + 1).padStart(2, "0")}`; }
+export function getMeiosPagamento(): MeioPagamento[] { return read(); }

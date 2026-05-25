@@ -67,3 +67,4 @@ export function upsertConta(c: ContaFinanceira) {
 }
 export function removeConta(id: string) { write(read().filter((x) => x.id !== id)); }
 export function newContaId() { return `CF-${String(read().length + 1).padStart(3, "0")}`; }
+export function getContasFinanceiras(): ContaFinanceira[] { return read(); }

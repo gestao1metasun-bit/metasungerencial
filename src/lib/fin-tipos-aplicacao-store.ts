@@ -53,3 +53,4 @@ export function upsertTipoAplicacao(t: TipoAplicacao) {
 }
 export function removeTipoAplicacao(id: string) { write(read().filter((x) => x.id !== id)); }
 export function newTipoAplicacaoId() { return `TA-${String(read().length + 1).padStart(2, "0")}`; }
+export function getTiposAplicacao(): TipoAplicacao[] { return read(); }

@@ -96,8 +96,10 @@ function proximoVencimento(base: string, idx: number, p: Periodicidade): string 
   return addDaysISO(base, idx * 7);
 }
 
+/* ============================================================
  * Tabela principal (AP ou AR)
  * ============================================================ */
+
 export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const todos = useTitulos();
   const naturezas = useNaturezasFin();

@@ -8,6 +8,7 @@ import {
 } from "@/hooks/usePedidosVenda";
 import { PedidoVendaModal } from "@/components/app/pv/PedidoVendaModal";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,9 @@ function PedidosVendaPage() {
           </Button>
         }
       />
+
+      <DashboardReaisOverview />
+
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
         <StatCard label="Rascunho" value={counts.RASCUNHO ?? 0} icon={FileText} />

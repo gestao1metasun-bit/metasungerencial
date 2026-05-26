@@ -4,6 +4,7 @@ import {
   Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -55,6 +56,7 @@ function EstoquePage() {
         title="Estoque"
         subtitle="Necessidades de obra, compras e controle de entregas."
       />
+      <div className="mb-4"><DashboardReaisOverview /></div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>

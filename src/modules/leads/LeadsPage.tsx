@@ -448,9 +448,14 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {!user ? (
+            <span className="text-xs text-destructive mr-auto">
+              Sessão não autenticada — faça login para salvar o lead.
+            </span>
+          ) : null}
           <Button variant="outline" onClick={() => { reset(); onClose(); }}>Cancelar</Button>
-          <Button onClick={salvar} disabled={!!leadExistenteNumero}>Salvar lead</Button>
+          <Button onClick={salvar} disabled={!!leadExistenteNumero || !user}>Salvar lead</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

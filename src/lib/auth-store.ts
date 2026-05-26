@@ -139,8 +139,27 @@ export function usePodeGerenciarAditivos(): boolean {
 }
 
 export async function signInEmail(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  console.info("[auth-login] signInWithPassword:start", { email });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  console.info("[auth-login] signInWithPassword:result", {
+    hasSession: !!data?.session,
+    userId: data?.user?.id ?? null,
+    email: data?.user?.email ?? null,
+    error: error?.message ?? null,
+  });
   if (error) throw error;
+  // Set imediato do estado global — não esperar onAuthStateChange
+  if (data?.session && data?.user) {
+    _state = { session: data.session, user: data.user, role: _state.role, loading: false };
+    emit();
+    setTimeout(() => {
+      void loadRole(data.user!.id).then((role) => {
+        _state = { session: data.session, user: data.user, role, loading: false };
+        emit();
+        void hydrateFunnel(true);
+      });
+    }, 0);
+  }
 }
 
 export async function signUpEmail(email: string, password: string, fullName?: string) {

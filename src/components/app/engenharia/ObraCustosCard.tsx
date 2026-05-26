@@ -30,17 +30,17 @@ export function ObraCustosCard({ obraId }: { obraId: string | undefined | null }
   async function handleSalvar() {
     const num = Number(valor.replace(",", "."));
     if (!Number.isFinite(num) || num < 0) {
-      toast({ title: "Valor inválido", description: "Informe um número >= 0", variant: "destructive" });
+      toast.error("Valor inválido", { description: "Informe um número >= 0" });
       return;
     }
     try {
       setSaving(true);
       await salvarCustoPrevisto(num);
-      toast({ title: "Custo previsto atualizado" });
+      toast.success("Custo previsto atualizado");
       setEdit(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast({ title: "Falha ao salvar", description: msg, variant: "destructive" });
+      toast.error("Falha ao salvar", { description: msg });
     } finally {
       setSaving(false);
     }

@@ -2543,6 +2543,16 @@ export type Database = {
         }
         Relationships: []
       }
+      v_auditoria_cobertura: {
+        Row: {
+          categoria: string | null
+          status_cobertura: string | null
+          tabela: unknown
+          tem_audit_row: boolean | null
+          tem_snapshot: boolean | null
+        }
+        Relationships: []
+      }
       v_custo_obra_previsto: {
         Row: {
           custo_previsto: number | null

@@ -1,33 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
-  ClipboardCheck, LineChart, Settings,
-} from "lucide-react";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
-
-type MacroModule = {
-  key: string;
-  label: string;
-  to: string;
-  icon: any;
-  /** Prefixos que ativam este macro módulo */
-  matches: string[];
-  /** Chave em canAccessModule */
-  accessKey: string;
-};
-
-const MACRO: MacroModule[] = [
-  { key: "dashboard",  label: "Dashboard",     to: "/dashboard",   icon: LayoutDashboard, matches: ["/dashboard", "/tarefas"], accessKey: "dashboard" },
-  { key: "comercial",  label: "Comercial",     to: "/comercial",   icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/pedidos-venda", "/financiamentos"], accessKey: "comercial" },
-  { key: "financeiro", label: "Financeiro",    to: "/financeiro",  icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos"], accessKey: "financeiro" },
-  { key: "engenharia", label: "Engenharia",    to: "/engenharia",  icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
-  { key: "estoque",    label: "Estoque",       to: "/estoque",     icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
-  { key: "posvenda",   label: "Pós-venda",     to: "/posvenda",    icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
-  { key: "aprovacoes", label: "Aprovações",    to: "/aprovacoes",  icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
-  { key: "analytics",  label: "Analytics",     to: "/analytics",   icon: LineChart,       matches: ["/analytics", "/relatorios"], accessKey: "analytics" },
-  { key: "config",     label: "Configurações", to: "/configuracoes", icon: Settings,      matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
-];
+import { MACRO_MODULES, macroAtivoPorRota } from "@/lib/nav-structure";
 
 function isMatch(path: string, prefixes: string[]) {
   return prefixes.some((p) => path === p || path.startsWith(p + "/"));
@@ -39,10 +13,10 @@ export function TopNav() {
   const identidade = useIdentidade();
   const activeTab = parseHash(hash);
 
-  const visible = MACRO.filter((m) =>
-    identidade.sessionLoading ? true : canAccessModule(identidade.role, m.accessKey as any),
+  const visible = MACRO_MODULES.filter((m) =>
+    identidade.sessionLoading ? true : canAccessModule(identidade.role, m.accessKey),
   );
-  const active = visible.find((m) => isMatch(path, m.matches)) ?? visible[0];
+  const active = macroAtivoPorRota(path) ?? visible[0];
 
   // Ribbon: pega ROUTE_TABS do caminho ativo (se houver)
   const ribbonCfg = ROUTE_TABS[path] ?? (active ? ROUTE_TABS[active.to] : undefined);

@@ -32,6 +32,7 @@ import {
 } from "@/lib/status-catalog";
 import { useConsultoresAtivos, formatTelefoneBR } from "@/lib/consultores-store";
 import { useAuth } from "@/lib/auth-store";
+import { supabase } from "@/integrations/supabase/client";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
   usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,

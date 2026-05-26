@@ -91,8 +91,11 @@ async function syncWrite(prev: Lead[], next: Lead[]) {
     if (!nextMap.has(id)) deletes.push(id);
   }
   const errs: string[] = [];
+  console.info("[lead-save] syncWrite diff", { upserts: upserts.length, deletes: deletes.length });
   if (upserts.length) {
+    console.info("[lead-save] chamando upsertLeads", { count: upserts.length });
     const { error } = await upsertLeads(upserts);
+    console.info("[lead-save] upsertLeads retornou", { error: error ?? null });
     if (error) errs.push(error);
   }
   if (deletes.length) {

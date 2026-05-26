@@ -69,8 +69,7 @@ function SolicitacoesMaterialPage() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Solicitações de Material"
-        description="Solicite, aprove e acompanhe materiais — o sistema desvia para compra apenas o que falta no estoque."
-        icon={PackageSearch}
+        subtitle="Solicite, aprove e acompanhe materiais — o sistema desvia para compra apenas o que falta no estoque."
         actions={
           <Button onClick={() => setCriar(true)}>
             <Plus className="h-4 w-4 mr-2" /> Nova solicitação

@@ -25,6 +25,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[
   { to: "/leads", label: "Leads / Pistas", icon: Users, key: "comercial", tier: "operacao" },
   { to: "/pedidos-venda", label: "Pedidos de Venda", icon: Receipt, key: "comercial", tier: "operacao" },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro", tier: "operacao" },
+  { to: "/financeiro-titulos", label: "Títulos Financeiros", icon: Receipt, key: "financeiro", tier: "operacao" },
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos", tier: "operacao" },
   { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia", tier: "operacao" },
   { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda", tier: "operacao" },

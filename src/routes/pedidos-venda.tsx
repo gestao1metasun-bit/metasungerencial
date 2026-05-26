@@ -12,7 +12,7 @@ import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReai
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Eye, Network, FileText } from "lucide-react";
+import {
+  EnterpriseDataGrid,
+  exportToCSV,
+} from "@/components/app/grid/EnterpriseDataGrid";
+
 
 export const Route = createFileRoute("/pedidos-venda")({
   head: () => ({ meta: [{ title: "Pedidos de Venda — Meta Sun Gerencial" }] }),

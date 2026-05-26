@@ -89,7 +89,7 @@ export function useIdentidade(): Identidade {
       ? "Usuário"
       : !isAuthenticated
       ? "Sem sessão"
-      : "Sem perfil";
+      : "Carregando…";
 
   const iniciais = !isAuthenticated ? "—" : calcIniciais(displayName);
 

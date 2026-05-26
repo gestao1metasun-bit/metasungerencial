@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { LogIn } from "lucide-react";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
+import { TopNav } from "@/components/app/TopNav";
 
 type Tier = "operacao" | "controle" | "estrutura";
 const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [
@@ -317,6 +318,7 @@ export function AppLayout() {
           </div>
         </header>
         <MaintenanceBanner />
+        <TopNav />
 
         <main className="flex-1 overflow-x-hidden p-6">
           <Outlet />

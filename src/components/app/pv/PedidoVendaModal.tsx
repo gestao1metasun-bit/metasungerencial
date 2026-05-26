@@ -233,6 +233,16 @@ export function PedidoVendaModal({ pvId, open, onOpenChange }: Props) {
                   Enviar para engenharia
                 </Button>
               )}
+              {["APROVADO", "EM_EXECUCAO", "FATURADO"].includes(status) && (
+                <Button
+                  variant="outline"
+                  onClick={() => gerarTit.mutate({ pvId: pv.id })}
+                  disabled={gerarTit.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Gerar títulos financeiros
+                </Button>
+              )}
             </TabsContent>
 
             {/* HISTÓRICO */}

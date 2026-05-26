@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarefasRouteImport } from './routes/tarefas'
+import { Route as SolicitacoesMaterialRouteImport } from './routes/solicitacoes-material'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PropostasRouteImport } from './routes/propostas'
 import { Route as PosvendaRouteImport } from './routes/posvenda'
@@ -51,6 +52,11 @@ import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.ap
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
   path: '/tarefas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolicitacoesMaterialRoute = SolicitacoesMaterialRouteImport.update({
+  id: '/solicitacoes-material',
+  path: '/solicitacoes-material',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
@@ -387,6 +396,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/solicitacoes-material'
     | '/tarefas'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/solicitacoes-material'
     | '/tarefas'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
@@ -467,6 +478,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/solicitacoes-material'
     | '/tarefas'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
@@ -508,6 +520,7 @@ export interface RootRouteChildren {
   PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  SolicitacoesMaterialRoute: typeof SolicitacoesMaterialRoute
   TarefasRoute: typeof TarefasRoute
 }
 
@@ -518,6 +531,13 @@ declare module '@tanstack/react-router' {
       path: '/tarefas'
       fullPath: '/tarefas'
       preLoaderRoute: typeof TarefasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solicitacoes-material': {
+      id: '/solicitacoes-material'
+      path: '/solicitacoes-material'
+      fullPath: '/solicitacoes-material'
+      preLoaderRoute: typeof SolicitacoesMaterialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -853,6 +873,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,
   RelatoriosRoute: RelatoriosRoute,
+  SolicitacoesMaterialRoute: SolicitacoesMaterialRoute,
   TarefasRoute: TarefasRoute,
 }
 export const routeTree = rootRouteImport

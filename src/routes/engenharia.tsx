@@ -2508,6 +2508,34 @@ const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
 ];
 
 const ETAPA_KEYS = ETAPA_COLS.map((c) => c.key);
+const DEBUG_OBRA_CODIGO = "OBR-20260526-710ec4";
+
+function debugObraPipeline(o: Obra | null | undefined) {
+  if (!o) return null;
+  return {
+    obra_id: o.id ?? null,
+    codigo: o.obs?.match(/Código: ([^·]+)/)?.[1]?.trim() ?? null,
+    status: o.status ?? null,
+    etapa: o.status ?? null,
+    projeto_contrato_id: o.obs?.match(/Projeto: ([0-9a-f-]+)/i)?.[1] ?? null,
+    cliente: o.cliente ?? null,
+    contrato: o.contrato ?? null,
+    coluna_valida: !!o.status && ETAPA_KEYS.includes(o.status),
+  };
+}
+
+function debugRowPipeline(r: ObraRow | null | undefined, extras?: { cliente?: string; contrato?: string; etapa?: string }) {
+  if (!r) return null;
+  return {
+    obra_id: r.id ?? null,
+    codigo: r.codigo ?? null,
+    status: r.status ?? null,
+    etapa: extras?.etapa ?? r.status ?? null,
+    projeto_contrato_id: projetoContratoIdOf(r),
+    cliente: extras?.cliente ?? null,
+    contrato: extras?.contrato ?? null,
+  };
+}
 
 function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
   const contratos = useContratos();

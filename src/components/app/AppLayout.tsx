@@ -129,10 +129,16 @@ export function AppLayout() {
     }
   }
 
+  const enterpriseShell = featureFlags.ENTERPRISE_SHELL_FULL;
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      {/* Sidebar — executive indigo with gold accents */}
+      {enterpriseShell ? (
+        <ContextualSidebar />
+      ) : (
+        /* Sidebar legada — executive indigo with gold accents */
       <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-gradient-sidebar text-sidebar-foreground relative">
+
         <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent pointer-events-none" />
 
         <div className="relative flex h-16 items-center justify-center px-3 border-b border-sidebar-border bg-white/95 backdrop-blur">

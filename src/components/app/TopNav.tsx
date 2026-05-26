@@ -2,10 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
 import { MACRO_MODULES, macroAtivoPorRota } from "@/lib/nav-structure";
-
-function isMatch(path: string, prefixes: string[]) {
-  return prefixes.some((p) => path === p || path.startsWith(p + "/"));
-}
+import { Ribbon } from "@/components/app/Ribbon";
 
 export function TopNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -22,6 +19,7 @@ export function TopNav() {
   const ribbonCfg = ROUTE_TABS[path] ?? (active ? ROUTE_TABS[active.to] : undefined);
   const ribbonTabs = ribbonCfg?.tabs.filter((t) => !t.hidden) ?? [];
   const defaultTab = ribbonCfg?.default ?? "";
+  const ribbonRoute = ROUTE_TABS[path] ? path : (active?.to ?? path);
 
   return (
     <div className="border-b border-border bg-card/80 backdrop-blur">
@@ -47,28 +45,14 @@ export function TopNav() {
         })}
       </div>
 
-      {/* Linha 2: ribbon contextual */}
+      {/* Linha 2: ribbon TOTVS por grupos */}
       {ribbonTabs.length > 0 && (
-        <div className="flex items-center gap-1 overflow-x-auto border-t border-border/60 bg-secondary/40 px-4 py-1">
-          {ribbonTabs.map((t) => {
-            const isOnRoute = active && path === active.to;
-            const isActive = isOnRoute && (activeTab || defaultTab) === t.value;
-            return (
-              <Link
-                key={t.value}
-                to={active?.to ?? path}
-                hash={`tab=${t.value}`}
-                className={`inline-flex items-center rounded px-2.5 py-1 text-[12px] whitespace-nowrap transition ${
-                  isActive
-                    ? "bg-gold/15 text-gold font-semibold"
-                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
-        </div>
+        <Ribbon
+          routePath={ribbonRoute}
+          tabs={ribbonTabs}
+          activeValue={activeTab}
+          defaultValue={defaultTab}
+        />
       )}
     </div>
   );

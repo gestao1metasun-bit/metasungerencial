@@ -1169,6 +1169,7 @@ function EditObraDialog({
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <ObraCustosCard obraId={obra.id} />
           <ObraMateriaisCard obraId={obra.id} />
+          <RastreabilidadeObraCard obraId={obra.id} />
         </div>
 
         <DialogFooter className="flex-wrap gap-2">

@@ -273,7 +273,9 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
   }
 
   const salvar = () => {
+    console.info("[lead-save] handler acionado", { nome, telefone, consumo, consultorId, origem, doc });
     if (!nome.trim() || !telefone.trim() || !consumo || !consultorId || !origem) {
+      console.warn("[lead-save] abortado: campos obrigatórios faltando");
       toast.error("Preencha os campos obrigatórios."); return;
     }
     const consumoNum = Number(consumo);

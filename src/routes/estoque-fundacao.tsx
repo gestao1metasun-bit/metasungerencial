@@ -18,7 +18,7 @@ function EstoqueFundacaoPage() {
   const saldos = useQuery({
     queryKey: ["v_estoque_saldos"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("v_estoque_saldos" as any).select("*").order("codigo");
+      const { data, error } = await (supabase as any).from("v_estoque_saldos").select("*").order("codigo");
       if (error) throw error;
       return (data ?? []) as Array<{
         produto_id: string; codigo: string; nome: string; unidade: string;

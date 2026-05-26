@@ -19,6 +19,7 @@ import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
 import { Route as FinanceiroTitulosRouteImport } from './routes/financeiro-titulos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as EstoqueFundacaoRouteImport } from './routes/estoque-fundacao'
 import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as EngenhariaRouteImport } from './routes/engenharia'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -79,6 +80,11 @@ const FinanceiroRoute = FinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EstoqueFundacaoRoute = EstoqueFundacaoRouteImport.update({
+  id: '/estoque-fundacao',
+  path: '/estoque-fundacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EstoqueRoute = EstoqueRouteImport.update({
   id: '/estoque',
   path: '/estoque',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
+  '/estoque-fundacao': typeof EstoqueFundacaoRoute
   '/financeiro': typeof FinanceiroRoute
   '/financeiro-titulos': typeof FinanceiroTitulosRoute
   '/financiamentos': typeof FinanciamentosRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
+  '/estoque-fundacao': typeof EstoqueFundacaoRoute
   '/financeiro': typeof FinanceiroRoute
   '/financeiro-titulos': typeof FinanceiroTitulosRoute
   '/financiamentos': typeof FinanciamentosRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
+  '/estoque-fundacao': typeof EstoqueFundacaoRoute
   '/financeiro': typeof FinanceiroRoute
   '/financeiro-titulos': typeof FinanceiroTitulosRoute
   '/financiamentos': typeof FinanciamentosRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/engenharia'
     | '/estoque'
+    | '/estoque-fundacao'
     | '/financeiro'
     | '/financeiro-titulos'
     | '/financiamentos'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/engenharia'
     | '/estoque'
+    | '/estoque-fundacao'
     | '/financeiro'
     | '/financeiro-titulos'
     | '/financiamentos'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/engenharia'
     | '/estoque'
+    | '/estoque-fundacao'
     | '/financeiro'
     | '/financeiro-titulos'
     | '/financiamentos'
@@ -265,6 +277,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   EngenhariaRoute: typeof EngenhariaRoute
   EstoqueRoute: typeof EstoqueRoute
+  EstoqueFundacaoRoute: typeof EstoqueFundacaoRoute
   FinanceiroRoute: typeof FinanceiroRoute
   FinanceiroTitulosRoute: typeof FinanceiroTitulosRoute
   FinanciamentosRoute: typeof FinanciamentosRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/estoque-fundacao': {
+      id: '/estoque-fundacao'
+      path: '/estoque-fundacao'
+      fullPath: '/estoque-fundacao'
+      preLoaderRoute: typeof EstoqueFundacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/estoque': {
       id: '/estoque'
       path: '/estoque'
@@ -425,6 +445,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   EngenhariaRoute: EngenhariaRoute,
   EstoqueRoute: EstoqueRoute,
+  EstoqueFundacaoRoute: EstoqueFundacaoRoute,
   FinanceiroRoute: FinanceiroRoute,
   FinanceiroTitulosRoute: FinanceiroTitulosRoute,
   FinanciamentosRoute: FinanciamentosRoute,

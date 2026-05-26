@@ -35,14 +35,13 @@ export type NavItem = {
 };
 
 export type MacroKey =
-  | "dashboard"
+  | "dashboards"
   | "comercial"
   | "financeiro"
   | "engenharia"
   | "estoque"
   | "aprovacoes"
   | "posvenda"
-  | "analytics"
   | "configuracoes";
 
 export type MacroModule = {
@@ -56,23 +55,35 @@ export type MacroModule = {
   accessKey: string;
 };
 
-// ── Macro módulos (ordem oficial do top-nav TOTVS/RM) ─────────────────────
+// ── Macro módulos (D6.E — Dashboards centralizados, separados da operação) ─
 export const MACRO_MODULES: MacroModule[] = [
-  { key: "dashboard",     label: "Dashboard",     to: "/dashboard",     icon: LayoutDashboard, matches: ["/dashboard", "/tarefas"], accessKey: "dashboard" },
+  { key: "dashboards",    label: "Dashboards",    to: "/dashboards",    icon: LayoutDashboard, matches: ["/dashboards", "/dashboard", "/analytics", "/relatorios", "/tarefas"], accessKey: "dashboard" },
   { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/financiamentos"], accessKey: "comercial" },
   { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
   { key: "engenharia",    label: "Engenharia",    to: "/engenharia",    icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
   { key: "estoque",       label: "Estoque",       to: "/estoque",       icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
   { key: "aprovacoes",    label: "Aprovações",    to: "/aprovacoes",    icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
   { key: "posvenda",      label: "Pós-venda",     to: "/posvenda",      icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
-  { key: "analytics",     label: "Analytics",     to: "/analytics",     icon: LineChart,       matches: ["/analytics", "/relatorios"], accessKey: "analytics" },
   { key: "configuracoes", label: "Configurações", to: "/configuracoes", icon: Settings,        matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
 ];
 
 // ── Rotas (sidebar legada + mapeamento para macro) ────────────────────────
 export const NAV_ITEMS: NavItem[] = [
-  { to: "/dashboard",          label: "Dashboard Geral",    icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "dashboard",     ordem: 10, critica: true },
-  { to: "/tarefas",            label: "Tarefas",            icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "dashboard",     ordem: 20 },
+  // Macro Dashboards
+  { to: "/dashboards",                label: "Visão Geral",              icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 5,  critica: true },
+  { to: "/dashboard",                 label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 8 },
+  { to: "/dashboards/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "dashboards",    ordem: 10 },
+  { to: "/dashboards/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "dashboards",    ordem: 20 },
+  { to: "/dashboards/engenharia",     label: "Engenharia",               icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "dashboards",    ordem: 30 },
+  { to: "/dashboards/estoque",        label: "Estoque",                  icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "dashboards",    ordem: 40 },
+  { to: "/dashboards/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "dashboards",    ordem: 50 },
+  { to: "/dashboards/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 60 },
+  { to: "/dashboards/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "dashboards",    ordem: 70 },
+  { to: "/analytics",                 label: "Analytics / Executivo",    icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "dashboards",    ordem: 80 },
+  { to: "/relatorios",                label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "dashboards",    ordem: 90 },
+  { to: "/tarefas",                   label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 100 },
+
+  // Operação
   { to: "/comercial",          label: "Comercial",          icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 10, critica: true },
   { to: "/leads",              label: "Leads / Pistas",     icon: Users,           accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 20 },
   { to: "/pedidos-venda",      label: "Pedidos de Venda",   icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 15, critica: true },
@@ -84,8 +95,6 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 10, critica: true },
   { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 20 },
   { to: "/aprovacoes",         label: "Central de Aprovações", icon: ClipboardCheck, accessKey: "dashboard",   tier: "operacao",  macro: "aprovacoes",    ordem: 10, critica: true },
-  { to: "/analytics",          label: "Analytics",          icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "analytics",     ordem: 10 },
-  { to: "/relatorios",         label: "Relatórios",         icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "analytics",     ordem: 20 },
   { to: "/cadastros",          label: "Cadastros Operacionais", icon: Database,    accessKey: "cadastros",     tier: "estrutura", macro: "configuracoes", ordem: 10 },
   { to: "/configuracoes",      label: "Configurações",      icon: Settings,        accessKey: "configuracoes", tier: "estrutura", macro: "configuracoes", ordem: 20, critica: true },
 ];

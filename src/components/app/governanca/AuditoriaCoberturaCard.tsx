@@ -23,8 +23,8 @@ export function AuditoriaCoberturaCard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["v_auditoria_cobertura"],
     queryFn: async (): Promise<Linha[]> => {
-      const { data, error } = await supabase
-        .from("v_auditoria_cobertura" as any)
+      const { data, error } = await (supabase as any)
+        .from("v_auditoria_cobertura")
         .select("*");
       if (error) throw error;
       return (data ?? []) as Linha[];

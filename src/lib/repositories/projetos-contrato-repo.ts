@@ -39,8 +39,8 @@ export type ProjetoContratoRow = {
   inv2: string | null;
   inv3: string | null;
   telhado_tipo: string | null;
-  endereco: Record<string, unknown>;
-  dados: Record<string, unknown>;
+  endereco: any;
+  dados: any;
   status: ProjetoContratoStatus;
   aprovado_em: string | null;
   aprovado_por: string | null;

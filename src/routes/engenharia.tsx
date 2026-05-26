@@ -199,6 +199,63 @@ function EngenhariaPage() {
   const equipes = useEquipes();
   const setEquipes = setEquipesStore;
   const [tab, setTab] = useTabFromHash("/engenharia");
+  const clientesAll = useClientesAll();
+
+  // ────────────────────────────────────────────────────────────────
+  // ONDA B — Engenharia Real (leitura Supabase + dedup com seed/mock)
+  // ────────────────────────────────────────────────────────────────
+  const flagObrasSupabase = featureFlags.ENG_OBRAS_SUPABASE;
+  const { obras: obrasReais, error: obrasReaisError } = useObrasReais(flagObrasSupabase);
+  useEffect(() => {
+    if (obrasReaisError) {
+      console.warn("[engenharia] obras-repo erro (mantendo seed):", obrasReaisError);
+    }
+  }, [obrasReaisError]);
+
+  useEffect(() => {
+    if (!flagObrasSupabase || obrasReais.length === 0) return;
+    setObras((cur) => {
+      // Dedup: por ID direto OU por bridge dados.projeto_contrato_id ↔ obra mock
+      // que herdou o id do projeto (caso projetoToObra).
+      const curById = new Map(cur.map((o) => [o.id, o]));
+      let mudou = false;
+      const merged: Obra[] = [...cur];
+      for (const r of obrasReais) {
+        const projetoId = projetoContratoIdOf(r);
+        // Já presente como obra-real?
+        if (curById.has(r.id)) continue;
+        // Já presente como obra-mock vinda do Comercial (mesmo projeto)?
+        if (projetoId && curById.has(projetoId)) continue;
+        // Inserir adaptada
+        const clienteNome = clientesAll.find((c) => c.id === r.cliente_id)?.nome ?? "—";
+        const adapted: Obra = {
+          id: r.id,
+          contrato: r.contrato_id ?? "",
+          cliente: clienteNome,
+          equipe: r.equipe ?? "",
+          modulos: r.modulos_qtde ?? 0,
+          potencia: Number(r.potencia_kwp ?? 0),
+          inversor: r.inversor ?? "",
+          inicio: r.data_inicio ?? "",
+          previsto: "",
+          finalizacao: r.data_finalizacao ?? null,
+          status: r.status ?? "Novo projeto",
+          telhado: r.telhado_tipo ?? "Outro",
+          obs: r.observacoes ?? "",
+          ordem: merged.length + 1,
+          inv2: r.inv2 ?? "",
+          inv3: r.inv3 ?? "",
+          painelW: PAINEL_W_DEFAULT,
+          telhadoTipo: r.telhado_tipo ?? "Outro",
+          tipo: r.tipo ?? "",
+        } as Obra;
+        merged.push(adapted);
+        mudou = true;
+      }
+      return mudou ? merged : cur;
+    });
+  }, [flagObrasSupabase, obrasReais, clientesAll]);
+
 
   // Auto-incorpora projetos aprovados no Comercial em Gestão de projetos
   useEffect(() => {

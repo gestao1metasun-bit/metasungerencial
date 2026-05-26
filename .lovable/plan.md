@@ -1,78 +1,154 @@
-## Onda 1.5 — Migração `contratos-store` → Supabase
 
-### Diagnóstico
+# Onda C — Fundação PV (Pedido de Venda)
 
-- `src/lib/contratos-store.ts`: 1104 linhas, persistência em `localStorage` (`ms.contratos.v2`).
-- Tipo `ContratoFull`: ~70 campos (cliente completo, projetos vinculados, auditoria, composição de pagamento, cláusulas custom, financiamento bancário, cadeia comercial lead→proposta→contrato).
-- Tabela `public.contratos` atual: ~15 colunas tipadas + `dados jsonb`. Cobre só núcleo (cliente_id, valor, kwp, status, datas, forma_pagamento).
-- 21 arquivos consumidores: rotas (comercial, financiamentos, engenharia, posvenda, dashboard, analytics), módulos (propostas, leads, financeiro), componentes (Aditivos, ContratoImpressao), lib (dev-seed, contrato-template, contrato-base-store, fin-orcamento-obras, aditivos-store, fin-pendencias).
-- **Incompatibilidade de ID**: store usa string `"088/2026"`; Supabase usa `uuid`. Os 21 consumidores tratam `id` como string em todo lugar.
+## Pré-requisito bloqueante
 
-### Princípio
+Confirmar Onda B antes de iniciar:
 
-Migrar em **3 sub-ondas** preservando a API atual do store. Os consumidores não mudam de assinatura — apenas trocam de fonte de dados. Isso evita refator gigante em 21 arquivos e mantém a UI funcionando durante a transição.
+1. App publicado em `https://metasungerencial.lovable.app/login` abre sem o toast `Missing Supabase environment variable(s)`.
+2. Login com `renanbarc16@gmail.com` mostra **RENAN BARCELOS** no header (não "Visitante").
+3. `/engenharia` mostra banner `sessão: OK` e `obras reais RLS >= 1`.
 
-### Sub-onda 1.5.A — Schema (migration)
+Se qualquer item falhar, eu paro a Onda C e voltamos à Onda B.
 
-Estender `public.contratos` para acomodar `ContratoFull`:
+## Escopo desta onda (apenas PV)
 
-- Adicionar coluna `codigo_externo text unique` (recebe os "088/2026" antigos como chave estável legível; `id uuid` continua sendo PK).
-- Adicionar colunas tipadas que já são usadas em filtros/joins:
-  - `vendedor text`, `comissao_pct numeric`, `comissao_valor numeric`
-  - `possui_financiamento boolean default false`, `financiamento_banco text`, `financiamento_valor numeric`, `financiamento_status text`, `financiamento_liberado_eng boolean default false`
-  - `proposta_id uuid`, `lead_id uuid`
-  - `assinado_aprovado boolean default false`, `assinado_aprovado_em timestamptz`, `assinado_aprovado_por uuid`
-  - `liberado_para_contrato boolean default false`, `liberado_em timestamptz`, `liberado_por uuid`
-  - `contrato_redigido boolean default false`, `cancelado boolean default false`, `motivo_cancelamento text`
-- Manter `dados jsonb` para o resto (clienteFull, auditoria local, parcelasPagto legado, composicaoPagto, clausulasCustom, pagamentoDetalhes, financiamento operacional, projetos legados embarcados).
-- Snapshot de versão (`tg_snapshot_version`) e auditoria de linha (`tg_audit_row`) já existem — apenas confirmar attach.
-- RLS: consultor enxerga onde `consultor_id = auth.uid()`; admin enxerga tudo; DELETE só admin (soft delete via `deleted_at`).
-- Índices: `codigo_externo`, `(consultor_id, status)`, `proposta_id`, `lead_id`.
+Ondas D–I ficam para depois. Esta onda entrega só a fundação transacional do Pedido de Venda e a ponte Contrato→Projeto→PV→Obra.
 
-### Sub-onda 1.5.B — Adapter no store (mesma API, fonte Supabase)
+## Entregáveis
 
-Reescrever internamente `src/lib/contratos-store.ts` mantendo **as mesmas exports**:
+### 1. Tabela `pedidos_venda`
 
-- `useContratos()`, `setContratos`, `upsertContrato`, `updateContratoAudit`, `addProjeto`, `updateProjeto`, `removeProjeto`, `getAllProjetos`, `nextProjetoId`, `solicitarAlteracaoContrato`, `validateContratoCompleto`, `buscarCEP` (puros — sem mudança).
-- Fonte de verdade passa a ser Supabase via `createServerFn` + `requireSupabaseAuth`. Lista é cacheada com TanStack Query (`['contratos']`).
-- `useContratos()` vira wrapper de `useQuery({ queryKey: ['contratos'] })`, mantendo retorno `ContratoFull[]` para zero impacto nos 21 consumidores.
-- Mutações chamam serverFns (`upsertContratoFn`, `updateContratoAuditFn`, etc.) e invalidam a query.
-- Função `contratoFromRow(row)` reconstrói `ContratoFull` a partir das colunas tipadas + `dados jsonb`. Função inversa `rowFromContrato(c)` serializa.
-- `id` continua sendo a string `"088/2026"` na superfície (campo `codigo_externo` no banco). Internamente o adapter resolve `codigo_externo → uuid` quando precisa cruzar com tabelas que referenciam `contratos.id` (ex.: futuros `projetos_contrato`).
-- `localStorage` mantido como cache de leitura otimista por 1 sub-onda, com flag `MIGRATION_SOURCE='supabase'|'local'` para rollback rápido se algo quebrar.
+Campos:
+- `id uuid pk default gen_random_uuid()`
+- `codigo text unique` (gerado: `PV-YYYYMMDD-<6hex>`)
+- `contrato_id uuid not null` (FK lógica para `contratos.id`)
+- `projeto_contrato_id uuid` (FK lógica para `projetos_contrato.id`)
+- `obra_id uuid` (preenchido quando a obra é gerada)
+- `cliente_id uuid not null`
+- `consultor_id uuid not null`
+- `status text not null default 'RASCUNHO'`
+- `valor_total numeric(14,2) not null default 0`
+- `forma_pagamento text` (`vista | parcelado | financiamento | permuta | misto`)
+- `possui_financiamento boolean not null default false`
+- `financiamento_banco text`
+- `financiamento_valor numeric(14,2)`
+- `gerente_id uuid`
+- `observacoes text`
+- `dados jsonb not null default '{}'::jsonb`
+- `aprovado_em timestamptz`, `aprovado_por uuid`
+- `cancelado_em timestamptz`, `motivo_cancelamento text`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
+- `deleted_at timestamptz`, `deleted_reason text`, `deleted_by uuid`
 
-### Sub-onda 1.5.C — Seeding e cleanup
+Índices: `(contrato_id)`, `(projeto_contrato_id)`, `(obra_id)`, `(consultor_id)`, `(status)`.
 
-- Migrar dados existentes do `localStorage` na primeira carga autenticada via `migrateLocalToSupabase()` (idempotente, marca flag `ms.contratos.migrated=true`).
-- `dev-seed.ts` passa a inserir via serverFn em vez de `localStorage`.
-- Remover `KEY = "ms.contratos.v2"` e `localStorage.setItem` após 1 versão de convivência.
-- Atualizar `contrato-base-store.ts` e `aditivos-store.ts` na mesma linha (eles compartilham padrão).
+### 2. Tabela `pedidos_venda_status_historico`
 
-### Fora de escopo desta onda
+Campos: `id`, `pedido_id`, `status_anterior`, `status_novo`, `motivo`, `user_id`, `user_email`, `created_at`.
+Preenchida por trigger a cada UPDATE de `status`.
 
-- Migrar `propostas`/`leads` (já estão em Supabase).
-- Refator dos 21 consumidores (acontece naturalmente conforme adapter cobre tudo).
-- Criar `projetos_contrato` UI (Onda 2, já desbloqueada quando `codigo_externo↔uuid` existir).
-- Migrar `aditivos-store`, `fin-titulos-store`, `fin-orcamento-obras` (Ondas 3+).
+### 3. Máquina de estados
 
-### Riscos
+Estados: `RASCUNHO`, `EM_ANALISE`, `APROVADO`, `EM_EXECUCAO`, `FATURADO`, `FINALIZADO`, `CANCELADO`.
 
-- **Performance**: 1 query por mount de `useContratos()` em 21 lugares. Mitigação: TanStack Query com `staleTime: 30s` e invalidação por mutation.
-- **Compatibilidade de tipos**: `ParcelaPagto.id`, `AuditEntry.id` são gerados client-side hoje (`A-${Date.now()}`). Mantemos esse formato no `dados jsonb` — sem schema para sub-coleções nesta onda.
-- **Auditoria duplicada**: hoje o store grava `auditoria[]` no objeto; o banco também tem `tg_audit_row`. Mantemos ambos por enquanto (UI lê de `auditoria[]`, banco é fonte forense).
+Transições válidas (trigger `tg_pv_valida_transicao`, bloqueia o resto com `42501`):
 
-### Entregáveis desta sub-onda (1.5.A apenas, para começar)
+```text
+RASCUNHO     -> EM_ANALISE | CANCELADO
+EM_ANALISE   -> APROVADO | RASCUNHO | CANCELADO
+APROVADO     -> EM_EXECUCAO | CANCELADO
+EM_EXECUCAO  -> FATURADO | CANCELADO
+FATURADO     -> FINALIZADO
+FINALIZADO   -> (nenhuma; apenas admin pode reabrir)
+CANCELADO    -> (nenhuma; apenas admin pode reabrir)
+```
 
-1. Migration estendendo `public.contratos` com colunas tipadas + índices.
-2. Confirmar triggers `tg_audit_row`, `tg_snapshot_version`, `tg_set_updated_at` ligados.
-3. Validar RLS.
+`is_admin(auth.uid())` ignora as restrições (modo exceção).
 
-Após 1.5.A aprovada e aplicada, abro PR de 1.5.B (adapter no store) sem tocar nos 21 consumidores. 1.5.C entra como housekeeping.
+### 4. RLS
 
-### Pergunta de decisão
+Espelha o padrão `obras` / `contratos`:
+- `pv_select`: `is_admin(auth.uid()) OR consultor_id = auth.uid()`
+- `pv_insert`: `is_admin OR consultor_id = auth.uid()`
+- `pv_update`: `is_admin OR consultor_id = auth.uid()`
+- `pv_delete`: somente `is_admin`
+- Histórico: SELECT próprio/admin; INSERT só via trigger (`with check true`); sem UPDATE/DELETE.
 
-Confirmar 3 pontos antes de migrar:
+GRANTs explícitos para `authenticated` e `service_role` (sem `anon`).
 
-1. **Manter `codigo_externo` (`"088/2026"`) como chave visível** e `id uuid` interno? (recomendado — zero impacto nos 21 consumidores)
-2. **Estratégia de dados existentes em `localStorage`**: migrar automaticamente na primeira carga (recomendado) ou descartar (mais limpo, mas perde estado dev)?
-3. **Convivência localStorage↔Supabase**: 1 versão de transição com flag de rollback (recomendado) ou cut-over direto?
+### 5. Auditoria
+
+Triggers reaproveitando funções existentes:
+- `tg_audit_row('comercial','pedidos_venda')` em INSERT/UPDATE/DELETE.
+- `tg_snapshot_version` em INSERT/UPDATE para `entidade_versoes`.
+- `tg_set_updated_at_generic` em UPDATE.
+- `tg_pv_status_historico` em UPDATE quando `OLD.status <> NEW.status`.
+
+### 6. RPC `gerar_pv_do_contrato(_contrato_id uuid, _projeto_contrato_id uuid default null)`
+
+Comportamento:
+- Verifica permissão (consultor dono do contrato ou admin).
+- Se `_projeto_contrato_id` nulo, usa o primeiro `projetos_contrato` APROVADO do contrato.
+- Cria `pedidos_venda` em `RASCUNHO` com `cliente_id`, `consultor_id`, `valor_total = projetos_contrato.valor`, `forma_pagamento`/`financiamento*` herdados do contrato.
+- Idempotente: se já existir PV não-cancelado para `(contrato_id, projeto_contrato_id)`, retorna o existente.
+- Retorna `uuid` do PV.
+
+### 7. RPC `aprovar_pv(_pv_id uuid, _motivo text default null)`
+
+- Valida `status = 'EM_ANALISE'`.
+- Atualiza `status='APROVADO'`, `aprovado_em=now()`, `aprovado_por=auth.uid()`.
+- Não dispara geração de títulos financeiros nesta onda (fica para Onda D).
+
+### 8. RPC `enviar_pv_para_engenharia(_pv_id uuid)`
+
+- Exige `status='APROVADO'`.
+- Reaproveita `enviar_projeto_para_engenharia(projeto_contrato_id)` para gerar a `obra`.
+- Grava `obra_id` no PV e transiciona PV para `EM_EXECUCAO`.
+
+### 9. Frontend mínimo (sem refino visual)
+
+- Página `/pedidos-venda` (lista + criar a partir de contrato).
+- Modal "Pedido de Venda" com tabs: Resumo / Pagamento / Engenharia / Histórico.
+- Botões: "Enviar para análise", "Aprovar" (admin/gerente), "Enviar para engenharia", "Cancelar".
+- Hook `usePedidosVenda` com TanStack Query e `invalidateQueries` em mutações.
+- Tudo via `supabase` client + RPCs; sem mock, sem array hardcoded.
+
+### 10. Bridge UUID rastreável
+
+- `contratos.id` → `projetos_contrato.contrato_id` → `pedidos_venda.projeto_contrato_id` → `pedidos_venda.obra_id` → `obras.id`.
+- View read-only `vw_bridge_pv` para diagnóstico operacional (`contrato_codigo, projeto_id, pv_id, pv_status, obra_codigo, obra_status`).
+
+## Fora de escopo desta onda (explícito)
+
+- Geração de `titulos_financeiros` → Onda D.
+- Refactor de Engenharia para drag-and-drop persistido → Onda E.
+- Cadastros estruturais (bancos, gerentes, naturezas) → Onda F.
+- State machine central genérica → Onda G.
+
+## Validação obrigatória ao final
+
+1. `INSERT` direto via UI cria PV em `RASCUNHO` e aparece em `entidade_versoes`/`audit_log`.
+2. Transição `RASCUNHO → APROVADO` direta é bloqueada com `42501`.
+3. Fluxo `RASCUNHO → EM_ANALISE → APROVADO → EM_EXECUCAO` funciona e cria obra real ligada por `obra_id`.
+4. `pedidos_venda_status_historico` tem 1 linha por transição.
+5. Consultor A não vê PV do consultor B; admin vê tudo.
+6. `vw_bridge_pv` retorna a cadeia completa para o contrato de teste.
+
+## Detalhes técnicos
+
+- Migração única com `CREATE TABLE` + `GRANT` + `ENABLE RLS` + `CREATE POLICY` + funções + triggers, na ordem exigida.
+- Funções marcadas `SECURITY DEFINER` com `SET search_path = public`.
+- Sem CHECK constraints temporais (usar triggers conforme guideline).
+- Sem alteração em `auth`, `storage`, `realtime`.
+- Frontend toca apenas: `src/routes/pedidos-venda*.tsx`, `src/components/pv/*`, `src/hooks/usePedidosVenda.ts`, `src/lib/pv.ts`. Não mexe em Engenharia, AppLayout, auth-store, repositories existentes.
+
+## Ordem de execução
+
+1. Migração SQL (você aprova) → executo.
+2. Tipos Supabase regenerados → aguardo.
+3. Hook + RPC wrappers + página + modal.
+4. Validação operacional na preview com o roteiro acima.
+5. Republicar e validar no published.
+6. Só então abrir plano da Onda D.

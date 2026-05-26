@@ -74,6 +74,13 @@ export type Database = {
             referencedRelation: "contratos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "aditivos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
         ]
       }
       anexos_audit: {
@@ -840,6 +847,13 @@ export type Database = {
             referencedRelation: "contratos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
         ]
       }
       parecer_executivo: {
@@ -875,6 +889,123 @@ export type Database = {
           privado?: boolean
           severidade?: string
           titulo?: string
+        }
+        Relationships: []
+      }
+      pedidos_venda: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          cancelado_em: string | null
+          cliente_id: string
+          codigo: string | null
+          consultor_id: string
+          contrato_id: string
+          created_at: string
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          financiamento_banco: string | null
+          financiamento_valor: number | null
+          forma_pagamento: string | null
+          gerente_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          obra_id: string | null
+          observacoes: string | null
+          possui_financiamento: boolean
+          projeto_contrato_id: string | null
+          status: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          cliente_id: string
+          codigo?: string | null
+          consultor_id: string
+          contrato_id: string
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          financiamento_banco?: string | null
+          financiamento_valor?: number | null
+          forma_pagamento?: string | null
+          gerente_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          possui_financiamento?: boolean
+          projeto_contrato_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          cliente_id?: string
+          codigo?: string | null
+          consultor_id?: string
+          contrato_id?: string
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          financiamento_banco?: string | null
+          financiamento_valor?: number | null
+          forma_pagamento?: string | null
+          gerente_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          possui_financiamento?: boolean
+          projeto_contrato_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: []
+      }
+      pedidos_venda_status_historico: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string | null
+          pedido_id: string
+          status_anterior: string | null
+          status_novo: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          pedido_id: string
+          status_anterior?: string | null
+          status_novo: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          pedido_id?: string
+          status_anterior?: string | null
+          status_novo?: string
+          user_email?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1022,6 +1153,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contratos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
           },
         ]
       }
@@ -1490,10 +1628,35 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_bridge_pv: {
+        Row: {
+          aprovado_em: string | null
+          cliente_id: string | null
+          consultor_id: string | null
+          contrato_codigo: string | null
+          contrato_id: string | null
+          contrato_status: string | null
+          obra_codigo: string | null
+          obra_id: string | null
+          obra_status: string | null
+          projeto_contrato_id: string | null
+          projeto_status: string | null
+          pv_codigo: string | null
+          pv_criado_em: string | null
+          pv_id: string | null
+          pv_status: string | null
+          pv_valor: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aprovar_projeto: {
         Args: { _motivo?: string; _projeto_id: string }
+        Returns: string
+      }
+      aprovar_pv: {
+        Args: { _motivo?: string; _pv_id: string }
         Returns: string
       }
       can_edit_operacional: {
@@ -1509,8 +1672,18 @@ export type Database = {
         Args: { _motivo: string; _projeto_id: string }
         Returns: undefined
       }
+      cancelar_pv: {
+        Args: { _motivo: string; _pv_id: string }
+        Returns: undefined
+      }
       enviar_projeto_para_engenharia: {
         Args: { _projeto_id: string }
+        Returns: string
+      }
+      enviar_pv_para_analise: { Args: { _pv_id: string }; Returns: string }
+      enviar_pv_para_engenharia: { Args: { _pv_id: string }; Returns: string }
+      gerar_pv_do_contrato: {
+        Args: { _contrato_id: string; _projeto_contrato_id?: string }
         Returns: string
       }
       gerar_tarefas_automaticas: { Args: never; Returns: Json }

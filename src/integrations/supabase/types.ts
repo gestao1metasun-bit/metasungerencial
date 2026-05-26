@@ -3073,6 +3073,104 @@ export type Database = {
           },
         ]
       }
+      v_reconciliacao_aprovacoes: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_comercial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_engenharia: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_estoque: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_financeira: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_pv: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
+      v_reconciliacao_resumo: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
+        }
+        Relationships: []
+      }
       v_saldo_operacional_obra: {
         Row: {
           codigo: string | null

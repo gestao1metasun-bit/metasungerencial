@@ -59,8 +59,8 @@ export type MacroModule = {
 // ── Macro módulos (ordem oficial do top-nav TOTVS/RM) ─────────────────────
 export const MACRO_MODULES: MacroModule[] = [
   { key: "dashboard",     label: "Dashboard",     to: "/dashboard",     icon: LayoutDashboard, matches: ["/dashboard", "/tarefas"], accessKey: "dashboard" },
-  { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/pedidos-venda", "/financiamentos"], accessKey: "comercial" },
-  { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos"], accessKey: "financeiro" },
+  { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/financiamentos"], accessKey: "comercial" },
+  { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
   { key: "engenharia",    label: "Engenharia",    to: "/engenharia",    icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
   { key: "estoque",       label: "Estoque",       to: "/estoque",       icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
   { key: "aprovacoes",    label: "Aprovações",    to: "/aprovacoes",    icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
@@ -75,7 +75,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/tarefas",            label: "Tarefas",            icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "dashboard",     ordem: 20 },
   { to: "/comercial",          label: "Comercial",          icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 10, critica: true },
   { to: "/leads",              label: "Leads / Pistas",     icon: Users,           accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 20 },
-  { to: "/pedidos-venda",      label: "Pedidos de Venda",   icon: Receipt,         accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 30, critica: true },
+  { to: "/pedidos-venda",      label: "Pedidos de Venda",   icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 15, critica: true },
   { to: "/financeiro",         label: "Financeiro",         icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 10, critica: true },
   { to: "/financeiro-titulos", label: "Títulos Financeiros",icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 20, critica: true },
   { to: "/financiamentos",     label: "Financiamentos",     icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "comercial",     ordem: 40 },

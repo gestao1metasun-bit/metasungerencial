@@ -17,6 +17,10 @@ import { LogIn } from "lucide-react";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 import { TopNav } from "@/components/app/TopNav";
+import { ContextualSidebar } from "@/components/app/ContextualSidebar";
+import { featureFlags } from "@/lib/feature-flags";
+
+
 
 type Tier = "operacao" | "controle" | "estrutura";
 const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [

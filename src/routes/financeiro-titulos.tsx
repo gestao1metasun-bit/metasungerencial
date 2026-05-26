@@ -20,9 +20,7 @@ import {
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -50,6 +48,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Eye, Wallet, Ban, Receipt, AlertCircle } from "lucide-react";
+import {
+  EnterpriseDataGrid,
+  exportToCSV,
+} from "@/components/app/grid/EnterpriseDataGrid";
+
 
 export const Route = createFileRoute("/financeiro-titulos")({
   head: () => ({ meta: [{ title: "Títulos Financeiros — Meta Sun" }] }),
@@ -68,7 +71,12 @@ function TitulosPage() {
   const [busca, setBusca] = useState("");
   const [tituloAtivo, setTituloAtivo] = useState<string | null>(null);
 
-  const { data: titulos = [], isLoading } = useTitulosFinanceiros({
+  const {
+    data: titulos = [],
+    isLoading,
+    refetch,
+    isFetching,
+  } = useTitulosFinanceiros({
     status,
     origemTipo: origem,
   });
@@ -96,6 +104,16 @@ function TitulosPage() {
     return t;
   }, [titulos]);
 
+  const handleExport = () =>
+    exportToCSV(`titulos-financeiros-${new Date().toISOString().slice(0, 10)}`, filtrados, [
+      { key: "codigo", label: "Código" },
+      { key: "status", label: "Status", get: (r) => TF_STATUS_LABEL[r.status as TFStatus] },
+      { key: "origem_tipo", label: "Origem", get: (r) => ORIGEM_LABEL[r.origem_tipo as OrigemTipo] },
+      { key: "vencimento", label: "Vencimento" },
+      { key: "valor_liquido", label: "Valor líquido" },
+      { key: "saldo", label: "Saldo" },
+    ]);
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       <PageHeader
@@ -114,45 +132,62 @@ function TitulosPage() {
         <StatCard label="Recebido" value={fmtBRL(totais.recebido)} icon={Wallet} />
       </div>
 
-      <Card className="p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            placeholder="Buscar código, observação..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="max-w-xs"
-          />
-          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TODOS">Todos os status</SelectItem>
-              {Object.entries(TF_STATUS_LABEL).map(([k, l]) => (
-                <SelectItem key={k} value={k}>
-                  {l}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={origem} onValueChange={(v) => setOrigem(v as any)}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TODOS">Todas as origens</SelectItem>
-              {Object.entries(ORIGEM_LABEL).map(([k, l]) => (
-                <SelectItem key={k} value={k}>
-                  {l}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
-      <Card>
-        <Table>
+      <EnterpriseDataGrid
+        gridId="financeiro-titulos"
+        title="Títulos"
+        count={filtrados.length}
+        toolbar={{
+          onRefresh: () => refetch(),
+          onExport: handleExport,
+        }}
+        filters={{
+          search: busca,
+          onSearchChange: setBusca,
+          searchPlaceholder: "Buscar código, observação…",
+          onClear:
+            status !== "TODOS" || origem !== "TODOS" || busca
+              ? () => {
+                  setStatus("TODOS");
+                  setOrigem("TODOS");
+                  setBusca("");
+                }
+              : undefined,
+          children: (
+            <>
+              <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+                <SelectTrigger className="h-7 w-44 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">Todos os status</SelectItem>
+                  {Object.entries(TF_STATUS_LABEL).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={origem} onValueChange={(v) => setOrigem(v as any)}>
+                <SelectTrigger className="h-7 w-44 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">Todas as origens</SelectItem>
+                  {Object.entries(ORIGEM_LABEL).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isFetching && (
+                <span className="text-[10px] text-muted-foreground">atualizando…</span>
+              )}
+            </>
+          ),
+        }}
+      >
+        <Table tableId="financeiro-titulos-grid">
           <TableHeader>
             <TableRow>
               <TableHead>Código</TableHead>
@@ -187,33 +222,35 @@ function TitulosPage() {
                     {TF_STATUS_LABEL[t.status as TFStatus]}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="text-xs">
                   {ORIGEM_LABEL[t.origem_tipo as OrigemTipo]}
                   <span className="ml-1 text-[10px] font-mono text-muted-foreground">
                     {t.origem_id.slice(0, 8)}
                   </span>
                 </TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="text-xs">
                   {t.vencimento
                     ? new Date(t.vencimento).toLocaleDateString("pt-BR")
                     : "—"}
                 </TableCell>
-                <TableCell>{fmtBRL(t.valor_liquido)}</TableCell>
-                <TableCell>{fmtBRL(t.saldo)}</TableCell>
+                <TableCell className="tabular-nums">{fmtBRL(t.valor_liquido)}</TableCell>
+                <TableCell className="tabular-nums">{fmtBRL(t.saldo)}</TableCell>
                 <TableCell>
                   <Button
                     size="icon"
                     variant="ghost"
+                    className="h-6 w-6"
                     onClick={() => setTituloAtivo(t.id)}
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </EnterpriseDataGrid>
+
 
       <TituloDetalheModal
         tituloId={tituloAtivo}

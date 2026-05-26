@@ -29,8 +29,8 @@ function EstoqueFundacaoPage() {
   const reservas = useQuery({
     queryKey: ["estoque_reservas"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("estoque_reservas" as any)
+      const { data, error } = await (supabase as any)
+        .from("estoque_reservas")
         .select("id,produto_id,obra_id,pv_id,quantidade_reservada,quantidade_entregue,status,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
@@ -40,8 +40,8 @@ function EstoqueFundacaoPage() {
   const entregas = useQuery({
     queryKey: ["estoque_entregas"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("estoque_entregas" as any)
+      const { data, error } = await (supabase as any)
+        .from("estoque_entregas")
         .select("id,reserva_id,produto_id,quantidade,status,baixado_em,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;

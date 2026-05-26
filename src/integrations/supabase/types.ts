@@ -722,6 +722,13 @@ export type Database = {
             referencedColumns: ["produto_id"]
           },
           {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
             foreignKeyName: "estoque_entregas_reserva_id_fkey"
             columns: ["reserva_id"]
             isOneToOne: false
@@ -800,6 +807,13 @@ export type Database = {
             referencedRelation: "v_estoque_saldos"
             referencedColumns: ["produto_id"]
           },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       estoque_reservas: {
@@ -867,6 +881,13 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -1101,6 +1122,13 @@ export type Database = {
             referencedRelation: "titulos_financeiros"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "movimentacoes_financeiras_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
         ]
       }
       obras: {
@@ -1253,6 +1281,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "titulos_financeiros"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parcelas_financeiras_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
           },
         ]
       }
@@ -2169,6 +2204,13 @@ export type Database = {
             referencedRelation: "v_estoque_saldos"
             referencedColumns: ["produto_id"]
           },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       materiais_pendentes_por_obra: {
@@ -2195,6 +2237,13 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -2225,6 +2274,13 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -2304,6 +2360,132 @@ export type Database = {
           unidade: string | null
         }
         Relationships: []
+      }
+      v_origem_estoque_completa: {
+        Row: {
+          created_at: string | null
+          custo_total: number | null
+          entrega_id: string | null
+          entrega_status: string | null
+          motivo: string | null
+          movimento_id: string | null
+          movimento_tipo: string | null
+          obra_codigo: string | null
+          obra_id: string | null
+          origem_tipo: string | null
+          produto_codigo: string | null
+          produto_id: string | null
+          produto_nome: string | null
+          projeto_id: string | null
+          pv_codigo: string | null
+          pv_id: string | null
+          quantidade: number | null
+          reserva_id: string | null
+          reserva_status: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_origem_financeira_completa: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          consultor_id: string | null
+          contrato_codigo: string | null
+          contrato_id: string | null
+          created_at: string | null
+          obra_codigo: string | null
+          obra_id: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          projeto_contrato_id: string | null
+          pv_codigo: string | null
+          pv_id: string | null
+          saldo: number | null
+          titulo_codigo: string | null
+          titulo_id: string | null
+          titulo_status: string | null
+          titulo_tipo: string | null
+          valor_liquido: number | null
+        }
+        Relationships: []
+      }
+      v_origem_obra_completa: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          consultor_id: string | null
+          consultor_nome: string | null
+          contrato_codigo: string | null
+          contrato_id: string | null
+          contrato_valor: number | null
+          created_at: string | null
+          custo_previsto: number | null
+          obra_codigo: string | null
+          obra_id: string | null
+          obra_status: string | null
+          projeto_contrato_id: string | null
+          projeto_descricao: string | null
+          pv_codigo: string | null
+          pv_id: string | null
+          pv_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
+      v_rastreabilidade_operacional: {
+        Row: {
+          contrato_codigo: string | null
+          contrato_id: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          obra_codigo: string | null
+          obra_id: string | null
+          obra_status: string | null
+          projeto_id: string | null
+          qtd_entregas: number | null
+          qtd_pvs: number | null
+          qtd_reservas: number | null
+          qtd_titulos: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
       }
       v_saldo_operacional_obra: {
         Row: {

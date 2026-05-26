@@ -2326,6 +2326,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_alertas_operacionais: {
+        Row: {
+          consultor_id: string | null
+          entidade_id: string | null
+          mensagem: string | null
+          referencia: string | null
+          severidade: string | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
       v_custo_obra_previsto: {
         Row: {
           custo_previsto: number | null
@@ -2358,6 +2369,15 @@ export type Database = {
           saldo_fisico: number | null
           saldo_reservado: number | null
           unidade: string | null
+        }
+        Relationships: []
+      }
+      v_hardening_report: {
+        Row: {
+          categoria: string | null
+          descricao: string | null
+          qtd: number | null
+          severidade: string | null
         }
         Relationships: []
       }
@@ -2665,6 +2685,13 @@ export type Database = {
       recalcular_saldo_contrato: {
         Args: { _contrato_id: string }
         Returns: Json
+      }
+      recalcular_status_vencidos: {
+        Args: never
+        Returns: {
+          parcelas_atualizadas: number
+          titulos_atualizados: number
+        }[]
       }
       receber_parcela: {
         Args: {

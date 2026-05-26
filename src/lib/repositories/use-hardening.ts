@@ -38,7 +38,7 @@ export function useHardeningReport(poll = false) {
       setRows(null);
     } else {
       setError(null);
-      setRows((data ?? []) as HardeningRow[]);
+      setRows((data ?? []) as unknown as HardeningRow[]);
     }
     setLoading(false);
   }
@@ -65,7 +65,7 @@ export function useAlertasOperacionais() {
         .limit(100);
       if (cancel) return;
       if (error) logger.warn("hardening", "load_alertas", error.message);
-      setRows((data ?? []) as AlertaRow[]);
+      setRows((data ?? []) as unknown as AlertaRow[]);
       setLoading(false);
     })();
     return () => { cancel = true; };

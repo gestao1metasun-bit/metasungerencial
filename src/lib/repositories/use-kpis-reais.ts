@@ -77,31 +77,52 @@ const ZERO_FIN: FinanceiroKpis = {
 };
 
 async function loadFinanceiro(): Promise<FinanceiroKpis | null> {
+  // Oficial (D7.8): valor em aberto, fluxo previsto 30d e atrasados leem
+  // parcelas reais (não titulos.status agregado, que pode estar dessincronizado).
   const { data: titulos, error } = await supabase
     .from("titulos_financeiros")
-    .select("status,tipo,valor_liquido,saldo,vencimento")
+    .select("id,status,tipo,valor_liquido,saldo,vencimento")
     .is("deleted_at", null)
     .limit(5000);
   if (error) { console.warn(TAG, "fin err", error.message); return null; }
 
+  const tituloIds = (titulos ?? []).map((t: any) => t.id as string);
+  const { data: parcelas } = tituloIds.length
+    ? await supabase
+        .from("parcelas_financeiras")
+        .select("titulo_id,status,valor,saldo,vencimento")
+        .in("titulo_id", tituloIds)
+        .limit(20000)
+    : { data: [] as any[] };
+
   const hoje = new Date().toISOString().slice(0, 10);
+  const em30d = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
   const k = { ...ZERO_FIN };
+
   for (const t of titulos ?? []) {
     k.totalTitulos += 1;
     const valor = Number(t.valor_liquido ?? 0);
     const saldo = Number(t.saldo ?? 0);
-    if (t.status === "BAIXADO" || t.status === "QUITADO") {
+    if (t.status === "RECEBIDO") {
       k.recebidos += 1;
-      k.valorRecebido += valor;
-      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoRealizado += valor;
-    } else if (t.status === "PENDENTE" || t.status === "PARCIAL") {
+      k.valorRecebido += valor - saldo;
+      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoRealizado += valor - saldo;
+    } else if (["PENDENTE", "PARCIAL", "ATRASADO"].includes(String(t.status))) {
       k.pendentes += 1;
-      k.valorPendente += saldo;
-      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoPrevisto += saldo;
-      if (t.vencimento && t.vencimento < hoje) {
-        k.atrasados += 1;
-        k.valorAtrasado += saldo;
-      }
+    }
+  }
+
+  for (const p of (parcelas ?? []) as any[]) {
+    const status = String(p.status ?? "");
+    if (status === "CANCELADA" || status === "RENEGOCIADA" || status === "RECEBIDO") continue;
+    const saldo = Number(p.saldo ?? 0);
+    k.valorPendente += saldo;
+    if (p.vencimento && p.vencimento < hoje) {
+      k.valorAtrasado += saldo;
+      k.atrasados += 1;
+    }
+    if (p.vencimento && p.vencimento <= em30d) {
+      k.fluxoPrevisto += saldo;
     }
   }
   k.saldoOperacional = k.valorRecebido - k.valorPendente;

@@ -21,10 +21,91 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "indicadores", label: "Indicadores", group: "Visão" },
     ],
   },
-  "/comercial": {
-    default: "dashboard",
+
+  // ── Macro módulo DASHBOARDS (D6.E — Gestão / KPIs centralizados) ──────
+  "/dashboards": {
+    default: "geral",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "geral", label: "Geral", group: "Visão Geral" },
+      { value: "executivo", label: "Executivo", group: "Visão Geral" },
+      { value: "indicadores", label: "Indicadores", group: "Visão Geral" },
+    ],
+  },
+  "/dashboards/comercial": {
+    default: "funil",
+    tabs: [
+      { value: "funil", label: "Funil", group: "Comercial" },
+      { value: "contratos", label: "Contratos", group: "Comercial" },
+      { value: "propostas", label: "Propostas", group: "Comercial" },
+      { value: "vendedores", label: "Vendedores", group: "Comercial" },
+      { value: "conversao", label: "Conversão", group: "Comercial" },
+    ],
+  },
+  "/dashboards/financeiro": {
+    default: "fluxo",
+    tabs: [
+      { value: "fluxo", label: "Fluxo de Caixa", group: "Financeiro" },
+      { value: "titulos", label: "Títulos", group: "Financeiro" },
+      { value: "inadimplencia", label: "Inadimplência", group: "Financeiro" },
+      { value: "prev-real", label: "Previsto × Realizado", group: "Financeiro" },
+      { value: "resultado", label: "Resultado Operacional", group: "Financeiro" },
+    ],
+  },
+  "/dashboards/engenharia": {
+    default: "obras",
+    tabs: [
+      { value: "obras", label: "Obras", group: "Engenharia" },
+      { value: "cronograma", label: "Cronograma", group: "Engenharia" },
+      { value: "produtividade", label: "Produtividade", group: "Engenharia" },
+      { value: "custos", label: "Custos", group: "Engenharia" },
+      { value: "pendencias", label: "Pendências", group: "Engenharia" },
+    ],
+  },
+  "/dashboards/estoque": {
+    default: "saldo",
+    tabs: [
+      { value: "saldo", label: "Saldo", group: "Estoque" },
+      { value: "reservas", label: "Reservas", group: "Estoque" },
+      { value: "entregas", label: "Entregas", group: "Estoque" },
+      { value: "baixo", label: "Estoque Baixo", group: "Estoque" },
+      { value: "custo", label: "Custo Estoque", group: "Estoque" },
+    ],
+  },
+  "/dashboards/financiamentos": {
+    default: "carteira",
+    tabs: [
+      { value: "carteira", label: "Carteira", group: "Financiamentos" },
+      { value: "bancos", label: "Bancos", group: "Financiamentos" },
+      { value: "liberacoes", label: "Liberações", group: "Financiamentos" },
+      { value: "prazos", label: "Prazos", group: "Financiamentos" },
+      { value: "pendencias", label: "Pendências", group: "Financiamentos" },
+    ],
+  },
+  "/dashboards/aprovacoes": {
+    default: "sla",
+    tabs: [
+      { value: "sla", label: "SLA", group: "Aprovações" },
+      { value: "gargalos", label: "Gargalos", group: "Aprovações" },
+      { value: "pendencias", label: "Pendências", group: "Aprovações" },
+      { value: "setor", label: "Por Setor", group: "Aprovações" },
+      { value: "aprovador", label: "Por Aprovador", group: "Aprovações" },
+    ],
+  },
+  "/dashboards/posvenda": {
+    default: "chamados",
+    tabs: [
+      { value: "chamados", label: "Chamados", group: "Pós-venda" },
+      { value: "garantias", label: "Garantias", group: "Pós-venda" },
+      { value: "sla", label: "SLA", group: "Pós-venda" },
+      { value: "recorrencias", label: "Recorrências", group: "Pós-venda" },
+    ],
+  },
+
+  // ── Operacionais (Dashboard escondido — preserva bookmarks via URL) ───
+  "/comercial": {
+    default: "orcamentos",
+    tabs: [
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "orcamentos", label: "Propostas", group: "Operação" },
       { value: "contratos", label: "Contratos", group: "Operação" },
       { value: "aditivos", label: "Aditivos", group: "Operação" },
@@ -37,9 +118,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
   "/financiamentos": {
-    default: "dashboard",
+    default: "carteira",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "carteira", label: "Contratos em Financiamento", group: "Operação" },
       { value: "sem", label: "Sem Financiamento", group: "Operação" },
       { value: "previsao", label: "Previsão", group: "Operação" },
@@ -49,9 +130,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
   "/engenharia": {
-    default: "dashboard",
+    default: "kanban",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "kanban", label: "Gestão de Projetos", group: "Operação" },
       { value: "ativas", label: "Cronograma", group: "Operação" },
       { value: "pendencias", label: "Pendências", group: "Controle" },
@@ -60,9 +141,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
   "/estoque": {
-    default: "dashboard",
+    default: "obras",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "obras", label: "Obras (necessidade)", group: "Operação" },
       { value: "compra", label: "Necessidade de Compra", group: "Operação" },
       { value: "itens", label: "Estoque Atual", group: "Operação" },
@@ -70,13 +151,13 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
   "/financeiro": {
-    default: "dashboard",
+    default: "receber",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
-      { value: "fluxo", label: "Fluxo de Caixa", group: "Visão" },
-      { value: "fluxo-real", label: "Fluxo Real × Previsto", group: "Visão" },
-      { value: "gerencial", label: "Visão Gerencial", group: "Visão" },
-      { value: "cmv", label: "CMV / Compras", group: "Visão" },
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
+      { value: "fluxo", label: "Fluxo de Caixa", group: "Visão", hidden: true },
+      { value: "fluxo-real", label: "Fluxo Real × Previsto", group: "Visão", hidden: true },
+      { value: "gerencial", label: "Visão Gerencial", group: "Visão", hidden: true },
+      { value: "cmv", label: "CMV / Compras", group: "Visão", hidden: true },
       { value: "receber", label: "Contas a Receber", group: "Operação" },
       { value: "pagar", label: "Contas a Pagar", group: "Operação" },
       { value: "lancamentos", label: "Lançamentos", group: "Operação" },
@@ -93,9 +174,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
   "/posvenda": {
-    default: "dashboard",
+    default: "chamados",
     tabs: [
-      { value: "dashboard", label: "Dashboard", group: "Visão" },
+      { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "chamados", label: "Chamados", group: "Operação" },
       { value: "tipos", label: "Tipos de Atendimento", group: "Estrutura" },
     ],

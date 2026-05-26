@@ -243,6 +243,7 @@ function DashboardGeral() {
               </ResponsiveContainer>
             </Card>
           </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="indicadores" className="mt-5">

@@ -3059,6 +3059,106 @@ export type Database = {
         }
         Relationships: []
       }
+      v_eng_backlog_equipe: {
+        Row: {
+          em_andamento: number | null
+          equipe: string | null
+          kwp_pendente: number | null
+          modulos_pendentes: number | null
+          planejadas: number | null
+        }
+        Relationships: []
+      }
+      v_eng_desvio_custo: {
+        Row: {
+          codigo: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          desvio_custo: number | null
+          desvio_pct: number | null
+          equipe: string | null
+          faixa: string | null
+          modulos_qtde: number | null
+          obra_id: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_eng_metricas_resumo: {
+        Row: {
+          kwp_backlog: number | null
+          kwp_instalado_total: number | null
+          modulos_instalados_total: number | null
+          obras_ativas: number | null
+          obras_atrasadas: number | null
+          obras_estouro_critico: number | null
+          obras_finalizadas: number | null
+          tempo_medio_obra_geral: number | null
+          total_obras: number | null
+        }
+        Relationships: []
+      }
+      v_eng_obras_atrasadas: {
+        Row: {
+          codigo: string | null
+          consultor_id: string | null
+          data_inicio: string | null
+          dias_em_aberto: number | null
+          equipe: string | null
+          modulos_qtde: number | null
+          obra_id: string | null
+          severidade: string | null
+          status: string | null
+        }
+        Insert: {
+          codigo?: string | null
+          consultor_id?: string | null
+          data_inicio?: string | null
+          dias_em_aberto?: never
+          equipe?: string | null
+          modulos_qtde?: number | null
+          obra_id?: string | null
+          severidade?: never
+          status?: string | null
+        }
+        Update: {
+          codigo?: string | null
+          consultor_id?: string | null
+          data_inicio?: string | null
+          dias_em_aberto?: never
+          equipe?: string | null
+          modulos_qtde?: number | null
+          obra_id?: string | null
+          severidade?: never
+          status?: string | null
+        }
+        Relationships: []
+      }
+      v_eng_produtividade_equipe: {
+        Row: {
+          equipe: string | null
+          kwp_instalado: number | null
+          modulos_instalados: number | null
+          modulos_por_dia_medio: number | null
+          obras_atrasadas: number | null
+          obras_em_andamento: number | null
+          obras_finalizadas: number | null
+          tempo_medio_obra_dias: number | null
+          total_obras: number | null
+        }
+        Relationships: []
+      }
+      v_eng_tempo_por_faixa: {
+        Row: {
+          faixa_modulos: string | null
+          modulos_dia_medio: number | null
+          obras: number | null
+          tempo_max_dias: number | null
+          tempo_medio_dias: number | null
+          tempo_min_dias: number | null
+        }
+        Relationships: []
+      }
       v_estoque_pendencias_resumo: {
         Row: {
           entregas_pendentes: number | null
@@ -3089,6 +3189,59 @@ export type Database = {
           descricao: string | null
           qtd: number | null
           severidade: string | null
+        }
+        Relationships: []
+      }
+      v_obra_custo_realizado: {
+        Row: {
+          codigo: string | null
+          consultor_id: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          data_finalizacao: string | null
+          data_inicio: string | null
+          desvio_custo: number | null
+          equipe: string | null
+          modulos_qtde: number | null
+          obra_id: string | null
+          potencia_kwp: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_obra_tempo: {
+        Row: {
+          codigo: string | null
+          data_finalizacao: string | null
+          data_inicio: string | null
+          dias_obra: number | null
+          equipe: string | null
+          modulos_por_dia: number | null
+          modulos_qtde: number | null
+          obra_id: string | null
+          status: string | null
+        }
+        Insert: {
+          codigo?: string | null
+          data_finalizacao?: string | null
+          data_inicio?: string | null
+          dias_obra?: never
+          equipe?: string | null
+          modulos_por_dia?: never
+          modulos_qtde?: number | null
+          obra_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          codigo?: string | null
+          data_finalizacao?: string | null
+          data_inicio?: string | null
+          dias_obra?: never
+          equipe?: string | null
+          modulos_por_dia?: never
+          modulos_qtde?: number | null
+          obra_id?: string | null
+          status?: string | null
         }
         Relationships: []
       }

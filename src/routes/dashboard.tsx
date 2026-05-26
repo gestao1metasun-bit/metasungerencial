@@ -26,6 +26,8 @@ import {
 import { contratos, evolucaoMensal, financiamentos, obras, vendedores, propostas, fmtBRL } from "@/lib/mock-data";
 import { useContratos } from "@/lib/contratos-store";
 import { IndicadoresTab } from "@/routes/comercial";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Geral — Meta Sun Gerencial" }] }),

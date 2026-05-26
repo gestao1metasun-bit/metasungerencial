@@ -205,12 +205,28 @@ function EngenhariaPage() {
   // ONDA B — Engenharia Real (leitura Supabase + dedup com seed/mock)
   // ────────────────────────────────────────────────────────────────
   const flagObrasSupabase = featureFlags.ENG_OBRAS_SUPABASE;
-  const { obras: obrasReais, error: obrasReaisError } = useObrasReais(flagObrasSupabase);
+  const { obras: obrasReais, error: obrasReaisError, reload: reloadObrasReais } = useObrasReais(flagObrasSupabase);
+  const [sessionInfo, setSessionInfo] = useState<{ userId: string | null; email: string | null }>({ userId: null, email: null });
+  useEffect(() => {
+    let alive = true;
+    const sync = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.auth.getSession();
+      if (!alive) return;
+      setSessionInfo({
+        userId: data.session?.user?.id ?? null,
+        email: data.session?.user?.email ?? null,
+      });
+    };
+    sync();
+    return () => { alive = false; };
+  }, [obrasReais]);
   useEffect(() => {
     if (obrasReaisError) {
       console.warn("[engenharia] obras-repo erro (mantendo seed):", obrasReaisError);
     }
   }, [obrasReaisError]);
+
 
   useEffect(() => {
     console.info("[engenharia] hook final", {

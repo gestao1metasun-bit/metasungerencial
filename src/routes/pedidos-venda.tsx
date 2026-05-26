@@ -44,9 +44,11 @@ function PedidosVendaPage() {
   const [busca, setBusca] = useState("");
   const [pvAtivo, setPvAtivo] = useState<string | null>(null);
   const [openNovo, setOpenNovo] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const { data: pvs = [], isLoading } = usePedidosVenda({ status: filtro });
+  const { data: pvs = [], isLoading, refetch, isFetching } = usePedidosVenda({ status: filtro });
   const { data: bridge = [] } = useBridgePV();
+
 
   const filtrados = useMemo(() => {
     if (!busca.trim()) return pvs;

@@ -19,6 +19,7 @@ import {
   useEnviarPVParaAnalise, useAprovarPV, useCancelarPV, useEnviarPVParaEngenharia,
   PV_STATUS_LABEL, PV_STATUS_TONE, type PVStatus,
 } from "@/hooks/usePedidosVenda";
+import { useGerarTitulosDoPV } from "@/hooks/useTitulosFinanceiros";
 import { useIsAdmin } from "@/lib/auth-store";
 
 interface Props {
@@ -231,6 +232,16 @@ export function PedidoVendaModal({ pvId, open, onOpenChange }: Props) {
                 >
                   <HardHat className="h-4 w-4 mr-2" />
                   Enviar para engenharia
+                </Button>
+              )}
+              {["APROVADO", "EM_EXECUCAO", "FATURADO"].includes(status) && (
+                <Button
+                  variant="outline"
+                  onClick={() => gerarTit.mutate({ pvId: pv.id })}
+                  disabled={gerarTit.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Gerar títulos financeiros
                 </Button>
               )}
             </TabsContent>

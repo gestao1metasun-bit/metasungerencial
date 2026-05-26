@@ -32,6 +32,7 @@ import {
 } from "@/lib/status-catalog";
 import { useConsultoresAtivos, formatTelefoneBR } from "@/lib/consultores-store";
 import { useAuth } from "@/lib/auth-store";
+import { supabase } from "@/integrations/supabase/client";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
   usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
@@ -272,8 +273,15 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     } finally { setBuscandoCep(false); }
   }
 
-  const salvar = () => {
+  const salvar = async () => {
     console.info("[lead-save] handler acionado", { nome, telefone, consumo, consultorId, origem, doc });
+    // Gate de autenticação: sem sessão hidratada não persistimos.
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !authData?.user) {
+      console.error("[lead-save] abortado: sem sessão autenticada", authErr);
+      toast.error("Sessão não carregada ou usuário não autenticado. Recarregue ou faça login novamente.");
+      return;
+    }
     if (!nome.trim() || !telefone.trim() || !consumo || !consultorId || !origem) {
       console.warn("[lead-save] abortado: campos obrigatórios faltando");
       toast.error("Preencha os campos obrigatórios."); return;
@@ -440,9 +448,14 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {!user ? (
+            <span className="text-xs text-destructive mr-auto">
+              Sessão não autenticada — faça login para salvar o lead.
+            </span>
+          ) : null}
           <Button variant="outline" onClick={() => { reset(); onClose(); }}>Cancelar</Button>
-          <Button onClick={salvar} disabled={!!leadExistenteNumero}>Salvar lead</Button>
+          <Button onClick={salvar} disabled={!!leadExistenteNumero || !user}>Salvar lead</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

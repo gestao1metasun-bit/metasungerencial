@@ -255,7 +255,7 @@ function EnviarEngenhariaBtn({ projetoId, onDone }: { projetoId: string; onDone:
         setBusy(true);
         const r = await enviarParaEngenharia(projetoId);
         setBusy(false);
-        if (r.error) { toast.error("Falha: " + r.error); return; }
+        if (r.error || !r.data) { toast.error("Falha: " + (r.error ?? "sem retorno")); return; }
         toast.success("Projeto enviado. Obra criada: " + r.data.slice(0, 8) + "…");
         onDone();
       }}

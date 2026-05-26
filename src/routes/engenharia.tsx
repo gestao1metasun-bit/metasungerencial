@@ -213,21 +213,43 @@ function EngenhariaPage() {
   }, [obrasReaisError]);
 
   useEffect(() => {
+    console.info("[engenharia] hook final", {
+      flagObrasSupabase,
+      total: obrasReais.length,
+      rows: obrasReais.map((row) => debugRowPipeline(row)),
+      target: obrasReais.find((row) => row.codigo === DEBUG_OBRA_CODIGO)
+        ? obrasReais.filter((row) => row.codigo === DEBUG_OBRA_CODIGO).map((row) => debugRowPipeline(row))
+        : null,
+    });
+  }, [flagObrasSupabase, obrasReais]);
+
+  useEffect(() => {
     if (!flagObrasSupabase) return;
     console.info("[engenharia] obras reais recebidas:", obrasReais.length, obrasReais.map(o => ({ id: o.id, codigo: o.codigo, status: o.status })));
-    if (obrasReais.length === 0) return;
     setObras((cur) => {
       // Dedup: por ID direto OU por bridge dados.projeto_contrato_id ↔ obra mock
       // que herdou o id do projeto (caso projetoToObra).
       const curById = new Map(cur.map((o) => [o.id, o]));
       let mudou = false;
       const merged: Obra[] = [...cur];
+      console.info("[engenharia] merge:start", {
+        mockCount: cur.length,
+        realCount: obrasReais.length,
+        mockRows: cur.map((o) => debugObraPipeline(o)),
+        realRows: obrasReais.map((row) => debugRowPipeline(row)),
+      });
       for (const r of obrasReais) {
         const projetoId = projetoContratoIdOf(r);
         // Já presente como obra-real?
-        if (curById.has(r.id)) { console.info("[engenharia] dedup por id real", r.id); continue; }
+        if (curById.has(r.id)) {
+          console.info("[engenharia] descarte:dedup:id", debugRowPipeline(r));
+          continue;
+        }
         // Já presente como obra-mock vinda do Comercial (mesmo projeto)?
-        if (projetoId && curById.has(projetoId)) { console.info("[engenharia] dedup por projeto_contrato_id", projetoId); continue; }
+        if (projetoId && curById.has(projetoId)) {
+          console.info("[engenharia] descarte:dedup:projeto", debugRowPipeline(r));
+          continue;
+        }
         // Normaliza status para uma coluna válida do Kanban da Engenharia.
         // O banco usa default 'Planejada' (genérico); mapeamos para 'Novo projeto'
         // que é a etapa inicial canônica do fluxo de engenharia.
@@ -263,13 +285,31 @@ function EngenhariaPage() {
           telhadoTipo: r.telhado_tipo ?? "Outro",
           tipo: r.tipo ?? "",
         } as Obra;
-        console.info("[engenharia] adicionando obra real:", adapted.id, "codigo:", r.codigo, "status:", statusNorm, "cliente:", clienteNome);
+        console.info("[engenharia] merge:add", debugRowPipeline(r, { cliente: clienteNome, contrato: contratoLabel, etapa: statusNorm }));
         merged.push(adapted);
         mudou = true;
       }
+      console.info("[engenharia] merge:result", {
+        mudou,
+        total: merged.length,
+        rows: merged.map((o) => debugObraPipeline(o)),
+        target: merged.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+          ? merged.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+          : null,
+      });
       return mudou ? merged : cur;
     });
   }, [flagObrasSupabase, obrasReais, clientesAll]);
+
+  useEffect(() => {
+    console.info("[engenharia] obras state final", {
+      total: obras.length,
+      rows: obras.map((o) => debugObraPipeline(o)),
+      target: obras.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+        ? obras.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+        : null,
+    });
+  }, [obras]);
 
 
   // Auto-incorpora projetos aprovados no Comercial em Gestão de projetos
@@ -2508,6 +2548,34 @@ const ETAPA_COLS: { key: string; label: string; tone: string }[] = [
 ];
 
 const ETAPA_KEYS = ETAPA_COLS.map((c) => c.key);
+const DEBUG_OBRA_CODIGO = "OBR-20260526-710ec4";
+
+function debugObraPipeline(o: Obra | null | undefined) {
+  if (!o) return null;
+  return {
+    obra_id: o.id ?? null,
+    codigo: o.obs?.match(/Código: ([^·]+)/)?.[1]?.trim() ?? null,
+    status: o.status ?? null,
+    etapa: o.status ?? null,
+    projeto_contrato_id: o.obs?.match(/Projeto: ([0-9a-f-]+)/i)?.[1] ?? null,
+    cliente: o.cliente ?? null,
+    contrato: o.contrato ?? null,
+    coluna_valida: !!o.status && ETAPA_KEYS.includes(o.status),
+  };
+}
+
+function debugRowPipeline(r: ObraRow | null | undefined, extras?: { cliente?: string; contrato?: string; etapa?: string }) {
+  if (!r) return null;
+  return {
+    obra_id: r.id ?? null,
+    codigo: r.codigo ?? null,
+    status: r.status ?? null,
+    etapa: extras?.etapa ?? r.status ?? null,
+    projeto_contrato_id: projetoContratoIdOf(r),
+    cliente: extras?.cliente ?? null,
+    contrato: extras?.contrato ?? null,
+  };
+}
 
 function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) => void }) {
   const contratos = useContratos();
@@ -2518,8 +2586,25 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
   const filtered = obras.filter((o) => {
     if (!q.trim()) return true;
     const s = q.toLowerCase();
-    return o.cliente.toLowerCase().includes(s) || o.id.toLowerCase().includes(s) || (o.contrato || "").toLowerCase().includes(s);
+    const keep = o.cliente.toLowerCase().includes(s)
+      || o.id.toLowerCase().includes(s)
+      || (o.contrato || "").toLowerCase().includes(s)
+      || (o.obs || "").toLowerCase().includes(s);
+    if (!keep) console.info("[engenharia] descarte:filtro", debugObraPipeline(o));
+    return keep;
   });
+
+  useEffect(() => {
+    console.info("[engenharia] kanban:filtered", {
+      busca: q,
+      totalEntrada: obras.length,
+      totalSaida: filtered.length,
+      rows: filtered.map((o) => debugObraPipeline(o)),
+      target: filtered.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+        ? filtered.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+        : null,
+    });
+  }, [filtered, obras.length, q]);
 
   const moveTo = (id: string, status: string) => {
     const cur = obras.find((o) => o.id === id);
@@ -2728,11 +2813,25 @@ function ObrasKanbanBlock({
     "ms.engenharia.obras.kanban",
     OBRAS_KANBAN_DEFAULTS,
   );
+  const colsAtivas = cols.filter((c) => c.ativo !== false);
   const items: KItem<Obra>[] = obras.map((o) => ({
     key: o.id,
     data: o,
-    defaultColId: `etapa:${o.status}`,
+    defaultColId: colsAtivas.some((c) => c.id === `etapa:${o.status}`) ? `etapa:${o.status}` : "etapa:Novo projeto",
   }));
+  useEffect(() => {
+    const payload = items.map((it) => ({
+      ...debugObraPipeline(it.data),
+      defaultColId: it.defaultColId,
+      assignedColId: assign[it.key] ?? null,
+      assignedColExists: !!assign[it.key] && colsAtivas.some((c) => c.id === assign[it.key]),
+    }));
+    console.info("[engenharia] kanban:items", {
+      colsAtivas: colsAtivas.map((c) => c.id),
+      rows: payload,
+      target: payload.find((row) => row.codigo === DEBUG_OBRA_CODIGO) ?? null,
+    });
+  }, [assign, colsAtivas, items]);
   const handleDrop = (cardKey: string, colId: string) => {
     if (colId.startsWith("etapa:")) moveTo(cardKey, colId.slice(6));
   };
@@ -2752,10 +2851,19 @@ function ObrasKanbanBlock({
         renderCard={(o) => (
           <div className={`rounded-md border bg-card p-2 shadow-sm hover:shadow ${o.aguardandoLiberacaoFin ? "border-amber-400 ring-1 ring-amber-300/60" : ""}`}>
             <div className="flex items-start justify-between gap-2">
-              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
+              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente || "Cliente não identificado"}</div>
               <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
             </div>
+            {o.obs?.includes(DEBUG_OBRA_CODIGO) ? (
+              <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                DEBUG REAL
+              </div>
+            ) : null}
             {o.tipo ? <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div> : null}
+            <div className="mt-1 text-[10px] text-muted-foreground">Código: {o.obs?.match(/Código: ([^·]+)/)?.[1]?.trim() ?? "—"}</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">Status: {o.status || "—"}</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">Projeto: {o.obs?.match(/Projeto: ([0-9a-f-]+)/i)?.[1] ?? "—"}</div>
+            <div className="mt-1 text-[10px] font-mono text-muted-foreground">Obra: {o.id}</div>
             {o.aguardandoLiberacaoFin ? (
               <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                 Aguardando liberação Financiamento

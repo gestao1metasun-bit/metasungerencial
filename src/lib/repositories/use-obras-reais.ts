@@ -17,6 +17,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TAG = "[obras-hook]";
 const POLL_MS = 30_000;
+const DEBUG_OBRA_CODIGO = "OBR-20260526-710ec4";
+
+function debugRows(rows: ObraRow[]) {
+  return rows.map((row) => ({
+    obra_id: row.id ?? null,
+    codigo: row.codigo ?? null,
+    status: row.status ?? null,
+    etapa: row.status ?? null,
+    projeto_contrato_id: row.dados?.projeto_contrato_id ?? null,
+    cliente_id: row.cliente_id ?? null,
+    contrato_id: row.contrato_id ?? null,
+  }));
+}
 
 export function useObrasReais(enabled: boolean = true) {
   const [obras, setObras] = useState<ObraRow[]>([]);
@@ -26,6 +39,7 @@ export function useObrasReais(enabled: boolean = true) {
   const reload = useCallback(async () => {
     if (!enabled) return;
     setLoading(true);
+    console.info(TAG, "reload:start", { enabled });
     const r = await fetchAll();
     if (r.error) {
       console.warn(TAG, "reload erro (mantendo lista anterior)", r.error);
@@ -33,6 +47,13 @@ export function useObrasReais(enabled: boolean = true) {
     } else {
       setError(null);
       setObras(r.data ?? []);
+      console.info(TAG, "reload:success", {
+        total: (r.data ?? []).length,
+        target: (r.data ?? []).find((row) => row.codigo === DEBUG_OBRA_CODIGO)
+          ? debugRows((r.data ?? []).filter((row) => row.codigo === DEBUG_OBRA_CODIGO))
+          : null,
+        rows: debugRows(r.data ?? []),
+      });
     }
     setLoading(false);
   }, [enabled]);

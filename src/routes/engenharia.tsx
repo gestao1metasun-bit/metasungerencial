@@ -205,12 +205,28 @@ function EngenhariaPage() {
   // ONDA B — Engenharia Real (leitura Supabase + dedup com seed/mock)
   // ────────────────────────────────────────────────────────────────
   const flagObrasSupabase = featureFlags.ENG_OBRAS_SUPABASE;
-  const { obras: obrasReais, error: obrasReaisError } = useObrasReais(flagObrasSupabase);
+  const { obras: obrasReais, error: obrasReaisError, reload: reloadObrasReais } = useObrasReais(flagObrasSupabase);
+  const [sessionInfo, setSessionInfo] = useState<{ userId: string | null; email: string | null }>({ userId: null, email: null });
+  useEffect(() => {
+    let alive = true;
+    const sync = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.auth.getSession();
+      if (!alive) return;
+      setSessionInfo({
+        userId: data.session?.user?.id ?? null,
+        email: data.session?.user?.email ?? null,
+      });
+    };
+    sync();
+    return () => { alive = false; };
+  }, [obrasReais]);
   useEffect(() => {
     if (obrasReaisError) {
       console.warn("[engenharia] obras-repo erro (mantendo seed):", obrasReaisError);
     }
   }, [obrasReaisError]);
+
 
   useEffect(() => {
     console.info("[engenharia] hook final", {
@@ -399,9 +415,46 @@ function EngenhariaPage() {
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
+      {(() => {
+        const targetReal = obrasReais.find((r) => r.codigo === DEBUG_OBRA_CODIGO);
+        const targetMerged = obras.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO));
+        const sessionOk = !!sessionInfo.userId;
+        const tone = !sessionOk
+          ? "border-destructive/40 bg-destructive/10 text-destructive"
+          : targetMerged
+            ? "border-emerald-400/40 bg-emerald-50 text-emerald-900"
+            : "border-amber-400/40 bg-amber-50 text-amber-900";
+        return (
+          <div className={`mb-3 rounded-md border p-2 text-[11px] font-mono ${tone}`}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span><b>ONDA B · diag</b></span>
+              <span>sessão: {sessionOk ? `OK (${sessionInfo.email ?? sessionInfo.userId})` : "AUSENTE — faça login"}</span>
+              <span>flag: {String(flagObrasSupabase)}</span>
+              <span>obras reais (RLS): <b>{obrasReais.length}</b></span>
+              <span>OBR-…710ec4 no fetch: <b>{targetReal ? "SIM" : "NÃO"}</b></span>
+              <span>OBR-…710ec4 no merge: <b>{targetMerged ? `SIM (col=${targetMerged.status})` : "NÃO"}</b></span>
+              {obrasReaisError ? <span className="text-destructive">erro: {obrasReaisError}</span> : null}
+              <button
+                type="button"
+                className="ml-auto rounded border px-2 py-0.5 text-[10px] hover:bg-background"
+                onClick={() => reloadObrasReais()}
+              >
+                Recarregar obras
+              </button>
+            </div>
+            {!sessionOk ? (
+              <div className="mt-1">
+                Sem sessão autenticada, o RLS de <code>public.obras</code> retorna 0 linhas.
+                Abra <code>/auth</code> ou <code>/login</code>, autentique e volte para esta tela.
+              </div>
+            ) : null}
+          </div>
+        );
+      })()}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+
           <TabsTrigger value="ativas">Gestão de projetos</TabsTrigger>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>

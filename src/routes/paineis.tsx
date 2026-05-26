@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
 import { AuditoriaCoberturaCard } from "@/components/app/governanca/AuditoriaCoberturaCard";
+import { ReconciliacaoCard } from "@/components/app/governanca/ReconciliacaoCard";
 
 export const Route = createFileRoute("/paineis")({
   head: () => ({ meta: [{ title: "Painéis — Meta Sun Gerencial" }] }),

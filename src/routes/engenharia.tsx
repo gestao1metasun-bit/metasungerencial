@@ -213,21 +213,43 @@ function EngenhariaPage() {
   }, [obrasReaisError]);
 
   useEffect(() => {
+    console.info("[engenharia] hook final", {
+      flagObrasSupabase,
+      total: obrasReais.length,
+      rows: obrasReais.map((row) => debugRowPipeline(row)),
+      target: obrasReais.find((row) => row.codigo === DEBUG_OBRA_CODIGO)
+        ? obrasReais.filter((row) => row.codigo === DEBUG_OBRA_CODIGO).map((row) => debugRowPipeline(row))
+        : null,
+    });
+  }, [flagObrasSupabase, obrasReais]);
+
+  useEffect(() => {
     if (!flagObrasSupabase) return;
     console.info("[engenharia] obras reais recebidas:", obrasReais.length, obrasReais.map(o => ({ id: o.id, codigo: o.codigo, status: o.status })));
-    if (obrasReais.length === 0) return;
     setObras((cur) => {
       // Dedup: por ID direto OU por bridge dados.projeto_contrato_id ↔ obra mock
       // que herdou o id do projeto (caso projetoToObra).
       const curById = new Map(cur.map((o) => [o.id, o]));
       let mudou = false;
       const merged: Obra[] = [...cur];
+      console.info("[engenharia] merge:start", {
+        mockCount: cur.length,
+        realCount: obrasReais.length,
+        mockRows: cur.map((o) => debugObraPipeline(o)),
+        realRows: obrasReais.map((row) => debugRowPipeline(row)),
+      });
       for (const r of obrasReais) {
         const projetoId = projetoContratoIdOf(r);
         // Já presente como obra-real?
-        if (curById.has(r.id)) { console.info("[engenharia] dedup por id real", r.id); continue; }
+        if (curById.has(r.id)) {
+          console.info("[engenharia] descarte:dedup:id", debugRowPipeline(r));
+          continue;
+        }
         // Já presente como obra-mock vinda do Comercial (mesmo projeto)?
-        if (projetoId && curById.has(projetoId)) { console.info("[engenharia] dedup por projeto_contrato_id", projetoId); continue; }
+        if (projetoId && curById.has(projetoId)) {
+          console.info("[engenharia] descarte:dedup:projeto", debugRowPipeline(r));
+          continue;
+        }
         // Normaliza status para uma coluna válida do Kanban da Engenharia.
         // O banco usa default 'Planejada' (genérico); mapeamos para 'Novo projeto'
         // que é a etapa inicial canônica do fluxo de engenharia.
@@ -263,13 +285,31 @@ function EngenhariaPage() {
           telhadoTipo: r.telhado_tipo ?? "Outro",
           tipo: r.tipo ?? "",
         } as Obra;
-        console.info("[engenharia] adicionando obra real:", adapted.id, "codigo:", r.codigo, "status:", statusNorm, "cliente:", clienteNome);
+        console.info("[engenharia] merge:add", debugRowPipeline(r, { cliente: clienteNome, contrato: contratoLabel, etapa: statusNorm }));
         merged.push(adapted);
         mudou = true;
       }
+      console.info("[engenharia] merge:result", {
+        mudou,
+        total: merged.length,
+        rows: merged.map((o) => debugObraPipeline(o)),
+        target: merged.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+          ? merged.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+          : null,
+      });
       return mudou ? merged : cur;
     });
   }, [flagObrasSupabase, obrasReais, clientesAll]);
+
+  useEffect(() => {
+    console.info("[engenharia] obras state final", {
+      total: obras.length,
+      rows: obras.map((o) => debugObraPipeline(o)),
+      target: obras.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+        ? obras.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+        : null,
+    });
+  }, [obras]);
 
 
   // Auto-incorpora projetos aprovados no Comercial em Gestão de projetos

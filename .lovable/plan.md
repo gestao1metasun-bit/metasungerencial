@@ -1,154 +1,108 @@
+# Onda D — Financeiro Real + Estoque (Fundação)
 
-# Onda C — Fundação PV (Pedido de Venda)
+Escopo grande. Vou executar em **sub-ondas sequenciais**, cada uma com migração + UI mínima + validação estrutural antes da próxima. Mantenho a diretriz: **consistência operacional > estética**, **sem mock**, **sem fallback silencioso**, **tudo via Supabase + RLS + auditoria**.
 
-## Pré-requisito bloqueante
+---
 
-Confirmar Onda B antes de iniciar:
+## Sub-onda D1 — Núcleo Financeiro (Schema)
 
-1. App publicado em `https://metasungerencial.lovable.app/login` abre sem o toast `Missing Supabase environment variable(s)`.
-2. Login com `renanbarc16@gmail.com` mostra **RENAN BARCELOS** no header (não "Visitante").
-3. `/engenharia` mostra banner `sessão: OK` e `obras reais RLS >= 1`.
+Migração única criando:
 
-Se qualquer item falhar, eu paro a Onda C e voltamos à Onda B.
+**Tabelas**
+- `centros_resultado` (codigo, nome, tipo, ativo)
+- `contas_financeiras` (codigo, nome, tipo: caixa/banco/cartao, ativo, saldo_inicial)
+- `titulos_financeiros` — campos: `tipo` (receber/pagar), `origem_tipo` (enum CHECK: contrato/projeto/pedido_venda/obra/cliente/fornecedor/aditivo/estoque/manual_controlado), `origem_id uuid NOT NULL`, `cliente_id`, `consultor_id`, `valor_bruto`, `valor_liquido`, `desconto`, `juros`, `multa`, `saldo`, `competencia`, `vencimento`, `status` (PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO), `centro_id`, `conta_id`, `forma_pagamento`, `observacoes`, auditoria padrão.
+- `parcelas_financeiras` (titulo_id, numero, valor, vencimento, saldo, status, recebido_em)
+- `movimentacoes_financeiras` (titulo_id, parcela_id?, tipo: recebimento/baixa/estorno/juros/desconto/multa, valor, data, conta_id, observacao, user_id) — append-only.
 
-## Escopo desta onda (apenas PV)
+**Constraints críticas**
+- `origem_id NOT NULL` + CHECK que `origem_tipo` é valor válido → **proíbe título órfão**.
+- Trigger `tg_titulo_valida_saldo`: bloqueia movimentação que ultrapasse `saldo`.
+- Trigger `tg_titulo_atualiza_saldo`: a cada movimentação recalcula `saldo` e ajusta `status` (PENDENTE → PARCIAL → RECEBIDO).
+- Trigger `tg_titulo_valida_transicao`: state machine (mesma lógica do PV — bloqueio 42501).
+- Trigger `tg_audit_row` + `tg_snapshot_version` + `tg_set_updated_at_generic` em `titulos_financeiros` e `movimentacoes_financeiras`.
+- `is_period_closed` aplicado em UPDATE financeiro.
 
-Ondas D–I ficam para depois. Esta onda entrega só a fundação transacional do Pedido de Venda e a ponte Contrato→Projeto→PV→Obra.
+**RLS**
+- `titulos_*` SELECT/INSERT/UPDATE: `is_admin(auth.uid()) OR consultor_id = auth.uid()`. DELETE: só admin.
+- `movimentacoes_*` SELECT via título; INSERT autenticado com validação de saldo no trigger; UPDATE/DELETE bloqueado (append-only).
+- `centros_resultado` / `contas_financeiras`: SELECT auth, write admin.
 
-## Entregáveis
+**RPCs**
+- `gerar_titulos_do_pv(_pv_id, _parcelas jsonb)` SECURITY DEFINER — só PV APROVADO, idempotente, preenche `origem_tipo='pedido_venda'` + `origem_id=pv_id`.
+- `receber_parcela(_parcela_id, _valor, _conta_id, _data, _obs)` — valida saldo, cria movimentação, recalcula via trigger.
+- `cancelar_titulo(_titulo_id, _motivo)` — exige motivo ≥3 chars.
+- `renegociar_titulo(_titulo_id, _novas_parcelas jsonb, _motivo)`.
 
-### 1. Tabela `pedidos_venda`
+---
 
-Campos:
-- `id uuid pk default gen_random_uuid()`
-- `codigo text unique` (gerado: `PV-YYYYMMDD-<6hex>`)
-- `contrato_id uuid not null` (FK lógica para `contratos.id`)
-- `projeto_contrato_id uuid` (FK lógica para `projetos_contrato.id`)
-- `obra_id uuid` (preenchido quando a obra é gerada)
-- `cliente_id uuid not null`
-- `consultor_id uuid not null`
-- `status text not null default 'RASCUNHO'`
-- `valor_total numeric(14,2) not null default 0`
-- `forma_pagamento text` (`vista | parcelado | financiamento | permuta | misto`)
-- `possui_financiamento boolean not null default false`
-- `financiamento_banco text`
-- `financiamento_valor numeric(14,2)`
-- `gerente_id uuid`
-- `observacoes text`
-- `dados jsonb not null default '{}'::jsonb`
-- `aprovado_em timestamptz`, `aprovado_por uuid`
-- `cancelado_em timestamptz`, `motivo_cancelamento text`
-- `created_at timestamptz not null default now()`
-- `updated_at timestamptz not null default now()`
-- `deleted_at timestamptz`, `deleted_reason text`, `deleted_by uuid`
+## Sub-onda D2 — UI Financeira Mínima
 
-Índices: `(contrato_id)`, `(projeto_contrato_id)`, `(obra_id)`, `(consultor_id)`, `(status)`.
+- Hook `useTitulosFinanceiros` (lista + CRUD via RPCs).
+- Rota `/financeiro/titulos` com tabela + filtros (status, origem_tipo, vencimento) + botão "Receber" → modal padronizado (Identificação / Financeiro / Operacional / Auditoria).
+- Botão "Gerar títulos" no `PedidoVendaModal` quando status = APROVADO.
+- Link no `AppLayout`.
 
-### 2. Tabela `pedidos_venda_status_historico`
+---
 
-Campos: `id`, `pedido_id`, `status_anterior`, `status_novo`, `motivo`, `user_id`, `user_email`, `created_at`.
-Preenchida por trigger a cada UPDATE de `status`.
+## Sub-onda D3 — Estoque (Fundação)
 
-### 3. Máquina de estados
+Migração criando:
 
-Estados: `RASCUNHO`, `EM_ANALISE`, `APROVADO`, `EM_EXECUCAO`, `FATURADO`, `FINALIZADO`, `CANCELADO`.
+- `estoque_itens` (codigo, descricao, unidade, categoria, ativo, custo_medio)
+- `estoque_movimentacoes` (item_id, tipo: entrada/saida/ajuste/reserva/liberacao_reserva, quantidade, custo_unit, **origem_tipo** CHECK (obra/pv/projeto/manual_controlado), **origem_id NOT NULL para saídas**, data, user_id, observacao) — append-only.
+- `estoque_reservas` (item_id, obra_id?, pv_id?, projeto_id?, quantidade, status: ATIVA/CONSUMIDA/LIBERADA, criado_em, consumido_em)
+- `estoque_entregas` (obra_id, item_id, quantidade, responsavel, data, observacao, reserva_id?)
 
-Transições válidas (trigger `tg_pv_valida_transicao`, bloqueia o resto com `42501`):
+**Views/Funções**
+- `vw_estoque_saldos`: por item retorna `fisico`, `reservado`, `disponivel = fisico - reservado`, `entregue`, `pendente`.
+- Trigger `tg_estoque_valida_origem_saida`: bloqueia saída sem `origem_id` válido.
+- Trigger `tg_estoque_valida_disponivel`: bloqueia reserva > disponível.
 
-```text
-RASCUNHO     -> EM_ANALISE | CANCELADO
-EM_ANALISE   -> APROVADO | RASCUNHO | CANCELADO
-APROVADO     -> EM_EXECUCAO | CANCELADO
-EM_EXECUCAO  -> FATURADO | CANCELADO
-FATURADO     -> FINALIZADO
-FINALIZADO   -> (nenhuma; apenas admin pode reabrir)
-CANCELADO    -> (nenhuma; apenas admin pode reabrir)
-```
+**RLS** análogo a PV (admin OR criador/consultor via obra).
 
-`is_admin(auth.uid())` ignora as restrições (modo exceção).
+**Bridge Engenharia ↔ Estoque**
+- RPC `reservar_material_obra(_obra_id, _item_id, _qtd)`.
+- RPC `entregar_material_obra(_reserva_id, _qtd, _responsavel, _obs)` → cria `estoque_entregas` + movimentação SAIDA com `origem_tipo='obra'`/`origem_id=obra_id` + atualiza reserva.
 
-### 4. RLS
+---
 
-Espelha o padrão `obras` / `contratos`:
-- `pv_select`: `is_admin(auth.uid()) OR consultor_id = auth.uid()`
-- `pv_insert`: `is_admin OR consultor_id = auth.uid()`
-- `pv_update`: `is_admin OR consultor_id = auth.uid()`
-- `pv_delete`: somente `is_admin`
-- Histórico: SELECT próprio/admin; INSERT só via trigger (`with check true`); sem UPDATE/DELETE.
+## Sub-onda D4 — UI Estoque Mínima
 
-GRANTs explícitos para `authenticated` e `service_role` (sem `anon`).
+- Rota `/estoque/itens` (lista + saldos da view).
+- Rota `/estoque/movimentacoes` (histórico append-only).
+- Aba "Materiais" no modal de Obra (reserva + entrega).
 
-### 5. Auditoria
+---
 
-Triggers reaproveitando funções existentes:
-- `tg_audit_row('comercial','pedidos_venda')` em INSERT/UPDATE/DELETE.
-- `tg_snapshot_version` em INSERT/UPDATE para `entidade_versoes`.
-- `tg_set_updated_at_generic` em UPDATE.
-- `tg_pv_status_historico` em UPDATE quando `OLD.status <> NEW.status`.
+## Sub-onda D5 — Preparação CMV
 
-### 6. RPC `gerar_pv_do_contrato(_contrato_id uuid, _projeto_contrato_id uuid default null)`
+- View `vw_custo_obra` (soma movimentações SAIDA × custo_unit por obra_id).
+- View `vw_custo_pv` (via obra vinculada ao PV).
+- View `vw_custo_contrato` (via PVs do contrato).
+- Sem UI nova nesta sub-onda — apenas estrutura para próximas ondas.
 
-Comportamento:
-- Verifica permissão (consultor dono do contrato ou admin).
-- Se `_projeto_contrato_id` nulo, usa o primeiro `projetos_contrato` APROVADO do contrato.
-- Cria `pedidos_venda` em `RASCUNHO` com `cliente_id`, `consultor_id`, `valor_total = projetos_contrato.valor`, `forma_pagamento`/`financiamento*` herdados do contrato.
-- Idempotente: se já existir PV não-cancelado para `(contrato_id, projeto_contrato_id)`, retorna o existente.
-- Retorna `uuid` do PV.
+---
 
-### 7. RPC `aprovar_pv(_pv_id uuid, _motivo text default null)`
+## Fora de escopo (explicitamente)
 
-- Valida `status = 'EM_ANALISE'`.
-- Atualiza `status='APROVADO'`, `aprovado_em=now()`, `aprovado_por=auth.uid()`.
-- Não dispara geração de títulos financeiros nesta onda (fica para Onda D).
+- Módulo fiscal, contabilidade completa, BI avançado, WMS, MRP, integrações bancárias, conciliação OFX, NFe — ficam para ondas futuras.
+- Refino visual, animações, dashboards — standby (regra existente).
 
-### 8. RPC `enviar_pv_para_engenharia(_pv_id uuid)`
+---
 
-- Exige `status='APROVADO'`.
-- Reaproveita `enviar_projeto_para_engenharia(projeto_contrato_id)` para gerar a `obra`.
-- Grava `obra_id` no PV e transiciona PV para `EM_EXECUCAO`.
+## Ordem de execução proposta
 
-### 9. Frontend mínimo (sem refino visual)
+1. **Agora**: migração D1 (schema financeiro + triggers + RPCs + RLS + GRANTs).
+2. Após aprovação da migração: UI D2 + hook + link.
+3. **Checkpoint operacional D1+D2**: validar geração de títulos a partir de PV aprovado no app publicado, recebimento de parcela, bloqueio de saldo, auditoria.
+4. Migração D3 (estoque) → UI D4 → checkpoint.
+5. Migração D5 (views CMV) → fim da Onda D.
 
-- Página `/pedidos-venda` (lista + criar a partir de contrato).
-- Modal "Pedido de Venda" com tabs: Resumo / Pagamento / Engenharia / Histórico.
-- Botões: "Enviar para análise", "Aprovar" (admin/gerente), "Enviar para engenharia", "Cancelar".
-- Hook `usePedidosVenda` com TanStack Query e `invalidateQueries` em mutações.
-- Tudo via `supabase` client + RPCs; sem mock, sem array hardcoded.
+Cada migração será submetida separadamente (uma por vez, sem paralelizar com código) para permitir validação incremental e rollback seguro.
 
-### 10. Bridge UUID rastreável
+---
 
-- `contratos.id` → `projetos_contrato.contrato_id` → `pedidos_venda.projeto_contrato_id` → `pedidos_venda.obra_id` → `obras.id`.
-- View read-only `vw_bridge_pv` para diagnóstico operacional (`contrato_codigo, projeto_id, pv_id, pv_status, obra_codigo, obra_status`).
+## Confirmação necessária
 
-## Fora de escopo desta onda (explícito)
-
-- Geração de `titulos_financeiros` → Onda D.
-- Refactor de Engenharia para drag-and-drop persistido → Onda E.
-- Cadastros estruturais (bancos, gerentes, naturezas) → Onda F.
-- State machine central genérica → Onda G.
-
-## Validação obrigatória ao final
-
-1. `INSERT` direto via UI cria PV em `RASCUNHO` e aparece em `entidade_versoes`/`audit_log`.
-2. Transição `RASCUNHO → APROVADO` direta é bloqueada com `42501`.
-3. Fluxo `RASCUNHO → EM_ANALISE → APROVADO → EM_EXECUCAO` funciona e cria obra real ligada por `obra_id`.
-4. `pedidos_venda_status_historico` tem 1 linha por transição.
-5. Consultor A não vê PV do consultor B; admin vê tudo.
-6. `vw_bridge_pv` retorna a cadeia completa para o contrato de teste.
-
-## Detalhes técnicos
-
-- Migração única com `CREATE TABLE` + `GRANT` + `ENABLE RLS` + `CREATE POLICY` + funções + triggers, na ordem exigida.
-- Funções marcadas `SECURITY DEFINER` com `SET search_path = public`.
-- Sem CHECK constraints temporais (usar triggers conforme guideline).
-- Sem alteração em `auth`, `storage`, `realtime`.
-- Frontend toca apenas: `src/routes/pedidos-venda*.tsx`, `src/components/pv/*`, `src/hooks/usePedidosVenda.ts`, `src/lib/pv.ts`. Não mexe em Engenharia, AppLayout, auth-store, repositories existentes.
-
-## Ordem de execução
-
-1. Migração SQL (você aprova) → executo.
-2. Tipos Supabase regenerados → aguardo.
-3. Hook + RPC wrappers + página + modal.
-4. Validação operacional na preview com o roteiro acima.
-5. Republicar e validar no published.
-6. Só então abrir plano da Onda D.
+Confirma esta divisão em 5 sub-ondas sequenciais? Posso começar imediatamente com a **migração D1 (núcleo financeiro)** assim que aprovar.

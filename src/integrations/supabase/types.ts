@@ -678,6 +678,13 @@ export type Database = {
             referencedRelation: "ordens_compra"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cotacoes_compra_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_oc_atrasada"
+            referencedColumns: ["ordem_id"]
+          },
         ]
       }
       entidade_versoes: {
@@ -782,11 +789,32 @@ export type Database = {
             referencedColumns: ["produto_id"]
           },
           {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
+          {
             foreignKeyName: "estoque_entregas_reserva_id_fkey"
             columns: ["reserva_id"]
             isOneToOne: false
             referencedRelation: "estoque_reservas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_reservas_atrasadas"
+            referencedColumns: ["reserva_id"]
           },
         ]
       }
@@ -867,6 +895,20 @@ export type Database = {
             referencedRelation: "v_origem_estoque_completa"
             referencedColumns: ["produto_id"]
           },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       estoque_reservas: {
@@ -941,6 +983,20 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -1327,6 +1383,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ordem_compra_itens_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_oc_atrasada"
+            referencedColumns: ["ordem_id"]
+          },
+          {
             foreignKeyName: "ordem_compra_itens_produto_id_fkey"
             columns: ["produto_id"]
             isOneToOne: false
@@ -1345,6 +1408,20 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
           },
           {
@@ -2124,6 +2201,20 @@ export type Database = {
             referencedColumns: ["produto_id"]
           },
           {
+            foreignKeyName: "solicitacao_material_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "solicitacao_material_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
+          {
             foreignKeyName: "solicitacao_material_itens_solicitacao_id_fkey"
             columns: ["solicitacao_id"]
             isOneToOne: false
@@ -2756,6 +2847,20 @@ export type Database = {
             referencedRelation: "v_origem_estoque_completa"
             referencedColumns: ["produto_id"]
           },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       materiais_pendentes_por_obra: {
@@ -2789,6 +2894,20 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -2826,6 +2945,20 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
           },
         ]
@@ -2923,6 +3056,18 @@ export type Database = {
           custo_realizado: number | null
           obra_id: string | null
           qtd_movimentos: number | null
+        }
+        Relationships: []
+      }
+      v_estoque_pendencias_resumo: {
+        Row: {
+          entregas_pendentes: number | null
+          estoque_baixo: number | null
+          material_parado: number | null
+          obra_sem_reserva: number | null
+          oc_atrasada: number | null
+          reservas_atrasadas: number | null
+          valor_parado_total: number | null
         }
         Relationships: []
       }
@@ -3038,6 +3183,228 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_bridge_pv"
             referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
+      v_pend_entregas_pendentes: {
+        Row: {
+          created_at: string | null
+          dias_pendente: number | null
+          entrega_id: string | null
+          produto_codigo: string | null
+          produto_id: string | null
+          produto_nome: string | null
+          quantidade: number | null
+          reserva_id: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_reservas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_reservas_atrasadas"
+            referencedColumns: ["reserva_id"]
+          },
+        ]
+      }
+      v_pend_estoque_baixo: {
+        Row: {
+          codigo: string | null
+          deficit: number | null
+          estoque_minimo: number | null
+          nome: string | null
+          produto_id: string | null
+          saldo_disponivel: number | null
+          saldo_fisico: number | null
+          saldo_reservado: number | null
+          unidade: string | null
+        }
+        Relationships: []
+      }
+      v_pend_material_parado: {
+        Row: {
+          codigo: string | null
+          custo_unitario: number | null
+          dias_parado: number | null
+          nome: string | null
+          produto_id: string | null
+          saldo_fisico: number | null
+          ultimo_movimento: string | null
+          unidade: string | null
+          valor_parado: number | null
+        }
+        Relationships: []
+      }
+      v_pend_obra_sem_reserva: {
+        Row: {
+          cliente_id: string | null
+          codigo: string | null
+          consultor_id: string | null
+          created_at: string | null
+          data_inicio: string | null
+          dias_desde_criacao: number | null
+          obra_id: string | null
+          status: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          created_at?: string | null
+          data_inicio?: string | null
+          dias_desde_criacao?: never
+          obra_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          codigo?: string | null
+          consultor_id?: string | null
+          created_at?: string | null
+          data_inicio?: string | null
+          dias_desde_criacao?: never
+          obra_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_pend_oc_atrasada: {
+        Row: {
+          aprovado_em: string | null
+          codigo: string | null
+          data_prevista: string | null
+          dias_atraso: number | null
+          fornecedor_nome: string | null
+          ordem_id: string | null
+          prazo_entrega_dias: number | null
+          status: Database["public"]["Enums"]["ordem_compra_status"] | null
+          valor_total: number | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          codigo?: string | null
+          data_prevista?: never
+          dias_atraso?: never
+          fornecedor_nome?: string | null
+          ordem_id?: string | null
+          prazo_entrega_dias?: number | null
+          status?: Database["public"]["Enums"]["ordem_compra_status"] | null
+          valor_total?: number | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          codigo?: string | null
+          data_prevista?: never
+          dias_atraso?: never
+          fornecedor_nome?: string | null
+          ordem_id?: string | null
+          prazo_entrega_dias?: number | null
+          status?: Database["public"]["Enums"]["ordem_compra_status"] | null
+          valor_total?: number | null
+        }
+        Relationships: []
+      }
+      v_pend_reservas_atrasadas: {
+        Row: {
+          created_at: string | null
+          dias_aberta: number | null
+          obra_id: string | null
+          produto_codigo: string | null
+          produto_id: string | null
+          produto_nome: string | null
+          pv_id: string | null
+          quantidade_entregue: number | null
+          quantidade_pendente: number | null
+          quantidade_reservada: number | null
+          reserva_id: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
           },
         ]
       }

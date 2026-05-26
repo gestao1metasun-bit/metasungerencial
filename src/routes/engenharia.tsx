@@ -2586,8 +2586,25 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
   const filtered = obras.filter((o) => {
     if (!q.trim()) return true;
     const s = q.toLowerCase();
-    return o.cliente.toLowerCase().includes(s) || o.id.toLowerCase().includes(s) || (o.contrato || "").toLowerCase().includes(s);
+    const keep = o.cliente.toLowerCase().includes(s)
+      || o.id.toLowerCase().includes(s)
+      || (o.contrato || "").toLowerCase().includes(s)
+      || (o.obs || "").toLowerCase().includes(s);
+    if (!keep) console.info("[engenharia] descarte:filtro", debugObraPipeline(o));
+    return keep;
   });
+
+  useEffect(() => {
+    console.info("[engenharia] kanban:filtered", {
+      busca: q,
+      totalEntrada: obras.length,
+      totalSaida: filtered.length,
+      rows: filtered.map((o) => debugObraPipeline(o)),
+      target: filtered.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO))
+        ? filtered.filter((o) => o.obs?.includes(DEBUG_OBRA_CODIGO)).map((o) => debugObraPipeline(o))
+        : null,
+    });
+  }, [filtered, obras.length, q]);
 
   const moveTo = (id: string, status: string) => {
     const cur = obras.find((o) => o.id === id);
@@ -2796,11 +2813,25 @@ function ObrasKanbanBlock({
     "ms.engenharia.obras.kanban",
     OBRAS_KANBAN_DEFAULTS,
   );
+  const colsAtivas = cols.filter((c) => c.ativo !== false);
   const items: KItem<Obra>[] = obras.map((o) => ({
     key: o.id,
     data: o,
-    defaultColId: `etapa:${o.status}`,
+    defaultColId: colsAtivas.some((c) => c.id === `etapa:${o.status}`) ? `etapa:${o.status}` : "etapa:Novo projeto",
   }));
+  useEffect(() => {
+    const payload = items.map((it) => ({
+      ...debugObraPipeline(it.data),
+      defaultColId: it.defaultColId,
+      assignedColId: assign[it.key] ?? null,
+      assignedColExists: !!assign[it.key] && colsAtivas.some((c) => c.id === assign[it.key]),
+    }));
+    console.info("[engenharia] kanban:items", {
+      colsAtivas: colsAtivas.map((c) => c.id),
+      rows: payload,
+      target: payload.find((row) => row.codigo === DEBUG_OBRA_CODIGO) ?? null,
+    });
+  }, [assign, colsAtivas, items]);
   const handleDrop = (cardKey: string, colId: string) => {
     if (colId.startsWith("etapa:")) moveTo(cardKey, colId.slice(6));
   };
@@ -2820,10 +2851,19 @@ function ObrasKanbanBlock({
         renderCard={(o) => (
           <div className={`rounded-md border bg-card p-2 shadow-sm hover:shadow ${o.aguardandoLiberacaoFin ? "border-amber-400 ring-1 ring-amber-300/60" : ""}`}>
             <div className="flex items-start justify-between gap-2">
-              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente}</div>
+              <div className="text-xs font-semibold text-foreground line-clamp-2">{o.cliente || "Cliente não identificado"}</div>
               <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">{fmtContrato(o.contrato)}</span>
             </div>
+            {o.obs?.includes(DEBUG_OBRA_CODIGO) ? (
+              <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                DEBUG REAL
+              </div>
+            ) : null}
             {o.tipo ? <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.tipo}</div> : null}
+            <div className="mt-1 text-[10px] text-muted-foreground">Código: {o.obs?.match(/Código: ([^·]+)/)?.[1]?.trim() ?? "—"}</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">Status: {o.status || "—"}</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">Projeto: {o.obs?.match(/Projeto: ([0-9a-f-]+)/i)?.[1] ?? "—"}</div>
+            <div className="mt-1 text-[10px] font-mono text-muted-foreground">Obra: {o.id}</div>
             {o.aguardandoLiberacaoFin ? (
               <div className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                 Aguardando liberação Financiamento

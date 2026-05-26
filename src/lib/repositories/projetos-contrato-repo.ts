@@ -187,7 +187,7 @@ export async function aprovarProjeto(
   if (!isUuid(projetoId)) return { error: "projeto_id inválido" };
   const { data, error } = await supabase.rpc("aprovar_projeto", {
     _projeto_id: projetoId,
-    _motivo: motivo ?? null,
+    _motivo: motivo ?? undefined,
   });
   if (error) {
     console.error(TAG_RPC, "aprovar_projeto error", error, { projetoId });

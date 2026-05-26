@@ -100,7 +100,7 @@ export type CriarProjetoInput = {
   inv2?: string | null;
   inv3?: string | null;
   telhado_tipo?: string | null;
-  endereco?: Record<string, unknown>;
+  endereco?: any;
   cliente_id?: string | null;
 };
 

@@ -78,8 +78,8 @@ export function ProjetosContratoSupabaseTab({
       recalcularSaldoContrato(contratoUuid),
     ]);
     if (r1.error) setErr(r1.error);
-    else setRows(r1.data);
-    if (!r2.error) setSaldo(r2.data);
+    else if (r1.data) setRows(r1.data);
+    if (!r2.error && r2.data) setSaldo(r2.data);
     setLoading(false);
   }, [contratoUuid, valido]);
 

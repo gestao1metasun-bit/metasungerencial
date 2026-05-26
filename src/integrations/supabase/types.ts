@@ -2143,6 +2143,92 @@ export type Database = {
       }
     }
     Views: {
+      materiais_entregues_por_obra: {
+        Row: {
+          codigo: string | null
+          custo_entregue: number | null
+          custo_unitario: number | null
+          nome: string | null
+          obra_id: string | null
+          produto_id: string | null
+          qtd_entregue: number | null
+          unidade: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      materiais_pendentes_por_obra: {
+        Row: {
+          codigo: string | null
+          custo_pendente: number | null
+          custo_unitario: number | null
+          nome: string | null
+          obra_id: string | null
+          produto_id: string | null
+          qtd_pendente: number | null
+          unidade: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      materiais_reservados_por_obra: {
+        Row: {
+          codigo: string | null
+          custo_estimado: number | null
+          custo_unitario: number | null
+          nome: string | null
+          obra_id: string | null
+          produto_id: string | null
+          qtd_entregue: number | null
+          qtd_pendente: number | null
+          qtd_reservada: number | null
+          unidade: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
       mv_kpi_comercial: {
         Row: {
           assinados: number | null
@@ -2227,6 +2313,17 @@ export type Database = {
           obra_id: string | null
           pct_consumido: number | null
           saldo_operacional: number | null
+        }
+        Relationships: []
+      }
+      v_status_material_obra: {
+        Row: {
+          obra_id: string | null
+          qtd_reservas: number | null
+          status_material: string | null
+          total_entregue: number | null
+          total_pendente: number | null
+          total_reservado: number | null
         }
         Relationships: []
       }

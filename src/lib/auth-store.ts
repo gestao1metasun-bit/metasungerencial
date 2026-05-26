@@ -37,17 +37,28 @@ async function loadRole(userId: string): Promise<AppRole | null> {
 }
 
 async function refresh() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
+  console.info("[auth-session] getSession()", {
+    hasSession: !!data.session,
+    userId: data.session?.user?.id ?? null,
+    email: data.session?.user?.email ?? null,
+    error: error?.message ?? null,
+  });
   const session = data.session;
   if (!session?.user) {
     _state = { session: null, user: null, role: null, loading: false };
+    emit();
     void hydrateFunnel(false);
   } else {
+    // Emite imediatamente com o usuário (sem esperar role) p/ header sair de "Visitante"
+    _state = { session, user: session.user, role: _state.role, loading: false };
+    emit();
     const role = await loadRole(session.user.id);
     _state = { session, user: session.user, role, loading: false };
+    console.info("[auth-session] role carregada", { role });
+    emit();
     void hydrateFunnel(true);
   }
-  emit();
 }
 
 async function hydrateFunnel(loggedIn: boolean) {
@@ -71,18 +82,29 @@ let _initialized = false;
 function ensureInit() {
   if (_initialized) return;
   _initialized = true;
+  console.info("[auth-session] ensureInit() — assinando onAuthStateChange");
   void refresh();
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.info("[auth-session] onAuthStateChange", {
+      event,
+      hasSession: !!session,
+      userId: session?.user?.id ?? null,
+      email: session?.user?.email ?? null,
+    });
     if (!session?.user) {
       _state = { session: null, user: null, role: null, loading: false };
       emit();
       void hydrateFunnel(false);
       return;
     }
-    // Defer role load to avoid potential deadlock inside auth callback
+    // Atualiza imediatamente com o usuário (UI sai de "Visitante" no ato)
+    _state = { session, user: session.user, role: _state.role, loading: false };
+    emit();
+    // Carrega role em seguida (fora do callback p/ evitar deadlock)
     setTimeout(() => {
       void loadRole(session.user.id).then((role) => {
         _state = { session, user: session.user, role, loading: false };
+        console.info("[auth-session] role atualizada via onAuthStateChange", { role });
         emit();
         void hydrateFunnel(true);
       });

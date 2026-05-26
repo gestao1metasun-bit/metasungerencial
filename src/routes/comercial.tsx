@@ -31,6 +31,7 @@ import { EyeButton } from "@/components/app/EyeButton";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -4000,10 +4001,11 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="projetos_db">4. Projetos DB</TabsTrigger>
             <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 
@@ -4174,6 +4176,11 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
           <TabsContent value="projetos" className="mt-4">
             <ProjetosManager contrato={contrato} />
           </TabsContent>
+
+          <TabsContent value="projetos_db" className="mt-4">
+            <ProjetosContratoSupabaseTab contratoUuid={contrato.id} contratoValorTotal={contrato.valor} />
+          </TabsContent>
+
 
           <TabsContent value="auditoria" className="mt-4">
             <Card className="p-3">

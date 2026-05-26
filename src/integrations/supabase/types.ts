@@ -2882,6 +2882,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_antiduplicidade_diagnostico: {
+        Row: {
+          acao_recomendada: string | null
+          campo: string | null
+          entidade: string | null
+          linhas_duplicadas: number | null
+          quantidade_grupos_duplicados: number | null
+          severidade: string | null
+        }
+        Relationships: []
+      }
       v_auditoria_cobertura: {
         Row: {
           categoria: string | null
@@ -3269,6 +3280,7 @@ export type Database = {
         Args: { _id: string; _motivo: string }
         Returns: string
       }
+      normalize_doc: { Args: { _doc: string }; Returns: string }
       processar_aprovacao_compra: {
         Args: { _ordem_id: string }
         Returns: undefined

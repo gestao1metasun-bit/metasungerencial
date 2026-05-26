@@ -51,6 +51,9 @@ import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";
 import { useAuth } from "@/lib/auth-store";
+import { useObrasReais } from "@/lib/repositories/use-obras-reais";
+import { type ObraRow, projetoContratoIdOf } from "@/lib/repositories/obras-repo";
+import { featureFlags } from "@/lib/feature-flags";
 
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 

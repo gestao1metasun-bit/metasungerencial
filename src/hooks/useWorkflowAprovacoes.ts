@@ -132,8 +132,9 @@ export function useAprovarSolicitacao() {
     mutationFn: async ({ id, motivo }: { id: string; motivo?: string }) => {
       const { error } = await supabase.rpc("aprovar_solicitacao", {
         _id: id,
-        _motivo: motivo ?? null,
+        _motivo: motivo ?? undefined,
       });
+
       if (error) throw error;
     },
     onSuccess: () => {

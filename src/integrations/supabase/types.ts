@@ -2779,6 +2779,12 @@ export type Database = {
         | "projeto.criar"
         | "projeto.aprovar"
         | "projeto.cancelar"
+        | "workflow.solicitar"
+        | "workflow.cancelar"
+        | "workflow.administrar"
+        | "workflow.aprovar.operacional"
+        | "workflow.aprovar.financeiro"
+        | "workflow.aprovar.diretoria"
       app_role: "admin_master" | "admin_geral" | "usuario"
     }
     CompositeTypes: {
@@ -2949,6 +2955,12 @@ export const Constants = {
         "projeto.criar",
         "projeto.aprovar",
         "projeto.cancelar",
+        "workflow.solicitar",
+        "workflow.cancelar",
+        "workflow.administrar",
+        "workflow.aprovar.operacional",
+        "workflow.aprovar.financeiro",
+        "workflow.aprovar.diretoria",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
     },

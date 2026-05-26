@@ -24,7 +24,7 @@ import { featureFlags } from "@/lib/feature-flags";
 
 type Tier = "operacao" | "controle" | "estrutura";
 const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [
-  { to: "/dashboards", label: "Dashboards", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
+  { to: "/paineis", label: "Painéis", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
   { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard", tier: "operacao" },
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial", tier: "operacao" },
   { to: "/leads", label: "Leads / Pistas", icon: Users, key: "comercial", tier: "operacao" },
@@ -37,7 +37,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[
   { to: "/estoque", label: "Estoque", icon: Package, key: "estoque", tier: "operacao" },
   { to: "/estoque-fundacao", label: "Estoque Fundação", icon: Package, key: "estoque", tier: "operacao" },
 
-  { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics", tier: "controle" },
+  { to: "/analises", label: "Análises", icon: LineChart, key: "analytics", tier: "controle" },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios", tier: "controle" },
 
   { to: "/cadastros", label: "Cadastros Operacionais", icon: Database, key: "cadastros", tier: "estrutura" },

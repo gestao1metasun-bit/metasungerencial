@@ -35,7 +35,7 @@ export type NavItem = {
 };
 
 export type MacroKey =
-  | "dashboards"
+  | "paineis"
   | "comercial"
   | "financeiro"
   | "engenharia"
@@ -55,9 +55,9 @@ export type MacroModule = {
   accessKey: string;
 };
 
-// ── Macro módulos (D6.E — Dashboards centralizados, separados da operação) ─
+// ── Macro módulos (D6.E — Painéis centralizados, separados da operação) ──
 export const MACRO_MODULES: MacroModule[] = [
-  { key: "dashboards",    label: "Dashboards",    to: "/dashboards",    icon: LayoutDashboard, matches: ["/dashboards", "/dashboard", "/analytics", "/relatorios", "/tarefas"], accessKey: "dashboard" },
+  { key: "paineis",       label: "Painéis",       to: "/paineis",       icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/analises", "/analytics", "/relatorios", "/tarefas"], accessKey: "dashboard" },
   { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/financiamentos"], accessKey: "comercial" },
   { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
   { key: "engenharia",    label: "Engenharia",    to: "/engenharia",    icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
@@ -69,19 +69,19 @@ export const MACRO_MODULES: MacroModule[] = [
 
 // ── Rotas (sidebar legada + mapeamento para macro) ────────────────────────
 export const NAV_ITEMS: NavItem[] = [
-  // Macro Dashboards
-  { to: "/dashboards",                label: "Visão Geral",              icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 5,  critica: true },
-  { to: "/dashboard",                 label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 8 },
-  { to: "/dashboards/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "dashboards",    ordem: 10 },
-  { to: "/dashboards/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "dashboards",    ordem: 20 },
-  { to: "/dashboards/engenharia",     label: "Engenharia",               icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "dashboards",    ordem: 30 },
-  { to: "/dashboards/estoque",        label: "Estoque",                  icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "dashboards",    ordem: 40 },
-  { to: "/dashboards/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "dashboards",    ordem: 50 },
-  { to: "/dashboards/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 60 },
-  { to: "/dashboards/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "dashboards",    ordem: 70 },
-  { to: "/analytics",                 label: "Analytics / Executivo",    icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "dashboards",    ordem: 80 },
-  { to: "/relatorios",                label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "dashboards",    ordem: 90 },
-  { to: "/tarefas",                   label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "dashboards",    ordem: 100 },
+  // Macro Painéis (gestão / KPIs)
+  { to: "/paineis",                label: "Visão Geral",              icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 5,  critica: true },
+  { to: "/dashboard",              label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 8 },
+  { to: "/paineis/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "paineis",       ordem: 10 },
+  { to: "/paineis/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "paineis",       ordem: 20 },
+  { to: "/paineis/engenharia",     label: "Engenharia",               icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "paineis",       ordem: 30 },
+  { to: "/paineis/estoque",        label: "Estoque",                  icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "paineis",       ordem: 40 },
+  { to: "/paineis/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "paineis",       ordem: 50 },
+  { to: "/paineis/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 60 },
+  { to: "/paineis/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "paineis",       ordem: 70 },
+  { to: "/analises",               label: "Análises / Executivo",     icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "paineis",       ordem: 80 },
+  { to: "/relatorios",             label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "paineis",       ordem: 90 },
+  { to: "/tarefas",                label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 100 },
 
   // Operação
   { to: "/comercial",          label: "Comercial",          icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 10, critica: true },

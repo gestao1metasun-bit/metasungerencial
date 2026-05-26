@@ -161,12 +161,6 @@ async function loadEngenharia(): Promise<EngenhariaKpis | null> {
   return k;
 }
 
-async function loadEstoque(): Promise<EstoqueKpis | null> {
-  const { data: movs, error: e1 } = await supabase
-    .from("estoque_movimentos")
-    .select("tipo,quantidade,custo_total")
-    .limit(10000);
-  if (e1) { console.warn(TAG, "estq mov err", e1.message); return null; }
 
 async function loadEstoque(): Promise<EstoqueKpis | null> {
   // Oficial (D7.8): saldo físico vem de estoque_movimentos (sem dupla baixa);

@@ -4177,6 +4177,11 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
             <ProjetosManager contrato={contrato} />
           </TabsContent>
 
+          <TabsContent value="projetos_db" className="mt-4">
+            <ProjetosContratoSupabaseTab contratoUuid={contrato.id} contratoValorTotal={contrato.valor} />
+          </TabsContent>
+
+
           <TabsContent value="auditoria" className="mt-4">
             <Card className="p-3">
               {(contrato.auditoria ?? []).length === 0 ? (

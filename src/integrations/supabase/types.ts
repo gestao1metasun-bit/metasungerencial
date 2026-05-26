@@ -2176,6 +2176,212 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_alcadas: {
+        Row: {
+          aprovador_role: Database["public"]["Enums"]["app_role"] | null
+          aprovador_usuario_id: string | null
+          ativo: boolean
+          centro_custo_id: string | null
+          cotacoes_minimas: number
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          permissao_requerida:
+            | Database["public"]["Enums"]["app_permission"]
+            | null
+          permite_excecao: boolean
+          setor: string | null
+          tipo_operacao: string
+          updated_at: string
+          valor_max: number | null
+          valor_min: number
+        }
+        Insert: {
+          aprovador_role?: Database["public"]["Enums"]["app_role"] | null
+          aprovador_usuario_id?: string | null
+          ativo?: boolean
+          centro_custo_id?: string | null
+          cotacoes_minimas?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          permissao_requerida?:
+            | Database["public"]["Enums"]["app_permission"]
+            | null
+          permite_excecao?: boolean
+          setor?: string | null
+          tipo_operacao: string
+          updated_at?: string
+          valor_max?: number | null
+          valor_min?: number
+        }
+        Update: {
+          aprovador_role?: Database["public"]["Enums"]["app_role"] | null
+          aprovador_usuario_id?: string | null
+          ativo?: boolean
+          centro_custo_id?: string | null
+          cotacoes_minimas?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          permissao_requerida?:
+            | Database["public"]["Enums"]["app_permission"]
+            | null
+          permite_excecao?: boolean
+          setor?: string | null
+          tipo_operacao?: string
+          updated_at?: string
+          valor_max?: number | null
+          valor_min?: number
+        }
+        Relationships: []
+      }
+      workflow_aprovacoes: {
+        Row: {
+          alcada_id: string | null
+          aprovador_email: string | null
+          aprovador_id: string | null
+          cancelado_em: string | null
+          centro_custo_id: string | null
+          codigo: string | null
+          contexto: Json
+          created_at: string
+          decidido_em: string | null
+          descricao: string | null
+          expira_em: string | null
+          id: string
+          motivo_decisao: string | null
+          motivo_solicitacao: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          setor: string | null
+          solicitado_em: string
+          solicitante_email: string | null
+          solicitante_id: string
+          status: Database["public"]["Enums"]["workflow_status"]
+          tipo_operacao: string
+          titulo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          alcada_id?: string | null
+          aprovador_email?: string | null
+          aprovador_id?: string | null
+          cancelado_em?: string | null
+          centro_custo_id?: string | null
+          codigo?: string | null
+          contexto?: Json
+          created_at?: string
+          decidido_em?: string | null
+          descricao?: string | null
+          expira_em?: string | null
+          id?: string
+          motivo_decisao?: string | null
+          motivo_solicitacao?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          setor?: string | null
+          solicitado_em?: string
+          solicitante_email?: string | null
+          solicitante_id: string
+          status?: Database["public"]["Enums"]["workflow_status"]
+          tipo_operacao: string
+          titulo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          alcada_id?: string | null
+          aprovador_email?: string | null
+          aprovador_id?: string | null
+          cancelado_em?: string | null
+          centro_custo_id?: string | null
+          codigo?: string | null
+          contexto?: Json
+          created_at?: string
+          decidido_em?: string | null
+          descricao?: string | null
+          expira_em?: string | null
+          id?: string
+          motivo_decisao?: string | null
+          motivo_solicitacao?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          setor?: string | null
+          solicitado_em?: string
+          solicitante_email?: string | null
+          solicitante_id?: string
+          status?: Database["public"]["Enums"]["workflow_status"]
+          tipo_operacao?: string
+          titulo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_aprovacoes_alcada_id_fkey"
+            columns: ["alcada_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_alcadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_aprovacoes_historico: {
+        Row: {
+          aprovacao_id: string
+          created_at: string
+          id: string
+          motivo: string | null
+          snapshot: Json | null
+          status_anterior: Database["public"]["Enums"]["workflow_status"] | null
+          status_novo: Database["public"]["Enums"]["workflow_status"]
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          aprovacao_id: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          snapshot?: Json | null
+          status_anterior?:
+            | Database["public"]["Enums"]["workflow_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["workflow_status"]
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          aprovacao_id?: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          snapshot?: Json | null
+          status_anterior?:
+            | Database["public"]["Enums"]["workflow_status"]
+            | null
+          status_novo?: Database["public"]["Enums"]["workflow_status"]
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_aprovacoes_historico_aprovacao_id_fkey"
+            columns: ["aprovacao_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_aprovacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       materiais_entregues_por_obra: {
@@ -2564,6 +2770,10 @@ export type Database = {
         Args: { _motivo?: string; _pv_id: string }
         Returns: string
       }
+      aprovar_solicitacao: {
+        Args: { _id: string; _motivo?: string }
+        Returns: string
+      }
       baixar_estoque_por_entrega: {
         Args: { _entrega_id: string }
         Returns: undefined
@@ -2584,6 +2794,10 @@ export type Database = {
       cancelar_pv: {
         Args: { _motivo: string; _pv_id: string }
         Returns: undefined
+      }
+      cancelar_solicitacao: {
+        Args: { _id: string; _motivo: string }
+        Returns: string
       }
       cancelar_titulo: {
         Args: { _motivo: string; _titulo_id: string }
@@ -2682,6 +2896,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      negar_solicitacao: {
+        Args: { _id: string; _motivo: string }
+        Returns: string
+      }
       recalcular_saldo_contrato: {
         Args: { _contrato_id: string }
         Returns: Json
@@ -2727,6 +2945,15 @@ export type Database = {
         }
         Returns: string
       }
+      resolver_alcada: {
+        Args: {
+          _centro_custo?: string
+          _setor?: string
+          _tipo: string
+          _valor: number
+        }
+        Returns: string
+      }
       restore_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }
         Returns: undefined
@@ -2734,6 +2961,21 @@ export type Database = {
       soft_delete_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }
         Returns: undefined
+      }
+      solicitar_aprovacao: {
+        Args: {
+          _centro_custo?: string
+          _contexto?: Json
+          _descricao?: string
+          _motivo?: string
+          _origem_id?: string
+          _origem_tipo?: string
+          _setor?: string
+          _tipo: string
+          _titulo: string
+          _valor: number
+        }
+        Returns: string
       }
     }
     Enums: {
@@ -2786,6 +3028,12 @@ export type Database = {
         | "workflow.aprovar.financeiro"
         | "workflow.aprovar.diretoria"
       app_role: "admin_master" | "admin_geral" | "usuario"
+      workflow_status:
+        | "PENDENTE"
+        | "APROVADA"
+        | "NEGADA"
+        | "CANCELADA"
+        | "EXPIRADA"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2963,6 +3211,13 @@ export const Constants = {
         "workflow.aprovar.diretoria",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
+      workflow_status: [
+        "PENDENTE",
+        "APROVADA",
+        "NEGADA",
+        "CANCELADA",
+        "EXPIRADA",
+      ],
     },
   },
 } as const

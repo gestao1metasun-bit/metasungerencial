@@ -67,6 +67,15 @@ export function AppLayout() {
   }, [hash]);
 
   const identidade = useIdentidade();
+  useEffect(() => {
+    console.info("[app-layout-auth]", {
+      isAuthenticated: identidade.isAuthenticated,
+      sessionLoading: identidade.sessionLoading,
+      email: identidade.email,
+      role: identidade.role,
+      displayName: identidade.displayName,
+    });
+  }, [identidade.isAuthenticated, identidade.sessionLoading, identidade.email, identidade.role, identidade.displayName]);
   const navigate = useNavigate();
   const contratos = useContratos();
   const pendentesAssinatura = contratos.filter((c) => c.status === "Pendente").length;

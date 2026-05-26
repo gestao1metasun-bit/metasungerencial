@@ -213,7 +213,9 @@ function EngenhariaPage() {
   }, [obrasReaisError]);
 
   useEffect(() => {
-    if (!flagObrasSupabase || obrasReais.length === 0) return;
+    if (!flagObrasSupabase) return;
+    console.info("[engenharia] obras reais recebidas:", obrasReais.length, obrasReais.map(o => ({ id: o.id, codigo: o.codigo, status: o.status })));
+    if (obrasReais.length === 0) return;
     setObras((cur) => {
       // Dedup: por ID direto OU por bridge dados.projeto_contrato_id ↔ obra mock
       // que herdou o id do projeto (caso projetoToObra).
@@ -223,14 +225,25 @@ function EngenhariaPage() {
       for (const r of obrasReais) {
         const projetoId = projetoContratoIdOf(r);
         // Já presente como obra-real?
-        if (curById.has(r.id)) continue;
+        if (curById.has(r.id)) { console.info("[engenharia] dedup por id real", r.id); continue; }
         // Já presente como obra-mock vinda do Comercial (mesmo projeto)?
-        if (projetoId && curById.has(projetoId)) continue;
+        if (projetoId && curById.has(projetoId)) { console.info("[engenharia] dedup por projeto_contrato_id", projetoId); continue; }
+        // Normaliza status para uma coluna válida do Kanban da Engenharia.
+        // O banco usa default 'Planejada' (genérico); mapeamos para 'Novo projeto'
+        // que é a etapa inicial canônica do fluxo de engenharia.
+        const STATUS_DB_MAP: Record<string, string> = {
+          "Planejada": "Novo projeto",
+          "planejada": "Novo projeto",
+        };
+        const dbStatus = r.status ?? "Novo projeto";
+        const statusNorm = STATUS_DB_MAP[dbStatus] ?? (ETAPA_KEYS.includes(dbStatus) ? dbStatus : "Novo projeto");
         // Inserir adaptada
-        const clienteNome = clientesAll.find((c) => c.id === r.cliente_id)?.nome ?? "—";
+        const clienteNome = clientesAll.find((c) => c.id === r.cliente_id)?.nome
+          ?? (r.cliente_id ? `Cliente ${String(r.cliente_id).slice(0, 8)}` : "—");
+        const contratoLabel = r.contrato_id ?? r.codigo ?? "";
         const adapted: Obra = {
           id: r.id,
-          contrato: r.contrato_id ?? "",
+          contrato: contratoLabel,
           cliente: clienteNome,
           equipe: r.equipe ?? "",
           modulos: r.modulos_qtde ?? 0,
@@ -239,9 +252,10 @@ function EngenhariaPage() {
           inicio: r.data_inicio ?? "",
           previsto: "",
           finalizacao: r.data_finalizacao ?? null,
-          status: r.status ?? "Novo projeto",
+          status: statusNorm,
           telhado: r.telhado_tipo ?? "Outro",
-          obs: r.observacoes ?? "",
+          obs: [r.observacoes, `Código: ${r.codigo ?? "—"}`, `Obra: ${r.id}`, projetoId ? `Projeto: ${projetoId}` : null]
+            .filter(Boolean).join(" · "),
           ordem: merged.length + 1,
           inv2: r.inv2 ?? "",
           inv3: r.inv3 ?? "",
@@ -249,6 +263,7 @@ function EngenhariaPage() {
           telhadoTipo: r.telhado_tipo ?? "Outro",
           tipo: r.tipo ?? "",
         } as Obra;
+        console.info("[engenharia] adicionando obra real:", adapted.id, "codigo:", r.codigo, "status:", statusNorm, "cliente:", clienteNome);
         merged.push(adapted);
         mudou = true;
       }

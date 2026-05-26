@@ -8,5 +8,5 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
  * path amigável e redirecionamos preservando o hash (#tab=...).
  */
 export const Route = createFileRoute("/analises")({
-  component: () => <Navigate to="/analytics" replace hash={(h) => h} />,
+  component: () => <Navigate to="/analytics" replace hash={(h) => h ?? ""} />,
 });

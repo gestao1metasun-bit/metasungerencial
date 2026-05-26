@@ -14,6 +14,7 @@ import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PropostasRouteImport } from './routes/propostas'
 import { Route as PosvendaRouteImport } from './routes/posvenda'
 import { Route as PedidosVendaRouteImport } from './routes/pedidos-venda'
+import { Route as PaineisRouteImport } from './routes/paineis'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
@@ -30,7 +31,15 @@ import { Route as CadastrosRouteImport } from './routes/cadastros'
 import { Route as CadastrarRouteImport } from './routes/cadastrar'
 import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AnalisesRouteImport } from './routes/analises'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PaineisPosvendaRouteImport } from './routes/paineis.posvenda'
+import { Route as PaineisFinanciamentosRouteImport } from './routes/paineis.financiamentos'
+import { Route as PaineisFinanceiroRouteImport } from './routes/paineis.financeiro'
+import { Route as PaineisEstoqueRouteImport } from './routes/paineis.estoque'
+import { Route as PaineisEngenhariaRouteImport } from './routes/paineis.engenharia'
+import { Route as PaineisComercialRouteImport } from './routes/paineis.comercial'
+import { Route as PaineisAprovacoesRouteImport } from './routes/paineis.aprovacoes'
 import { Route as DashboardsPosvendaRouteImport } from './routes/dashboards.posvenda'
 import { Route as DashboardsFinanciamentosRouteImport } from './routes/dashboards.financiamentos'
 import { Route as DashboardsFinanceiroRouteImport } from './routes/dashboards.financeiro'
@@ -62,6 +71,11 @@ const PosvendaRoute = PosvendaRouteImport.update({
 const PedidosVendaRoute = PedidosVendaRouteImport.update({
   id: '/pedidos-venda',
   path: '/pedidos-venda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaineisRoute = PaineisRouteImport.update({
+  id: '/paineis',
+  path: '/paineis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -144,10 +158,50 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalisesRoute = AnalisesRouteImport.update({
+  id: '/analises',
+  path: '/analises',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PaineisPosvendaRoute = PaineisPosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisFinanciamentosRoute = PaineisFinanciamentosRouteImport.update({
+  id: '/financiamentos',
+  path: '/financiamentos',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisFinanceiroRoute = PaineisFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisEstoqueRoute = PaineisEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisEngenhariaRoute = PaineisEngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisComercialRoute = PaineisComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const PaineisAprovacoesRoute = PaineisAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => PaineisRoute,
 } as any)
 const DashboardsPosvendaRoute = DashboardsPosvendaRouteImport.update({
   id: '/posvenda',
@@ -188,6 +242,7 @@ const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analises': typeof AnalisesRoute
   '/analytics': typeof AnalyticsRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
@@ -204,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -216,9 +272,17 @@ export interface FileRoutesByFullPath {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
+  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
+  '/paineis/comercial': typeof PaineisComercialRoute
+  '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/estoque': typeof PaineisEstoqueRoute
+  '/paineis/financeiro': typeof PaineisFinanceiroRoute
+  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/posvenda': typeof PaineisPosvendaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analises': typeof AnalisesRoute
   '/analytics': typeof AnalyticsRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
@@ -235,6 +299,7 @@ export interface FileRoutesByTo {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -247,10 +312,18 @@ export interface FileRoutesByTo {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
+  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
+  '/paineis/comercial': typeof PaineisComercialRoute
+  '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/estoque': typeof PaineisEstoqueRoute
+  '/paineis/financeiro': typeof PaineisFinanceiroRoute
+  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/posvenda': typeof PaineisPosvendaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analises': typeof AnalisesRoute
   '/analytics': typeof AnalyticsRoute
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
@@ -267,6 +340,7 @@ export interface FileRoutesById {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -279,11 +353,19 @@ export interface FileRoutesById {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
+  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
+  '/paineis/comercial': typeof PaineisComercialRoute
+  '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/estoque': typeof PaineisEstoqueRoute
+  '/paineis/financeiro': typeof PaineisFinanceiroRoute
+  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/posvenda': typeof PaineisPosvendaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analises'
     | '/analytics'
     | '/aprovacoes'
     | '/cadastrar'
@@ -300,6 +382,7 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
+    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -312,9 +395,17 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
+    | '/paineis/aprovacoes'
+    | '/paineis/comercial'
+    | '/paineis/engenharia'
+    | '/paineis/estoque'
+    | '/paineis/financeiro'
+    | '/paineis/financiamentos'
+    | '/paineis/posvenda'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analises'
     | '/analytics'
     | '/aprovacoes'
     | '/cadastrar'
@@ -331,6 +422,7 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
+    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -343,9 +435,17 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
+    | '/paineis/aprovacoes'
+    | '/paineis/comercial'
+    | '/paineis/engenharia'
+    | '/paineis/estoque'
+    | '/paineis/financeiro'
+    | '/paineis/financiamentos'
+    | '/paineis/posvenda'
   id:
     | '__root__'
     | '/'
+    | '/analises'
     | '/analytics'
     | '/aprovacoes'
     | '/cadastrar'
@@ -362,6 +462,7 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
+    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -374,10 +475,18 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
+    | '/paineis/aprovacoes'
+    | '/paineis/comercial'
+    | '/paineis/engenharia'
+    | '/paineis/estoque'
+    | '/paineis/financeiro'
+    | '/paineis/financiamentos'
+    | '/paineis/posvenda'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalisesRoute: typeof AnalisesRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AprovacoesRoute: typeof AprovacoesRoute
   CadastrarRoute: typeof CadastrarRoute
@@ -394,6 +503,7 @@ export interface RootRouteChildren {
   FinanciamentosRoute: typeof FinanciamentosRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  PaineisRoute: typeof PaineisRouteWithChildren
   PedidosVendaRoute: typeof PedidosVendaRoute
   PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
@@ -436,6 +546,13 @@ declare module '@tanstack/react-router' {
       path: '/pedidos-venda'
       fullPath: '/pedidos-venda'
       preLoaderRoute: typeof PedidosVendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paineis': {
+      id: '/paineis'
+      path: '/paineis'
+      fullPath: '/paineis'
+      preLoaderRoute: typeof PaineisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -550,12 +667,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analises': {
+      id: '/analises'
+      path: '/analises'
+      fullPath: '/analises'
+      preLoaderRoute: typeof AnalisesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/paineis/posvenda': {
+      id: '/paineis/posvenda'
+      path: '/posvenda'
+      fullPath: '/paineis/posvenda'
+      preLoaderRoute: typeof PaineisPosvendaRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/financiamentos': {
+      id: '/paineis/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/paineis/financiamentos'
+      preLoaderRoute: typeof PaineisFinanciamentosRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/financeiro': {
+      id: '/paineis/financeiro'
+      path: '/financeiro'
+      fullPath: '/paineis/financeiro'
+      preLoaderRoute: typeof PaineisFinanceiroRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/estoque': {
+      id: '/paineis/estoque'
+      path: '/estoque'
+      fullPath: '/paineis/estoque'
+      preLoaderRoute: typeof PaineisEstoqueRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/engenharia': {
+      id: '/paineis/engenharia'
+      path: '/engenharia'
+      fullPath: '/paineis/engenharia'
+      preLoaderRoute: typeof PaineisEngenhariaRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/comercial': {
+      id: '/paineis/comercial'
+      path: '/comercial'
+      fullPath: '/paineis/comercial'
+      preLoaderRoute: typeof PaineisComercialRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/paineis/aprovacoes': {
+      id: '/paineis/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/paineis/aprovacoes'
+      preLoaderRoute: typeof PaineisAprovacoesRouteImport
+      parentRoute: typeof PaineisRoute
     }
     '/dashboards/posvenda': {
       id: '/dashboards/posvenda'
@@ -633,8 +806,32 @@ const DashboardsRouteWithChildren = DashboardsRoute._addFileChildren(
   DashboardsRouteChildren,
 )
 
+interface PaineisRouteChildren {
+  PaineisAprovacoesRoute: typeof PaineisAprovacoesRoute
+  PaineisComercialRoute: typeof PaineisComercialRoute
+  PaineisEngenhariaRoute: typeof PaineisEngenhariaRoute
+  PaineisEstoqueRoute: typeof PaineisEstoqueRoute
+  PaineisFinanceiroRoute: typeof PaineisFinanceiroRoute
+  PaineisFinanciamentosRoute: typeof PaineisFinanciamentosRoute
+  PaineisPosvendaRoute: typeof PaineisPosvendaRoute
+}
+
+const PaineisRouteChildren: PaineisRouteChildren = {
+  PaineisAprovacoesRoute: PaineisAprovacoesRoute,
+  PaineisComercialRoute: PaineisComercialRoute,
+  PaineisEngenhariaRoute: PaineisEngenhariaRoute,
+  PaineisEstoqueRoute: PaineisEstoqueRoute,
+  PaineisFinanceiroRoute: PaineisFinanceiroRoute,
+  PaineisFinanciamentosRoute: PaineisFinanciamentosRoute,
+  PaineisPosvendaRoute: PaineisPosvendaRoute,
+}
+
+const PaineisRouteWithChildren =
+  PaineisRoute._addFileChildren(PaineisRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalisesRoute: AnalisesRoute,
   AnalyticsRoute: AnalyticsRoute,
   AprovacoesRoute: AprovacoesRoute,
   CadastrarRoute: CadastrarRoute,
@@ -651,6 +848,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanciamentosRoute: FinanciamentosRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  PaineisRoute: PaineisRouteWithChildren,
   PedidosVendaRoute: PedidosVendaRoute,
   PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,

@@ -1717,6 +1717,7 @@ export type Database = {
           competencia: string | null
           consultor_id: string | null
           conta_id: string | null
+          contrato_id: string | null
           created_at: string
           dados: Json
           deleted_at: string | null
@@ -1747,6 +1748,7 @@ export type Database = {
           competencia?: string | null
           consultor_id?: string | null
           conta_id?: string | null
+          contrato_id?: string | null
           created_at?: string
           dados?: Json
           deleted_at?: string | null
@@ -1777,6 +1779,7 @@ export type Database = {
           competencia?: string | null
           consultor_id?: string | null
           conta_id?: string | null
+          contrato_id?: string | null
           created_at?: string
           dados?: Json
           deleted_at?: string | null

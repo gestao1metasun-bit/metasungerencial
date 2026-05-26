@@ -32,7 +32,7 @@ export function useObrasReais(enabled: boolean = true) {
       setError(r.error);
     } else {
       setError(null);
-      setObras(r.data);
+      setObras(r.data ?? []);
     }
     setLoading(false);
   }, [enabled]);

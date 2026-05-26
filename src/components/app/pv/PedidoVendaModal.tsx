@@ -19,6 +19,7 @@ import {
   useEnviarPVParaAnalise, useAprovarPV, useCancelarPV, useEnviarPVParaEngenharia,
   PV_STATUS_LABEL, PV_STATUS_TONE, type PVStatus,
 } from "@/hooks/usePedidosVenda";
+import { useGerarTitulosDoPV } from "@/hooks/useTitulosFinanceiros";
 import { useIsAdmin } from "@/lib/auth-store";
 
 interface Props {

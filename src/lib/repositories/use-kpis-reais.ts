@@ -168,19 +168,33 @@ async function loadEstoque(): Promise<EstoqueKpis | null> {
     .limit(10000);
   if (e1) { console.warn(TAG, "estq mov err", e1.message); return null; }
 
+async function loadEstoque(): Promise<EstoqueKpis | null> {
+  // Oficial (D7.8): saldo físico vem de estoque_movimentos (sem dupla baixa);
+  // reservado inclui status ATIVA e PARCIAL.
+  const { data: movs, error: e1 } = await supabase
+    .from("estoque_movimentos")
+    .select("tipo,quantidade,custo_total")
+    .limit(10000);
+  if (e1) { console.warn(TAG, "estq mov err", e1.message); return null; }
+
   let saldoFisico = 0;
   let custoEstoque = 0;
   for (const m of movs ?? []) {
     const q = Number(m.quantidade ?? 0);
     const c = Number(m.custo_total ?? 0);
-    if (m.tipo === "ENTRADA") { saldoFisico += q; custoEstoque += c; }
-    else if (m.tipo === "SAIDA" || m.tipo === "BAIXA") { saldoFisico -= q; custoEstoque -= c; }
+    const tipo = String(m.tipo ?? "").toLowerCase();
+    if (tipo === "entrada" || tipo === "ajuste_pos" || tipo === "devolucao") {
+      saldoFisico += q; custoEstoque += c;
+    } else if (tipo === "saida" || tipo === "baixa_entrega" || tipo === "ajuste_neg") {
+      saldoFisico -= q; custoEstoque -= c;
+    }
+    // 'reserva' e 'entrega' são eventos informativos — não alteram saldo físico
   }
 
   const { data: reservas } = await supabase
     .from("estoque_reservas")
     .select("quantidade_reservada,quantidade_entregue,status")
-    .eq("status", "ATIVA")
+    .in("status", ["ATIVA", "PARCIAL"])
     .limit(5000);
   let reservado = 0;
   for (const r of reservas ?? []) {

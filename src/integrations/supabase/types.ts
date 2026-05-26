@@ -1110,6 +1110,7 @@ export type Database = {
           consultor_id: string | null
           contrato_id: string | null
           created_at: string
+          custo_previsto: number
           dados: Json
           data_finalizacao: string | null
           data_inicio: string | null
@@ -1135,6 +1136,7 @@ export type Database = {
           consultor_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          custo_previsto?: number
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
@@ -1160,6 +1162,7 @@ export type Database = {
           consultor_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          custo_previsto?: number
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
@@ -2181,6 +2184,29 @@ export type Database = {
         }
         Relationships: []
       }
+      v_custo_obra_previsto: {
+        Row: {
+          custo_previsto: number | null
+          obra_id: string | null
+        }
+        Insert: {
+          custo_previsto?: never
+          obra_id?: string | null
+        }
+        Update: {
+          custo_previsto?: never
+          obra_id?: string | null
+        }
+        Relationships: []
+      }
+      v_custo_obra_realizado: {
+        Row: {
+          custo_realizado: number | null
+          obra_id: string | null
+          qtd_movimentos: number | null
+        }
+        Relationships: []
+      }
       v_estoque_saldos: {
         Row: {
           codigo: string | null
@@ -2190,6 +2216,17 @@ export type Database = {
           saldo_fisico: number | null
           saldo_reservado: number | null
           unidade: string | null
+        }
+        Relationships: []
+      }
+      v_saldo_operacional_obra: {
+        Row: {
+          codigo: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          obra_id: string | null
+          pct_consumido: number | null
+          saldo_operacional: number | null
         }
         Relationships: []
       }

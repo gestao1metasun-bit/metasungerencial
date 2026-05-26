@@ -26,14 +26,16 @@ export const featureFlags = {
     return readBool("ff:eng-obras-supabase", true);
   },
   /**
-   * D6 — Enterprise Shell RM.
-   * false (padrão): top-nav + ribbon convivem com a sidebar antiga como menu principal.
-   * true: sidebar antiga deixa de ser menu — vira painel contextual
-   *       (favoritos, pendências, atalhos, filtros). TopNav assume.
-   * Alternar localmente: localStorage.setItem("ff:enterprise-shell-full","1")
+   * D6.5 — Enterprise Shell Full (ativado por padrão).
+   * true (padrão): sidebar lateral deixa de ser menu principal.
+   *                TopNav (macro módulos) + Ribbon assumem a navegação;
+   *                ContextualSidebar fica disponível como painel auxiliar.
+   * false: força o layout legado com sidebar azul como menu principal.
+   * Override local: localStorage.setItem("ff:enterprise-shell-full","0")
+   * Override URL:   ?ff:enterprise-shell-full=0
    */
   get ENTERPRISE_SHELL_FULL() {
-    return readBool("ff:enterprise-shell-full", false);
+    return readBool("ff:enterprise-shell-full", true);
   },
 
 

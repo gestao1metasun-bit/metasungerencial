@@ -281,49 +281,61 @@ export function AppLayout() {
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-card/85 backdrop-blur-xl px-6 shadow-elegant relative">
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
-          <div className="relative max-w-sm flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar contratos, clientes, obras..."
-              className="h-9 pl-9 bg-secondary/70 border-border rounded-lg focus-visible:ring-primary"
-            />
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90 gap-2 shadow-sm">
-              <RefreshCw className="h-4 w-4" />
-              Atualizar
-            </Button>
+        <header className="sticky top-0 z-20 flex h-12 items-center gap-3 border-b border-border bg-card/95 backdrop-blur-xl px-4 shadow-sm relative">
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+          {enterpriseShell && (
+            <div className="flex items-center gap-2 pr-3 mr-1 border-r border-border/60">
+              <img src={logoMetaSun} alt="META SUN" className="h-7 w-auto object-contain" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden md:inline">
+                Gerencial
+              </span>
+            </div>
+          )}
+          {!enterpriseShell && (
+            <>
+              <div className="relative max-w-sm flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar contratos, clientes, obras..."
+                  className="h-9 pl-9 bg-secondary/70 border-border rounded-lg focus-visible:ring-primary"
+                />
+              </div>
+              <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90 gap-2 shadow-sm">
+                <RefreshCw className="h-4 w-4" />
+                Atualizar
+              </Button>
+            </>
+          )}
+          <div className="ml-auto flex items-center gap-2">
             <FavoritosMenu />
             {!identidade.sessionLoading && !identidade.isAuthenticated && (
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/login" })}
-                title="Faça login para habilitar ações administrativas (criar/liberar contratos, etc.)."
+                title="Faça login para habilitar ações administrativas."
                 className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
               >
                 <LogIn className="h-3 w-3" /> Sem sessão
               </button>
             )}
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold" />
+              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-gold" />
             </Button>
-            <Link to="/configuracoes" className="hidden md:flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-1.5 hover:bg-accent transition-colors shadow-sm">
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground ring-2 ring-gold/30">{initials}</div>
+            <Link to="/configuracoes" className="hidden md:flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent transition-colors">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-gradient-primary text-[11px] font-bold text-primary-foreground ring-1 ring-gold/30">{initials}</div>
               <div className="leading-tight text-left">
-                <div className="text-sm font-semibold tracking-tight">{displayName}</div>
-                <div className="text-[11px] text-muted-foreground">{displayPerfil}</div>
+                <div className="text-[12px] font-semibold tracking-tight">{displayName}</div>
+                <div className="text-[10px] text-muted-foreground">{displayPerfil}</div>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </Link>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleLogout}
               title="Sair"
-              className="text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -332,7 +344,7 @@ export function AppLayout() {
         <MaintenanceBanner />
         <TopNav />
 
-        <main className="flex-1 overflow-x-hidden p-6">
+        <main className={`flex-1 overflow-x-hidden ${enterpriseShell ? "p-3" : "p-6"}`}>
           <Outlet />
         </main>
       </div>

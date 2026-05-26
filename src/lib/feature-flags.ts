@@ -1,16 +1,8 @@
 /**
  * Feature flags do frontend.
  *
- * Onda B — Engenharia Real: ativar leitura Supabase de `obras` mantendo
- * mocks como fallback de UI até dedup completo.
- *
- * Convivência híbrida:
- *  - `ENG_OBRAS_SUPABASE = true`  → mescla obras reais (RLS) por cima do seed,
- *    dedup por ID. Obras criadas via RPC `enviar_projeto_para_engenharia`
- *    aparecem imediatamente na Engenharia.
- *  - `ENG_OBRAS_SUPABASE = false` → comportamento legado (somente mock).
- *
- * Para desativar localmente sem recompilar: `localStorage.setItem("ff:eng-obras-supabase","0")`.
+ * Onda B — leitura Supabase de obras (híbrido com seed).
+ * Onda D6 — Enterprise Shell RM (substituição gradual da sidebar legada).
  */
 function readBool(key: string, def: boolean): boolean {
   if (typeof window === "undefined") return def;
@@ -24,5 +16,15 @@ export const featureFlags = {
   /** Onda B — leitura Supabase de obras na Engenharia (híbrido com seed). */
   get ENG_OBRAS_SUPABASE() {
     return readBool("ff:eng-obras-supabase", true);
+  },
+  /**
+   * D6 — Enterprise Shell RM.
+   * false (padrão): top-nav + ribbon convivem com a sidebar antiga como menu principal.
+   * true: sidebar antiga deixa de ser menu — vira painel contextual
+   *       (favoritos, pendências, atalhos, filtros). TopNav assume.
+   * Alternar localmente: localStorage.setItem("ff:enterprise-shell-full","1")
+   */
+  get ENTERPRISE_SHELL_FULL() {
+    return readBool("ff:enterprise-shell-full", false);
   },
 };

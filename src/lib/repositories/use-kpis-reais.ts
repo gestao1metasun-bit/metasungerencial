@@ -77,31 +77,52 @@ const ZERO_FIN: FinanceiroKpis = {
 };
 
 async function loadFinanceiro(): Promise<FinanceiroKpis | null> {
+  // Oficial (D7.8): valor em aberto, fluxo previsto 30d e atrasados leem
+  // parcelas reais (não titulos.status agregado, que pode estar dessincronizado).
   const { data: titulos, error } = await supabase
     .from("titulos_financeiros")
-    .select("status,tipo,valor_liquido,saldo,vencimento")
+    .select("id,status,tipo,valor_liquido,saldo,vencimento")
     .is("deleted_at", null)
     .limit(5000);
   if (error) { console.warn(TAG, "fin err", error.message); return null; }
 
+  const tituloIds = (titulos ?? []).map((t: any) => t.id as string);
+  const { data: parcelas } = tituloIds.length
+    ? await supabase
+        .from("parcelas_financeiras")
+        .select("titulo_id,status,valor,saldo,vencimento")
+        .in("titulo_id", tituloIds)
+        .limit(20000)
+    : { data: [] as any[] };
+
   const hoje = new Date().toISOString().slice(0, 10);
+  const em30d = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
   const k = { ...ZERO_FIN };
+
   for (const t of titulos ?? []) {
     k.totalTitulos += 1;
     const valor = Number(t.valor_liquido ?? 0);
     const saldo = Number(t.saldo ?? 0);
-    if (t.status === "BAIXADO" || t.status === "QUITADO") {
+    if (t.status === "RECEBIDO") {
       k.recebidos += 1;
-      k.valorRecebido += valor;
-      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoRealizado += valor;
-    } else if (t.status === "PENDENTE" || t.status === "PARCIAL") {
+      k.valorRecebido += valor - saldo;
+      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoRealizado += valor - saldo;
+    } else if (["PENDENTE", "PARCIAL", "ATRASADO"].includes(String(t.status))) {
       k.pendentes += 1;
-      k.valorPendente += saldo;
-      if (t.tipo === "RECEBER" || t.tipo === "AR") k.fluxoPrevisto += saldo;
-      if (t.vencimento && t.vencimento < hoje) {
-        k.atrasados += 1;
-        k.valorAtrasado += saldo;
-      }
+    }
+  }
+
+  for (const p of (parcelas ?? []) as any[]) {
+    const status = String(p.status ?? "");
+    if (status === "CANCELADA" || status === "RENEGOCIADA" || status === "RECEBIDO") continue;
+    const saldo = Number(p.saldo ?? 0);
+    k.valorPendente += saldo;
+    if (p.vencimento && p.vencimento < hoje) {
+      k.valorAtrasado += saldo;
+      k.atrasados += 1;
+    }
+    if (p.vencimento && p.vencimento <= em30d) {
+      k.fluxoPrevisto += saldo;
     }
   }
   k.saldoOperacional = k.valorRecebido - k.valorPendente;
@@ -140,7 +161,10 @@ async function loadEngenharia(): Promise<EngenhariaKpis | null> {
   return k;
 }
 
+
 async function loadEstoque(): Promise<EstoqueKpis | null> {
+  // Oficial (D7.8): saldo físico vem de estoque_movimentos (sem dupla baixa);
+  // reservado inclui status ATIVA e PARCIAL.
   const { data: movs, error: e1 } = await supabase
     .from("estoque_movimentos")
     .select("tipo,quantidade,custo_total")
@@ -152,14 +176,19 @@ async function loadEstoque(): Promise<EstoqueKpis | null> {
   for (const m of movs ?? []) {
     const q = Number(m.quantidade ?? 0);
     const c = Number(m.custo_total ?? 0);
-    if (m.tipo === "ENTRADA") { saldoFisico += q; custoEstoque += c; }
-    else if (m.tipo === "SAIDA" || m.tipo === "BAIXA") { saldoFisico -= q; custoEstoque -= c; }
+    const tipo = String(m.tipo ?? "").toLowerCase();
+    if (tipo === "entrada" || tipo === "ajuste_pos" || tipo === "devolucao") {
+      saldoFisico += q; custoEstoque += c;
+    } else if (tipo === "saida" || tipo === "baixa_entrega" || tipo === "ajuste_neg") {
+      saldoFisico -= q; custoEstoque -= c;
+    }
+    // 'reserva' e 'entrega' são eventos informativos — não alteram saldo físico
   }
 
   const { data: reservas } = await supabase
     .from("estoque_reservas")
     .select("quantidade_reservada,quantidade_entregue,status")
-    .eq("status", "ATIVA")
+    .in("status", ["ATIVA", "PARCIAL"])
     .limit(5000);
   let reservado = 0;
   for (const r of reservas ?? []) {

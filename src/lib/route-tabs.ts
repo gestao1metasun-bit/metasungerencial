@@ -1,7 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export type SubTab = { value: string; label: string; group?: string; hidden?: boolean };
+export type SubTab = { value: string; label: string; group?: string; hidden?: boolean; icon?: string };
 
 /**
  * Grupos padronizados em todo o ERP:

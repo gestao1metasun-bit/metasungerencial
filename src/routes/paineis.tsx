@@ -19,6 +19,7 @@ function PaineisHome() {
       />
       <div className="space-y-4">
         <AuditoriaCoberturaCard />
+        <ReconciliacaoCard />
 
         <Card className="p-8 text-center text-sm text-muted-foreground">
           <BarChart3 className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />

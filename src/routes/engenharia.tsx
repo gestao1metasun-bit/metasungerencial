@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { setObrasSnapshot, type ObraSnapshot } from "@/lib/obras-snapshot-store";
 import { ObraCustosCard } from "@/components/app/engenharia/ObraCustosCard";
+import { ObraMateriaisCard } from "@/components/app/engenharia/ObraMateriaisCard";
 import {
   garantirNecessidadeObra,
   recalcularNecessidade,
@@ -1164,8 +1165,9 @@ function EditObraDialog({
           </div>
         )}
 
-        <div className="mt-3">
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <ObraCustosCard obraId={obra.id} />
+          <ObraMateriaisCard obraId={obra.id} />
         </div>
 
         <DialogFooter className="flex-wrap gap-2">

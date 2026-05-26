@@ -44,6 +44,7 @@ export function PedidoVendaModal({ pvId, open, onOpenChange }: Props) {
   const aprovar = useAprovarPV();
   const cancelar = useCancelarPV();
   const enviarEng = useEnviarPVParaEngenharia();
+  const gerarTit = useGerarTitulosDoPV();
 
   const [form, setForm] = useState({
     forma_pagamento: "",

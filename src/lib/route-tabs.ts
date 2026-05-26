@@ -22,7 +22,86 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
 
-  // ── Macro módulo DASHBOARDS (D6.E — Gestão / KPIs centralizados) ──────
+  // ── Macro módulo PAINÉIS (D6.E — Gestão / KPIs centralizados) ─────────
+  "/paineis": {
+    default: "geral",
+    tabs: [
+      { value: "geral", label: "Geral", group: "Visão Geral" },
+      { value: "executivo", label: "Executivo", group: "Visão Geral" },
+      { value: "indicadores", label: "Indicadores", group: "Visão Geral" },
+    ],
+  },
+  "/paineis/comercial": {
+    default: "funil",
+    tabs: [
+      { value: "funil", label: "Funil", group: "Comercial" },
+      { value: "contratos", label: "Contratos", group: "Comercial" },
+      { value: "propostas", label: "Propostas", group: "Comercial" },
+      { value: "vendedores", label: "Vendedores", group: "Comercial" },
+      { value: "conversao", label: "Conversão", group: "Comercial" },
+    ],
+  },
+  "/paineis/financeiro": {
+    default: "fluxo",
+    tabs: [
+      { value: "fluxo", label: "Fluxo de Caixa", group: "Financeiro" },
+      { value: "titulos", label: "Títulos", group: "Financeiro" },
+      { value: "inadimplencia", label: "Inadimplência", group: "Financeiro" },
+      { value: "prev-real", label: "Previsto × Realizado", group: "Financeiro" },
+      { value: "resultado", label: "Resultado Operacional", group: "Financeiro" },
+    ],
+  },
+  "/paineis/engenharia": {
+    default: "obras",
+    tabs: [
+      { value: "obras", label: "Obras", group: "Engenharia" },
+      { value: "cronograma", label: "Cronograma", group: "Engenharia" },
+      { value: "produtividade", label: "Produtividade", group: "Engenharia" },
+      { value: "custos", label: "Custos", group: "Engenharia" },
+      { value: "pendencias", label: "Pendências", group: "Engenharia" },
+    ],
+  },
+  "/paineis/estoque": {
+    default: "saldo",
+    tabs: [
+      { value: "saldo", label: "Saldo", group: "Estoque" },
+      { value: "reservas", label: "Reservas", group: "Estoque" },
+      { value: "entregas", label: "Entregas", group: "Estoque" },
+      { value: "baixo", label: "Estoque Baixo", group: "Estoque" },
+      { value: "custo", label: "Custo Estoque", group: "Estoque" },
+    ],
+  },
+  "/paineis/financiamentos": {
+    default: "carteira",
+    tabs: [
+      { value: "carteira", label: "Carteira", group: "Financiamentos" },
+      { value: "bancos", label: "Bancos", group: "Financiamentos" },
+      { value: "liberacoes", label: "Liberações", group: "Financiamentos" },
+      { value: "prazos", label: "Prazos", group: "Financiamentos" },
+      { value: "pendencias", label: "Pendências", group: "Financiamentos" },
+    ],
+  },
+  "/paineis/aprovacoes": {
+    default: "sla",
+    tabs: [
+      { value: "sla", label: "SLA", group: "Aprovações" },
+      { value: "gargalos", label: "Gargalos", group: "Aprovações" },
+      { value: "pendencias", label: "Pendências", group: "Aprovações" },
+      { value: "setor", label: "Por Setor", group: "Aprovações" },
+      { value: "aprovador", label: "Por Aprovador", group: "Aprovações" },
+    ],
+  },
+  "/paineis/posvenda": {
+    default: "chamados",
+    tabs: [
+      { value: "chamados", label: "Chamados", group: "Pós-venda" },
+      { value: "garantias", label: "Garantias", group: "Pós-venda" },
+      { value: "sla", label: "SLA", group: "Pós-venda" },
+      { value: "recorrencias", label: "Recorrências", group: "Pós-venda" },
+    ],
+  },
+
+  // ── Macro módulo DASHBOARDS (D6.E — alias legado, mesmas abas) ────────
   "/dashboards": {
     default: "geral",
     tabs: [

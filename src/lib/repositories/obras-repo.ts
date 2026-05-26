@@ -20,6 +20,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const TAG = "[obras-repo]";
+const DEBUG_OBRA_CODIGO = "OBR-20260526-710ec4";
 
 export type ObraRow = {
   id: string;
@@ -58,11 +59,29 @@ export function projetoContratoIdOf(row: ObraRow): string | null {
   return isUuid(v) ? v : null;
 }
 
+function debugRow(row: ObraRow | null | undefined) {
+  if (!row) return null;
+  return {
+    obra_id: row.id ?? null,
+    codigo: row.codigo ?? null,
+    status: row.status ?? null,
+    projeto_contrato_id: projetoContratoIdOf(row),
+    cliente_id: row.cliente_id ?? null,
+    contrato_id: row.contrato_id ?? null,
+    consultor_id: row.consultor_id ?? null,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LEITURA
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function fetchAll(): Promise<RepoResult<ObraRow[]>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  console.info(TAG, "fetchAll start", {
+    hasSession: !!sessionData.session,
+    userId: sessionData.session?.user?.id ?? null,
+  });
   const { data, error } = await supabase
     .from("obras")
     .select("*")
@@ -72,7 +91,13 @@ export async function fetchAll(): Promise<RepoResult<ObraRow[]>> {
     console.error(TAG, "fetchAll error", error);
     return { error: error.message };
   }
-  return { data: (data ?? []) as ObraRow[] };
+  const rows = (data ?? []) as ObraRow[];
+  console.info(TAG, "fetchAll ok", {
+    total: rows.length,
+    target: debugRow(rows.find((row) => row.codigo === DEBUG_OBRA_CODIGO)),
+    rows: rows.map(debugRow),
+  });
+  return { data: rows };
 }
 
 export async function fetchByContrato(contratoId: string): Promise<RepoResult<ObraRow[]>> {

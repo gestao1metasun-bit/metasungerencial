@@ -33,7 +33,8 @@ export const featureFlags = {
    * Alternar localmente: localStorage.setItem("ff:enterprise-shell-full","1")
    */
   get ENTERPRISE_SHELL_FULL() {
-    return readBool("ff:enterprise-shell-full", true);
+    return readBool("ff:enterprise-shell-full", false);
   },
+
 
 };

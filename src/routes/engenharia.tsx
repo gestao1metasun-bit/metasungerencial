@@ -18,6 +18,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -418,6 +419,7 @@ function EngenhariaPage() {
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
+      <div className="mb-4"><DashboardReaisOverview /></div>
       {(() => {
         const targetReal = obrasReais.find((r) => r.codigo === DEBUG_OBRA_CODIGO);
         const targetMerged = obras.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO));

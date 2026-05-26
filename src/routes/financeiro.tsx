@@ -9,6 +9,7 @@ import {
   AreaChart, Area, Legend, LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -84,6 +85,8 @@ function FinanceiroPage() {
           setCentros={setCentros} setNaturezas={setNaturezas}
         />}
       />
+      <div className="mb-4"><DashboardReaisOverview /></div>
+
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">

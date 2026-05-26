@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Users, Plus, Trash2, SquarePen } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { HardeningReportCard } from "@/components/app/hardening/HardeningReportCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTabFromHash } from "@/lib/route-tabs";
@@ -41,6 +42,7 @@ function ConfigPage() {
   return (
     <>
       <PageHeader title="Configurações" subtitle="Parâmetros do sistema, perfis, usuários e integrações." />
+      <div className="mb-4"><HardeningReportCard /></div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="empresa"><Building2 className="mr-2 h-4 w-4" /> Empresa</TabsTrigger>

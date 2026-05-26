@@ -32,7 +32,7 @@ import {
   type SolicitacaoMaterial,
 } from "@/hooks/useSolicitacoesMaterial";
 import {
-  PackageSearch, Plus, Send, Ban, Eye, ShoppingCart, CheckCircle2, FileText,
+  Plus, Send, Ban, Eye, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/solicitacoes-material")({

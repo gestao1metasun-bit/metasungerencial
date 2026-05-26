@@ -24,7 +24,7 @@ import { featureFlags } from "@/lib/feature-flags";
 
 type Tier = "operacao" | "controle" | "estrutura";
 const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[] = [
-  { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
+  { to: "/dashboards", label: "Dashboards", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
   { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard", tier: "operacao" },
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial", tier: "operacao" },
   { to: "/leads", label: "Leads / Pistas", icon: Users, key: "comercial", tier: "operacao" },

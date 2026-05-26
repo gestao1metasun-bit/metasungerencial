@@ -122,13 +122,13 @@ export function useEstoquePendencias(enabled: boolean = true): EstoquePendencias
       ]);
 
       setState({
-        resumo: (resumo.data as PendenciasResumo) ?? null,
-        estoqueBaixo: (eb.data as EstoqueBaixoRow[]) ?? [],
-        reservasAtrasadas: (ra.data as ReservaAtrasadaRow[]) ?? [],
-        entregasPendentes: (ep.data as EntregaPendenteRow[]) ?? [],
-        ocAtrasada: (oc.data as OcAtrasadaRow[]) ?? [],
-        materialParado: (mp.data as MaterialParadoRow[]) ?? [],
-        obraSemReserva: (osr.data as ObraSemReservaRow[]) ?? [],
+        resumo: (resumo.data as unknown as PendenciasResumo) ?? null,
+        estoqueBaixo: (eb.data as unknown as EstoqueBaixoRow[]) ?? [],
+        reservasAtrasadas: (ra.data as unknown as ReservaAtrasadaRow[]) ?? [],
+        entregasPendentes: (ep.data as unknown as EntregaPendenteRow[]) ?? [],
+        ocAtrasada: (oc.data as unknown as OcAtrasadaRow[]) ?? [],
+        materialParado: (mp.data as unknown as MaterialParadoRow[]) ?? [],
+        obraSemReserva: (osr.data as unknown as ObraSemReservaRow[]) ?? [],
         loading: false,
         error: null,
       });

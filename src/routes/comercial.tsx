@@ -4001,10 +4001,11 @@ function EditarContratoDialog({ contrato, vendedoresList, open: openProp, onOpen
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cliente">1. Cliente</TabsTrigger>
             <TabsTrigger value="dados">2. Dados do contrato</TabsTrigger>
             <TabsTrigger value="projetos">3. Projetos ({contrato.projetos?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="projetos_db">4. Projetos DB</TabsTrigger>
             <TabsTrigger value="auditoria"><History className="mr-1 h-3.5 w-3.5" /> Auditoria ({contrato.auditoria?.length ?? 0})</TabsTrigger>
           </TabsList>
 

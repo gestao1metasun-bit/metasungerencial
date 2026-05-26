@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Briefcase, Banknote, HardHat, Package, FileText, Wallet,
-  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight, LineChart, Headset, ListChecks,
+  Database, FileBarChart, Settings, Bell, Search, LogOut, ChevronDown, RefreshCw, ChevronRight, LineChart, Headset, ListChecks, Users,
 } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useRef, useState } from "react";
@@ -22,6 +22,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[
   { to: "/dashboard", label: "Dashboard Geral", icon: LayoutDashboard, key: "dashboard", tier: "operacao" },
   { to: "/tarefas", label: "Tarefas", icon: ListChecks, key: "dashboard", tier: "operacao" },
   { to: "/comercial", label: "Comercial", icon: Briefcase, key: "comercial", tier: "operacao" },
+  { to: "/leads", label: "Leads / Pistas", icon: Users, key: "comercial", tier: "operacao" },
   { to: "/financeiro", label: "Financeiro", icon: Wallet, key: "financeiro", tier: "operacao" },
   { to: "/financiamentos", label: "Financiamentos", icon: Banknote, key: "financiamentos", tier: "operacao" },
   { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia", tier: "operacao" },

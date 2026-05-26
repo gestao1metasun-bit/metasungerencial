@@ -27,6 +27,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as ComercialRouteImport } from './routes/comercial'
 import { Route as CadastrosRouteImport } from './routes/cadastros'
 import { Route as CadastrarRouteImport } from './routes/cadastrar'
+import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -120,6 +121,11 @@ const CadastrarRoute = CadastrarRouteImport.update({
   path: '/cadastrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AprovacoesRoute = AprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -134,6 +140,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analytics'
+    | '/aprovacoes'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/aprovacoes'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/analytics'
+    | '/aprovacoes'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AprovacoesRoute: typeof AprovacoesRoute
   CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
   ComercialRoute: typeof ComercialRoute
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aprovacoes': {
+      id: '/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/aprovacoes'
+      preLoaderRoute: typeof AprovacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
@@ -438,6 +458,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AprovacoesRoute: AprovacoesRoute,
   CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,
   ComercialRoute: ComercialRoute,

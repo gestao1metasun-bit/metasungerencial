@@ -273,7 +273,9 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
   }
 
   const salvar = () => {
+    console.info("[lead-save] handler acionado", { nome, telefone, consumo, consultorId, origem, doc });
     if (!nome.trim() || !telefone.trim() || !consumo || !consultorId || !origem) {
+      console.warn("[lead-save] abortado: campos obrigatórios faltando");
       toast.error("Preencha os campos obrigatórios."); return;
     }
     const consumoNum = Number(consumo);
@@ -316,12 +318,14 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao salvar cliente."); return;
     }
+    console.info("[lead-save] chamando criarLead");
     const lead = criarLead({
       nome, telefone, consumoKwh: consumoNum,
       consultorId, origem: origem as OrigemLead,
       observacao, doc, clienteId,
       criadoPor: user?.email ?? undefined,
     });
+    console.info("[lead-save] criarLead retornou", { id: lead.id, numero: lead.numero });
     toast.success(`Lead ${lead.numero} criado${clienteExistenteId ? " (cliente já cadastrado, endereço atualizado)" : ""}.`);
     reset();
     onClose();

@@ -12,7 +12,7 @@ import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReai
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Eye, Network, FileText } from "lucide-react";
+import {
+  EnterpriseDataGrid,
+  exportToCSV,
+} from "@/components/app/grid/EnterpriseDataGrid";
+
 
 export const Route = createFileRoute("/pedidos-venda")({
   head: () => ({ meta: [{ title: "Pedidos de Venda — Meta Sun Gerencial" }] }),
@@ -39,9 +44,11 @@ function PedidosVendaPage() {
   const [busca, setBusca] = useState("");
   const [pvAtivo, setPvAtivo] = useState<string | null>(null);
   const [openNovo, setOpenNovo] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const { data: pvs = [], isLoading } = usePedidosVenda({ status: filtro });
+  const { data: pvs = [], isLoading, refetch, isFetching } = usePedidosVenda({ status: filtro });
   const { data: bridge = [] } = useBridgePV();
+
 
   const filtrados = useMemo(() => {
     if (!busca.trim()) return pvs;
@@ -94,35 +101,62 @@ function PedidosVendaPage() {
         </TabsList>
 
         <TabsContent value="lista" className="space-y-3 pt-3">
-          <Card className="p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                placeholder="Buscar por código, observação, banco..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="max-w-xs"
-              />
-              <Select value={filtro} onValueChange={(v) => setFiltro(v as any)}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TODOS">Todos os status</SelectItem>
-                  {Object.entries(PV_STATUS_LABEL).map(([k, l]) => (
-                    <SelectItem key={k} value={k}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </Card>
-
-          <Card>
+          <EnterpriseDataGrid
+            gridId="pedidos-venda"
+            title="Pedidos de Venda"
+            count={filtrados.length}
+            toolbar={{
+              onRefresh: () => refetch(),
+              onExport: () =>
+                exportToCSV("pedidos-venda", filtrados, [
+                  { key: "codigo", label: "Código" },
+                  { key: "status", label: "Status", get: (r) => PV_STATUS_LABEL[r.status as PVStatus] ?? r.status },
+                  { key: "valor_total", label: "Valor", get: (r) => Number(r.valor_total ?? 0).toFixed(2) },
+                  { key: "forma_pagamento", label: "Forma pagto" },
+                  { key: "obra_id", label: "Obra" },
+                  { key: "created_at", label: "Criado em", get: (r) => new Date(r.created_at).toLocaleDateString("pt-BR") },
+                ]),
+              leftActions:
+                selected.size > 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    {selected.size} selecionado{selected.size > 1 ? "s" : ""}
+                  </span>
+                ) : null,
+            }}
+            filters={{
+              search: busca,
+              onSearchChange: setBusca,
+              searchPlaceholder: "Buscar código, observação, banco…",
+              onClear: busca || filtro !== "TODOS" ? () => { setBusca(""); setFiltro("TODOS"); } : undefined,
+              children: (
+                <Select value={filtro} onValueChange={(v) => setFiltro(v as any)}>
+                  <SelectTrigger className="h-7 w-44 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos os status</SelectItem>
+                    {Object.entries(PV_STATUS_LABEL).map(([k, l]) => (
+                      <SelectItem key={k} value={k}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ),
+            }}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[36px]">
+                    <Checkbox
+                      checked={filtrados.length > 0 && selected.size === filtrados.length}
+                      onCheckedChange={(v) =>
+                        setSelected(v ? new Set(filtrados.map((p) => p.id)) : new Set())
+                      }
+                    />
+                  </TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Forma pagto</TableHead>
                   <TableHead>Obra vinculada</TableHead>
                   <TableHead>Criado em</TableHead>
@@ -132,47 +166,69 @@ function PedidosVendaPage() {
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                       Carregando…
                     </TableCell>
                   </TableRow>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                       Nenhum PV. Use "Gerar PV de contrato".
                     </TableCell>
                   </TableRow>
                 )}
                 {filtrados.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow
+                    key={p.id}
+                    data-state={selected.has(p.id) ? "selected" : undefined}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selected.has(p.id)}
+                        onCheckedChange={(v) => {
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(p.id);
+                            else next.delete(p.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.codigo}</TableCell>
                     <TableCell>
                       <Badge className={PV_STATUS_TONE[p.status as PVStatus]}>
                         {PV_STATUS_LABEL[p.status as PVStatus]}
                       </Badge>
                     </TableCell>
-                    <TableCell>{fmtBRL(p.valor_total)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_total)}</TableCell>
+                    <TableCell className="text-muted-foreground">
                       {p.forma_pagamento ?? "—"}
                     </TableCell>
                     <TableCell className="font-mono text-[11px]">
                       {p.obra_id ? p.obra_id.slice(0, 8) : "—"}
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell>
                       {new Date(p.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => setPvAtivo(p.id)}>
-                        <Eye className="h-4 w-4" />
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPvAtivo(p.id)}>
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </Card>
+            {isFetching && !isLoading && (
+              <div className="border-t bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground">
+                Atualizando…
+              </div>
+            )}
+          </EnterpriseDataGrid>
         </TabsContent>
+
 
         <TabsContent value="bridge" className="pt-3">
           <Card>

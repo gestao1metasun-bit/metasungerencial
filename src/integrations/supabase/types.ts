@@ -627,6 +627,59 @@ export type Database = {
           },
         ]
       }
+      cotacoes_compra: {
+        Row: {
+          anexo_url: string | null
+          fornecedor_doc: string | null
+          fornecedor_nome: string
+          id: string
+          observacoes: string | null
+          ordem_id: string
+          prazo_entrega_dias: number | null
+          registrado_em: string
+          registrado_por: string | null
+          status: Database["public"]["Enums"]["cotacao_status"]
+          validade_dias: number | null
+          valor_total: number
+        }
+        Insert: {
+          anexo_url?: string | null
+          fornecedor_doc?: string | null
+          fornecedor_nome: string
+          id?: string
+          observacoes?: string | null
+          ordem_id: string
+          prazo_entrega_dias?: number | null
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["cotacao_status"]
+          validade_dias?: number | null
+          valor_total: number
+        }
+        Update: {
+          anexo_url?: string | null
+          fornecedor_doc?: string | null
+          fornecedor_nome?: string
+          id?: string
+          observacoes?: string | null
+          ordem_id?: string
+          prazo_entrega_dias?: number | null
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["cotacao_status"]
+          validade_dias?: number | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacoes_compra_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_compra"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entidade_versoes: {
         Row: {
           created_at: string
@@ -1231,6 +1284,152 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_bridge_pv"
             referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
+      ordem_compra_itens: {
+        Row: {
+          created_at: string
+          custo_unitario: number
+          id: string
+          ordem_id: string
+          produto_id: string
+          quantidade: number
+          quantidade_recebida: number
+          solicitacao_item_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          custo_unitario?: number
+          id?: string
+          ordem_id: string
+          produto_id: string
+          quantidade: number
+          quantidade_recebida?: number
+          solicitacao_item_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          custo_unitario?: number
+          id?: string
+          ordem_id?: string
+          produto_id?: string
+          quantidade?: number
+          quantidade_recebida?: number
+          solicitacao_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_compra_itens_ordem_id_fkey"
+            columns: ["ordem_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "ordem_compra_itens_solicitacao_item_id_fkey"
+            columns: ["solicitacao_item_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacao_material_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordens_compra: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          cancelado_em: string | null
+          codigo: string | null
+          cotacao_escolhida_id: string | null
+          created_at: string
+          dados: Json
+          fornecedor_doc: string | null
+          fornecedor_nome: string | null
+          id: string
+          motivo_cancelamento: string | null
+          prazo_entrega_dias: number | null
+          recebido_em: string | null
+          recebido_por: string | null
+          solicitacao_id: string | null
+          status: Database["public"]["Enums"]["ordem_compra_status"]
+          titulo_financeiro_id: string | null
+          updated_at: string
+          valor_total: number
+          workflow_fin_id: string | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          codigo?: string | null
+          cotacao_escolhida_id?: string | null
+          created_at?: string
+          dados?: Json
+          fornecedor_doc?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          prazo_entrega_dias?: number | null
+          recebido_em?: string | null
+          recebido_por?: string | null
+          solicitacao_id?: string | null
+          status?: Database["public"]["Enums"]["ordem_compra_status"]
+          titulo_financeiro_id?: string | null
+          updated_at?: string
+          valor_total?: number
+          workflow_fin_id?: string | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          cancelado_em?: string | null
+          codigo?: string | null
+          cotacao_escolhida_id?: string | null
+          created_at?: string
+          dados?: Json
+          fornecedor_doc?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          prazo_entrega_dias?: number | null
+          recebido_em?: string | null
+          recebido_por?: string | null
+          solicitacao_id?: string | null
+          status?: Database["public"]["Enums"]["ordem_compra_status"]
+          titulo_financeiro_id?: string | null
+          updated_at?: string
+          valor_total?: number
+          workflow_fin_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_compra_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacoes_material"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1862,6 +2061,146 @@ export type Database = {
           user_agent?: string | null
           user_email?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      solicitacao_material_itens: {
+        Row: {
+          created_at: string
+          custo_unitario_estimado: number
+          id: string
+          observacao: string | null
+          produto_id: string
+          quantidade_a_comprar: number
+          quantidade_reservada: number
+          quantidade_solicitada: number
+          reserva_id: string | null
+          solicitacao_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_unitario_estimado?: number
+          id?: string
+          observacao?: string | null
+          produto_id: string
+          quantidade_a_comprar?: number
+          quantidade_reservada?: number
+          quantidade_solicitada: number
+          reserva_id?: string | null
+          solicitacao_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_unitario_estimado?: number
+          id?: string
+          observacao?: string | null
+          produto_id?: string
+          quantidade_a_comprar?: number
+          quantidade_reservada?: number
+          quantidade_solicitada?: number
+          reserva_id?: string | null
+          solicitacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacao_material_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacao_material_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "solicitacao_material_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "solicitacao_material_itens_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacoes_material"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitacoes_material: {
+        Row: {
+          aprovado_setor_em: string | null
+          aprovado_setor_por: string | null
+          cancelado_em: string | null
+          codigo: string | null
+          concluido_em: string | null
+          created_at: string
+          dados: Json
+          id: string
+          motivo: string | null
+          motivo_cancelamento: string | null
+          motivo_negacao: string | null
+          obra_id: string | null
+          prioridade: string
+          pv_id: string | null
+          setor: string | null
+          solicitante_email: string | null
+          solicitante_id: string
+          status: Database["public"]["Enums"]["solicitacao_material_status"]
+          updated_at: string
+          valor_estimado: number
+          workflow_setor_id: string | null
+        }
+        Insert: {
+          aprovado_setor_em?: string | null
+          aprovado_setor_por?: string | null
+          cancelado_em?: string | null
+          codigo?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          motivo?: string | null
+          motivo_cancelamento?: string | null
+          motivo_negacao?: string | null
+          obra_id?: string | null
+          prioridade?: string
+          pv_id?: string | null
+          setor?: string | null
+          solicitante_email?: string | null
+          solicitante_id: string
+          status?: Database["public"]["Enums"]["solicitacao_material_status"]
+          updated_at?: string
+          valor_estimado?: number
+          workflow_setor_id?: string | null
+        }
+        Update: {
+          aprovado_setor_em?: string | null
+          aprovado_setor_por?: string | null
+          cancelado_em?: string | null
+          codigo?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          motivo?: string | null
+          motivo_cancelamento?: string | null
+          motivo_negacao?: string | null
+          obra_id?: string | null
+          prioridade?: string
+          pv_id?: string | null
+          setor?: string | null
+          solicitante_email?: string | null
+          solicitante_id?: string
+          status?: Database["public"]["Enums"]["solicitacao_material_status"]
+          updated_at?: string
+          valor_estimado?: number
+          workflow_setor_id?: string | null
         }
         Relationships: []
       }
@@ -2809,9 +3148,23 @@ export type Database = {
         Args: { _id: string; _motivo: string }
         Returns: string
       }
+      cancelar_solicitacao_material: {
+        Args: { _id: string; _motivo: string }
+        Returns: undefined
+      }
       cancelar_titulo: {
         Args: { _motivo: string; _titulo_id: string }
         Returns: undefined
+      }
+      criar_solicitacao_material: {
+        Args: {
+          _itens: Json
+          _motivo: string
+          _obra_id: string
+          _prioridade?: string
+          _setor: string
+        }
+        Returns: string
       }
       enviar_projeto_para_engenharia: {
         Args: { _projeto_id: string }
@@ -2819,6 +3172,12 @@ export type Database = {
       }
       enviar_pv_para_analise: { Args: { _pv_id: string }; Returns: string }
       enviar_pv_para_engenharia: { Args: { _pv_id: string }; Returns: string }
+      enviar_solicitacao_material: { Args: { _id: string }; Returns: string }
+      escolher_cotacao: { Args: { _cotacao_id: string }; Returns: string }
+      estoque_saldo_disponivel: {
+        Args: { _produto_id: string }
+        Returns: number
+      }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
         Returns: string
@@ -2910,6 +3269,14 @@ export type Database = {
         Args: { _id: string; _motivo: string }
         Returns: string
       }
+      processar_aprovacao_compra: {
+        Args: { _ordem_id: string }
+        Returns: undefined
+      }
+      processar_aprovacao_material: {
+        Args: { _solicitacao_id: string }
+        Returns: undefined
+      }
       recalcular_saldo_contrato: {
         Args: { _contrato_id: string }
         Returns: Json
@@ -2920,6 +3287,10 @@ export type Database = {
           parcelas_atualizadas: number
           titulos_atualizados: number
         }[]
+      }
+      receber_ordem_compra: {
+        Args: { _ordem_id: string; _recebimentos?: Json }
+        Returns: undefined
       }
       receber_parcela: {
         Args: {
@@ -2933,6 +3304,19 @@ export type Database = {
         Returns: string
       }
       refresh_mv_kpis: { Args: never; Returns: Json }
+      registrar_cotacao: {
+        Args: {
+          _anexo: string
+          _doc: string
+          _fornecedor: string
+          _obs: string
+          _ordem_id: string
+          _prazo_dias: number
+          _validade_dias: number
+          _valor: number
+        }
+        Returns: string
+      }
       registrar_entrega_material: {
         Args: {
           _obs?: string
@@ -3038,6 +3422,22 @@ export type Database = {
         | "workflow.aprovar.financeiro"
         | "workflow.aprovar.diretoria"
       app_role: "admin_master" | "admin_geral" | "usuario"
+      cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
+      ordem_compra_status:
+        | "COTACAO"
+        | "AGUARDANDO_APROVACAO_FIN"
+        | "APROVADA"
+        | "NEGADA"
+        | "RECEBIDA"
+        | "CANCELADA"
+      solicitacao_material_status:
+        | "RASCUNHO"
+        | "PENDENTE_APROVACAO_SETOR"
+        | "NEGADA_SETOR"
+        | "CANCELADA"
+        | "ATENDIDA_ESTOQUE"
+        | "AGUARDANDO_COMPRA"
+        | "CONCLUIDA"
       workflow_status:
         | "PENDENTE"
         | "APROVADA"
@@ -3221,6 +3621,24 @@ export const Constants = {
         "workflow.aprovar.diretoria",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
+      cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
+      ordem_compra_status: [
+        "COTACAO",
+        "AGUARDANDO_APROVACAO_FIN",
+        "APROVADA",
+        "NEGADA",
+        "RECEBIDA",
+        "CANCELADA",
+      ],
+      solicitacao_material_status: [
+        "RASCUNHO",
+        "PENDENTE_APROVACAO_SETOR",
+        "NEGADA_SETOR",
+        "CANCELADA",
+        "ATENDIDA_ESTOQUE",
+        "AGUARDANDO_COMPRA",
+        "CONCLUIDA",
+      ],
       workflow_status: [
         "PENDENTE",
         "APROVADA",

@@ -275,6 +275,8 @@ export function AppLayout() {
           </div>
         </div>
       </aside>
+      )}
+
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">

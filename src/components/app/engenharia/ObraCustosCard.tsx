@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useObraCustos } from "@/lib/repositories/use-obra-custos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const fmt = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });

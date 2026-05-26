@@ -26,6 +26,8 @@ import {
 import { contratos, evolucaoMensal, financiamentos, obras, vendedores, propostas, fmtBRL } from "@/lib/mock-data";
 import { useContratos } from "@/lib/contratos-store";
 import { IndicadoresTab } from "@/routes/comercial";
+import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Geral — Meta Sun Gerencial" }] }),
@@ -116,7 +118,18 @@ function DashboardGeral() {
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="visao" className="mt-5">
+        <TabsContent value="visao" className="mt-5 space-y-5">
+          <DashboardReaisOverview />
+
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Badge variant="outline" className="border-warning/60 text-warning">
+                MODO MOCK
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                Painéis abaixo são demonstração visual (mock controlado, DEV ONLY) — não refletem dados transacionais reais.
+              </span>
+            </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
             <StatCard label="Contratos" value={total} icon={FileText} tone="primary" hint={`${assinados} assinados`} onView={open("contratos")} />
             <StatCard label="Assinados" value={assinados} icon={CheckCircle2} tone="success" trend={{ value: "+12% mês", positive: true }} onView={open("assinados")} />
@@ -229,6 +242,7 @@ function DashboardGeral() {
                 </BarChart>
               </ResponsiveContainer>
             </Card>
+          </div>
           </div>
         </TabsContent>
 

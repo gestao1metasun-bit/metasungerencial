@@ -30,6 +30,7 @@ const nav: { to: string; label: string; icon: any; key: ModuleKey; tier: Tier }[
   { to: "/engenharia", label: "Engenharia", icon: HardHat, key: "engenharia", tier: "operacao" },
   { to: "/posvenda", label: "Pós-venda", icon: Headset, key: "posvenda", tier: "operacao" },
   { to: "/estoque", label: "Estoque", icon: Package, key: "estoque", tier: "operacao" },
+  { to: "/estoque-fundacao", label: "Estoque Fundação", icon: Package, key: "estoque", tier: "operacao" },
 
   { to: "/analytics", label: "Analytics", icon: LineChart, key: "analytics", tier: "controle" },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart, key: "relatorios", tier: "controle" },

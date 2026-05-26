@@ -663,6 +663,214 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_entregas: {
+        Row: {
+          baixado_em: string | null
+          baixado_por: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          observacoes: string | null
+          produto_id: string
+          quantidade: number
+          recebido_por: string | null
+          reserva_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          baixado_em?: string | null
+          baixado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacoes?: string | null
+          produto_id: string
+          quantidade: number
+          recebido_por?: string | null
+          reserva_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          baixado_em?: string | null
+          baixado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacoes?: string | null
+          produto_id?: string
+          quantidade?: number
+          recebido_por?: string | null
+          reserva_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_entregas_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_reservas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_movimentos: {
+        Row: {
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          entrega_id: string | null
+          id: string
+          motivo: string | null
+          obra_id: string | null
+          origem_tipo: string | null
+          produto_id: string
+          projeto_id: string | null
+          pv_id: string | null
+          quantidade: number
+          reserva_id: string | null
+          tipo: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          entrega_id?: string | null
+          id?: string
+          motivo?: string | null
+          obra_id?: string | null
+          origem_tipo?: string | null
+          produto_id: string
+          projeto_id?: string | null
+          pv_id?: string | null
+          quantidade: number
+          reserva_id?: string | null
+          tipo: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          entrega_id?: string | null
+          id?: string
+          motivo?: string | null
+          obra_id?: string | null
+          origem_tipo?: string | null
+          produto_id?: string
+          projeto_id?: string | null
+          pv_id?: string | null
+          quantidade?: number
+          reserva_id?: string | null
+          tipo?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      estoque_reservas: {
+        Row: {
+          cancelada_em: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          motivo: string | null
+          motivo_cancelamento: string | null
+          obra_id: string | null
+          observacoes: string | null
+          produto_id: string
+          projeto_id: string | null
+          pv_id: string | null
+          quantidade_entregue: number
+          quantidade_reservada: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          motivo?: string | null
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          produto_id: string
+          projeto_id?: string | null
+          pv_id?: string | null
+          quantidade_entregue?: number
+          quantidade_reservada: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          motivo?: string | null
+          motivo_cancelamento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          produto_id?: string
+          projeto_id?: string | null
+          pv_id?: string | null
+          quantidade_entregue?: number
+          quantidade_reservada?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           created_at: string
@@ -1225,6 +1433,51 @@ export type Database = {
           mes?: number
           modulo?: string
           motivo?: string | null
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          codigo: string
+          created_at: string
+          custo_unitario: number
+          dados: Json
+          deleted_at: string | null
+          estoque_minimo: number
+          id: string
+          nome: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          codigo: string
+          created_at?: string
+          custo_unitario?: number
+          dados?: Json
+          deleted_at?: string | null
+          estoque_minimo?: number
+          id?: string
+          nome: string
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          codigo?: string
+          created_at?: string
+          custo_unitario?: number
+          dados?: Json
+          deleted_at?: string | null
+          estoque_minimo?: number
+          id?: string
+          nome?: string
+          unidade?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1928,6 +2181,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_estoque_saldos: {
+        Row: {
+          codigo: string | null
+          custo_unitario: number | null
+          nome: string | null
+          produto_id: string | null
+          saldo_fisico: number | null
+          saldo_reservado: number | null
+          unidade: string | null
+        }
+        Relationships: []
+      }
       vw_bridge_pv: {
         Row: {
           aprovado_em: string | null
@@ -1951,6 +2216,10 @@ export type Database = {
       }
     }
     Functions: {
+      ajustar_estoque_manual_controlado: {
+        Args: { _delta: number; _motivo: string; _produto_id: string }
+        Returns: string
+      }
       aprovar_projeto: {
         Args: { _motivo?: string; _projeto_id: string }
         Returns: string
@@ -1958,6 +2227,10 @@ export type Database = {
       aprovar_pv: {
         Args: { _motivo?: string; _pv_id: string }
         Returns: string
+      }
+      baixar_estoque_por_entrega: {
+        Args: { _entrega_id: string }
+        Returns: undefined
       }
       can_edit_operacional: {
         Args: {
@@ -2089,8 +2362,26 @@ export type Database = {
         Returns: string
       }
       refresh_mv_kpis: { Args: never; Returns: Json }
+      registrar_entrega_material: {
+        Args: {
+          _obs?: string
+          _quantidade: number
+          _recebido_por?: string
+          _reserva_id: string
+        }
+        Returns: string
+      }
       renegociar_titulo: {
         Args: { _motivo: string; _novas_parcelas: Json; _titulo_id: string }
+        Returns: string
+      }
+      reservar_material_para_obra: {
+        Args: {
+          _motivo?: string
+          _obra_id: string
+          _produto_id: string
+          _quantidade: number
+        }
         Returns: string
       }
       restore_entidade: {

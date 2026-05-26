@@ -22,6 +22,7 @@ import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as EstoqueFundacaoRouteImport } from './routes/estoque-fundacao'
 import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as EngenhariaRouteImport } from './routes/engenharia'
+import { Route as DashboardsRouteImport } from './routes/dashboards'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as ComercialRouteImport } from './routes/comercial'
@@ -30,6 +31,13 @@ import { Route as CadastrarRouteImport } from './routes/cadastrar'
 import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardsPosvendaRouteImport } from './routes/dashboards.posvenda'
+import { Route as DashboardsFinanciamentosRouteImport } from './routes/dashboards.financiamentos'
+import { Route as DashboardsFinanceiroRouteImport } from './routes/dashboards.financeiro'
+import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoque'
+import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
+import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
+import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
 
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
@@ -96,6 +104,11 @@ const EngenhariaRoute = EngenhariaRouteImport.update({
   path: '/engenharia',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardsRoute = DashboardsRouteImport.update({
+  id: '/dashboards',
+  path: '/dashboards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -136,6 +149,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardsPosvendaRoute = DashboardsPosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsFinanciamentosRoute =
+  DashboardsFinanciamentosRouteImport.update({
+    id: '/financiamentos',
+    path: '/financiamentos',
+    getParentRoute: () => DashboardsRoute,
+  } as any)
+const DashboardsFinanceiroRoute = DashboardsFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsEstoqueRoute = DashboardsEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsEngenhariaRoute = DashboardsEngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsComercialRoute = DashboardsComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => DashboardsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
   '/estoque-fundacao': typeof EstoqueFundacaoRoute
@@ -159,6 +209,13 @@ export interface FileRoutesByFullPath {
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
   '/tarefas': typeof TarefasRoute
+  '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
+  '/dashboards/comercial': typeof DashboardsComercialRoute
+  '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
+  '/dashboards/estoque': typeof DashboardsEstoqueRoute
+  '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
+  '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
+  '/dashboards/posvenda': typeof DashboardsPosvendaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -169,6 +226,7 @@ export interface FileRoutesByTo {
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
   '/estoque-fundacao': typeof EstoqueFundacaoRoute
@@ -182,6 +240,13 @@ export interface FileRoutesByTo {
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
   '/tarefas': typeof TarefasRoute
+  '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
+  '/dashboards/comercial': typeof DashboardsComercialRoute
+  '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
+  '/dashboards/estoque': typeof DashboardsEstoqueRoute
+  '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
+  '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
+  '/dashboards/posvenda': typeof DashboardsPosvendaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,6 +258,7 @@ export interface FileRoutesById {
   '/comercial': typeof ComercialRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
   '/estoque': typeof EstoqueRoute
   '/estoque-fundacao': typeof EstoqueFundacaoRoute
@@ -206,6 +272,13 @@ export interface FileRoutesById {
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
   '/tarefas': typeof TarefasRoute
+  '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
+  '/dashboards/comercial': typeof DashboardsComercialRoute
+  '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
+  '/dashboards/estoque': typeof DashboardsEstoqueRoute
+  '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
+  '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
+  '/dashboards/posvenda': typeof DashboardsPosvendaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -218,6 +291,7 @@ export interface FileRouteTypes {
     | '/comercial'
     | '/configuracoes'
     | '/dashboard'
+    | '/dashboards'
     | '/engenharia'
     | '/estoque'
     | '/estoque-fundacao'
@@ -231,6 +305,13 @@ export interface FileRouteTypes {
     | '/propostas'
     | '/relatorios'
     | '/tarefas'
+    | '/dashboards/aprovacoes'
+    | '/dashboards/comercial'
+    | '/dashboards/engenharia'
+    | '/dashboards/estoque'
+    | '/dashboards/financeiro'
+    | '/dashboards/financiamentos'
+    | '/dashboards/posvenda'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -241,6 +322,7 @@ export interface FileRouteTypes {
     | '/comercial'
     | '/configuracoes'
     | '/dashboard'
+    | '/dashboards'
     | '/engenharia'
     | '/estoque'
     | '/estoque-fundacao'
@@ -254,6 +336,13 @@ export interface FileRouteTypes {
     | '/propostas'
     | '/relatorios'
     | '/tarefas'
+    | '/dashboards/aprovacoes'
+    | '/dashboards/comercial'
+    | '/dashboards/engenharia'
+    | '/dashboards/estoque'
+    | '/dashboards/financeiro'
+    | '/dashboards/financiamentos'
+    | '/dashboards/posvenda'
   id:
     | '__root__'
     | '/'
@@ -264,6 +353,7 @@ export interface FileRouteTypes {
     | '/comercial'
     | '/configuracoes'
     | '/dashboard'
+    | '/dashboards'
     | '/engenharia'
     | '/estoque'
     | '/estoque-fundacao'
@@ -277,6 +367,13 @@ export interface FileRouteTypes {
     | '/propostas'
     | '/relatorios'
     | '/tarefas'
+    | '/dashboards/aprovacoes'
+    | '/dashboards/comercial'
+    | '/dashboards/engenharia'
+    | '/dashboards/estoque'
+    | '/dashboards/financeiro'
+    | '/dashboards/financiamentos'
+    | '/dashboards/posvenda'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -288,6 +385,7 @@ export interface RootRouteChildren {
   ComercialRoute: typeof ComercialRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
+  DashboardsRoute: typeof DashboardsRouteWithChildren
   EngenhariaRoute: typeof EngenhariaRoute
   EstoqueRoute: typeof EstoqueRoute
   EstoqueFundacaoRoute: typeof EstoqueFundacaoRoute
@@ -396,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngenhariaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboards': {
+      id: '/dashboards'
+      path: '/dashboards'
+      fullPath: '/dashboards'
+      preLoaderRoute: typeof DashboardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -452,8 +557,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboards/posvenda': {
+      id: '/dashboards/posvenda'
+      path: '/posvenda'
+      fullPath: '/dashboards/posvenda'
+      preLoaderRoute: typeof DashboardsPosvendaRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/financiamentos': {
+      id: '/dashboards/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/dashboards/financiamentos'
+      preLoaderRoute: typeof DashboardsFinanciamentosRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/financeiro': {
+      id: '/dashboards/financeiro'
+      path: '/financeiro'
+      fullPath: '/dashboards/financeiro'
+      preLoaderRoute: typeof DashboardsFinanceiroRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/estoque': {
+      id: '/dashboards/estoque'
+      path: '/estoque'
+      fullPath: '/dashboards/estoque'
+      preLoaderRoute: typeof DashboardsEstoqueRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/engenharia': {
+      id: '/dashboards/engenharia'
+      path: '/engenharia'
+      fullPath: '/dashboards/engenharia'
+      preLoaderRoute: typeof DashboardsEngenhariaRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/comercial': {
+      id: '/dashboards/comercial'
+      path: '/comercial'
+      fullPath: '/dashboards/comercial'
+      preLoaderRoute: typeof DashboardsComercialRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/aprovacoes': {
+      id: '/dashboards/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/dashboards/aprovacoes'
+      preLoaderRoute: typeof DashboardsAprovacoesRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
   }
 }
+
+interface DashboardsRouteChildren {
+  DashboardsAprovacoesRoute: typeof DashboardsAprovacoesRoute
+  DashboardsComercialRoute: typeof DashboardsComercialRoute
+  DashboardsEngenhariaRoute: typeof DashboardsEngenhariaRoute
+  DashboardsEstoqueRoute: typeof DashboardsEstoqueRoute
+  DashboardsFinanceiroRoute: typeof DashboardsFinanceiroRoute
+  DashboardsFinanciamentosRoute: typeof DashboardsFinanciamentosRoute
+  DashboardsPosvendaRoute: typeof DashboardsPosvendaRoute
+}
+
+const DashboardsRouteChildren: DashboardsRouteChildren = {
+  DashboardsAprovacoesRoute: DashboardsAprovacoesRoute,
+  DashboardsComercialRoute: DashboardsComercialRoute,
+  DashboardsEngenhariaRoute: DashboardsEngenhariaRoute,
+  DashboardsEstoqueRoute: DashboardsEstoqueRoute,
+  DashboardsFinanceiroRoute: DashboardsFinanceiroRoute,
+  DashboardsFinanciamentosRoute: DashboardsFinanciamentosRoute,
+  DashboardsPosvendaRoute: DashboardsPosvendaRoute,
+}
+
+const DashboardsRouteWithChildren = DashboardsRoute._addFileChildren(
+  DashboardsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -464,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComercialRoute: ComercialRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
+  DashboardsRoute: DashboardsRouteWithChildren,
   EngenhariaRoute: EngenhariaRoute,
   EstoqueRoute: EstoqueRoute,
   EstoqueFundacaoRoute: EstoqueFundacaoRoute,

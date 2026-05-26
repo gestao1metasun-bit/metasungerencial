@@ -6,11 +6,19 @@
  */
 function readBool(key: string, def: boolean): boolean {
   if (typeof window === "undefined") return def;
+  // Override via querystring (?ff:enterprise-shell-full=1) — útil para validação
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const q = sp.get(key);
+    if (q === "0" || q === "false") return false;
+    if (q === "1" || q === "true") return true;
+  } catch { /* ignore */ }
   const v = window.localStorage.getItem(key);
   if (v === "0" || v === "false") return false;
   if (v === "1" || v === "true") return true;
   return def;
 }
+
 
 export const featureFlags = {
   /** Onda B — leitura Supabase de obras na Engenharia (híbrido com seed). */

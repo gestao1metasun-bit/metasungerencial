@@ -73,7 +73,8 @@ export type Filtro = "pendentes_para_mim" | "minhas" | "historico" | "todas";
 
 export function useWorkflowAprovacoes(filtro: Filtro = "pendentes_para_mim") {
   const auth = useAuth();
-  const uid = auth.userId ?? null;
+  const uid = auth.user?.id ?? null;
+
 
   return useQuery({
     queryKey: QK.list(filtro, uid),

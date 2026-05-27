@@ -71,61 +71,133 @@ function PedidosVendaPage() {
     return c;
   }, [pvs]);
 
+  const enviar = useEnviarPVParaAnalise();
+  const aprovar = useAprovarPV();
+  const cancelar = useCancelarPV();
+
+  const selectedArr = useMemo(() => Array.from(selected), [selected]);
+  const selectedRows = useMemo(
+    () => filtrados.filter((p) => selected.has(p.id)),
+    [filtrados, selected],
+  );
+  const singleSel = selectedRows.length === 1 ? selectedRows[0] : null;
+
+  const lote = async (
+    fn: (id: string) => Promise<unknown>,
+    label: string,
+  ) => {
+    if (selectedArr.length === 0) return;
+    let ok = 0, fail = 0;
+    for (const id of selectedArr) {
+      try { await fn(id); ok++; } catch { fail++; }
+    }
+    toast[fail ? "warning" : "success"](
+      `${label}: ${ok} ok${fail ? `, ${fail} falha${fail > 1 ? "s" : ""}` : ""}`,
+    );
+    setSelected(new Set());
+  };
+
+  const handleAprovar = () => {
+    if (!singleSel) return;
+    if (singleSel.status !== "EM_ANALISE") {
+      toast.warning("Apenas PVs em análise podem ser aprovados.");
+      return;
+    }
+    aprovar.mutate({ pvId: singleSel.id });
+  };
+  const handleCancelarLote = () => {
+    if (selectedArr.length === 0) return;
+    const motivo = window.prompt("Motivo do cancelamento (mín. 3 caracteres):", "");
+    if (!motivo || motivo.trim().length < 3) return;
+    lote((id) => cancelar.mutateAsync({ pvId: id, motivo: motivo.trim() }), "Cancelamento");
+  };
+  const handleEnviarLote = () =>
+    lote((id) => enviar.mutateAsync(id), "Envio para análise");
+
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-2 p-2 md:p-3">
       <PageHeader
         title="Pedidos de Venda"
-        subtitle="Fundação transacional — Contrato → Projeto → PV → Engenharia."
+        subtitle="Operação comercial — Contrato → Projeto → PV → Engenharia."
         actions={
-          <Button onClick={() => setOpenNovo(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Gerar PV de contrato
+          <Button size="sm" className="h-7" onClick={() => setOpenNovo(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Gerar PV
           </Button>
         }
       />
 
-      <DashboardReaisOverview />
-
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <StatCard label="Rascunho" value={counts.RASCUNHO ?? 0} icon={FileText} />
-        <StatCard label="Em análise" value={counts.EM_ANALISE ?? 0} icon={FileText} />
-        <StatCard label="Aprovado" value={counts.APROVADO ?? 0} icon={FileText} />
-        <StatCard label="Em execução" value={counts.EM_EXECUCAO ?? 0} icon={FileText} />
-        <StatCard label="Faturado" value={counts.FATURADO ?? 0} icon={FileText} />
-        <StatCard label="Finalizado" value={counts.FINALIZADO ?? 0} icon={FileText} />
-        <StatCard label="Cancelado" value={counts.CANCELADO ?? 0} icon={FileText} />
+      {/* Strip operacional denso — substitui StatCards */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2 py-1 text-[11px]">
+        <span className="font-bold uppercase tracking-wider text-muted-foreground/80 mr-2">
+          Pipeline
+        </span>
+        {(Object.keys(PV_STATUS_LABEL) as PVStatus[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setFiltro(filtro === k ? "TODOS" : k)}
+            className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition ${
+              filtro === k ? "bg-primary/15 text-primary ring-1 ring-primary/30" : "hover:bg-background"
+            }`}
+          >
+            <span className="text-muted-foreground">{PV_STATUS_LABEL[k]}</span>
+            <span className="font-mono font-semibold tabular-nums">{counts[k] ?? 0}</span>
+          </button>
+        ))}
+        <span className="ml-auto text-muted-foreground">
+          Total: <span className="font-mono font-semibold text-foreground">{pvs.length}</span>
+        </span>
       </div>
 
       <Tabs defaultValue="lista" className="w-full">
-        <TabsList>
-          <TabsTrigger value="lista">Lista</TabsTrigger>
-          <TabsTrigger value="bridge"><Network className="h-4 w-4 mr-1" />Bridge UUID</TabsTrigger>
+        <TabsList className="h-7">
+          <TabsTrigger value="lista" className="h-6 text-[11px]">Lista</TabsTrigger>
+          <TabsTrigger value="bridge" className="h-6 text-[11px]">
+            <Network className="h-3 w-3 mr-1" />Bridge UUID
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="lista" className="space-y-3 pt-3">
+        <TabsContent value="lista" className="space-y-2 pt-2">
+          <EnterpriseToolbar
+            title="Pedidos"
+            count={filtrados.length}
+            hint={selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? "s" : ""}` : undefined}
+            selecionado={selected.size > 0}
+            onNovo={() => setOpenNovo(true)}
+            onEditar={() => singleSel && setPvAtivo(singleSel.id)}
+            onAprovar={handleAprovar}
+            onCancelar={handleCancelarLote}
+            onExportar={() =>
+              exportToCSV("pedidos-venda", filtrados, [
+                { key: "codigo", label: "Código" },
+                { key: "status", label: "Status", get: (r) => PV_STATUS_LABEL[r.status as PVStatus] ?? r.status },
+                { key: "valor_total", label: "Valor", get: (r) => Number(r.valor_total ?? 0).toFixed(2) },
+                { key: "forma_pagamento", label: "Forma pagto" },
+                { key: "obra_id", label: "Obra" },
+                { key: "created_at", label: "Criado em", get: (r) => new Date(r.created_at).toLocaleDateString("pt-BR") },
+              ])
+            }
+            onImprimir={() => window.print()}
+            onAtualizar={() => refetch()}
+            onHistorico={() => singleSel && setPvAtivo(singleSel.id)}
+            onAnexos={() => singleSel && setPvAtivo(singleSel.id)}
+            loteActions={
+              selected.size > 0 ? (
+                <Button
+                  size="sm" variant="ghost"
+                  className="h-7 px-2 text-[11.5px]"
+                  onClick={handleEnviarLote}
+                >
+                  Enviar p/ análise
+                </Button>
+              ) : null
+            }
+          />
+
           <EnterpriseDataGrid
             gridId="pedidos-venda"
-            title="Pedidos de Venda"
             count={filtrados.length}
-            toolbar={{
-              onRefresh: () => refetch(),
-              onExport: () =>
-                exportToCSV("pedidos-venda", filtrados, [
-                  { key: "codigo", label: "Código" },
-                  { key: "status", label: "Status", get: (r) => PV_STATUS_LABEL[r.status as PVStatus] ?? r.status },
-                  { key: "valor_total", label: "Valor", get: (r) => Number(r.valor_total ?? 0).toFixed(2) },
-                  { key: "forma_pagamento", label: "Forma pagto" },
-                  { key: "obra_id", label: "Obra" },
-                  { key: "created_at", label: "Criado em", get: (r) => new Date(r.created_at).toLocaleDateString("pt-BR") },
-                ]),
-              leftActions:
-                selected.size > 0 ? (
-                  <span className="text-xs text-muted-foreground">
-                    {selected.size} selecionado{selected.size > 1 ? "s" : ""}
-                  </span>
-                ) : null,
-            }}
             filters={{
               search: busca,
               onSearchChange: setBusca,
@@ -149,7 +221,7 @@ function PedidosVendaPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[36px]">
+                  <TableHead className="w-[32px]">
                     <Checkbox
                       checked={filtrados.length > 0 && selected.size === filtrados.length}
                       onCheckedChange={(v) =>
@@ -161,23 +233,23 @@ function PedidosVendaPage() {
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Forma pagto</TableHead>
-                  <TableHead>Obra vinculada</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead className="w-[60px]" />
+                  <TableHead>Obra</TableHead>
+                  <TableHead>Criado</TableHead>
+                  <TableHead className="w-[40px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                       Carregando…
                     </TableCell>
                   </TableRow>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
-                      Nenhum PV. Use "Gerar PV de contrato".
+                    <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                      Nenhum PV. Use "Gerar PV".
                     </TableCell>
                   </TableRow>
                 )}
@@ -185,8 +257,17 @@ function PedidosVendaPage() {
                   <TableRow
                     key={p.id}
                     data-state={selected.has(p.id) ? "selected" : undefined}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(p.id)) next.delete(p.id);
+                        else next.add(p.id);
+                        return next;
+                      });
+                    }}
                   >
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selected.has(p.id)}
                         onCheckedChange={(v) => {
@@ -212,11 +293,11 @@ function PedidosVendaPage() {
                     <TableCell className="font-mono text-[11px]">
                       {p.obra_id ? p.obra_id.slice(0, 8) : "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs">
                       {new Date(p.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPvAtivo(p.id)}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPvAtivo(p.id)}>
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </TableCell>
@@ -231,6 +312,7 @@ function PedidosVendaPage() {
             )}
           </EnterpriseDataGrid>
         </TabsContent>
+
 
 
         <TabsContent value="bridge" className="pt-3">

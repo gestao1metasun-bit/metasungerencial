@@ -41,7 +41,7 @@ export function ContextualSidebar() {
     .sort((a, b) => a.ordem - b.ordem);
 
   return (
-    <aside className="flex w-44 shrink-0 flex-col border-r border-border bg-muted/30 text-foreground/85">
+    <aside className="flex h-full w-full flex-col bg-muted/30 text-foreground/85">
       <div className="border-b border-border px-2 py-1.5">
         <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Contexto

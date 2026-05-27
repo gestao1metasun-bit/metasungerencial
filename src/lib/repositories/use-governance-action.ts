@@ -18,7 +18,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { usePermissions } from "@/hooks/use-permissions";
+import { useMyPermissions } from "@/hooks/use-permissions";
 
 export type GovernanceActionInfo = {
   loading: boolean;
@@ -74,14 +74,12 @@ function useMatrixRow(modulo: string, acao: string) {
 
 export function useGovernanceAction(modulo: string, acao: string): GovernanceActionInfo {
   const { data: row, isLoading } = useMatrixRow(modulo, acao);
-  const perms = usePermissions();
-  const isAdmin = (perms as any)?.isAdmin ?? false;
-  const has = (k: string) => isAdmin || !!(perms as any)?.permissions?.[k] || !!(perms as any)?.[k];
+  const perms = useMyPermissions();
 
   return useMemo<GovernanceActionInfo>(() => {
     if (isLoading) return { ...EMPTY, loading: true };
     if (!row) return { ...EMPTY, found: false };
-    const allowed = !row.permissao ? true : has(row.permissao);
+    const allowed = !row.permissao ? true : perms.can(row.permissao);
     return {
       loading: false,
       found: true,
@@ -97,7 +95,7 @@ export function useGovernanceAction(modulo: string, acao: string): GovernanceAct
       blockedReason: allowed ? null
         : `Permissão necessária: ${row.permissao}`,
     };
-  }, [row, isLoading, isAdmin, perms]);
+  }, [row, isLoading, perms]);
 }
 
 /* ----------------------------- Pendências ----------------------------- */

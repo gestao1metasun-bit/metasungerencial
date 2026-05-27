@@ -86,6 +86,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/paineis/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 60 },
   { to: "/paineis/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "paineis",       ordem: 70 },
   { to: "/paineis/saude-dados",    label: "Saúde dos Dados",          icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "paineis",       ordem: 75, critica: true },
+  { to: "/paineis/governanca",     label: "Governança",               icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "paineis",       ordem: 76, critica: true },
   { to: "/analises",               label: "Análises / Executivo",     icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "paineis",       ordem: 80 },
   { to: "/relatorios",             label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "paineis",       ordem: 90 },
   { to: "/tarefas",                label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 100 },

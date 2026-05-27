@@ -517,10 +517,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             case "novo":       return setCriarOpen(true);
             case "atualizar":  return toast.info("Lista atualizada.");
             case "editar":     return singleSel && setEditar(singleSel);
-            case "anexos":
+            case "anexos":     return singleSel && setAnexosTitulo(singleSel);
             case "historico":
             case "comentarios":
             case "auditoria":  return singleSel && setVerHist(singleSel);
+
             case "cancelar": {
               if (selRows.length === 0) return;
               const motivo = window.prompt(`Motivo do cancelamento (${selRows.length} título(s), mín. 3 caracteres):`, "");

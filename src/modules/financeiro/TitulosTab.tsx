@@ -455,6 +455,19 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             icon: ENTERPRISE_PROCESS_ICON_HINT.enviar,    requerSelecao: 1, permiteLote: true },
           { key: "estornar",     label: "Estornar baixa",
             icon: ENTERPRISE_PROCESS_ICON_HINT.estornar,  requerSelecao: 1, permiteLote: false, destructive: true, requerMotivo: true },
+          // Paridade com o menu "Opções" da linha (D6.13.4):
+          { key: "detalhar",     label: "Detalhar / Painel",
+            requerSelecao: 1, permiteLote: false },
+          { key: "ratear",       label: "Ratear título",
+            requerSelecao: 1, permiteLote: false },
+          { key: "cadastrar_cheque", label: "Cadastrar cheque",
+            requerSelecao: 1, permiteLote: false },
+          { key: "gerar_copia",  label: "Gerar cópia",
+            requerSelecao: 1, permiteLote: false },
+          { key: "imprimir_modelo", label: "Imprimir modelo",
+            requerSelecao: 1, permiteLote: false },
+          { key: "excluir",      label: "Excluir título",
+            requerSelecao: 1, permiteLote: true, destructive: true, requerMotivo: true },
         ];
 
         const handleAction = (a: string) => {

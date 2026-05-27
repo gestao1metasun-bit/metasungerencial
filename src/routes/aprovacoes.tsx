@@ -296,7 +296,7 @@ function AprovacoesPage() {
                           {WF_STATUS_LABEL[r.status]}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             size="icon"
@@ -338,6 +338,7 @@ function AprovacoesPage() {
                           )}
                         </div>
                       </TableCell>
+
                     </TableRow>
                   );
                 })}

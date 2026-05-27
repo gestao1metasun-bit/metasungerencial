@@ -1,114 +1,65 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+/**
+ * D6.8 — Onda 4: /dashboard operacional ERP 2 colunas.
+ *
+ * Antes: dashboard SaaS com cards grandes + 4 gráficos dominantes + mock.
+ * Agora: layout corporativo ERP estilo TOTVS RM / SAP:
+ *   - Coluna esquerda (Operação / Exceções): aprovações pendentes,
+ *     financeiro vencido, estoque baixo/parado, obras críticas.
+ *   - Coluna direita (Gestão compacta): KPIs reais densos por área
+ *     (financeiro, comercial, engenharia, estoque) + status reconciliação.
+ *
+ * Aba "indicadores" preservada (IndicadoresTab continua acessível via hash).
+ * Mock visual / gráficos grandes movidos para fora do caminho principal.
+ */
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  FileText, CheckCircle2, Clock, XCircle, DollarSign, Banknote,
-  HardHat, TrendingUp, Activity, AlertTriangle,
+  AlertTriangle, ClipboardCheck, CircleDollarSign, PackageSearch,
+  HardHat, RefreshCw, ArrowRight, Activity, Wallet, TrendingUp,
+  FileText, Boxes, Clock,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, Line, Legend, ComposedChart, Area, AreaChart,
-} from "recharts";
-import { useAditivos, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
 import { PageHeader } from "@/components/app/PageHeader";
-import { StatCard } from "@/components/app/StatCard";
-import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { contratos, evolucaoMensal, financiamentos, obras, vendedores, propostas, fmtBRL } from "@/lib/mock-data";
+import { useKpisReais } from "@/lib/repositories/use-kpis-reais";
+import { useWorkflowAprovacoes } from "@/hooks/useWorkflowAprovacoes";
+import { useEstoquePendencias } from "@/lib/repositories/use-estoque-pendencias";
 import { useContratos } from "@/lib/contratos-store";
+import { vendedores, propostas } from "@/lib/mock-data";
 import { IndicadoresTab } from "@/routes/comercial";
-import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
-import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard Geral — Meta Sun Gerencial" }] }),
+  head: () => ({ meta: [{ title: "Dashboard Operacional — Meta Sun Gerencial" }] }),
   component: DashboardGeral,
 });
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const BRL = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 function DashboardGeral() {
   const [tab, setTab] = useTabFromHash("/dashboard");
+  const kpis = useKpisReais();
+  const wf = useWorkflowAprovacoes("pendentes_para_mim");
+  const pend = useEstoquePendencias();
   const liveContratos = useContratos();
-  const aditivos = useAditivos();
-  const aditivosPendentes = aditivos.filter(isAditivoPendente);
 
-  const total = contratos.length;
-  const assinadosList = contratos.filter((c) => c.status === "Assinado");
-  const pendentesList = contratos.filter((c) => c.status === "Pendente");
-  const canceladosList = contratos.filter((c) => c.status === "Cancelado");
-  const geradosList = contratos.filter((c) => c.status === "Gerado");
-  const assinados = assinadosList.length;
-  const pendentes = pendentesList.length;
-  const cancelados = canceladosList.length;
-  const valorVendido = assinadosList.reduce((s, c) => s + c.valor, 0);
-  const valorFinanciado = financiamentos.reduce((s, f) => s + f.valorFinanciado, 0);
-  const obrasAtivasList = obras.filter((o) => o.status !== "Finalizado");
-  const obrasAtivas = obrasAtivasList.length;
-  const ticketMedio = valorVendido / Math.max(assinados, 1);
-  const kwpTotal = contratos.reduce((s, c) => s + c.kwp, 0);
-  const obrasFinalizadasList = obras.filter((o) => o.status === "Finalizado");
-  const kwpInstalado = obrasFinalizadasList.reduce((s, o) => s + o.potencia, 0);
-
-  const statusData = [
-    { name: "Assinado", value: assinados },
-    { name: "Pendente", value: pendentes },
-    { name: "Gerado", value: geradosList.length },
-    { name: "Cancelado", value: cancelados },
-  ];
-
-  const vendedoresData = vendedores.map((v) => ({ nome: v.nome.split(" ")[0], vendido: v.vendido }));
-
-  const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-  const evolGerAss = useMemo(() => {
-    const map = new Map<string, { mes: string; gerados: number; assinados: number; valorAssinado: number }>();
-    MESES.forEach((m) => map.set(m, { mes: m, gerados: 0, assinados: 0, valorAssinado: 0 }));
-    contratos.forEach((c) => {
-      const m = MESES[new Date(c.data).getMonth()];
-      const r = map.get(m)!;
-      r.gerados += 1;
-      if (c.status === "Assinado") { r.assinados += 1; r.valorAssinado += c.valor; }
-    });
-    return Array.from(map.values()).filter((r, i) => i <= 5 || r.gerados > 0 || r.assinados > 0);
-  }, []);
-
-  type ModalKey = "contratos" | "assinados" | "pendentes" | "cancelados" | "valor" | "fin" | "obras" | "ticket" | "kwp" | "kwpInst";
-  const [openModal, setOpenModal] = useState<null | ModalKey>(null);
-  const open = (k: ModalKey) => () => setOpenModal(k);
+  const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); };
 
   return (
     <>
       <PageHeader
-        title="Dashboard Geral"
-        subtitle="Visão consolidada de todos os módulos."
+        title="Dashboard Operacional"
+        subtitle="Exceções, KPIs reais e indicadores executivos consolidados."
         actions={
-          <Select defaultValue="mes">
-            <SelectTrigger className="w-52 bg-card"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hoje">Hoje</SelectItem>
-              <SelectItem value="ontem">Ontem</SelectItem>
-              <SelectItem value="7d">Últimos 7 dias</SelectItem>
-              <SelectItem value="15d">Últimos 15 dias</SelectItem>
-              <SelectItem value="30d">Últimos 30 dias</SelectItem>
-              <SelectItem value="mes">Este mês</SelectItem>
-              <SelectItem value="mesAnt">Mês anterior</SelectItem>
-              <SelectItem value="trim">Trimestre</SelectItem>
-              <SelectItem value="semestre">Semestre</SelectItem>
-              <SelectItem value="ano">Este ano</SelectItem>
-              <SelectItem value="anoAnt">Ano anterior</SelectItem>
-              <SelectItem value="tudo">Todo o período</SelectItem>
-              <SelectItem value="custom">Personalizado…</SelectItem>
-            </SelectContent>
-          </Select>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-[11.5px]"
+            onClick={reload}
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Atualizar
+          </Button>
         }
       />
 
@@ -118,135 +69,97 @@ function DashboardGeral() {
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="visao" className="mt-5 space-y-5">
-          <DashboardReaisOverview />
+        <TabsContent value="visao" className="mt-2 space-y-2">
+          {/* Strip operacional denso */}
+          <OperationalStrip kpis={kpis} wf={wf.data?.length ?? 0} />
 
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <Badge variant="outline" className="border-warning/60 text-warning">
-                MODO MOCK
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                Painéis abaixo são demonstração visual (mock controlado, DEV ONLY) — não refletem dados transacionais reais.
-              </span>
+          {/* 2 colunas ERP */}
+          <div className="grid gap-2 xl:grid-cols-[1.35fr_1fr]">
+            {/* Coluna esquerda — Operação / Exceções */}
+            <div className="space-y-2">
+              <ExcecoesAprovacoes wfData={wf.data ?? []} loading={wf.isLoading} />
+              <ExcecoesFinanceiro fin={kpis.financeiro} loading={kpis.loading} />
+              <ExcecoesEstoque pend={pend} />
+              <ExcecoesObras eng={kpis.engenharia} loading={kpis.loading} />
             </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-            <StatCard label="Contratos" value={total} icon={FileText} tone="primary" hint={`${assinados} assinados`} onView={open("contratos")} />
-            <StatCard label="Assinados" value={assinados} icon={CheckCircle2} tone="success" trend={{ value: "+12% mês", positive: true }} onView={open("assinados")} />
-            <StatCard label="Pendentes" value={pendentes} icon={Clock} tone="warning" onView={open("pendentes")} />
-            <StatCard label="Cancelados" value={cancelados} icon={XCircle} tone="destructive" onView={open("cancelados")} />
-            <StatCard label="Valor vendido" value={fmtBRL(valorVendido)} icon={DollarSign} tone="primary" onView={open("valor")} />
-            <StatCard label="Total financiado" value={fmtBRL(valorFinanciado)} icon={Banknote} tone="info" onView={open("fin")} />
-            <StatCard label="Obras em andamento" value={obrasAtivas} icon={HardHat} tone="info" onView={open("obras")} />
-            <StatCard label="Ticket médio" value={fmtBRL(ticketMedio)} icon={TrendingUp} tone="primary" />
-            <StatCard label="kWp vendido" value={`${kwpTotal.toFixed(1)}`} icon={TrendingUp} tone="warning" hint="kWp totais" />
-            <StatCard label="kWp instalado" value={`${kwpInstalado.toFixed(1)}`} icon={CheckCircle2} tone="success" hint={`${obrasFinalizadasList.length} obras finalizadas`} />
-          </div>
 
-          {aditivosPendentes.length > 0 && (
-            <Card className="mt-4 p-4 border-warning/40 bg-warning/5">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-md bg-warning/15 text-warning">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">
-                      {aditivosPendentes.length} aditivo{aditivosPendentes.length > 1 ? "s" : ""} pendente{aditivosPendentes.length > 1 ? "s" : ""}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Contratos com alterações em andamento. Operações sensíveis estão travadas até aprovação.
-                    </div>
-                  </div>
+            {/* Coluna direita — Gestão compacta */}
+            <div className="space-y-2">
+              <CompactKpiBlock
+                title="Financeiro"
+                icon={<Wallet className="h-3.5 w-3.5" />}
+                href="/financeiro-titulos"
+                rows={[
+                  ["Em aberto", BRL(kpis.financeiro?.valorPendente ?? 0), "warning"],
+                  ["Atrasado", BRL(kpis.financeiro?.valorAtrasado ?? 0), "danger"],
+                  ["Recebido", BRL(kpis.financeiro?.valorRecebido ?? 0), "success"],
+                  ["Fluxo 30d", BRL(kpis.financeiro?.fluxoPrevisto ?? 0), "info"],
+                  ["Títulos", String(kpis.financeiro?.totalTitulos ?? 0), "muted"],
+                ]}
+              />
+              <CompactKpiBlock
+                title="Comercial"
+                icon={<FileText className="h-3.5 w-3.5" />}
+                href="/pedidos-venda"
+                rows={[
+                  ["PV total", String(kpis.comercial?.totalPv ?? 0), "muted"],
+                  ["Aprovados", String(kpis.comercial?.pvAprovados ?? 0), "success"],
+                  ["Em execução", String(kpis.comercial?.pvExecucao ?? 0), "info"],
+                  ["Contratos", String(kpis.comercial?.totalContratos ?? 0), "muted"],
+                  ["Ticket médio", BRL(kpis.comercial?.ticketMedio ?? 0), "primary"],
+                ]}
+              />
+              <CompactKpiBlock
+                title="Engenharia"
+                icon={<HardHat className="h-3.5 w-3.5" />}
+                href="/engenharia"
+                rows={[
+                  ["Obras", String(kpis.engenharia?.totalObras ?? 0), "muted"],
+                  ["Ativas", String(kpis.engenharia?.obrasAtivas ?? 0), "info"],
+                  ["Finalizadas", String(kpis.engenharia?.obrasFinalizadas ?? 0), "success"],
+                  ["Custo previsto", BRL(kpis.engenharia?.custoPrevisto ?? 0), "muted"],
+                  ["Consumo", `${kpis.engenharia?.consumoPct ?? 0}%`,
+                    (kpis.engenharia?.consumoPct ?? 0) > 100 ? "danger" : "primary"],
+                ]}
+              />
+              <CompactKpiBlock
+                title="Estoque"
+                icon={<Boxes className="h-3.5 w-3.5" />}
+                href="/estoque"
+                rows={[
+                  ["Saldo físico", String(kpis.estoque?.saldoFisico ?? 0), "muted"],
+                  ["Reservado", String(kpis.estoque?.reservado ?? 0), "warning"],
+                  ["Disponível", String(kpis.estoque?.disponivel ?? 0), "success"],
+                  ["Entregas pend.", String(kpis.estoque?.entregasPendentes ?? 0), "info"],
+                  ["Custo estoque", BRL(kpis.estoque?.custoEstoque ?? 0), "primary"],
+                ]}
+              />
+
+              {/* Status reconciliação compacto */}
+              <Card className="p-2.5">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  <Activity className="h-3 w-3" /> Status reconciliação
                 </div>
-                <Link to="/comercial" hash="tab=aditivos" className="text-xs font-semibold text-primary hover:underline">
-                  Gerenciar aditivos →
+                <div className="grid grid-cols-2 gap-1.5 text-[11.5px]">
+                  <ReconciliationCell label="Saldo operacional"
+                    value={BRL(kpis.financeiro?.saldoOperacional ?? 0)}
+                    tone={(kpis.financeiro?.saldoOperacional ?? 0) >= 0 ? "success" : "danger"} />
+                  <ReconciliationCell label="Backend"
+                    value={kpis.disponivel ? "OK" : "MOCK"}
+                    tone={kpis.disponivel ? "success" : "warning"} />
+                </div>
+                <Link
+                  to="/analises"
+                  className="mt-2 inline-flex items-center gap-1 text-[10.5px] font-semibold text-primary hover:underline"
+                >
+                  Abrir reconciliação <ArrowRight className="h-3 w-3" />
                 </Link>
-              </div>
-            </Card>
-          )}
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Evolução: Gerados × Assinados</div>
-                  <div className="text-xs text-muted-foreground">Quantidade mensal de contratos gerados e assinados</div>
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={evolGerAss}>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="gerados" fill="var(--chart-1)" radius={[4,4,0,0]} name="Gerados" />
-                  <Bar dataKey="assinados" fill="var(--chart-2)" radius={[4,4,0,0]} name="Assinados" />
-                  <Line type="monotone" dataKey="assinados" stroke="var(--chart-4)" strokeWidth={2.5} dot={{ r: 3 }} name="Tendência assinados" />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </Card>
-
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold">Evolução mensal — Vendido × Financiado</div>
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={evolucaoMensal}>
-                  <defs>
-                    <linearGradient id="gV" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gF" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Area type="monotone" dataKey="vendido" stroke="var(--chart-1)" fill="url(#gV)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="financiado" stroke="var(--chart-2)" fill="url(#gF)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
-
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-4 text-sm font-semibold">Contratos por status</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
-                    {statusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Card>
-
-            <Card className="p-5 bg-[image:var(--gradient-card)]">
-              <div className="mb-4 text-sm font-semibold">Vendido por vendedor</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={vendedoresData} layout="vertical">
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v)=>`${(v/1000).toFixed(0)}k`} />
-                  <YAxis type="category" dataKey="nome" stroke="var(--muted-foreground)" fontSize={12} width={80} />
-                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8 }} />
-                  <Bar dataKey="vendido" fill="var(--chart-1)" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="indicadores" className="mt-5">
+        <TabsContent value="indicadores" className="mt-3">
           <IndicadoresTab
             contratos={liveContratos as any}
             vendedoresList={vendedores as any}
@@ -255,122 +168,279 @@ function DashboardGeral() {
           />
         </TabsContent>
       </Tabs>
-
-      <DetailModal
-        open={openModal !== null}
-        onClose={() => setOpenModal(null)}
-        modal={openModal}
-        data={{
-          contratos, assinadosList, pendentesList, canceladosList,
-          obrasAtivasList, obrasFinalizadasList, financiamentos,
-          valorVendido, valorFinanciado, ticketMedio, kwpTotal, kwpInstalado,
-        }}
-      />
     </>
   );
 }
 
-function DetailModal({
-  open, onClose, modal, data,
-}: {
-  open: boolean; onClose: () => void; modal: string | null;
-  data: {
-    contratos: typeof contratos; assinadosList: typeof contratos; pendentesList: typeof contratos;
-    canceladosList: typeof contratos; obrasAtivasList: typeof obras; obrasFinalizadasList: typeof obras;
-    financiamentos: typeof financiamentos;
-    valorVendido: number; valorFinanciado: number; ticketMedio: number; kwpTotal: number; kwpInstalado: number;
-  };
-}) {
-  if (!modal) return null;
-  const titles: Record<string, string> = {
-    contratos: "Todos os contratos", assinados: "Contratos assinados",
-    pendentes: "Contratos pendentes", cancelados: "Contratos cancelados",
-    valor: "Detalhamento — Valor vendido", fin: "Financiamentos ativos",
-    obras: "Obras em andamento", ticket: "Análise de ticket médio",
-    kwp: "kWp por contrato", kwpInst: "kWp instalado (obras finalizadas)",
-  };
-  const list =
-    modal === "assinados" ? data.assinadosList :
-    modal === "pendentes" ? data.pendentesList :
-    modal === "cancelados" ? data.canceladosList :
-    modal === "ticket" ? data.assinadosList :
-    modal === "valor" ? [...data.assinadosList].sort((a,b)=>b.valor-a.valor) :
-    modal === "kwp" ? [...data.contratos].sort((a,b)=>b.kwp-a.kwp) :
-    data.contratos;
+/* ─────────────────────────── Strip operacional ─────────────────────────── */
 
+function OperationalStrip({ kpis, wf }: { kpis: ReturnType<typeof useKpisReais>; wf: number }) {
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[1400px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{titles[modal]}</DialogTitle>
-          <DialogDescription>
-            {modal === "fin" && `${data.financiamentos.length} financiamentos · ${fmtBRL(data.valorFinanciado)}`}
-            {modal === "obras" && `${data.obrasAtivasList.length} obras em andamento`}
-            {!["fin","obras"].includes(modal) && `${list.length} registros · Ticket médio ${fmtBRL(data.ticketMedio)}`}
-          </DialogDescription>
-        </DialogHeader>
-
-        {modal === "fin" ? (
-          <Table>
-            <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead>ID</TableHead><TableHead>Cliente</TableHead><TableHead>Banco</TableHead>
-              <TableHead className="text-right">Valor</TableHead><TableHead>Status</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {data.financiamentos.map((f) => (
-                <TableRow key={f.id}>
-                  <TableCell className="font-mono text-xs text-primary">{f.id}</TableCell>
-                  <TableCell>{f.cliente}</TableCell>
-                  <TableCell className="text-muted-foreground">{f.banco}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtBRL(f.valorFinanciado)}</TableCell>
-                  <TableCell><StatusBadge status={f.statusOp} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (modal === "obras" || modal === "kwpInst") ? (
-          <Table>
-            <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
-              <TableHead className="text-right">Módulos</TableHead><TableHead className="text-right">kWp</TableHead><TableHead>Status</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {(modal === "kwpInst" ? data.obrasFinalizadasList : data.obrasAtivasList).map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
-                  <TableCell>{o.cliente}</TableCell>
-                  <TableCell className="text-muted-foreground">{o.equipe}</TableCell>
-                  <TableCell className="text-right">{o.modulos}</TableCell>
-                  <TableCell className="text-right">{o.potencia.toFixed(1)}</TableCell>
-                  <TableCell><StatusBadge status={o.status} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Table>
-            <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Vendedor</TableHead>
-              <TableHead className="text-right">Valor</TableHead><TableHead className="text-right">kWp</TableHead>
-              <TableHead>Status</TableHead><TableHead>Data</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {list.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs text-primary">{c.id}</TableCell>
-                  <TableCell className="font-medium">{c.cliente}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.vendedor}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
-                  <TableCell className="text-right">{c.kwp.toFixed(1)}</TableCell>
-                  <TableCell><StatusBadge status={c.status} /></TableCell>
-                  <TableCell className="text-muted-foreground">{c.data}</TableCell>
-                </TableRow>
-              ))}
-              {list.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhum registro</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        )}
-      </DialogContent>
-    </Dialog>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border/80 bg-muted/40 px-2.5 py-1.5">
+      <StripItem label="Aprovações" value={wf} tone="warning" />
+      <Sep />
+      <StripItem label="Atrasado" value={BRL(kpis.financeiro?.valorAtrasado ?? 0)} tone="danger" />
+      <StripItem label="Em aberto" value={BRL(kpis.financeiro?.valorPendente ?? 0)} tone="warning" />
+      <StripItem label="Recebido" value={BRL(kpis.financeiro?.valorRecebido ?? 0)} tone="success" />
+      <Sep />
+      <StripItem label="Obras ativas" value={kpis.engenharia?.obrasAtivas ?? 0} tone="info" />
+      <StripItem label="Consumo obra" value={`${kpis.engenharia?.consumoPct ?? 0}%`} tone="primary" />
+      <Sep />
+      <StripItem label="Disponível" value={kpis.estoque?.disponivel ?? 0} tone="success" />
+      <StripItem label="Reservado" value={kpis.estoque?.reservado ?? 0} tone="warning" />
+      <StripItem label="Entregas pend." value={kpis.estoque?.entregasPendentes ?? 0} tone="info" />
+      <Sep />
+      <StripItem label="PV abertos" value={(kpis.comercial?.totalPv ?? 0) - (kpis.comercial?.pvAprovados ?? 0)} tone="muted" />
+      <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] uppercase tracking-wider text-muted-foreground/80">
+        <Clock className="h-3 w-3" /> Tempo real
+      </span>
+    </div>
   );
 }
+
+function StripItem({ label, value, tone = "muted" }: { label: string; value: string | number; tone?: Tone }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 text-[11px]">
+      <span className="uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      <span className={`font-mono font-semibold ${toneText(tone)}`}>{value}</span>
+    </span>
+  );
+}
+
+function Sep() { return <span className="h-3.5 w-px bg-border/80" />; }
+
+/* ─────────────────────────── Exceções (esquerda) ─────────────────────────── */
+
+function ExcecoesAprovacoes({ wfData, loading }: { wfData: any[]; loading: boolean }) {
+  return (
+    <ExceptionBlock
+      title="Aprovações pendentes"
+      icon={<ClipboardCheck className="h-3.5 w-3.5" />}
+      tone="warning"
+      count={wfData.length}
+      hrefAll="/aprovacoes"
+      loading={loading}
+      empty="Nenhuma aprovação pendente para você."
+    >
+      {wfData.slice(0, 6).map((w) => (
+        <ExceptionRow
+          key={w.id}
+          left={<span className="font-mono text-[10.5px] text-muted-foreground">{w.codigo ?? w.id.slice(0, 8)}</span>}
+          mid={<span className="truncate font-semibold">{w.titulo ?? w.tipo_operacao}</span>}
+          right={<span className="font-mono">{BRL(Number(w.valor ?? 0))}</span>}
+          href="/aprovacoes"
+        />
+      ))}
+    </ExceptionBlock>
+  );
+}
+
+function ExcecoesFinanceiro({ fin, loading }: { fin: any; loading: boolean }) {
+  const atrasado = fin?.valorAtrasado ?? 0;
+  const qtd = fin?.atrasados ?? 0;
+  return (
+    <ExceptionBlock
+      title="Financeiro vencido"
+      icon={<CircleDollarSign className="h-3.5 w-3.5" />}
+      tone={atrasado > 0 ? "danger" : "success"}
+      count={qtd}
+      hrefAll="/financeiro-titulos#tab=receber"
+      loading={loading}
+      empty="Sem parcelas vencidas."
+    >
+      <div className="px-2 py-1.5 text-[12px]">
+        <div className="flex items-baseline justify-between">
+          <span className="text-muted-foreground">Valor vencido</span>
+          <span className="font-mono font-semibold text-destructive">{BRL(atrasado)}</span>
+        </div>
+        <div className="mt-0.5 flex items-baseline justify-between">
+          <span className="text-muted-foreground">Em aberto (total)</span>
+          <span className="font-mono">{BRL(fin?.valorPendente ?? 0)}</span>
+        </div>
+        <div className="mt-0.5 flex items-baseline justify-between">
+          <span className="text-muted-foreground">Fluxo previsto 30d</span>
+          <span className="font-mono">{BRL(fin?.fluxoPrevisto ?? 0)}</span>
+        </div>
+      </div>
+    </ExceptionBlock>
+  );
+}
+
+function ExcecoesEstoque({ pend }: { pend: ReturnType<typeof useEstoquePendencias> }) {
+  const baixo = pend.estoqueBaixo ?? [];
+  const totalAlerts =
+    (pend.resumo?.estoque_baixo ?? 0) +
+    (pend.resumo?.reservas_atrasadas ?? 0) +
+    (pend.resumo?.oc_atrasada ?? 0);
+  return (
+    <ExceptionBlock
+      title="Estoque crítico"
+      icon={<PackageSearch className="h-3.5 w-3.5" />}
+      tone={totalAlerts > 0 ? "warning" : "success"}
+      count={totalAlerts}
+      hrefAll="/estoque#tab=compra"
+      loading={pend.loading}
+      empty="Sem produtos abaixo do mínimo."
+    >
+      <div className="grid grid-cols-3 gap-1 px-2 pt-1 text-[11px]">
+        <MiniMetric label="Baixo" value={pend.resumo?.estoque_baixo ?? 0} tone="warning" />
+        <MiniMetric label="Res. atrasadas" value={pend.resumo?.reservas_atrasadas ?? 0} tone="danger" />
+        <MiniMetric label="OC atrasada" value={pend.resumo?.oc_atrasada ?? 0} tone="danger" />
+      </div>
+      {baixo.slice(0, 4).map((p) => (
+        <ExceptionRow
+          key={p.produto_id}
+          left={<span className="font-mono text-[10.5px] text-muted-foreground">{p.codigo}</span>}
+          mid={<span className="truncate">{p.nome}</span>}
+          right={<span className="font-mono text-destructive">déficit {p.deficit}</span>}
+          href="/estoque#tab=itens"
+        />
+      ))}
+    </ExceptionBlock>
+  );
+}
+
+function ExcecoesObras({ eng, loading }: { eng: any; loading: boolean }) {
+  const consumo = eng?.consumoPct ?? 0;
+  return (
+    <ExceptionBlock
+      title="Obras críticas"
+      icon={<HardHat className="h-3.5 w-3.5" />}
+      tone={consumo > 100 ? "danger" : consumo > 90 ? "warning" : "info"}
+      count={eng?.obrasAtivas ?? 0}
+      hrefAll="/engenharia"
+      loading={loading}
+      empty="Sem obras ativas."
+    >
+      <div className="px-2 py-1.5 text-[12px]">
+        <div className="flex items-baseline justify-between">
+          <span className="text-muted-foreground">Custo previsto</span>
+          <span className="font-mono">{BRL(eng?.custoPrevisto ?? 0)}</span>
+        </div>
+        <div className="mt-0.5 flex items-baseline justify-between">
+          <span className="text-muted-foreground">Custo realizado</span>
+          <span className="font-mono">{BRL(eng?.custoRealizado ?? 0)}</span>
+        </div>
+        <div className="mt-0.5 flex items-baseline justify-between">
+          <span className="text-muted-foreground">Consumo</span>
+          <span className={`font-mono font-semibold ${consumo > 100 ? "text-destructive" : ""}`}>
+            {consumo}%
+          </span>
+        </div>
+      </div>
+    </ExceptionBlock>
+  );
+}
+
+/* ───────────────────────────── KPIs compactos ─────────────────────────── */
+
+function CompactKpiBlock({
+  title, icon, href, rows,
+}: {
+  title: string; icon: React.ReactNode; href: string;
+  rows: [string, string, Tone][];
+}) {
+  return (
+    <Card className="p-0">
+      <div className="flex items-center justify-between border-b border-border/70 px-2.5 py-1">
+        <div className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          {icon} {title}
+        </div>
+        <Link to={href} className="text-[10.5px] font-semibold text-primary hover:underline">
+          Abrir →
+        </Link>
+      </div>
+      <div className="divide-y divide-border/40">
+        {rows.map(([label, value, tone]) => (
+          <div key={label} className="flex items-baseline justify-between px-2.5 py-1 text-[11.5px]">
+            <span className="text-muted-foreground">{label}</span>
+            <span className={`font-mono font-semibold ${toneText(tone)}`}>{value}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/* ───────────────────────────── Primitivos ─────────────────────────── */
+
+type Tone = "muted" | "primary" | "info" | "success" | "warning" | "danger";
+
+function toneText(t: Tone): string {
+  switch (t) {
+    case "primary": return "text-primary";
+    case "info": return "text-info";
+    case "success": return "text-success";
+    case "warning": return "text-warning";
+    case "danger": return "text-destructive";
+    default: return "text-foreground";
+  }
+}
+
+function ExceptionBlock({
+  title, icon, tone, count, hrefAll, loading, empty, children,
+}: {
+  title: string; icon: React.ReactNode; tone: Tone;
+  count: number; hrefAll: string; loading: boolean;
+  empty: string; children: React.ReactNode;
+}) {
+  return (
+    <Card className="p-0">
+      <div className="flex items-center justify-between border-b border-border/70 bg-muted/30 px-2.5 py-1">
+        <div className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          <span className={toneText(tone)}>{icon}</span>
+          {title}
+          <span className={`ml-1 rounded bg-background px-1.5 font-mono text-[10px] ${toneText(tone)}`}>
+            {loading ? "…" : count}
+          </span>
+        </div>
+        <Link to={hrefAll} className="text-[10.5px] font-semibold text-primary hover:underline">
+          Abrir →
+        </Link>
+      </div>
+      {loading ? (
+        <div className="px-2.5 py-2 text-[11px] text-muted-foreground">Carregando…</div>
+      ) : count === 0 ? (
+        <div className="px-2.5 py-2 text-[11px] text-muted-foreground">{empty}</div>
+      ) : (
+        <div className="divide-y divide-border/40">{children}</div>
+      )}
+    </Card>
+  );
+}
+
+function ExceptionRow({ left, mid, right, href }: {
+  left: React.ReactNode; mid: React.ReactNode; right: React.ReactNode; href: string;
+}) {
+  return (
+    <Link
+      to={href}
+      className="grid grid-cols-[80px_1fr_auto] items-center gap-2 px-2.5 py-1 text-[12px] hover:bg-muted/40"
+    >
+      {left}
+      <div className="truncate">{mid}</div>
+      <div className="font-mono text-[11px]">{right}</div>
+    </Link>
+  );
+}
+
+function MiniMetric({ label, value, tone }: { label: string; value: number; tone: Tone }) {
+  return (
+    <div className="flex flex-col rounded bg-muted/40 px-1.5 py-1">
+      <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      <span className={`font-mono text-[12px] font-semibold ${toneText(tone)}`}>{value}</span>
+    </div>
+  );
+}
+
+function ReconciliationCell({ label, value, tone }: { label: string; value: string; tone: Tone }) {
+  return (
+    <div className="flex flex-col rounded border border-border/60 bg-muted/30 px-2 py-1">
+      <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      <span className={`font-mono text-[11.5px] font-semibold ${toneText(tone)}`}>{value}</span>
+    </div>
+  );
+}
+
+/* Helper compat: TrendingUp/Activity são importados acima para uso futuro. */
+void TrendingUp; void AlertTriangle;

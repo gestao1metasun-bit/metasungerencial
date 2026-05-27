@@ -5,6 +5,7 @@ import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Plus, Lock, Unlock, ShieldCheck, History,
 } from "lucide-react";
+import { AnexosButton } from "@/components/app/enterprise/AnexosButton";
 import {
   aprovarFinalizacao, revogarAprovacao, useAprovacoes, temAmbasAprovacoes,
   aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,
@@ -872,23 +873,32 @@ function ObrasAtivasTab({
               return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
                 <TableCell>
-                  <ActionsMenu>
-                    <DropdownMenuItem onSelect={() => setEditing(o)}>
-                      <SquarePen className="mr-2 h-4 w-4" /> Editar
-                    </DropdownMenuItem>
-                    {link && (
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
-                            retornar(o.id);
-                          }
-                        }}
-                      >
-                        <RotateCcw className="mr-2 h-4 w-4 text-warning" />
-                        <span className="text-warning">Retornar ao Comercial</span>
+                  <div className="flex items-center gap-1">
+                    <ActionsMenu>
+                      <DropdownMenuItem onSelect={() => setEditing(o)}>
+                        <SquarePen className="mr-2 h-4 w-4" /> Editar
                       </DropdownMenuItem>
-                    )}
-                  </ActionsMenu>
+                      {link && (
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
+                              retornar(o.id);
+                            }
+                          }}
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4 text-warning" />
+                          <span className="text-warning">Retornar ao Comercial</span>
+                        </DropdownMenuItem>
+                      )}
+                    </ActionsMenu>
+                    <AnexosButton
+                      entidade="obras"
+                      entidadeId={o.id}
+                      titulo={`Anexos · Obra ${o.id.slice(0, 8)}`}
+                      descricao={o.cliente ? `Cliente: ${o.cliente}` : undefined}
+                      categoriaPadrao="foto_obra"
+                    />
+                  </div>
                 </TableCell>
                 <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>

@@ -13,7 +13,7 @@
 import {
   LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
   ClipboardCheck, LineChart, Settings, FileBarChart, Database,
-  ListChecks, Users, Receipt, Banknote,
+  ListChecks, Users, Receipt, Banknote, ShoppingCart,
 } from "lucide-react";
 import type { ROUTE_TABS } from "@/lib/route-tabs";
 

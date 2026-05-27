@@ -10,6 +10,7 @@ import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 import { TopNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
+import { CommandPalette } from "@/components/app/CommandPalette";
 import { featureFlags } from "@/lib/feature-flags";
 
 export function AppLayout() {

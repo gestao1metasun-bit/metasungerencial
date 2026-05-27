@@ -248,10 +248,18 @@ export function EnterpriseRecordToolbar({
     if (!showAction(a)) return null;
     const Icon = ACTION_ICON[a];
     const label = ACTION_LABEL[a];
-    const tone: "default" | "primary" | "danger" | "muted" =
+    const tone: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info" =
       a === "novo" ? "primary"
+      : a === "editar" ? "warning"
       : (a === "excluir" || a === "cancelar") ? "danger"
+      : a === "salvar" ? "success"
       : (a === "atualizar" || a === "visualizar") ? "muted"
+      : a === "historico" ? "info"
+      : a === "comentarios" ? "info"
+      : a === "auditoria" ? "warning"
+      : a === "exportar" ? "success"
+      : a === "imprimir" ? "info"
+      : (a === "filtroAvancado" || a === "visoes" || a === "colunas" || a === "layout") ? "info"
       : "default";
     return (
       <IconBtn

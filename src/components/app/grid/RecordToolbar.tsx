@@ -248,6 +248,18 @@ export function RecordToolbar({
         </>
       )}
 
+      {/* Flag — sinalização universal (D6.10) */}
+      {flagEntidade && (
+        <>
+          <Sep />
+          <FlagPicker
+            entidade={flagEntidade}
+            registroId={flagRegistroId ?? null}
+            disabled={!selecionado || !flagRegistroId}
+          />
+        </>
+      )}
+
       {extraLeft}
 
       {/* Processos (dropdown estilo TOTVS) */}

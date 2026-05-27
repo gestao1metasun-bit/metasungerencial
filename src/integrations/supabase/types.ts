@@ -3959,12 +3959,22 @@ export type Database = {
       }
       titulos_taxas: {
         Row: {
+          categoria: string | null
+          centro_resultado_id: string | null
           created_at: string
           data_aplicacao: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           id: string
+          legacy_id: string | null
+          legacy_source: string | null
           motivo: string | null
+          natureza_id: string | null
           observacao: string | null
+          origem: string | null
           parcela_id: string | null
+          percentual: number | null
           tipo: string
           titulo_id: string
           user_email: string | null
@@ -3972,12 +3982,22 @@ export type Database = {
           valor: number
         }
         Insert: {
+          categoria?: string | null
+          centro_resultado_id?: string | null
           created_at?: string
           data_aplicacao?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
           motivo?: string | null
+          natureza_id?: string | null
           observacao?: string | null
+          origem?: string | null
           parcela_id?: string | null
+          percentual?: number | null
           tipo: string
           titulo_id: string
           user_email?: string | null
@@ -3985,12 +4005,22 @@ export type Database = {
           valor: number
         }
         Update: {
+          categoria?: string | null
+          centro_resultado_id?: string | null
           created_at?: string
           data_aplicacao?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
           motivo?: string | null
+          natureza_id?: string | null
           observacao?: string | null
+          origem?: string | null
           parcela_id?: string | null
+          percentual?: number | null
           tipo?: string
           titulo_id?: string
           user_email?: string | null
@@ -3998,6 +4028,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "titulos_taxas_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "titulos_taxas_parcela_id_fkey"
             columns: ["parcela_id"]

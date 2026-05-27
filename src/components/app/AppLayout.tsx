@@ -9,7 +9,7 @@ import { useIdentidade } from "@/lib/identidade";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
-import { TopNav } from "@/components/app/TopNav";
+import { TopNav, MacroNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
 import { featureFlags } from "@/lib/feature-flags";
@@ -53,14 +53,17 @@ export function AppLayout() {
       {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
       <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-border bg-card/95 backdrop-blur-xl px-3 shadow-sm relative">
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-        <div className="flex items-center gap-2 pr-3 mr-1 border-r border-border/60">
+        <div className="flex shrink-0 items-center gap-2 pr-3 mr-1 border-r border-border/60">
           <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden md:inline">
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden xl:inline">
             Gerencial
           </span>
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        {/* Macro módulos ERP — sempre visíveis (TOTVS RM/Sankhya/SAP) */}
+        <MacroNav />
+
+        <div className="flex shrink-0 items-center gap-1.5 pl-2 ml-1 border-l border-border/60">
           <FavoritosMenu />
           {!identidade.sessionLoading && !identidade.isAuthenticated && (
             <button

@@ -12,9 +12,12 @@ export function MacroNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const identidade = useIdentidade();
 
-  const visible = MACRO_MODULES.filter((m) =>
-    identidade.sessionLoading ? true : canAccessModule(identidade.role, m.accessKey),
-  );
+  // Macro nav é shell ERP — sempre visível. Permissão é validada nas rotas.
+  // Filtro de role só aplica para usuários autenticados com role operacional restrita.
+  const visible =
+    !identidade.sessionLoading && identidade.isAuthenticated && identidade.role === "usuario"
+      ? MACRO_MODULES.filter((m) => canAccessModule(identidade.role, m.accessKey))
+      : MACRO_MODULES;
   const active = macroAtivoPorRota(path) ?? visible[0];
 
   return (

@@ -1,21 +1,30 @@
 /**
- * D6.1 — Painel Contextual (preparação).
+ * D6.1 — Painel Contextual (D6.7 hardenizado).
  *
- * Substitui a sidebar legada quando featureFlags.ENTERPRISE_SHELL_FULL = true.
- * Aqui ficam: favoritos, pendências, atalhos e contexto do módulo ativo.
+ * Substitui a sidebar legada (sempre ativa desde D6.6).
+ * Agora conectada a stores reais:
+ *  - atalhos do macro módulo (NAV_ITEMS)
+ *  - favoritos reais (useFavoritos)
+ *  - recentes reais (useRecentes)
+ *  - pendências reais (useWorkflowAprovacoes pendentes_para_mim)
  *
- * Esta versão é o esqueleto da D6.1: estrutura visual + slots prontos,
- * sem implementar workflow/fila pessoal real (isso entra na D6.4).
+ * Sem placeholders "vazios".
  */
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Star, Bell, Zap, Filter, ClipboardCheck } from "lucide-react";
+import { Star, Bell, Zap, ClipboardCheck, Clock, Filter, X } from "lucide-react";
 import { macroAtivoPorRota, NAV_ITEMS } from "@/lib/nav-structure";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
+import { useFavoritos, useRecentes } from "@/lib/favoritos-store";
+import { useWorkflowAprovacoes } from "@/hooks/useWorkflowAprovacoes";
 
 export function ContextualSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const identidade = useIdentidade();
   const macro = macroAtivoPorRota(path);
+  const { favoritos, remove: removeFav } = useFavoritos();
+  const { recentes } = useRecentes();
+  const wf = useWorkflowAprovacoes("pendentes_para_mim");
+  const pendentes = wf.data ?? [];
 
   const atalhosModulo = NAV_ITEMS
     .filter((n) => n.macro === macro?.key)
@@ -49,7 +58,7 @@ export function ContextualSidebar() {
                   <li key={it.to}>
                     <Link
                       to={it.to}
-                      className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition ${
+                      className={`flex items-center gap-2 rounded px-2 py-1 text-[12px] transition ${
                         active
                           ? "bg-gold/15 text-gold font-semibold"
                           : "text-sidebar-foreground/80 hover:bg-white/5 hover:text-sidebar-foreground"
@@ -65,40 +74,97 @@ export function ContextualSidebar() {
           )}
         </Section>
 
-        {/* Favoritos (placeholder integrável com favoritos-store) */}
-        <Section title="Favoritos" icon={<Star className="h-3 w-3" />}>
-          <EmptyHint>
-            Marque telas frequentes com a estrela no topo para fixar aqui.
-          </EmptyHint>
-        </Section>
-
-        {/* Pendências do usuário (placeholder D6.4) */}
-        <Section title="Pendências" icon={<Bell className="h-3 w-3" />}>
+        {/* Pendências reais */}
+        <Section
+          title="Pendências"
+          icon={<Bell className="h-3 w-3" />}
+          counter={pendentes.length || undefined}
+        >
           <Link
             to="/aprovacoes"
-            className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] text-sidebar-foreground/75 hover:bg-white/5 hover:text-sidebar-foreground"
+            className="flex items-center gap-2 rounded px-2 py-1 text-[12px] text-sidebar-foreground/80 hover:bg-white/5 hover:text-sidebar-foreground"
           >
             <ClipboardCheck className="h-3.5 w-3.5 text-sidebar-foreground/55" />
             Central de Aprovações
+            {pendentes.length > 0 && (
+              <span className="ml-auto inline-flex h-4 min-w-[16px] items-center justify-center rounded bg-amber-500/90 px-1 text-[9.5px] font-bold text-amber-950">
+                {pendentes.length}
+              </span>
+            )}
           </Link>
-          <EmptyHint className="mt-1">
-            Fila pessoal (workflow) será ligada na D6.4.
-          </EmptyHint>
+          {pendentes.length === 0 && (
+            <EmptyHint className="mt-1">Sem aprovações pendentes para você.</EmptyHint>
+          )}
         </Section>
 
-        {/* Filtros contextuais (placeholder D6.3) */}
+        {/* Favoritos reais */}
+        <Section
+          title="Favoritos"
+          icon={<Star className="h-3 w-3" />}
+          counter={favoritos.length || undefined}
+        >
+          {favoritos.length === 0 ? (
+            <EmptyHint>Use a estrela no topo das telas para fixar aqui.</EmptyHint>
+          ) : (
+            <ul className="space-y-0.5">
+              {favoritos.slice(0, 8).map((f, i) => (
+                <li key={`f-${i}`} className="group flex items-center gap-1">
+                  <Link
+                    to={f.path}
+                    hash={f.tab ? `tab=${f.tab}` : undefined}
+                    className="flex flex-1 items-center gap-2 rounded px-2 py-1 text-[12px] text-sidebar-foreground/80 hover:bg-white/5 hover:text-sidebar-foreground"
+                  >
+                    <Star className="h-3 w-3 text-gold/80" />
+                    <span className="truncate">{f.label}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label="Remover favorito"
+                    onClick={() => removeFav(f)}
+                    className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-sidebar-foreground/40 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
+        {/* Recentes reais */}
+        <Section title="Recentes" icon={<Clock className="h-3 w-3" />}>
+          {recentes.length === 0 ? (
+            <EmptyHint>Sem acessos recentes.</EmptyHint>
+          ) : (
+            <ul className="space-y-0.5">
+              {recentes.slice(0, 6).map((r, i) => (
+                <li key={`r-${i}`}>
+                  <Link
+                    to={r.path}
+                    hash={r.tab ? `tab=${r.tab}` : undefined}
+                    className="flex items-center gap-2 rounded px-2 py-1 text-[12px] text-sidebar-foreground/75 hover:bg-white/5 hover:text-sidebar-foreground"
+                  >
+                    <Clock className="h-3 w-3 text-sidebar-foreground/45" />
+                    <span className="truncate">{r.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
         <Section title="Filtros rápidos" icon={<Filter className="h-3 w-3" />}>
-          <EmptyHint>Sem filtros disponíveis neste módulo ainda.</EmptyHint>
+          <EmptyHint>Filtros contextuais por módulo virão na próxima onda.</EmptyHint>
         </Section>
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
-        <div className="rounded-md bg-sidebar-accent/50 px-3 py-2 ring-1 ring-white/5">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/60">
+      <div className="border-t border-sidebar-border p-2">
+        <div className="rounded bg-sidebar-accent/50 px-2 py-1.5 ring-1 ring-white/5">
+          <div className="text-[9px] uppercase tracking-[0.18em] text-sidebar-foreground/60">
             Shell
           </div>
-          <div className="text-[11px] font-semibold text-gold font-display">
-            Enterprise RM
+          <div className="text-[10.5px] font-semibold text-gold font-display">
+            Enterprise RM · D6.7
           </div>
         </div>
       </div>
@@ -107,13 +173,18 @@ export function ContextualSidebar() {
 }
 
 function Section({
-  title, icon, children,
-}: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  title, icon, counter, children,
+}: { title: string; icon: React.ReactNode; counter?: number; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-1.5 flex items-center gap-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gold/70">
+      <div className="mb-1 flex items-center gap-1.5 px-1.5 text-[9.5px] font-bold uppercase tracking-[0.18em] text-gold/75">
         {icon}
-        {title}
+        <span className="flex-1">{title}</span>
+        {typeof counter === "number" && (
+          <span className="rounded bg-sidebar-accent px-1 text-[9px] font-bold text-gold">
+            {counter}
+          </span>
+        )}
       </div>
       {children}
     </div>
@@ -122,7 +193,7 @@ function Section({
 
 function EmptyHint({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`px-2.5 text-[11px] leading-snug text-sidebar-foreground/45 ${className}`}>
+    <div className={`px-2 text-[10.5px] leading-snug text-sidebar-foreground/45 ${className}`}>
       {children}
     </div>
   );

@@ -87,6 +87,10 @@ export type RecordToolbarProps = {
   onAnexos?: ActionFn;
   anexosCount?: number;
 
+  /** Flag — sinalização universal (D6.10). Passe `flagEntidade` + `flagRegistroId`. */
+  flagEntidade?: string;
+  flagRegistroId?: string | null;
+
   /** Processos (dropdown corporativo — sincronização, geração, importação…). */
   processos?: ProcessoItem[];
 

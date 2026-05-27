@@ -204,6 +204,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const showFiscal = preset === "fiscal";
   const showAuditoria = preset === "auditoria";
   const [criarOpen, setCriarOpen] = useState(false);
+  const [filtrosOpen, setFiltrosOpen] = useState(false);
   const [editar, setEditar] = useState<Titulo | null>(null);
   const [baixar, setBaixar] = useState<Titulo | null>(null);
   const [estornar, setEstornar] = useState<{ titulo: Titulo; movId: string } | null>(null);

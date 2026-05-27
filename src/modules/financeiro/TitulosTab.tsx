@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "@/components/app/enterprise/EnterpriseRecordToolbar";
 import type { EnterpriseProcessItem } from "@/components/app/enterprise/EnterpriseRecordToolbar";
+import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
+
 import { toast } from "sonner";
 import {
   useRepoTitulos, useFinanceiroRepo,

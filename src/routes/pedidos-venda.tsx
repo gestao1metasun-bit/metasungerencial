@@ -8,8 +8,6 @@ import {
 } from "@/hooks/usePedidosVenda";
 import { PedidoVendaModal } from "@/components/app/pv/PedidoVendaModal";
 import { PageHeader } from "@/components/app/PageHeader";
-import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
-import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,11 +22,16 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Eye, Network, FileText } from "lucide-react";
+import { Plus, Eye, Network } from "lucide-react";
 import {
   EnterpriseDataGrid,
   exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
+import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import {
+  useEnviarPVParaAnalise, useAprovarPV, useCancelarPV,
+} from "@/hooks/usePedidosVenda";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/pedidos-venda")({

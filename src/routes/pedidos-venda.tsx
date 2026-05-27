@@ -245,19 +245,22 @@ function PedidosVendaPage() {
                 ]) },
               { key: "resync", label: "Re-sincronizar com contratos", icon: RotateCw, onClick: () => refetch() },
             ]}
-            filtros={(Object.keys(PV_STATUS_LABEL) as PVStatus[]).map((k) => ({
-              key: k,
-              label: PV_STATUS_LABEL[k],
-              count: counts[k] ?? 0,
-              active: filtro === k,
-              onClick: () => setFiltro(k),
-            })).concat([{
-              key: "TODOS",
-              label: "Todos",
-              count: pvs.length,
-              active: filtro === "TODOS",
-              onClick: () => setFiltro("TODOS"),
-            }])}
+            filtros={[
+              ...(Object.keys(PV_STATUS_LABEL) as PVStatus[]).map((k) => ({
+                key: k,
+                label: PV_STATUS_LABEL[k],
+                count: counts[k] ?? 0,
+                active: filtro === k,
+                onClick: () => setFiltro(k),
+              })),
+              {
+                key: "TODOS",
+                label: "Todos",
+                count: pvs.length,
+                active: filtro === "TODOS",
+                onClick: () => setFiltro("TODOS" as PVStatus | "TODOS"),
+              },
+            ]}
             filtroAtivoLabel={filtro === "TODOS" ? "Todos" : PV_STATUS_LABEL[filtro]}
             layouts={[
               { key: "padrao", label: "Padrão", active: true, onClick: () => {} },

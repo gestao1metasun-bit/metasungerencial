@@ -83,14 +83,69 @@ export type Database = {
           },
         ]
       }
+      anexos: {
+        Row: {
+          categoria: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          entidade_id: string
+          entidade_tipo: string
+          id: string
+          mime: string
+          nome: string
+          observacao: string | null
+          owner_id: string
+          storage_path: string
+          tamanho: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          entidade_id: string
+          entidade_tipo: string
+          id?: string
+          mime: string
+          nome: string
+          observacao?: string | null
+          owner_id: string
+          storage_path: string
+          tamanho: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          entidade_id?: string
+          entidade_tipo?: string
+          id?: string
+          mime?: string
+          nome?: string
+          observacao?: string | null
+          owner_id?: string
+          storage_path?: string
+          tamanho?: number
+        }
+        Relationships: []
+      }
       anexos_audit: {
         Row: {
           acao: string
           anexo_id: string | null
+          categoria: string | null
           created_at: string
           detalhe: string | null
+          entidade_id: string | null
+          entidade_tipo: string | null
           id: string
           ip: string | null
+          motivo: string | null
           nome: string | null
           tamanho: number | null
           titulo_id: string | null
@@ -101,10 +156,14 @@ export type Database = {
         Insert: {
           acao: string
           anexo_id?: string | null
+          categoria?: string | null
           created_at?: string
           detalhe?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
           id?: string
           ip?: string | null
+          motivo?: string | null
           nome?: string | null
           tamanho?: number | null
           titulo_id?: string | null
@@ -115,10 +174,14 @@ export type Database = {
         Update: {
           acao?: string
           anexo_id?: string | null
+          categoria?: string | null
           created_at?: string
           detalhe?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
           id?: string
           ip?: string | null
+          motivo?: string | null
           nome?: string | null
           tamanho?: number | null
           titulo_id?: string | null
@@ -4455,6 +4518,10 @@ export type Database = {
         Returns: string
       }
       normalize_doc: { Args: { _doc: string }; Returns: string }
+      pode_acessar_entidade: {
+        Args: { _id: string; _tipo: string }
+        Returns: boolean
+      }
       processar_aprovacao_compra: {
         Args: { _ordem_id: string }
         Returns: undefined

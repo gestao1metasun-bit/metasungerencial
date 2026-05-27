@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "@/components/app/enterprise/EnterpriseRecordToolbar";
 import type { EnterpriseProcessItem } from "@/components/app/enterprise/EnterpriseRecordToolbar";
+import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
+
 import { toast } from "sonner";
 import {
   useRepoTitulos, useFinanceiroRepo,
@@ -207,6 +209,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [estornar, setEstornar] = useState<{ titulo: Titulo; movId: string } | null>(null);
   const [verHist, setVerHist] = useState<Titulo | null>(null);
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
+  const [anexosTitulo, setAnexosTitulo] = useState<Titulo | null>(null);
+
   const [ratear, setRatear] = useState<Titulo | null>(null);
 
   // D6.13.3 piloto — seleção múltipla para EnterpriseRecordToolbar (RM-style).
@@ -513,10 +517,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             case "novo":       return setCriarOpen(true);
             case "atualizar":  return toast.info("Lista atualizada.");
             case "editar":     return singleSel && setEditar(singleSel);
-            case "anexos":
+            case "anexos":     return singleSel && setAnexosTitulo(singleSel);
             case "historico":
             case "comentarios":
             case "auditoria":  return singleSel && setVerHist(singleSel);
+
             case "cancelar": {
               if (selRows.length === 0) return;
               const motivo = window.prompt(`Motivo do cancelamento (${selRows.length} título(s), mín. 3 caracteres):`, "");

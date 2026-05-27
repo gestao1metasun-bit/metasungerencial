@@ -27,6 +27,9 @@ export type { EntityTimelineProps, EntityTimelineEventType } from "./EntityTimel
 
 export { AttachmentPanel } from "./AttachmentPanel";
 export type { AttachmentPanelProps } from "./AttachmentPanel";
+export { AttachmentDialog } from "./AttachmentDialog";
+export type { AttachmentDialogProps } from "./AttachmentDialog";
+
 
 export { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "./EnterpriseRecordToolbar";
 export type {

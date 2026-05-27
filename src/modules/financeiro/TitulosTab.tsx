@@ -349,25 +349,6 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         </div>
         <FiltrosSheet chips={chips} toggleChip={toggleChip} clearChips={() => setChips(new Set())} tipo={tipo} />
         <div className="ml-auto flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Mais ações <ChevronDown className="ml-1 h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <DropdownMenuItem
-                onClick={async () => {
-                  try {
-                    const n = await repo.importarPrevisoesDoLegado(readLancamentos());
-                    toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
-                  } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
-                }}
-              >
-                Importar previsões do fluxo de caixa
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
             <TituloDialog
               tipo={tipo}

@@ -164,7 +164,7 @@ function IconBtn({
   title?: string;
 }) {
   const toneClass: Record<string, string> = {
-    default: "text-foreground/85 hover:text-foreground",
+    default: "text-foreground/80 hover:text-foreground",
     primary: "text-primary hover:text-primary",
     danger:  "text-destructive hover:text-destructive",
     muted:   "text-muted-foreground hover:text-foreground",
@@ -173,25 +173,25 @@ function IconBtn({
     <Button
       type="button"
       variant="ghost"
-      size="sm"
+      size="icon"
       onClick={onClick}
       disabled={disabled}
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "h-7 px-1.5 rounded-sm gap-1 text-[11.5px]",
+        "h-6 w-6 rounded-sm p-0 shrink-0",
         toneClass[tone],
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      <span className="hidden lg:inline">{label}</span>
     </Button>
   );
 }
 
 function Sep() {
-  return <span className="mx-0.5 h-5 w-px shrink-0 bg-border/80" aria-hidden />;
+  return <span className="mx-1 h-4 w-px shrink-0 bg-border/70" aria-hidden />;
 }
+
 
 // ============================================================================
 // Componente

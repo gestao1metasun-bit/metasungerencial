@@ -61,9 +61,11 @@ function AprovacoesPage() {
   const [tipoFiltro, setTipoFiltro] = useState<string>("TODOS");
   const [busca, setBusca] = useState("");
   const [detalhe, setDetalhe] = useState<WorkflowAprovacao | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [acao, setAcao] = useState<{
     kind: "aprovar" | "negar" | "cancelar"; row: WorkflowAprovacao;
   } | null>(null);
+
 
   // Carregamos as quatro filas para alimentar StatCards (chaves separadas).
   const pendentesParaMim = useWorkflowAprovacoes("pendentes_para_mim");

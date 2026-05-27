@@ -291,8 +291,8 @@ export function EnterpriseRecordToolbar({
       data-selection-mode={mode}
       data-selection-count={count}
       className={cn(
-        "flex items-center gap-0 border border-border/80",
-        "bg-muted/30 px-1 py-0.5 rounded-sm overflow-x-auto",
+        "flex items-center gap-0.5 border border-slate-200",
+        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 rounded-sm overflow-x-auto shadow-sm",
         className,
       )}
     >

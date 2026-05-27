@@ -75,16 +75,6 @@ function FinanceiroPage() {
 
   return (
     <>
-      <PageHeader
-        title="Financeiro"
-        subtitle="Fluxo de caixa operacional + estrutura fixa — obras, despesas, receitas e previsões consolidadas."
-        actions={<HeaderActions
-          tab={tab}
-          centros={centros} naturezas={naturezas}
-          setLancs={setLancs} setRecs={setRecs}
-          setCentros={setCentros} setNaturezas={setNaturezas}
-        />}
-      />
       
 
 

@@ -197,6 +197,78 @@ function PedidosVendaPage() {
             }
           />
 
+          {/* D6.9 — Faixa de manipulação de registro estilo TOTVS RM */}
+          <RecordToolbar
+            current={singleSel ? filtrados.findIndex((p) => p.id === singleSel.id) + 1 : undefined}
+            total={singleSel ? filtrados.length : undefined}
+            onFirst={() => singleSel && setSelected(new Set([filtrados[0]?.id].filter(Boolean) as string[]))}
+            onPrev={() => {
+              if (!singleSel) return;
+              const i = filtrados.findIndex((p) => p.id === singleSel.id);
+              if (i > 0) setSelected(new Set([filtrados[i - 1].id]));
+            }}
+            onNext={() => {
+              if (!singleSel) return;
+              const i = filtrados.findIndex((p) => p.id === singleSel.id);
+              if (i >= 0 && i < filtrados.length - 1) setSelected(new Set([filtrados[i + 1].id]));
+            }}
+            onLast={() => filtrados.length > 0 && setSelected(new Set([filtrados[filtrados.length - 1].id]))}
+            search={busca}
+            onSearchChange={setBusca}
+            searchPlaceholder="Buscar código, obs, banco…"
+            selecionado={selected.size > 0}
+            onNovo={() => setOpenNovo(true)}
+            onEditar={() => singleSel && setPvAtivo(singleSel.id)}
+            onExcluir={handleCancelarLote}
+            onAtualizar={() => refetch()}
+            onExportar={() =>
+              exportToCSV("pedidos-venda", filtrados, [
+                { key: "codigo", label: "Código" },
+                { key: "status", label: "Status", get: (r) => PV_STATUS_LABEL[r.status as PVStatus] ?? r.status },
+                { key: "valor_total", label: "Valor", get: (r) => Number(r.valor_total ?? 0).toFixed(2) },
+              ])
+            }
+            onImprimir={() => window.print()}
+            onAnexos={() => singleSel && setPvAtivo(singleSel.id)}
+            processos={[
+              { key: "enviar", label: "Enviar para análise", icon: Send, onClick: handleEnviarLote, disabled: selected.size === 0 },
+              { key: "aprovar", label: "Aprovar PV", icon: CheckCircle2, onClick: handleAprovar, disabled: !singleSel },
+              { key: "cancelar", label: "Cancelar PV", icon: XCircle, onClick: handleCancelarLote, disabled: selected.size === 0, destructive: true },
+              { key: "exportar-xls", label: "Exportar planilha completa", icon: FileSpreadsheet, onClick: () =>
+                exportToCSV("pedidos-venda-completo", filtrados, [
+                  { key: "codigo", label: "Código" },
+                  { key: "status", label: "Status" },
+                  { key: "valor_total", label: "Valor" },
+                  { key: "forma_pagamento", label: "Forma pagto" },
+                  { key: "obra_id", label: "Obra" },
+                  { key: "created_at", label: "Criado em" },
+                ]) },
+              { key: "resync", label: "Re-sincronizar com contratos", icon: RotateCw, onClick: () => refetch() },
+            ]}
+            filtros={(Object.keys(PV_STATUS_LABEL) as PVStatus[]).map((k) => ({
+              key: k,
+              label: PV_STATUS_LABEL[k],
+              count: counts[k] ?? 0,
+              active: filtro === k,
+              onClick: () => setFiltro(k),
+            })).concat([{
+              key: "TODOS",
+              label: "Todos",
+              count: pvs.length,
+              active: filtro === "TODOS",
+              onClick: () => setFiltro("TODOS"),
+            }])}
+            filtroAtivoLabel={filtro === "TODOS" ? "Todos" : PV_STATUS_LABEL[filtro]}
+            layouts={[
+              { key: "padrao", label: "Padrão", active: true, onClick: () => {} },
+              { key: "completo", label: "Completo (todas colunas)", onClick: () => {} },
+              { key: "financeiro", label: "Foco financeiro", onClick: () => {} },
+            ]}
+            layoutAtivoLabel="Padrão"
+            onSalvarLayout={() => toast.info("Salvar visão atual — em breve.")}
+            onGerenciarLayouts={() => toast.info("Gerenciar visões — em breve.")}
+          />
+
           <EnterpriseDataGrid
             gridId="pedidos-venda"
             count={filtrados.length}

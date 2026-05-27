@@ -58,6 +58,7 @@ function TitulosPage() {
   const [origem, setOrigem] = useState<OrigemTipo | "TODOS">("TODOS");
   const [busca, setBusca] = useState("");
   const [tituloAtivo, setTituloAtivo] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const {
     data: titulos = [],
@@ -68,6 +69,8 @@ function TitulosPage() {
     status,
     origemTipo: origem,
   });
+
+  const cancelar = useCancelarTitulo();
 
   const filtrados = useMemo(() => {
     if (!busca.trim()) return titulos;
@@ -92,6 +95,13 @@ function TitulosPage() {
     return t;
   }, [titulos]);
 
+  const selectedArr = useMemo(() => Array.from(selected), [selected]);
+  const selectedRows = useMemo(
+    () => filtrados.filter((t) => selected.has(t.id)),
+    [filtrados, selected],
+  );
+  const singleSel = selectedRows.length === 1 ? selectedRows[0] : null;
+
   const handleExport = () =>
     exportToCSV(`titulos-financeiros-${new Date().toISOString().slice(0, 10)}`, filtrados, [
       { key: "codigo", label: "Código" },
@@ -102,32 +112,62 @@ function TitulosPage() {
       { key: "saldo", label: "Saldo" },
     ]);
 
+  const handleCancelarLote = async () => {
+    if (selectedArr.length === 0) return;
+    const motivo = window.prompt("Motivo do cancelamento (mín. 3 caracteres):", "");
+    if (!motivo || motivo.trim().length < 3) return;
+    let ok = 0, fail = 0;
+    for (const id of selectedArr) {
+      try { await cancelar.mutateAsync({ tituloId: id, motivo: motivo.trim() }); ok++; }
+      catch { fail++; }
+    }
+    toast[fail ? "warning" : "success"](
+      `Cancelamento: ${ok} ok${fail ? `, ${fail} falha${fail > 1 ? "s" : ""}` : ""}`,
+    );
+    setSelected(new Set());
+  };
+
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-2 p-2 md:p-3">
       <PageHeader
         title="Títulos Financeiros"
-        subtitle="Núcleo financeiro real — origem obrigatória, sem títulos órfãos."
+        subtitle="Contas a receber/pagar corporativo — origem rastreada, sem títulos órfãos."
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total bruto" value={fmtBRL(totais.total)} icon={Wallet} />
-        <StatCard label="Em aberto" value={fmtBRL(totais.aberto)} icon={Receipt} />
-        <StatCard
-          label="Atrasado"
-          value={fmtBRL(totais.atrasado)}
-          icon={AlertCircle}
-        />
-        <StatCard label="Recebido" value={fmtBRL(totais.recebido)} icon={Wallet} />
+      {/* Strip financeiro denso — substitui StatCards SaaS */}
+      <div className="flex flex-wrap items-center gap-3 rounded border border-border/70 bg-muted/30 px-3 py-1.5 text-[11px]">
+        <Totalizador label="Total bruto" value={fmtBRL(totais.total)} />
+        <Sep />
+        <Totalizador label="Em aberto" value={fmtBRL(totais.aberto)} tone="warning" />
+        <Sep />
+        <Totalizador label="Atrasado" value={fmtBRL(totais.atrasado)} tone="danger" />
+        <Sep />
+        <Totalizador label="Recebido" value={fmtBRL(totais.recebido)} tone="success" />
+        <span className="ml-auto text-muted-foreground">
+          Registros: <span className="font-mono font-semibold text-foreground">{filtrados.length}</span>
+          {titulos.length !== filtrados.length && (
+            <span className="text-muted-foreground/70"> / {titulos.length}</span>
+          )}
+        </span>
       </div>
+
+      <EnterpriseToolbar
+        title="Títulos"
+        count={filtrados.length}
+        hint={selected.size > 0 ? `${selected.size} selecionado${selected.size > 1 ? "s" : ""}` : undefined}
+        selecionado={selected.size > 0}
+        onEditar={() => singleSel && setTituloAtivo(singleSel.id)}
+        onCancelar={handleCancelarLote}
+        onExportar={handleExport}
+        onImprimir={() => window.print()}
+        onAtualizar={() => refetch()}
+        onHistorico={() => singleSel && setTituloAtivo(singleSel.id)}
+        onAnexos={() => singleSel && setTituloAtivo(singleSel.id)}
+      />
 
       <EnterpriseDataGrid
         gridId="financeiro-titulos"
-        title="Títulos"
         count={filtrados.length}
-        toolbar={{
-          onRefresh: () => refetch(),
-          onExport: handleExport,
-        }}
         filters={{
           search: busca,
           onSearchChange: setBusca,
@@ -149,9 +189,7 @@ function TitulosPage() {
                 <SelectContent>
                   <SelectItem value="TODOS">Todos os status</SelectItem>
                   {Object.entries(TF_STATUS_LABEL).map(([k, l]) => (
-                    <SelectItem key={k} value={k}>
-                      {l}
-                    </SelectItem>
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -162,9 +200,7 @@ function TitulosPage() {
                 <SelectContent>
                   <SelectItem value="TODOS">Todas as origens</SelectItem>
                   {Object.entries(ORIGEM_LABEL).map(([k, l]) => (
-                    <SelectItem key={k} value={k}>
-                      {l}
-                    </SelectItem>
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -175,35 +211,68 @@ function TitulosPage() {
           ),
         }}
       >
-        <Table tableId="financeiro-titulos-grid">
+        <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[32px]">
+                <Checkbox
+                  checked={filtrados.length > 0 && selected.size === filtrados.length}
+                  onCheckedChange={(v) =>
+                    setSelected(v ? new Set(filtrados.map((t) => t.id)) : new Set())
+                  }
+                />
+              </TableHead>
               <TableHead>Código</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Vencimento</TableHead>
-              <TableHead>Valor líquido</TableHead>
-              <TableHead>Saldo</TableHead>
-              <TableHead className="w-[60px]" />
+              <TableHead className="text-right">Valor líquido</TableHead>
+              <TableHead className="text-right">Saldo</TableHead>
+              <TableHead className="w-[40px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                   Carregando…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && filtrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                   Nenhum título. Gere a partir de um PV aprovado.
                 </TableCell>
               </TableRow>
             )}
             {filtrados.map((t) => (
-              <TableRow key={t.id}>
+              <TableRow
+                key={t.id}
+                data-state={selected.has(t.id) ? "selected" : undefined}
+                className="cursor-pointer"
+                onClick={() => {
+                  setSelected((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(t.id)) next.delete(t.id);
+                    else next.add(t.id);
+                    return next;
+                  });
+                }}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selected.has(t.id)}
+                    onCheckedChange={(v) => {
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (v) next.add(t.id);
+                        else next.delete(t.id);
+                        return next;
+                      });
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="font-mono text-xs">{t.codigo}</TableCell>
                 <TableCell>
                   <Badge className={TF_STATUS_TONE[t.status as TFStatus]}>
@@ -221,9 +290,9 @@ function TitulosPage() {
                     ? new Date(t.vencimento).toLocaleDateString("pt-BR")
                     : "—"}
                 </TableCell>
-                <TableCell className="tabular-nums">{fmtBRL(t.valor_liquido)}</TableCell>
-                <TableCell className="tabular-nums">{fmtBRL(t.saldo)}</TableCell>
-                <TableCell>
+                <TableCell className="text-right tabular-nums">{fmtBRL(t.valor_liquido)}</TableCell>
+                <TableCell className="text-right tabular-nums font-semibold">{fmtBRL(t.saldo)}</TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <Button
                     size="icon"
                     variant="ghost"
@@ -238,6 +307,7 @@ function TitulosPage() {
           </TableBody>
         </Table>
       </EnterpriseDataGrid>
+
 
 
       <TituloDetalheModal

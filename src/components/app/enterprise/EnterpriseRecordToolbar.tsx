@@ -325,7 +325,7 @@ export function EnterpriseRecordToolbar({
         </>
       )}
 
-      {/* Anexos (com label + chevron, como no print) */}
+      {/* Anexos (label + chevron, azul) */}
       {enabled.has("anexos") && (
         <Button
           type="button"
@@ -334,9 +334,9 @@ export function EnterpriseRecordToolbar({
           onClick={() => fire("anexos")}
           disabled={mode === "none"}
           title="Anexos"
-          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+          className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50"
         >
-          <Paperclip className="h-3.5 w-3.5" />
+          <Paperclip className="h-4 w-4" />
           <span>Anexos</span>
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Button>
@@ -347,7 +347,7 @@ export function EnterpriseRecordToolbar({
       {renderActionBtn("comentarios")}
       {renderActionBtn("auditoria")}
 
-      {/* Processos contextuais (label + chevron) */}
+      {/* Processos contextuais (label + chevron, verde/esmeralda) */}
       {processosVisiveis.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -355,10 +355,10 @@ export function EnterpriseRecordToolbar({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+              className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
               title="Processos disponíveis"
             >
-              <Cog className="h-3.5 w-3.5" />
+              <Cog className="h-4 w-4" />
               <span>Processos</span>
               {count > 1 && (
                 <span className="ml-0.5 rounded bg-background px-1 font-mono text-[10px] border border-border/60">
@@ -400,7 +400,7 @@ export function EnterpriseRecordToolbar({
 
       <Sep />
 
-      {/* Filtro estilo "[Filtro: Todos] ▼" do RM */}
+      {/* Filtro estilo "[Filtro: Todos] ▼" do RM — roxo/índigo */}
       {(enabled.has("filtroRapido") || enabled.has("filtroAvancado")) && (
         <Button
           type="button"
@@ -408,10 +408,10 @@ export function EnterpriseRecordToolbar({
           size="sm"
           onClick={() => (onFilter ? onFilter() : fire("filtroRapido"))}
           title="Filtro"
-          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+          className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50"
         >
-          <Filter className="h-3.5 w-3.5" />
-          <span>[Filtro: Todos]</span>
+          <Filter className="h-4 w-4" />
+          <span>Filtros: Todos</span>
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Button>
       )}

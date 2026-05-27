@@ -186,7 +186,7 @@ function IconBtn({
         toneClass[tone],
       )}
     >
-      <Icon className="h-4 w-4" strokeWidth={2.25} />
+      <Icon className="h-4 w-4" />
     </Button>
   );
 }

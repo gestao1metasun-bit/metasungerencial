@@ -888,17 +888,17 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               </TableCell>
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + calcEncargos(t, parametrosFin).jurosSugerido, 0))}
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status === "Aberto" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + calcEncargos(t, parametrosFin).multaSugerida, 0))}
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status === "Aberto" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-emerald-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.descontoConcedido ?? 0), 0))}
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.desconto ?? 0), 0))}
                 </TableCell>
               )}
               <TableCell className="text-right font-mono text-[14px] font-bold tabular-nums text-emerald-800">

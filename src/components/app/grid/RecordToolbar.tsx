@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { FlagPicker } from "@/components/app/flags/FlagPicker";
 
 type ActionFn = () => void;
 

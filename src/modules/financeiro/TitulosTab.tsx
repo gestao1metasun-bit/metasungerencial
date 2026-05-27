@@ -2013,7 +2013,8 @@ type ChipKeyExt =
   | "baixado_hoje" | "baixado_semana" | "baixado_mes"
   | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
   | "conciliados" | "nao_conciliados"
-  | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+  | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados"
+  | "com_anexo" | "sem_anexo";
 
 function CHIP_LABEL(k: ChipKeyExt, tipo: TituloTipo): string {
   switch (k) {
@@ -2035,6 +2036,8 @@ function CHIP_LABEL(k: ChipKeyExt, tipo: TituloTipo): string {
     case "renegociados": return "Renegociados";
     case "com_obra": return "Com obra";
     case "rateados": return "Rateados";
+    case "com_anexo": return "Com anexo";
+    case "sem_anexo": return "Sem anexo";
   }
 }
 
@@ -2054,6 +2057,7 @@ function FiltrosSheet({ chips, toggleChip, clearChips, tipo, open, onOpenChange,
     { title: tipo === "AP" ? "Pagamento" : "Recebimento", items: ["baixado_hoje", "baixado_semana", "baixado_mes"] },
     { title: "Conciliação", items: ["conciliados", "nao_conciliados", "conciliado_hoje", "conciliado_semana", "conciliado_mes"] },
     { title: "Operacional", items: ["com_encargos", "com_desconto", "renegociados", "com_obra", "rateados"] },
+    { title: "Anexos", items: ["com_anexo", "sem_anexo"] },
   ];
 
   return (

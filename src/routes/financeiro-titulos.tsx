@@ -186,6 +186,52 @@ function TitulosPage() {
         onAtualizar={() => refetch()}
         onHistorico={() => singleSel && setTituloAtivo(singleSel.id)}
         onAnexos={() => singleSel && setTituloAtivo(singleSel.id)}
+        loteActions={
+          selected.size > 0 ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={renegociavel.ok ? "default" : "outline"}
+                      className="h-7 px-2 gap-1.5 text-[11.5px]"
+                      disabled={!renegociavel.ok}
+                      onClick={() => setRenegociarOpen(true)}
+                    >
+                      <RefreshCcw className="h-3.5 w-3.5" />
+                      Renegociar ({selected.size})
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!renegociavel.ok && (
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    {renegociavel.motivo}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          ) : undefined
+        }
+      />
+
+      <RenegociarLoteDialog
+        open={renegociarOpen}
+        onOpenChange={setRenegociarOpen}
+        titulos={selectedRows.map((t) => ({
+          id: t.id,
+          codigo: t.codigo,
+          status: t.status,
+          saldo: Number(t.saldo || 0),
+          vencimento: t.vencimento,
+          cliente_id: t.cliente_id,
+          tipo: t.tipo,
+        }))}
+        onSuccess={(novoId) => {
+          setSelected(new Set());
+          setTituloAtivo(novoId);
+        }}
       />
 
       <EnterpriseDataGrid

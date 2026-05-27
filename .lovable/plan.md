@@ -1,120 +1,136 @@
-## D12 — Analytics Enterprise
+# D8.0 — Estrutura Financeira Enterprise
 
-Refundar `/analytics` como **central executiva corporativa**, com 8 setores, KPIs oficiais reconciliados, drill-down em todo "olhinho" e padrão visual já fechado em D6 (ribbon + toolbar + grid denso + full width). Zero mock.
+Fundação corporativa do Financeiro **antes** de expandir Analytics (D12). Estilo TOTVS RM / Sankhya / SAP — conceitual, não visual.
 
-### Princípios (não-negociáveis)
+## Princípios não-negociáveis
 
-1. **Fonte única.** Todo KPI vem de view/RPC oficial em Supabase (`v_*`, `kpi_*`, `vw_*`). Quando a view não existe → criar via migration ANTES da UI.
-2. **Drill-down obrigatório.** Cada KPI tem ícone 👁 que abre grid denso com a base por trás (não modal genérico, e sim `EnterpriseDataGrid` com filtros pré-aplicados).
-3. **Reconciliação visível.** Onde houver mais de uma fonte (ex.: contratos × PVs × títulos), mostrar badge de conformidade (✅ reconciliado / ⚠ divergente) ligado ao `v_hardening_report` / view de reconciliação oficial.
-4. **Padrão D6.** Ribbon na rota, `EnterpriseToolbar` no topo de cada setor, `KPICard` denso (h ≤ 96px), grid abaixo. Sem dashboards SaaS gigantes.
-5. **RLS respeitada.** Reusar `getMyPermissions` + `useAnalyticsAccess`. Setores aparecem condicionalmente conforme `analytics.amplo`/`analytics.privado`/permissões setoriais.
+1. **Nada é apagado.** Renegociação/cancelamento/estorno geram novos status e mantêm vínculo + trilha.
+2. **Status nunca editável livre** — sempre consequência de RPC oficial com flag de sessão (mesmo padrão D4.1/D5.1).
+3. **Toda alteração financeira passa por RPC auditada** — log obrigatório em `audit_log` + `titulos_financeiros_historico`.
+4. **Permissão granular** (`financeiro.renegociar`, `financeiro.baixar`, `financeiro.estornar`, `financeiro.cancelar`, `financeiro.alterar_venc`, `financeiro.trocar_portador`, `financeiro.consolidar`) plugada no workflow D5.1 quando exceder alçada.
+5. **D8.0 entrega FUNDAÇÃO** (schema + RPCs + status oficiais + auditoria). UI rica e Analytics ficam para D8.1+ e D12.
 
-### Estrutura de rotas
+## Estado atual (o que já existe)
 
-Migrar de uma rota única `/analytics` com 14 tabs para **rotas-irmãs por setor**, espelhando o padrão de `/paineis.*`:
+- `titulos_financeiros` — tem `conta_id`, `centro_id`, status [PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO]. **Falta**: portador, natureza FK, banco, SUBSTITUIDO/CONSOLIDADO/ESTORNADO/PAGO/VENCIDO, vínculo de renegociação.
+- `contas_financeiras` — tem código/banco/agência/conta. **Falta**: portador estruturado, tipo (caixa/banco/cartão).
+- `centros_resultado` — OK.
+- `movimentacoes_financeiras` — OK, baixa só via aqui (D4.1 hardening).
+- `parcelas_financeiras` — OK.
+- `workflow_aprovacoes` (D5.1) — pronto para plugar alçadas financeiras.
+- **Não existe**: `portadores`, `naturezas_financeiras` (existe só como texto em `dados`), `bancos` cadastrais, `plano_contas`, `titulos_renegociacao`, `titulos_financeiros_historico`.
 
-```text
-/analytics                    → Diretoria/Geral (visão consolidada)
-/analytics.comercial          → Comercial
-/analytics.financeiro         → Financeiro
-/analytics.financiamentos     → Financiamentos
-/analytics.engenharia         → Engenharia
-/analytics.estoque            → Estoque
-/analytics.aprovacoes         → Aprovações
-/analytics.posvenda           → Pós-venda
-```
-
-Ribbon contextual de cada rota com tabs internas (Visão / Operação / Exceções / Rankings / Reconciliação). MacroNav já mostra "Analytics" como módulo único; ribbon faz a navegação setorial.
-
-### Ondas
-
-#### D12.0 — Fundação (esta onda — ENTREGAR JÁ)
-- Criar rotas-irmãs (8 arquivos `analytics.*.tsx`) com layout esqueleto: `PageHeader` + ribbon setorial + `EnterpriseToolbar` + área de KPIs + grid stub.
-- Atualizar `nav-structure.ts` (Analytics aponta para `/analytics` consolidado) e `route-tabs.ts` (ribbon de cada rota).
-- Criar `src/components/app/analytics/AnalyticsKpiStrip.tsx` (faixa densa de KPIs reusável, com prop `onDrillDown`).
-- Criar `src/components/app/analytics/AnalyticsSectorShell.tsx` (shell padrão de setor: toolbar + período + filtros + slot KPIs + slot grid).
-- Hook `useAnalyticsPeriod()` (state em URL search-param `from/to/preset`).
-- Stub de cada setor exibe banner "Em ligação à base oficial — Onda D12.x" até o setor estar pronto, mas estrutura navegável.
-
-#### D12.1 — Comercial (próxima onda)
-- Views/RPCs novas (migration): `v_analytics_comercial_kpis` (contratos gerados/assinados/pendentes/cancelados, valor vendido, ticket, kWp, kWh, conversão, tempo médio assinatura) + `v_ranking_vendedores` + `v_funil_comercial`.
-- UI: KPI strip + ranking grid + funil + comparativo mensal (tabela densa, não gráfico).
-- Drill-down: cada KPI abre grid de contratos com filtro pré-aplicado.
-
-#### D12.2 — Financeiro
-- Reusar `v_hardening_report`, `v_titulos_*`, `vw_fluxo_caixa_real`. Adicionar `v_analytics_financeiro_kpis` (AP/AR totais, vencidos, 30/60/90, inadimplência, realizado×previsto).
-- DRE resumido via `v_dre_gerencial` (criar se não existir).
-- Filtros: período, status, CR, natureza, conta. Drill-down → `/financeiro-titulos` com search-params.
-
-#### D12.3 — Financiamentos
-- Migration `v_analytics_financiamentos` (total, por banco, por gerente, liberados/pendentes/cancelados, ticket, prazo médio, tempo liberação).
-- Ranking bancos + comparativo BASA × SICREDI × outros.
-
-#### D12.4 — Engenharia
-- Reusar `v_obras_metricas_reais`, `use-eng-metricas`. Adicionar custo previsto×realizado por obra, gargalos por equipe, materiais pendentes (via `v_origem_*`).
-- Drill-down: linha → `/engenharia` filtrado.
-
-#### D12.5 — Estoque
-- `v_estoque_saldo`, `v_estoque_reservado`, `v_estoque_transito` + curva ABC futura (`v_estoque_curva_abc` migration), divergências de inventário, rastreabilidade.
-
-#### D12.6 — Aprovações
-- Sobre `workflow_aprovacoes` + `workflow_aprovacoes_historico`. KPIs: pendentes, SLA vencido, tempo médio, por setor, por aprovador, gargalos.
-- Drill-down → `/aprovacoes` filtrado.
-
-#### D12.7 — Pós-venda
-- Sobre `posvenda_store` + chamados. Volume, SLA, satisfação, recorrências.
-
-#### D12.8 — Diretoria/Geral (consolidação)
-- `/analytics` raiz agrega o melhor de cada setor: faturamento, contratos, financeiro snapshot, engenharia snapshot, estoque snapshot, financiamentos snapshot, **alertas críticos** (de `v_hardening_report`), **reconciliações** (de view oficial), saúde operacional ERP (semáforo por setor).
-- Card de "Saúde do ERP" com 8 indicadores (1 por setor) mostrando ✅/⚠/❌.
-
-### Migração suave
-
-A rota atual `/analytics` mantém suas tabs de KPIs financeiros gerenciais (EBITDA/ROI/etc.) DENTRO da view Diretoria/Geral via tab "KPIs Financeiros" — nada de quebrar o que já existe. O conteúdo migra progressivamente conforme as ondas D12.1+ entregam views reconciliadas.
-
-### Componentes novos (D12.0)
+## Sub-ondas D8.0
 
 ```text
-src/components/app/analytics/
-  AnalyticsSectorShell.tsx    # shell padrão de setor
-  AnalyticsKpiStrip.tsx       # faixa horizontal densa de KPIs com 👁
-  AnalyticsDrillSheet.tsx     # sheet right com grid de drill-down
-  AnalyticsPeriodPicker.tsx   # picker de período (preset/from/to) integrado a URL
-  AnalyticsHealthCard.tsx     # semáforo de saúde por setor (Diretoria)
-src/hooks/
-  use-analytics-period.ts
-  use-analytics-sector-kpis.ts  # wrapper genérico por setor
-src/lib/repositories/
-  analytics-repo.ts             # facade tipado para v_analytics_*
+D8.0.1  Cadastros estruturais (portadores, naturezas, bancos, plano_contas)
+D8.0.2  Hardening de titulos_financeiros (FKs + status novos + colunas governança)
+D8.0.3  Renegociação / Consolidação (tabelas + RPCs + state machine)
+D8.0.4  Governança operacional (RPCs alterar_venc/trocar_portador/estornar/cancelar)
+D8.0.5  Auditoria + permissões + integração workflow D5.1
 ```
 
-### Rotas novas (D12.0)
+Cada sub-onda = 1 migration aprovada antes da próxima. UI não muda em D8.0 (vem em D8.1).
 
-```text
-src/routes/analytics.comercial.tsx
-src/routes/analytics.financeiro.tsx
-src/routes/analytics.financiamentos.tsx
-src/routes/analytics.engenharia.tsx
-src/routes/analytics.estoque.tsx
-src/routes/analytics.aprovacoes.tsx
-src/routes/analytics.posvenda.tsx
-```
+---
 
-A rota raiz `/analytics` é reescrita para virar Diretoria/Geral (mantendo tabs financeiras como subseção). Ribbon de cada uma definido em `route-tabs.ts`.
+### D8.0.1 — Cadastros estruturais
 
-### Critério de aceite por onda
+**Migration cria**:
 
-- Onda D12.0: navegação 8 setores funcionando, layout enterprise consistente, stubs honestos ("Aguardando ligação D12.x"), zero quebra do `/analytics` atual.
-- Ondas D12.1+: cada setor entra apenas quando suas views/RPCs estiverem criadas, RLS validada e drill-down ligado. Nada de KPI sem fonte.
+- `bancos` (codigo FEBRABAN, nome, ispb, ativo)
+- `portadores` (codigo, nome, tipo [BANCO/CAIXA/CARTAO/GATEWAY/OUTRO], banco_id FK, conta_financeira_id FK, ativo, dados jsonb)
+- `naturezas_financeiras` (codigo, nome, tipo [RECEITA/DESPESA/AMBOS], grupo, subgrupo, classificacao_contabil, ativo) — replaces texto solto em `dados.natureza`
+- `plano_contas` (codigo hierárquico tipo "3.1.01", nome, nivel, pai_id FK self, tipo, natureza_id FK opcional, ativo)
+- Adicionar `tipo` em `contas_financeiras` (CAIXA/BANCO/CARTAO/INTERNA)
 
-### Fora de escopo (D12)
+GRANT padrão (SELECT auth, ALL service_role + admin write via RLS).
+Seed mínimo: 5 bancos comuns (BB/Itaú/Bradesco/Santander/Caixa) + naturezas básicas (Venda Solar, Comissão, Compra Material, Folha, etc).
 
-- Gráficos elaborados (continuamos tabela densa > chart bonito, alinhado a D6).
-- Reconciliação NOVA (D12 consome `v_hardening_report` existente; expandir reconciliação é D7).
-- Permissões granulares novas por setor (reusar `analytics.amplo`/`analytics.privado` e perms setoriais já existentes).
-- Export PDF executivo (entra em D12.9 se solicitado).
+---
 
-### Próximo passo após aprovação do plano
+### D8.0.2 — Hardening de `titulos_financeiros`
 
-Implementar **D12.0** em um único turno: 8 rotas + 5 componentes shell + hook de período + atualização de `nav-structure`/`route-tabs`. Sem tocar em migration ainda (D12.1 abre a primeira migration de view oficial).
+**Migration adiciona colunas**:
+
+- `portador_id uuid FK portadores`
+- `natureza_id uuid FK naturezas_financeiras` (mantém texto antigo durante migração)
+- `banco_id uuid FK bancos` (denormalizado p/ relatório rápido)
+- `plano_conta_id uuid FK plano_contas` (opcional, p/ DRE futuro)
+- `renegociado_em_id uuid FK titulos_financeiros` (aponta p/ título novo quando este foi consumido)
+- `origem_renegociacao_id uuid FK titulos_renegociacao` (quando este nasceu de renegociação)
+- `pago_em timestamptz`, `estornado_em timestamptz`, `estornado_por uuid`, `consolidado_em_id uuid FK self`
+
+**Status oficiais novos** (CHECK atualizado):
+`PENDENTE / PARCIAL / RECEBIDO / PAGO / VENCIDO / RENEGOCIADO / SUBSTITUIDO / CONSOLIDADO / CANCELADO / ESTORNADO / ACORDO`
+
+Backfill: ATRASADO → VENCIDO; RECEBIDO continua para receber, PAGO entra para pagar (trigger auto-status no recebimento total).
+
+Trigger anti-edição livre de campos críticos (`status`, `valor_bruto`, `vencimento`, `portador_id`, `natureza_id`) — só permitido com flag `app.via_rpc_financeira='true'` (mesmo padrão D4.1/D5.1).
+
+---
+
+### D8.0.3 — Renegociação / Consolidação
+
+**Tabelas novas**:
+
+- `titulos_renegociacao` (id, tipo [RENEGOCIACAO/CONSOLIDACAO/ACORDO], titulo_novo_id FK, criado_por, criado_em, motivo NOT NULL, valor_original, valor_final, juros, multa, desconto, observacao, anexo_storage_path)
+- `titulos_renegociacao_origens` (renegociacao_id FK, titulo_origem_id FK, valor_consumido) — N títulos antigos → 1 novo
+
+**RPC `fin_renegociar_titulos(p_titulos uuid[], p_novo jsonb, p_motivo text, p_tipo text)`**:
+1. Valida permissão `financeiro.renegociar` + workflow se exceder alçada.
+2. Calcula valor consolidado + juros/multa/desconto.
+3. Cria novo `titulos_financeiros` com portador/natureza/vencimento novos.
+4. Marca títulos origem como `RENEGOCIADO` (1→1) ou `SUBSTITUIDO`/`CONSOLIDADO` (N→1).
+5. Insere em `titulos_renegociacao` + `titulos_renegociacao_origens`.
+6. `audit_log` com snapshot antes/depois.
+
+**View `v_renegociacao_titulos`** — exibe trilha completa N↔N para Analytics.
+
+---
+
+### D8.0.4 — Governança operacional (RPCs)
+
+Cada RPC seta flag de sessão, valida permissão, dispara workflow se necessário, grava histórico:
+
+- `fin_alterar_vencimento(p_titulo, p_novo_venc, p_motivo)` → perm `financeiro.alterar_venc`
+- `fin_trocar_portador(p_titulo, p_portador_novo, p_motivo)` → perm `financeiro.trocar_portador`
+- `fin_estornar_baixa(p_movimentacao_id, p_motivo)` → reverte movimentação, recalcula saldo, status volta PARCIAL/PENDENTE, registra ESTORNADO se total
+- `fin_cancelar_titulo(p_titulo, p_motivo)` → bloqueado se houver movimentação não estornada
+- `fin_alterar_valor(p_titulo, p_novo_valor, p_motivo)` → sempre exige workflow (alta sensibilidade)
+
+---
+
+### D8.0.5 — Auditoria + permissões + workflow
+
+- `titulos_financeiros_historico` (titulo_id, acao, status_anterior, status_novo, valor_anterior, valor_novo, campo, user_id, motivo, workflow_id, created_at) — populada por trigger em UPDATE controlado por flag.
+- Novas permissões em `app_permission` enum: `financeiro.renegociar`, `financeiro.baixar`, `financeiro.estornar`, `financeiro.cancelar`, `financeiro.alterar_venc`, `financeiro.trocar_portador`, `financeiro.alterar_valor`, `financeiro.consolidar`.
+- Alçadas D5.1 plugadas: renegociação > X → workflow; alterar_valor sempre workflow; estorno > Y → workflow.
+
+---
+
+## Não escopo D8.0 (vem depois)
+
+- Conciliação bancária extrato-OFX (D8.1)
+- Borderô / remessa CNAB / retorno (D8.2)
+- PIX integração (D8.3)
+- DRE gerencial + previsto×realizado (D8.4)
+- UI rica de renegociação multi-seleção em grid (D8.1 — esta entrega só RPC)
+- Analytics financeiro executivo (D12.2 — sobre base D8 madura)
+- Integração contábil real (estrutura preparada, sem export ainda)
+
+## Critério de aceite D8.0
+
+- [ ] 5 migrations aplicadas em sequência, cada uma aprovada
+- [ ] `titulos_financeiros` tem portador/natureza/banco como FK reais
+- [ ] Status oficial = 11 valores listados, validado por CHECK
+- [ ] Renegociação N→1 cria vínculo rastreável e nada é apagado
+- [ ] Toda alteração financeira sensível exige RPC + flag de sessão
+- [ ] Auditoria grava antes/depois com workflow_id quando aplicável
+- [ ] Permissões granulares ativas; workflow D5.1 pluga onde excede alçada
+- [ ] UI atual de `/financeiro-titulos` continua funcionando (backfill garante)
+- [ ] Nenhum dado existente perdido
+
+## Plano de execução
+
+Vou começar pela **D8.0.1 (cadastros estruturais)** como primeira migration. Confirma esta ordem ou prefere quebrar diferente?

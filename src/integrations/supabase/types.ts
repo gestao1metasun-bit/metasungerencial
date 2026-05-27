@@ -212,6 +212,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bancos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          ispb: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          ispb?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          ispb?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       centros_resultado: {
         Row: {
           ativo: boolean
@@ -457,6 +487,7 @@ export type Database = {
           nome: string
           saldo_inicial: number
           tipo: string
+          tipo_conta: string | null
           updated_at: string
         }
         Insert: {
@@ -470,6 +501,7 @@ export type Database = {
           nome: string
           saldo_inicial?: number
           tipo: string
+          tipo_conta?: string | null
           updated_at?: string
         }
         Update: {
@@ -483,6 +515,7 @@ export type Database = {
           nome?: string
           saldo_inicial?: number
           tipo?: string
+          tipo_conta?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1240,6 +1273,45 @@ export type Database = {
           },
         ]
       }
+      naturezas_financeiras: {
+        Row: {
+          ativo: boolean
+          classificacao_contabil: string | null
+          codigo: string
+          created_at: string
+          grupo: string | null
+          id: string
+          nome: string
+          subgrupo: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          classificacao_contabil?: string | null
+          codigo: string
+          created_at?: string
+          grupo?: string | null
+          id?: string
+          nome: string
+          subgrupo?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          classificacao_contabil?: string | null
+          codigo?: string
+          created_at?: string
+          grupo?: string | null
+          id?: string
+          nome?: string
+          subgrupo?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           cliente_id: string | null
@@ -1749,6 +1821,123 @@ export type Database = {
           motivo?: string | null
         }
         Relationships: []
+      }
+      plano_contas: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          natureza_id: string | null
+          nivel: number
+          nome: string
+          pai_id: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          natureza_id?: string | null
+          nivel?: number
+          nome: string
+          pai_id?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          natureza_id?: string | null
+          nivel?: number
+          nome?: string
+          pai_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_contas_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_contas_pai_id_fkey"
+            columns: ["pai_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portadores: {
+        Row: {
+          agencia: string | null
+          ativo: boolean
+          banco_id: string | null
+          carteira: string | null
+          codigo: string
+          conta: string | null
+          conta_financeira_id: string | null
+          created_at: string
+          dados: Json
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          agencia?: string | null
+          ativo?: boolean
+          banco_id?: string | null
+          carteira?: string | null
+          codigo: string
+          conta?: string | null
+          conta_financeira_id?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          agencia?: string | null
+          ativo?: boolean
+          banco_id?: string | null
+          carteira?: string | null
+          codigo?: string
+          conta?: string | null
+          conta_financeira_id?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portadores_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portadores_conta_financeira_id_fkey"
+            columns: ["conta_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtos: {
         Row: {

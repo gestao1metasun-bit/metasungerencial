@@ -33,16 +33,20 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Ban, RefreshCcw } from "lucide-react";
+import { Eye, Ban } from "lucide-react";
 import {
   EnterpriseDataGrid,
   exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
 import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { ProcessosMenu } from "@/components/app/grid/ProcessosMenu";
+import { useProcessos } from "@/lib/process-engine";
+import "@/lib/processes/financeiro.processes"; // registra processos do módulo
+import type {
+  TituloProcessRow,
+  RenegociarExtras,
+} from "@/lib/processes/financeiro.processes";
 import { toast } from "sonner";
 
 
@@ -132,23 +136,28 @@ function TitulosPage() {
     setSelected(new Set());
   };
 
-  // Validação da seleção para renegociação em lote
-  const renegociavel = useMemo(() => {
-    if (selectedRows.length === 0) return { ok: false, motivo: "Selecione ao menos um título." };
-    const clientes = new Set(selectedRows.map((t) => t.cliente_id ?? "__sem__"));
-    if (clientes.size > 1) return { ok: false, motivo: "Selecione títulos de um único cliente." };
-    if (selectedRows.some((t) => !t.cliente_id))
-      return { ok: false, motivo: "Há título(s) sem cliente — não é possível renegociar." };
-    const tipos = new Set(selectedRows.map((t) => t.tipo));
-    if (tipos.size > 1) return { ok: false, motivo: "Não misture contas a receber e a pagar." };
-    const statusOk = new Set(["PENDENTE", "PARCIAL", "ATRASADO"]);
-    const invalido = selectedRows.find((t) => !statusOk.has(t.status));
-    if (invalido)
-      return { ok: false, motivo: `Título ${invalido.codigo ?? invalido.id.slice(0,8)} em status ${invalido.status} não é renegociável.` };
-    const saldo = selectedRows.reduce((s, t) => s + Number(t.saldo || 0), 0);
-    if (saldo <= 0) return { ok: false, motivo: "Saldo total dos selecionados é zero." };
-    return { ok: true, motivo: "" };
-  }, [selectedRows]);
+  // D6.13.3 — Process Engine: substitui validação inline de renegociação.
+  // Toda a regra (mesmo cliente, mesmo tipo, status renegociável, saldo>0)
+  // vive em `financeiro.processes.ts`. A tela só injeta o opener do modal.
+  const processos = useProcessos<TituloProcessRow, RenegociarExtras>(
+    "titulos_financeiros",
+    {
+      selectedIds: selectedArr,
+      selectedRows: selectedRows.map((t) => ({
+        id: t.id,
+        codigo: t.codigo,
+        status: t.status,
+        saldo: Number(t.saldo || 0),
+        vencimento: t.vencimento,
+        cliente_id: t.cliente_id,
+        tipo: t.tipo,
+      })),
+      extras: {
+        openRenegociarLoteDialog: () => setRenegociarOpen(true),
+      },
+    },
+  );
+
 
   return (
     <div className="space-y-2 p-2 md:p-3">
@@ -187,31 +196,22 @@ function TitulosPage() {
         onHistorico={() => singleSel && setTituloAtivo(singleSel.id)}
         onAnexos={() => singleSel && setTituloAtivo(singleSel.id)}
         loteActions={
-          selected.size > 0 ? (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={renegociavel.ok ? "default" : "outline"}
-                      className="h-7 px-2 gap-1.5 text-[11.5px]"
-                      disabled={!renegociavel.ok}
-                      onClick={() => setRenegociarOpen(true)}
-                    >
-                      <RefreshCcw className="h-3.5 w-3.5" />
-                      Renegociar ({selected.size})
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!renegociavel.ok && (
-                  <TooltipContent side="bottom" className="max-w-xs text-xs">
-                    {renegociavel.motivo}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+          processos.items.length > 0 ? (
+            <ProcessosMenu
+              label="Processos"
+              selecaoCount={selected.size}
+              items={processos.items.map(({ def, blockedReason }) => ({
+                id: def.key,
+                label: def.label,
+                icon: def.icon,
+                disabled: blockedReason !== null,
+                hint: blockedReason ?? undefined,
+                tone: def.destructive ? "danger" : "primary",
+                onClick: () => {
+                  void processos.execute(def.key);
+                },
+              }))}
+            />
           ) : undefined
         }
       />

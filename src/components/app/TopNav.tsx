@@ -65,7 +65,7 @@ export function TopNav() {
   if (ribbonTabs.length === 0) return null;
 
   return (
-    <div className="sticky top-11 z-10 border-b border-border bg-card/95 backdrop-blur shadow-sm">
+    <div className="sticky top-11 z-10 bg-card">
       <Ribbon
         routePath={ribbonRoute}
         tabs={ribbonTabs}

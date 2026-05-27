@@ -38,6 +38,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-meta-bar: var(--meta-bar);
+  --color-meta-bar-foreground: var(--meta-bar-foreground);
+  --color-meta-bar-hover: var(--meta-bar-hover);
+  --color-meta-bar-active: var(--meta-bar-active);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -100,6 +104,12 @@
   --border: oklch(0.92 0.008 260);
   --input: oklch(0.92 0.008 260);
   --ring: oklch(0.42 0.18 272);
+
+  /* D6.13 — Meta Sun corporate blue bar (header macro nav) */
+  --meta-bar: oklch(0.32 0.09 245);            /* azul corporativo petróleo, ~#0f3a66 */
+  --meta-bar-foreground: oklch(0.985 0.004 260);
+  --meta-bar-hover: oklch(0.38 0.10 245 / 0.55);
+  --meta-bar-active: oklch(0.46 0.11 245);
 
   /* Executive dark sidebar — deep indigo */
   --sidebar: oklch(0.18 0.06 270);

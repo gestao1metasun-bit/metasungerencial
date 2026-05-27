@@ -23,7 +23,7 @@ export function MacroNav() {
   return (
     <nav
       aria-label="Macro módulos"
-      className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
+      className="flex min-w-0 flex-1 items-stretch gap-0 overflow-x-auto h-full"
     >
       {visible.map((m) => {
         const isActive = active?.key === m.key;
@@ -32,13 +32,13 @@ export function MacroNav() {
           <Link
             key={m.key}
             to={m.to}
-            className={`group inline-flex shrink-0 items-center gap-1.5 rounded-sm px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap transition border-b-2 ${
+            className={`group inline-flex shrink-0 items-center gap-1.5 px-3 text-[11.5px] font-medium whitespace-nowrap transition-colors border-b-2 ${
               isActive
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-transparent text-foreground/80 hover:text-foreground hover:bg-accent/60"
+                ? "bg-white/15 text-white border-white/70 font-bold"
+                : "border-transparent text-white/75 hover:text-white hover:bg-white/10"
             }`}
           >
-            <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-gold"}`} />
+            <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-white/70 group-hover:text-white"}`} />
             {m.label}
           </Link>
         );
@@ -65,7 +65,7 @@ export function TopNav() {
   if (ribbonTabs.length === 0) return null;
 
   return (
-    <div className="sticky top-11 z-10 border-b border-border bg-card/95 backdrop-blur shadow-sm">
+    <div className="sticky top-11 z-10 bg-card">
       <Ribbon
         routePath={ribbonRoute}
         tabs={ribbonTabs}

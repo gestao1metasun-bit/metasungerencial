@@ -22,6 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "@/components/app/enterprise/EnterpriseRecordToolbar";
+import type { EnterpriseProcessItem } from "@/components/app/enterprise/EnterpriseRecordToolbar";
 import { toast } from "sonner";
 import {
   useRepoTitulos, useFinanceiroRepo,
@@ -205,6 +208,12 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [verHist, setVerHist] = useState<Titulo | null>(null);
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
   const [ratear, setRatear] = useState<Titulo | null>(null);
+
+  // D6.13.3 piloto — seleção múltipla para EnterpriseRecordToolbar (RM-style).
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) =>
+    setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const limparSel = () => setSelecionados(new Set());
 
   const dateHelpers = useMemo(() => {
     const today = hojeISO;
@@ -474,10 +483,118 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         <Card className="p-3"><div className="text-xs text-muted-foreground">{tipo === "AP" ? "Pago" : "Recebido"}</div><div className="text-lg font-semibold">{fmtBRLPrecise(totais.pago)}</div></Card>
       </div>
 
+      {/* D6.13.3 piloto vivo — Barra Operacional de Registro estilo TOTVS RM. */}
+      {(() => {
+        const selRows = lista.filter((t) => selecionados.has(t.id));
+        const singleSel = selRows.length === 1 ? selRows[0] : null;
+        const isAR = tipo === "AR";
+        const entityType = isAR ? "contas_receber" : "contas_pagar";
+        const statusRenegociavel = new Set<TituloStatus>(["a_receber", "a_pagar", "parcial", "previsto", "comprometido"]);
+        const podeRenegociarLote = selRows.length > 0 &&
+          selRows.every((t) => statusRenegociavel.has(t.status)) &&
+          (isAR
+            ? new Set(selRows.map((t) => t.cliente ?? "__")).size === 1
+            : new Set(selRows.map((t) => t.fornecedor ?? "__")).size === 1);
+        const podeBaixar = selRows.length > 0 &&
+          selRows.every((t) => t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado");
+
+        const availableProcesses: EnterpriseProcessItem[] = [
+          { key: "baixar",       label: isAR ? "Receber título"  : "Baixar título",
+            icon: ENTERPRISE_PROCESS_ICON_HINT.baixar,    requerSelecao: 1, permiteLote: false },
+          { key: "renegociar",   label: "Renegociar",
+            icon: ENTERPRISE_PROCESS_ICON_HINT.renegociar, requerSelecao: 1, permiteLote: true, requerMotivo: true },
+          { key: "consolidar",   label: "Consolidar em um título",
+            icon: ENTERPRISE_PROCESS_ICON_HINT.consolidar, requerSelecao: 2, permiteLote: true, requerMotivo: true },
+          { key: "alterar_vencimento", label: "Alterar vencimento",
+            requerSelecao: 1, permiteLote: true, requerMotivo: true },
+          { key: "enviar_cobranca", label: isAR ? "Enviar cobrança" : "Enviar lembrete",
+            icon: ENTERPRISE_PROCESS_ICON_HINT.enviar,    requerSelecao: 1, permiteLote: true },
+          { key: "estornar",     label: "Estornar baixa",
+            icon: ENTERPRISE_PROCESS_ICON_HINT.estornar,  requerSelecao: 1, permiteLote: false, destructive: true, requerMotivo: true },
+        ];
+
+        const handleAction = (a: string) => {
+          switch (a) {
+            case "novo":       return setCriarOpen(true);
+            case "atualizar":  return toast.info("Lista atualizada.");
+            case "editar":     return singleSel && setEditar(singleSel);
+            case "anexos":
+            case "historico":
+            case "comentarios":
+            case "auditoria":  return singleSel && setVerHist(singleSel);
+            case "cancelar": {
+              if (selRows.length === 0) return;
+              const motivo = window.prompt(`Motivo do cancelamento (${selRows.length} título(s), mín. 3 caracteres):`, "");
+              if (!motivo || motivo.trim().length < 3) return;
+              (async () => {
+                let ok = 0, fail = 0;
+                for (const t of selRows) {
+                  try { await repo.cancelarTitulo(t.id, motivo.trim()); ok++; } catch { fail++; }
+                }
+                toast[fail ? "warning" : "success"](`Cancelamento: ${ok} ok${fail ? `, ${fail} falha(s)` : ""}`);
+                limparSel();
+              })();
+              return;
+            }
+            case "exportar":   return toast.info("Exportação CSV será habilitada via Process Engine (D6.13.3).");
+            case "imprimir":   return window.print();
+            default:           return;
+          }
+        };
+
+        const handleProcess = (key: string) => {
+          switch (key) {
+            case "baixar":
+              if (!podeBaixar)  return toast.warning("Seleção contém título já baixado/cancelado.");
+              if (singleSel)    return setBaixar(singleSel);
+              return toast.warning("Baixa em lote ainda não disponível — selecione 1 título.");
+            case "renegociar":
+              if (!podeRenegociarLote) return toast.warning("Renegociação exige mesmo cliente/fornecedor e status em aberto.");
+              if (singleSel)    return setRenegociar(singleSel);
+              return toast.info("Renegociação em lote será migrada ao Process Engine.");
+            case "consolidar":
+              return toast.info("Consolidação em lote: aguardando Process Engine (D6.13.3).");
+            case "alterar_vencimento":
+              return toast.info("Alterar vencimento: aguardando Process Engine (D6.13.3).");
+            case "enviar_cobranca":
+              return toast.info("Cobrança/lembrete: aguardando integração com canal (D6.13.3).");
+            case "estornar":
+              return toast.info("Estorno: usar histórico do título (será migrado ao Process Engine).");
+            default: return;
+          }
+        };
+
+        return (
+          <EnterpriseRecordToolbar
+            entityType={entityType}
+            selectedIds={Array.from(selecionados)}
+            availableActions={[
+              "novo", "editar", "cancelar", "atualizar",
+              "anexos", "historico", "comentarios", "auditoria",
+              "exportar", "imprimir",
+              "filtroRapido", "filtroAvancado", "visoes", "colunas",
+            ]}
+            availableProcesses={availableProcesses}
+            onAction={(a) => handleAction(a)}
+            onProcess={(k) => handleProcess(k)}
+            onFilter={() => toast.info("Filtros avançados disponíveis no painel lateral.")}
+          />
+        );
+      })()}
+
       <Card className="bg-[image:var(--gradient-card)]">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[32px]">
+                <Checkbox
+                  checked={lista.length > 0 && selecionados.size === lista.length}
+                  onCheckedChange={(v) =>
+                    setSelecionados(v ? new Set(lista.map((t) => t.id)) : new Set())
+                  }
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>{tipo === "AP" ? "Fornecedor / Vínculos" : "Cliente / Vínculos"}</TableHead>
@@ -493,7 +610,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={showEncargos ? 11 : 8} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={showEncargos ? 12 : 9} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -533,7 +650,14 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   }).join("\n")
                 : "";
               return (
-              <TableRow key={t.id} className="group">
+              <TableRow key={t.id} className="group" data-state={selecionados.has(t.id) ? "selected" : undefined}>
+                <TableCell className="w-[32px]">
+                  <Checkbox
+                    checked={selecionados.has(t.id)}
+                    onCheckedChange={() => toggleSel(t.id)}
+                    aria-label={`Selecionar ${t.descricao}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <TituloRowActions

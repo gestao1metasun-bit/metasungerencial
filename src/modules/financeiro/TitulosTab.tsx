@@ -475,13 +475,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         </div>
       )}
 
+      {/* KPIs removidos (D6.13.3 — alinhamento RM): toolbar operacional assume a parte superior. */}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card className="p-3"><div className="text-xs text-muted-foreground">Total títulos</div><div className="text-lg font-semibold">{totais.qtd}</div></Card>
-        <Card className="p-3"><div className="text-xs text-muted-foreground">Em aberto</div><div className="text-lg font-semibold">{totais.aberto}</div></Card>
-        <Card className="p-3"><div className="text-xs text-muted-foreground">Saldo aberto</div><div className="text-lg font-semibold">{fmtBRLPrecise(totais.saldoAberto)}</div></Card>
-        <Card className="p-3"><div className="text-xs text-muted-foreground">{tipo === "AP" ? "Pago" : "Recebido"}</div><div className="text-lg font-semibold">{fmtBRLPrecise(totais.pago)}</div></Card>
-      </div>
 
       {/* D6.13.3 piloto vivo — Barra Operacional de Registro estilo TOTVS RM. */}
       {(() => {

@@ -446,6 +446,7 @@ function ContratoAssinadoRow({
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
   const [aditivosOpen, setAditivosOpen] = useState(false);
+  const [anexosOpen, setAnexosOpen] = useState(false);
   const aditivosDoContrato = useAditivosByContrato(c.id);
   const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
   const podeGerenciarAditivos = usePodeGerenciarAditivos();

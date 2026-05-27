@@ -114,13 +114,58 @@ function AprovacoesPage() {
     return Array.from(s).sort();
   }, [ativa.data]);
 
+  const selectedRow = useMemo(
+    () => filtrados.find((r) => r.id === selectedId) ?? null,
+    [filtrados, selectedId],
+  );
+  const podeAprovarSelecionada = !!selectedRow && selectedRow.status === "PENDENTE" && selectedRow.solicitante_id !== uid;
+  const podeCancelarSelecionada = !!selectedRow && selectedRow.status === "PENDENTE" && selectedRow.solicitante_id === uid;
+
+  const refreshAll = () => {
+    void pendentesParaMim.refetch();
+    void minhas.refetch();
+    void historico.refetch();
+  };
+  const exportarAtual = () =>
+    exportToCSV(`aprovacoes-${tab}`, filtrados, [
+      { key: "codigo", label: "Código" },
+      { key: "tipo_operacao", label: "Tipo", get: (r) => WF_TIPO_LABEL[r.tipo_operacao] ?? r.tipo_operacao },
+      { key: "titulo", label: "Título" },
+      { key: "valor", label: "Valor", get: (r) => Number(r.valor ?? 0).toFixed(2) },
+      { key: "setor", label: "Setor" },
+      { key: "solicitante_email", label: "Solicitante" },
+      { key: "status", label: "Status", get: (r) => WF_STATUS_LABEL[r.status] ?? r.status },
+      { key: "solicitado_em", label: "Solicitado em", get: (r) => fmtData(r.solicitado_em) },
+      { key: "decidido_em", label: "Decidido em", get: (r) => fmtData(r.decidido_em) },
+    ]);
+
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-3 p-2 md:p-3">
       <PageHeader
         eyebrow="Workflow Corporativo"
         title="Central de Aprovações"
         subtitle="Fila operacional por alçada — compras, materiais e descontos."
       />
+
+      <EnterpriseToolbar
+        title="Aprovações"
+        count={filtrados.length}
+        hint={selectedRow ? `${selectedRow.codigo ?? selectedRow.id.slice(0, 8)} selecionada` : undefined}
+        selecionado={!!selectedRow}
+        onAtualizar={refreshAll}
+        onExportar={exportarAtual}
+        onImprimir={() => window.print()}
+        onAprovar={podeAprovarSelecionada ? () => setAcao({ kind: "aprovar", row: selectedRow! }) : undefined}
+        onCancelar={
+          podeCancelarSelecionada
+            ? () => setAcao({ kind: "cancelar", row: selectedRow! })
+            : selectedRow?.status === "PENDENTE" && selectedRow.solicitante_id !== uid
+              ? () => setAcao({ kind: "negar", row: selectedRow! })
+              : undefined
+        }
+        onHistorico={selectedRow ? () => setDetalhe(selectedRow) : undefined}
+      />
+
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Pendentes para mim" value={counts.pendentes_para_mim} icon={Inbox} />

@@ -3684,6 +3684,90 @@ export type Database = {
         }
         Relationships: []
       }
+      v_kpis_aprovacoes_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
+      v_kpis_comercial_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
+      v_kpis_engenharia_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
+      v_kpis_estoque_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
+      v_kpis_financeiro_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
+      v_kpis_financiamentos_oficial: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          valor: number | null
+          valor_dashboard: number | null
+          verificado_em: string | null
+        }
+        Relationships: []
+      }
       v_obra_custo_realizado: {
         Row: {
           codigo: string | null
@@ -4287,6 +4371,21 @@ export type Database = {
           obra_id: string | null
           pct_consumido: number | null
           saldo_operacional: number | null
+        }
+        Relationships: []
+      }
+      v_saude_dados: {
+        Row: {
+          diferenca: number | null
+          indicador: string | null
+          modulo: string | null
+          origem_provavel: string | null
+          perc_divergencia: number | null
+          status: string | null
+          sugestao: string | null
+          ultima_verificacao: string | null
+          valor_base: number | null
+          valor_dashboard: number | null
         }
         Relationships: []
       }

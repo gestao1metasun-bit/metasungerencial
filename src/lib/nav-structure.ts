@@ -13,7 +13,7 @@
 import {
   LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
   ClipboardCheck, LineChart, Settings, FileBarChart, Database,
-  ListChecks, Users, Receipt, Banknote, ShoppingCart,
+  ListChecks, Users, Receipt, Banknote, ShoppingCart, ShieldCheck,
 } from "lucide-react";
 import type { ROUTE_TABS } from "@/lib/route-tabs";
 
@@ -85,6 +85,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/paineis/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "paineis",       ordem: 50 },
   { to: "/paineis/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 60 },
   { to: "/paineis/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "paineis",       ordem: 70 },
+  { to: "/paineis/saude-dados",    label: "Saúde dos Dados",          icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "paineis",       ordem: 75, critica: true },
   { to: "/analises",               label: "Análises / Executivo",     icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "paineis",       ordem: 80 },
   { to: "/relatorios",             label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "paineis",       ordem: 90 },
   { to: "/tarefas",                label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 100 },

@@ -1442,6 +1442,13 @@ export type Database = {
             referencedRelation: "v_origem_financeira_completa"
             referencedColumns: ["titulo_id"]
           },
+          {
+            foreignKeyName: "movimentacoes_financeiras_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
         ]
       }
       naturezas_financeiras: {
@@ -1807,6 +1814,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_origem_financeira_completa"
             referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "parcelas_financeiras_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3023,6 +3037,13 @@ export type Database = {
             referencedRelation: "v_origem_financeira_completa"
             referencedColumns: ["titulo_id"]
           },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
         ]
       }
       titulos_renegociacao_itens: {
@@ -3068,6 +3089,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_origem_financeira_completa"
             referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacao_itens_titulo_antigo_id_fkey"
+            columns: ["titulo_antigo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3137,6 +3165,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_origem_financeira_completa"
             referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4640,6 +4675,90 @@ export type Database = {
         }
         Relationships: []
       }
+      v_titulos_enriquecido: {
+        Row: {
+          anexos_count: number | null
+          centro_id: string | null
+          cliente_doc: string | null
+          cliente_id: string | null
+          cliente_nome: string | null
+          codigo: string | null
+          competencia: string | null
+          conciliado: boolean | null
+          consultor_id: string | null
+          conta_id: string | null
+          contrato_codigo: string | null
+          contrato_id: string | null
+          created_at: string | null
+          dados: Json | null
+          deleted_at: string | null
+          desconto: number | null
+          dias_atraso: number | null
+          em_aberto: boolean | null
+          forma_pagamento: string | null
+          id: string | null
+          juros: number | null
+          motivo_renegociacao: string | null
+          movimentos_count: number | null
+          multa: number | null
+          obra_codigo: string | null
+          obra_id: string | null
+          observacoes: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          renegociado: boolean | null
+          renegociado_em: string | null
+          saldo: number | null
+          status: string | null
+          tem_anexo: boolean | null
+          tem_movimento: boolean | null
+          tipo: string | null
+          titulo_substituto_id: string | null
+          ultimo_movimento_data: string | null
+          updated_at: string | null
+          valor_bruto: number | null
+          valor_liquido: number | null
+          vencido: boolean | null
+          vencimento: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_financeiros_centro_id_fkey"
+            columns: ["centro_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_bridge_pv: {
         Row: {
           aprovado_em: string | null
@@ -4947,6 +5066,36 @@ export type Database = {
       restore_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }
         Returns: undefined
+      }
+      rpc_titulos_totais: {
+        Args: {
+          _cliente_id?: string
+          _com_anexo?: boolean
+          _competencia?: string
+          _conciliado?: boolean
+          _consultor_id?: string
+          _contrato_id?: string
+          _origem_tipo?: string
+          _renegociado?: boolean
+          _search?: string
+          _so_vencidos?: boolean
+          _status?: string
+          _tipo?: string
+          _vencimento_ate?: string
+          _vencimento_de?: string
+        }
+        Returns: {
+          desconto_total: number
+          juros_total: number
+          multa_total: number
+          qtd_aberto: number
+          qtd_baixado: number
+          qtd_cancelado: number
+          qtd_total: number
+          saldo_aberto: number
+          valor_bruto_total: number
+          valor_pago: number
+        }[]
       }
       soft_delete_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }

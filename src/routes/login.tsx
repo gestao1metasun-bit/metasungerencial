@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sun, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Sun, Mail, Lock, ArrowRight, Loader2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
 
@@ -19,6 +20,8 @@ function LoginPage() {
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("renanbarc16@gmail.com");
 
   useEffect(() => {
     if (!loading && user) {
@@ -50,15 +53,17 @@ function LoginPage() {
   }
 
   async function handleForgotPassword() {
-    if (!email) {
+    if (!recoveryEmail) {
       toast.error("Informe seu e-mail para recuperar a senha.");
       return;
     }
 
     setRecovering(true);
     try {
-      await requestPasswordReset(email.trim().toLowerCase());
+      await requestPasswordReset(recoveryEmail.trim().toLowerCase());
       toast.success("Enviamos o link de redefinição para o seu e-mail.");
+      setEmail((prev) => prev || recoveryEmail.trim().toLowerCase());
+      setForgotOpen(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao enviar recuperação.";
       toast.error(msg);
@@ -99,11 +104,14 @@ function LoginPage() {
               <Label htmlFor="senha">Senha</Label>
               <button
                 type="button"
-                onClick={() => void handleForgotPassword()}
+                onClick={() => {
+                  setRecoveryEmail(email.trim().toLowerCase() || "renanbarc16@gmail.com");
+                  setForgotOpen(true);
+                }}
                 disabled={recovering || submitting}
-                className="text-xs text-primary hover:underline disabled:pointer-events-none disabled:opacity-60"
+                className="text-xs font-medium text-primary underline underline-offset-4 hover:opacity-80 disabled:pointer-events-none disabled:opacity-60"
               >
-                {recovering ? "Enviando..." : "Esqueci minha senha"}
+                Esqueci minha senha
               </button>
             </div>
             <div className="relative">
@@ -114,6 +122,19 @@ function LoginPage() {
           <Button type="submit" disabled={submitting} className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>)}
           </Button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setRecoveryEmail(email.trim().toLowerCase() || "renanbarc16@gmail.com");
+              setForgotOpen(true);
+            }}
+            disabled={recovering || submitting}
+            className="flex w-full items-center justify-center gap-2 text-sm font-medium text-primary underline underline-offset-4 hover:opacity-80 disabled:pointer-events-none disabled:opacity-60"
+          >
+            <KeyRound className="h-4 w-4" />
+            Esqueci minha senha
+          </button>
         </form>
 
         <div className="mt-6 text-center text-sm">
@@ -124,6 +145,46 @@ function LoginPage() {
           © {new Date().getFullYear()} Meta Sun Energia Solar
         </div>
       </Card>
+
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar acesso</DialogTitle>
+            <DialogDescription>
+              Informe o e-mail para receber o link de redefinição e seguir para a tela <strong>/reset-password</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="recovery-email">E-mail</Label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="recovery-email"
+                type="email"
+                autoComplete="email"
+                value={recoveryEmail}
+                onChange={(e) => setRecoveryEmail(e.target.value)}
+                className="h-11 pl-9"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => setForgotOpen(false)} disabled={recovering}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleForgotPassword()}
+              disabled={recovering}
+              className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90"
+            >
+              {recovering ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link de recuperação"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

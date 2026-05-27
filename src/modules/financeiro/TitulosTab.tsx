@@ -713,35 +713,97 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               ];
               const atual = presets.find((p) => p.k === preset) ?? presets[0];
               return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
-                      title="Trocar visão"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-info" />
-                      <span className="text-muted-foreground">Visão:</span>
-                      <span>{atual.label}</span>
-                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    {presets.map((p) => (
-                      <DropdownMenuItem
-                        key={p.k}
-                        onClick={() => setPreset(p.k)}
-                        className={preset === p.k ? "font-semibold" : ""}
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
+                        title="Trocar visão"
                       >
-                        <div className="flex flex-col">
-                          <span>{p.label}</span>
-                          <span className="text-[10.5px] text-muted-foreground">{p.hint}</span>
+                        <Eye className="h-3.5 w-3.5 text-info" />
+                        <span className="text-muted-foreground">Visão:</span>
+                        <span>{atual.label}</span>
+                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      {presets.map((p) => (
+                        <DropdownMenuItem
+                          key={p.k}
+                          onClick={() => setPreset(p.k)}
+                          className={preset === p.k ? "font-semibold" : ""}
+                        >
+                          <div className="flex flex-col">
+                            <span>{p.label}</span>
+                            <span className="text-[10.5px] text-muted-foreground">{p.hint}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Column chooser — colunas opcionais agrupadas */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
+                        title="Escolher colunas visíveis"
+                      >
+                        <Columns3 className="h-3.5 w-3.5 text-info" />
+                        <span>Colunas</span>
+                        {extraCols.size > 0 && (
+                          <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-600 px-1 text-[10px] font-semibold text-white">
+                            +{extraCols.size}
+                          </span>
+                        )}
+                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-72 max-h-[70vh] overflow-y-auto">
+                      <DropdownMenuLabel className="flex items-center justify-between">
+                        <span className="text-[11px] uppercase tracking-wide">Colunas opcionais</span>
+                        {extraCols.size > 0 && (
+                          <button
+                            type="button"
+                            className="text-[10px] text-muted-foreground hover:text-foreground"
+                            onClick={(e) => { e.preventDefault(); setExtraCols(new Set()); }}
+                          >
+                            Limpar
+                          </button>
+                        )}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {COL_GROUPS.map((g) => (
+                        <div key={g.group}>
+                          <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {g.group}
+                          </div>
+                          {g.keys.map((k) => (
+                            <DropdownMenuCheckboxItem
+                              key={k}
+                              checked={extraCols.has(k)}
+                              onCheckedChange={(v) => {
+                                setExtraCols((s) => {
+                                  const n = new Set(s);
+                                  if (v) n.add(k); else n.delete(k);
+                                  return n;
+                                });
+                              }}
+                              onSelect={(e) => e.preventDefault()}
+                              className="text-xs"
+                            >
+                              {COL_DEFS[k].label}
+                            </DropdownMenuCheckboxItem>
+                          ))}
                         </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               );
             })()}
 

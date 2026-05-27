@@ -36,6 +36,7 @@ import { Route as AnalisesRouteImport } from './routes/analises'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaineisSaudeDadosRouteImport } from './routes/paineis.saude-dados'
 import { Route as PaineisPosvendaRouteImport } from './routes/paineis.posvenda'
+import { Route as PaineisGovernancaRouteImport } from './routes/paineis.governanca'
 import { Route as PaineisFinanciamentosRouteImport } from './routes/paineis.financiamentos'
 import { Route as PaineisFinanceiroRouteImport } from './routes/paineis.financeiro'
 import { Route as PaineisEstoqueRouteImport } from './routes/paineis.estoque'
@@ -192,6 +193,11 @@ const PaineisPosvendaRoute = PaineisPosvendaRouteImport.update({
   path: '/posvenda',
   getParentRoute: () => PaineisRoute,
 } as any)
+const PaineisGovernancaRoute = PaineisGovernancaRouteImport.update({
+  id: '/governanca',
+  path: '/governanca',
+  getParentRoute: () => PaineisRoute,
+} as any)
 const PaineisFinanciamentosRoute = PaineisFinanciamentosRouteImport.update({
   id: '/financiamentos',
   path: '/financiamentos',
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
 }
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
 }
@@ -439,6 +447,7 @@ export interface FileRoutesById {
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
+  '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
 }
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
+    | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
   fileRoutesByTo: FileRoutesByTo
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
+    | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
   id:
@@ -588,6 +599,7 @@ export interface FileRouteTypes {
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
+    | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
   fileRoutesById: FileRoutesById
@@ -811,6 +823,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaineisPosvendaRouteImport
       parentRoute: typeof PaineisRoute
     }
+    '/paineis/governanca': {
+      id: '/paineis/governanca'
+      path: '/governanca'
+      fullPath: '/paineis/governanca'
+      preLoaderRoute: typeof PaineisGovernancaRouteImport
+      parentRoute: typeof PaineisRoute
+    }
     '/paineis/financiamentos': {
       id: '/paineis/financiamentos'
       path: '/financiamentos'
@@ -1009,6 +1028,7 @@ interface PaineisRouteChildren {
   PaineisEstoqueRoute: typeof PaineisEstoqueRoute
   PaineisFinanceiroRoute: typeof PaineisFinanceiroRoute
   PaineisFinanciamentosRoute: typeof PaineisFinanciamentosRoute
+  PaineisGovernancaRoute: typeof PaineisGovernancaRoute
   PaineisPosvendaRoute: typeof PaineisPosvendaRoute
   PaineisSaudeDadosRoute: typeof PaineisSaudeDadosRoute
 }
@@ -1020,6 +1040,7 @@ const PaineisRouteChildren: PaineisRouteChildren = {
   PaineisEstoqueRoute: PaineisEstoqueRoute,
   PaineisFinanceiroRoute: PaineisFinanceiroRoute,
   PaineisFinanciamentosRoute: PaineisFinanciamentosRoute,
+  PaineisGovernancaRoute: PaineisGovernancaRoute,
   PaineisPosvendaRoute: PaineisPosvendaRoute,
   PaineisSaudeDadosRoute: PaineisSaudeDadosRoute,
 }

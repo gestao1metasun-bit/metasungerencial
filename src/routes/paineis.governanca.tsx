@@ -6,13 +6,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, ShieldCheck, AlertTriangle, ListChecks } from "lucide-react";
+import { Check, X, ShieldCheck, AlertTriangle, ListChecks, Lock, FileText as FileIcon } from "lucide-react";
 import {
   useGovernanceMatrix,
   useGovernanceGaps,
   useGovernanceResumo,
   type GovernanceRow,
 } from "@/lib/repositories/use-governance-matrix";
+import {
+  useGovernanceGapsStatus,
+  useGovernancePendencias,
+} from "@/lib/repositories/use-governance-action";
 
 export const Route = createFileRoute("/paineis/governanca")({
   head: () => ({ meta: [{ title: "Governança — Matriz Enterprise · Meta Sun" }] }),
@@ -43,10 +47,12 @@ function GovernancaPage() {
   const matrix = useGovernanceMatrix();
   const gaps = useGovernanceGaps();
   const resumo = useGovernanceResumo();
+  const gapsStatus = useGovernanceGapsStatus();
+  const pendencias = useGovernancePendencias();
 
   const [modulo, setModulo] = useState<(typeof MODULOS)[number]>("todos");
   const [busca, setBusca] = useState("");
-  const [tab, setTab] = useState<"matriz"|"gaps"|"resumo">("matriz");
+  const [tab, setTab] = useState<"matriz"|"gaps"|"pendencias"|"resumo">("matriz");
 
   const rows: GovernanceRow[] = matrix.data ?? [];
   const lista = useMemo(() => rows.filter(r => {

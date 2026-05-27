@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarefasRouteImport } from './routes/tarefas'
 import { Route as SolicitacoesMaterialRouteImport } from './routes/solicitacoes-material'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PropostasRouteImport } from './routes/propostas'
 import { Route as PosvendaRouteImport } from './routes/posvenda'
@@ -66,6 +67,11 @@ const TarefasRoute = TarefasRouteImport.update({
 const SolicitacoesMaterialRoute = SolicitacoesMaterialRouteImport.update({
   id: '/solicitacoes-material',
   path: '/solicitacoes-material',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -324,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
@@ -374,6 +381,7 @@ export interface FileRoutesByTo {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/reset-password'
     | '/solicitacoes-material'
     | '/tarefas'
     | '/analytics/aprovacoes'
@@ -527,6 +537,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/reset-password'
     | '/solicitacoes-material'
     | '/tarefas'
     | '/analytics/aprovacoes'
@@ -577,6 +588,7 @@ export interface FileRouteTypes {
     | '/posvenda'
     | '/propostas'
     | '/relatorios'
+    | '/reset-password'
     | '/solicitacoes-material'
     | '/tarefas'
     | '/analytics/aprovacoes'
@@ -628,6 +640,7 @@ export interface RootRouteChildren {
   PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SolicitacoesMaterialRoute: typeof SolicitacoesMaterialRoute
   TarefasRoute: typeof TarefasRoute
 }
@@ -646,6 +659,13 @@ declare module '@tanstack/react-router' {
       path: '/solicitacoes-material'
       fullPath: '/solicitacoes-material'
       preLoaderRoute: typeof SolicitacoesMaterialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -1072,6 +1092,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SolicitacoesMaterialRoute: SolicitacoesMaterialRoute,
   TarefasRoute: TarefasRoute,
 }

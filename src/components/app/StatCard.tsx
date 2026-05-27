@@ -39,32 +39,30 @@ export function StatCard({
   return (
     <Card
       onClick={onClick}
-      className={`group relative overflow-hidden border-border/70 bg-card p-5 shadow-elegant transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow ${onClick ? "cursor-pointer" : ""}`}
+      className={`group relative overflow-hidden border-border/70 bg-card p-2.5 shadow-sm ${onClick ? "cursor-pointer hover:bg-accent/40" : ""}`}
     >
-      {/* Left accent bar */}
-      <span className={`absolute left-0 top-4 bottom-4 w-[3px] rounded-r ${accentBar[tone]} opacity-80`} />
-      {/* Subtle corner glow */}
-      <div className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${toneRing[tone]} opacity-60 blur-2xl`} />
+      {/* D6.6 — barra lateral fina, sem glow corner SaaS */}
+      <span className={`absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r ${accentBar[tone]} opacity-80`} />
 
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative flex items-center justify-between gap-2 pl-1.5">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+          <div className="flex items-center gap-1">
+            <div className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground truncate">{label}</div>
             {onView && <EyeButton onClick={onView} />}
           </div>
-          <div className="mt-3 truncate font-display text-[2rem] leading-none font-bold tracking-tight text-foreground tabular-nums">
+          <div className="mt-0.5 truncate font-display text-[18px] leading-tight font-bold tracking-tight text-foreground tabular-nums">
             {value}
           </div>
-          {hint && <div className="mt-2 text-xs text-muted-foreground">{hint}</div>}
+          {hint && <div className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{hint}</div>}
           {trend && (
-            <div className={`mt-2.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${trend.positive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+            <div className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0 text-[10px] font-semibold ${trend.positive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
               {trend.positive ? "▲" : "▼"} {trend.value}
             </div>
           )}
         </div>
         {Icon && (
-          <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${toneRing[tone]} ring-1 shadow-sm`}>
-            <Icon className="h-5 w-5" />
+          <div className={`grid h-7 w-7 shrink-0 place-items-center rounded bg-gradient-to-br ${toneRing[tone]} ring-1`}>
+            <Icon className="h-3.5 w-3.5" />
           </div>
         )}
       </div>

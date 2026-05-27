@@ -856,11 +856,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               {showEncargos && <TableHead className="w-[90px] text-right">Desconto</TableHead>}
               <TableHead className="w-[130px] text-right">Total</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
+              {extraColList.map((k) => (
+                <TableHead key={k} className={`${COL_DEFS[k].width ?? ""} ${COL_DEFS[k].align === "right" ? "text-right" : ""}`.trim()}>
+                  {COL_DEFS[k].label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={showEncargos ? 12 : 9} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={totalCols} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}

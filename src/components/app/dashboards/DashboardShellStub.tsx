@@ -1,10 +1,10 @@
 /**
- * D6.E → D6.7 — Shell de painéis consolidado.
+ * D6.E → D6.7 → D14.4 — Shell de painéis consolidado.
  *
- * Agora renderiza o DashboardReaisOverview (KPIs Supabase) como conteúdo
- * padrão e mantém o ribbon como navegação interna. Sem badge "Em
- * consolidação" e sem mensagem "KPIs serão exibidos aqui" — todos os
- * painéis (/paineis/*) usam este shell.
+ * Renderiza o DashboardReaisOverview (KPIs reais transacionais) + a tira
+ * KpisOficiaisStrip (verdade oficial v_kpis_*_oficial) como conteúdo
+ * padrão. Sem cálculo paralelo no shell — toda área que tem view oficial
+ * lê via useKpisOficiais (D14.1).
  */
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
@@ -12,15 +12,24 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { useTabFromHash, ROUTE_TABS } from "@/lib/route-tabs";
 import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
+import { KpisOficiaisStrip } from "@/components/app/analytics/KpisOficiaisStrip";
+import type { KpiArea } from "@/lib/repositories/use-kpis-oficiais";
+
+const AREA_BY_ROUTE: Record<string, KpiArea | undefined> = {
+  "/paineis/financeiro": "financeiro",
+  "/paineis/comercial": "comercial",
+  "/paineis/engenharia": "engenharia",
+  "/paineis/estoque": "estoque",
+  "/paineis/aprovacoes": "aprovacoes",
+  "/paineis/financiamentos": "financiamentos",
+};
 
 export type DashboardShellStubProps = {
   routePath: string;
   title: string;
   subtitle: string;
-  /** rota operacional onde os dados estão hoje (atalho rápido). */
   legacyHref?: string;
   legacyLabel?: string;
-  /** conteúdo específico do painel; quando ausente, usa overview consolidado. */
   children?: React.ReactNode;
 };
 
@@ -30,6 +39,7 @@ export function DashboardShellStub({
   const cfg = ROUTE_TABS[routePath];
   const [tab] = useTabFromHash(routePath);
   const active = cfg?.tabs.find((t) => t.value === tab) ?? cfg?.tabs[0];
+  const area = AREA_BY_ROUTE[routePath];
 
   return (
     <>
@@ -54,6 +64,7 @@ export function DashboardShellStub({
             Painel ativo: <span className="font-semibold text-foreground">{active.label}</span>
           </Card>
         )}
+        {area && <KpisOficiaisStrip area={area} />}
         {children ?? <DashboardReaisOverview />}
       </div>
     </>

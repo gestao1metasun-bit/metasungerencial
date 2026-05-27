@@ -1259,6 +1259,57 @@ export type Database = {
         }
         Relationships: []
       }
+      governance_pendencias: {
+        Row: {
+          acao: string
+          created_at: string
+          created_by: string | null
+          criticidade: string
+          entidade: string
+          id: string
+          justificativa: string | null
+          mitigacao: string | null
+          modulo: string
+          prazo: string | null
+          responsavel_id: string | null
+          status: string
+          tipo_lacuna: string
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          entidade: string
+          id?: string
+          justificativa?: string | null
+          mitigacao?: string | null
+          modulo: string
+          prazo?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tipo_lacuna: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          created_by?: string | null
+          criticidade?: string
+          entidade?: string
+          id?: string
+          justificativa?: string | null
+          mitigacao?: string | null
+          modulo?: string
+          prazo?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tipo_lacuna?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -3768,6 +3819,24 @@ export type Database = {
           modulo?: string | null
           perfil?: string | null
           total_gaps?: never
+        }
+        Relationships: []
+      }
+      v_governance_gaps_status: {
+        Row: {
+          acao: string | null
+          criticidade: string | null
+          entidade: string | null
+          gap_auditoria: boolean | null
+          gap_motivo: boolean | null
+          gap_sla: boolean | null
+          gap_workflow: boolean | null
+          modulo: string | null
+          pendencias_abertas: number | null
+          pendencias_mitigadas: number | null
+          perfil: string | null
+          status_governanca: string | null
+          total_gaps: number | null
         }
         Relationships: []
       }

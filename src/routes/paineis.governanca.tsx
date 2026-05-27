@@ -6,13 +6,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, ShieldCheck, AlertTriangle, ListChecks } from "lucide-react";
+import { Check, X, ShieldCheck, AlertTriangle, ListChecks, Lock, FileText as FileIcon } from "lucide-react";
 import {
   useGovernanceMatrix,
   useGovernanceGaps,
   useGovernanceResumo,
   type GovernanceRow,
 } from "@/lib/repositories/use-governance-matrix";
+import {
+  useGovernanceGapsStatus,
+  useGovernancePendencias,
+} from "@/lib/repositories/use-governance-action";
 
 export const Route = createFileRoute("/paineis/governanca")({
   head: () => ({ meta: [{ title: "Governança — Matriz Enterprise · Meta Sun" }] }),
@@ -43,10 +47,12 @@ function GovernancaPage() {
   const matrix = useGovernanceMatrix();
   const gaps = useGovernanceGaps();
   const resumo = useGovernanceResumo();
+  const gapsStatus = useGovernanceGapsStatus();
+  const pendencias = useGovernancePendencias();
 
   const [modulo, setModulo] = useState<(typeof MODULOS)[number]>("todos");
   const [busca, setBusca] = useState("");
-  const [tab, setTab] = useState<"matriz"|"gaps"|"resumo">("matriz");
+  const [tab, setTab] = useState<"matriz"|"gaps"|"pendencias"|"resumo">("matriz");
 
   const rows: GovernanceRow[] = matrix.data ?? [];
   const lista = useMemo(() => rows.filter(r => {
@@ -91,6 +97,7 @@ function GovernancaPage() {
           <TabsList className="h-8">
             <TabsTrigger value="matriz" className="h-7 px-2 text-xs">Matriz</TabsTrigger>
             <TabsTrigger value="gaps" className="h-7 px-2 text-xs">Lacunas</TabsTrigger>
+            <TabsTrigger value="pendencias" className="h-7 px-2 text-xs">Pendências ({pendencias.data?.length ?? 0})</TabsTrigger>
             <TabsTrigger value="resumo" className="h-7 px-2 text-xs">Resumo</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -204,6 +211,100 @@ function GovernancaPage() {
           </Table>
         </div>
       )}
+
+      {/* PENDÊNCIAS — lacunas documentadas / mitigadas */}
+      {tab === "pendencias" && (
+        <div className="space-y-3">
+          <div className="rounded-md border bg-muted/20 p-2 text-[11px] text-muted-foreground flex items-start gap-2">
+            <Lock className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+            <div>
+              Cada lacuna crítica deve ter ao menos uma pendência <b>aberta, mitigada ou aceita</b>.
+              Lacunas <b>BLOQUEAR</b> não têm tratamento documentado — a ação operacional precisa ser
+              bloqueada no front até registro. Apenas admin registra pendências
+              (tabela <code>governance_pendencias</code>).
+            </div>
+          </div>
+
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="h-8 text-xs">Módulo</TableHead>
+                  <TableHead className="h-8 text-xs">Entidade</TableHead>
+                  <TableHead className="h-8 text-xs">Ação</TableHead>
+                  <TableHead className="h-8 text-xs">Criticidade</TableHead>
+                  <TableHead className="h-8 text-xs text-center">Lacunas</TableHead>
+                  <TableHead className="h-8 text-xs text-center">Aberta</TableHead>
+                  <TableHead className="h-8 text-xs text-center">Mitigada</TableHead>
+                  <TableHead className="h-8 text-xs">Status governança</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {gapsStatus.isLoading && (
+                  <TableRow><TableCell colSpan={8} className="h-12 text-center text-xs text-muted-foreground">Carregando status…</TableCell></TableRow>
+                )}
+                {(gapsStatus.data ?? []).map((g, i) => {
+                  const statusColor =
+                    g.status_governanca === "BLOQUEAR" ? "bg-destructive text-destructive-foreground"
+                    : g.status_governanca === "DOCUMENTADA" ? "bg-amber-500 text-white"
+                    : g.status_governanca === "MITIGADA" ? "bg-emerald-600 text-white"
+                    : "bg-muted text-muted-foreground";
+                  return (
+                    <TableRow key={i} className="text-xs">
+                      <TableCell className="capitalize font-medium">{g.modulo}</TableCell>
+                      <TableCell>{g.entidade}</TableCell>
+                      <TableCell className="font-mono">{g.acao}</TableCell>
+                      <TableCell><CritBadge c={g.criticidade} /></TableCell>
+                      <TableCell className="text-center tabular-nums font-bold">{g.total_gaps}</TableCell>
+                      <TableCell className="text-center tabular-nums">{g.pendencias_abertas}</TableCell>
+                      <TableCell className="text-center tabular-nums">{g.pendencias_mitigadas}</TableCell>
+                      <TableCell><Badge className={statusColor}>{g.status_governanca}</Badge></TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-md border overflow-x-auto">
+            <div className="bg-muted/40 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <FileIcon className="h-3.5 w-3.5" /> Pendências registradas
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="h-8 text-xs">Módulo</TableHead>
+                  <TableHead className="h-8 text-xs">Entidade</TableHead>
+                  <TableHead className="h-8 text-xs">Ação</TableHead>
+                  <TableHead className="h-8 text-xs">Lacuna</TableHead>
+                  <TableHead className="h-8 text-xs">Status</TableHead>
+                  <TableHead className="h-8 text-xs">Criticidade</TableHead>
+                  <TableHead className="h-8 text-xs">Mitigação</TableHead>
+                  <TableHead className="h-8 text-xs">Prazo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(pendencias.data ?? []).length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="h-12 text-center text-xs text-muted-foreground">Nenhuma pendência registrada.</TableCell></TableRow>
+                )}
+                {(pendencias.data ?? []).map(p => (
+                  <TableRow key={p.id} className="text-xs">
+                    <TableCell className="capitalize font-medium">{p.modulo}</TableCell>
+                    <TableCell>{p.entidade}</TableCell>
+                    <TableCell className="font-mono">{p.acao}</TableCell>
+                    <TableCell className="capitalize">{p.tipo_lacuna}</TableCell>
+                    <TableCell className="capitalize">{p.status}</TableCell>
+                    <TableCell><CritBadge c={p.criticidade} /></TableCell>
+                    <TableCell className="text-muted-foreground max-w-[260px] truncate" title={p.mitigacao ?? ""}>{p.mitigacao ?? "—"}</TableCell>
+                    <TableCell className="tabular-nums">{p.prazo ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
 
       {/* RESUMO */}
       {tab === "resumo" && (

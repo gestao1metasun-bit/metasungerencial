@@ -280,12 +280,12 @@ export function EnterpriseRecordToolbar({
       data-selection-mode={mode}
       data-selection-count={count}
       className={cn(
-        "flex flex-wrap items-center gap-0.5 border border-border/80",
-        "bg-muted/40 px-1.5 py-1 rounded-sm",
+        "flex items-center gap-0 border border-border/80",
+        "bg-muted/30 px-1 py-0.5 rounded-sm overflow-x-auto",
         className,
       )}
     >
-      {/* CRUD */}
+      {/* CRUD — ícones puros estilo RM */}
       {renderActionBtn("novo")}
       {renderActionBtn("editar")}
       {renderActionBtn("salvar")}
@@ -298,7 +298,7 @@ export function EnterpriseRecordToolbar({
       {renderActionBtn("visualizar")}
       <Sep />
 
-      {/* Busca rápida */}
+      {/* Busca rápida (quando o consumidor injetar) */}
       {onSearchChange && (
         <>
           <div className="relative">
@@ -307,99 +307,124 @@ export function EnterpriseRecordToolbar({
               value={search ?? ""}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-7 w-52 rounded-sm pl-6 text-[11.5px]"
+              className="h-6 w-44 rounded-sm pl-6 text-[11.5px]"
             />
           </div>
           <Sep />
         </>
       )}
 
-      {/* Documentais (single) */}
-      {renderActionBtn("anexos")}
+      {/* Anexos (com label + chevron, como no print) */}
+      {enabled.has("anexos") && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => fire("anexos")}
+          disabled={mode === "none"}
+          title="Anexos"
+          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+        >
+          <Paperclip className="h-3.5 w-3.5" />
+          <span>Anexos</span>
+          <ChevronDown className="h-3 w-3 opacity-70" />
+        </Button>
+      )}
+
+      {/* Histórico/Comentários/Auditoria — ícones puros */}
       {renderActionBtn("historico")}
       {renderActionBtn("comentarios")}
       {renderActionBtn("auditoria")}
 
-      {/* Processos contextuais (dropdown estilo RM) */}
+      {/* Processos contextuais (label + chevron) */}
       {processosVisiveis.length > 0 && (
-        <>
-          <Sep />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 gap-1 rounded-sm text-[11.5px] text-foreground/85"
-                title="Processos disponíveis"
-              >
-                <Cog className="h-3.5 w-3.5" />
-                <span>Processos</span>
-                {count > 1 && (
-                  <span className="ml-0.5 rounded bg-background px-1 font-mono text-[10px] border border-border/60">
-                    {count}
-                  </span>
-                )}
-                <ChevronDown className="h-3 w-3 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[260px]">
-              <DropdownMenuLabel className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
-                Processos {count > 1 ? `· lote (${count})` : ""}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {processosVisiveis.map((p) => {
-                const Icon = p.icon ?? Cog;
-                return (
-                  <DropdownMenuItem
-                    key={p.key}
-                    onClick={() => onProcess?.(p.key, { selectedIds })}
-                    className={cn(
-                      "text-[12px] gap-2",
-                      p.destructive && "text-destructive focus:text-destructive",
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="flex-1">{p.label}</span>
-                    {p.requerMotivo && (
-                      <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
-                        motivo
-                      </span>
-                    )}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+              title="Processos disponíveis"
+            >
+              <Cog className="h-3.5 w-3.5" />
+              <span>Processos</span>
+              {count > 1 && (
+                <span className="ml-0.5 rounded bg-background px-1 font-mono text-[10px] border border-border/60">
+                  {count}
+                </span>
+              )}
+              <ChevronDown className="h-3 w-3 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[260px]">
+            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              Processos {count > 1 ? `· lote (${count})` : ""}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {processosVisiveis.map((p) => {
+              const Icon = p.icon ?? Cog;
+              return (
+                <DropdownMenuItem
+                  key={p.key}
+                  onClick={() => onProcess?.(p.key, { selectedIds })}
+                  className={cn(
+                    "text-[12px] gap-2",
+                    p.destructive && "text-destructive focus:text-destructive",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="flex-1">{p.label}</span>
+                  {p.requerMotivo && (
+                    <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
+                      motivo
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      <Sep />
+
+      {/* Filtro estilo "[Filtro: Todos] ▼" do RM */}
+      {(enabled.has("filtroRapido") || enabled.has("filtroAvancado")) && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => (onFilter ? onFilter() : fire("filtroRapido"))}
+          title="Filtro"
+          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+        >
+          <Filter className="h-3.5 w-3.5" />
+          <span>[Filtro: Todos]</span>
+          <ChevronDown className="h-3 w-3 opacity-70" />
+        </Button>
       )}
 
       {extraLeft}
 
-      <div className="ml-auto flex items-center gap-0.5">
-        {/* Export / Print */}
+      <div className="ml-auto flex items-center gap-0">
         {renderActionBtn("exportar")}
         {renderActionBtn("imprimir")}
         <Sep />
-
-        {/* Filtros / visões / layout */}
-        {renderActionBtn("filtroRapido")}
         {renderActionBtn("filtroAvancado")}
         {renderActionBtn("visoes")}
         {renderActionBtn("colunas")}
-
         {extraRight}
+        {count > 0 && (
+          <span
+            className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+            aria-label={`${count} selecionado(s)`}
+          >
+            {count} sel.
+          </span>
+        )}
       </div>
-
-      {/* Indicador discreto de seleção (canto) */}
-      {count > 0 && (
-        <span
-          className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-          aria-label={`${count} selecionado(s)`}
-        >
-          {count} sel.
-        </span>
-      )}
     </div>
   );
 }
+

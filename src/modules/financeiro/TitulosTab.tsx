@@ -888,12 +888,12 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               </TableCell>
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status === "Aberto" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status === "Aberto" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (

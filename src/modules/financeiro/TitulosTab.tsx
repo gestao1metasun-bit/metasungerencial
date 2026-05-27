@@ -910,6 +910,17 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
         </Table>
       </Card>
 
+      {/* Anexos polimórficos (D6.13.4) */}
+      <AttachmentDialog
+        open={!!anexosTitulo}
+        onOpenChange={(o) => !o && setAnexosTitulo(null)}
+        entidade="titulos_financeiros"
+        entidadeId={anexosTitulo?.id ?? null}
+        titulo={anexosTitulo ? `Anexos · ${anexosTitulo.documentoTipo ?? "Título"} ${anexosTitulo.documentoNumero ?? ""}`.trim() : "Anexos"}
+        descricao={anexosTitulo ? `Vencimento ${fmtDateBR(anexosTitulo.vencimento)} · Saldo ${fmtBRLPrecise(anexosTitulo.saldo)}` : undefined}
+        categoriaPadrao="boleto"
+      />
+
       {/* Editar */}
       <Dialog open={!!editar} onOpenChange={(o) => !o && setEditar(null)}>
         {editar && (

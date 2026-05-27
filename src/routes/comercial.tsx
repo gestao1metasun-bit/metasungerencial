@@ -32,6 +32,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
+import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -446,6 +447,7 @@ function ContratoAssinadoRow({
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
   const [aditivosOpen, setAditivosOpen] = useState(false);
+  const [anexosOpen, setAnexosOpen] = useState(false);
   const aditivosDoContrato = useAditivosByContrato(c.id);
   const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
   const podeGerenciarAditivos = usePodeGerenciarAditivos();
@@ -453,6 +455,16 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
 
   return (
+    <>
+    <AttachmentDialog
+      open={anexosOpen}
+      onOpenChange={setAnexosOpen}
+      entidade="contratos"
+      entidadeId={c.id}
+      titulo={`Anexos · Contrato ${fmtContratoId(c.id)}`}
+      descricao={c.cliente ? `Cliente: ${c.cliente}` : undefined}
+      categoriaPadrao="contrato"
+    />
     <TableRow>
       <TableCell>
         {anexoInput}
@@ -464,6 +476,9 @@ function ContratoAssinadoRow({
           )}
           <DropdownMenuItem onSelect={abrirSeletor}>
             <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setAnexosOpen(true)}>
+            <Paperclip className="mr-2 h-4 w-4 text-sky-600" /> Anexos do contrato (todos)
           </DropdownMenuItem>
           {!aprovado && (
             <DropdownMenuItem
@@ -612,6 +627,7 @@ function ContratoAssinadoRow({
         )}
       </TableCell>
     </TableRow>
+    </>
   );
 }
 

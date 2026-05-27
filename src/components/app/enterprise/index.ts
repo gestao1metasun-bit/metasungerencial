@@ -29,6 +29,8 @@ export { AttachmentPanel } from "./AttachmentPanel";
 export type { AttachmentPanelProps } from "./AttachmentPanel";
 export { AttachmentDialog } from "./AttachmentDialog";
 export type { AttachmentDialogProps } from "./AttachmentDialog";
+export { AnexosButton } from "./AnexosButton";
+export type { AnexosButtonProps } from "./AnexosButton";
 
 
 export { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "./EnterpriseRecordToolbar";

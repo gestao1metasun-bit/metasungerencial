@@ -11,13 +11,18 @@
  * Sem placeholders "vazios".
  */
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Star, Bell, Zap, ClipboardCheck, Clock, Filter, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Star, Bell, Zap, ClipboardCheck, Clock, X } from "lucide-react";
 import { macroAtivoPorRota, NAV_ITEMS } from "@/lib/nav-structure";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
 import { useFavoritos, useRecentes } from "@/lib/favoritos-store";
 import { useWorkflowAprovacoes } from "@/hooks/useWorkflowAprovacoes";
 
 export function ContextualSidebar() {
+  // Evita hydration mismatch: favoritos/recentes vêm de localStorage (vazio no SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const path = useRouterState({ select: (s) => s.location.pathname });
   const identidade = useIdentidade();
   const macro = macroAtivoPorRota(path);

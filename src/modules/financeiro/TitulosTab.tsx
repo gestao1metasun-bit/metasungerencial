@@ -1924,9 +1924,12 @@ type FiltrosSheetProps = {
   toggleChip: (k: ChipKeyExt) => void;
   clearChips: () => void;
   tipo: TituloTipo;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideTrigger?: boolean;
 };
 
-function FiltrosSheet({ chips, toggleChip, clearChips, tipo }: FiltrosSheetProps) {
+function FiltrosSheet({ chips, toggleChip, clearChips, tipo, open, onOpenChange, hideTrigger }: FiltrosSheetProps) {
   const groups: { title: string; items: ChipKeyExt[] }[] = [
     { title: "Vencimento", items: ["vence_hoje", "vence_semana", "vence_mes", "vencidos", "aberto"] },
     { title: tipo === "AP" ? "Pagamento" : "Recebimento", items: ["baixado_hoje", "baixado_semana", "baixado_mes"] },
@@ -1935,18 +1938,20 @@ function FiltrosSheet({ chips, toggleChip, clearChips, tipo }: FiltrosSheetProps
   ];
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          Filtros
-          {chips.size > 0 && (
-            <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-              {chips.size}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Filtros
+            {chips.size > 0 && (
+              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                {chips.size}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Filtros</SheetTitle>

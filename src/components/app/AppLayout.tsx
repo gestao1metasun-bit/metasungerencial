@@ -107,6 +107,7 @@ export function AppLayout() {
         </main>
 
       </div>
+      <CommandPalette />
     </div>
   );
 }

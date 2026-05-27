@@ -466,6 +466,9 @@ function ContratoAssinadoRow({
           <DropdownMenuItem onSelect={abrirSeletor}>
             <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setAnexosOpen(true)}>
+            <Paperclip className="mr-2 h-4 w-4 text-sky-600" /> Anexos do contrato (todos)
+          </DropdownMenuItem>
           {!aprovado && (
             <DropdownMenuItem
               disabled={!temAnexo}

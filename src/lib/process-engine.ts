@@ -230,24 +230,30 @@ export function useProcessos<TRow = unknown, TExtras = unknown>(
     queryClient,
   });
 
-  const availableProcesses = useMemo<EnterpriseProcessItem[]>(() => {
+  const items = useMemo<ProcessoComStatus<TRow, TExtras>[]>(() => {
     const ctx = buildCtx();
-    return all
-      .filter((def) => checkProcessAvailability(def, ctx) === null)
-      .map((def) => ({
-        key: def.key,
-        label: def.label,
-        icon: def.icon,
-        permissao: def.permissao,
-        requerSelecao: def.requerSelecao,
-        permiteLote: def.permiteLote !== false,
-        destructive: def.destructive,
-        requerMotivo: def.requerMotivo,
-      }));
+    return all.map((def) => ({ def, blockedReason: checkProcessAvailability(def, ctx) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [all, selectedIds, selectedRows, permissions, extras]);
 
+  const availableProcesses = useMemo<EnterpriseProcessItem[]>(
+    () =>
+      items
+        .filter((it) => it.blockedReason === null)
+        .map(({ def }) => ({
+          key: def.key,
+          label: def.label,
+          icon: def.icon,
+          permissao: def.permissao,
+          requerSelecao: def.requerSelecao,
+          permiteLote: def.permiteLote !== false,
+          destructive: def.destructive,
+          requerMotivo: def.requerMotivo,
+        })),
+    [items],
+  );
+
   const execute = (processKey: string) => executeProcess(entity, processKey, buildCtx());
 
-  return { all, availableProcesses, execute };
+  return { all, items, availableProcesses, execute };
 }

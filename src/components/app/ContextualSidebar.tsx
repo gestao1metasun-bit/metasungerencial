@@ -49,7 +49,7 @@ export function ContextualSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
+      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3" suppressHydrationWarning>
         {/* Atalhos do módulo */}
         <Section title="Atalhos do módulo" icon={<Zap className="h-3 w-3" />}>
           {atalhosModulo.length === 0 ? (

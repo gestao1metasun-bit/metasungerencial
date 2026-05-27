@@ -139,23 +139,28 @@ function TitulosPage() {
     setSelected(new Set());
   };
 
-  // Validação da seleção para renegociação em lote
-  const renegociavel = useMemo(() => {
-    if (selectedRows.length === 0) return { ok: false, motivo: "Selecione ao menos um título." };
-    const clientes = new Set(selectedRows.map((t) => t.cliente_id ?? "__sem__"));
-    if (clientes.size > 1) return { ok: false, motivo: "Selecione títulos de um único cliente." };
-    if (selectedRows.some((t) => !t.cliente_id))
-      return { ok: false, motivo: "Há título(s) sem cliente — não é possível renegociar." };
-    const tipos = new Set(selectedRows.map((t) => t.tipo));
-    if (tipos.size > 1) return { ok: false, motivo: "Não misture contas a receber e a pagar." };
-    const statusOk = new Set(["PENDENTE", "PARCIAL", "ATRASADO"]);
-    const invalido = selectedRows.find((t) => !statusOk.has(t.status));
-    if (invalido)
-      return { ok: false, motivo: `Título ${invalido.codigo ?? invalido.id.slice(0,8)} em status ${invalido.status} não é renegociável.` };
-    const saldo = selectedRows.reduce((s, t) => s + Number(t.saldo || 0), 0);
-    if (saldo <= 0) return { ok: false, motivo: "Saldo total dos selecionados é zero." };
-    return { ok: true, motivo: "" };
-  }, [selectedRows]);
+  // D6.13.3 — Process Engine: substitui validação inline de renegociação.
+  // Toda a regra (mesmo cliente, mesmo tipo, status renegociável, saldo>0)
+  // vive em `financeiro.processes.ts`. A tela só injeta o opener do modal.
+  const processos = useProcessos<TituloProcessRow, RenegociarExtras>(
+    "titulos_financeiros",
+    {
+      selectedIds: selectedArr,
+      selectedRows: selectedRows.map((t) => ({
+        id: t.id,
+        codigo: t.codigo,
+        status: t.status,
+        saldo: Number(t.saldo || 0),
+        vencimento: t.vencimento,
+        cliente_id: t.cliente_id,
+        tipo: t.tipo,
+      })),
+      extras: {
+        openRenegociarLoteDialog: () => setRenegociarOpen(true),
+      },
+    },
+  );
+
 
   return (
     <div className="space-y-2 p-2 md:p-3">

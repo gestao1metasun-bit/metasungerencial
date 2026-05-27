@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updatePassword } from "@/lib/auth-store";
+import { clearAuthSession, updatePassword } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -45,6 +45,7 @@ function ResetPasswordPage() {
     setSubmitting(true);
     try {
       await updatePassword(password);
+      await clearAuthSession();
       toast.success("Senha atualizada com sucesso. Faça login novamente.");
       void navigate({ to: "/login" });
     } catch (err) {

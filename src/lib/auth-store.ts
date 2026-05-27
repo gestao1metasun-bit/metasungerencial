@@ -186,6 +186,10 @@ export async function updatePassword(password: string) {
   if (error) throw error;
 }
 
+export async function clearAuthSession() {
+  await supabase.auth.signOut();
+}
+
 export async function signOut() {
   await supabase.auth.signOut();
 }

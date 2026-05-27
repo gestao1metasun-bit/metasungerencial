@@ -57,13 +57,14 @@ export type MacroModule = {
 
 // ── Macro módulos (D6.E — Painéis centralizados, separados da operação) ──
 export const MACRO_MODULES: MacroModule[] = [
-  { key: "paineis",       label: "Painéis",       to: "/paineis",       icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/analises", "/analytics", "/relatorios", "/tarefas"], accessKey: "dashboard" },
+  { key: "paineis",       label: "Painéis",       to: "/paineis",       icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/tarefas"], accessKey: "dashboard" },
   { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/financiamentos"], accessKey: "comercial" },
   { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
   { key: "engenharia",    label: "Engenharia",    to: "/engenharia",    icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
-  { key: "estoque",       label: "Estoque",       to: "/estoque",       icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
+  { key: "estoque",       label: "Estoque",       to: "/estoque",       icon: Package,         matches: ["/estoque", "/estoque-fundacao", "/solicitacoes-material"], accessKey: "estoque" },
   { key: "aprovacoes",    label: "Aprovações",    to: "/aprovacoes",    icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
   { key: "posvenda",      label: "Pós-venda",     to: "/posvenda",      icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
+  { key: "analytics",     label: "Analytics",     to: "/analises",      icon: LineChart,       matches: ["/analises", "/analytics", "/relatorios"], accessKey: "analytics" },
   { key: "configuracoes", label: "Configurações", to: "/configuracoes", icon: Settings,        matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
 ];
 

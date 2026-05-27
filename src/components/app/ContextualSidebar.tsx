@@ -25,17 +25,17 @@ export function ContextualSidebar() {
     .sort((a, b) => a.ordem - b.ordem);
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-gradient-sidebar text-sidebar-foreground">
-      <div className="border-b border-sidebar-border/70 px-4 py-3">
-        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold/80">
+    <aside className="flex w-52 shrink-0 flex-col border-r border-sidebar-border bg-gradient-sidebar text-sidebar-foreground">
+      <div className="border-b border-sidebar-border/70 px-3 py-2">
+        <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-gold/80">
           Contexto
         </div>
-        <div className="mt-0.5 text-sm font-semibold tracking-tight text-sidebar-foreground">
+        <div className="mt-0.5 text-[12px] font-semibold tracking-tight text-sidebar-foreground truncate">
           {macro?.label ?? "—"}
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
         {/* Atalhos do módulo */}
         <Section title="Atalhos do módulo" icon={<Zap className="h-3 w-3" />}>
           {atalhosModulo.length === 0 ? (

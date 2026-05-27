@@ -1,108 +1,120 @@
-# Onda D — Financeiro Real + Estoque (Fundação)
+## D12 — Analytics Enterprise
 
-Escopo grande. Vou executar em **sub-ondas sequenciais**, cada uma com migração + UI mínima + validação estrutural antes da próxima. Mantenho a diretriz: **consistência operacional > estética**, **sem mock**, **sem fallback silencioso**, **tudo via Supabase + RLS + auditoria**.
+Refundar `/analytics` como **central executiva corporativa**, com 8 setores, KPIs oficiais reconciliados, drill-down em todo "olhinho" e padrão visual já fechado em D6 (ribbon + toolbar + grid denso + full width). Zero mock.
 
----
+### Princípios (não-negociáveis)
 
-## Sub-onda D1 — Núcleo Financeiro (Schema)
+1. **Fonte única.** Todo KPI vem de view/RPC oficial em Supabase (`v_*`, `kpi_*`, `vw_*`). Quando a view não existe → criar via migration ANTES da UI.
+2. **Drill-down obrigatório.** Cada KPI tem ícone 👁 que abre grid denso com a base por trás (não modal genérico, e sim `EnterpriseDataGrid` com filtros pré-aplicados).
+3. **Reconciliação visível.** Onde houver mais de uma fonte (ex.: contratos × PVs × títulos), mostrar badge de conformidade (✅ reconciliado / ⚠ divergente) ligado ao `v_hardening_report` / view de reconciliação oficial.
+4. **Padrão D6.** Ribbon na rota, `EnterpriseToolbar` no topo de cada setor, `KPICard` denso (h ≤ 96px), grid abaixo. Sem dashboards SaaS gigantes.
+5. **RLS respeitada.** Reusar `getMyPermissions` + `useAnalyticsAccess`. Setores aparecem condicionalmente conforme `analytics.amplo`/`analytics.privado`/permissões setoriais.
 
-Migração única criando:
+### Estrutura de rotas
 
-**Tabelas**
-- `centros_resultado` (codigo, nome, tipo, ativo)
-- `contas_financeiras` (codigo, nome, tipo: caixa/banco/cartao, ativo, saldo_inicial)
-- `titulos_financeiros` — campos: `tipo` (receber/pagar), `origem_tipo` (enum CHECK: contrato/projeto/pedido_venda/obra/cliente/fornecedor/aditivo/estoque/manual_controlado), `origem_id uuid NOT NULL`, `cliente_id`, `consultor_id`, `valor_bruto`, `valor_liquido`, `desconto`, `juros`, `multa`, `saldo`, `competencia`, `vencimento`, `status` (PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO), `centro_id`, `conta_id`, `forma_pagamento`, `observacoes`, auditoria padrão.
-- `parcelas_financeiras` (titulo_id, numero, valor, vencimento, saldo, status, recebido_em)
-- `movimentacoes_financeiras` (titulo_id, parcela_id?, tipo: recebimento/baixa/estorno/juros/desconto/multa, valor, data, conta_id, observacao, user_id) — append-only.
+Migrar de uma rota única `/analytics` com 14 tabs para **rotas-irmãs por setor**, espelhando o padrão de `/paineis.*`:
 
-**Constraints críticas**
-- `origem_id NOT NULL` + CHECK que `origem_tipo` é valor válido → **proíbe título órfão**.
-- Trigger `tg_titulo_valida_saldo`: bloqueia movimentação que ultrapasse `saldo`.
-- Trigger `tg_titulo_atualiza_saldo`: a cada movimentação recalcula `saldo` e ajusta `status` (PENDENTE → PARCIAL → RECEBIDO).
-- Trigger `tg_titulo_valida_transicao`: state machine (mesma lógica do PV — bloqueio 42501).
-- Trigger `tg_audit_row` + `tg_snapshot_version` + `tg_set_updated_at_generic` em `titulos_financeiros` e `movimentacoes_financeiras`.
-- `is_period_closed` aplicado em UPDATE financeiro.
+```text
+/analytics                    → Diretoria/Geral (visão consolidada)
+/analytics.comercial          → Comercial
+/analytics.financeiro         → Financeiro
+/analytics.financiamentos     → Financiamentos
+/analytics.engenharia         → Engenharia
+/analytics.estoque            → Estoque
+/analytics.aprovacoes         → Aprovações
+/analytics.posvenda           → Pós-venda
+```
 
-**RLS**
-- `titulos_*` SELECT/INSERT/UPDATE: `is_admin(auth.uid()) OR consultor_id = auth.uid()`. DELETE: só admin.
-- `movimentacoes_*` SELECT via título; INSERT autenticado com validação de saldo no trigger; UPDATE/DELETE bloqueado (append-only).
-- `centros_resultado` / `contas_financeiras`: SELECT auth, write admin.
+Ribbon contextual de cada rota com tabs internas (Visão / Operação / Exceções / Rankings / Reconciliação). MacroNav já mostra "Analytics" como módulo único; ribbon faz a navegação setorial.
 
-**RPCs**
-- `gerar_titulos_do_pv(_pv_id, _parcelas jsonb)` SECURITY DEFINER — só PV APROVADO, idempotente, preenche `origem_tipo='pedido_venda'` + `origem_id=pv_id`.
-- `receber_parcela(_parcela_id, _valor, _conta_id, _data, _obs)` — valida saldo, cria movimentação, recalcula via trigger.
-- `cancelar_titulo(_titulo_id, _motivo)` — exige motivo ≥3 chars.
-- `renegociar_titulo(_titulo_id, _novas_parcelas jsonb, _motivo)`.
+### Ondas
 
----
+#### D12.0 — Fundação (esta onda — ENTREGAR JÁ)
+- Criar rotas-irmãs (8 arquivos `analytics.*.tsx`) com layout esqueleto: `PageHeader` + ribbon setorial + `EnterpriseToolbar` + área de KPIs + grid stub.
+- Atualizar `nav-structure.ts` (Analytics aponta para `/analytics` consolidado) e `route-tabs.ts` (ribbon de cada rota).
+- Criar `src/components/app/analytics/AnalyticsKpiStrip.tsx` (faixa densa de KPIs reusável, com prop `onDrillDown`).
+- Criar `src/components/app/analytics/AnalyticsSectorShell.tsx` (shell padrão de setor: toolbar + período + filtros + slot KPIs + slot grid).
+- Hook `useAnalyticsPeriod()` (state em URL search-param `from/to/preset`).
+- Stub de cada setor exibe banner "Em ligação à base oficial — Onda D12.x" até o setor estar pronto, mas estrutura navegável.
 
-## Sub-onda D2 — UI Financeira Mínima
+#### D12.1 — Comercial (próxima onda)
+- Views/RPCs novas (migration): `v_analytics_comercial_kpis` (contratos gerados/assinados/pendentes/cancelados, valor vendido, ticket, kWp, kWh, conversão, tempo médio assinatura) + `v_ranking_vendedores` + `v_funil_comercial`.
+- UI: KPI strip + ranking grid + funil + comparativo mensal (tabela densa, não gráfico).
+- Drill-down: cada KPI abre grid de contratos com filtro pré-aplicado.
 
-- Hook `useTitulosFinanceiros` (lista + CRUD via RPCs).
-- Rota `/financeiro/titulos` com tabela + filtros (status, origem_tipo, vencimento) + botão "Receber" → modal padronizado (Identificação / Financeiro / Operacional / Auditoria).
-- Botão "Gerar títulos" no `PedidoVendaModal` quando status = APROVADO.
-- Link no `AppLayout`.
+#### D12.2 — Financeiro
+- Reusar `v_hardening_report`, `v_titulos_*`, `vw_fluxo_caixa_real`. Adicionar `v_analytics_financeiro_kpis` (AP/AR totais, vencidos, 30/60/90, inadimplência, realizado×previsto).
+- DRE resumido via `v_dre_gerencial` (criar se não existir).
+- Filtros: período, status, CR, natureza, conta. Drill-down → `/financeiro-titulos` com search-params.
 
----
+#### D12.3 — Financiamentos
+- Migration `v_analytics_financiamentos` (total, por banco, por gerente, liberados/pendentes/cancelados, ticket, prazo médio, tempo liberação).
+- Ranking bancos + comparativo BASA × SICREDI × outros.
 
-## Sub-onda D3 — Estoque (Fundação)
+#### D12.4 — Engenharia
+- Reusar `v_obras_metricas_reais`, `use-eng-metricas`. Adicionar custo previsto×realizado por obra, gargalos por equipe, materiais pendentes (via `v_origem_*`).
+- Drill-down: linha → `/engenharia` filtrado.
 
-Migração criando:
+#### D12.5 — Estoque
+- `v_estoque_saldo`, `v_estoque_reservado`, `v_estoque_transito` + curva ABC futura (`v_estoque_curva_abc` migration), divergências de inventário, rastreabilidade.
 
-- `estoque_itens` (codigo, descricao, unidade, categoria, ativo, custo_medio)
-- `estoque_movimentacoes` (item_id, tipo: entrada/saida/ajuste/reserva/liberacao_reserva, quantidade, custo_unit, **origem_tipo** CHECK (obra/pv/projeto/manual_controlado), **origem_id NOT NULL para saídas**, data, user_id, observacao) — append-only.
-- `estoque_reservas` (item_id, obra_id?, pv_id?, projeto_id?, quantidade, status: ATIVA/CONSUMIDA/LIBERADA, criado_em, consumido_em)
-- `estoque_entregas` (obra_id, item_id, quantidade, responsavel, data, observacao, reserva_id?)
+#### D12.6 — Aprovações
+- Sobre `workflow_aprovacoes` + `workflow_aprovacoes_historico`. KPIs: pendentes, SLA vencido, tempo médio, por setor, por aprovador, gargalos.
+- Drill-down → `/aprovacoes` filtrado.
 
-**Views/Funções**
-- `vw_estoque_saldos`: por item retorna `fisico`, `reservado`, `disponivel = fisico - reservado`, `entregue`, `pendente`.
-- Trigger `tg_estoque_valida_origem_saida`: bloqueia saída sem `origem_id` válido.
-- Trigger `tg_estoque_valida_disponivel`: bloqueia reserva > disponível.
+#### D12.7 — Pós-venda
+- Sobre `posvenda_store` + chamados. Volume, SLA, satisfação, recorrências.
 
-**RLS** análogo a PV (admin OR criador/consultor via obra).
+#### D12.8 — Diretoria/Geral (consolidação)
+- `/analytics` raiz agrega o melhor de cada setor: faturamento, contratos, financeiro snapshot, engenharia snapshot, estoque snapshot, financiamentos snapshot, **alertas críticos** (de `v_hardening_report`), **reconciliações** (de view oficial), saúde operacional ERP (semáforo por setor).
+- Card de "Saúde do ERP" com 8 indicadores (1 por setor) mostrando ✅/⚠/❌.
 
-**Bridge Engenharia ↔ Estoque**
-- RPC `reservar_material_obra(_obra_id, _item_id, _qtd)`.
-- RPC `entregar_material_obra(_reserva_id, _qtd, _responsavel, _obs)` → cria `estoque_entregas` + movimentação SAIDA com `origem_tipo='obra'`/`origem_id=obra_id` + atualiza reserva.
+### Migração suave
 
----
+A rota atual `/analytics` mantém suas tabs de KPIs financeiros gerenciais (EBITDA/ROI/etc.) DENTRO da view Diretoria/Geral via tab "KPIs Financeiros" — nada de quebrar o que já existe. O conteúdo migra progressivamente conforme as ondas D12.1+ entregam views reconciliadas.
 
-## Sub-onda D4 — UI Estoque Mínima
+### Componentes novos (D12.0)
 
-- Rota `/estoque/itens` (lista + saldos da view).
-- Rota `/estoque/movimentacoes` (histórico append-only).
-- Aba "Materiais" no modal de Obra (reserva + entrega).
+```text
+src/components/app/analytics/
+  AnalyticsSectorShell.tsx    # shell padrão de setor
+  AnalyticsKpiStrip.tsx       # faixa horizontal densa de KPIs com 👁
+  AnalyticsDrillSheet.tsx     # sheet right com grid de drill-down
+  AnalyticsPeriodPicker.tsx   # picker de período (preset/from/to) integrado a URL
+  AnalyticsHealthCard.tsx     # semáforo de saúde por setor (Diretoria)
+src/hooks/
+  use-analytics-period.ts
+  use-analytics-sector-kpis.ts  # wrapper genérico por setor
+src/lib/repositories/
+  analytics-repo.ts             # facade tipado para v_analytics_*
+```
 
----
+### Rotas novas (D12.0)
 
-## Sub-onda D5 — Preparação CMV
+```text
+src/routes/analytics.comercial.tsx
+src/routes/analytics.financeiro.tsx
+src/routes/analytics.financiamentos.tsx
+src/routes/analytics.engenharia.tsx
+src/routes/analytics.estoque.tsx
+src/routes/analytics.aprovacoes.tsx
+src/routes/analytics.posvenda.tsx
+```
 
-- View `vw_custo_obra` (soma movimentações SAIDA × custo_unit por obra_id).
-- View `vw_custo_pv` (via obra vinculada ao PV).
-- View `vw_custo_contrato` (via PVs do contrato).
-- Sem UI nova nesta sub-onda — apenas estrutura para próximas ondas.
+A rota raiz `/analytics` é reescrita para virar Diretoria/Geral (mantendo tabs financeiras como subseção). Ribbon de cada uma definido em `route-tabs.ts`.
 
----
+### Critério de aceite por onda
 
-## Fora de escopo (explicitamente)
+- Onda D12.0: navegação 8 setores funcionando, layout enterprise consistente, stubs honestos ("Aguardando ligação D12.x"), zero quebra do `/analytics` atual.
+- Ondas D12.1+: cada setor entra apenas quando suas views/RPCs estiverem criadas, RLS validada e drill-down ligado. Nada de KPI sem fonte.
 
-- Módulo fiscal, contabilidade completa, BI avançado, WMS, MRP, integrações bancárias, conciliação OFX, NFe — ficam para ondas futuras.
-- Refino visual, animações, dashboards — standby (regra existente).
+### Fora de escopo (D12)
 
----
+- Gráficos elaborados (continuamos tabela densa > chart bonito, alinhado a D6).
+- Reconciliação NOVA (D12 consome `v_hardening_report` existente; expandir reconciliação é D7).
+- Permissões granulares novas por setor (reusar `analytics.amplo`/`analytics.privado` e perms setoriais já existentes).
+- Export PDF executivo (entra em D12.9 se solicitado).
 
-## Ordem de execução proposta
+### Próximo passo após aprovação do plano
 
-1. **Agora**: migração D1 (schema financeiro + triggers + RPCs + RLS + GRANTs).
-2. Após aprovação da migração: UI D2 + hook + link.
-3. **Checkpoint operacional D1+D2**: validar geração de títulos a partir de PV aprovado no app publicado, recebimento de parcela, bloqueio de saldo, auditoria.
-4. Migração D3 (estoque) → UI D4 → checkpoint.
-5. Migração D5 (views CMV) → fim da Onda D.
-
-Cada migração será submetida separadamente (uma por vez, sem paralelizar com código) para permitir validação incremental e rollback seguro.
-
----
-
-## Confirmação necessária
-
-Confirma esta divisão em 5 sub-ondas sequenciais? Posso começar imediatamente com a **migração D1 (núcleo financeiro)** assim que aprovar.
+Implementar **D12.0** em um único turno: 8 rotas + 5 componentes shell + hook de período + atualização de `nav-structure`/`route-tabs`. Sem tocar em migration ainda (D12.1 abre a primeira migration de view oficial).

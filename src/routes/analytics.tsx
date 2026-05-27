@@ -47,6 +47,7 @@ import {
   DEFAULT_BANDS,
 } from "@/lib/analytics-kpis";
 import { ParametrosGerenciaisTab } from "@/components/app/analytics/ParametrosGerenciaisTab";
+import { AnalyticsSectorTabs } from "@/components/app/analytics/AnalyticsSectorShell";
 import { KpiServidorBanner } from "@/components/app/analytics/KpiServidorBanner";
 import { Lock, ShieldCheck } from "lucide-react";
 
@@ -141,9 +142,11 @@ function AnalyticsPage() {
 
   return (
     <>
+      <AnalyticsSectorTabs />
       <PageHeader
-        title="Analytics"
-        subtitle={isPrivado ? "Camada executiva — CFO / Controladoria / Diretoria" : "Indicadores gerenciais — gerentes & supervisores"}
+        title="Analytics · Diretoria / Geral"
+        eyebrow="Analytics Enterprise"
+        subtitle={isPrivado ? "Visão consolidada — CFO / Controladoria / Diretoria" : "Visão consolidada — gerentes & supervisores"}
       />
       <div className="mb-4 flex items-center gap-2">
         {isPrivado ? (

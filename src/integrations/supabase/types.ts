@@ -1202,6 +1202,63 @@ export type Database = {
         }
         Relationships: []
       }
+      governance_matrix: {
+        Row: {
+          acao: string
+          audita: boolean
+          created_at: string
+          criticidade: string
+          entidade: string
+          id: string
+          modulo: string
+          observacao: string | null
+          perfil: string
+          permissao: string | null
+          requer_motivo: boolean
+          requer_workflow: boolean
+          sla_horas: number | null
+          suporta_estorno: boolean
+          suporta_lote: boolean
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          audita?: boolean
+          created_at?: string
+          criticidade?: string
+          entidade: string
+          id?: string
+          modulo: string
+          observacao?: string | null
+          perfil?: string
+          permissao?: string | null
+          requer_motivo?: boolean
+          requer_workflow?: boolean
+          sla_horas?: number | null
+          suporta_estorno?: boolean
+          suporta_lote?: boolean
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          audita?: boolean
+          created_at?: string
+          criticidade?: string
+          entidade?: string
+          id?: string
+          modulo?: string
+          observacao?: string | null
+          perfil?: string
+          permissao?: string | null
+          requer_motivo?: boolean
+          requer_workflow?: boolean
+          sla_horas?: number | null
+          suporta_estorno?: boolean
+          suporta_lote?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -3672,6 +3729,120 @@ export type Database = {
           saldo_fisico: number | null
           saldo_reservado: number | null
           unidade: string | null
+        }
+        Relationships: []
+      }
+      v_governance_gaps: {
+        Row: {
+          acao: string | null
+          criticidade: string | null
+          entidade: string | null
+          gap_auditoria: boolean | null
+          gap_motivo: boolean | null
+          gap_sla: boolean | null
+          gap_workflow: boolean | null
+          modulo: string | null
+          perfil: string | null
+          total_gaps: number | null
+        }
+        Insert: {
+          acao?: string | null
+          criticidade?: string | null
+          entidade?: string | null
+          gap_auditoria?: never
+          gap_motivo?: never
+          gap_sla?: never
+          gap_workflow?: never
+          modulo?: string | null
+          perfil?: string | null
+          total_gaps?: never
+        }
+        Update: {
+          acao?: string | null
+          criticidade?: string | null
+          entidade?: string | null
+          gap_auditoria?: never
+          gap_motivo?: never
+          gap_sla?: never
+          gap_workflow?: never
+          modulo?: string | null
+          perfil?: string | null
+          total_gaps?: never
+        }
+        Relationships: []
+      }
+      v_governance_matrix_full: {
+        Row: {
+          acao: string | null
+          audita: boolean | null
+          criticidade: string | null
+          entidade: string | null
+          gap_auditoria: boolean | null
+          gap_motivo: boolean | null
+          gap_sla: boolean | null
+          gap_workflow: boolean | null
+          modulo: string | null
+          observacao: string | null
+          perfil: string | null
+          permissao: string | null
+          requer_motivo: boolean | null
+          requer_workflow: boolean | null
+          sla_horas: number | null
+          suporta_estorno: boolean | null
+          suporta_lote: boolean | null
+        }
+        Insert: {
+          acao?: string | null
+          audita?: boolean | null
+          criticidade?: string | null
+          entidade?: string | null
+          gap_auditoria?: never
+          gap_motivo?: never
+          gap_sla?: never
+          gap_workflow?: never
+          modulo?: string | null
+          observacao?: string | null
+          perfil?: string | null
+          permissao?: string | null
+          requer_motivo?: boolean | null
+          requer_workflow?: boolean | null
+          sla_horas?: number | null
+          suporta_estorno?: boolean | null
+          suporta_lote?: boolean | null
+        }
+        Update: {
+          acao?: string | null
+          audita?: boolean | null
+          criticidade?: string | null
+          entidade?: string | null
+          gap_auditoria?: never
+          gap_motivo?: never
+          gap_sla?: never
+          gap_workflow?: never
+          modulo?: string | null
+          observacao?: string | null
+          perfil?: string | null
+          permissao?: string | null
+          requer_motivo?: boolean | null
+          requer_workflow?: boolean | null
+          sla_horas?: number | null
+          suporta_estorno?: boolean | null
+          suporta_lote?: boolean | null
+        }
+        Relationships: []
+      }
+      v_governance_resumo: {
+        Row: {
+          altas: number | null
+          com_auditoria: number | null
+          com_estorno: number | null
+          com_lote: number | null
+          com_motivo: number | null
+          com_sla: number | null
+          com_workflow: number | null
+          criticas: number | null
+          modulo: string | null
+          total_acoes: number | null
         }
         Relationships: []
       }

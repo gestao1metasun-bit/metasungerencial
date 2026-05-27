@@ -114,11 +114,12 @@ const GROUP_META: Record<string, { icon: Icon; tone: "neutral" | "ok" | "warn" |
   "Geral":      { icon: Table2,      tone: "neutral" },
 };
 
-const TONE_CLASSES: Record<string, string> = {
-  neutral: "text-foreground/70",
-  ok:      "text-emerald-700",
-  warn:    "text-amber-700",
-  muted:   "text-muted-foreground",
+// Tom da faixa inferior (label centralizado) por grupo.
+const GROUP_STRIP_CLASS: Record<string, string> = {
+  neutral: "text-meta-bar-active/80",
+  ok:      "text-orange-600/85",
+  warn:    "text-meta-bar/85",
+  muted:   "text-slate-600/80",
 };
 
 export type RibbonProps = {
@@ -144,43 +145,46 @@ export function Ribbon({ routePath, tabs, activeValue, defaultValue }: RibbonPro
 
   const effectiveActive = activeValue || defaultValue;
 
+  // D6.13 — Faixas sólidas: cada grupo é um bloco com botões em linha e
+  // tira inferior h-4 carregando o nome do agrupamento centralizado.
   return (
-    <div className="border-t border-border/60 bg-secondary/30">
-      <div className="flex items-stretch gap-0 overflow-x-auto px-3 py-1.5">
+    <div className="bg-card border-b border-border shadow-sm">
+      <div className="flex items-stretch overflow-x-auto">
         {groups.map((g, gi) => {
           const meta = GROUP_META[g.name] ?? GROUP_META.Geral;
-          const GIcon = meta.icon;
+          const stripClass = GROUP_STRIP_CLASS[meta.tone];
           return (
-            <div key={`${g.name}-${gi}`} className="flex items-stretch">
-              {gi > 0 && <div className="mx-1 w-px self-stretch bg-border/70" />}
-              <div className="flex flex-col items-stretch px-2 py-0.5 min-w-0">
-                <div className="flex flex-wrap items-start gap-0.5">
-                  {g.tabs.map((t) => {
-                    const Icon = iconFor(t);
-                    const isActive = effectiveActive === t.value;
-                    return (
-                      <Link
-                        key={t.value}
-                        to={routePath}
-                        hash={`tab=${t.value}`}
-                        className={`group inline-flex flex-col items-center gap-0.5 rounded px-2 py-1 min-w-[58px] transition ${
-                          isActive
-                            ? "bg-gold/15 text-gold"
-                            : "text-foreground/70 hover:bg-accent/60 hover:text-foreground"
-                        }`}
-                      >
-                        <Icon className={`h-4 w-4 ${isActive ? "text-gold" : "text-muted-foreground group-hover:text-foreground"}`} />
-                        <span className={`text-[10.5px] leading-tight text-center whitespace-nowrap ${isActive ? "font-semibold" : ""}`}>
-                          {t.label}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-                <div className={`mt-0.5 flex items-center gap-1 px-1 text-[9px] font-bold uppercase tracking-[0.16em] ${TONE_CLASSES[meta.tone]}`}>
-                  <GIcon className="h-2.5 w-2.5" />
+            <div
+              key={`${g.name}-${gi}`}
+              className={`flex flex-col min-w-max ${gi < groups.length - 1 ? "border-r border-border/70" : ""}`}
+            >
+              <div className="flex flex-1 items-center px-3 py-1 gap-1">
+                {g.tabs.map((t) => {
+                  const Icon = iconFor(t);
+                  const isActive = effectiveActive === t.value;
+                  return (
+                    <Link
+                      key={t.value}
+                      to={routePath}
+                      hash={`tab=${t.value}`}
+                      className={`group inline-flex flex-col items-center justify-center gap-0.5 rounded-[0.375rem] px-2.5 h-14 min-w-[64px] transition-colors ${
+                        isActive
+                          ? "bg-meta-bar/10 text-meta-bar"
+                          : "text-foreground/75 hover:bg-accent/60 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className={`h-[18px] w-[18px] ${isActive ? "text-meta-bar" : "text-muted-foreground group-hover:text-foreground"}`} />
+                      <span className={`text-[10px] leading-tight text-center whitespace-nowrap ${isActive ? "font-bold" : "font-semibold"}`}>
+                        {t.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+              <div className="h-4 bg-muted/40 border-t border-border/60 flex items-center justify-center">
+                <span className={`text-[9px] font-bold tracking-[0.18em] uppercase ${stripClass}`}>
                   {g.name}
-                </div>
+                </span>
               </div>
             </div>
           );

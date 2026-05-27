@@ -197,7 +197,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
     | "baixado_hoje" | "baixado_semana" | "baixado_mes"
     | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
     | "conciliados" | "nao_conciliados"
-    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados"
+    | "com_anexo" | "sem_anexo";
   const [chips, setChips] = useState<Set<ChipKey>>(new Set());
   const toggleChip = (k: ChipKey) => setChips((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const showEncargos = preset !== "diretoria";

@@ -22,9 +22,9 @@ export function TopNav() {
   const ribbonRoute = ROUTE_TABS[path] ? path : (active?.to ?? path);
 
   return (
-    <div className="border-b border-border bg-card/80 backdrop-blur">
-      {/* Linha 1: macro módulos */}
-      <div className="flex items-center gap-1 overflow-x-auto px-4 py-1.5">
+    <div className="sticky top-11 z-10 border-b border-border bg-card/95 backdrop-blur shadow-sm">
+      {/* Linha 1: macro módulos — sempre visíveis (padrão TOTVS RM/Sankhya/SAP) */}
+      <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1">
         {visible.map((m) => {
           const isActive = active?.key === m.key;
           const Icon = m.icon;
@@ -32,10 +32,10 @@ export function TopNav() {
             <Link
               key={m.key}
               to={m.to}
-              className={`group inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition ${
+              className={`group inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap transition border-b-2 ${
                 isActive
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-foreground/70 hover:text-foreground hover:bg-accent/60 border border-transparent"
+                  ? "border-primary bg-primary/8 text-primary"
+                  : "border-transparent text-foreground/75 hover:text-foreground hover:bg-accent/50"
               }`}
             >
               <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-gold"}`} />

@@ -161,21 +161,12 @@ function EstoquePage() {
 
 function DashboardTab() {
   const st = useEstoqueState();
-  const obrasAtivas = st.necessidades.filter((n) => !n.arquivada);
-  const selecionadas = obrasAtivas.filter((n) => n.selecionadaCompra);
   const linhas = calcularNecessidadeCompra(st);
-  const aComprarTotal = linhas.reduce((s, l) => s + l.aComprar, 0);
-  const obrasMatOK = obrasAtivas.filter(isMaterialEntregueTotal).length;
   const sku = st.itens.length;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <StatCard label="Obras no fluxo" value={String(obrasAtivas.length)} hint="Em cronograma/elaboração" />
-        <StatCard label="Selecionadas p/ compra" value={String(selecionadas.length)} hint="Entram no cálculo" />
-        <StatCard label="Itens a comprar" value={String(aComprarTotal)} hint="Soma de unidades" />
-        <StatCard label="Obras com material entregue" value={`${obrasMatOK}/${obrasAtivas.length}`} hint="Entrega total concluída" />
-      </div>
+    <div className="space-y-2">
+
       <Card className="p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <ShoppingCart className="h-4 w-4 text-amber-600" /> Próximas compras (consolidado)

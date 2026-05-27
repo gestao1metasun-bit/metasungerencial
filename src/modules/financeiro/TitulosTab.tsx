@@ -869,6 +869,44 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               );
             })}
           </TableBody>
+          <TableFooter className="bg-gradient-to-b from-slate-50 to-slate-100 border-t-2 border-slate-300">
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="py-2 text-[12px] font-semibold text-slate-700">
+                <span className="inline-flex items-center gap-2">
+                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{lista.length}</span>
+                  {lista.length === 1 ? "registro" : "registros"}
+                  {selecionados.size > 0 && (
+                    <span className="text-emerald-700">· {selecionados.size} selecionado{selecionados.size > 1 ? "s" : ""}</span>
+                  )}
+                </span>
+              </TableCell>
+              <TableCell colSpan={2} className="text-right text-[11px] uppercase tracking-wider text-slate-500">
+                Totais →
+              </TableCell>
+              <TableCell className="text-right font-mono text-[13px] font-bold tabular-nums text-slate-800">
+                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
+              </TableCell>
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + calcEncargos(t, parametrosFin).jurosSugerido, 0))}
+                </TableCell>
+              )}
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + calcEncargos(t, parametrosFin).multaSugerida, 0))}
+                </TableCell>
+              )}
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-emerald-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.descontoConcedido ?? 0), 0))}
+                </TableCell>
+              )}
+              <TableCell className="text-right font-mono text-[14px] font-bold tabular-nums text-emerald-800">
+                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.saldo ?? 0), 0))}
+              </TableCell>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
         </Table>
       </Card>
 

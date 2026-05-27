@@ -2279,6 +2279,105 @@ export type Database = {
         }
         Relationships: []
       }
+      record_flags: {
+        Row: {
+          cor: Database["public"]["Enums"]["flag_cor"]
+          created_at: string
+          entidade: string
+          escopo: Database["public"]["Enums"]["flag_escopo"]
+          id: string
+          observacao: string | null
+          prioridade: number
+          registro_id: string
+          resolvido_em: string | null
+          rotulo: string | null
+          setor: string | null
+          sla_em: string | null
+          updated_at: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          cor: Database["public"]["Enums"]["flag_cor"]
+          created_at?: string
+          entidade: string
+          escopo?: Database["public"]["Enums"]["flag_escopo"]
+          id?: string
+          observacao?: string | null
+          prioridade?: number
+          registro_id: string
+          resolvido_em?: string | null
+          rotulo?: string | null
+          setor?: string | null
+          sla_em?: string | null
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Update: {
+          cor?: Database["public"]["Enums"]["flag_cor"]
+          created_at?: string
+          entidade?: string
+          escopo?: Database["public"]["Enums"]["flag_escopo"]
+          id?: string
+          observacao?: string | null
+          prioridade?: number
+          registro_id?: string
+          resolvido_em?: string | null
+          rotulo?: string | null
+          setor?: string | null
+          sla_em?: string | null
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      record_flags_historico: {
+        Row: {
+          acao: string
+          cor_anterior: Database["public"]["Enums"]["flag_cor"] | null
+          cor_nova: Database["public"]["Enums"]["flag_cor"] | null
+          created_at: string
+          entidade: string
+          flag_id: string | null
+          id: number
+          registro_id: string
+          snapshot_new: Json | null
+          snapshot_old: Json | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          cor_anterior?: Database["public"]["Enums"]["flag_cor"] | null
+          cor_nova?: Database["public"]["Enums"]["flag_cor"] | null
+          created_at?: string
+          entidade: string
+          flag_id?: string | null
+          id?: number
+          registro_id: string
+          snapshot_new?: Json | null
+          snapshot_old?: Json | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          cor_anterior?: Database["public"]["Enums"]["flag_cor"] | null
+          cor_nova?: Database["public"]["Enums"]["flag_cor"] | null
+          created_at?: string
+          entidade?: string
+          flag_id?: string | null
+          id?: number
+          registro_id?: string
+          snapshot_new?: Json | null
+          snapshot_old?: Json | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           created_at: string
@@ -3880,6 +3979,102 @@ export type Database = {
         }
         Relationships: []
       }
+      v_record_flags_count: {
+        Row: {
+          entidade: string | null
+          prioridade_max: number | null
+          proximo_sla: string | null
+          qt_amarelo: number | null
+          qt_azul: number | null
+          qt_cinza: number | null
+          qt_roxo: number | null
+          qt_verde: number | null
+          qt_vermelho: number | null
+          registro_id: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      v_record_flags_por_setor: {
+        Row: {
+          abertas: number | null
+          cor: Database["public"]["Enums"]["flag_cor"] | null
+          entidade: string | null
+          setor: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      v_record_flags_por_usuario: {
+        Row: {
+          abertas: number | null
+          cor: Database["public"]["Enums"]["flag_cor"] | null
+          entidade: string | null
+          total: number | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_record_flags_resumo_modulo: {
+        Row: {
+          abertas: number | null
+          cor: Database["public"]["Enums"]["flag_cor"] | null
+          entidade: string | null
+          resolvidas: number | null
+          sla_estourado: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      v_record_flags_sla: {
+        Row: {
+          cor: Database["public"]["Enums"]["flag_cor"] | null
+          created_at: string | null
+          entidade: string | null
+          horas_para_sla: number | null
+          id: string | null
+          prioridade: number | null
+          registro_id: string | null
+          rotulo: string | null
+          setor: string | null
+          sla_em: string | null
+          sla_status: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cor?: Database["public"]["Enums"]["flag_cor"] | null
+          created_at?: string | null
+          entidade?: string | null
+          horas_para_sla?: never
+          id?: string | null
+          prioridade?: number | null
+          registro_id?: string | null
+          rotulo?: string | null
+          setor?: string | null
+          sla_em?: string | null
+          sla_status?: never
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cor?: Database["public"]["Enums"]["flag_cor"] | null
+          created_at?: string | null
+          entidade?: string | null
+          horas_para_sla?: never
+          id?: string | null
+          prioridade?: number | null
+          registro_id?: string | null
+          rotulo?: string | null
+          setor?: string | null
+          sla_em?: string | null
+          sla_status?: never
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       v_saldo_operacional_obra: {
         Row: {
           codigo: string | null
@@ -3995,6 +4190,37 @@ export type Database = {
       estoque_saldo_disponivel: {
         Args: { _produto_id: string }
         Returns: number
+      }
+      flag_clear: {
+        Args: { _entidade: string; _registro_id: string }
+        Returns: number
+      }
+      flag_resolve: {
+        Args: { _flag_id: string; _observacao?: string }
+        Returns: string
+      }
+      flag_set: {
+        Args: {
+          _cor: Database["public"]["Enums"]["flag_cor"]
+          _entidade: string
+          _escopo?: Database["public"]["Enums"]["flag_escopo"]
+          _observacao?: string
+          _prioridade?: number
+          _registro_id: string
+          _rotulo?: string
+          _setor?: string
+          _sla_em?: string
+        }
+        Returns: string
+      }
+      flag_toggle: {
+        Args: {
+          _cor: Database["public"]["Enums"]["flag_cor"]
+          _entidade: string
+          _registro_id: string
+          _rotulo?: string
+        }
+        Returns: string
       }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
@@ -4242,6 +4468,8 @@ export type Database = {
         | "workflow.aprovar.diretoria"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
+      flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
+      flag_escopo: "PESSOAL" | "EQUIPE" | "GLOBAL"
       ordem_compra_status:
         | "COTACAO"
         | "AGUARDANDO_APROVACAO_FIN"
@@ -4441,6 +4669,8 @@ export const Constants = {
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
+      flag_cor: ["VERMELHO", "AMARELO", "VERDE", "AZUL", "ROXO", "CINZA"],
+      flag_escopo: ["PESSOAL", "EQUIPE", "GLOBAL"],
       ordem_compra_status: [
         "COTACAO",
         "AGUARDANDO_APROVACAO_FIN",

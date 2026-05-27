@@ -19,39 +19,27 @@ import {
 } from "@/hooks/useTitulosFinanceiros";
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
 import { PageHeader } from "@/components/app/PageHeader";
-import { StatCard } from "@/components/app/StatCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Wallet, Ban, Receipt, AlertCircle } from "lucide-react";
+import { Eye, Ban } from "lucide-react";
 import {
   EnterpriseDataGrid,
   exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
+import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/financeiro-titulos")({

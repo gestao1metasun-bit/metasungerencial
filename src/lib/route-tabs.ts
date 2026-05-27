@@ -106,6 +106,14 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "indicadores", label: "Indicadores", group: "Saúde dos Dados" },
     ],
   },
+  "/paineis/governanca": {
+    default: "matriz",
+    tabs: [
+      { value: "matriz", label: "Matriz", group: "Governança" },
+      { value: "gaps", label: "Lacunas", group: "Governança" },
+      { value: "resumo", label: "Resumo", group: "Governança" },
+    ],
+  },
 
   // ── Macro módulo DASHBOARDS (D6.E — alias legado, mesmas abas) ────────
   "/dashboards": {

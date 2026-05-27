@@ -539,6 +539,27 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             onAction={(a) => handleAction(a)}
             onProcess={(k) => handleProcess(k)}
             onFilter={() => toast.info("Filtros avançados disponíveis no painel lateral.")}
+            extraRight={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm p-0 text-slate-700 hover:bg-slate-100" title="Mais opções">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      try {
+                        const n = await repo.importarPrevisoesDoLegado(readLancamentos());
+                        toast.success(n > 0 ? `${n} previsões importadas como títulos.` : "Nada novo para importar.");
+                      } catch (e: any) { toast.error(e?.message ?? "Falha ao importar previsões."); }
+                    }}
+                  >
+                    Importar previsões do fluxo de caixa
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
           />
         );
       })()}

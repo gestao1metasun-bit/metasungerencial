@@ -286,6 +286,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             case "renegociados": ok = renegociado; break;
             case "com_obra": ok = !!t.obraId; break;
             case "rateados": ok = rateios.length > 0; break;
+            case "com_anexo": ok = (t.anexos?.length ?? 0) > 0; break;
+            case "sem_anexo": ok = (t.anexos?.length ?? 0) === 0; break;
           }
           if (!ok) return false;
         }

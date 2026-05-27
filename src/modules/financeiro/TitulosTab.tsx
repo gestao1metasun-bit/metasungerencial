@@ -1120,6 +1120,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 </TableCell>
 
                 <TableCell><StatusPill s={t.status} renegociado={t.statusRenegociacao === "renegociado"} /></TableCell>
+                {extraColList.map((k) => (
+                  <TableCell key={k} className={`${COL_DEFS[k].width ?? ""} ${COL_DEFS[k].align === "right" ? "text-right" : ""}`.trim()}>
+                    {COL_DEFS[k].render(t)}
+                  </TableCell>
+                ))}
               </TableRow>
               );
             })}
@@ -1128,10 +1133,17 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={4} className="py-2 text-[12px] font-semibold text-slate-700">
                 <span className="inline-flex items-center gap-2">
-                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{lista.length}</span>
-                  {lista.length === 1 ? "registro" : "registros"}
+                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{linhasRodape.length}</span>
+                  {linhasRodape.length === 1 ? "registro" : "registros"}
                   {selecionados.size > 0 && (
-                    <span className="text-emerald-700">· {selecionados.size} selecionado{selecionados.size > 1 ? "s" : ""}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSomaSelecao((v) => !v)}
+                      className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${somaSelecao ? "border-emerald-600 bg-emerald-600 text-white" : "border-emerald-600 text-emerald-700 hover:bg-emerald-50"}`}
+                      title="Alternar entre Σ Total filtrado e Σ Seleção"
+                    >
+                      Σ {somaSelecao ? "Seleção" : "Total"} · {selecionados.size} sel.
+                    </button>
                   )}
                 </span>
               </TableCell>
@@ -1139,27 +1151,35 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 Totais →
               </TableCell>
               <TableCell className="text-right font-mono text-[13px] font-bold tabular-nums text-slate-800">
-                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
+                {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
               </TableCell>
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-emerald-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.desconto ?? 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.desconto ?? 0), 0))}
                 </TableCell>
               )}
               <TableCell className="text-right font-mono text-[14px] font-bold tabular-nums text-emerald-800">
-                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.saldo ?? 0), 0))}
+                {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.saldo ?? 0), 0))}
               </TableCell>
               <TableCell />
+              {extraColList.map((k) => {
+                const total = COL_DEFS[k].total?.(linhasRodape);
+                return (
+                  <TableCell key={k} className={`text-right font-mono text-[12px] tabular-nums text-slate-700 ${COL_DEFS[k].width ?? ""}`.trim()}>
+                    {total ?? ""}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableFooter>
         </Table>

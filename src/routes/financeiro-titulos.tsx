@@ -576,3 +576,29 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function Sep() {
+  return <span className="h-3.5 w-px bg-border" />;
+}
+
+function Totalizador({
+  label, value, tone = "default",
+}: { label: string; value: string; tone?: "default" | "warning" | "danger" | "success" }) {
+  const toneClass: Record<string, string> = {
+    default: "text-foreground",
+    warning: "text-amber-500",
+    danger: "text-destructive",
+    success: "text-success",
+  };
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
+        {label}
+      </span>
+      <span className={`font-mono font-semibold tabular-nums ${toneClass[tone]}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+

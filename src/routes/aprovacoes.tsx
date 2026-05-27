@@ -255,8 +255,15 @@ function AprovacoesPage() {
                   const risco = slaEmRisco(r);
                   const expirada = slaExpirada(r);
                   const isMinha = r.solicitante_id === uid;
+                  const isSelected = r.id === selectedId;
                   return (
-                    <TableRow key={r.id}>
+                    <TableRow
+                      key={r.id}
+                      data-state={isSelected ? "selected" : undefined}
+                      className={isSelected ? "bg-primary/5" : "cursor-pointer"}
+                      onClick={() => setSelectedId(r.id === selectedId ? null : r.id)}
+                    >
+
                       <TableCell className="font-mono text-[11px]">{r.codigo ?? r.id.slice(0, 8)}</TableCell>
                       <TableCell className="text-xs">
                         <Badge variant="outline" className="font-normal">

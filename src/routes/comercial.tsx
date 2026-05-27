@@ -454,6 +454,16 @@ function ContratoAssinadoRow({
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
 
   return (
+    <>
+    <AttachmentDialog
+      open={anexosOpen}
+      onOpenChange={setAnexosOpen}
+      entidade="contratos"
+      entidadeId={c.id}
+      titulo={`Anexos · Contrato ${fmtContratoId(c.id)}`}
+      descricao={c.cliente ? `Cliente: ${c.cliente}` : undefined}
+      categoriaPadrao="contrato"
+    />
     <TableRow>
       <TableCell>
         {anexoInput}

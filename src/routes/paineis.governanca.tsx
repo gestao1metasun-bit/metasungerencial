@@ -97,6 +97,7 @@ function GovernancaPage() {
           <TabsList className="h-8">
             <TabsTrigger value="matriz" className="h-7 px-2 text-xs">Matriz</TabsTrigger>
             <TabsTrigger value="gaps" className="h-7 px-2 text-xs">Lacunas</TabsTrigger>
+            <TabsTrigger value="pendencias" className="h-7 px-2 text-xs">Pendências ({pendencias.data?.length ?? 0})</TabsTrigger>
             <TabsTrigger value="resumo" className="h-7 px-2 text-xs">Resumo</TabsTrigger>
           </TabsList>
         </Tabs>

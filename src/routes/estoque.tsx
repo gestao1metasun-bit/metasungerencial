@@ -4,7 +4,6 @@ import {
   Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,6 +19,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
+import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
   setSelecionadaCompra, marcarEntrega, isMaterialEntregueTotal,
@@ -42,34 +43,115 @@ function fmtDate(iso?: string) {
   try { const d = new Date(iso); return d.toLocaleString("pt-BR"); } catch { return "—"; }
 }
 
+/* ───────── Strip operacional denso (Almoxarifado) ───────── */
+function Chip({ label, value, tone = "default" }: { label: string; value: string | number; tone?: "default" | "warn" | "danger" | "success" }) {
+  const toneClass: Record<string, string> = {
+    default: "text-foreground",
+    warn:    "text-amber-700 dark:text-amber-400",
+    danger:  "text-destructive",
+    success: "text-emerald-700 dark:text-emerald-400",
+  };
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-border/70 bg-background">
+      <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className={`text-[12px] font-semibold tabular-nums ${toneClass[tone]}`}>{value}</span>
+    </div>
+  );
+}
+
+function EstoqueStrip() {
+  const st = useEstoqueState();
+  const transito = useComprasTransito();
+  const obrasAtivas = st.necessidades.filter((n) => !n.arquivada);
+  const selecionadas = obrasAtivas.filter((n) => n.selecionadaCompra);
+  const linhas = calcularNecessidadeCompra(st);
+  const aComprar = linhas.reduce((s, l) => s + l.aComprar, 0);
+  const obrasOK = obrasAtivas.filter(isMaterialEntregueTotal).length;
+  const totalReservado = st.itens.reduce((s, i) => s + (i.qtdReservada || 0), 0);
+  const totalDisponivel = st.itens.reduce((s, i) => s + Math.max(0, (i.qtdAtual || 0) - (i.qtdReservada || 0)), 0);
+  const transitoQtd = transito.reduce((s, c) => s + (c.qtd || 0), 0);
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2 py-1 text-[11.5px]">
+      <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground mr-1">Almoxarifado</span>
+      <Chip label="SKU" value={st.itens.length} />
+      <Chip label="Disp." value={totalDisponivel} tone="success" />
+      <Chip label="Reserv." value={totalReservado} />
+      <Chip label="Trânsito" value={transitoQtd} />
+      <span className="mx-1 h-4 w-px bg-border/70" />
+      <Chip label="Obras ativas" value={obrasAtivas.length} />
+      <Chip label="Sel. compra" value={selecionadas.length} />
+      <Chip label="Mat. entregue" value={`${obrasOK}/${obrasAtivas.length}`} tone="success" />
+      <Chip label="A comprar" value={aComprar} tone={aComprar > 0 ? "warn" : "default"} />
+    </div>
+  );
+}
+
 function EstoquePage() {
   const [tab, setTab] = useTabFromHash("/estoque");
   const isAdmin = useIsAdmin();
-  // Por padrão consideramos o usuário "Estoque" se for admin. Pode evoluir para
-  // checar um perfil específico (ex.: setor === "estoque").
   const podeEntregar = isAdmin;
   const podeAjustarEstoque = isAdmin;
+  const st = useEstoqueState();
+
+  const onExportar = () => {
+    try {
+      exportToCSV("estoque-itens", st.itens, [
+        { key: "id", label: "Código" },
+        { key: "nome", label: "Item" },
+        { key: "categoria", label: "Categoria" },
+        { key: "unidade", label: "Unidade" },
+        { key: "qtdAtual", label: "Qtd" },
+        { key: "qtdReservada", label: "Reservada" },
+        { key: "custoMedio", label: "Custo Médio" },
+      ]);
+      toast.success("Exportado.");
+    } catch { toast.error("Falha ao exportar."); }
+  };
 
   return (
     <>
       <PageHeader
         title="Estoque"
-        subtitle="Necessidades de obra, compras e controle de entregas."
+        subtitle="Almoxarifado · necessidade · compras · reservas · entregas · rastreabilidade."
       />
-      <div className="mb-4"><DashboardReaisOverview /></div>
+
+      <div className="mb-2"><EstoqueStrip /></div>
+
+      <div className="mb-2">
+        <EnterpriseToolbar
+          title="Estoque"
+          onNovo={() => setTab("itens")}
+          onEditar={() => setTab("itens")}
+          onAprovar={() => setTab("obras")}
+          onCancelar={undefined}
+          onExportar={onExportar}
+          onImprimir={() => window.print()}
+          onAtualizar={() => window.location.reload()}
+          onHistorico={() => setTab("entregas")}
+          onAnexos={undefined}
+          selecionado
+          extraActions={
+            <span className="text-[10.5px] text-muted-foreground hidden lg:inline">
+              Reservar · Entregar · Ajustar · Inventário via aba <b>Obras</b> / <b>Itens</b>
+            </span>
+          }
+        />
+      </div>
+
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="hidden">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="obras">Obras</TabsTrigger>
-          <TabsTrigger value="compra">Compra</TabsTrigger>
-          <TabsTrigger value="itens">Itens</TabsTrigger>
-          <TabsTrigger value="entregas">Entregas</TabsTrigger>
+        <TabsList className="h-7 p-0.5 gap-0.5 bg-muted/40 border border-border/70 rounded">
+          <TabsTrigger value="dashboard" className="h-6 px-2 text-[11.5px]">Resumo</TabsTrigger>
+          <TabsTrigger value="obras" className="h-6 px-2 text-[11.5px]">Obras / Reservas</TabsTrigger>
+          <TabsTrigger value="compra" className="h-6 px-2 text-[11.5px]">Compras</TabsTrigger>
+          <TabsTrigger value="itens" className="h-6 px-2 text-[11.5px]">Produtos / Saldos</TabsTrigger>
+          <TabsTrigger value="entregas" className="h-6 px-2 text-[11.5px]">Movimentos / Entregas</TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard" className="mt-5"><DashboardTab /></TabsContent>
-        <TabsContent value="obras" className="mt-5"><ObrasTab podeEntregar={podeEntregar} /></TabsContent>
-        <TabsContent value="compra" className="mt-5"><CompraTab /></TabsContent>
-        <TabsContent value="itens" className="mt-5"><ItensTab podeAjustar={podeAjustarEstoque} /></TabsContent>
-        <TabsContent value="entregas" className="mt-5"><EntregasTab /></TabsContent>
+        <TabsContent value="dashboard" className="mt-2"><DashboardTab /></TabsContent>
+        <TabsContent value="obras" className="mt-2"><ObrasTab podeEntregar={podeEntregar} /></TabsContent>
+        <TabsContent value="compra" className="mt-2"><CompraTab /></TabsContent>
+        <TabsContent value="itens" className="mt-2"><ItensTab podeAjustar={podeAjustarEstoque} /></TabsContent>
+        <TabsContent value="entregas" className="mt-2"><EntregasTab /></TabsContent>
       </Tabs>
     </>
   );

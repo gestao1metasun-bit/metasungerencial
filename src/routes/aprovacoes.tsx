@@ -194,24 +194,10 @@ function AprovacoesPage() {
             title="Fila de aprovações"
             count={filtrados.length}
             toolbar={{
-              onRefresh: () => {
-                void pendentesParaMim.refetch();
-                void minhas.refetch();
-                void historico.refetch();
-              },
-              onExport: () =>
-                exportToCSV(`aprovacoes-${tab}`, filtrados, [
-                  { key: "codigo", label: "Código" },
-                  { key: "tipo_operacao", label: "Tipo", get: (r) => WF_TIPO_LABEL[r.tipo_operacao] ?? r.tipo_operacao },
-                  { key: "titulo", label: "Título" },
-                  { key: "valor", label: "Valor", get: (r) => Number(r.valor ?? 0).toFixed(2) },
-                  { key: "setor", label: "Setor" },
-                  { key: "solicitante_email", label: "Solicitante" },
-                  { key: "status", label: "Status", get: (r) => WF_STATUS_LABEL[r.status] ?? r.status },
-                  { key: "solicitado_em", label: "Solicitado em", get: (r) => fmtData(r.solicitado_em) },
-                  { key: "decidido_em", label: "Decidido em", get: (r) => fmtData(r.decidido_em) },
-                ]),
+              onRefresh: refreshAll,
+              onExport: exportarAtual,
             }}
+
             filters={{
               search: busca,
               onSearchChange: setBusca,

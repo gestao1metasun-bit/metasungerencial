@@ -18,6 +18,7 @@ import {
   type ParcelaFinanceira,
 } from "@/hooks/useTitulosFinanceiros";
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
+import { RenegociarLoteDialog } from "@/components/app/financeiro/RenegociarLoteDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +33,11 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Ban } from "lucide-react";
+import { Eye, Ban, RefreshCcw } from "lucide-react";
 import {
   EnterpriseDataGrid,
   exportToCSV,
@@ -59,6 +63,7 @@ function TitulosPage() {
   const [busca, setBusca] = useState("");
   const [tituloAtivo, setTituloAtivo] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [renegociarOpen, setRenegociarOpen] = useState(false);
 
   const {
     data: titulos = [],
@@ -126,6 +131,24 @@ function TitulosPage() {
     );
     setSelected(new Set());
   };
+
+  // Validação da seleção para renegociação em lote
+  const renegociavel = useMemo(() => {
+    if (selectedRows.length === 0) return { ok: false, motivo: "Selecione ao menos um título." };
+    const clientes = new Set(selectedRows.map((t) => t.cliente_id ?? "__sem__"));
+    if (clientes.size > 1) return { ok: false, motivo: "Selecione títulos de um único cliente." };
+    if (selectedRows.some((t) => !t.cliente_id))
+      return { ok: false, motivo: "Há título(s) sem cliente — não é possível renegociar." };
+    const tipos = new Set(selectedRows.map((t) => t.tipo));
+    if (tipos.size > 1) return { ok: false, motivo: "Não misture contas a receber e a pagar." };
+    const statusOk = new Set(["PENDENTE", "PARCIAL", "ATRASADO"]);
+    const invalido = selectedRows.find((t) => !statusOk.has(t.status));
+    if (invalido)
+      return { ok: false, motivo: `Título ${invalido.codigo ?? invalido.id.slice(0,8)} em status ${invalido.status} não é renegociável.` };
+    const saldo = selectedRows.reduce((s, t) => s + Number(t.saldo || 0), 0);
+    if (saldo <= 0) return { ok: false, motivo: "Saldo total dos selecionados é zero." };
+    return { ok: true, motivo: "" };
+  }, [selectedRows]);
 
   return (
     <div className="space-y-2 p-2 md:p-3">

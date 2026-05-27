@@ -38,6 +38,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-meta-bar: var(--meta-bar);
+  --color-meta-bar-foreground: var(--meta-bar-foreground);
+  --color-meta-bar-hover: var(--meta-bar-hover);
+  --color-meta-bar-active: var(--meta-bar-active);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);

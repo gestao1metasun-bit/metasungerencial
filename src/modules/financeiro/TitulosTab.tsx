@@ -204,6 +204,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const showFiscal = preset === "fiscal";
   const showAuditoria = preset === "auditoria";
   const [criarOpen, setCriarOpen] = useState(false);
+  const [filtrosOpen, setFiltrosOpen] = useState(false);
   const [editar, setEditar] = useState<Titulo | null>(null);
   const [baixar, setBaixar] = useState<Titulo | null>(null);
   const [estornar, setEstornar] = useState<{ titulo: Titulo; movId: string } | null>(null);
@@ -321,93 +322,76 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   return (
     <div className="space-y-4">
       <PeriodoFechadoBanner />
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar descrição, fornecedor, cliente, contrato…"
-          className="h-9 w-72"
+      
+      {/* Sheet de filtros — disparado pelo botão "Filtros: Todos" da toolbar enterprise */}
+      <FiltrosSheet
+        chips={chips}
+        toggleChip={toggleChip}
+        clearChips={() => setChips(new Set())}
+        tipo={tipo}
+        open={filtrosOpen}
+        onOpenChange={setFiltrosOpen}
+        hideTrigger
+      />
+
+      {/* Dialog "Novo título" — aberto pelo botão + da toolbar enterprise */}
+      <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
+        <TituloDialog
+          tipo={tipo}
+          cadastros={cadastros}
+          onSave={async (input, pendingFiles) => {
+            const parcelas: ParcelaPlano[] | undefined = input._parcelas;
+            delete input._parcelas;
+            const criados: Titulo[] = [];
+            try {
+              if (parcelas && parcelas.length > 1) {
+                for (let idx = 0; idx < parcelas.length; idx++) {
+                  const p = parcelas[idx];
+                  const label = `${idx + 1}/${parcelas.length}`;
+                  criados.push(await repo.criarTitulo({
+                    ...input,
+                    tipo, origem: input.origem ?? "manual",
+                    descricao: `${input.descricao} (${label})`,
+                    valorOriginal: p.valor,
+                    vencimento: p.vencimento,
+                    competencia: p.competencia,
+                    parcelaLabel: label,
+                  }));
+                }
+                toast.success(`${parcelas.length} parcelas criadas.`);
+              } else {
+                criados.push(await repo.criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
+                toast.success("Título criado.");
+              }
+            } catch (e: any) {
+              toast.error(e?.message ?? "Falha ao criar título(s).");
+              return;
+            }
+            setCriarOpen(false);
+            const alvo = criados[0];
+            if (alvo) for (const file of pendingFiles) {
+              try {
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("tituloId", alvo.id);
+                const { anexo } = await uploadAnexoFn({ data: fd });
+                await repo.anexar(alvo.id, {
+                  id: anexo.id,
+                  nome: anexo.nome,
+                  mime: anexo.mime,
+                  tamanho: anexo.tamanho,
+                  storagePath: anexo.storage_path,
+                  enviadoEm: anexo.created_at,
+                });
+              } catch (e: any) {
+                toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
+              }
+            }
+            if (alvo) setEditar(alvo);
+          }}
+          onCancel={() => setCriarOpen(false)}
         />
-        <div className="inline-flex h-9 items-center rounded-md border bg-background p-0.5 text-xs">
-          {([
-            { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
-            { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
-            { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão (sem encargos detalhados)" },
-            { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
-            { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico detalhado" },
-          ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
-            <button
-              key={p.k}
-              type="button"
-              onClick={() => setPreset(p.k)}
-              title={p.hint}
-              className={`rounded px-2 py-1 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <FiltrosSheet chips={chips} toggleChip={toggleChip} clearChips={() => setChips(new Set())} tipo={tipo} />
-        <div className="ml-auto flex items-center gap-2">
-          <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
-            <TituloDialog
-              tipo={tipo}
-              cadastros={cadastros}
-              onSave={async (input, pendingFiles) => {
-                const parcelas: ParcelaPlano[] | undefined = input._parcelas;
-                delete input._parcelas;
-                const criados: Titulo[] = [];
-                try {
-                  if (parcelas && parcelas.length > 1) {
-                    for (let idx = 0; idx < parcelas.length; idx++) {
-                      const p = parcelas[idx];
-                      const label = `${idx + 1}/${parcelas.length}`;
-                      criados.push(await repo.criarTitulo({
-                        ...input,
-                        tipo, origem: input.origem ?? "manual",
-                        descricao: `${input.descricao} (${label})`,
-                        valorOriginal: p.valor,
-                        vencimento: p.vencimento,
-                        competencia: p.competencia,
-                        parcelaLabel: label,
-                      }));
-                    }
-                    toast.success(`${parcelas.length} parcelas criadas.`);
-                  } else {
-                    criados.push(await repo.criarTitulo({ ...input, tipo, origem: input.origem ?? "manual" }));
-                    toast.success("Título criado.");
-                  }
-                } catch (e: any) {
-                  toast.error(e?.message ?? "Falha ao criar título(s).");
-                  return;
-                }
-                setCriarOpen(false);
-                const alvo = criados[0];
-                if (alvo) for (const file of pendingFiles) {
-                  try {
-                    const fd = new FormData();
-                    fd.append("file", file);
-                    fd.append("tituloId", alvo.id);
-                    const { anexo } = await uploadAnexoFn({ data: fd });
-                    await repo.anexar(alvo.id, {
-                      id: anexo.id,
-                      nome: anexo.nome,
-                      mime: anexo.mime,
-                      tamanho: anexo.tamanho,
-                      storagePath: anexo.storage_path,
-                      enviadoEm: anexo.created_at,
-                    });
-                  } catch (e: any) {
-                    toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
-                  }
-                }
-                if (alvo) setEditar(alvo);
-              }}
-              onCancel={() => setCriarOpen(false)}
-            />
-          </Dialog>
-        </div>
-      </div>
+      </Dialog>
 
       {/* Chips de filtros ativos (apenas os selecionados) */}
       {chips.size > 0 && (
@@ -538,7 +522,31 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             availableProcesses={availableProcesses}
             onAction={(a) => handleAction(a)}
             onProcess={(k) => handleProcess(k)}
-            onFilter={() => toast.info("Filtros avançados disponíveis no painel lateral.")}
+            search={busca}
+            onSearchChange={setBusca}
+            searchPlaceholder="Buscar descrição, fornecedor, cliente…"
+            onFilter={() => setFiltrosOpen(true)}
+            extraLeft={
+              <div className="inline-flex h-7 items-center rounded-sm border border-slate-200 bg-white p-0.5 text-[11.5px] shrink-0">
+                {([
+                  { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
+                  { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
+                  { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão" },
+                  { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
+                  { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico" },
+                ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
+                  <button
+                    key={p.k}
+                    type="button"
+                    onClick={() => setPreset(p.k)}
+                    title={p.hint}
+                    className={`rounded-sm px-2 py-0.5 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            }
             extraRight={
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1924,9 +1932,12 @@ type FiltrosSheetProps = {
   toggleChip: (k: ChipKeyExt) => void;
   clearChips: () => void;
   tipo: TituloTipo;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideTrigger?: boolean;
 };
 
-function FiltrosSheet({ chips, toggleChip, clearChips, tipo }: FiltrosSheetProps) {
+function FiltrosSheet({ chips, toggleChip, clearChips, tipo, open, onOpenChange, hideTrigger }: FiltrosSheetProps) {
   const groups: { title: string; items: ChipKeyExt[] }[] = [
     { title: "Vencimento", items: ["vence_hoje", "vence_semana", "vence_mes", "vencidos", "aberto"] },
     { title: tipo === "AP" ? "Pagamento" : "Recebimento", items: ["baixado_hoje", "baixado_semana", "baixado_mes"] },
@@ -1935,18 +1946,20 @@ function FiltrosSheet({ chips, toggleChip, clearChips, tipo }: FiltrosSheetProps
   ];
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          Filtros
-          {chips.size > 0 && (
-            <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-              {chips.size}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Filtros
+            {chips.size > 0 && (
+              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                {chips.size}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Filtros</SheetTitle>

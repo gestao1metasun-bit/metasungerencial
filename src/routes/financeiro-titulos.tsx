@@ -37,7 +37,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Ban, RefreshCcw } from "lucide-react";
+import { Eye, Ban } from "lucide-react";
 import {
   EnterpriseDataGrid,
   exportToCSV,

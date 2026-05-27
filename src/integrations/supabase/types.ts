@@ -14,6 +14,259 @@ export type Database = {
   }
   public: {
     Tables: {
+      adiantamento_abatimentos: {
+        Row: {
+          adiantamento_id: string
+          created_at: string
+          created_by: string | null
+          data_abatimento: string
+          estornado: boolean
+          estornado_em: string | null
+          estornado_por: string | null
+          estorno_motivo: string | null
+          id: string
+          legacy_id: string | null
+          legacy_source: string | null
+          movimentacao_id: string | null
+          observacao: string | null
+          parcela_id: string | null
+          titulo_id: string | null
+          valor: number
+        }
+        Insert: {
+          adiantamento_id: string
+          created_at?: string
+          created_by?: string | null
+          data_abatimento?: string
+          estornado?: boolean
+          estornado_em?: string | null
+          estornado_por?: string | null
+          estorno_motivo?: string | null
+          id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
+          movimentacao_id?: string | null
+          observacao?: string | null
+          parcela_id?: string | null
+          titulo_id?: string | null
+          valor: number
+        }
+        Update: {
+          adiantamento_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_abatimento?: string
+          estornado?: boolean
+          estornado_em?: string | null
+          estornado_por?: string | null
+          estorno_motivo?: string | null
+          id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
+          movimentacao_id?: string | null
+          observacao?: string | null
+          parcela_id?: string | null
+          titulo_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adiantamento_abatimentos_adiantamento_id_fkey"
+            columns: ["adiantamento_id"]
+            isOneToOne: false
+            referencedRelation: "adiantamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamento_abatimentos_movimentacao_id_fkey"
+            columns: ["movimentacao_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamento_abatimentos_parcela_id_fkey"
+            columns: ["parcela_id"]
+            isOneToOne: false
+            referencedRelation: "parcelas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamento_abatimentos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamento_abatimentos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "adiantamento_abatimentos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adiantamentos: {
+        Row: {
+          cliente_id: string | null
+          codigo: string | null
+          competencia: string | null
+          consultor_id: string | null
+          conta_id: string | null
+          contrato_id: string | null
+          created_at: string
+          created_by: string | null
+          data_movimento: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          direcao: string
+          documento: string | null
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          id: string
+          legacy_id: string | null
+          legacy_source: string | null
+          natureza: string
+          observacao: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          pv_id: string | null
+          saldo: number | null
+          status: string
+          updated_at: string
+          valor: number
+          valor_abatido: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          codigo?: string | null
+          competencia?: string | null
+          consultor_id?: string | null
+          conta_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_movimento?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          direcao: string
+          documento?: string | null
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
+          natureza: string
+          observacao?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          pv_id?: string | null
+          saldo?: number | null
+          status?: string
+          updated_at?: string
+          valor: number
+          valor_abatido?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          codigo?: string | null
+          competencia?: string | null
+          consultor_id?: string | null
+          conta_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_movimento?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          direcao?: string
+          documento?: string | null
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          legacy_id?: string | null
+          legacy_source?: string | null
+          natureza?: string
+          observacao?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          pv_id?: string | null
+          saldo?: number | null
+          status?: string
+          updated_at?: string
+          valor?: number
+          valor_abatido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adiantamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["pv_id"]
+          },
+        ]
+      }
       aditivos: {
         Row: {
           consultor_id: string | null

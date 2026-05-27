@@ -34,6 +34,6 @@ export { EnterpriseDataGrid } from "@/components/app/grid/EnterpriseDataGrid";
 export { EnterpriseDialog } from "@/components/app/grid/EnterpriseDialog";
 export { HistoricoDrawer } from "@/components/app/grid/HistoricoDrawer";
 export { ProcessosMenu } from "@/components/app/grid/ProcessosMenu";
-export type { ProcessoMenuItem } from "@/components/app/grid/ProcessosMenu";
+export type { ProcessoItem } from "@/components/app/grid/ProcessosMenu";
 export { FlagPicker } from "@/components/app/flags/FlagPicker";
 export { CommandPalette } from "@/components/app/CommandPalette";

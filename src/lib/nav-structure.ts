@@ -42,6 +42,7 @@ export type MacroKey =
   | "estoque"
   | "aprovacoes"
   | "posvenda"
+  | "analytics"
   | "configuracoes";
 
 export type MacroModule = {

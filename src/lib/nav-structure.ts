@@ -13,7 +13,7 @@
 import {
   LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
   ClipboardCheck, LineChart, Settings, FileBarChart, Database,
-  ListChecks, Users, Receipt, Banknote,
+  ListChecks, Users, Receipt, Banknote, ShoppingCart,
 } from "lucide-react";
 import type { ROUTE_TABS } from "@/lib/route-tabs";
 
@@ -38,6 +38,8 @@ export type MacroKey =
   | "paineis"
   | "comercial"
   | "financeiro"
+  | "financiamentos"
+  | "compras"
   | "engenharia"
   | "estoque"
   | "aprovacoes"
@@ -56,17 +58,19 @@ export type MacroModule = {
   accessKey: string;
 };
 
-// ── Macro módulos (D6.E — Painéis centralizados, separados da operação) ──
+// ── Macro módulos (D6.11 — ERP clássico: departamentos separados no topo) ──
 export const MACRO_MODULES: MacroModule[] = [
-  { key: "paineis",       label: "Painéis",       to: "/paineis",       icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/tarefas"], accessKey: "dashboard" },
-  { key: "comercial",     label: "Comercial",     to: "/comercial",     icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas", "/financiamentos"], accessKey: "comercial" },
-  { key: "financeiro",    label: "Financeiro",    to: "/financeiro",    icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
-  { key: "engenharia",    label: "Engenharia",    to: "/engenharia",    icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
-  { key: "estoque",       label: "Estoque",       to: "/estoque",       icon: Package,         matches: ["/estoque", "/estoque-fundacao", "/solicitacoes-material"], accessKey: "estoque" },
-  { key: "aprovacoes",    label: "Aprovações",    to: "/aprovacoes",    icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
-  { key: "posvenda",      label: "Pós-venda",     to: "/posvenda",      icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
-  { key: "analytics",     label: "Analytics",     to: "/analises",      icon: LineChart,       matches: ["/analises", "/analytics", "/relatorios"], accessKey: "analytics" },
-  { key: "configuracoes", label: "Configurações", to: "/configuracoes", icon: Settings,        matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
+  { key: "paineis",        label: "Painéis",        to: "/paineis",                icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/tarefas"], accessKey: "dashboard" },
+  { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
+  { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
+  { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
+  { key: "compras",        label: "Compras",        to: "/solicitacoes-material",  icon: ShoppingCart,    matches: ["/solicitacoes-material", "/compras"], accessKey: "estoque" },
+  { key: "engenharia",     label: "Engenharia",     to: "/engenharia",             icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
+  { key: "estoque",        label: "Estoque",        to: "/estoque",                icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
+  { key: "aprovacoes",     label: "Aprovações",     to: "/aprovacoes",             icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
+  { key: "posvenda",       label: "Pós-venda",      to: "/posvenda",               icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
+  { key: "analytics",      label: "Analytics",      to: "/analises",               icon: LineChart,       matches: ["/analises", "/analytics", "/relatorios"], accessKey: "analytics" },
+  { key: "configuracoes",  label: "Configurações",  to: "/configuracoes",          icon: Settings,        matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
 ];
 
 // ── Rotas (sidebar legada + mapeamento para macro) ────────────────────────
@@ -91,12 +95,12 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/pedidos-venda",      label: "Pedidos de Venda",   icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 15, critica: true },
   { to: "/financeiro",         label: "Financeiro",         icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 10, critica: true },
   { to: "/financeiro-titulos", label: "Títulos Financeiros",icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 20, critica: true },
-  { to: "/financiamentos",     label: "Financiamentos",     icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "comercial",     ordem: 40 },
+  { to: "/financiamentos",     label: "Financiamentos",     icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "financiamentos",ordem: 10 },
   { to: "/engenharia",         label: "Engenharia",         icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "engenharia",    ordem: 10, critica: true },
   { to: "/posvenda",           label: "Pós-venda",          icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "posvenda",      ordem: 10, critica: true },
   { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 10, critica: true },
   { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 20 },
-  { to: "/solicitacoes-material", label: "Solicitações de Material", icon: Package,  accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 30, critica: true },
+  { to: "/solicitacoes-material", label: "Solicitações de Material", icon: ShoppingCart,  accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 10, critica: true },
   { to: "/aprovacoes",         label: "Central de Aprovações", icon: ClipboardCheck, accessKey: "dashboard",   tier: "operacao",  macro: "aprovacoes",    ordem: 10, critica: true },
   { to: "/cadastros",          label: "Cadastros Operacionais", icon: Database,    accessKey: "cadastros",     tier: "estrutura", macro: "configuracoes", ordem: 10 },
   { to: "/configuracoes",      label: "Configurações",      icon: Settings,        accessKey: "configuracoes", tier: "estrutura", macro: "configuracoes", ordem: 20, critica: true },

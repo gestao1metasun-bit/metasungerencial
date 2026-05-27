@@ -518,6 +518,82 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               return toast.info("Cobrança/lembrete: aguardando integração com canal (D6.13.3).");
             case "estornar":
               return toast.info("Estorno: usar histórico do título (será migrado ao Process Engine).");
+            case "detalhar":
+              if (!singleSel) return toast.warning("Selecione 1 título.");
+              return setEditar(singleSel);
+            case "ratear":
+              if (!singleSel) return toast.warning("Selecione 1 título.");
+              if (singleSel.bloqueadoFechamento) return toast.warning("Título em período fechado.");
+              if (singleSel.status === "cancelado") return toast.warning("Título cancelado não pode ser rateado.");
+              return setRatear(singleSel);
+            case "cadastrar_cheque": {
+              if (!singleSel) return toast.warning("Selecione 1 título.");
+              if (singleSel.status === "cancelado") return toast.warning("Título cancelado.");
+              const numero = window.prompt("Número do cheque:", "");
+              if (!numero || !numero.trim()) return;
+              const banco = window.prompt("Banco (opcional):", "") ?? "";
+              (async () => {
+                try {
+                  await repo.cadastrarCheque(singleSel.id, { numero: numero.trim(), banco, agencia: "", conta: "", bom_para: "", titular: "" });
+                  toast.success("Cheque cadastrado.");
+                } catch (e: any) { toast.error(e?.message ?? "Falha ao cadastrar cheque."); }
+              })();
+              return;
+            }
+            case "gerar_copia": {
+              if (!singleSel) return toast.warning("Selecione 1 título.");
+              const venc = window.prompt("Novo vencimento (AAAA-MM-DD):", singleSel.vencimento);
+              if (!venc) return;
+              const valorStr = window.prompt("Valor:", String(singleSel.valorOriginal));
+              if (!valorStr) return;
+              const valor = Number(valorStr);
+              if (!isFinite(valor) || valor <= 0) return toast.error("Valor inválido.");
+              (async () => {
+                try {
+                  const nova = await repo.gerarCopiaTitulo(singleSel.id, {
+                    vencimento: venc, valorOriginal: valor, descricao: `${singleSel.descricao} (cópia)`,
+                  });
+                  toast.success(`Cópia gerada: ${nova.id}`);
+                } catch (e: any) { toast.error(e?.message ?? "Falha ao gerar cópia."); }
+              })();
+              return;
+            }
+            case "imprimir_modelo": {
+              if (!singleSel) return toast.warning("Selecione 1 título.");
+              const t = singleSel;
+              const w = window.open("", "_blank", "width=820,height=900");
+              if (!w) return toast.error("Bloqueio de pop-up impediu a impressão.");
+              w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Título ${t.id}</title>
+                <style>body{font-family:system-ui,sans-serif;padding:24px;color:#111}h1{font-size:18px;margin:0 0 4px}.muted{color:#666;font-size:12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;margin-top:12px;font-size:13px}</style>
+                </head><body><h1>${t.tipo === "AP" ? "Conta a pagar" : "Conta a receber"} — ${t.id}</h1>
+                <div class="muted">Emitido em ${new Date().toLocaleString("pt-BR")}</div>
+                <div class="grid">
+                  <div><b>Descrição:</b> ${t.descricao}</div>
+                  <div><b>${t.tipo === "AP" ? "Fornecedor" : "Cliente"}:</b> ${(t.fornecedor ?? t.cliente) || "—"}</div>
+                  <div><b>Vencimento:</b> ${t.vencimento}</div>
+                  <div><b>Valor:</b> ${fmtBRLPrecise(t.valorOriginal)}</div>
+                  <div><b>Pago:</b> ${fmtBRLPrecise(t.valorPago)}</div>
+                  <div><b>Saldo:</b> ${fmtBRLPrecise(t.saldo)}</div>
+                  <div><b>Status:</b> ${t.status}</div>
+                </div><script>window.print()</script></body></html>`);
+              w.document.close();
+              return;
+            }
+            case "excluir": {
+              if (selRows.length === 0) return;
+              const motivo = window.prompt(`Motivo da exclusão (${selRows.length} título(s), mín. 3 caracteres):`, "");
+              if (!motivo || motivo.trim().length < 3) return;
+              (async () => {
+                let ok = 0, fail = 0;
+                for (const t of selRows) {
+                  if (t.valorPago > 0) { fail++; continue; }
+                  try { await repo.cancelarTitulo(t.id, motivo.trim()); ok++; } catch { fail++; }
+                }
+                toast[fail ? "warning" : "success"](`Exclusão: ${ok} ok${fail ? `, ${fail} falha(s)` : ""}`);
+                limparSel();
+              })();
+              return;
+            }
             default: return;
           }
         };

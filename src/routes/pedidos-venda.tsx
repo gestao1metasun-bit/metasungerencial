@@ -230,6 +230,8 @@ function PedidosVendaPage() {
             }
             onImprimir={() => window.print()}
             onAnexos={() => singleSel && setPvAtivo(singleSel.id)}
+            flagEntidade="pedidos_venda"
+            flagRegistroId={singleSel?.id ?? null}
             processos={[
               { key: "enviar", label: "Enviar para análise", icon: Send, onClick: handleEnviarLote, disabled: selected.size === 0 },
               { key: "aprovar", label: "Aprovar PV", icon: CheckCircle2, onClick: handleAprovar, disabled: !singleSel },

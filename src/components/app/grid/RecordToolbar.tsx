@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { FlagPicker } from "@/components/app/flags/FlagPicker";
 
 type ActionFn = () => void;
 
@@ -85,6 +86,10 @@ export type RecordToolbarProps = {
   /** Anexos. */
   onAnexos?: ActionFn;
   anexosCount?: number;
+
+  /** Flag — sinalização universal (D6.10). Passe `flagEntidade` + `flagRegistroId`. */
+  flagEntidade?: string;
+  flagRegistroId?: string | null;
 
   /** Processos (dropdown corporativo — sincronização, geração, importação…). */
   processos?: ProcessoItem[];
@@ -150,6 +155,7 @@ export function RecordToolbar({
   selecionado = false,
   onColunas,
   onAnexos, anexosCount,
+  flagEntidade, flagRegistroId,
   processos, filtros, filtroAtivoLabel,
   layouts, layoutAtivoLabel, onSalvarLayout, onGerenciarLayouts,
   extraLeft, extraRight,
@@ -239,6 +245,18 @@ export function RecordToolbar({
               </span>
             )}
           </Button>
+        </>
+      )}
+
+      {/* Flag — sinalização universal (D6.10) */}
+      {flagEntidade && (
+        <>
+          <Sep />
+          <FlagPicker
+            entidade={flagEntidade}
+            registroId={flagRegistroId ?? null}
+            disabled={!selecionado || !flagRegistroId}
+          />
         </>
       )}
 

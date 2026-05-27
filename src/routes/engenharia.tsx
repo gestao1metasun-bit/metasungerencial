@@ -3002,3 +3002,23 @@ function ObrasKanbanBlock({
     </div>
   );
 }
+
+/* D6.8 Onda 4 — chip denso de strip operacional. */
+function StripChip({
+  label, value, tone = "muted",
+}: { label: string; value: string | number; tone?: "muted" | "primary" | "info" | "success" | "warning" | "danger" }) {
+  const toneText: Record<string, string> = {
+    muted: "text-foreground",
+    primary: "text-primary",
+    info: "text-info",
+    success: "text-success",
+    warning: "text-warning",
+    danger: "text-destructive",
+  };
+  return (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      <span className={`font-mono font-semibold ${toneText[tone]}`}>{value}</span>
+    </span>
+  );
+}

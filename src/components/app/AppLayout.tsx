@@ -129,204 +129,51 @@ export function AppLayout() {
     }
   }
 
-  const enterpriseShell = featureFlags.ENTERPRISE_SHELL_FULL;
+  // D6.6 — Enterprise Shell é o padrão definitivo. A sidebar legada SaaS foi
+  // removida. A flag ainda é lida apenas para permitir um fallback manual via
+  // localStorage durante diagnóstico, mas sem renderizar o menu antigo.
+  void featureFlags.ENTERPRISE_SHELL_FULL;
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      {enterpriseShell ? (
-        <ContextualSidebar />
-      ) : (
-        /* Sidebar legada — executive indigo with gold accents */
-      <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-gradient-sidebar text-sidebar-foreground relative">
-
-        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent pointer-events-none" />
-
-        <div className="relative flex h-16 items-center justify-center px-3 border-b border-sidebar-border bg-white/95 backdrop-blur">
-          <img src={logoMetaSun} alt="META SUN — Energia Solar" className="h-10 w-auto object-contain" />
-          <div className="absolute bottom-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
-        </div>
-
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {tierOrder.map((tier) => {
-            const items = grouped[tier];
-            if (items.length === 0) return null;
-            const meta = TIER_META[tier];
-            const collapsed = collapsedTiers[tier];
-            const hasActive = items.some((it) => path === it.to || path.startsWith(it.to + "/"));
-            // Se o tier tem rota ativa, força aberto
-            const showItems = !collapsed || hasActive;
-            return (
-              <div key={tier} className="mb-4 last:mb-0">
-                <button
-                  type="button"
-                  onClick={() => setCollapsedTiers((c) => ({ ...c, [tier]: !c[tier] }))}
-                  className="w-full px-3 pb-2 flex items-center gap-2 group"
-                >
-                  <span className={`text-[10px] font-bold uppercase tracking-[0.22em] transition ${tier === "estrutura" ? "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70" : "text-gold/80 group-hover:text-gold"}`}>
-                    {meta.label}
-                  </span>
-                  <span className="h-px flex-1 bg-sidebar-border/60" />
-                  <ChevronDown className={`h-3 w-3 transition-transform ${showItems ? "" : "-rotate-90"} ${tier === "estrutura" ? "text-sidebar-foreground/40" : "text-gold/60"}`} />
-                </button>
-                {showItems && (
-                  <ul className="space-y-0.5">
-                    {items.map((item) => {
-                      const active = path === item.to || path.startsWith(item.to + "/");
-                      const Icon = item.icon;
-                      const sub = ROUTE_TABS[item.to];
-                      const isOpen = openMenu === item.to;
-                      const dimmed = tier === "estrutura" && !active;
-                      return (
-                        <li key={item.to}>
-                          <div className={`group flex items-center gap-2 rounded-md pr-1 text-sm font-medium transition-all duration-200 hover:bg-sidebar-accent/60 ${active ? "nav-item-active" : dimmed ? "text-sidebar-foreground/60" : "text-sidebar-foreground/85"}`}>
-                            <Link to={item.to} className="flex flex-1 items-center gap-3 px-3 py-2 min-w-0">
-                              <Icon className={`h-4 w-4 transition-colors ${active ? "text-gold" : dimmed ? "text-sidebar-foreground/45 group-hover:text-gold" : "text-sidebar-foreground/60 group-hover:text-gold"}`} />
-                              <span className="flex-1 truncate tracking-tight">{item.label}</span>
-                              {item.to === "/comercial" && pendentesAssinatura > 0 && (
-                                <span
-                                  title={`${pendentesAssinatura} contrato(s) pendente(s) de assinatura`}
-                                  className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
-                                >
-                                  {pendentesAssinatura}
-                                </span>
-                              )}
-                            </Link>
-                            {sub && (
-                              <button
-                                type="button"
-                                aria-label={isOpen ? "Recolher" : "Expandir"}
-                                onClick={() => setOpenMenu((cur) => (cur === item.to ? null : item.to))}
-                                className="flex h-7 w-7 items-center justify-center rounded hover:bg-white/5"
-                              >
-                                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""} ${active ? "text-gold" : "text-sidebar-foreground/50"}`} />
-                              </button>
-                            )}
-                          </div>
-
-                          {sub && isOpen && (() => {
-                            const visibleTabs = sub.tabs.filter((t) => !t.hidden);
-                            const groups: { name: string | null; tabs: typeof visibleTabs }[] = [];
-                            visibleTabs.forEach((t) => {
-                              const g = t.group ?? null;
-                              const last = groups[groups.length - 1];
-                              if (last && last.name === g) last.tabs.push(t);
-                              else groups.push({ name: g, tabs: [t] });
-                            });
-                            return (
-                              <ul className="ml-7 mt-1 mb-1 space-y-0.5 border-l border-sidebar-border/70 pl-3">
-                                {groups.map((g, gi) => {
-                                  const isStructural = g.name === "Estrutura" || g.name === "Sistema";
-                                  return (
-                                    <li key={`g-${gi}`}>
-                                      {g.name && (
-                                        <div className={`mt-2 mb-0.5 px-3 text-[10px] font-bold uppercase tracking-wider ${isStructural ? "text-sidebar-foreground/30" : "text-sidebar-foreground/40"}`}>
-                                          {g.name}
-                                        </div>
-                                      )}
-                                      <ul className="space-y-0.5">
-                                        {g.tabs.map((t) => {
-                                          const tabActive = active && isHydrated && currentTab === t.value;
-                                          const tabDimmed = isStructural && !tabActive;
-                                          return (
-                                            <li key={t.value}>
-                                              <Link
-                                                to={item.to}
-                                                hash={`tab=${t.value}`}
-                                                className={`flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-[13px] transition ${
-                                                  tabActive
-                                                    ? "bg-gold/15 text-gold font-semibold"
-                                                    : tabDimmed
-                                                    ? "text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground"
-                                                    : "text-sidebar-foreground/75 hover:bg-white/5 hover:text-sidebar-foreground"
-                                                }`}
-                                              >
-                                                <span className="truncate">{t.label}</span>
-                                              </Link>
-                                            </li>
-                                          );
-                                        })}
-                                      </ul>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            );
-                          })()}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-
-        <div className="border-t border-sidebar-border p-4">
-          <div className="rounded-lg bg-sidebar-accent/50 p-3 ring-1 ring-white/5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/60">Versão</div>
-                <div className="text-sm font-semibold text-gold font-display">1.0.0</div>
-              </div>
-              <div className="h-8 w-8 rounded-md bg-gradient-gold shadow-gold" />
-            </div>
-          </div>
-        </div>
-      </aside>
-      )}
-
+      <ContextualSidebar />
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-12 items-center gap-3 border-b border-border bg-card/95 backdrop-blur-xl px-4 shadow-sm relative">
+        {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
+        <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-border bg-card/95 backdrop-blur-xl px-3 shadow-sm relative">
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-          {enterpriseShell && (
-            <div className="flex items-center gap-2 pr-3 mr-1 border-r border-border/60">
-              <img src={logoMetaSun} alt="META SUN" className="h-7 w-auto object-contain" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden md:inline">
-                Gerencial
-              </span>
-            </div>
-          )}
-          {!enterpriseShell && (
-            <>
-              <div className="relative max-w-sm flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar contratos, clientes, obras..."
-                  className="h-9 pl-9 bg-secondary/70 border-border rounded-lg focus-visible:ring-primary"
-                />
-              </div>
-              <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90 gap-2 shadow-sm">
-                <RefreshCw className="h-4 w-4" />
-                Atualizar
-              </Button>
-            </>
-          )}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 pr-3 mr-1 border-r border-border/60">
+            <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden md:inline">
+              Gerencial
+            </span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1.5">
             <FavoritosMenu />
             {!identidade.sessionLoading && !identidade.isAuthenticated && (
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/login" })}
                 title="Faça login para habilitar ações administrativas."
-                className="hidden md:inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
+                className="hidden md:inline-flex items-center gap-1.5 rounded border border-amber-400/60 bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-800 hover:bg-amber-100"
               >
                 <LogIn className="h-3 w-3" /> Sem sessão
               </button>
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary relative">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary relative">
               <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-gold" />
+              <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
             </Button>
-            <Link to="/configuracoes" className="hidden md:flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent transition-colors">
-              <div className="grid h-7 w-7 place-items-center rounded-full bg-gradient-primary text-[11px] font-bold text-primary-foreground ring-1 ring-gold/30">{initials}</div>
+            <Link
+              to="/configuracoes"
+              className="hidden md:flex items-center gap-2 rounded border border-border bg-card px-2 py-0.5 hover:bg-accent"
+            >
+              <div className="grid h-6 w-6 place-items-center rounded-full bg-gradient-primary text-[10px] font-bold text-primary-foreground ring-1 ring-gold/30">{initials}</div>
               <div className="leading-tight text-left">
-                <div className="text-[12px] font-semibold tracking-tight">{displayName}</div>
-                <div className="text-[10px] text-muted-foreground">{displayPerfil}</div>
+                <div className="text-[11.5px] font-semibold tracking-tight">{displayName}</div>
+                <div className="text-[9.5px] text-muted-foreground">{displayPerfil}</div>
               </div>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </Link>
@@ -335,18 +182,19 @@ export function AppLayout() {
               size="icon"
               onClick={handleLogout}
               title="Sair"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
             </Button>
           </div>
         </header>
         <MaintenanceBanner />
         <TopNav />
 
-        <main className={`flex-1 overflow-x-hidden ${enterpriseShell ? "p-3" : "p-6"}`}>
+        <main className="flex-1 overflow-x-hidden p-2">
           <Outlet />
         </main>
+
       </div>
     </div>
   );

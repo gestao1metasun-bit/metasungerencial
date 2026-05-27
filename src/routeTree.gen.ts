@@ -48,6 +48,13 @@ import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoq
 import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
 import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
 import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
+import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
+import { Route as AnalyticsFinanciamentosRouteImport } from './routes/analytics.financiamentos'
+import { Route as AnalyticsFinanceiroRouteImport } from './routes/analytics.financeiro'
+import { Route as AnalyticsEstoqueRouteImport } from './routes/analytics.estoque'
+import { Route as AnalyticsEngenhariaRouteImport } from './routes/analytics.engenharia'
+import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comercial'
+import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
 
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
@@ -245,11 +252,46 @@ const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
   path: '/aprovacoes',
   getParentRoute: () => DashboardsRoute,
 } as any)
+const AnalyticsPosvendaRoute = AnalyticsPosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsFinanciamentosRoute = AnalyticsFinanciamentosRouteImport.update({
+  id: '/financiamentos',
+  path: '/financiamentos',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsFinanceiroRoute = AnalyticsFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsEstoqueRoute = AnalyticsEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsEngenhariaRoute = AnalyticsEngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsComercialRoute = AnalyticsComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsAprovacoesRoute = AnalyticsAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analises': typeof AnalisesRoute
-  '/analytics': typeof AnalyticsRoute
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
@@ -272,6 +314,13 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
+  '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
+  '/analytics/comercial': typeof AnalyticsComercialRoute
+  '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/estoque': typeof AnalyticsEstoqueRoute
+  '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
+  '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -290,7 +339,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analises': typeof AnalisesRoute
-  '/analytics': typeof AnalyticsRoute
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
@@ -313,6 +362,13 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
+  '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
+  '/analytics/comercial': typeof AnalyticsComercialRoute
+  '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/estoque': typeof AnalyticsEstoqueRoute
+  '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
+  '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -332,7 +388,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analises': typeof AnalisesRoute
-  '/analytics': typeof AnalyticsRoute
+  '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
@@ -355,6 +411,13 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
   '/tarefas': typeof TarefasRoute
+  '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
+  '/analytics/comercial': typeof AnalyticsComercialRoute
+  '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/estoque': typeof AnalyticsEstoqueRoute
+  '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
+  '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -398,6 +461,13 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/solicitacoes-material'
     | '/tarefas'
+    | '/analytics/aprovacoes'
+    | '/analytics/comercial'
+    | '/analytics/engenharia'
+    | '/analytics/estoque'
+    | '/analytics/financeiro'
+    | '/analytics/financiamentos'
+    | '/analytics/posvenda'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -439,6 +509,13 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/solicitacoes-material'
     | '/tarefas'
+    | '/analytics/aprovacoes'
+    | '/analytics/comercial'
+    | '/analytics/engenharia'
+    | '/analytics/estoque'
+    | '/analytics/financeiro'
+    | '/analytics/financiamentos'
+    | '/analytics/posvenda'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -480,6 +557,13 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/solicitacoes-material'
     | '/tarefas'
+    | '/analytics/aprovacoes'
+    | '/analytics/comercial'
+    | '/analytics/engenharia'
+    | '/analytics/estoque'
+    | '/analytics/financeiro'
+    | '/analytics/financiamentos'
+    | '/analytics/posvenda'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -499,7 +583,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalisesRoute: typeof AnalisesRoute
-  AnalyticsRoute: typeof AnalyticsRoute
+  AnalyticsRoute: typeof AnalyticsRouteWithChildren
   AprovacoesRoute: typeof AprovacoesRoute
   CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
@@ -799,8 +883,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsAprovacoesRouteImport
       parentRoute: typeof DashboardsRoute
     }
+    '/analytics/posvenda': {
+      id: '/analytics/posvenda'
+      path: '/posvenda'
+      fullPath: '/analytics/posvenda'
+      preLoaderRoute: typeof AnalyticsPosvendaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/financiamentos': {
+      id: '/analytics/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/analytics/financiamentos'
+      preLoaderRoute: typeof AnalyticsFinanciamentosRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/financeiro': {
+      id: '/analytics/financeiro'
+      path: '/financeiro'
+      fullPath: '/analytics/financeiro'
+      preLoaderRoute: typeof AnalyticsFinanceiroRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/estoque': {
+      id: '/analytics/estoque'
+      path: '/estoque'
+      fullPath: '/analytics/estoque'
+      preLoaderRoute: typeof AnalyticsEstoqueRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/engenharia': {
+      id: '/analytics/engenharia'
+      path: '/engenharia'
+      fullPath: '/analytics/engenharia'
+      preLoaderRoute: typeof AnalyticsEngenhariaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/comercial': {
+      id: '/analytics/comercial'
+      path: '/comercial'
+      fullPath: '/analytics/comercial'
+      preLoaderRoute: typeof AnalyticsComercialRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/aprovacoes': {
+      id: '/analytics/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/analytics/aprovacoes'
+      preLoaderRoute: typeof AnalyticsAprovacoesRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
   }
 }
+
+interface AnalyticsRouteChildren {
+  AnalyticsAprovacoesRoute: typeof AnalyticsAprovacoesRoute
+  AnalyticsComercialRoute: typeof AnalyticsComercialRoute
+  AnalyticsEngenhariaRoute: typeof AnalyticsEngenhariaRoute
+  AnalyticsEstoqueRoute: typeof AnalyticsEstoqueRoute
+  AnalyticsFinanceiroRoute: typeof AnalyticsFinanceiroRoute
+  AnalyticsFinanciamentosRoute: typeof AnalyticsFinanciamentosRoute
+  AnalyticsPosvendaRoute: typeof AnalyticsPosvendaRoute
+}
+
+const AnalyticsRouteChildren: AnalyticsRouteChildren = {
+  AnalyticsAprovacoesRoute: AnalyticsAprovacoesRoute,
+  AnalyticsComercialRoute: AnalyticsComercialRoute,
+  AnalyticsEngenhariaRoute: AnalyticsEngenhariaRoute,
+  AnalyticsEstoqueRoute: AnalyticsEstoqueRoute,
+  AnalyticsFinanceiroRoute: AnalyticsFinanceiroRoute,
+  AnalyticsFinanciamentosRoute: AnalyticsFinanciamentosRoute,
+  AnalyticsPosvendaRoute: AnalyticsPosvendaRoute,
+}
+
+const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
+  AnalyticsRouteChildren,
+)
 
 interface DashboardsRouteChildren {
   DashboardsAprovacoesRoute: typeof DashboardsAprovacoesRoute
@@ -852,7 +1009,7 @@ const PaineisRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalisesRoute: AnalisesRoute,
-  AnalyticsRoute: AnalyticsRoute,
+  AnalyticsRoute: AnalyticsRouteWithChildren,
   AprovacoesRoute: AprovacoesRoute,
   CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,

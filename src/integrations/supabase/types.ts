@@ -2737,13 +2737,17 @@ export type Database = {
           id: string
           juros: number
           motivo_cancelamento: string | null
+          motivo_renegociacao: string | null
           multa: number
           observacoes: string | null
           origem_id: string
           origem_tipo: string
+          renegociado_em: string | null
+          renegociado_por: string | null
           saldo: number
           status: string
           tipo: string
+          titulo_substituto_id: string | null
           updated_at: string
           valor_bruto: number
           valor_liquido: number
@@ -2768,13 +2772,17 @@ export type Database = {
           id?: string
           juros?: number
           motivo_cancelamento?: string | null
+          motivo_renegociacao?: string | null
           multa?: number
           observacoes?: string | null
           origem_id: string
           origem_tipo: string
+          renegociado_em?: string | null
+          renegociado_por?: string | null
           saldo?: number
           status?: string
           tipo: string
+          titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
           valor_liquido?: number
@@ -2799,13 +2807,17 @@ export type Database = {
           id?: string
           juros?: number
           motivo_cancelamento?: string | null
+          motivo_renegociacao?: string | null
           multa?: number
           observacoes?: string | null
           origem_id?: string
           origem_tipo?: string
+          renegociado_em?: string | null
+          renegociado_por?: string | null
           saldo?: number
           status?: string
           tipo?: string
+          titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
           valor_liquido?: number
@@ -2825,6 +2837,135 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contas_financeiras"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_titulo_substituto_id_fkey"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+        ]
+      }
+      titulos_renegociacao_itens: {
+        Row: {
+          created_at: string
+          id: string
+          renegociacao_id: string
+          saldo_consolidado: number
+          titulo_antigo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          renegociacao_id: string
+          saldo_consolidado: number
+          titulo_antigo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          renegociacao_id?: string
+          saldo_consolidado?: number
+          titulo_antigo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_renegociacao_itens_renegociacao_id_fkey"
+            columns: ["renegociacao_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_renegociacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacao_itens_titulo_antigo_id_fkey"
+            columns: ["titulo_antigo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacao_itens_titulo_antigo_id_fkey"
+            columns: ["titulo_antigo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+        ]
+      }
+      titulos_renegociacoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          desconto_aplicado: number
+          id: string
+          juros_aplicado: number
+          motivo: string
+          multa_aplicada: number
+          observacao: string | null
+          qtd_titulos_consolidados: number
+          tipo: string
+          titulo_novo_id: string
+          user_email: string | null
+          user_id: string | null
+          valor_original_total: number
+          valor_renegociado_total: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          desconto_aplicado?: number
+          id?: string
+          juros_aplicado?: number
+          motivo: string
+          multa_aplicada?: number
+          observacao?: string | null
+          qtd_titulos_consolidados?: number
+          tipo: string
+          titulo_novo_id: string
+          user_email?: string | null
+          user_id?: string | null
+          valor_original_total?: number
+          valor_renegociado_total?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          desconto_aplicado?: number
+          id?: string
+          juros_aplicado?: number
+          motivo?: string
+          multa_aplicada?: number
+          observacao?: string | null
+          qtd_titulos_consolidados?: number
+          tipo?: string
+          titulo_novo_id?: string
+          user_email?: string | null
+          user_id?: string | null
+          valor_original_total?: number
+          valor_renegociado_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
           },
         ]
       }
@@ -4375,6 +4516,10 @@ export type Database = {
         Args: { _motivo: string; _novas_parcelas: Json; _titulo_id: string }
         Returns: string
       }
+      renegociar_titulos_lote: {
+        Args: { _condicoes: Json; _motivo: string; _titulo_ids: string[] }
+        Returns: Json
+      }
       reservar_material_para_obra: {
         Args: {
           _motivo?: string
@@ -4466,6 +4611,7 @@ export type Database = {
         | "workflow.aprovar.operacional"
         | "workflow.aprovar.financeiro"
         | "workflow.aprovar.diretoria"
+        | "financeiro.renegociar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -4666,6 +4812,7 @@ export const Constants = {
         "workflow.aprovar.operacional",
         "workflow.aprovar.financeiro",
         "workflow.aprovar.diretoria",
+        "financeiro.renegociar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

@@ -53,7 +53,7 @@ export function AppLayout() {
       {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
       <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
         <div className="flex shrink-0 items-center gap-2 pr-3 mr-1 border-r border-white/15">
-          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain brightness-0 invert" />
+          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
           <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70 hidden xl:inline">
             Gerencial
           </span>

@@ -7,7 +7,7 @@ import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Do
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { ContraparteCombo } from "@/components/app/financeiro/ContraparteCombo";
 import { PeriodoFechadoBanner } from "@/components/app/financeiro/PeriodoFechadoBanner";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
 import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";
 import { TituloRowActions } from "@/components/app/financeiro/TituloRowActions";

@@ -192,9 +192,17 @@ export type UseProcessosOptions<TRow, TExtras> = {
   extras?: TExtras;
 };
 
+export type ProcessoComStatus<TRow, TExtras> = {
+  def: ProcessDefinition<TRow, TExtras>;
+  /** `null` se disponível, mensagem amigável se bloqueado. */
+  blockedReason: string | null;
+};
+
 export type UseProcessosResult<TRow, TExtras> = {
   /** Lista crua de processos registrados para a entidade. */
   all: ProcessDefinition<TRow, TExtras>[];
+  /** Lista com status de disponibilidade (para menus que mostram disabled). */
+  items: ProcessoComStatus<TRow, TExtras>[];
   /** Itens prontos para o dropdown `availableProcesses` do EnterpriseRecordToolbar. */
   availableProcesses: EnterpriseProcessItem[];
   /** Dispara processo respeitando validação + permissão + auditoria. */

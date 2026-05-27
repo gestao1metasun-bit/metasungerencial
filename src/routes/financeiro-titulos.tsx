@@ -199,31 +199,22 @@ function TitulosPage() {
         onHistorico={() => singleSel && setTituloAtivo(singleSel.id)}
         onAnexos={() => singleSel && setTituloAtivo(singleSel.id)}
         loteActions={
-          selected.size > 0 ? (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={renegociavel.ok ? "default" : "outline"}
-                      className="h-7 px-2 gap-1.5 text-[11.5px]"
-                      disabled={!renegociavel.ok}
-                      onClick={() => setRenegociarOpen(true)}
-                    >
-                      <RefreshCcw className="h-3.5 w-3.5" />
-                      Renegociar ({selected.size})
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!renegociavel.ok && (
-                  <TooltipContent side="bottom" className="max-w-xs text-xs">
-                    {renegociavel.motivo}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+          processos.items.length > 0 ? (
+            <ProcessosMenu
+              label="Processos"
+              selecaoCount={selected.size}
+              items={processos.items.map(({ def, blockedReason }) => ({
+                id: def.key,
+                label: def.label,
+                icon: def.icon,
+                disabled: blockedReason !== null,
+                hint: blockedReason ?? undefined,
+                tone: def.destructive ? "danger" : "primary",
+                onClick: () => {
+                  void processos.execute(def.key);
+                },
+              }))}
+            />
           ) : undefined
         }
       />

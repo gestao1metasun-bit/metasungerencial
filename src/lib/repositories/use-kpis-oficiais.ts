@@ -53,7 +53,7 @@ async function fetchArea(area: KpiArea): Promise<KpiOficialRow[]> {
     .select("indicador,valor,valor_dashboard,diferenca,perc_divergencia,status,origem_provavel,sugestao,verificado_em")
     .order("indicador", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as KpiOficialRow[];
+  return (data ?? []) as unknown as KpiOficialRow[];
 }
 
 /** Lê os KPIs oficiais de uma área específica. */
@@ -97,7 +97,7 @@ export function useSaudeDados() {
         .order("modulo", { ascending: true })
         .order("indicador", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as SaudeDadosRow[];
+      return (data ?? []) as unknown as SaudeDadosRow[];
     },
     ...COMMON,
   });

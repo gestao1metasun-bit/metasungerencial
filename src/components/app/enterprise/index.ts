@@ -28,6 +28,14 @@ export type { EntityTimelineProps, EntityTimelineEventType } from "./EntityTimel
 export { AttachmentPanel } from "./AttachmentPanel";
 export type { AttachmentPanelProps } from "./AttachmentPanel";
 
+export { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "./EnterpriseRecordToolbar";
+export type {
+  EnterpriseRecordToolbarProps,
+  EnterpriseEntityType,
+  EnterpriseRecordAction,
+  EnterpriseProcessItem,
+} from "./EnterpriseRecordToolbar";
+
 // Re-exports oficiais (componentes já existentes consolidados sob o framework)
 export { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
 export { EnterpriseDataGrid } from "@/components/app/grid/EnterpriseDataGrid";

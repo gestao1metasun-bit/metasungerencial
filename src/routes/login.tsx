@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { signInEmail, useAuth } from "@/lib/auth-store";
+import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -18,6 +18,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -45,6 +46,24 @@ function LoginPage() {
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      toast.error("Informe seu e-mail para recuperar a senha.");
+      return;
+    }
+
+    setRecovering(true);
+    try {
+      await requestPasswordReset(email.trim().toLowerCase());
+      toast.success("Enviamos o link de redefinição para o seu e-mail.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao enviar recuperação.";
+      toast.error(msg);
+    } finally {
+      setRecovering(false);
     }
   }
 
@@ -78,6 +97,14 @@ function LoginPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="senha">Senha</Label>
+              <button
+                type="button"
+                onClick={() => void handleForgotPassword()}
+                disabled={recovering || submitting}
+                className="text-xs text-primary hover:underline disabled:pointer-events-none disabled:opacity-60"
+              >
+                {recovering ? "Enviando..." : "Esqueci minha senha"}
+              </button>
             </div>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

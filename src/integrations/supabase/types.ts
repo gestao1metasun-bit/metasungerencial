@@ -305,6 +305,145 @@ export type Database = {
         }
         Relationships: []
       }
+      boletos: {
+        Row: {
+          cancelado_em: string | null
+          codigo: string | null
+          created_at: string
+          created_by: string | null
+          dados: Json
+          data_emissao: string | null
+          data_entrada: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          fornecedor_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          numero_boleto: string | null
+          numero_nf: string | null
+          observacoes: string | null
+          status: string
+          titulo_id: string | null
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          cancelado_em?: string | null
+          codigo?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_emissao?: string | null
+          data_entrada?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero_boleto?: string | null
+          numero_nf?: string | null
+          observacoes?: string | null
+          status?: string
+          titulo_id?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          cancelado_em?: string | null
+          codigo?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_emissao?: string | null
+          data_entrada?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero_boleto?: string | null
+          numero_nf?: string | null
+          observacoes?: string | null
+          status?: string
+          titulo_id?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boletos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boletos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boletos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "boletos_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boletos_itens: {
+        Row: {
+          boleto_id: string
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          descricao: string | null
+          id: string
+          produto_id: string | null
+          quantidade: number
+        }
+        Insert: {
+          boleto_id: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          descricao?: string | null
+          id?: string
+          produto_id?: string | null
+          quantidade: number
+        }
+        Update: {
+          boleto_id?: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          descricao?: string | null
+          id?: string
+          produto_id?: string | null
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boletos_itens_boleto_id_fkey"
+            columns: ["boleto_id"]
+            isOneToOne: false
+            referencedRelation: "boletos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       centros_resultado: {
         Row: {
           ativo: boolean
@@ -1097,6 +1236,108 @@ export type Database = {
           },
         ]
       }
+      extrato_banco: {
+        Row: {
+          conta_id: string
+          created_at: string
+          dados: Json
+          data: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          descricao: string
+          documento: string | null
+          hash_linha: string | null
+          id: string
+          importado_em: string
+          importado_por: string | null
+          movimento_id: string | null
+          observacao: string | null
+          status: string
+          titulo_id: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          conta_id: string
+          created_at?: string
+          dados?: Json
+          data: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao: string
+          documento?: string | null
+          hash_linha?: string | null
+          id?: string
+          importado_em?: string
+          importado_por?: string | null
+          movimento_id?: string | null
+          observacao?: string | null
+          status?: string
+          titulo_id?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          conta_id?: string
+          created_at?: string
+          dados?: Json
+          data?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string
+          documento?: string | null
+          hash_linha?: string | null
+          id?: string
+          importado_em?: string
+          importado_por?: string | null
+          movimento_id?: string | null
+          observacao?: string | null
+          status?: string
+          titulo_id?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extrato_banco_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extrato_banco_movimento_id_fkey"
+            columns: ["movimento_id"]
+            isOneToOne: false
+            referencedRelation: "movimentacoes_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extrato_banco_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extrato_banco_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "extrato_banco_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           created_at: string
@@ -1126,6 +1367,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          banco_agencia: string | null
+          banco_conta: string | null
+          banco_id: string | null
+          banco_tipo: string | null
+          cep: string | null
+          cidade: string | null
+          codigo: string | null
+          complemento: string | null
+          created_at: string
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          documento: string | null
+          email: string | null
+          id: string
+          inscricao_est: string | null
+          nome: string
+          numero: string | null
+          observacoes: string | null
+          pix_chave: string | null
+          rua: string | null
+          telefone: string | null
+          telefone2: string | null
+          tipo_pessoa: string
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          banco_agencia?: string | null
+          banco_conta?: string | null
+          banco_id?: string | null
+          banco_tipo?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          documento?: string | null
+          email?: string | null
+          id?: string
+          inscricao_est?: string | null
+          nome: string
+          numero?: string | null
+          observacoes?: string | null
+          pix_chave?: string | null
+          rua?: string | null
+          telefone?: string | null
+          telefone2?: string | null
+          tipo_pessoa?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          banco_agencia?: string | null
+          banco_conta?: string | null
+          banco_id?: string | null
+          banco_tipo?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          documento?: string | null
+          email?: string | null
+          id?: string
+          inscricao_est?: string | null
+          nome?: string
+          numero?: string | null
+          observacoes?: string | null
+          pix_chave?: string | null
+          rua?: string | null
+          telefone?: string | null
+          telefone2?: string | null
+          tipo_pessoa?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gerencial_parametros: {
         Row: {
@@ -2563,6 +2908,190 @@ export type Database = {
         }
         Relationships: []
       }
+      rescisoes_contrato: {
+        Row: {
+          cliente_id: string | null
+          codigo: string | null
+          conta_devolucao_id: string | null
+          contrato_id: string
+          created_at: string
+          created_by: string | null
+          dados: Json
+          data_rescisao: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          devolucao_liquida: number
+          id: string
+          motivo: string
+          multa_calculada: number
+          multa_tipo: string
+          multa_valor: number
+          observacoes: string | null
+          responsavel_id: string | null
+          status: string
+          titulo_devolucao_id: string | null
+          updated_at: string
+          valor_recebido: number
+          vencimento_devolucao: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          codigo?: string | null
+          conta_devolucao_id?: string | null
+          contrato_id: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_rescisao?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          devolucao_liquida?: number
+          id?: string
+          motivo: string
+          multa_calculada?: number
+          multa_tipo?: string
+          multa_valor?: number
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo_devolucao_id?: string | null
+          updated_at?: string
+          valor_recebido?: number
+          vencimento_devolucao?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          codigo?: string | null
+          conta_devolucao_id?: string | null
+          contrato_id?: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          data_rescisao?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          devolucao_liquida?: number
+          id?: string
+          motivo?: string
+          multa_calculada?: number
+          multa_tipo?: string
+          multa_valor?: number
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo_devolucao_id?: string | null
+          updated_at?: string
+          valor_recebido?: number
+          vencimento_devolucao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescisoes_contrato_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_conta_devolucao_id_fkey"
+            columns: ["conta_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rescisoes_itens: {
+        Row: {
+          created_at: string
+          id: string
+          rescisao_id: string
+          saldo_cancelado: number
+          titulo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rescisao_id: string
+          saldo_cancelado: number
+          titulo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rescisao_id?: string
+          saldo_cancelado?: number
+          titulo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescisoes_itens_rescisao_id_fkey"
+            columns: ["rescisao_id"]
+            isOneToOne: false
+            referencedRelation: "rescisoes_contrato"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_itens_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_itens_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "rescisoes_itens_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string
@@ -3169,6 +3698,77 @@ export type Database = {
           {
             foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
             columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      titulos_taxas: {
+        Row: {
+          created_at: string
+          data_aplicacao: string
+          id: string
+          motivo: string | null
+          observacao: string | null
+          parcela_id: string | null
+          tipo: string
+          titulo_id: string
+          user_email: string | null
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_aplicacao?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          parcela_id?: string | null
+          tipo: string
+          titulo_id: string
+          user_email?: string | null
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data_aplicacao?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          parcela_id?: string | null
+          tipo?: string
+          titulo_id?: string
+          user_email?: string | null
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_taxas_parcela_id_fkey"
+            columns: ["parcela_id"]
+            isOneToOne: false
+            referencedRelation: "parcelas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
             referencedColumns: ["id"]

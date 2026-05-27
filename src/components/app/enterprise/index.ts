@@ -32,6 +32,14 @@ export type { AttachmentDialogProps } from "./AttachmentDialog";
 export { AnexosButton } from "./AnexosButton";
 export type { AnexosButtonProps } from "./AnexosButton";
 
+// D14.5 — Paginação server-side universal
+export { ServerPaginationFooter } from "./ServerPaginationFooter";
+export { useServerPagination } from "@/lib/repositories/use-server-pagination";
+export type {
+  ServerPaginationOptions,
+  ServerPaginationResult,
+} from "@/lib/repositories/use-server-pagination";
+
 
 export { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "./EnterpriseRecordToolbar";
 export type {

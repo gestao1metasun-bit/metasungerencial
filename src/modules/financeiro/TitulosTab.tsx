@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadAnexo, signedUrlAnexo, deleteAnexo } from "@/lib/anexos.functions";
-import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown, FileSignature, Hammer, History, Wallet, CreditCard, AlertTriangle, CalendarDays, CheckCheck, Hash, Copy, SlidersHorizontal, X } from "lucide-react";
+import { Plus, SquarePen, CheckCircle2, XCircle, Undo2, Eye, Lock, Paperclip, Download, Trash2, Upload, ArrowDownCircle, ArrowUpCircle, Link2, Sparkles, Split, MoreHorizontal, ChevronDown, FileSignature, Hammer, History, Wallet, CreditCard, AlertTriangle, CalendarDays, CheckCheck, Hash, Copy, SlidersHorizontal, X, Columns3 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { ContraparteCombo } from "@/components/app/financeiro/ContraparteCombo";
 import { PeriodoFechadoBanner } from "@/components/app/financeiro/PeriodoFechadoBanner";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { RenegociarTituloDialog } from "@/components/app/financeiro/RenegociarTituloDialog";
 import { EdicaoRateioDialog } from "@/components/app/financeiro/EdicaoRateioDialog";
 import { TituloRowActions } from "@/components/app/financeiro/TituloRowActions";
@@ -197,7 +197,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
     | "baixado_hoje" | "baixado_semana" | "baixado_mes"
     | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
     | "conciliados" | "nao_conciliados"
-    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+    | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados"
+    | "com_anexo" | "sem_anexo";
   const [chips, setChips] = useState<Set<ChipKey>>(new Set());
   const toggleChip = (k: ChipKey) => setChips((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const showEncargos = preset !== "diretoria";
@@ -285,6 +286,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             case "renegociados": ok = renegociado; break;
             case "com_obra": ok = !!t.obraId; break;
             case "rateados": ok = rateios.length > 0; break;
+            case "com_anexo": ok = (t.anexos?.length ?? 0) > 0; break;
+            case "sem_anexo": ok = (t.anexos?.length ?? 0) === 0; break;
           }
           if (!ok) return false;
         }
@@ -316,6 +319,91 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
       pago: lista.filter((t) => t.status === "pago" || t.status === "recebido").reduce((s, t) => s + t.valorOriginal, 0),
     };
   }, [lista]);
+
+  // ============================================================
+  // Column chooser enterprise (D6.13.5 prep) — colunas opcionais.
+  // Cada coluna usa SOMENTE dados reais já presentes em Titulo.
+  // ============================================================
+  type ColKey =
+    | "id_curto" | "documento" | "competencia" | "emissao" | "data_liquidacao"
+    | "contrato" | "obra" | "centro_custo" | "natureza"
+    | "conta_fin" | "meio_pgto" | "valor_pago"
+    | "anexos_count" | "criado_por" | "criado_em" | "observacao"
+    | "renegociado_em" | "renegociacao_id" | "documento_numero";
+
+  const COL_GROUPS: { group: string; keys: ColKey[] }[] = [
+    { group: "Identificação",  keys: ["id_curto", "documento", "documento_numero"] },
+    { group: "Datas",          keys: ["emissao", "competencia", "data_liquidacao"] },
+    { group: "Valores",        keys: ["valor_pago"] },
+    { group: "Pagamento",      keys: ["meio_pgto", "conta_fin"] },
+    { group: "Controladoria",  keys: ["centro_custo", "natureza", "contrato", "obra"] },
+    { group: "Governança",     keys: ["criado_por", "criado_em", "renegociado_em", "renegociacao_id", "anexos_count", "observacao"] },
+  ];
+
+  const COL_DEFS: Record<ColKey, {
+    label: string;
+    width?: string;
+    align?: "right" | "left";
+    render: (t: Titulo) => React.ReactNode;
+    total?: (rows: Titulo[]) => string | null;
+  }> = {
+    id_curto:        { label: "ID", width: "w-[80px]", render: (t) => <span className="font-mono text-[10px] text-muted-foreground">{t.id.slice(0, 8)}</span> },
+    documento:       { label: "Tipo doc.", width: "w-[90px]", render: (t) => t.documentoTipo ? <Badge variant="outline" className="text-[10px]">{t.documentoTipo}</Badge> : <span className="text-xs text-muted-foreground">—</span> },
+    documento_numero:{ label: "Nº doc.", width: "w-[110px]", render: (t) => <span className="font-mono text-xs">{t.documentoNumero ?? "—"}</span> },
+    emissao:         { label: "Emissão", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{t.dataEmissao ? fmtDateBR(t.dataEmissao) : "—"}</span> },
+    competencia:     { label: "Competência", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{fmtCompetenciaBR(t.competencia)}</span> },
+    data_liquidacao: { label: "Baixa", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{t.dataLiquidacao ? fmtDateBR(t.dataLiquidacao) : "—"}</span> },
+    valor_pago:      { label: "Pago/Recebido", width: "w-[110px]", align: "right",
+                       render: (t) => <span className="font-mono text-xs tabular-nums">{fmtBRLPrecise(t.valorPago)}</span>,
+                       total: (rows) => fmtBRLPrecise(rows.reduce((s, t) => s + (t.valorPago ?? 0), 0)) },
+    meio_pgto:       { label: "Forma pgto.", width: "w-[110px]", render: (t) => <span className="text-xs">{t.meioPagamento ?? "—"}</span> },
+    conta_fin:       { label: "Conta financeira", width: "w-[140px]", render: (t) => <span className="text-xs">{t.contaFinanceira ?? "—"}</span> },
+    centro_custo:    { label: "Centro de resultado", width: "w-[140px]", render: (t) => <span className="text-xs">{t.centroCusto || "—"}</span> },
+    natureza:        { label: "Natureza", width: "w-[140px]", render: (t) => <span className="text-xs">{t.natureza || "—"}</span> },
+    contrato:        { label: "Contrato", width: "w-[110px]", render: (t) => t.contratoId ? <span className="font-mono text-[10px] text-sky-700">{t.contratoId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    obra:            { label: "Obra", width: "w-[110px]", render: (t) => t.obraId ? <span className="font-mono text-[10px] text-orange-700">{t.obraId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    criado_por:      { label: "Criado por", width: "w-[120px]", render: (t) => <span className="text-xs text-muted-foreground">{t.criadoPor ?? "—"}</span> },
+    criado_em:       { label: "Criado em", width: "w-[100px]", render: (t) => <span className="font-mono text-xs text-muted-foreground">{t.criadoEm ? fmtDateBR(t.criadoEm.slice(0,10)) : "—"}</span> },
+    renegociado_em:  { label: "Renegociado em", width: "w-[110px]", render: (t) => <span className="font-mono text-xs">{t.renegociadoEm ? fmtDateBR(t.renegociadoEm.slice(0,10)) : "—"}</span> },
+    renegociacao_id: { label: "Título substituto", width: "w-[120px]", render: (t) => t.renegociacaoId ? <span className="font-mono text-[10px] text-violet-700">{t.renegociacaoId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    anexos_count:    { label: "Anexos", width: "w-[70px]", align: "right",
+                       render: (t) => {
+                         const n = t.anexos?.length ?? 0;
+                         return n > 0
+                           ? <span className="inline-flex items-center gap-1 font-mono text-xs text-sky-700"><Paperclip className="h-3 w-3" />{n}</span>
+                           : <span className="text-xs text-muted-foreground">—</span>;
+                       } },
+    observacao:      { label: "Observação", width: "max-w-[200px]", render: (t) => <span className="block truncate text-xs text-muted-foreground" title={t.observacao ?? ""}>{t.observacao || "—"}</span> },
+  };
+
+  const COLS_KEY = `ms.grid.titulos.${tipo}.cols.v1`;
+  const [extraCols, setExtraCols] = useState<Set<ColKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(COLS_KEY);
+      if (raw) return new Set(JSON.parse(raw) as ColKey[]);
+    } catch {}
+    return new Set();
+  });
+  useEffect(() => {
+    try { localStorage.setItem(COLS_KEY, JSON.stringify([...extraCols])); } catch {}
+  }, [COLS_KEY, extraCols]);
+
+  const extraColList = useMemo<ColKey[]>(() => {
+    const ordered: ColKey[] = [];
+    for (const g of COL_GROUPS) for (const k of g.keys) if (extraCols.has(k)) ordered.push(k);
+    return ordered;
+  }, [extraCols]);
+
+  // Modo "Σ Seleção" vs "Σ Total filtrado" no rodapé.
+  const [somaSelecao, setSomaSelecao] = useState(false);
+  const linhasRodape = useMemo(
+    () => somaSelecao && selecionados.size > 0 ? lista.filter((t) => selecionados.has(t.id)) : lista,
+    [somaSelecao, selecionados, lista],
+  );
+
+  const baseCols = showEncargos ? 12 : 9;
+  const totalCols = baseCols + extraColList.length;
 
   const titulo = tipo === "AP" ? "Contas a Pagar" : "Contas a Receber";
 
@@ -625,35 +713,97 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               ];
               const atual = presets.find((p) => p.k === preset) ?? presets[0];
               return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
-                      title="Trocar visão"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-info" />
-                      <span className="text-muted-foreground">Visão:</span>
-                      <span>{atual.label}</span>
-                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    {presets.map((p) => (
-                      <DropdownMenuItem
-                        key={p.k}
-                        onClick={() => setPreset(p.k)}
-                        className={preset === p.k ? "font-semibold" : ""}
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
+                        title="Trocar visão"
                       >
-                        <div className="flex flex-col">
-                          <span>{p.label}</span>
-                          <span className="text-[10.5px] text-muted-foreground">{p.hint}</span>
+                        <Eye className="h-3.5 w-3.5 text-info" />
+                        <span className="text-muted-foreground">Visão:</span>
+                        <span>{atual.label}</span>
+                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      {presets.map((p) => (
+                        <DropdownMenuItem
+                          key={p.k}
+                          onClick={() => setPreset(p.k)}
+                          className={preset === p.k ? "font-semibold" : ""}
+                        >
+                          <div className="flex flex-col">
+                            <span>{p.label}</span>
+                            <span className="text-[10.5px] text-muted-foreground">{p.hint}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Column chooser — colunas opcionais agrupadas */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 rounded-sm border border-slate-200 bg-white px-2 text-[11.5px] font-medium text-slate-700 hover:bg-slate-100 shrink-0"
+                        title="Escolher colunas visíveis"
+                      >
+                        <Columns3 className="h-3.5 w-3.5 text-info" />
+                        <span>Colunas</span>
+                        {extraCols.size > 0 && (
+                          <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-600 px-1 text-[10px] font-semibold text-white">
+                            +{extraCols.size}
+                          </span>
+                        )}
+                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-72 max-h-[70vh] overflow-y-auto">
+                      <DropdownMenuLabel className="flex items-center justify-between">
+                        <span className="text-[11px] uppercase tracking-wide">Colunas opcionais</span>
+                        {extraCols.size > 0 && (
+                          <button
+                            type="button"
+                            className="text-[10px] text-muted-foreground hover:text-foreground"
+                            onClick={(e) => { e.preventDefault(); setExtraCols(new Set()); }}
+                          >
+                            Limpar
+                          </button>
+                        )}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {COL_GROUPS.map((g) => (
+                        <div key={g.group}>
+                          <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {g.group}
+                          </div>
+                          {g.keys.map((k) => (
+                            <DropdownMenuCheckboxItem
+                              key={k}
+                              checked={extraCols.has(k)}
+                              onCheckedChange={(v) => {
+                                setExtraCols((s) => {
+                                  const n = new Set(s);
+                                  if (v) n.add(k); else n.delete(k);
+                                  return n;
+                                });
+                              }}
+                              onSelect={(e) => e.preventDefault()}
+                              className="text-xs"
+                            >
+                              {COL_DEFS[k].label}
+                            </DropdownMenuCheckboxItem>
+                          ))}
                         </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               );
             })()}
 
@@ -706,11 +856,16 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               {showEncargos && <TableHead className="w-[90px] text-right">Desconto</TableHead>}
               <TableHead className="w-[130px] text-right">Total</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
+              {extraColList.map((k) => (
+                <TableHead key={k} className={`${COL_DEFS[k].width ?? ""} ${COL_DEFS[k].align === "right" ? "text-right" : ""}`.trim()}>
+                  {COL_DEFS[k].label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={showEncargos ? 12 : 9} className="py-10 text-center text-sm text-muted-foreground">
+              <TableRow><TableCell colSpan={totalCols} className="py-10 text-center text-sm text-muted-foreground">
                 Nenhum título. Crie manualmente ou importe previsões.
               </TableCell></TableRow>
             )}
@@ -965,6 +1120,11 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 </TableCell>
 
                 <TableCell><StatusPill s={t.status} renegociado={t.statusRenegociacao === "renegociado"} /></TableCell>
+                {extraColList.map((k) => (
+                  <TableCell key={k} className={`${COL_DEFS[k].width ?? ""} ${COL_DEFS[k].align === "right" ? "text-right" : ""}`.trim()}>
+                    {COL_DEFS[k].render(t)}
+                  </TableCell>
+                ))}
               </TableRow>
               );
             })}
@@ -973,10 +1133,17 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={4} className="py-2 text-[12px] font-semibold text-slate-700">
                 <span className="inline-flex items-center gap-2">
-                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{lista.length}</span>
-                  {lista.length === 1 ? "registro" : "registros"}
+                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{linhasRodape.length}</span>
+                  {linhasRodape.length === 1 ? "registro" : "registros"}
                   {selecionados.size > 0 && (
-                    <span className="text-emerald-700">· {selecionados.size} selecionado{selecionados.size > 1 ? "s" : ""}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSomaSelecao((v) => !v)}
+                      className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${somaSelecao ? "border-emerald-600 bg-emerald-600 text-white" : "border-emerald-600 text-emerald-700 hover:bg-emerald-50"}`}
+                      title="Alternar entre Σ Total filtrado e Σ Seleção"
+                    >
+                      Σ {somaSelecao ? "Seleção" : "Total"} · {selecionados.size} sel.
+                    </button>
                   )}
                 </span>
               </TableCell>
@@ -984,27 +1151,35 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                 Totais →
               </TableCell>
               <TableCell className="text-right font-mono text-[13px] font-bold tabular-nums text-slate-800">
-                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
+                {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
               </TableCell>
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
                 </TableCell>
               )}
               {showEncargos && (
                 <TableCell className="text-right font-mono text-[12px] tabular-nums text-emerald-700">
-                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.desconto ?? 0), 0))}
+                  {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.desconto ?? 0), 0))}
                 </TableCell>
               )}
               <TableCell className="text-right font-mono text-[14px] font-bold tabular-nums text-emerald-800">
-                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.saldo ?? 0), 0))}
+                {fmtBRLPrecise(linhasRodape.reduce((s, t) => s + (t.saldo ?? 0), 0))}
               </TableCell>
               <TableCell />
+              {extraColList.map((k) => {
+                const total = COL_DEFS[k].total?.(linhasRodape);
+                return (
+                  <TableCell key={k} className={`text-right font-mono text-[12px] tabular-nums text-slate-700 ${COL_DEFS[k].width ?? ""}`.trim()}>
+                    {total ?? ""}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableFooter>
         </Table>
@@ -2012,7 +2187,8 @@ type ChipKeyExt =
   | "baixado_hoje" | "baixado_semana" | "baixado_mes"
   | "conciliado_hoje" | "conciliado_semana" | "conciliado_mes"
   | "conciliados" | "nao_conciliados"
-  | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados";
+  | "com_encargos" | "com_desconto" | "renegociados" | "com_obra" | "rateados"
+  | "com_anexo" | "sem_anexo";
 
 function CHIP_LABEL(k: ChipKeyExt, tipo: TituloTipo): string {
   switch (k) {
@@ -2034,6 +2210,8 @@ function CHIP_LABEL(k: ChipKeyExt, tipo: TituloTipo): string {
     case "renegociados": return "Renegociados";
     case "com_obra": return "Com obra";
     case "rateados": return "Rateados";
+    case "com_anexo": return "Com anexo";
+    case "sem_anexo": return "Sem anexo";
   }
 }
 
@@ -2053,6 +2231,7 @@ function FiltrosSheet({ chips, toggleChip, clearChips, tipo, open, onOpenChange,
     { title: tipo === "AP" ? "Pagamento" : "Recebimento", items: ["baixado_hoje", "baixado_semana", "baixado_mes"] },
     { title: "Conciliação", items: ["conciliados", "nao_conciliados", "conciliado_hoje", "conciliado_semana", "conciliado_mes"] },
     { title: "Operacional", items: ["com_encargos", "com_desconto", "renegociados", "com_obra", "rateados"] },
+    { title: "Anexos", items: ["com_anexo", "sem_anexo"] },
   ];
 
   return (

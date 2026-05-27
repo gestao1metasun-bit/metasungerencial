@@ -43,6 +43,13 @@ import {
   exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
 import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { ProcessosMenu } from "@/components/app/grid/ProcessosMenu";
+import { useProcessos } from "@/lib/process-engine";
+import "@/lib/processes/financeiro.processes"; // registra processos do módulo
+import type {
+  TituloProcessRow,
+  RenegociarExtras,
+} from "@/lib/processes/financeiro.processes";
 import { toast } from "sonner";
 
 

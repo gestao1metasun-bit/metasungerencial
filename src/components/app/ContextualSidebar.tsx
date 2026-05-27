@@ -83,7 +83,7 @@ export function ContextualSidebar() {
         <Section
           title="Pendências"
           icon={<Bell className="h-3 w-3" />}
-          counter={pendentes.length || undefined}
+          counter={mounted ? (pendentes.length || undefined) : undefined}
         >
           <Link
             to="/aprovacoes"
@@ -91,13 +91,13 @@ export function ContextualSidebar() {
           >
             <ClipboardCheck className="h-3.5 w-3.5 text-sidebar-foreground/55" />
             Central de Aprovações
-            {pendentes.length > 0 && (
+            {mounted && pendentes.length > 0 && (
               <span className="ml-auto inline-flex h-4 min-w-[16px] items-center justify-center rounded bg-amber-500/90 px-1 text-[9.5px] font-bold text-amber-950">
                 {pendentes.length}
               </span>
             )}
           </Link>
-          {pendentes.length === 0 && (
+          {mounted && pendentes.length === 0 && (
             <EmptyHint className="mt-1">Sem aprovações pendentes para você.</EmptyHint>
           )}
         </Section>
@@ -106,9 +106,9 @@ export function ContextualSidebar() {
         <Section
           title="Favoritos"
           icon={<Star className="h-3 w-3" />}
-          counter={favoritos.length || undefined}
+          counter={mounted ? (favoritos.length || undefined) : undefined}
         >
-          {favoritos.length === 0 ? (
+          {!mounted || favoritos.length === 0 ? (
             <EmptyHint>Use a estrela no topo das telas para fixar aqui.</EmptyHint>
           ) : (
             <ul className="space-y-0.5">
@@ -138,7 +138,7 @@ export function ContextualSidebar() {
 
         {/* Recentes reais */}
         <Section title="Recentes" icon={<Clock className="h-3 w-3" />}>
-          {recentes.length === 0 ? (
+          {!mounted || recentes.length === 0 ? (
             <EmptyHint>Sem acessos recentes.</EmptyHint>
           ) : (
             <ul className="space-y-0.5">
@@ -158,9 +158,6 @@ export function ContextualSidebar() {
           )}
         </Section>
 
-        <Section title="Filtros rápidos" icon={<Filter className="h-3 w-3" />}>
-          <EmptyHint>Filtros contextuais por módulo virão na próxima onda.</EmptyHint>
-        </Section>
       </nav>
 
       <div className="border-t border-sidebar-border p-2">

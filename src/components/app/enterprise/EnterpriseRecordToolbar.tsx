@@ -160,14 +160,17 @@ function IconBtn({
   label: string;
   onClick?: () => void;
   disabled?: boolean;
-  tone?: "default" | "primary" | "danger" | "muted";
+  tone?: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info";
   title?: string;
 }) {
   const toneClass: Record<string, string> = {
-    default: "text-foreground/80 hover:text-foreground",
-    primary: "text-primary hover:text-primary",
-    danger:  "text-destructive hover:text-destructive",
-    muted:   "text-muted-foreground hover:text-foreground",
+    default: "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
+    primary: "text-sky-600 hover:text-sky-700 hover:bg-sky-50",
+    danger:  "text-red-600 hover:text-red-700 hover:bg-red-50",
+    muted:   "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+    success: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50",
+    warning: "text-amber-600 hover:text-amber-700 hover:bg-amber-50",
+    info:    "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50",
   };
   return (
     <Button
@@ -179,11 +182,11 @@ function IconBtn({
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "h-6 w-6 rounded-sm p-0 shrink-0",
+        "h-7 w-7 rounded-sm p-0 shrink-0",
         toneClass[tone],
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" strokeWidth={2.25} />
     </Button>
   );
 }

@@ -5,6 +5,7 @@ import {
   HardHat, Wrench, Clock, CheckCircle2, AlertTriangle, SquarePen, Users,
   ChevronUp, ChevronDown, RotateCcw, Eye, Plus, Lock, Unlock, ShieldCheck, History,
 } from "lucide-react";
+import { AnexosButton } from "@/components/app/enterprise/AnexosButton";
 import {
   aprovarFinalizacao, revogarAprovacao, useAprovacoes, temAmbasAprovacoes,
   aguardandoAprovacao, useObrasAguardandoIds, liberarEdicao, usePodeEditarFinalizada,

@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "@/components/app/enterprise/EnterpriseRecordToolbar";
@@ -869,6 +869,44 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               );
             })}
           </TableBody>
+          <TableFooter className="bg-gradient-to-b from-slate-50 to-slate-100 border-t-2 border-slate-300">
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="py-2 text-[12px] font-semibold text-slate-700">
+                <span className="inline-flex items-center gap-2">
+                  <span className="rounded-sm bg-sky-100 px-1.5 py-0.5 font-mono text-[11px] text-sky-800">{lista.length}</span>
+                  {lista.length === 1 ? "registro" : "registros"}
+                  {selecionados.size > 0 && (
+                    <span className="text-emerald-700">· {selecionados.size} selecionado{selecionados.size > 1 ? "s" : ""}</span>
+                  )}
+                </span>
+              </TableCell>
+              <TableCell colSpan={2} className="text-right text-[11px] uppercase tracking-wider text-slate-500">
+                Totais →
+              </TableCell>
+              <TableCell className="text-right font-mono text-[13px] font-bold tabular-nums text-slate-800">
+                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.valorOriginal ?? 0), 0))}
+              </TableCell>
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-amber-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).jurosSugerido : 0), 0))}
+                </TableCell>
+              )}
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-rose-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.status !== "pago" && t.status !== "recebido" && t.status !== "cancelado" ? calcularEncargos(t, hojeISO, parametrosFin).multaSugerida : 0), 0))}
+                </TableCell>
+              )}
+              {showEncargos && (
+                <TableCell className="text-right font-mono text-[12px] tabular-nums text-emerald-700">
+                  {fmtBRLPrecise(lista.reduce((s, t) => s + (t.desconto ?? 0), 0))}
+                </TableCell>
+              )}
+              <TableCell className="text-right font-mono text-[14px] font-bold tabular-nums text-emerald-800">
+                {fmtBRLPrecise(lista.reduce((s, t) => s + (t.saldo ?? 0), 0))}
+              </TableCell>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
         </Table>
       </Card>
 

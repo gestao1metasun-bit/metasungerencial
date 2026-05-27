@@ -160,14 +160,17 @@ function IconBtn({
   label: string;
   onClick?: () => void;
   disabled?: boolean;
-  tone?: "default" | "primary" | "danger" | "muted";
+  tone?: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info";
   title?: string;
 }) {
   const toneClass: Record<string, string> = {
-    default: "text-foreground/80 hover:text-foreground",
-    primary: "text-primary hover:text-primary",
-    danger:  "text-destructive hover:text-destructive",
-    muted:   "text-muted-foreground hover:text-foreground",
+    default: "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
+    primary: "text-sky-600 hover:text-sky-700 hover:bg-sky-50",
+    danger:  "text-red-600 hover:text-red-700 hover:bg-red-50",
+    muted:   "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+    success: "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50",
+    warning: "text-amber-600 hover:text-amber-700 hover:bg-amber-50",
+    info:    "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50",
   };
   return (
     <Button
@@ -179,11 +182,11 @@ function IconBtn({
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "h-6 w-6 rounded-sm p-0 shrink-0",
+        "h-7 w-7 rounded-sm p-0 shrink-0",
         toneClass[tone],
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" />
     </Button>
   );
 }
@@ -245,10 +248,18 @@ export function EnterpriseRecordToolbar({
     if (!showAction(a)) return null;
     const Icon = ACTION_ICON[a];
     const label = ACTION_LABEL[a];
-    const tone: "default" | "primary" | "danger" | "muted" =
+    const tone: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info" =
       a === "novo" ? "primary"
+      : a === "editar" ? "warning"
       : (a === "excluir" || a === "cancelar") ? "danger"
+      : a === "salvar" ? "success"
       : (a === "atualizar" || a === "visualizar") ? "muted"
+      : a === "historico" ? "info"
+      : a === "comentarios" ? "info"
+      : a === "auditoria" ? "warning"
+      : a === "exportar" ? "success"
+      : a === "imprimir" ? "info"
+      : (a === "filtroAvancado" || a === "visoes" || a === "colunas" || a === "layout") ? "info"
       : "default";
     return (
       <IconBtn
@@ -280,8 +291,8 @@ export function EnterpriseRecordToolbar({
       data-selection-mode={mode}
       data-selection-count={count}
       className={cn(
-        "flex items-center gap-0 border border-border/80",
-        "bg-muted/30 px-1 py-0.5 rounded-sm overflow-x-auto",
+        "flex items-center gap-0.5 border border-slate-200",
+        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 rounded-sm overflow-x-auto shadow-sm",
         className,
       )}
     >
@@ -314,7 +325,7 @@ export function EnterpriseRecordToolbar({
         </>
       )}
 
-      {/* Anexos (com label + chevron, como no print) */}
+      {/* Anexos (label + chevron, azul) */}
       {enabled.has("anexos") && (
         <Button
           type="button"
@@ -323,9 +334,9 @@ export function EnterpriseRecordToolbar({
           onClick={() => fire("anexos")}
           disabled={mode === "none"}
           title="Anexos"
-          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+          className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-sky-700 hover:text-sky-800 hover:bg-sky-50"
         >
-          <Paperclip className="h-3.5 w-3.5" />
+          <Paperclip className="h-4 w-4" />
           <span>Anexos</span>
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Button>
@@ -336,7 +347,7 @@ export function EnterpriseRecordToolbar({
       {renderActionBtn("comentarios")}
       {renderActionBtn("auditoria")}
 
-      {/* Processos contextuais (label + chevron) */}
+      {/* Processos contextuais (label + chevron, verde/esmeralda) */}
       {processosVisiveis.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -344,10 +355,10 @@ export function EnterpriseRecordToolbar({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+              className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
               title="Processos disponíveis"
             >
-              <Cog className="h-3.5 w-3.5" />
+              <Cog className="h-4 w-4" />
               <span>Processos</span>
               {count > 1 && (
                 <span className="ml-0.5 rounded bg-background px-1 font-mono text-[10px] border border-border/60">
@@ -389,7 +400,7 @@ export function EnterpriseRecordToolbar({
 
       <Sep />
 
-      {/* Filtro estilo "[Filtro: Todos] ▼" do RM */}
+      {/* Filtro estilo "[Filtro: Todos] ▼" do RM — roxo/índigo */}
       {(enabled.has("filtroRapido") || enabled.has("filtroAvancado")) && (
         <Button
           type="button"
@@ -397,10 +408,10 @@ export function EnterpriseRecordToolbar({
           size="sm"
           onClick={() => (onFilter ? onFilter() : fire("filtroRapido"))}
           title="Filtro"
-          className="h-6 px-1.5 gap-1 rounded-sm text-[11.5px] text-foreground/85"
+          className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50"
         >
-          <Filter className="h-3.5 w-3.5" />
-          <span>[Filtro: Todos]</span>
+          <Filter className="h-4 w-4" />
+          <span>Filtros: Todos</span>
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Button>
       )}

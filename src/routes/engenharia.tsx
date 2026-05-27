@@ -18,7 +18,8 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
-import { DashboardReaisOverview } from "@/components/app/analytics/DashboardReaisOverview";
+import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -416,10 +417,58 @@ function EngenhariaPage() {
     // dep simples baseada em uma assinatura serializada das obras
   }, [obras.map((o) => `${o.id}:${o.status}:${o.modulos}:${o.inversor}:${o.inv2}:${o.inv3}:${o.telhadoTipo}`).join("|")]);
 
+  // ── D6.8 Onda 4: strip operacional + EnterpriseToolbar ──
+  const totalObras = obras.length;
+  const ativas = obras.filter((o) => o.status !== "Finalizado" && o.status !== "Contrato cancelado").length;
+  const finalizadas = obras.filter((o) => o.status === "Finalizado").length;
+  const standby = obras.filter((o) => o.status === "Stand-by" || o.status === "Standby").length;
+  const executando = obras.filter((o) => o.status === "Executando instalação").length;
+  const pendsAbertas = pends.filter((p: any) => !p.resolvida && p.status !== "Resolvida").length;
+  const kwpAtivo = obras
+    .filter((o) => o.status !== "Finalizado" && o.status !== "Contrato cancelado")
+    .reduce((s, o) => s + (Number(o.potencia) || 0), 0);
+
   return (
     <>
       <PageHeader title="Engenharia" subtitle="Obras, equipes, cronograma e produtividade." />
-      <div className="mb-4"><DashboardReaisOverview /></div>
+
+      {/* Strip operacional denso (substitui DashboardReaisOverview que poluía a operação) */}
+      <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border/80 bg-muted/40 px-2.5 py-1.5 text-[11px]">
+        <StripChip label="Obras" value={totalObras} tone="muted" />
+        <StripChip label="Ativas" value={ativas} tone="info" />
+        <StripChip label="Executando" value={executando} tone="success" />
+        <StripChip label="Stand-by" value={standby} tone="warning" />
+        <StripChip label="Finalizadas" value={finalizadas} tone="muted" />
+        <span className="h-3.5 w-px bg-border/80" />
+        <StripChip label="Pend. abertas" value={pendsAbertas} tone={pendsAbertas > 0 ? "danger" : "muted"} />
+        <StripChip label="kWp ativo" value={`${kwpAtivo.toFixed(1)}`} tone="primary" />
+        <StripChip label="Equipes" value={equipes.length} tone="muted" />
+        <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/80">Engenharia · operação</span>
+      </div>
+
+      {/* EnterpriseToolbar padronizado */}
+      <div className="mb-2">
+        <EnterpriseToolbar
+          title="Engenharia"
+          count={totalObras}
+          hint={`${ativas} ativas · ${pendsAbertas} pend.`}
+          onAtualizar={() => reloadObrasReais()}
+          onExportar={() =>
+            exportToCSV("obras-engenharia.csv", obras as any[], [
+              { key: "id", label: "ID" },
+              { key: "contrato", label: "Contrato" },
+              { key: "cliente", label: "Cliente" },
+              { key: "status", label: "Status" },
+              { key: "equipe", label: "Equipe" },
+              { key: "modulos", label: "Módulos" },
+              { key: "potencia", label: "kWp" },
+              { key: "inicio", label: "Início" },
+              { key: "previsto", label: "Previsto" },
+              { key: "finalizacao", label: "Finalização" },
+            ])
+          }
+        />
+      </div>
       {(() => {
         const targetReal = obrasReais.find((r) => r.codigo === DEBUG_OBRA_CODIGO);
         const targetMerged = obras.find((o) => o.obs?.includes(DEBUG_OBRA_CODIGO));
@@ -2951,5 +3000,25 @@ function ObrasKanbanBlock({
       />
       <ColunasManager open={manage} onOpenChange={setManage} cols={cols} setCols={setCols} />
     </div>
+  );
+}
+
+/* D6.8 Onda 4 — chip denso de strip operacional. */
+function StripChip({
+  label, value, tone = "muted",
+}: { label: string; value: string | number; tone?: "muted" | "primary" | "info" | "success" | "warning" | "danger" }) {
+  const toneText: Record<string, string> = {
+    muted: "text-foreground",
+    primary: "text-primary",
+    info: "text-info",
+    success: "text-success",
+    warning: "text-warning",
+    danger: "text-destructive",
+  };
+  return (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="uppercase tracking-wider text-muted-foreground/80">{label}</span>
+      <span className={`font-mono font-semibold ${toneText[tone]}`}>{value}</span>
+    </span>
   );
 }

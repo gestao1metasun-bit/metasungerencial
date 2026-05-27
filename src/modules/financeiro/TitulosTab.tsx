@@ -650,7 +650,14 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                   }).join("\n")
                 : "";
               return (
-              <TableRow key={t.id} className="group">
+              <TableRow key={t.id} className="group" data-state={selecionados.has(t.id) ? "selected" : undefined}>
+                <TableCell className="w-[32px]">
+                  <Checkbox
+                    checked={selecionados.has(t.id)}
+                    onCheckedChange={() => toggleSel(t.id)}
+                    aria-label={`Selecionar ${t.descricao}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <TituloRowActions

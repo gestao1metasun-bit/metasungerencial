@@ -23,6 +23,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   EnterpriseDataGrid, exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
+import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
 import {
   useWorkflowAprovacoes, useWorkflowHistorico,
   useAprovarSolicitacao, useNegarSolicitacao, useCancelarSolicitacao,
@@ -34,6 +35,7 @@ import { useAuth } from "@/lib/auth-store";
 import {
   Inbox, ClipboardCheck, Clock, ShieldCheck, Check, X, Eye, AlertTriangle, Ban,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/aprovacoes")({
   head: () => ({

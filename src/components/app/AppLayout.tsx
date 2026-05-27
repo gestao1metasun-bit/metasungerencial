@@ -51,11 +51,10 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
-      <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-border bg-card/95 backdrop-blur-xl px-3 shadow-sm relative">
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-        <div className="flex shrink-0 items-center gap-2 pr-3 mr-1 border-r border-border/60">
-          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground hidden xl:inline">
+      <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
+        <div className="flex shrink-0 items-center gap-2 pr-3 mr-1 border-r border-white/15">
+          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain brightness-0 invert" />
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70 hidden xl:inline">
             Gerencial
           </span>
         </div>
@@ -63,19 +62,19 @@ export function AppLayout() {
         {/* Macro módulos ERP — sempre visíveis (TOTVS RM/Sankhya/SAP) */}
         <MacroNav />
 
-        <div className="flex shrink-0 items-center gap-1.5 pl-2 ml-1 border-l border-border/60">
+        <div className="flex shrink-0 items-center gap-1.5 pl-2 ml-1 border-l border-white/15">
           <FavoritosMenu />
           {!identidade.sessionLoading && !identidade.isAuthenticated && (
             <button
               type="button"
               onClick={() => void navigate({ to: "/login" })}
               title="Faça login para habilitar ações administrativas."
-              className="hidden md:inline-flex items-center gap-1.5 rounded border border-amber-400/60 bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-800 hover:bg-amber-100"
+              className="hidden md:inline-flex items-center gap-1.5 rounded border border-amber-300/60 bg-amber-400/20 px-2 py-0.5 text-[10.5px] font-semibold text-amber-100 hover:bg-amber-400/30"
             >
               <LogIn className="h-3 w-3" /> Sem sessão
             </button>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary relative">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 relative">
             <Bell className="h-4 w-4" />
             <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
           </Button>
@@ -84,27 +83,27 @@ export function AppLayout() {
             size="icon"
             onClick={() => setContextOpen(true)}
             title="Painel de contexto (favoritos, recentes, pendências)"
-            className="h-7 w-7 text-muted-foreground hover:text-primary"
+            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10"
           >
             <PanelRight className="h-4 w-4" />
           </Button>
           <Link
             to="/configuracoes"
-            className="hidden md:flex items-center gap-2 rounded border border-border bg-card px-2 py-0.5 hover:bg-accent"
+            className="hidden md:flex items-center gap-2 rounded border border-white/15 bg-white/10 px-2 py-0.5 hover:bg-white/15"
           >
-            <div className="grid h-6 w-6 place-items-center rounded-full bg-gradient-primary text-[10px] font-bold text-primary-foreground ring-1 ring-gold/30">{initials}</div>
+            <div className="grid h-6 w-6 place-items-center rounded-full bg-meta-bar-active text-[10px] font-bold text-white ring-1 ring-gold/40">{initials}</div>
             <div className="leading-tight text-left">
-              <div className="text-[11.5px] font-semibold tracking-tight">{displayName}</div>
-              <div className="text-[9.5px] text-muted-foreground">{displayPerfil}</div>
+              <div className="text-[11.5px] font-semibold tracking-tight text-white">{displayName}</div>
+              <div className="text-[9.5px] text-white/60">{displayPerfil}</div>
             </div>
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-white/60" />
           </Link>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             title="Sair"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            className="h-7 w-7 text-white/80 hover:text-red-200 hover:bg-white/10"
           >
             <LogOut className="h-3.5 w-3.5" />
           </Button>

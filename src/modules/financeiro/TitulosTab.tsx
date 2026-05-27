@@ -320,6 +320,91 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
     };
   }, [lista]);
 
+  // ============================================================
+  // Column chooser enterprise (D6.13.5 prep) — colunas opcionais.
+  // Cada coluna usa SOMENTE dados reais já presentes em Titulo.
+  // ============================================================
+  type ColKey =
+    | "id_curto" | "documento" | "competencia" | "emissao" | "data_liquidacao"
+    | "contrato" | "obra" | "centro_custo" | "natureza"
+    | "conta_fin" | "meio_pgto" | "valor_pago"
+    | "anexos_count" | "criado_por" | "criado_em" | "observacao"
+    | "renegociado_em" | "renegociacao_id" | "documento_numero";
+
+  const COL_GROUPS: { group: string; keys: ColKey[] }[] = [
+    { group: "Identificação",  keys: ["id_curto", "documento", "documento_numero"] },
+    { group: "Datas",          keys: ["emissao", "competencia", "data_liquidacao"] },
+    { group: "Valores",        keys: ["valor_pago"] },
+    { group: "Pagamento",      keys: ["meio_pgto", "conta_fin"] },
+    { group: "Controladoria",  keys: ["centro_custo", "natureza", "contrato", "obra"] },
+    { group: "Governança",     keys: ["criado_por", "criado_em", "renegociado_em", "renegociacao_id", "anexos_count", "observacao"] },
+  ];
+
+  const COL_DEFS: Record<ColKey, {
+    label: string;
+    width?: string;
+    align?: "right" | "left";
+    render: (t: Titulo) => React.ReactNode;
+    total?: (rows: Titulo[]) => string | null;
+  }> = {
+    id_curto:        { label: "ID", width: "w-[80px]", render: (t) => <span className="font-mono text-[10px] text-muted-foreground">{t.id.slice(0, 8)}</span> },
+    documento:       { label: "Tipo doc.", width: "w-[90px]", render: (t) => t.documentoTipo ? <Badge variant="outline" className="text-[10px]">{t.documentoTipo}</Badge> : <span className="text-xs text-muted-foreground">—</span> },
+    documento_numero:{ label: "Nº doc.", width: "w-[110px]", render: (t) => <span className="font-mono text-xs">{t.documentoNumero ?? "—"}</span> },
+    emissao:         { label: "Emissão", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{t.dataEmissao ? fmtDateBR(t.dataEmissao) : "—"}</span> },
+    competencia:     { label: "Competência", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{fmtCompetenciaBR(t.competencia)}</span> },
+    data_liquidacao: { label: "Baixa", width: "w-[90px]", render: (t) => <span className="font-mono text-xs">{t.dataLiquidacao ? fmtDateBR(t.dataLiquidacao) : "—"}</span> },
+    valor_pago:      { label: "Pago/Recebido", width: "w-[110px]", align: "right",
+                       render: (t) => <span className="font-mono text-xs tabular-nums">{fmtBRLPrecise(t.valorPago)}</span>,
+                       total: (rows) => fmtBRLPrecise(rows.reduce((s, t) => s + (t.valorPago ?? 0), 0)) },
+    meio_pgto:       { label: "Forma pgto.", width: "w-[110px]", render: (t) => <span className="text-xs">{t.meioPagamento ?? "—"}</span> },
+    conta_fin:       { label: "Conta financeira", width: "w-[140px]", render: (t) => <span className="text-xs">{t.contaFinanceira ?? "—"}</span> },
+    centro_custo:    { label: "Centro de resultado", width: "w-[140px]", render: (t) => <span className="text-xs">{t.centroCusto || "—"}</span> },
+    natureza:        { label: "Natureza", width: "w-[140px]", render: (t) => <span className="text-xs">{t.natureza || "—"}</span> },
+    contrato:        { label: "Contrato", width: "w-[110px]", render: (t) => t.contratoId ? <span className="font-mono text-[10px] text-sky-700">{t.contratoId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    obra:            { label: "Obra", width: "w-[110px]", render: (t) => t.obraId ? <span className="font-mono text-[10px] text-orange-700">{t.obraId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    criado_por:      { label: "Criado por", width: "w-[120px]", render: (t) => <span className="text-xs text-muted-foreground">{t.criadoPor ?? "—"}</span> },
+    criado_em:       { label: "Criado em", width: "w-[100px]", render: (t) => <span className="font-mono text-xs text-muted-foreground">{t.criadoEm ? fmtDateBR(t.criadoEm.slice(0,10)) : "—"}</span> },
+    renegociado_em:  { label: "Renegociado em", width: "w-[110px]", render: (t) => <span className="font-mono text-xs">{t.renegociadoEm ? fmtDateBR(t.renegociadoEm.slice(0,10)) : "—"}</span> },
+    renegociacao_id: { label: "Título substituto", width: "w-[120px]", render: (t) => t.renegociacaoId ? <span className="font-mono text-[10px] text-violet-700">{t.renegociacaoId.slice(0,8)}</span> : <span className="text-xs text-muted-foreground">—</span> },
+    anexos_count:    { label: "Anexos", width: "w-[70px]", align: "right",
+                       render: (t) => {
+                         const n = t.anexos?.length ?? 0;
+                         return n > 0
+                           ? <span className="inline-flex items-center gap-1 font-mono text-xs text-sky-700"><Paperclip className="h-3 w-3" />{n}</span>
+                           : <span className="text-xs text-muted-foreground">—</span>;
+                       } },
+    observacao:      { label: "Observação", width: "max-w-[200px]", render: (t) => <span className="block truncate text-xs text-muted-foreground" title={t.observacao ?? ""}>{t.observacao || "—"}</span> },
+  };
+
+  const COLS_KEY = `ms.grid.titulos.${tipo}.cols.v1`;
+  const [extraCols, setExtraCols] = useState<Set<ColKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(COLS_KEY);
+      if (raw) return new Set(JSON.parse(raw) as ColKey[]);
+    } catch {}
+    return new Set();
+  });
+  useEffect(() => {
+    try { localStorage.setItem(COLS_KEY, JSON.stringify([...extraCols])); } catch {}
+  }, [COLS_KEY, extraCols]);
+
+  const extraColList = useMemo<ColKey[]>(() => {
+    const ordered: ColKey[] = [];
+    for (const g of COL_GROUPS) for (const k of g.keys) if (extraCols.has(k)) ordered.push(k);
+    return ordered;
+  }, [extraCols]);
+
+  // Modo "Σ Seleção" vs "Σ Total filtrado" no rodapé.
+  const [somaSelecao, setSomaSelecao] = useState(false);
+  const linhasRodape = useMemo(
+    () => somaSelecao && selecionados.size > 0 ? lista.filter((t) => selecionados.has(t.id)) : lista,
+    [somaSelecao, selecionados, lista],
+  );
+
+  const baseCols = showEncargos ? 12 : 9;
+  const totalCols = baseCols + extraColList.length;
+
   const titulo = tipo === "AP" ? "Contas a Pagar" : "Contas a Receber";
 
   return (

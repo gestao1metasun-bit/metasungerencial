@@ -209,6 +209,12 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   const [renegociar, setRenegociar] = useState<Titulo | null>(null);
   const [ratear, setRatear] = useState<Titulo | null>(null);
 
+  // D6.13.3 piloto — seleção múltipla para EnterpriseRecordToolbar (RM-style).
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) =>
+    setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const limparSel = () => setSelecionados(new Set());
+
   const dateHelpers = useMemo(() => {
     const today = hojeISO;
     const d = new Date(today + "T00:00:00");

@@ -1,15 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DashboardShellStub } from "@/components/app/dashboards/DashboardShellStub";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboards/estoque")({
-  head: () => ({ meta: [{ title: "Dashboard Estoque — Meta Sun Gerencial" }] }),
-  component: () => (
-    <DashboardShellStub
-      routePath="/dashboards/estoque"
-      title="Dashboard Estoque"
-      subtitle="Saldo, reservas, entregas, estoque baixo e custo."
-      legacyHref="/estoque"
-      legacyLabel="Operação Estoque"
-    />
-  ),
+  beforeLoad: () => { throw redirect({ to: "/paineis/estoque", replace: true }); },
 });

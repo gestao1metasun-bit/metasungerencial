@@ -321,49 +321,34 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   return (
     <div className="space-y-4">
       <PeriodoFechadoBanner />
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="grid gap-1">
-          <Label className="text-xs text-muted-foreground">Buscar</Label>
-          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="descrição, fornecedor, cliente, contrato…" className="h-9 w-72" />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar descrição, fornecedor, cliente, contrato…"
+          className="h-9 w-72"
+        />
+        <div className="inline-flex h-9 items-center rounded-md border bg-background p-0.5 text-xs">
+          {([
+            { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
+            { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
+            { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão (sem encargos detalhados)" },
+            { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
+            { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico detalhado" },
+          ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
+            <button
+              key={p.k}
+              type="button"
+              onClick={() => setPreset(p.k)}
+              title={p.hint}
+              className={`rounded px-2 py-1 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-        <div className="grid gap-1">
-          <Label className="text-xs text-muted-foreground">Status</Label>
-          <Select value={fStatus} onValueChange={(v) => setFStatus(v as any)}>
-            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              {((tipo === "AP"
-                ? ["previsto","comprometido","a_pagar","parcial","pago","cancelado"]
-                : ["previsto","comprometido","a_receber","parcial","recebido","cancelado"]) as TituloStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-1">
-          <Label className="text-xs text-muted-foreground">Visão</Label>
-          <div className="inline-flex h-9 items-center rounded-md border bg-background p-0.5 text-xs">
-            {([
-              { k: "operacional", label: "Operacional", hint: "Dia a dia financeiro" },
-              { k: "cobranca",    label: "Cobrança",    hint: "Apenas em aberto, vencidos primeiro" },
-              { k: "diretoria",   label: "Diretoria",   hint: "Foco em totais e previsão (sem encargos detalhados)" },
-              { k: "fiscal",      label: "Fiscal",      hint: "Documento (NF/Boleto), competência" },
-              { k: "auditoria",   label: "Auditoria",   hint: "ID visível, criador, histórico detalhado" },
-            ] as { k: PresetView; label: string; hint: string }[]).map((p) => (
-              <button
-                key={p.k}
-                type="button"
-                onClick={() => setPreset(p.k)}
-                title={p.hint}
-                className={`rounded px-2 py-1 transition ${preset === p.k ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <FiltrosSheet chips={chips} toggleChip={toggleChip} clearChips={() => setChips(new Set())} tipo={tipo} />
         <div className="ml-auto flex items-center gap-2">
-          <FiltrosSheet chips={chips} toggleChip={toggleChip} clearChips={() => setChips(new Set())} tipo={tipo} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -384,9 +369,6 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={criarOpen} onOpenChange={setCriarOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-1.5 h-4 w-4" /> Novo título</Button>
-            </DialogTrigger>
             <TituloDialog
               tipo={tipo}
               cadastros={cadastros}
@@ -438,10 +420,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
                     toast.error(`${file.name}: ${e?.message ?? "falha no upload"}`);
                   }
                 }
-                // Reabre o título recém-criado para anexar comprovantes e/ou fazer rateio.
                 if (alvo) setEditar(alvo);
               }}
-
               onCancel={() => setCriarOpen(false)}
             />
           </Dialog>

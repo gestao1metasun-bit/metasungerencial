@@ -85,7 +85,7 @@ function FinanceiroPage() {
           setCentros={setCentros} setNaturezas={setNaturezas}
         />}
       />
-      <div className="mb-4"><DashboardReaisOverview /></div>
+      
 
 
       <Tabs value={tab} onValueChange={setTab}>

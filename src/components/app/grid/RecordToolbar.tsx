@@ -155,6 +155,7 @@ export function RecordToolbar({
   selecionado = false,
   onColunas,
   onAnexos, anexosCount,
+  flagEntidade, flagRegistroId,
   processos, filtros, filtroAtivoLabel,
   layouts, layoutAtivoLabel, onSalvarLayout, onGerenciarLayouts,
   extraLeft, extraRight,

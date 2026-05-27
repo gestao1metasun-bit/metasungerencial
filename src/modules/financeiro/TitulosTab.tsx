@@ -322,7 +322,7 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
   return (
     <div className="space-y-4">
       <PeriodoFechadoBanner />
-      <div className="flex flex-wrap items-center gap-2">
+      
       {/* Sheet de filtros — disparado pelo botão "Filtros: Todos" da toolbar enterprise */}
       <FiltrosSheet
         chips={chips}

@@ -261,6 +261,45 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
         </Card>
       )}
 
+      {/* D17.UI.2 — Toolbar RM TOTVS (3 linhas: registro + status + layout) */}
+      <EnterpriseRecordToolbar
+        entityType="titulos_financeiros"
+        selectedIds={[]}
+        availableActions={[
+          "novo", "editar", "excluir", "atualizar", "visualizar",
+          "anexos", "historico", "auditoria",
+          "exportar", "imprimir", "colunas", "filtroAvancado",
+        ]}
+        position={{ current: Math.min(1, filtrados.length), total: filtrados.length }}
+        onNavigate={() => { /* navegação por registro (em breve) */ }}
+        onAction={(a) => {
+          if (a === "novo") setNovoOpen(true);
+          else if (a === "atualizar") void refetch();
+          else toast.message(`Ação "${a}" — em breve no padrão Enterprise`);
+        }}
+        onFilter={() => toast.info("Filtros avançados — em breve")}
+        statusActions={[
+          { key: "aprovar",  label: "Aprovar",  icon: CheckCircle2, tone: "success", onClick: () => toast.message("Aprovar — em breve") },
+          { key: "reprovar", label: "Reprovar", icon: XCircle,      tone: "danger",  onClick: () => toast.message("Reprovar — em breve") },
+          { key: "baixar",   label: "Baixar",   icon: Banknote,     tone: "success", onClick: () => toast.message("Selecione um título") },
+          { key: "estornar", label: "Estornar", icon: Undo2,        tone: "warning", onClick: () => toast.message("Estornar — em breve") },
+          { key: "visualizar", label: "Visualizar", icon: Eye,      tone: "info",    onClick: () => toast.message("Visualizar — em breve") },
+          { key: "imprimir",   label: "Imprimir",   icon: Printer,  tone: "muted",   onClick: () => toast.message("Imprimir — em breve") },
+          { key: "email",      label: "Enviar e-mail", icon: Mail,  tone: "info",    onClick: () => toast.message("E-mail — em breve") },
+          { key: "remessa",    label: "Remessa",      icon: Send,   tone: "primary", onClick: () => toast.message("Remessa — em breve") },
+        ] satisfies StatusActionItem[]}
+        layoutBar={{
+          presets: [
+            { key: "padrao",   label: "Padrão" },
+            { key: "vencidos", label: "Vencidos" },
+            { key: "abertos",  label: "Em aberto" },
+          ],
+          currentPreset: "padrao",
+          density: "compact",
+          onDensityChange: () => { /* opcional */ },
+        }}
+      />
+
       {/* Tabela */}
       <Card className="overflow-hidden">
         <Table>

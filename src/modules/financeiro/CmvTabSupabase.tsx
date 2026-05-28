@@ -51,9 +51,9 @@ export function CmvTabSupabase() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Custo total (AP)" value={fmtBRL(totais.tot)} icon={TrendingDown} tone="red" />
-        <StatCard label="Custo realizado" value={fmtBRL(totais.real)} icon={Package} tone="emerald" />
-        <StatCard label="Custo previsto" value={fmtBRL(totais.prev)} icon={Package} tone="amber" />
+        <StatCard label="Custo total (AP)" value={fmtBRL(totais.tot)} icon={TrendingDown} tone="destructive" />
+        <StatCard label="Custo realizado" value={fmtBRL(totais.real)} icon={Package} tone="success" />
+        <StatCard label="Custo previsto" value={fmtBRL(totais.prev)} icon={Package} tone="warning" />
       </div>
 
       <Card className="p-4 space-y-4">

@@ -25,7 +25,7 @@ function fmtMonth(d: string) {
 }
 
 export function FechamentoTabSupabase() {
-  const [contas] = useContasFinanceiras();
+  const contas = useContasFinanceiras();
   const contasAtivas = contas.filter((c) => c.ativa);
   const [contaSel, setContaSel] = useState<string>(contasAtivas[0]?.id ?? "");
   const [comp, setComp] = useState(() => {

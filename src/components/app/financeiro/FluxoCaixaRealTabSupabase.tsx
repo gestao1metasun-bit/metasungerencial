@@ -41,9 +41,9 @@ export function FluxoCaixaRealTabSupabase() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Entradas" value={fmtBRL(agregado.totalEnt)} icon={TrendingUp} tone="emerald" />
-        <StatCard label="Saídas" value={fmtBRL(agregado.totalSai)} icon={Wallet} tone="red" />
-        <StatCard label="Saldo líquido" value={fmtBRL(agregado.totalEnt - agregado.totalSai)} icon={Wallet} tone="indigo" />
+        <StatCard label="Entradas" value={fmtBRL(agregado.totalEnt)} icon={TrendingUp} tone="success" />
+        <StatCard label="Saídas" value={fmtBRL(agregado.totalSai)} icon={Wallet} tone="destructive" />
+        <StatCard label="Saldo líquido" value={fmtBRL(agregado.totalEnt - agregado.totalSai)} icon={Wallet} tone="info" />
       </div>
 
       <Card className="p-4 space-y-4">

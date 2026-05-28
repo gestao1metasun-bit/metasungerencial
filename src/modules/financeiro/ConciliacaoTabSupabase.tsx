@@ -20,7 +20,7 @@ import {
 import { useContasFinanceiras } from "@/lib/fin-contas-store";
 
 export function ConciliacaoTabSupabase() {
-  const [contas] = useContasFinanceiras();
+  const contas = useContasFinanceiras();
   const contasAtivas = contas.filter((c) => c.ativa);
   const [contaSel, setContaSel] = useState<string>(contasAtivas[0]?.id ?? "");
   const [statusFilter, setStatusFilter] = useState<string>("PENDENTE");

@@ -34,10 +34,14 @@ import { TitulosTabSupabase } from "@/modules/financeiro/TitulosTabSupabase";
 import { useFeatureFlag, isFeatureEnabled } from "@/config/featureFlags";
 
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
+import { FornecedoresTabSupabase } from "@/modules/financeiro/FornecedoresTabSupabase";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
+import { FechamentoTabSupabase } from "@/modules/financeiro/FechamentoTabSupabase";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
+import { ConciliacaoTabSupabase } from "@/modules/financeiro/ConciliacaoTabSupabase";
 import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
 import { CmvTab } from "@/modules/financeiro/CmvTab";
+import { CmvTabSupabase } from "@/modules/financeiro/CmvTabSupabase";
 import { ParametrosFinanceirosForm } from "@/components/app/financeiro/ParametrosFinanceirosForm";
 import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
 import { RenegociacaoHistoricoListSupabase } from "@/components/app/financeiro/RenegociacaoHistoricoListSupabase";
@@ -47,6 +51,7 @@ import { AdiantamentosTabSupabase } from "@/modules/financeiro/AdiantamentosTabS
 import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
 import { RescisoesTabSupabase } from "@/components/app/financeiro/RescisoesTabSupabase";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";
+import { FluxoCaixaRealTabSupabase } from "@/components/app/financeiro/FluxoCaixaRealTabSupabase";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -174,20 +179,20 @@ function FinanceiroPage() {
 
 
         <TabsContent value="fornecedores" className="mt-5">
-          <FornecedoresTab />
+          {isFeatureEnabled("D15_FORNECEDORES_SUPABASE") ? <FornecedoresTabSupabase /> : <FornecedoresTab />}
         </TabsContent>
 
         <TabsContent value="conciliacao" className="mt-5">
-          <ConciliacaoTab />
+          {isFeatureEnabled("D15_CONCILIACAO_SUPABASE") ? <ConciliacaoTabSupabase /> : <ConciliacaoTab />}
         </TabsContent>
 
         <TabsContent value="fechamento" className="mt-5">
-          <FechamentoTab />
+          {isFeatureEnabled("D15_FECHAMENTO_SUPABASE") ? <FechamentoTabSupabase /> : <FechamentoTab />}
         </TabsContent>
 
 
         <TabsContent value="cmv" className="mt-5">
-          <CmvTab />
+          {isFeatureEnabled("D15_CMV_SUPABASE") ? <CmvTabSupabase /> : <CmvTab />}
         </TabsContent>
 
         <TabsContent value="renegociacoes" className="mt-5">
@@ -208,7 +213,7 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="fluxo-real" className="mt-5">
-          <FluxoCaixaRealTab />
+          {isFeatureEnabled("D15_FLUXO_CAIXA_SUPABASE") ? <FluxoCaixaRealTabSupabase /> : <FluxoCaixaRealTab />}
         </TabsContent>
       </Tabs>
     </>

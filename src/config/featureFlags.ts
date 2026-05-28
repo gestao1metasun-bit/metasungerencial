@@ -33,7 +33,13 @@ export type FeatureFlagName =
   // D15.3.c — Rescisões/Renegociações/Taxas Supabase (default ligado)
   | "D15_RESCISOES_SUPABASE"
   | "D15_RENEGOCIACAO_HIST_SUPABASE"
-  | "D15_TAXAS_SUPABASE";
+  | "D15_TAXAS_SUPABASE"
+  // D15.3.d — Conciliação/Fechamento/Fluxo/CMV/Fornecedores Supabase (default ligado)
+  | "D15_FORNECEDORES_SUPABASE"
+  | "D15_FECHAMENTO_SUPABASE"
+  | "D15_CONCILIACAO_SUPABASE"
+  | "D15_FLUXO_CAIXA_SUPABASE"
+  | "D15_CMV_SUPABASE";
 
 const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_FINANCEIRO: false,
@@ -51,6 +57,12 @@ const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_RESCISOES_SUPABASE: true,
   D15_RENEGOCIACAO_HIST_SUPABASE: true,
   D15_TAXAS_SUPABASE: true,
+  // D15.3.d — Supabase é o padrão para conciliação/fechamento/fluxo/CMV/fornecedores.
+  D15_FORNECEDORES_SUPABASE: true,
+  D15_FECHAMENTO_SUPABASE: true,
+  D15_CONCILIACAO_SUPABASE: true,
+  D15_FLUXO_CAIXA_SUPABASE: true,
+  D15_CMV_SUPABASE: true,
 };
 
 

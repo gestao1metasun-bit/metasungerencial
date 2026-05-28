@@ -42,6 +42,7 @@ import { Route as PaineisGovernancaRouteImport } from './routes/paineis.governan
 import { Route as PaineisFinanciamentosRouteImport } from './routes/paineis.financiamentos'
 import { Route as PaineisFinanceiroRouteImport } from './routes/paineis.financeiro'
 import { Route as PaineisEstoqueRouteImport } from './routes/paineis.estoque'
+import { Route as PaineisErrosRouteImport } from './routes/paineis.erros'
 import { Route as PaineisEngenhariaRouteImport } from './routes/paineis.engenharia'
 import { Route as PaineisComercialRouteImport } from './routes/paineis.comercial'
 import { Route as PaineisAprovacoesRouteImport } from './routes/paineis.aprovacoes'
@@ -225,6 +226,11 @@ const PaineisEstoqueRoute = PaineisEstoqueRouteImport.update({
   path: '/estoque',
   getParentRoute: () => PaineisRoute,
 } as any)
+const PaineisErrosRoute = PaineisErrosRouteImport.update({
+  id: '/erros',
+  path: '/erros',
+  getParentRoute: () => PaineisRoute,
+} as any)
 const PaineisEngenhariaRoute = PaineisEngenhariaRouteImport.update({
   id: '/engenharia',
   path: '/engenharia',
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
   '/paineis/comercial': typeof PaineisComercialRoute
   '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/erros': typeof PaineisErrosRoute
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
   '/paineis/comercial': typeof PaineisComercialRoute
   '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/erros': typeof PaineisErrosRoute
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
   '/paineis/comercial': typeof PaineisComercialRoute
   '/paineis/engenharia': typeof PaineisEngenhariaRoute
+  '/paineis/erros': typeof PaineisErrosRoute
   '/paineis/estoque': typeof PaineisEstoqueRoute
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
@@ -515,6 +524,7 @@ export interface FileRouteTypes {
     | '/paineis/aprovacoes'
     | '/paineis/comercial'
     | '/paineis/engenharia'
+    | '/paineis/erros'
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
@@ -567,6 +577,7 @@ export interface FileRouteTypes {
     | '/paineis/aprovacoes'
     | '/paineis/comercial'
     | '/paineis/engenharia'
+    | '/paineis/erros'
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
@@ -619,6 +630,7 @@ export interface FileRouteTypes {
     | '/paineis/aprovacoes'
     | '/paineis/comercial'
     | '/paineis/engenharia'
+    | '/paineis/erros'
     | '/paineis/estoque'
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
@@ -890,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaineisEstoqueRouteImport
       parentRoute: typeof PaineisRoute
     }
+    '/paineis/erros': {
+      id: '/paineis/erros'
+      path: '/erros'
+      fullPath: '/paineis/erros'
+      preLoaderRoute: typeof PaineisErrosRouteImport
+      parentRoute: typeof PaineisRoute
+    }
     '/paineis/engenharia': {
       id: '/paineis/engenharia'
       path: '/engenharia'
@@ -1064,6 +1083,7 @@ interface PaineisRouteChildren {
   PaineisAprovacoesRoute: typeof PaineisAprovacoesRoute
   PaineisComercialRoute: typeof PaineisComercialRoute
   PaineisEngenhariaRoute: typeof PaineisEngenhariaRoute
+  PaineisErrosRoute: typeof PaineisErrosRoute
   PaineisEstoqueRoute: typeof PaineisEstoqueRoute
   PaineisFinanceiroRoute: typeof PaineisFinanceiroRoute
   PaineisFinanciamentosRoute: typeof PaineisFinanciamentosRoute
@@ -1077,6 +1097,7 @@ const PaineisRouteChildren: PaineisRouteChildren = {
   PaineisAprovacoesRoute: PaineisAprovacoesRoute,
   PaineisComercialRoute: PaineisComercialRoute,
   PaineisEngenhariaRoute: PaineisEngenhariaRoute,
+  PaineisErrosRoute: PaineisErrosRoute,
   PaineisEstoqueRoute: PaineisEstoqueRoute,
   PaineisFinanceiroRoute: PaineisFinanceiroRoute,
   PaineisFinanciamentosRoute: PaineisFinanciamentosRoute,

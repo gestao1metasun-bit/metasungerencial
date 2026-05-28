@@ -17,7 +17,7 @@ import {
   useFecharFechamento,
   useReabrirFechamento,
 } from "@/lib/repositories/fechamento-repo";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
 
 function fmtMonth(d: string) {
   const [y, m] = d.split("-");
@@ -25,8 +25,8 @@ function fmtMonth(d: string) {
 }
 
 export function FechamentoTabSupabase() {
-  const contas = useContasFinanceiras();
-  const contasAtivas = contas.filter((c) => c.ativa);
+  const { data: contas = [] } = useContasFinanceirasOficiais();
+  const contasAtivas = contas.filter((c) => c.ativo);
   const [contaSel, setContaSel] = useState<string>(contasAtivas[0]?.id ?? "");
   const [comp, setComp] = useState(() => {
     const d = new Date();

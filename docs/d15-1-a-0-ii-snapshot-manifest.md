@@ -47,15 +47,22 @@
 
 ---
 
-## 3. Stores a exportar (todas as 6 — íntegras)
+## 3. Stores a exportar (10 chaves — íntegras)
 
 ```
+# Repositório financeiro (camada "repo")
 fin-titulos
 fin-renegociacao
 fin-estornos
 fin-adiantamentos
 fin-compras
 fin-conciliacao
+
+# Módulo Lançamentos (camada legacy LS — decisão D15: vira visão derivada após corte)
+metasun.fin.lancamentos.v1
+metasun.fin.recorrentes.v1
+metasun.fin.centros.v1
+metasun.fin.naturezas.v1
 ```
 
 Regras:

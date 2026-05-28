@@ -1,28 +1,21 @@
 /**
  * D17.UI.4 — Helper universal de adoção do padrão Enterprise RM/TOTVS.
  *
- * Combina em um único hook tudo que uma tela operacional precisa:
- *   - paginação server-side (useServerPagination)
+ * Combina em um único hook:
+ *   - paginação server-side (useServerPagination — table-bound)
  *   - preferências de coluna (useColumnPrefs)
  *   - seleção múltipla (useRowSelection)
  *   - densidade + layout persistidos em `ui.{entity}.v1`
- *   - filtros básicos com debounce (busca, status, período, responsável)
+ *   - filtros leves (busca, status, período, responsável)
  *
- * Persistência: SOMENTE em chaves `ui.*` (compatível com ls-guard).
+ * Persistência: SOMENTE chaves `ui.*` (compatível com ls-guard).
  * Zero dado operacional, zero regra de negócio, zero RPC.
- *
- * Uso:
- *   const grid = useEnterpriseGrid({
- *     entity: "contratos",
- *     columns: COLS,
- *     fetcher: ({ from, to, search }) => repo.listar({ from, to, search }),
- *     getId: (r) => r.id,
- *   });
- *   // grid.rows, grid.total, grid.pagination, grid.columns, grid.selection,
- *   // grid.density, grid.layout, grid.filters
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useServerPagination } from "@/lib/repositories/use-server-pagination";
+import {
+  useServerPagination,
+  type ServerPaginationOptions,
+} from "@/lib/repositories/use-server-pagination";
 import { useColumnPrefs, type ColumnDef } from "@/lib/ui/column-prefs";
 import { useRowSelection } from "@/lib/ui/use-row-selection";
 
@@ -39,15 +32,11 @@ export type EnterpriseGridFilters = {
 type Options<T> = {
   entity: string;
   columns: ColumnDef[];
-  fetcher: (args: {
-    from: number;
-    to: number;
-    search: string;
-    status: string | null;
-    periodo: { from?: string; to?: string };
-    responsavel: string | null;
-  }) => Promise<{ rows: T[]; count: number }>;
+  /** Opções pass-through para useServerPagination (table, select, filters, etc.). */
+  pagination: Omit<ServerPaginationOptions, "searchValue">;
+  /** Extrator de id para seleção múltipla. */
   getId: (row: T) => string;
+  /** Email do usuário (namespaceia prefs de coluna). */
   userKey?: string;
   defaultPageSize?: number;
 };
@@ -86,7 +75,7 @@ export function useEnterpriseGrid<T>(opts: Options<T>) {
   const defaults: UIPrefs = {
     density: "compact",
     layout: "grid",
-    pageSize: opts.defaultPageSize ?? 50,
+    pageSize: opts.defaultPageSize ?? opts.pagination.defaultPageSize ?? 50,
   };
   const [ui, setUI] = useState<UIPrefs>(() => loadUI(opts.entity, defaults));
 
@@ -107,52 +96,29 @@ export function useEnterpriseGrid<T>(opts: Options<T>) {
     []
   );
 
-  const fetcher = useCallback(
-    ({ from, to, search }: { from: number; to: number; search: string }) =>
-      opts.fetcher({
-        from,
-        to,
-        search,
-        status: filters.status,
-        periodo: filters.periodo,
-        responsavel: filters.responsavel,
-      }),
-    [opts, filters.status, filters.periodo, filters.responsavel]
-  );
-
   const pagination = useServerPagination<T>({
-    queryKey: ["enterprise-grid", opts.entity, filters],
-    pageSize: ui.pageSize,
-    fetcher,
+    ...opts.pagination,
+    defaultPageSize: ui.pageSize,
+    searchValue: filters.search,
   });
 
-  const columns = useColumnPrefs(
-    opts.userKey ?? "anon",
-    opts.entity,
-    opts.columns
-  );
+  const columns = useColumnPrefs(opts.entity, opts.columns, opts.userKey);
 
   const selection = useRowSelection<T>(pagination.rows, opts.getId);
 
   return useMemo(
     () => ({
-      // dados
       rows: pagination.rows,
       total: pagination.total,
       isLoading: pagination.isLoading,
       isFetching: pagination.isFetching,
       refetch: pagination.refetch,
       error: pagination.error,
-      // paginação
       pagination,
-      // colunas
       columns,
-      // seleção
       selection,
-      // filtros
       filters,
       setFilters,
-      // UI prefs
       density: ui.density,
       setDensity: (d: GridDensity) => setUI((p) => ({ ...p, density: d })),
       layout: ui.layout,

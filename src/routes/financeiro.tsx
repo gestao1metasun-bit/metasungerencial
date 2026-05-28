@@ -210,6 +210,12 @@ function FinanceiroPage() {
   );
 }
 
+/* ============== TitulosTab switch (D15.3.a: Supabase por padrão) ============== */
+function TitulosTabSwitch({ tipo }: { tipo: "AR" | "AP" }) {
+  const useSupabase = useFeatureFlag("D15_TITULOS_SUPABASE");
+  return useSupabase ? <TitulosTabSupabase tipo={tipo} /> : <TitulosTab tipo={tipo} />;
+}
+
 /* ============== Projeção / Gráficos ============== */
 function ProjecaoCaixa({ lancs }: { lancs: Lancamento[] }) {
   const [dias, setDias] = useState<30 | 60 | 90 | 180 | 365>(30);

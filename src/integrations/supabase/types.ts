@@ -2260,6 +2260,80 @@ export type Database = {
         }
         Relationships: []
       }
+      fechamentos_periodo: {
+        Row: {
+          competencia: string
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          fechado_em: string | null
+          fechado_por: string | null
+          id: string
+          motivo_reabertura: string | null
+          observacoes: string | null
+          reaberto_em: string | null
+          reaberto_por: string | null
+          row_version: number
+          saldo_apurado: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          motivo_reabertura?: string | null
+          observacoes?: string | null
+          reaberto_em?: string | null
+          reaberto_por?: string | null
+          row_version?: number
+          saldo_apurado?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          motivo_reabertura?: string | null
+          observacoes?: string | null
+          reaberto_em?: string | null
+          reaberto_por?: string | null
+          row_version?: number
+          saldo_apurado?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fechamentos_periodo_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           ativo: boolean
@@ -6128,6 +6202,48 @@ export type Database = {
         }
         Relationships: []
       }
+      v_cmv_oficial: {
+        Row: {
+          centro_resultado_id: string | null
+          competencia: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          custo_total: number | null
+          fornecedor_id: string | null
+          natureza_id: string | null
+          qtde_titulos: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tf_centro"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_fornecedor"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_natureza"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_centro_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_custo_obra_previsto: {
         Row: {
           custo_previsto: number | null
@@ -6272,6 +6388,19 @@ export type Database = {
           saldo_fisico: number | null
           saldo_reservado: number | null
           unidade: string | null
+        }
+        Relationships: []
+      }
+      v_fluxo_caixa_oficial: {
+        Row: {
+          centro_resultado_id: string | null
+          conta_id: string | null
+          data: string | null
+          natureza_id: string | null
+          natureza_temporal: string | null
+          qtde: number | null
+          tipo_lancamento: string | null
+          total: number | null
         }
         Relationships: []
       }
@@ -7944,6 +8073,39 @@ export type Database = {
       rpc_contrato_marcar_financeiro_liberado: {
         Args: { p_contrato_id: string; p_observacao?: string }
         Returns: boolean
+      }
+      rpc_extrato_conciliar: {
+        Args: {
+          p_extrato_id: string
+          p_movimento_id?: string
+          p_observacao?: string
+          p_titulo_id?: string
+        }
+        Returns: undefined
+      }
+      rpc_extrato_desconciliar: {
+        Args: { p_extrato_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_extrato_ignorar: {
+        Args: { p_extrato_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_fechamento_abrir: {
+        Args: {
+          p_competencia: string
+          p_conta_id: string
+          p_observacoes?: string
+        }
+        Returns: string
+      }
+      rpc_fechamento_fechar: {
+        Args: { p_id: string; p_saldo_apurado: number }
+        Returns: undefined
+      }
+      rpc_fechamento_reabrir: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
       }
       rpc_idempotente_check: {
         Args: { _payload?: Json; _request_id: string; _rpc_nome: string }

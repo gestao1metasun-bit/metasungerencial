@@ -16,7 +16,6 @@ import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PropostasRouteImport } from './routes/propostas'
 import { Route as PosvendaRouteImport } from './routes/posvenda'
 import { Route as PedidosVendaRouteImport } from './routes/pedidos-venda'
-import { Route as PaineisRouteImport } from './routes/paineis'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
@@ -88,11 +87,6 @@ const PosvendaRoute = PosvendaRouteImport.update({
 const PedidosVendaRoute = PedidosVendaRouteImport.update({
   id: '/pedidos-venda',
   path: '/pedidos-venda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaineisRoute = PaineisRouteImport.update({
-  id: '/paineis',
-  path: '/paineis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -301,7 +295,6 @@ export interface FileRoutesByFullPath {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -348,7 +341,6 @@ export interface FileRoutesByTo {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -396,7 +388,6 @@ export interface FileRoutesById {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -445,7 +436,6 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
-    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -492,7 +482,6 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
-    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -539,7 +528,6 @@ export interface FileRouteTypes {
     | '/financiamentos'
     | '/leads'
     | '/login'
-    | '/paineis'
     | '/pedidos-venda'
     | '/posvenda'
     | '/propostas'
@@ -587,7 +575,6 @@ export interface RootRouteChildren {
   FinanciamentosRoute: typeof FinanciamentosRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
-  PaineisRoute: typeof PaineisRoute
   PedidosVendaRoute: typeof PedidosVendaRoute
   PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
@@ -646,13 +633,6 @@ declare module '@tanstack/react-router' {
       path: '/pedidos-venda'
       fullPath: '/pedidos-venda'
       preLoaderRoute: typeof PedidosVendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paineis': {
-      id: '/paineis'
-      path: '/paineis'
-      fullPath: '/paineis'
-      preLoaderRoute: typeof PaineisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -994,7 +974,6 @@ const rootRouteChildren: RootRouteChildren = {
   FinanciamentosRoute: FinanciamentosRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
-  PaineisRoute: PaineisRoute,
   PedidosVendaRoute: PedidosVendaRoute,
   PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,

@@ -11,11 +11,11 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from "@/components/app/AppLayout";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
 import { installLsGuard } from "@/lib/ls-guard";
-import { perfMark, perfMeasure } from "@/lib/perf";
+import { perfMark, perfMeasure, perfReport } from "@/lib/perf";
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
@@ -130,17 +130,47 @@ function RootComponent() {
   const shouldHoldPrivateRoute = !isPublicRoute && loading;
   const hasValidSession = !!session && !!user;
   const shouldBlockPrivateRoute = !isPublicRoute && !loading && !hasValidSession;
-  useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); installLsGuard(); }, []);
+
+  // D16.PERF P2 — bootstrap NÃO-crítico (seed dev, session logger, ls-guard)
+  // sai do caminho do shell. Roda em idle para não bloquear shell.ready.
+  useEffect(() => {
+    const run = () => {
+      bootstrapSeedIfPending();
+      wireSessionLogger();
+      installLsGuard();
+    };
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    if (typeof w.requestIdleCallback === "function") {
+      w.requestIdleCallback(run, { timeout: 2000 });
+    } else {
+      setTimeout(run, 0);
+    }
+  }, []);
 
   // D16.PERF — marca shell.ready uma vez quando rota privada renderiza com sessão válida
   useEffect(() => {
     if (!isPublicRoute && hasValidSession && !loading) {
       perfMark("shell.ready");
-      // Se houve login nesta sessão, mede login → shell
       perfMeasure("login.start", "shell.ready", "shell.ready");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidSession, loading, isPublicRoute]);
+
+  // D16.PERF P2 — route.ready + module.switch a cada troca de rota privada
+  const lastPath = useRef<string | null>(null);
+  useEffect(() => {
+    if (isPublicRoute || !hasValidSession) return;
+    const prev = lastPath.current;
+    perfMark("route.ready");
+    if (prev && prev !== path) {
+      // mede troca entre módulos (rota anterior → nova rota)
+      perfReport("module.switch", performance.now() - (routeStartRef.current ?? performance.now()), path);
+    }
+    routeStartRef.current = performance.now();
+    lastPath.current = path;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, hasValidSession, isPublicRoute]);
+  const routeStartRef = useRef<number | null>(null);
 
   return (
     <QueryClientProvider client={queryClient}>

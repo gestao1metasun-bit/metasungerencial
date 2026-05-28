@@ -118,7 +118,7 @@ function LoginPage() {
           <Button type="submit" disabled={submitting} className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>)}
           </Button>
-        </form>
+        
 
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">Primeiro acesso? </span>

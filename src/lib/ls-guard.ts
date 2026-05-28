@@ -9,7 +9,7 @@
  * transição), mas torna toda violação visível.
  */
 
-import { logError } from '@/lib/repositories/error-log-repo';
+import { errorLogRepo } from '@/lib/repositories/error-log-repo';
 
 const FORBIDDEN_PREFIXES = [
   'metasun.fin.',
@@ -75,12 +75,16 @@ export function installLsGuard() {
       }
 
       // Async log — não bloqueia gravação
-      void logError({
-        level: 'warn',
-        category: 'ls-guard',
-        message: `LS write proibido: ${key}`,
-        context: violation,
-      }).catch(() => {});
+      void errorLogRepo
+        .log({
+          modulo: 'plataforma',
+          tela: 'ls-guard',
+          acao: 'ls_write_proibido',
+          mensagem: `LS write proibido: ${key}`,
+          payload: violation as unknown as Record<string, unknown>,
+          severidade: 'warn',
+        })
+        .catch(() => {});
     }
     return orig(key, value);
   };

@@ -16,7 +16,7 @@
  *   - rodar 1x por máquina; idempotente (rodar de novo só remove resíduo)
  */
 
-import { logError } from '@/lib/repositories/error-log-repo';
+import { errorLogRepo } from '@/lib/repositories/error-log-repo';
 
 const WHITELIST_PREFIX = [
   // UI / preferências
@@ -220,11 +220,13 @@ export async function executarPurgaLegadoLS(opts?: {
   };
 
   try {
-    await logError({
-      level: 'info',
-      category: 'ls-purge',
-      message: `Purga LS executada: ${removed.length} removidas, ${kept.length} mantidas, ${unknown.length} indeterminadas`,
-      context: result as unknown as Record<string, unknown>,
+    await errorLogRepo.log({
+      modulo: 'plataforma',
+      tela: 'ls-purge',
+      acao: 'purga_legado_ls',
+      mensagem: `Purga LS executada: ${removed.length} removidas, ${kept.length} mantidas, ${unknown.length} indeterminadas`,
+      payload: result as unknown as Record<string, unknown>,
+      severidade: 'info',
     });
   } catch {
     // sem-op: purga não pode falhar por causa de log

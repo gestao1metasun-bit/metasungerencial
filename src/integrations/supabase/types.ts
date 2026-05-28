@@ -8187,6 +8187,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      fn_op_fin_log_evento: {
+        Args: {
+          _detalhes: Json
+          _evento: string
+          _motivo: string
+          _op_id: string
+        }
+        Returns: undefined
+      }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
         Returns: string
@@ -8546,6 +8555,48 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_op_fin_aprovar: {
+        Args: {
+          _observacao?: string
+          _operacao_id: string
+          _request_id: string
+        }
+        Returns: Json
+      }
+      rpc_op_fin_cancelar: {
+        Args: { _motivo: string; _operacao_id: string; _request_id: string }
+        Returns: Json
+      }
+      rpc_op_fin_criar: {
+        Args: { _payload: Json; _request_id: string }
+        Returns: Json
+      }
+      rpc_op_fin_estornar_recebimento: {
+        Args: { _motivo: string; _request_id: string; _titulo_id: string }
+        Returns: Json
+      }
+      rpc_op_fin_gerar_parcelas: {
+        Args: {
+          _intervalo_dias?: number
+          _operacao_id: string
+          _request_id: string
+          _vencimento_primeiro: string
+        }
+        Returns: Json
+      }
+      rpc_op_fin_liberar: {
+        Args: { _operacao_id: string; _request_id: string }
+        Returns: Json
+      }
+      rpc_op_fin_renegociar: {
+        Args: {
+          _motivo: string
+          _operacao_origem_id: string
+          _payload: Json
+          _request_id: string
+        }
+        Returns: Json
+      }
       rpc_perf_log: {
         Args: {
           p_evento: string

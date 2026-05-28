@@ -31,7 +31,7 @@ import {
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { TitulosTabSupabase } from "@/modules/financeiro/TitulosTabSupabase";
-import { useFeatureFlag } from "@/config/featureFlags";
+import { useFeatureFlag, isFeatureEnabled } from "@/config/featureFlags";
 
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
@@ -42,7 +42,6 @@ import { ParametrosFinanceirosForm } from "@/components/app/financeiro/Parametro
 import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
 import { AdiantamentosTab } from "@/components/app/financeiro/AdiantamentosTab";
 import { AdiantamentosTabSupabase } from "@/modules/financeiro/AdiantamentosTabSupabase";
-import { isFeatureEnabled } from "@/config/featureFlags";
 
 import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";

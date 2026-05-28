@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Activity, Database, FileWarning, Clock, CheckCircle2 } from 'lucide-react';
 import { PurgaLegadoLSCard } from '@/components/app/PurgaLegadoLSCard';
 
-export const Route = createFileRoute('/paineis/saude-sistema')({
+export const Route = createFileRoute('/analytics/saude-sistema')({
   component: SaudeSistemaPage,
   head: () => ({
     meta: [

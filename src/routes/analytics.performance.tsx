@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Activity, Gauge } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-export const Route = createFileRoute('/paineis/performance')({
+export const Route = createFileRoute('/analytics/performance')({
   component: PerformancePage,
   head: () => ({
     meta: [

@@ -18,7 +18,7 @@ import {
   useGovernancePendencias,
 } from "@/lib/repositories/use-governance-action";
 
-export const Route = createFileRoute("/paineis/governanca")({
+export const Route = createFileRoute("/analytics/governanca")({
   head: () => ({ meta: [{ title: "Governança — Matriz Enterprise · Meta Sun" }] }),
   component: GovernancaPage,
 });

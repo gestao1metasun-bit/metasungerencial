@@ -4436,6 +4436,98 @@ export type Database = {
         }
         Relationships: []
       }
+      recorrentes_financeiras: {
+        Row: {
+          ativo: boolean
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          descricao: string
+          dia_vencimento: number
+          fornecedor_id: string | null
+          id: string
+          natureza_id: string | null
+          observacao: string | null
+          periodicidade: string
+          proximo_vencimento: string | null
+          row_version: number
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao: string
+          dia_vencimento?: number
+          fornecedor_id?: string | null
+          id?: string
+          natureza_id?: string | null
+          observacao?: string | null
+          periodicidade?: string
+          proximo_vencimento?: string | null
+          row_version?: number
+          tipo: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          ativo?: boolean
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string
+          dia_vencimento?: number
+          fornecedor_id?: string | null
+          id?: string
+          natureza_id?: string | null
+          observacao?: string | null
+          periodicidade?: string
+          proximo_vencimento?: string | null
+          row_version?: number
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recorrentes_financeiras_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recorrentes_financeiras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recorrentes_financeiras_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recorrentes_financeiras_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rescisoes_contrato: {
         Row: {
           cliente_id: string | null

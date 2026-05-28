@@ -2054,6 +2054,36 @@ export type Database = {
         }
         Relationships: []
       }
+      grupos_financeiros: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -2290,6 +2320,36 @@ export type Database = {
           id?: string
           sistema_destino?: string
           tipo_mapeamento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meios_pagamento: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
           updated_at?: string
         }
         Relationships: []
@@ -4046,6 +4106,44 @@ export type Database = {
         }
         Relationships: []
       }
+      subgrupos_financeiros: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          grupo_id: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          grupo_id: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          grupo_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subgrupos_financeiros_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_flags: {
         Row: {
           description: string | null
@@ -4179,6 +4277,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipos_aplicacao: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          pos_venda: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          pos_venda?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          pos_venda?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       titulos_financeiros: {
         Row: {

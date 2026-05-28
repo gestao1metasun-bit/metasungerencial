@@ -193,19 +193,12 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           <Button size="sm" variant="outline" onClick={() => refetch()}>
             <RotateCcw className="size-3.5 mr-1" /> Atualizar
           </Button>
-          <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="size-3.5 mr-1" /> Novo lançamento
-              </Button>
-            </DialogTrigger>
-            <NovoLancamentoDialog
-              tipo={tipo === "AR" ? "receber" : "pagar"}
-              onDone={() => { setNovoOpen(false); refetch(); }}
-            />
-          </Dialog>
+          <div className="text-[11px] text-muted-foreground text-right max-w-[180px] leading-tight">
+            Títulos nascem de <strong>contratos</strong> ou <strong>pedidos de compra</strong>.
+          </div>
         </Card>
       </div>
+
 
       {/* Filtros */}
       <Card className="p-3">

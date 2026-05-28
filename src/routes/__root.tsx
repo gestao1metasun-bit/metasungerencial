@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
+  Navigate,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
@@ -124,17 +125,29 @@ function RootComponent() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, loading } = useAuth();
   const isPublicRoute = path === "/login" || path === "/cadastrar" || path === "/reset-password";
+  const shouldHoldPrivateRoute = !isPublicRoute && loading;
   const shouldBlockPrivateRoute = !isPublicRoute && !loading && !user;
   useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}
+      {shouldHoldPrivateRoute ? <AuthBootstrapScreen /> : shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}
       <Toaster />
     </QueryClientProvider>
   );
 }
 
 function LoginRedirect() {
-  return <Link to="/login" preload={false} className="hidden">login</Link>;
+  return <Navigate to="/login" replace />;
+}
+
+function AuthBootstrapScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="text-center">
+        <div className="text-sm font-medium text-foreground">Validando autenticação…</div>
+        <div className="mt-1 text-xs text-muted-foreground">Aguardando sessão segura do ERP.</div>
+      </div>
+    </div>
+  );
 }

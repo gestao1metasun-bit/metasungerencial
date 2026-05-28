@@ -31,7 +31,7 @@ import {
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
 import { TitulosTabSupabase } from "@/modules/financeiro/TitulosTabSupabase";
-import { useFeatureFlag } from "@/config/featureFlags";
+import { useFeatureFlag, isFeatureEnabled } from "@/config/featureFlags";
 
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
@@ -41,6 +41,8 @@ import { CmvTab } from "@/modules/financeiro/CmvTab";
 import { ParametrosFinanceirosForm } from "@/components/app/financeiro/ParametrosFinanceirosForm";
 import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
 import { AdiantamentosTab } from "@/components/app/financeiro/AdiantamentosTab";
+import { AdiantamentosTabSupabase } from "@/modules/financeiro/AdiantamentosTabSupabase";
+
 import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";
 import { toast } from "sonner";
@@ -195,8 +197,9 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="adiantamentos" className="mt-5">
-          <AdiantamentosTab />
+          {isFeatureEnabled("D15_ADIANTAMENTOS_SUPABASE") ? <AdiantamentosTabSupabase /> : <AdiantamentosTab />}
         </TabsContent>
+
 
         <TabsContent value="rescisoes" className="mt-5">
           <RescisoesTab />

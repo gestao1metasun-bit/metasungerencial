@@ -78,6 +78,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "adiantamento_abatimentos_adiantamento_id_fkey"
+            columns: ["adiantamento_id"]
+            isOneToOne: false
+            referencedRelation: "v_adiantamentos_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "adiantamento_abatimentos_movimentacao_id_fkey"
             columns: ["movimentacao_id"]
             isOneToOne: false
@@ -5989,6 +5996,92 @@ export type Database = {
         }
         Relationships: []
       }
+      v_adiantamentos_enriquecido: {
+        Row: {
+          abatimentos_count: number | null
+          cliente_id: string | null
+          cliente_nome: string | null
+          codigo: string | null
+          competencia: string | null
+          conta_id: string | null
+          conta_nome: string | null
+          contrato_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_movimento: string | null
+          direcao: string | null
+          documento: string | null
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string | null
+          natureza: string | null
+          observacao: string | null
+          pv_id: string | null
+          saldo: number | null
+          status: string | null
+          valor: number | null
+          valor_abatido: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adiantamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "adiantamentos_pv_id_fkey"
+            columns: ["pv_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["pv_id"]
+          },
+        ]
+      }
       v_alertas_operacionais: {
         Row: {
           consultor_id: string | null
@@ -7571,6 +7664,14 @@ export type Database = {
           _parcela_id: string
           _request_id?: string
           _valor: number
+        }
+        Returns: Json
+      }
+      rpc_adiantamento_estornar: {
+        Args: {
+          _adiantamento_id: string
+          _motivo: string
+          _request_id?: string
         }
         Returns: Json
       }

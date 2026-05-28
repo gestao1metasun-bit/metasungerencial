@@ -28,6 +28,8 @@ import {
   Layout, Columns3, Download, Printer, Search,
   CheckCircle2, Send, FileText, Calculator, Wrench,
   PackageCheck, FileSignature, Banknote, Undo2, Wallet,
+  ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
+  Rows3, Rows, Square, SquareStack, BarChart3, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,7 +109,47 @@ export type EnterpriseRecordToolbarProps = {
   extraLeft?: ReactNode;
   extraRight?: ReactNode;
 
+  // -------- D17.UI.2 — Modo RM 3 linhas (opt-in) --------
+  /** Navegação tipo "459/500" + setas. Quando passada, ativa a navegação. */
+  position?: { current: number; total: number };
+  onNavigate?: (dir: "first" | "prev" | "next" | "last") => void;
+  /** Linha 2 — ações de status circulares coloridas (aprovar/reprovar/baixar/etc). */
+  statusActions?: StatusActionItem[];
+  /** Linha 3 — barra de Layout estilo RM (presets + densidade + chart). */
+  layoutBar?: LayoutBarConfig;
+
   className?: string;
+};
+
+/** Ação de status redonda da Linha 2 (TOTVS RM). */
+export type StatusActionItem = {
+  key: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  /** Cor canônica D17. */
+  tone:
+    | "success" // verde — aprovar/baixar/confirmar
+    | "danger"  // vermelho — reprovar/cancelar/estornar
+    | "info"    // azul — visualizar/email/documento
+    | "warning" // âmbar — pendência/alerta
+    | "primary" // azul forte — ação principal
+    | "muted";  // cinza — neutro
+  onClick?: () => void;
+  disabled?: boolean;
+  /** Mostra um pequeno selo (ex.: contagem ou "•"). */
+  badge?: string;
+};
+
+/** Configuração da Linha 3 (Layout / densidade). */
+export type LayoutBarConfig = {
+  presets?: { key: string; label: string }[];
+  currentPreset?: string;
+  onPresetChange?: (key: string) => void;
+  /** Botões de densidade/visão de tabela. */
+  density?: "compact" | "comfortable" | "spacious";
+  onDensityChange?: (d: "compact" | "comfortable" | "spacious") => void;
+  /** Slot extra à direita (ex.: gráfico). */
+  extra?: ReactNode;
 };
 
 // ============================================================================
@@ -210,6 +252,9 @@ export function EnterpriseRecordToolbar({
   onAction, onProcess,
   onAttach, onHistory, onFilter,
   extraLeft, extraRight,
+  position, onNavigate,
+  statusActions,
+  layoutBar,
   className,
 }: EnterpriseRecordToolbarProps) {
   const count = selectedIds.length;
@@ -283,7 +328,9 @@ export function EnterpriseRecordToolbar({
     });
   }, [availableProcesses, count, permissions]);
 
-  return (
+  const hasRmRows = !!(statusActions?.length || layoutBar);
+
+  const row1 = (
     <div
       role="toolbar"
       aria-label="Barra Operacional de Registro"
@@ -292,8 +339,8 @@ export function EnterpriseRecordToolbar({
       data-selection-count={count}
       className={cn(
         "flex items-center gap-0.5 border border-slate-200",
-        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 rounded-sm overflow-x-auto shadow-sm",
-        className,
+        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 overflow-x-auto shadow-sm",
+        hasRmRows ? "rounded-t-sm border-b-0" : "rounded-sm",
       )}
     >
       {/* CRUD — ícones puros estilo RM */}
@@ -307,6 +354,20 @@ export function EnterpriseRecordToolbar({
       {/* Estado */}
       {renderActionBtn("atualizar")}
       {renderActionBtn("visualizar")}
+
+      {/* Navegação RM (459/500 com setas) */}
+      {position && onNavigate && (
+        <>
+          <Sep />
+          <IconBtn icon={ChevronsLeft} label="Primeiro" tone="muted" onClick={() => onNavigate("first")} />
+          <IconBtn icon={ChevronLeft} label="Anterior" tone="muted" onClick={() => onNavigate("prev")} />
+          <span className="px-1.5 font-mono text-[11.5px] text-slate-700 tabular-nums select-none">
+            {position.current}/{position.total}
+          </span>
+          <IconBtn icon={ChevronRight} label="Próximo" tone="muted" onClick={() => onNavigate("next")} />
+          <IconBtn icon={ChevronsRight} label="Último" tone="muted" onClick={() => onNavigate("last")} />
+        </>
+      )}
       <Sep />
 
       {/* Busca rápida (quando o consumidor injetar) */}
@@ -437,5 +498,126 @@ export function EnterpriseRecordToolbar({
       </div>
     </div>
   );
+
+  // ------- Linha 2: ações de status (RM circulares coloridas) -------
+  const STATUS_TONE: Record<StatusActionItem["tone"], string> = {
+    success: "bg-emerald-500 text-white hover:bg-emerald-600",
+    danger:  "bg-rose-500 text-white hover:bg-rose-600",
+    info:    "bg-sky-500 text-white hover:bg-sky-600",
+    warning: "bg-amber-500 text-white hover:bg-amber-600",
+    primary: "bg-indigo-500 text-white hover:bg-indigo-600",
+    muted:   "bg-slate-300 text-slate-700 hover:bg-slate-400",
+  };
+
+  const row2 = statusActions?.length ? (
+    <div
+      role="toolbar"
+      aria-label="Ações de status"
+      className="flex items-center gap-1 border-x border-slate-200 bg-slate-50 px-1.5 py-1 overflow-x-auto"
+    >
+      {statusActions.map((s) => {
+        const Icon = s.icon;
+        return (
+          <button
+            key={s.key}
+            type="button"
+            disabled={s.disabled}
+            onClick={s.onClick}
+            title={s.label}
+            aria-label={s.label}
+            className={cn(
+              "relative inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 transition",
+              "disabled:opacity-40 disabled:cursor-not-allowed",
+              STATUS_TONE[s.tone],
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {s.badge && (
+              <span className="absolute -top-1 -right-1 rounded-full bg-white text-[9px] font-mono text-slate-700 border border-slate-300 px-1 leading-none">
+                {s.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
+  // ------- Linha 3: Layout / densidade (estilo "Layout: Padrão ▼ ...") -------
+  const row3 = layoutBar ? (
+    <div
+      role="toolbar"
+      aria-label="Layout"
+      className="flex items-center gap-1 border border-slate-200 bg-white px-1.5 py-1 rounded-b-sm overflow-x-auto"
+    >
+      <span className="text-[11.5px] text-slate-600 px-1">Layout:</span>
+      {layoutBar.presets && layoutBar.presets.length > 0 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 gap-1 rounded-sm text-[11.5px]"
+            >
+              {layoutBar.presets.find((p) => p.key === layoutBar.currentPreset)?.label ?? "Padrão"}
+              <ChevronDown className="h-3 w-3 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {layoutBar.presets.map((p) => (
+              <DropdownMenuItem
+                key={p.key}
+                onClick={() => layoutBar.onPresetChange?.(p.key)}
+                className="text-[12px]"
+              >
+                {p.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <span className="text-[11.5px] font-medium text-slate-700 px-1">Padrão</span>
+      )}
+      <Sep />
+      <IconBtn
+        icon={Rows3}
+        label="Densidade compacta"
+        tone={layoutBar.density === "compact" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("compact")}
+      />
+      <IconBtn
+        icon={Rows}
+        label="Densidade confortável"
+        tone={layoutBar.density === "comfortable" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("comfortable")}
+      />
+      <IconBtn
+        icon={SquareStack}
+        label="Densidade espaçosa"
+        tone={layoutBar.density === "spacious" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("spacious")}
+      />
+      <Sep />
+      <IconBtn icon={Square} label="Visão tabela" tone="muted" />
+      <IconBtn icon={BarChart3} label="Visão gráfico" tone="muted" />
+      <Sep />
+      <IconBtn icon={Mail} label="Enviar" tone="muted" />
+      <div className="ml-auto">{layoutBar.extra}</div>
+    </div>
+  ) : null;
+
+  if (!hasRmRows && !position) {
+    return <div className={className}>{row1}</div>;
+  }
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      {row1}
+      {row2}
+      {row3}
+    </div>
+  );
 }
+
 

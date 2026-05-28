@@ -1,0 +1,64 @@
+=== ARQUIVOS COM localStorage ===
+46
+
+=== TOP 30 ARQUIVOS POR USO ===
+src/lib/financeiro-store.ts:11
+src/modules/propostas/components/PropostaList.tsx:9
+src/lib/perfis-store.ts:9
+src/modules/propostas/store.ts:6
+src/lib/fin-grupos-store.ts:6
+src/lib/fin-fechamento-store.ts:4
+src/lib/fin-contas-store.ts:4
+src/lib/equipes-store.ts:4
+src/lib/contratos-store.ts:4
+src/lib/clientes-store.ts:4
+src/modules/propostas/proposta-config-store.ts:3
+src/lib/usuarios-store.ts:3
+src/lib/gerentes-store.ts:3
+src/lib/fin-tipos-aplicacao-store.ts:3
+src/lib/fin-parametros-financeiros-store.ts:3
+src/lib/fin-naturezas-store.ts:3
+src/lib/fin-meios-pagamento-store.ts:3
+src/lib/fin-fornecedores-store.ts:3
+src/lib/fin-centros-custo-store.ts:3
+src/lib/consultores-store.ts:3
+src/lib/bancos-store.ts:3
+src/modules/propostas/PropostasPage.tsx:2
+src/modules/financeiro/TitulosTab.tsx:2
+src/lib/posvenda-store.ts:2
+src/lib/obras-snapshot-store.ts:2
+src/lib/obras-finalizacao-store.ts:2
+src/lib/fin-titulos-store.ts:2
+src/lib/fin-rescisao-store.ts:2
+src/lib/fin-renegociacao-store.ts:2
+src/lib/fin-pendencias.ts:2
+
+=== CHAVES metasun.fin.* (operacional) ===
+src/lib/financeiro-store.ts:"metasun.fin.centros.v1"
+src/lib/financeiro-store.ts:"metasun.fin.lancamentos.v1"
+src/lib/financeiro-store.ts:"metasun.fin.naturezas.v1"
+src/lib/financeiro-store.ts:"metasun.fin.recorrentes.v1"
+
+=== CHAVES ms.* operacionais ===
+src/lib/clientes-store.ts:"ms.clientes.extra.v1"
+src/lib/clientes-store.ts:"ms.clientes.full.v1"
+src/lib/compras-transito-store.ts:"ms.estoque.compras.transito.v1"
+src/lib/contratos-store.ts:"ms.contratos.lastSync"
+src/lib/contratos-store.ts:"ms.contratos.v2"
+src/lib/dev-seed.ts:"ms.clientes.extra.v1"
+src/lib/dev-seed.ts:"ms.clientes.full.v1"
+src/lib/dev-seed.ts:"ms.contratos.v2"
+src/lib/dev-seed.ts:"ms.estoque.compras.transito.v1"
+src/lib/dev-seed.ts:"ms.estoque.itens.v1"
+src/lib/dev-seed.ts:"ms.estoque.log.v1"
+src/lib/dev-seed.ts:"ms.estoque.mov.v1"
+src/lib/dev-seed.ts:"ms.estoque.necessidades.v1"
+src/lib/dev-seed.ts:"ms.obras.finalizacao.v1"
+src/lib/estoque-store.ts:"ms.estoque.itens.v1"
+src/lib/estoque-store.ts:"ms.estoque.log.v1"
+src/lib/estoque-store.ts:"ms.estoque.mov.v1"
+src/lib/estoque-store.ts:"ms.estoque.necessidades.v1"
+src/lib/obras-finalizacao-store.ts:"ms.obras.finalizacao.v1"
+
+=== CHAVES fin-* (legadas) ===
+src/lib/fin-parametros-financeiros-store.ts:"fin-parametros"

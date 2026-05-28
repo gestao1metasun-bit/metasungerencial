@@ -1,128 +1,245 @@
 
-# D14 — Enterprise 99% Readiness
+# Plano Mestre D15 → ~90% Maturidade Enterprise
 
-Frente transversal de fechamento. Não cria módulo novo. Cada onda fortalece uma das 6 camadas (Visual, Operacional, Governança, Segurança, Dados, Arquitetura).
+Objetivo: levar Meta Sun de **~68/100** ("ERP parcial com fundação enterprise") para **88–92/100** ("ERP enterprise operacional confiável"), eliminando dependência operacional de localStorage e consolidando Supabase como fonte única da verdade. Sem refator cego, sem mexer no Shell D6, sem abrir D8/D9/D10/D11.
 
-## Regra de execução
-
-Uma onda por vez, com critério de saída antes de abrir a próxima. Nada de tocar em código de UI antes de Data Truth e Security estarem fechadas — senão polimos em cima de números errados ou de RLS furada.
-
-## Sequenciamento proposto
-
-```text
-D14.1  Enterprise Data Truth        (Dados)        ── pré-requisito de tudo
-D14.2  Security & RLS Final Scan    (Segurança)    ── pré-requisito de operação
-D14.3  Governance Matrix            (Governança)
-D14.4  Operational Rollout          (Operacional)
-D14.5  Performance & Pagination     (Arquitetura)
-D14.6  Tests & Homologation         (Arquitetura)
-D14.7  Final 99% Report             (Relatório)
-```
-
-Visual Enterprise (96 → 99%) é tratado como passe transversal dentro de D14.4 por rota crítica, não como onda própria — o shell já está fechado (D6).
+Execução em **11 ondas pequenas, reversíveis e auditáveis** (Onda 0 a Onda 10). Cada onda entrega: diagnóstico → migração SQL → migração de dados → dual-read → corte → rollback documentado.
 
 ---
 
-## D14.1 — Enterprise Data Truth (recomendada para começar AGORA)
+## Visão geral das ondas
 
-Objetivo: nenhum KPI executivo pode divergir silenciosamente.
+| # | Onda | Objetivo | Bloqueia próxima? | Esforço | Risco |
+|---|------|----------|-------------------|---------|-------|
+| 0 | Congelamento + baseline | Inventário + snapshot + rollback | **SIM** | P | Baixo |
+| 1 | D15 Financeiro LS→Supabase | `v_lancamentos_derivados` + `rpc_lancamento_criar` + corte | **SIM** | GG | Alto |
+| 2 | Cadastros canônicos | Naturezas/CR/contas/bancos/fornecedores no banco | SIM (p/ 3) | M | Médio |
+| 3 | Comercial + Contratos | Leads/propostas/contratos/RPCs cascade | SIM (p/ 4–10) | G | Alto |
+| 4 | Anexo universal | `entity_attachments` em 18 entidades críticas | Não | M | Baixo |
+| 5 | Auditoria diária | Cobertura `audit_log` em todas operações | Não | M | Baixo |
+| 6 | Concorrência + idempotência | `row_version` + `idempotency_key` | Não | M | Médio |
+| 7 | Segurança + rotas | Privadas, RLS, grants, HIBP, search_path | Não | P | Baixo |
+| 8 | Saúde + integridade | Painel `/admin/saude-sistema` | Não | M | Baixo |
+| 9 | Testes + gates | Vitest + scripts integridade + CI | Não | M | Baixo |
+| 10 | Corte definitivo LS | Remover stores operacionais legadas | **Last** | P | Médio |
 
-Entregas:
-- Inventário de todos os hooks/components que calculam KPI hoje (`useDashboard*`, `useKpis*`, cálculos inline em `paineis/*`, `analytics/*`, `financeiro/*`).
-- Criar/consolidar 6 views oficiais (somente as que ainda não existem):
-  - `v_kpis_comercial_oficial`
-  - `v_kpis_financeiro_oficial`
-  - `v_kpis_estoque_oficial`
-  - `v_kpis_engenharia_oficial`
-  - `v_kpis_aprovacoes_oficial`
-  - `v_kpis_financiamentos_oficial`
-- Substituir cálculos paralelos por leitura da view oficial.
-- Painel `/paineis/saude-dados` com status OK / Divergente / Crítico por KPI, última verificação e origem provável (já temos `v_hardening_report` como base).
-- Toda métrica com "olhinho" abre grid de origem + filtros + totalização + export.
-
-Critério de saída: reconciliação financeiro / estoque / comercial / engenharia / aprovações / financiamentos / compras bate 100% com a view oficial em ambiente de homologação.
-
----
-
-## D14.2 — Security & RLS Final Scan
-
-Objetivo: blindagem pré-produção, zero risco crítico sem justificativa.
-
-Entregas:
-- Rodar `security--run_security_scan` + `supabase--linter` completos.
-- Matriz de teste por perfil: Admin Master, Diretoria, Financeiro, Comercial, Engenharia, Estoque, Compras, Consultor, Somente Leitura.
-- Auditar SECURITY DEFINER, GRANTs, policies, storage buckets, RPCs, views.
-- Bloquear via trigger (onde ainda não está):
-  - DELETE físico em entidades críticas (contratos, PVs, títulos, obras, estoque).
-  - UPDATE direto de status crítico fora das RPCs/flag de sessão.
-  - Baixa fora de `movimentacoes_financeiras`.
-  - Estoque negativo.
-  - Aprovação fora de `app.via_workflow_rpc`.
-- Relatório: riscos corrigidos / aceitos / mitigados / residuais.
-
-Critério de saída: scan limpo para crítico/alto. Riscos aceitos documentados em `mem://security/*` + `security--update_memory`.
+Esforço: P=1–2 dias · M=3–5 · G=1–2 sem · GG=2–3 sem. Ordem **obrigatória** para 0→3; 4–9 podem paralelizar após 3; 10 só após todas.
 
 ---
 
-## D14.3 — Governance Matrix
+## Onda 0 — Congelamento e baseline
 
-Entregas:
-- Tabela `governance_matrix` (ou doc estrutural) com:
-  `Ação | Entidade | Permissão | Workflow? | Motivo? | Auditoria? | Lote? | Estorno?`
-- Cobrir as 15 ações críticas listadas (cancelar, excluir, renegociar, baixar, estornar, alterar vencimento/valor/CR/natureza/portador, ajustar estoque, aprovar compra, alterar status obra, cancelar/aditivar contrato).
-- Congelamento de alçada no momento da abertura do workflow (snapshot em `workflow_aprovacoes.alcada_snapshot`).
-- Delegação: aprovador substituto, férias, ausência, escalonamento.
-- SLA por aprovação: prazo, atraso, escalonamento, alerta.
+**Diagnóstico curto.** Sem alterar código. Tudo é leitura e exportação.
 
-Critério: nenhuma ação crítica executável sem trilha transversal.
+**Arquivos afetados.** Nenhum (apenas geração em `docs/d15-onda-0/`).
 
----
+**Entregas.**
+- `docs/d15-onda-0/inventario-localstorage.md` — varredura `rg -n "localStorage|metasun\.|ms\." src/` com classificação **operacional vs preferência**.
+- `docs/d15-onda-0/inventario-supabase.md` — tabelas + count, RPCs (88), views (incluindo `v_kpis_*_oficial`, `v_reconciliacao_*`, `v_titulos_enriquecido`), triggers (201), policies RLS, funções SECURITY DEFINER, índices D14.5.
+- `docs/d15-onda-0/snapshot-operador-{hash}.json` — re-rodar `scripts/d15-snapshot-export.js` (já existe `658dff81`, basta re-validar).
+- `docs/d15-onda-0/baseline-volumetria.md` — count linha a linha de todas as 66 tabelas.
+- `docs/d15-onda-0/rollback-plan.md` — por onda.
+- **Feature flags em `src/config/featureFlags.ts`**: `D15_DUAL_READ_FINANCEIRO`, `D15_SUPABASE_READ_FINANCEIRO`, `D15_LS_FINANCEIRO_DISABLED`, idem para cadastros/comercial.
 
-## D14.4 — Operational Rollout (inclui passe visual 96→99%)
+**Critério de aceite.** Relatório baseline salvo. Nenhum código funcional alterado. Flags default = `false` (modo atual preservado).
 
-Por rota crítica, fechar checklist:
-- Toolbar RM (Salvar / Filtrar / ProcessosMenu / MaisAções).
-- Seleção múltipla + ações em lote.
-- Anexos + Histórico + ProcessMenu + Visões salvas + Export + Print.
-- Sem sidebar fixa, sem card SaaS, sem barra duplicada, sem placeholder.
-
-Rotas no escopo: Contas a Receber, Contas a Pagar, Títulos, PVs, Contratos, Propostas, Obras, Estoque, Aprovações, Compras, Financiamentos.
-
-Processos mínimos por módulo já listados no brief — vira matriz de cobertura.
-
-Critério: usuário opera em lote sem retrabalho manual em todas as 11 rotas.
+**Rollback.** N/A (somente leitura).
 
 ---
 
-## D14.5 — Performance & Pagination
+## Onda 1 — D15 Financeiro LS → Supabase (CRÍTICA)
 
-- Server-side pagination nos grids críticos (títulos, PVs, estoque_movimentos, obras, aprovações).
-- Índices: `status`, `cliente_id`, `contrato_id`, `origem_id`, `entidade_id`, `created_at`, `vencimento`, `deleted_at`, `centro_resultado`, `natureza`, `conta_financeira`.
-- GIN nos `jsonb` consultados (`dados`, `valor_novo`, `valor_anterior`).
-- Padronizar engines: `EnterpriseEntity`, `ProcessEngine`, `AttachmentEngine`, `TimelineEngine`, `SavedViewsEngine`, `BulkOperationEngine`.
+Já validada em D15.1.a.0.ii+ (dry-run 100% paridade, 0 bloqueantes, snapshot `658dff81`).
+
+**Tabelas afetadas.** `titulos_financeiros`, `parcelas_financeiras`, `movimentacoes_financeiras`, `naturezas_financeiras`, `centros_resultado`, `contas_financeiras`, `bancos`, `fornecedores`.
+
+**Sub-ondas.**
+
+### 1.A — View derivada + RPC atômica (Migration)
+- `v_lancamentos_derivados` (security_invoker=on) unindo títulos + parcelas + mov + adiantamentos + abatimentos + extrato + boletos + renegociações com colunas canônicas: `origem_tipo`, `entidade_id`, `data_evento`, `competencia`, `valor`, `natureza_id`, `centro_resultado_id`, `conta_id`, `status_derivado`, `tipo (RECEBER|PAGAR|REALIZADO|PREVISTO)`.
+- `rpc_lancamento_criar(payload jsonb) RETURNS uuid` SECURITY DEFINER:
+  - Valida natureza + CR + conta + competência + valor + tipo.
+  - Cria título → parcela(s) → movimentação (se realizado), em transação única.
+  - Aplica `idempotency_key` (UNIQUE) calculado de `(data, valor, natureza, conta, descricao_hash, user_id)`.
+  - Auditoria automática.
+  - Setando `app.via_movimentacao='true'` para passar pelos triggers existentes.
+- `rpc_lancamento_editar`, `rpc_lancamento_cancelar`, `rpc_lancamento_baixar_em_lote`, `rpc_lancamento_estornar`, `rpc_lancamento_conciliar`, `rpc_lancamento_desconciliar`.
+- Grants: `EXECUTE TO authenticated`.
+
+### 1.B — Importer de migração
+- Script `scripts/d15-import-lancamentos.ts` lê snapshot `658dff81`, chama `rpc_lancamento_criar` com `idempotency_key` derivado. Re-executável.
+- Tabela `migracao_d15_log` (origem, lancamento_ls_id, titulo_id, status, erro).
+- Relatório de paridade vs dry-run (esperado: 13 títulos, 8 movimentações realizadas, saldo +R$ 120.467).
+
+### 1.C — Dual-read
+- Hook `useLancamentos` lê **ambas** as fontes quando `D15_DUAL_READ_FINANCEIRO=true`, exibe banner de divergência. Bloqueia corte se diff > 0.
+
+### 1.D — Corte
+- Ativar `D15_SUPABASE_READ_FINANCEIRO=true`, desligar dual-read. Stores `metasun.fin.*` ficam apenas como **backup read-only** marcado.
+- Substituir handlers de criar/editar/baixar/estornar/conciliar pelas RPCs.
+
+**Critério de aceite.** Nenhum lançamento crítico em LS. Migração bate com snapshot. Dashboard financeiro e tela de Lançamentos leem `v_lancamentos_derivados`. Clique duplo em "Criar" bloqueado pela `idempotency_key`. Auditoria povoada.
+
+**Rollback.** Flag `D15_SUPABASE_READ_FINANCEIRO=false` volta ao LS. `migracao_d15_log` permite re-rodar. View e RPCs são aditivos.
 
 ---
 
-## D14.6 — Tests & Homologation
+## Onda 2 — Cadastros canônicos no banco
 
-- Testes mínimos das RPCs críticas, RLS, workflow, renegociação, baixa, estoque, anexos, reconciliação.
-- Seed de homologação: 20 clientes → contratos → PVs → títulos → obras → estoque → compras → aprovações → renegociações → anexos.
-- Teste ponta-a-ponta: Lead → Proposta → Contrato → PV → Financeiro → Engenharia → Estoque → Compra → Aprovação → Baixa → Analytics.
+**Tabelas afetadas.** `naturezas_financeiras`, `centros_resultado`, `contas_financeiras`, `bancos`, `fornecedores`, `clientes`, `consultores`, `equipes`, `parametros_financeiros`, nova `recorrencias_financeiras`.
+
+**Entregas.**
+- Migration: índices `UNIQUE LOWER(nome)` por tipo, `deleted_at`, triggers de auditoria, soft-delete.
+- Hooks `useNaturezas`, `useCentrosResultado`, `useContas`, `useBancos`, `useFornecedores` substituem stores LS.
+- Importer de cadastros LS (snapshot D15) com dedupe por nome normalizado.
+- LS guarda **apenas filtros visuais** dessas telas.
+
+**Critério.** Telas de cadastro criam/editam no banco. Duplicidade bloqueada por índice. Dashboards e Lançamentos usam a mesma lista.
+
+**Rollback.** Soft-delete preserva tudo; flag de origem permite voltar a ler LS por 1 ciclo.
 
 ---
 
-## D14.7 — Final 99% Report
+## Onda 3 — Comercial e Contratos no Supabase
 
-Tabela final `Camada | Antes | Depois | Status | Pendências` + recomendação piloto interno / produção ampla.
+**Tabelas afetadas.** `leads`, `clientes`, `propostas`, `contratos`, `contratos_aditivos`, `contrato_status_historico` (já existe ou criar).
+
+**RPCs novas/consolidadas.**
+`rpc_lead_criar`, `rpc_cliente_criar_ou_vincular` (match por CPF/CNPJ), `rpc_proposta_criar`, `rpc_proposta_aprovar`, `rpc_contrato_criar`, `rpc_contrato_assinar`, `rpc_contrato_cancelar`, **`rpc_cancelar_contrato_cascade`** (cancela propostas, PVs, libera reservas, cancela títulos não baixados, bloqueia se há baixa irreversível sem fluxo de estorno).
+
+**Critério.** Leads/propostas/contratos sem LS. Cancelamento cascade não deixa órfãos (validado pelas 4 views `v_origem_*` da Onda D4.4). Status via state machine (triggers `tg_*_valida_transicao`).
+
+**Rollback.** Tabelas existem; flag dual-read permite voltar.
 
 ---
 
-## Decisão necessária antes de mexer em código
+## Onda 4 — Anexo universal
 
-Qual onda abro AGORA?
+**Tabela afetada.** `entity_attachments` (já existe) + storage bucket `anexos`.
 
-1. **D14.1 Data Truth** — recomendação técnica. Sem isso, qualquer ajuste visual ou operacional pode estar pintando em cima de número errado. É a base de D14.4 e D14.7.
-2. **D14.2 Security** — pode rodar em paralelo (scan é leitura). Posso iniciar D14.1 + scan de leitura de D14.2 no mesmo turno.
-3. **Outra ordem** — você define.
+**Aplicar em 18 entidades.** cliente, lead, proposta, contrato, projeto, obra, pv, título, parcela, movimentação, financiamento, compra, cotação, ordem_compra, entrega_estoque, pendência, solicitação, aprovação.
 
-Também preciso saber: durante D14.1, posso **criar/alterar views oficiais** (migrations) e **substituir hooks de KPI** existentes? Isso vai mexer em dashboards já em uso, e prefiro confirmação antes de tocar.
+**Entregas.**
+- Componente `<AttachmentEngine entityType=... entityId=... />` universal.
+- Função `pode_acessar_entidade(_user, _entidade, _id)` SECURITY DEFINER usada pelas policies do bucket.
+- Migração de anexos legados paralelos para `entity_attachments`.
+
+**Critério.** 18 entidades suportam anexos. RLS bloqueia acesso indevido. Auditoria em upload/delete/download.
+
+---
+
+## Onda 5 — Auditoria real
+
+**Tabelas afetadas.** `audit_log` (já existe), trigger `tg_audit_row` (já existe).
+
+**Entregas.**
+- Anexar `tg_audit_row` nas tabelas que ainda não têm: `leads`, `propostas`, `clientes`, `fornecedores`, `naturezas_financeiras`, `centros_resultado`, `contas_financeiras`, `recorrencias_financeiras`, `entity_attachments`, `parametros_financeiros`, `user_permission_overrides`, `role_permissions`.
+- Padronizar `correlation_id` (UUID por request) propagado nas RPCs via `set_config('app.correlation_id', ...)`.
+- Coluna `idempotency_key` no `audit_log` quando aplicável.
+
+**Critério.** Operação diária aparece em `audit_log` com antes/depois, usuário, motivo, correlation_id. Painel `/admin/auditoria` filtrável.
+
+---
+
+## Onda 6 — Concorrência, idempotência, versionamento
+
+**Tabelas afetadas.** Entidades críticas ganham `row_version int NOT NULL DEFAULT 1`.
+
+**Entregas.**
+- Trigger `tg_bump_row_version` incrementa em cada UPDATE.
+- RPCs aceitam `_expected_version`; raise `42501 'Conflito de versão'` se diverge.
+- Tabela `idempotency_keys (key text PK, scope text, response jsonb, created_at)` com TTL 24h.
+- UI: hook `useOptimisticMutation` mostra modal "Outro usuário alterou — recarregar?".
+- Botões críticos com `useDoubleClickGuard` (300ms + idempotency_key).
+
+**Critério.** Clique duplo não duplica. Edição concorrente abre conflito visível. Retry de RPC não duplica lançamento.
+
+---
+
+## Onda 7 — Segurança, rotas, RLS
+
+**Entregas.**
+- Auditar todas rotas em `src/routes/`: garantir que tudo operacional está sob `_authenticated/`.
+- Remover qualquer fallback "modo visitante" em rota privada.
+- Loading components não vazam dados sensíveis.
+- Logout limpa `queryClient` + LS de preferências sensíveis.
+- Revisar RLS das tabelas migradas nas ondas 1–3.
+- Re-rodar `supabase--linter`, fechar warns possíveis.
+- Habilitar HIBP via `configure_auth password_hibp_enabled: true`.
+- Matriz `governance_matrix` (D14.3) cobre as novas RPCs.
+
+**Critério.** Sem sessão, nada operacional renderiza. Sem permissão, RPC retorna 42501. RLS bloqueia mesmo com frontend manipulado.
+
+---
+
+## Onda 8 — Painel de saúde
+
+**Tabelas afetadas.** Nenhuma nova; usa views.
+
+**Entregas.**
+- View `v_saude_sistema` (security_invoker=on) agregando 20+ indicadores: contratos órfãos, propostas sem cliente, projetos sem contrato, títulos sem parcela, parcelas sem título, mov sem título, lançamentos sem natureza, estoque negativo, anexos órfãos, aprovações > 7 dias, falhas RPC último mês, conflitos de versão, idempotency hits, último refresh MV, status RLS por tabela, status views oficiais.
+- Rota `/admin/saude-sistema` consome a view, agrupa por severidade (CRÍTICO/ALTO/MÉDIO/INFO).
+
+**Critério.** Gestor enxerga saúde real. Inconsistências detectadas antes da crise.
+
+---
+
+## Onda 9 — Testes mínimos + gates
+
+**Entregas.**
+- `tests/integration/onda1-financeiro.test.ts` cobre os 20 fluxos críticos listados.
+- `scripts/integridade-d15.ts` (executável CLI) replica view `v_saude_sistema` + exit code não-zero se críticos > 0.
+- Gate de PR: rodar `bunx vitest run tests/integration` antes do merge.
+- Migrations sempre com bloco `-- ROLLBACK` documentado.
+
+**Critério.** Fluxo crítico tem teste. PR sem teste é bloqueado.
+
+---
+
+## Onda 10 — Corte definitivo LocalStorage
+
+Só após ondas 1–9 estáveis (≥ 2 semanas em produção).
+
+**Entregas.**
+- `rg -n "localStorage\.(get|set)Item.*\b(metasun\.fin|ms\.contrato|ms\.cliente|ms\.lead|ms\.proposta|ms\.obra|ms\.estoque|ms\.compra|ms\.aprov)" src/` → remover todas ocorrências.
+- Manter LS apenas: `theme`, `sidebar-state`, `tabela-filtros-{rota}`, `tabela-ordenacao-{rota}`, `dashboard-layout`.
+- Função utilitária `assertNoOperationalLS()` em dev: lista chaves proibidas no console.
+
+**Critério.** Limpar LS no Chrome **não perde nenhuma operação**. Troca de máquina mantém a verdade.
+
+---
+
+## Métrica final esperada
+
+| Camada | Hoje | Alvo | Onda principal |
+|--------|------|------|----------------|
+| Banco/governança | 9,0 | 9,0 | (mantido) |
+| Backend/RPCs | 7,5 | 8,8 | 1, 3 |
+| Frontend enterprise | 8,5 | 8,8 | 1–3 |
+| Persistência operacional | 4,0 | 9,0 | **1, 2, 3, 10** |
+| Fonte única da verdade | 4,5 | 9,0 | **1, 2, 3, 10** |
+| Auditoria real | 6,0 | 8,5 | 5 |
+| Concorrência | 5,0 | 8,0 | 6 |
+| Segurança | 8,5 | 9,0 | 7 |
+| Testes/QA | 2,5 | 6,5 | 9 |
+| **Maturidade geral** | **~68** | **88–92** | — |
+
+---
+
+## Protocolo por onda
+
+**Antes:** diagnóstico curto + arquivos/tabelas/RPCs/policies + risco + rollback + critério de aceite (este plano já entrega isso para todas as 11).
+
+**Depois:** resumo do que mudou + evidência de teste + evidência de paridade + pendências + próxima onda.
+
+---
+
+## Pedido de aprovação
+
+Aprovação proposta em **3 níveis** para evitar commit cego:
+
+1. **Aprovar o plano mestre** (este documento) — destrava execução sequencial.
+2. **Aprovar Onda 0 agora** — somente leitura, gera baseline e flags. Sem risco.
+3. Onda 1 (financeiro) só inicia após Onda 0 entregue e revisada.
+
+Se aprovado, começo pela **Onda 0** imediatamente: inventário + snapshot + feature flags + rollback plan. Nenhum código funcional muda nessa primeira execução.

@@ -40,10 +40,12 @@ import { CadastrosTab } from "@/modules/financeiro/CadastrosTab";
 import { CmvTab } from "@/modules/financeiro/CmvTab";
 import { ParametrosFinanceirosForm } from "@/components/app/financeiro/ParametrosFinanceirosForm";
 import { RenegociacaoHistoricoList } from "@/components/app/financeiro/RenegociacaoHistoricoList";
+import { RenegociacaoHistoricoListSupabase } from "@/components/app/financeiro/RenegociacaoHistoricoListSupabase";
 import { AdiantamentosTab } from "@/components/app/financeiro/AdiantamentosTab";
 import { AdiantamentosTabSupabase } from "@/modules/financeiro/AdiantamentosTabSupabase";
 
 import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
+import { RescisoesTabSupabase } from "@/components/app/financeiro/RescisoesTabSupabase";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";
 import { toast } from "sonner";
 
@@ -189,7 +191,7 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="renegociacoes" className="mt-5">
-          <RenegociacaoHistoricoList />
+          {isFeatureEnabled("D15_RENEGOCIACAO_HIST_SUPABASE") ? <RenegociacaoHistoricoListSupabase /> : <RenegociacaoHistoricoList />}
         </TabsContent>
 
         <TabsContent value="parametros-fin" className="mt-5">
@@ -202,7 +204,7 @@ function FinanceiroPage() {
 
 
         <TabsContent value="rescisoes" className="mt-5">
-          <RescisoesTab />
+          {isFeatureEnabled("D15_RESCISOES_SUPABASE") ? <RescisoesTabSupabase /> : <RescisoesTab />}
         </TabsContent>
 
         <TabsContent value="fluxo-real" className="mt-5">

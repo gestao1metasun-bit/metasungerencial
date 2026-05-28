@@ -47,7 +47,18 @@ type Categoria =
   | 'INVALIDO'
   | 'PERDA_POTENCIAL'
   | 'SALDO_DIVERGENTE'
-  | 'RENEGOCIACAO_INCONSISTENTE';
+  | 'RENEGOCIACAO_INCONSISTENTE'
+  // Camada 4 — Lançamentos (metasun.fin.lancamentos.v1)
+  | 'CONVERTIVEL_TITULO_RECEBER'
+  | 'CONVERTIVEL_TITULO_PAGAR'
+  | 'CONVERTIVEL_MOVIMENTACAO_REALIZADA'
+  | 'CONVERTIVEL_MOVIMENTACAO_PREVISTA'
+  | 'CONVERTIVEL_RECORRENTE'
+  | 'LANCAMENTO_SEM_TITULO'
+  | 'DATA_INVALIDA'
+  | 'VALOR_INVALIDO'
+  | 'OBRA_INVALIDA'
+  | 'DUPLICIDADE_POTENCIAL';
 
 const STORES_OFICIAIS = [
   'fin-titulos',
@@ -57,6 +68,15 @@ const STORES_OFICIAIS = [
   'fin-compras',
   'fin-conciliacao',
 ] as const;
+
+const STORES_LANCAMENTOS = [
+  'metasun.fin.lancamentos.v1',
+  'metasun.fin.recorrentes.v1',
+  'metasun.fin.centros.v1',
+  'metasun.fin.naturezas.v1',
+] as const;
+
+
 
 const STATUS_OFICIAL_TITULO = new Set([
   'ABERTO', 'PARCIAL', 'PAGO', 'VENCIDO', 'CANCELADO', 'RENEGOCIADO',

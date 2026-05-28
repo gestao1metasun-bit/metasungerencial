@@ -47,6 +47,8 @@ export type {
   EnterpriseEntityType,
   EnterpriseRecordAction,
   EnterpriseProcessItem,
+  StatusActionItem,
+  LayoutBarConfig,
 } from "./EnterpriseRecordToolbar";
 
 // Re-exports oficiais (componentes já existentes consolidados sob o framework)

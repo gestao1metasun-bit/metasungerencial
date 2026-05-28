@@ -179,10 +179,9 @@ function RootComponent() {
       perfReport("module.switch", switchMs, path);
       perfReport("route.ready", switchMs, path);
     } else {
-      // Primeira rota da sessão: mede desde o shell.ready (ou timeOrigin)
-      perfMarkIfAbsent("route.ready.anchor");
-      perfMeasure("shell.ready", "route.ready.anchor", "route.ready", path);
-      delete (window as unknown as { perfMarks?: Record<string, number> }).perfMarks?.["route.ready.anchor"];
+      // Primeira rota da sessão: do shell.ready até este effect
+      perfMark("route.ready");
+      perfMeasure("shell.ready", "route.ready", "route.ready", path);
     }
     lastPath.current = path;
   }, [path, hasValidSession, isPublicRoute]);

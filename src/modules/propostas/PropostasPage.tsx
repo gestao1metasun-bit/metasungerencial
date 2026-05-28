@@ -267,20 +267,25 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         <PageHeader
           title="Propostas Fotovoltaicas"
           subtitle="Crie propostas guiadas com cálculo automático de potência, preço e margem."
-          actions={
-            <Button onClick={() => novaProposta()} className="gap-2">
-              <Plus className="h-4 w-4" /> Nova Proposta
-            </Button>
-          }
         />
       )}
-      {embedded && (
-        <div className="flex items-center justify-end mt-4">
-          <Button onClick={() => novaProposta()} className="gap-2">
-            <Plus className="h-4 w-4" /> Nova Proposta
-          </Button>
-        </div>
-      )}
+      {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS */}
+      <div className={embedded ? "mt-4" : "mt-3"}>
+        <EnterpriseRecordToolbar
+          entityType="propostas"
+          selectedIds={vendoId ? [vendoId] : []}
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+          onAction={(a) => {
+            if (a === "novo") novaProposta();
+            else if (a === "atualizar") toast.info("Lista de propostas atualizada.");
+            else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
+            else if (a === "imprimir" && vendoId) toast.info("Use o botão Imprimir dentro da proposta.");
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
+            else if (a === "filtroAvancado") toast.info("Use filtros da PropostaList abaixo.");
+          }}
+        />
+      </div>
+
       <div className="mt-5">
         <PropostaList
           propostas={propostas}

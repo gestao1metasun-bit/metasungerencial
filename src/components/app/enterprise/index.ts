@@ -75,3 +75,14 @@ export type { FilterPanelProps } from "./FilterPanel";
 export { BulkActionBar } from "./BulkActionBar";
 export type { BulkAction, BulkActionBarProps, BulkActionTone } from "./BulkActionBar";
 export { useRowSelection } from "@/lib/ui/use-row-selection";
+
+// D17.UI.4 — Casca de página + orquestrador
+export { EnterprisePageShell } from "./EnterprisePageShell";
+export type { EnterprisePageShellProps } from "./EnterprisePageShell";
+export { useEnterpriseGrid } from "@/lib/ui/use-enterprise-grid";
+export type {
+  UseEnterpriseGridReturn,
+  EnterpriseGridFilters,
+  GridDensity,
+  GridLayout,
+} from "@/lib/ui/use-enterprise-grid";

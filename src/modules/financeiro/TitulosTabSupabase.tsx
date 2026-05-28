@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Wallet, AlertTriangle, FileText, Filter, RotateCcw,
+  Wallet, AlertTriangle, FileText, Filter, RotateCcw,
   CheckCircle2, XCircle, Banknote, Undo2, Printer, Mail, Eye, Send,
 } from "lucide-react";
 import {

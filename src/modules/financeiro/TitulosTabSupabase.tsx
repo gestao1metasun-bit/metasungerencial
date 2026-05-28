@@ -690,3 +690,55 @@ function NovoLancamentoDialog({ tipo, onDone }: { tipo: "receber" | "pagar"; onD
     </DialogContent>
   );
 }
+
+/* ============================================================================
+   D17.UI.3 — Cancelamento em lote
+   ========================================================================== */
+function BulkCancelDialog({
+  open, onClose, titulos, onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  titulos: TituloFinanceiro[];
+  onConfirm: (motivo: string) => void | Promise<void>;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (!open) { setMotivo(""); setBusy(false); } }, [open]);
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !busy) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cancelar {titulos.length} título(s) em lote</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="text-muted-foreground">
+            Cada cancelamento é registrado em auditoria individualmente.
+            Motivo obrigatório (≥ 5 caracteres) e será aplicado a todos.
+          </div>
+          <Textarea
+            rows={3}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Ex.: lote de duplicidade · cliente desistiu · acordo geral"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Voltar</Button>
+          <Button
+            variant="destructive"
+            disabled={motivo.trim().length < 5 || busy || titulos.length === 0}
+            onClick={async () => {
+              setBusy(true);
+              await onConfirm(motivo.trim());
+              setBusy(false);
+            }}
+          >
+            {busy ? "Cancelando…" : `Cancelar ${titulos.length} título(s)`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

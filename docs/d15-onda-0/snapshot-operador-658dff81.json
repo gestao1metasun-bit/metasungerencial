@@ -1,0 +1,511 @@
+{
+  "manifest": {
+    "wave": "D15.1.a.0.ii",
+    "purpose": "snapshot-canonico-financeiro",
+    "operador": {
+      "nome": "Renan Barcelos",
+      "funcao": "Gerência / Financeiro"
+    },
+    "maquina": {
+      "descricao": "Notebook/PC principal — operação financeira diária Meta Sun",
+      "navegador": "Google Chrome",
+      "perfil": "Perfil operacional principal Meta Sun"
+    },
+    "origem": "https://metasungerencial.lovable.app/dashboard",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "timestamp_iso": "2026-05-28T15:07:54.385Z",
+    "timezone": "America/Manaus",
+    "versao_erp": null
+  },
+  "stores_esperadas": [
+    "fin-titulos",
+    "fin-renegociacao",
+    "fin-estornos",
+    "fin-adiantamentos",
+    "fin-compras",
+    "fin-conciliacao",
+    "metasun.fin.lancamentos.v1",
+    "metasun.fin.recorrentes.v1",
+    "metasun.fin.centros.v1",
+    "metasun.fin.naturezas.v1"
+  ],
+  "stores_ausentes": [
+    "fin-titulos",
+    "fin-renegociacao",
+    "fin-estornos",
+    "fin-adiantamentos",
+    "fin-compras",
+    "fin-conciliacao"
+  ],
+  "stores": {
+    "fin-titulos": null,
+    "fin-renegociacao": null,
+    "fin-estornos": null,
+    "fin-adiantamentos": null,
+    "fin-compras": null,
+    "fin-conciliacao": null,
+    "metasun.fin.lancamentos.v1": {
+      "raw_bytes": 2978,
+      "parsed": [
+        {
+          "id": "L-001",
+          "data": "2026-05-20",
+          "descricao": "Aluguel sede",
+          "tipo": "Saída",
+          "valor": 12000,
+          "camada": "Realizado",
+          "natureza": "Aluguel",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-002",
+          "data": "2026-05-23",
+          "descricao": "Folha de pagamento",
+          "tipo": "Saída",
+          "valor": 178000,
+          "camada": "Realizado",
+          "natureza": "Folha de pagamento",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-003",
+          "data": "2026-05-24",
+          "descricao": "Liberação BASA — FIN-0087",
+          "tipo": "Entrada",
+          "valor": 360000,
+          "camada": "Realizado",
+          "natureza": "Liberação financiamento",
+          "centroCusto": "Comercial",
+          "obra": "OB-0230",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-004",
+          "data": "2026-05-25",
+          "descricao": "Material — OB-0231 (módulos)",
+          "tipo": "Saída",
+          "valor": 42000,
+          "camada": "Realizado",
+          "natureza": "Material",
+          "centroCusto": "Engenharia/Operação",
+          "obra": "OB-0231",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-005",
+          "data": "2026-05-26",
+          "descricao": "Combustível frota",
+          "tipo": "Saída",
+          "valor": 3200,
+          "camada": "Realizado",
+          "natureza": "Combustível",
+          "centroCusto": "Frota",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-010",
+          "data": "2026-05-30",
+          "descricao": "Boleto Canadian Solar",
+          "tipo": "Saída",
+          "valor": 142000,
+          "camada": "Confirmado",
+          "natureza": "Material",
+          "centroCusto": "Engenharia/Operação",
+          "obra": "OB-0230",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-011",
+          "data": "2026-06-01",
+          "descricao": "Recebimento cliente — CT-0142 P1",
+          "tipo": "Entrada",
+          "valor": 29667,
+          "camada": "Confirmado",
+          "natureza": "Recebimento de cliente",
+          "centroCusto": "Comercial",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-012",
+          "data": "2026-06-02",
+          "descricao": "Impostos DAS",
+          "tipo": "Saída",
+          "valor": 18500,
+          "camada": "Confirmado",
+          "natureza": "Impostos",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-020",
+          "data": "2026-06-06",
+          "descricao": "Mão de obra OB-0228",
+          "tipo": "Saída",
+          "valor": 22000,
+          "camada": "Previsto",
+          "natureza": "Mão de obra",
+          "centroCusto": "Engenharia/Operação",
+          "obra": "OB-0228",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-021",
+          "data": "2026-06-09",
+          "descricao": "Liberação SICREDI prevista",
+          "tipo": "Entrada",
+          "valor": 195000,
+          "camada": "Previsto",
+          "natureza": "Liberação financiamento",
+          "centroCusto": "Comercial",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-030",
+          "data": "2026-06-15",
+          "descricao": "Recebimento parcela CT-0138",
+          "tipo": "Entrada",
+          "valor": 74500,
+          "camada": "A realizar",
+          "natureza": "Recebimento de cliente",
+          "centroCusto": "Comercial",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-031",
+          "data": "2026-06-19",
+          "descricao": "Material OB-0228",
+          "tipo": "Saída",
+          "valor": 86000,
+          "camada": "A realizar",
+          "natureza": "Material",
+          "centroCusto": "Engenharia/Operação",
+          "obra": "OB-0228",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        },
+        {
+          "id": "L-040",
+          "data": "2026-07-12",
+          "descricao": "Campanha marketing trimestre",
+          "tipo": "Saída",
+          "valor": 35000,
+          "camada": "Orçado futuro",
+          "natureza": "Marketing",
+          "centroCusto": "Marketing",
+          "empresa": "Meta Sun",
+          "filial": "Manaus"
+        }
+      ]
+    },
+    "metasun.fin.recorrentes.v1": {
+      "raw_bytes": 2244,
+      "parsed": [
+        {
+          "id": "R-001",
+          "descricao": "Aluguel sede",
+          "tipo": "Saída",
+          "valor": 12000,
+          "recorrencia": "Mensal",
+          "diaVencimento": 5,
+          "natureza": "Aluguel",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "aluguel"
+        },
+        {
+          "id": "R-002",
+          "descricao": "Folha de pagamento",
+          "tipo": "Saída",
+          "valor": 178000,
+          "recorrencia": "Mensal",
+          "diaVencimento": 5,
+          "natureza": "Folha de pagamento",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "folha"
+        },
+        {
+          "id": "R-003",
+          "descricao": "Pró-labore sócios",
+          "tipo": "Saída",
+          "valor": 28000,
+          "recorrencia": "Mensal",
+          "diaVencimento": 10,
+          "natureza": "Pró-labore",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "folha"
+        },
+        {
+          "id": "R-004",
+          "descricao": "Energia elétrica",
+          "tipo": "Saída",
+          "valor": 4200,
+          "recorrencia": "Mensal",
+          "diaVencimento": 15,
+          "natureza": "Energia/Água",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "manual"
+        },
+        {
+          "id": "R-005",
+          "descricao": "Internet + telefonia",
+          "tipo": "Saída",
+          "valor": 1800,
+          "recorrencia": "Mensal",
+          "diaVencimento": 12,
+          "natureza": "Internet/Telefonia",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "assinatura"
+        },
+        {
+          "id": "R-006",
+          "descricao": "Software CRM/ERP",
+          "tipo": "Saída",
+          "valor": 2400,
+          "recorrencia": "Mensal",
+          "diaVencimento": 20,
+          "natureza": "Software/Licenças",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "assinatura"
+        },
+        {
+          "id": "R-007",
+          "descricao": "Contabilidade",
+          "tipo": "Saída",
+          "valor": 3500,
+          "recorrencia": "Mensal",
+          "diaVencimento": 8,
+          "natureza": "Contabilidade",
+          "centroCusto": "Administrativo",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "assinatura"
+        },
+        {
+          "id": "R-008",
+          "descricao": "Seguros frota",
+          "tipo": "Saída",
+          "valor": 1900,
+          "recorrencia": "Mensal",
+          "diaVencimento": 18,
+          "natureza": "Veículos/Seguros",
+          "centroCusto": "Frota",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "manual"
+        },
+        {
+          "id": "R-009",
+          "descricao": "Recebimento parcelas CT (carteira)",
+          "tipo": "Entrada",
+          "valor": 86000,
+          "recorrencia": "Mensal",
+          "diaVencimento": 10,
+          "natureza": "Parcelas/Recorrentes",
+          "centroCusto": "Comercial",
+          "empresa": "Meta Sun",
+          "filial": "Manaus",
+          "ativa": true,
+          "origem": "contrato"
+        }
+      ]
+    },
+    "metasun.fin.centros.v1": {
+      "raw_bytes": 278,
+      "parsed": [
+        {
+          "id": "c1",
+          "nome": "Administrativo",
+          "tipo": "Administrativo"
+        },
+        {
+          "id": "c2",
+          "nome": "Comercial",
+          "tipo": "Comercial"
+        },
+        {
+          "id": "c3",
+          "nome": "Engenharia/Operação",
+          "tipo": "Operacional"
+        },
+        {
+          "id": "c4",
+          "nome": "Frota",
+          "tipo": "Operacional"
+        },
+        {
+          "id": "c5",
+          "nome": "Marketing",
+          "tipo": "Administrativo"
+        }
+      ]
+    },
+    "metasun.fin.naturezas.v1": {
+      "raw_bytes": 1335,
+      "parsed": [
+        {
+          "id": "n1",
+          "nome": "Material",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n2",
+          "nome": "Mão de obra",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n3",
+          "nome": "Logística/Frete",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n4",
+          "nome": "Combustível",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n5",
+          "nome": "Hospedagem",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n6",
+          "nome": "Terceiros",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n7",
+          "nome": "Aluguel",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n8",
+          "nome": "Folha de pagamento",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n9",
+          "nome": "Pró-labore",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n10",
+          "nome": "Energia/Água",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n11",
+          "nome": "Internet/Telefonia",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n12",
+          "nome": "Software/Licenças",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n13",
+          "nome": "Contabilidade",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n14",
+          "nome": "Marketing",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n15",
+          "nome": "Manutenção/Limpeza",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n16",
+          "nome": "Impostos",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n17",
+          "nome": "Financiamentos",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n18",
+          "nome": "Veículos/Seguros",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n19",
+          "nome": "Benefícios/Encargos",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n20",
+          "nome": "Comissões",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n21",
+          "nome": "Despesas bancárias",
+          "tipo": "Saída"
+        },
+        {
+          "id": "n50",
+          "nome": "Recebimento de cliente",
+          "tipo": "Entrada"
+        },
+        {
+          "id": "n51",
+          "nome": "Liberação financiamento",
+          "tipo": "Entrada"
+        },
+        {
+          "id": "n52",
+          "nome": "Parcelas/Recorrentes",
+          "tipo": "Entrada"
+        },
+        {
+          "id": "n53",
+          "nome": "Outras receitas",
+          "tipo": "Entrada"
+        }
+      ]
+    }
+  },
+  "integrity": {
+    "algo": "SHA-256",
+    "hash_full": "658dff817942531667446769051f690dfe07b4496429b7fd4b6c44ffa34ae86a",
+    "hash_short": "658dff81",
+    "canonical_bytes": 8142
+  }
+}

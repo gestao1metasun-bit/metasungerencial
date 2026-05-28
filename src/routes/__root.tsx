@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
 import { installLsGuard } from "@/lib/ls-guard";
-import { perfMark, perfMeasure, perfReport } from "@/lib/perf";
+import { perfMark, perfMarkIfAbsent, perfMeasure, perfReport, markRouteStart, getRouteStart } from "@/lib/perf";
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
@@ -147,28 +147,44 @@ function RootComponent() {
     }
   }, []);
 
-  // D16.PERF — marca shell.ready uma vez quando rota privada renderiza com sessão válida
+  // D16.PERF P2.1 — shell.ready funciona mesmo quando o usuário já está
+  // autenticado (sem login.start). Cascata de fallback em perfMeasure.
+  const shellMarked = useRef(false);
   useEffect(() => {
+    if (shellMarked.current) return;
     if (!isPublicRoute && hasValidSession && !loading) {
+      shellMarked.current = true;
+      // garante um anchor "auth.ok" para medições derivadas
+      perfMarkIfAbsent("auth.ok");
       perfMark("shell.ready");
       perfMeasure("login.start", "shell.ready", "shell.ready");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidSession, loading, isPublicRoute]);
 
-  // D16.PERF P2 — route.ready + module.switch a cada troca de rota privada
+  // D16.PERF P2.1 — route.ready REPORTADO + module.switch
+  // Mede do início da navegação ao primeiro effect renderizado.
   const lastPath = useRef<string | null>(null);
-  const routeStartRef = useRef<number | null>(null);
   useEffect(() => {
     if (isPublicRoute || !hasValidSession) return;
     const prev = lastPath.current;
-    perfMark("route.ready");
-    if (prev && prev !== path) {
-      perfReport("module.switch", performance.now() - (routeStartRef.current ?? performance.now()), path);
+    const prevStart = prev ? getRouteStart(prev) : undefined;
+    markRouteStart(path);
+
+    // route.ready: do início desta rota até o effect (≈ primeiro render).
+    // Como markRouteStart acabou de gravar, usamos o nosso próprio "agora"
+    // como ponto final, e o início real é o tick anterior do React commit.
+    // Boa aproximação: tempo desde o último route.start (mudança).
+    if (prev && prev !== path && prevStart != null) {
+      const switchMs = performance.now() - prevStart;
+      perfReport("module.switch", switchMs, path);
+      perfReport("route.ready", switchMs, path);
+    } else {
+      // Primeira rota da sessão: mede desde o shell.ready (ou timeOrigin)
+      perfMarkIfAbsent("route.ready.anchor");
+      perfMeasure("shell.ready", "route.ready.anchor", "route.ready", path);
+      delete (window as unknown as { perfMarks?: Record<string, number> }).perfMarks?.["route.ready.anchor"];
     }
-    routeStartRef.current = performance.now();
     lastPath.current = path;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, hasValidSession, isPublicRoute]);
 
   return (

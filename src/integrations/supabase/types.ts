@@ -968,6 +968,54 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_carteira_transferencias: {
+        Row: {
+          contexto: Json
+          created_at: string
+          escopo: string
+          executed_at: string
+          executor_email: string | null
+          executor_id: string
+          id: string
+          lote_id: string | null
+          lote_qtd: number | null
+          motivo: string
+          registro_id: string
+          vendedor_destino_id: string
+          vendedor_origem_id: string | null
+        }
+        Insert: {
+          contexto?: Json
+          created_at?: string
+          escopo: string
+          executed_at?: string
+          executor_email?: string | null
+          executor_id: string
+          id?: string
+          lote_id?: string | null
+          lote_qtd?: number | null
+          motivo: string
+          registro_id: string
+          vendedor_destino_id: string
+          vendedor_origem_id?: string | null
+        }
+        Update: {
+          contexto?: Json
+          created_at?: string
+          escopo?: string
+          executed_at?: string
+          executor_email?: string | null
+          executor_id?: string
+          id?: string
+          lote_id?: string | null
+          lote_qtd?: number | null
+          motivo?: string
+          registro_id?: string
+          vendedor_destino_id?: string
+          vendedor_origem_id?: string | null
+        }
+        Relationships: []
+      }
       comercial_pipeline_etapas: {
         Row: {
           ativo: boolean
@@ -3775,6 +3823,8 @@ export type Database = {
       }
       propostas: {
         Row: {
+          aprovacao_excecao_id: string | null
+          aprovacao_excecao_status: string | null
           cliente_doc: string | null
           cliente_id: string | null
           cliente_nome: string | null
@@ -3792,12 +3842,15 @@ export type Database = {
           modulos_qtd: number | null
           motivo_status: string | null
           numero: string | null
+          parametro_rs_kwp_aplicado: number | null
           potencia_kwp: number | null
           renovacao_motivo: string | null
           renovada_em: string | null
+          requer_aprovacao_excecao: boolean
           revisada_em: string | null
           revisao_motivo: string | null
           row_version: number
+          rs_kwp_calculado: number | null
           status: string
           updated_at: string
           validade: string | null
@@ -3807,6 +3860,8 @@ export type Database = {
           versao_pai_id: string | null
         }
         Insert: {
+          aprovacao_excecao_id?: string | null
+          aprovacao_excecao_status?: string | null
           cliente_doc?: string | null
           cliente_id?: string | null
           cliente_nome?: string | null
@@ -3824,12 +3879,15 @@ export type Database = {
           modulos_qtd?: number | null
           motivo_status?: string | null
           numero?: string | null
+          parametro_rs_kwp_aplicado?: number | null
           potencia_kwp?: number | null
           renovacao_motivo?: string | null
           renovada_em?: string | null
+          requer_aprovacao_excecao?: boolean
           revisada_em?: string | null
           revisao_motivo?: string | null
           row_version?: number
+          rs_kwp_calculado?: number | null
           status?: string
           updated_at?: string
           validade?: string | null
@@ -3839,6 +3897,8 @@ export type Database = {
           versao_pai_id?: string | null
         }
         Update: {
+          aprovacao_excecao_id?: string | null
+          aprovacao_excecao_status?: string | null
           cliente_doc?: string | null
           cliente_id?: string | null
           cliente_nome?: string | null
@@ -3856,12 +3916,15 @@ export type Database = {
           modulos_qtd?: number | null
           motivo_status?: string | null
           numero?: string | null
+          parametro_rs_kwp_aplicado?: number | null
           potencia_kwp?: number | null
           renovacao_motivo?: string | null
           renovada_em?: string | null
+          requer_aprovacao_excecao?: boolean
           revisada_em?: string | null
           revisao_motivo?: string | null
           row_version?: number
+          rs_kwp_calculado?: number | null
           status?: string
           updated_at?: string
           validade?: string | null
@@ -3871,6 +3934,13 @@ export type Database = {
           versao_pai_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "propostas_aprovacao_excecao_id_fkey"
+            columns: ["aprovacao_excecao_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_aprovacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "propostas_versao_pai_id_fkey"
             columns: ["versao_pai_id"]
@@ -7202,6 +7272,24 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_carteira_transferir_individual: {
+        Args: {
+          p_escopo: string
+          p_motivo: string
+          p_registro_id: string
+          p_vendedor_destino_id: string
+        }
+        Returns: string
+      }
+      rpc_carteira_transferir_lote: {
+        Args: {
+          p_escopo: string
+          p_motivo: string
+          p_registro_ids: string[]
+          p_vendedor_destino_id: string
+        }
+        Returns: string
+      }
       rpc_idempotente_check: {
         Args: { _payload?: Json; _request_id: string; _rpc_nome: string }
         Returns: Json
@@ -7248,10 +7336,18 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_proposta_decidir_aprovacao_excecao: {
+        Args: { p_aprovacao_id: string; p_decisao: string; p_motivo: string }
+        Returns: undefined
+      }
       rpc_proposta_marcar_vencidas: { Args: never; Returns: number }
       rpc_proposta_renovar_validade: {
         Args: { _dias?: number; _id: string; _motivo: string }
         Returns: undefined
+      }
+      rpc_proposta_solicitar_aprovacao_excecao: {
+        Args: { p_motivo: string; p_proposta_id: string }
+        Returns: string
       }
       rpc_proposta_solicitar_revisao: {
         Args: { _id: string; _motivo: string }
@@ -7409,6 +7505,7 @@ export type Database = {
         | "comercial.parametro.configurar"
         | "comercial.comissao.visualizar"
         | "comercial.comissao.liberar"
+        | "comercial.carteira.ver_historico"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -7628,6 +7725,7 @@ export const Constants = {
         "comercial.parametro.configurar",
         "comercial.comissao.visualizar",
         "comercial.comissao.liberar",
+        "comercial.carteira.ver_historico",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

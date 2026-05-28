@@ -57,6 +57,31 @@ Esforço: P=1–2 dias · M=3–5 · G=1–2 sem · GG=2–3 sem. Ordem **obriga
 
 ---
 
+## Escopo fiscal/contábil — diretriz oficial (2026-05-28)
+
+Meta Sun **NÃO** implementa módulo fiscal/contábil completo. Fica gerencial/operacional. Fiscal+contábil = sistema externo (Domínio/Alterdata/Sankhya/TOTVS) — definição futura.
+
+**Proibido neste plano:** SPED/ECD/ECF/EFD, apuração tributária, escrituração contábil, partidas dobradas, fechamento contábil, obrigações acessórias, NF-e como motor fiscal.
+
+**Obrigatório desde já — toda entidade nasce integrável:**
+- Campos universais: `codigo_interno`, `codigo_externo`, `sistema_origem`, `sistema_destino`, `status_integracao` (pendente/exportado/integrado/erro/reprocessar/ignorado), `data_integracao`, `erro_integracao`, `hash_remessa`, `lote_integracao_id`, `conta_contabil_mapeavel`, `tipo_documento`, `numero_documento`, `competencia`, `valor_bruto`, `desconto`, `acrescimo`, `valor_liquido`, `observacoes`, anexos.
+- Camada de **mapeamento de-para** (não gera contabilidade agora): natureza→conta contábil, CR→CC, conta financeira→conta bancária/contábil, cliente/fornecedor→cadastro externo, tipo lançamento→evento contábil, tipo doc→doc fiscal, operação comercial→classificação, obra→CC/projeto externo, material→categoria externa, forma pgto→meio pgto externo.
+- Tabelas estruturais: `mapeamentos_externos`, `lotes_integracao`, `eventos_pendentes_integracao`, `logs_integracao` + auditoria de exportação/reprocessamento.
+
+**Regras de pedra no operacional:** nenhum lançamento sem natureza+competência+conta+tipo+origem; CR obrigatório quando aplicável; contratos/obras/movimentações sempre com vínculos rastreáveis; integração futura rastreável/auditável/reversível.
+
+**Impacto nas ondas:**
+- **Onda 1.A.0** (alinhamento pré-migração): adiciona os campos de integrabilidade em titulos/parcelas/mov/adiantamentos/boletos/rescisões/extrato + cria `mapeamentos_externos` e `lotes_integracao` **vazias**.
+- **Onda 2** (cadastros): nascem com `codigo_externo` + `sistema_destino` + status integração.
+- **Onda 3** (comercial): idem em contratos/propostas/PVs.
+- **Não implementar agora:** motor de exportação, conector, parser fiscal — apenas estrutura.
+
+**Critério de aceite global:** quando o sistema fiscal/contábil externo for definido, basta preencher mapeamentos e ligar exportador — sem refazer o núcleo financeiro.
+
+Memória oficial: `mem://constraints/erp-escopo-fiscal-contabil`.
+
+---
+
 ## Onda 0 — Congelamento e baseline
 
 **Diagnóstico curto.** Sem alterar código. Tudo é leitura e exportação.

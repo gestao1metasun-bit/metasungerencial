@@ -1,206 +1,209 @@
-# D15 — Onda 1.A.0 — Alinhamento Estrutural Financeiro
+# D15 — Onda 1.A.0 (REV2) — Alinhamento Financeiro + Integrabilidade
 
-**Modo:** estrutura apenas. Sem dados, sem flags, sem UI, sem corte LS.
-**Pré-requisito:** aprovação explícita antes de aplicar `MIGRATION.sql`.
-**Sucessor:** Onda 1.A (reescrita) só roda após esta onda validada.
+**Modo:** DDL puro. Sem dados, sem flags, sem UI, sem corte LS.
+**Diretriz oficial:** Meta Sun NÃO é sistema fiscal/contábil. Esta onda
+prepara o financeiro gerencial para ser fonte operacional confiável **e**
+deixa estruturas para integrar futuramente com sistema externo
+(Domínio/Alterdata/Sankhya/TOTVS) sem refazer o núcleo.
 
 ---
 
-## 1. Diagnóstico — Charter D15 × Schema Real
+## 1. Diagnóstico — charter × schema real × integrabilidade
 
-### 1.1 Estruturas que **JÁ EXISTEM** no banco (descoberta principal)
+### 1.1 Já existe no banco
 
-A memória D15.1.a.0.i+ está correta — o grosso da fundação financeira oficial **já está no Supabase**:
-
-| Categoria | Item | Estado |
-|---|---|---|
-| Cadastro | `fornecedores` | ✅ existe |
-| Cadastro | `naturezas_financeiras` | ✅ existe |
-| Cadastro | `centros_resultado` | ✅ existe |
-| Cadastro | `contas_financeiras` | ✅ existe |
-| Núcleo | `titulos_financeiros`, `parcelas_financeiras`, `movimentacoes_financeiras` | ✅ existem |
-| Complementar | `titulos_taxas`, `boletos`, `adiantamentos`, `adiantamento_abatimentos`, `rescisoes_contrato`, `extrato_banco` | ✅ existem |
-| Permissões | `financeiro.movimentar`, `.editar`, `.visualizar`, `.conciliar`, `.renegociar`, `.fechar_periodo`, `.reabrir_periodo`, `.excluir` | ✅ todas no enum `app_permission` |
-| Hardening | triggers `tg_mf_aplica_movimento`, `tg_tf_bloqueia_baixa_manual`, `tg_em_bloqueia_saldo_negativo`, `tg_tf_guard_periodo`, `tg_audit_row` | ✅ ativos |
-
-**Conclusão:** não é preciso criar a "estrutura financeira oficial" do zero — ela existe. O gap é cirúrgico.
-
-### 1.2 Mismatches do MIGRATION.sql original × schema real
-
-A `docs/d15-onda-1a/MIGRATION.sql` foi escrita contra um modelo **hipotético** divergente do schema real:
-
-| MIGRATION.sql (errado) | Schema real (correto) |
+| Categoria | Itens |
 |---|---|
-| `valor_total` | `valor_bruto`, `valor_liquido`, `saldo` |
-| `data_emissao` | `competencia` (date) |
-| `data_vencimento` | `vencimento` |
-| `descricao` | `observacoes` (não há campo `descricao`) |
-| `observacao` | `observacoes` |
-| `centro_resultado_id` | `centro_id` (mantido — decisão do operador) |
-| `pv_id`, `obra_id`, `fornecedor_id` (colunas dedicadas) | `origem_tipo` + `origem_id` (padrão polimórfico já validado por CHECK) |
-| `created_by` | (ausente — usar `dados->>'created_by'` ou criar coluna) |
-| `tipo IN ('AR','AP')` | `tipo IN ('receber','pagar')` |
-| `status ABERTO/BAIXADO` | `status PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO` |
-| `movimentacoes.tipo BAIXA/ESTORNO/CONCILIACAO` | `tipo recebimento/baixa/estorno/juros/multa/desconto` |
+| Cadastros | `fornecedores`, `naturezas_financeiras`, `centros_resultado`, `contas_financeiras` ✅ |
+| Núcleo financeiro | `titulos_financeiros`, `parcelas_financeiras`, `movimentacoes_financeiras` ✅ |
+| Complementar | `titulos_taxas` (enterprise), `boletos`+`boletos_itens`, `adiantamentos`+`adiantamento_abatimentos`, `rescisoes_contrato`, `extrato_banco` ✅ |
+| Permissões | `financeiro.{visualizar,movimentar,editar,conciliar,renegociar,fechar_periodo,reabrir_periodo,excluir}` ✅ |
+| Hardening | `tg_mf_aplica_movimento`, `tg_tf_bloqueia_baixa_manual`, `tg_em_bloqueia_saldo_negativo`, `tg_tf_guard_periodo`, `tg_audit_row` ✅ |
 
-### 1.3 Gaps REAIS de schema (o que esta onda corrige)
+### 1.2 Gaps reais (corrigidos nesta onda)
 
-**G1. Vínculos faltantes em `titulos_financeiros`:**
-- ❌ `natureza_id uuid` — exigido pelo charter (toda RPC oficial obriga natureza).
-- ❌ `fornecedor_id uuid` — útil como FK direta em AP (hoje só via `origem_tipo='fornecedor'`).
-- ❌ `created_by uuid` — auditoria mais barata que parsing `dados->>'created_by'`.
-
-**G2. Vínculos faltantes em `parcelas_financeiras`:**
-- ❌ `created_by uuid` — paridade com títulos.
-
-**G3. FKs declaradas no núcleo financeiro = ZERO.**
-Hoje **nenhuma** FK existe em `titulos_financeiros`, `parcelas_financeiras` ou `movimentacoes_financeiras`. Risco real de órfãos. Esta onda declara as FKs.
-
-**G4. Índices de leitura para a view derivada e RPCs.**
-Faltam índices em `parcelas_financeiras.titulo_id`, `movimentacoes_financeiras.titulo_id/parcela_id`, `titulos_financeiros.natureza_id`, `.centro_id`, `.conta_id`, `.origem_tipo+origem_id`.
-
-**G5. Triggers `updated_at`.**
-`titulos_financeiros`, `parcelas_financeiras` têm coluna `updated_at` mas não há trigger que a atualize (verificar).
-
----
-
-## 2. Decisões arquiteturais desta onda
-
-| Decisão | Direção tomada | Justificativa |
+| # | Gap | Tratamento |
 |---|---|---|
-| Nome do centro de resultado | **Manter `centro_id`** (não renomear) | Zero impacto em código existente. RPCs novas usam `centro_id`. |
-| Vínculo PV/Obra/Fornecedor | **Manter `origem_tipo`+`origem_id` como canônico** | Padrão já implementado, com CHECK, com 10 origens semeadas. Adicionar `fornecedor_id` apenas como conveniência opcional para AP. |
-| Status `tipo` | **Manter `receber`/`pagar`** | Convenção do projeto inteiro. RPCs do D15 se adaptam. |
-| Status `status` | **Manter `PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO`** | Triggers de hardening dependem destes valores. |
-| `descricao` | **Não criar coluna nova** — usar `observacoes` | Evita renomeação massiva. |
-| Tabela `lancamentos` | **Não criar** — Lançamento é VISÃO derivada (decisão oficial D15) | Memória `d15-lancamentos-derivado`. |
+| G1 | `titulos_financeiros` sem `natureza_id`, `fornecedor_id`, `created_by` | adicionar |
+| G2 | `parcelas_financeiras` sem `created_by` | adicionar |
+| G3 | **Zero FKs** declaradas no núcleo financeiro | declarar 14 FKs |
+| G4 | Faltam índices para a view derivada e RPCs da Onda 1.A | criar 8 índices financeiros + 7 de integração |
+| G5 | `updated_at` sem trigger em `titulos`/`parcelas` | criar 2 triggers |
+| G6 | **Sem camada de integrabilidade** — ERP não tem como exportar/marcar status para sistema fiscal externo | adicionar 13 campos universais em 7 tabelas + 4 tabelas estruturais novas + 4 permissões |
+
+### 1.3 Decisões mantidas (do REV1)
+
+- `centro_id` preservado (não renomear para `centro_resultado_id`).
+- `origem_tipo`+`origem_id` continua canônico (PV/Obra/Contrato/Fornecedor).
+- `fornecedor_id` é **conveniência** para AP, convive com `origem_tipo='fornecedor'`.
+- `tipo IN ('receber','pagar')` e status `PENDENTE/PARCIAL/RECEBIDO/ATRASADO/CANCELADO/RENEGOCIADO` mantidos.
+- Tabela `lancamentos` **não** existe — lançamentos são VIEW derivada (Onda 1.A).
 
 ---
 
-## 3. Escopo da `MIGRATION.sql` desta onda (1.A.0)
+## 2. Diretriz fiscal/contábil — escopo desta onda
 
-1. `ALTER TABLE titulos_financeiros ADD COLUMN natureza_id uuid;`
-2. `ALTER TABLE titulos_financeiros ADD COLUMN fornecedor_id uuid;`
-3. `ALTER TABLE titulos_financeiros ADD COLUMN created_by uuid;`
-4. `ALTER TABLE parcelas_financeiras ADD COLUMN created_by uuid;`
-5. Declarar FKs em `titulos_financeiros`: `cliente_id → clientes`, `consultor_id → auth.users`, `centro_id → centros_resultado`, `conta_id → contas_financeiras`, `contrato_id → contratos`, `titulo_substituto_id → titulos_financeiros`, `natureza_id → naturezas_financeiras`, `fornecedor_id → fornecedores`, `created_by → auth.users`. Todas `ON DELETE RESTRICT` (proteção) exceto `consultor_id`/`created_by` (`SET NULL`).
-6. Declarar FKs em `parcelas_financeiras`: `titulo_id → titulos_financeiros ON DELETE CASCADE`, `created_by → auth.users SET NULL`.
-7. Declarar FKs em `movimentacoes_financeiras`: `titulo_id → titulos_financeiros ON DELETE RESTRICT`, `parcela_id → parcelas_financeiras ON DELETE RESTRICT`, `conta_id → contas_financeiras`, `user_id → auth.users`.
-8. Índices: `idx_tf_natureza`, `idx_tf_centro`, `idx_tf_conta`, `idx_tf_fornecedor`, `idx_tf_origem (origem_tipo,origem_id)`, `idx_pf_titulo`, `idx_mf_titulo`, `idx_mf_parcela`. Todos `WHERE deleted_at IS NULL` quando aplicável.
-9. Triggers `updated_at`: adicionar `tg_set_updated_at_generic` em `titulos_financeiros`, `parcelas_financeiras` se ausentes.
-10. **Nenhuma RPC, nenhuma view, nenhum dado.** RPCs e `v_lancamentos_derivados` ficam para a Onda 1.A reescrita.
+| Faz nesta onda | NÃO faz (e não fará no Meta Sun) |
+|---|---|
+| Campos de integrabilidade em 7 tabelas financeiras | Apuração de impostos, escrituração contábil |
+| Tabela `lotes_integracao` (estrutural, vazia) | SPED/ECD/ECF/EFD |
+| Tabela `mapeamentos_externos` (de-para genérico) | Motor de NF-e/NFS-e |
+| Tabela `eventos_pendentes_integracao` (fila lógica vazia) | Fechamento contábil / partidas dobradas |
+| Tabela `logs_integracao` (append-only, vazia) | Conector externo / chamada de API fiscal |
+| Permissões `integracao.{visualizar,mapear,exportar,reprocessar}` | Exportação real de remessa (vai para uma onda futura sob flag) |
+| FKs `lote_integracao_id` em todas as 7 tabelas financeiras | UI de integração / motor de despacho |
 
 ---
 
-## 4. Validações §5 (rodam após o `ALTER`)
+## 3. Escopo da `MIGRATION.sql` (REV2)
+
+1. **Enum `app_permission`** — adiciona 4 valores via `ALTER TYPE`:
+   `integracao.visualizar`, `integracao.mapear`, `integracao.exportar`, `integracao.reprocessar`.
+2. **Vínculos** — `natureza_id`, `fornecedor_id`, `created_by` em `titulos_financeiros`; `created_by` em `parcelas_financeiras`.
+3. **Integrabilidade universal (7 tabelas)** — `titulos`, `parcelas`, `movimentações`, `adiantamentos`, `boletos`, `rescisoes_contrato`, `extrato_banco`:
+   - `codigo_externo text` — id no sistema fiscal externo.
+   - `sistema_origem text` / `sistema_destino text` — rastreio bi-direcional.
+   - `status_integracao text DEFAULT 'pendente'` — `pendente|exportado|integrado|erro|reprocessar|ignorado` (CHECK aplicado).
+   - `data_integracao timestamptz`, `erro_integracao text`.
+   - `hash_remessa text`, `lote_integracao_id uuid` (FK para `lotes_integracao`).
+   - Em `titulos_financeiros` também: `conta_contabil_externa`, `tipo_documento`, `numero_documento`, `serie_documento`, `chave_documento`.
+4. **FKs do núcleo (14)** — declaração explícita nas 3 tabelas centrais, com `ON DELETE` por intenção (RESTRICT para cadastros, SET NULL para usuários, CASCADE para parcelas→título).
+5. **Índices (15)** — leitura financeira (FKs + origem polimórfica) + parciais `WHERE status_integracao <> 'integrado'` para fila de pendentes.
+6. **Triggers `updated_at`** em `titulos_financeiros`, `parcelas_financeiras` (reusa `tg_set_updated_at_generic`).
+7. **`lotes_integracao`** — agrupador de eventos por sistema/competência/tipo; status `aberto|fechado|exportado|integrado|erro|cancelado`; `hash_remessa`, contadores, `exportado_em/por`. RLS por `integracao.mapear`.
+8. **`mapeamentos_externos`** — de-para genérico `(sistema_destino, tipo_mapeamento, chave_interna)` único; cobre natureza→conta, CR→CC, conta→banco, cliente/fornecedor→cadastro externo, tipo lançamento→evento, tipo doc→fiscal, forma pgto→meio pgto, obra→CC, material→categoria, operação→classificação (apenas estrutura, não há seed).
+9. **`eventos_pendentes_integracao`** — fila lógica (`tipo_evento`, `entidade`, `entidade_id`, `payload jsonb`, `tentativas`, `proxima_tentativa`, `hash_payload`). Vazia. Sem worker.
+10. **`logs_integracao`** — append-only (INSERT permitido a `integracao.exportar`; sem UPDATE/DELETE para `authenticated`).
+11. **GRANTs + RLS + policies** em todas as 4 tabelas novas + triggers `updated_at`.
+
+---
+
+## 4. Validações §5 (rodar logo após o ALTER)
 
 | # | Validação | SQL |
 |---|---|---|
-| V1 | Colunas adicionadas | `SELECT column_name FROM information_schema.columns WHERE table_name='titulos_financeiros' AND column_name IN ('natureza_id','fornecedor_id','created_by');` → 3 linhas |
-| V2 | FKs declaradas | `SELECT count(*) FROM information_schema.table_constraints WHERE constraint_type='FOREIGN KEY' AND table_name IN ('titulos_financeiros','parcelas_financeiras','movimentacoes_financeiras');` → ≥ 14 |
-| V3 | Índices novos | `SELECT indexname FROM pg_indexes WHERE schemaname='public' AND indexname LIKE 'idx_tf_%' OR indexname LIKE 'idx_pf_titulo' OR indexname LIKE 'idx_mf_%';` → ≥ 8 |
-| V4 | Linhas operacionais inalteradas | `SELECT count(*) FROM titulos_financeiros;` antes/depois → idênticos (0) |
-| V5 | Nenhuma flag D15 ativada | `grep "DEFAULT_FLAGS" src/config/featureFlags.ts` → todas `false` |
-| V6 | Linter Supabase | `supabase--linter` → não aumenta # de WARNs (baseline 75) |
+| V1 | Novas permissões | `SELECT count(*) FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid WHERE t.typname='app_permission' AND e.enumlabel LIKE 'integracao.%';` → 4 |
+| V2 | Colunas vínculo | `SELECT column_name FROM information_schema.columns WHERE table_name='titulos_financeiros' AND column_name IN ('natureza_id','fornecedor_id','created_by');` → 3 |
+| V3 | Integrabilidade em 7 tabelas | `SELECT table_name, count(*) FROM information_schema.columns WHERE column_name IN ('codigo_externo','status_integracao','hash_remessa','lote_integracao_id') AND table_name IN ('titulos_financeiros','parcelas_financeiras','movimentacoes_financeiras','adiantamentos','boletos','rescisoes_contrato','extrato_banco') GROUP BY 1;` → 7 linhas, cada com 4 |
+| V4 | FKs declaradas | `SELECT count(*) FROM information_schema.table_constraints WHERE constraint_type='FOREIGN KEY' AND table_name IN ('titulos_financeiros','parcelas_financeiras','movimentacoes_financeiras');` → ≥ 18 (14 núcleo + 4 de lote) |
+| V5 | Tabelas novas | `SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('lotes_integracao','mapeamentos_externos','eventos_pendentes_integracao','logs_integracao');` → 4 |
+| V6 | RLS habilitada nas 4 | `SELECT relname, relrowsecurity FROM pg_class WHERE relname IN ('lotes_integracao','mapeamentos_externos','eventos_pendentes_integracao','logs_integracao');` → 4 com `true` |
+| V7 | Volumetria operacional inalterada | `SELECT count(*) FROM titulos_financeiros;` antes/depois → idênticos (0) |
+| V8 | Flags D15 | `grep DEFAULT_FLAGS src/config/featureFlags.ts` → todas `false` |
+| V9 | Linter Supabase | `supabase--linter` → baseline 75 WARN (não regredir) |
 
 ---
 
 ## 5. Rollback completo
 
 ```sql
--- ordem inversa
-DROP INDEX IF EXISTS public.idx_mf_parcela;
-DROP INDEX IF EXISTS public.idx_mf_titulo;
-DROP INDEX IF EXISTS public.idx_pf_titulo;
-DROP INDEX IF EXISTS public.idx_tf_origem;
-DROP INDEX IF EXISTS public.idx_tf_fornecedor;
-DROP INDEX IF EXISTS public.idx_tf_conta;
-DROP INDEX IF EXISTS public.idx_tf_centro;
-DROP INDEX IF EXISTS public.idx_tf_natureza;
+-- Camada de integração
+DROP TABLE IF EXISTS public.logs_integracao;
+DROP TABLE IF EXISTS public.eventos_pendentes_integracao;
+DROP TABLE IF EXISTS public.mapeamentos_externos;
 
-ALTER TABLE public.movimentacoes_financeiras
-  DROP CONSTRAINT IF EXISTS fk_mf_titulo,
-  DROP CONSTRAINT IF EXISTS fk_mf_parcela,
-  DROP CONSTRAINT IF EXISTS fk_mf_conta,
-  DROP CONSTRAINT IF EXISTS fk_mf_user;
+-- FKs de lote antes de dropar lotes_integracao
+ALTER TABLE public.titulos_financeiros        DROP CONSTRAINT IF EXISTS fk_tf_lote;
+ALTER TABLE public.parcelas_financeiras       DROP CONSTRAINT IF EXISTS fk_pf_lote;
+ALTER TABLE public.movimentacoes_financeiras  DROP CONSTRAINT IF EXISTS fk_mf_lote;
+ALTER TABLE public.adiantamentos              DROP CONSTRAINT IF EXISTS fk_adi_lote;
+ALTER TABLE public.boletos                    DROP CONSTRAINT IF EXISTS fk_bol_lote;
+ALTER TABLE public.rescisoes_contrato         DROP CONSTRAINT IF EXISTS fk_res_lote;
+ALTER TABLE public.extrato_banco              DROP CONSTRAINT IF EXISTS fk_ext_lote;
+DROP TABLE IF EXISTS public.lotes_integracao;
 
-ALTER TABLE public.parcelas_financeiras
-  DROP CONSTRAINT IF EXISTS fk_pf_titulo,
-  DROP CONSTRAINT IF EXISTS fk_pf_created_by,
-  DROP COLUMN IF EXISTS created_by;
-
-ALTER TABLE public.titulos_financeiros
-  DROP CONSTRAINT IF EXISTS fk_tf_cliente,
-  DROP CONSTRAINT IF EXISTS fk_tf_consultor,
-  DROP CONSTRAINT IF EXISTS fk_tf_centro,
-  DROP CONSTRAINT IF EXISTS fk_tf_conta,
-  DROP CONSTRAINT IF EXISTS fk_tf_contrato,
-  DROP CONSTRAINT IF EXISTS fk_tf_titulo_substituto,
-  DROP CONSTRAINT IF EXISTS fk_tf_natureza,
-  DROP CONSTRAINT IF EXISTS fk_tf_fornecedor,
-  DROP CONSTRAINT IF EXISTS fk_tf_created_by,
-  DROP COLUMN IF EXISTS created_by,
-  DROP COLUMN IF EXISTS fornecedor_id,
-  DROP COLUMN IF EXISTS natureza_id;
-
+-- Índices e triggers (idempotente: ver MIGRATION REV1)
 DROP TRIGGER IF EXISTS tg_pf_updated_at ON public.parcelas_financeiras;
 DROP TRIGGER IF EXISTS tg_tf_updated_at ON public.titulos_financeiros;
+
+-- FKs do núcleo
+ALTER TABLE public.movimentacoes_financeiras
+  DROP CONSTRAINT IF EXISTS fk_mf_titulo, DROP CONSTRAINT IF EXISTS fk_mf_parcela,
+  DROP CONSTRAINT IF EXISTS fk_mf_conta,  DROP CONSTRAINT IF EXISTS fk_mf_user;
+ALTER TABLE public.parcelas_financeiras
+  DROP CONSTRAINT IF EXISTS fk_pf_titulo, DROP CONSTRAINT IF EXISTS fk_pf_created_by;
+ALTER TABLE public.titulos_financeiros
+  DROP CONSTRAINT IF EXISTS fk_tf_cliente, DROP CONSTRAINT IF EXISTS fk_tf_consultor,
+  DROP CONSTRAINT IF EXISTS fk_tf_centro,  DROP CONSTRAINT IF EXISTS fk_tf_conta,
+  DROP CONSTRAINT IF EXISTS fk_tf_contrato,DROP CONSTRAINT IF EXISTS fk_tf_titulo_substituto,
+  DROP CONSTRAINT IF EXISTS fk_tf_natureza,DROP CONSTRAINT IF EXISTS fk_tf_fornecedor,
+  DROP CONSTRAINT IF EXISTS fk_tf_created_by;
+
+-- Campos de integrabilidade (em cada uma das 7 tabelas):
+-- ALTER TABLE public.<t> DROP COLUMN IF EXISTS codigo_externo, sistema_origem, sistema_destino,
+--   status_integracao, data_integracao, erro_integracao, hash_remessa, lote_integracao_id,
+--   conta_contabil_externa, tipo_documento, numero_documento, serie_documento, chave_documento;
+
+-- Campos de vínculo
+ALTER TABLE public.parcelas_financeiras DROP COLUMN IF EXISTS created_by;
+ALTER TABLE public.titulos_financeiros
+  DROP COLUMN IF EXISTS created_by, DROP COLUMN IF EXISTS fornecedor_id, DROP COLUMN IF EXISTS natureza_id;
+
+-- Permissões: enum não permite DROP VALUE em Postgres. Permanecem inativas (sem policies que as exijam).
 ```
+
+> Nota: valores adicionados a `app_permission` não podem ser removidos pelo Postgres. Em rollback as 4 permissões ficam órfãs, sem efeito operacional.
 
 ---
 
 ## 6. Riscos e mitigações
 
-| # | Risco | Severidade | Mitigação |
+| # | Risco | Sev | Mitigação |
 |---|---|---|---|
-| R1 | FK `cliente_id → clientes RESTRICT` quebra futura exclusão de cliente com título | Médio | Usar `ON DELETE RESTRICT` é o desejado — proteção. Soft-delete de cliente já existe e não dispara. |
-| R2 | FK `titulo_id CASCADE` em parcelas deleta parcelas se título for hard-deleted | Baixo | Convenção do ERP é soft-delete; hard-delete só admin via SQL. Aceito. |
-| R3 | Adicionar coluna `created_by` NULL em tabela com 0 linhas | Nulo | titulos/parcelas operacionais = 0 linhas hoje. Backfill futuro a partir de `dados->>'created_by'` se houver. |
-| R4 | Novos índices aumentam custo de write | Baixo | Volume operacional financeiro = 0; impacto desprezível por meses. |
-| R5 | Trigger `tg_set_updated_at_generic` já existir | Baixo | Migration usa `DROP TRIGGER IF EXISTS` antes do `CREATE`. |
-| R6 | Operação produtiva em LS depender da ausência das colunas | Nulo | Adicionar coluna nullable é compatível ascendente; nenhum SELECT/INSERT atual quebra. |
+| R1 | FK `cliente_id → clientes RESTRICT` impede exclusão de cliente com título | Médio | Comportamento desejado; soft-delete de cliente continua funcionando. |
+| R2 | `CASCADE` em `parcelas.titulo_id` deleta parcelas se título for hard-deleted | Baixo | Convenção é soft-delete; hard-delete só admin. |
+| R3 | Adição de coluna `NOT NULL DEFAULT 'pendente'` em tabela com linhas | Nulo | Todas as 7 tabelas financeiras = 0 linhas operacionais hoje. |
+| R4 | `ALTER TYPE app_permission ADD VALUE` exige fora de transação em alguns clientes | Baixo | Cada `ADD VALUE` está em bloco `DO $$` próprio (idempotente). Migrations Supabase rodam em transação implícita; se falhar, usar `ADD VALUE IF NOT EXISTS` em PG ≥ 12 já está coberto pela checagem `IF NOT EXISTS`. |
+| R5 | Novos índices oneram write | Baixo | Volume = 0 hoje; índices parciais minimizam custo. |
+| R6 | Trigger `tg_set_updated_at_generic` já existir antes | Nulo | Migration usa `DROP TRIGGER IF EXISTS` antes do `CREATE`. |
+| R7 | Operação produtiva em LS depender da ausência dos novos campos | Nulo | Colunas nullable / com DEFAULT; nenhum `INSERT` existente quebra. |
+| R8 | Rollback do enum impossível | Baixo | Documentado; 4 permissões ficam órfãs sem efeito. |
+| R9 | Confundir camada de integração com motor fiscal | Médio | Charter `mem://constraints/erp-escopo-fiscal-contabil` proíbe motor fiscal/contábil. Esta onda **só** cria tabelas vazias + campos. |
 
 ---
 
 ## 7. Impacto produtivo
 
-- **UI:** 0 mudanças.
-- **Stores LS:** 0 mudanças.
-- **Comportamento operacional:** 0 mudanças.
-- **Volumetria:** 0 linhas afetadas (todas tabelas financeiras = 0).
-- **Permissões:** 0 mudanças.
-- **Flags D15:** todas continuam `false`.
-- **Performance:** apenas ganho (índices novos).
+| Dimensão | Mudança |
+|---|---|
+| UI | 0 |
+| Stores LS | 0 |
+| Comportamento operacional | 0 |
+| Volumetria | 0 linhas migradas (todas tabelas alvo = 0) |
+| Flags D15 | inalteradas (todas `false`) |
+| Performance | apenas ganho (índices novos) |
+| Permissões | +4 valores inativos no enum, sem policy que as exija fora das tabelas novas |
 
 ---
 
 ## 8. Checklist de aceite
 
-- [ ] V1–V6 todas verdes
-- [ ] Linter Supabase não regrediu (baseline ≤ 75 WARN)
+- [ ] V1–V9 todas verdes
+- [ ] Linter Supabase ≤ 75 WARN (baseline mantido)
 - [ ] `count(titulos_financeiros)` antes == depois
 - [ ] Build do projeto continua verde
-- [ ] Nenhuma flag `D15_*` mudou
 - [ ] Nenhum arquivo de UI/store/repository foi tocado
-- [ ] Rollback testável (script §5 roda limpo em ambiente vazio)
-- [ ] Rastreabilidade: log no `migracao_d15_log` opcional (esta onda é DDL puro, pode-se registrar manualmente entrada com `onda='1.A.0'`)
+- [ ] Flags `D15_*` continuam `false`
+- [ ] Rollback §5 roda limpo em ambiente vazio
+- [ ] Tabelas `lotes_integracao`, `mapeamentos_externos`, `eventos_pendentes_integracao`, `logs_integracao` permanecem **vazias** após aplicar
 
 ---
 
-## 9. Recomendação revisada para a Onda 1.A
+## 9. Recomendação para a reescrita da Onda 1.A
 
-Após 1.A.0 aprovada e aplicada, a `MIGRATION.sql` da Onda 1.A será **reescrita** com:
+Após esta REV2 aplicada e validada, a `MIGRATION.sql` da Onda 1.A será **reescrita** com:
 
-- `v_lancamentos_derivados` usando colunas reais: `valor_liquido`, `vencimento`, `competencia`, `observacoes`, `centro_id`, `origem_tipo`+`origem_id`, `tipo IN ('receber','pagar')`, status reais.
-- RPCs `rpc_lancamento_*` mapeando payload do operador → schema canônico, exigindo `natureza_id`+`centro_id`+`conta_id`.
-- `rpc_lancamento_criar` decide `origem_tipo` a partir do payload (`pv_id` → `'pedido_venda'`, `obra_id` → `'obra'`, `fornecedor_id` → `'fornecedor'`, etc.) e grava `origem_id`.
-- Idempotência + auditoria + `migracao_d15_log` mantidos como projetados.
-- Infra `migracao_d15_log` + `chaves_de_idempotencia` + helpers `_d15_*` migram para a Onda 1.A reescrita (são pré-requisito das RPCs, não do schema).
+- View `v_lancamentos_derivados` (`security_invoker=on`) usando colunas reais: `valor_liquido`, `vencimento`, `competencia`, `observacoes`, `centro_id`, `origem_tipo`+`origem_id`, `tipo IN ('receber','pagar')`, status reais; agora **incluindo** `natureza_id`, `fornecedor_id`, `codigo_externo`, `status_integracao` já disponíveis.
+- 7 RPCs `rpc_lancamento_*` que exigem `natureza_id`+`centro_id`+`conta_id` (todas FKs já válidas) e mapeiam payload→origem polimórfica.
+- Infra `migracao_d15_log` + `chaves_de_idempotencia` + helpers `_d15_*` (pré-requisito das RPCs, não do schema — fica na 1.A).
+- Sem alteração de UI; sem flags ativadas; sem corte LS.
+
+A Onda 1.B (migração real do snapshot `658dff81`) recebe lote `sistema_origem='localstorage'` em cada registro, deixando trilha integral para a futura exportação.
 
 ---
 
-## 10. Riscos operacionais herdados (registrados, sem ação nesta onda)
+## 10. Riscos operacionais herdados (registrados, sem ação aqui)
 
 - **CRÍTICO** `ms.audit.v1` continua sendo log operacional em LS. Onda 5 já promovida para após 1.B.
-- **MÉDIO** 17 stores LS financeiras seguem como fonte única de verdade até a Onda 1.A + 1.B + 1.C concluírem.
-- **BAIXO** `dados jsonb` em `titulos_financeiros` segue como saco genérico — limpeza fica para Onda 7.
+- **MÉDIO** 17 stores LS financeiras seguem fonte única de verdade até 1.A+1.B+1.C concluídas.
+- **BAIXO** `dados jsonb` em `titulos_financeiros` segue saco genérico — limpeza fica para Onda 7.

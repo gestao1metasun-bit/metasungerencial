@@ -139,23 +139,13 @@ function ensureInit() {
       userId: session?.user?.id ?? null,
       email: session?.user?.email ?? null,
     });
-    if (!session?.user) {
-      _state = { session: null, user: null, role: null, loading: false };
-      emit();
-      void hydrateFunnel(false);
+    if (!session?.user || event === "SIGNED_OUT") {
+      setAnonymousState();
       return;
     }
-    // Atualiza imediatamente com o usuário (UI sai de "Visitante" no ato)
-    _state = { session, user: session.user, role: _state.role, loading: false };
-    emit();
-    // Carrega role em seguida (fora do callback p/ evitar deadlock)
+
     setTimeout(() => {
-      void loadRole(session.user.id).then((role) => {
-        _state = { session, user: session.user, role, loading: false };
-        console.info("[auth-session] role atualizada via onAuthStateChange", { role });
-        emit();
-        void hydrateFunnel(true);
-      });
+      void validateActiveSession(session);
     }, 0);
   });
 }
@@ -196,17 +186,8 @@ export async function signInEmail(email: string, password: string) {
     error: error?.message ?? null,
   });
   if (error) throw error;
-  // Set imediato do estado global — não esperar onAuthStateChange
   if (data?.session && data?.user) {
-    _state = { session: data.session, user: data.user, role: _state.role, loading: false };
-    emit();
-    setTimeout(() => {
-      void loadRole(data.user!.id).then((role) => {
-        _state = { session: data.session, user: data.user, role, loading: false };
-        emit();
-        void hydrateFunnel(true);
-      });
-    }, 0);
+    await validateActiveSession(data.session);
   }
 }
 

@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
 import { installLsGuard } from "@/lib/ls-guard";
+import { perfMark, perfMeasure } from "@/lib/perf";
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";

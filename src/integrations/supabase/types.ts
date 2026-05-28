@@ -968,6 +968,57 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_pipeline_etapas: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          cor: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          row_version: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          cor?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          row_version?: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          cor?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          row_version?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       concessionarias: {
         Row: {
           ativo: boolean
@@ -2171,6 +2222,48 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_origens: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          id: string
+          nome: string
+          ordem: number
+          row_version: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          row_version?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          row_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -2440,6 +2533,93 @@ export type Database = {
           nome?: string
           row_version?: number
           tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motivos_ganho: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          id: string
+          nome: string
+          ordem: number
+          row_version: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          row_version?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          row_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motivos_perda: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          exige_observacao: boolean
+          id: string
+          nome: string
+          ordem: number
+          row_version: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          exige_observacao?: boolean
+          id?: string
+          nome: string
+          ordem?: number
+          row_version?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          exige_observacao?: boolean
+          id?: string
+          nome?: string
+          ordem?: number
+          row_version?: number
           updated_at?: string
         }
         Relationships: []
@@ -7177,6 +7357,20 @@ export type Database = {
         | "integracao.mapear"
         | "integracao.exportar"
         | "integracao.reprocessar"
+        | "comercial.lead.criar"
+        | "comercial.lead.editar"
+        | "comercial.proposta.criar"
+        | "comercial.proposta.editar"
+        | "comercial.proposta.revisar"
+        | "comercial.proposta.aprovar_excecao"
+        | "comercial.carteira.transferir"
+        | "comercial.carteira.transferir_lote"
+        | "contrato.cancelar"
+        | "contrato.reabrir"
+        | "comercial.pipeline.configurar"
+        | "comercial.parametro.configurar"
+        | "comercial.comissao.visualizar"
+        | "comercial.comissao.liberar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -7382,6 +7576,20 @@ export const Constants = {
         "integracao.mapear",
         "integracao.exportar",
         "integracao.reprocessar",
+        "comercial.lead.criar",
+        "comercial.lead.editar",
+        "comercial.proposta.criar",
+        "comercial.proposta.editar",
+        "comercial.proposta.revisar",
+        "comercial.proposta.aprovar_excecao",
+        "comercial.carteira.transferir",
+        "comercial.carteira.transferir_lote",
+        "contrato.cancelar",
+        "contrato.reabrir",
+        "comercial.pipeline.configurar",
+        "comercial.parametro.configurar",
+        "comercial.comissao.visualizar",
+        "comercial.comissao.liberar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

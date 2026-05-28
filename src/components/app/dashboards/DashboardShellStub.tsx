@@ -31,12 +31,12 @@ function OverviewFallback() {
 }
 
 const AREA_BY_ROUTE: Record<string, KpiArea | undefined> = {
-  "/paineis/financeiro": "financeiro",
-  "/paineis/comercial": "comercial",
-  "/paineis/engenharia": "engenharia",
-  "/paineis/estoque": "estoque",
-  "/paineis/aprovacoes": "aprovacoes",
-  "/paineis/financiamentos": "financiamentos",
+  "/analytics/financeiro": "financeiro",
+  "/analytics/comercial": "comercial",
+  "/analytics/engenharia": "engenharia",
+  "/analytics/estoque": "estoque",
+  "/analytics/aprovacoes": "aprovacoes",
+  "/analytics/financiamentos": "financiamentos",
 };
 
 export type DashboardShellStubProps = {

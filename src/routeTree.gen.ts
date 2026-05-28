@@ -35,18 +35,6 @@ import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AnalisesRouteImport } from './routes/analises'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PaineisSaudeSistemaRouteImport } from './routes/paineis.saude-sistema'
-import { Route as PaineisSaudeDadosRouteImport } from './routes/paineis.saude-dados'
-import { Route as PaineisPosvendaRouteImport } from './routes/paineis.posvenda'
-import { Route as PaineisPerformanceRouteImport } from './routes/paineis.performance'
-import { Route as PaineisGovernancaRouteImport } from './routes/paineis.governanca'
-import { Route as PaineisFinanciamentosRouteImport } from './routes/paineis.financiamentos'
-import { Route as PaineisFinanceiroRouteImport } from './routes/paineis.financeiro'
-import { Route as PaineisEstoqueRouteImport } from './routes/paineis.estoque'
-import { Route as PaineisErrosRouteImport } from './routes/paineis.erros'
-import { Route as PaineisEngenhariaRouteImport } from './routes/paineis.engenharia'
-import { Route as PaineisComercialRouteImport } from './routes/paineis.comercial'
-import { Route as PaineisAprovacoesRouteImport } from './routes/paineis.aprovacoes'
 import { Route as DashboardsPosvendaRouteImport } from './routes/dashboards.posvenda'
 import { Route as DashboardsFinanciamentosRouteImport } from './routes/dashboards.financiamentos'
 import { Route as DashboardsFinanceiroRouteImport } from './routes/dashboards.financeiro'
@@ -54,10 +42,15 @@ import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoq
 import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
 import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
 import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
+import { Route as AnalyticsSaudeSistemaRouteImport } from './routes/analytics.saude-sistema'
+import { Route as AnalyticsSaudeDadosRouteImport } from './routes/analytics.saude-dados'
 import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
+import { Route as AnalyticsPerformanceRouteImport } from './routes/analytics.performance'
+import { Route as AnalyticsGovernancaRouteImport } from './routes/analytics.governanca'
 import { Route as AnalyticsFinanciamentosRouteImport } from './routes/analytics.financiamentos'
 import { Route as AnalyticsFinanceiroRouteImport } from './routes/analytics.financeiro'
 import { Route as AnalyticsEstoqueRouteImport } from './routes/analytics.estoque'
+import { Route as AnalyticsErrosRouteImport } from './routes/analytics.erros'
 import { Route as AnalyticsEngenhariaRouteImport } from './routes/analytics.engenharia'
 import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comercial'
 import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
@@ -192,66 +185,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PaineisSaudeSistemaRoute = PaineisSaudeSistemaRouteImport.update({
-  id: '/saude-sistema',
-  path: '/saude-sistema',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisSaudeDadosRoute = PaineisSaudeDadosRouteImport.update({
-  id: '/saude-dados',
-  path: '/saude-dados',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisPosvendaRoute = PaineisPosvendaRouteImport.update({
-  id: '/posvenda',
-  path: '/posvenda',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisPerformanceRoute = PaineisPerformanceRouteImport.update({
-  id: '/performance',
-  path: '/performance',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisGovernancaRoute = PaineisGovernancaRouteImport.update({
-  id: '/governanca',
-  path: '/governanca',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisFinanciamentosRoute = PaineisFinanciamentosRouteImport.update({
-  id: '/financiamentos',
-  path: '/financiamentos',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisFinanceiroRoute = PaineisFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisEstoqueRoute = PaineisEstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisErrosRoute = PaineisErrosRouteImport.update({
-  id: '/erros',
-  path: '/erros',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisEngenhariaRoute = PaineisEngenhariaRouteImport.update({
-  id: '/engenharia',
-  path: '/engenharia',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisComercialRoute = PaineisComercialRouteImport.update({
-  id: '/comercial',
-  path: '/comercial',
-  getParentRoute: () => PaineisRoute,
-} as any)
-const PaineisAprovacoesRoute = PaineisAprovacoesRouteImport.update({
-  id: '/aprovacoes',
-  path: '/aprovacoes',
-  getParentRoute: () => PaineisRoute,
-} as any)
 const DashboardsPosvendaRoute = DashboardsPosvendaRouteImport.update({
   id: '/posvenda',
   path: '/posvenda',
@@ -288,9 +221,29 @@ const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
   path: '/aprovacoes',
   getParentRoute: () => DashboardsRoute,
 } as any)
+const AnalyticsSaudeSistemaRoute = AnalyticsSaudeSistemaRouteImport.update({
+  id: '/saude-sistema',
+  path: '/saude-sistema',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsSaudeDadosRoute = AnalyticsSaudeDadosRouteImport.update({
+  id: '/saude-dados',
+  path: '/saude-dados',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
 const AnalyticsPosvendaRoute = AnalyticsPosvendaRouteImport.update({
   id: '/posvenda',
   path: '/posvenda',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsPerformanceRoute = AnalyticsPerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsGovernancaRoute = AnalyticsGovernancaRouteImport.update({
+  id: '/governanca',
+  path: '/governanca',
   getParentRoute: () => AnalyticsRoute,
 } as any)
 const AnalyticsFinanciamentosRoute = AnalyticsFinanciamentosRouteImport.update({
@@ -306,6 +259,11 @@ const AnalyticsFinanceiroRoute = AnalyticsFinanceiroRouteImport.update({
 const AnalyticsEstoqueRoute = AnalyticsEstoqueRouteImport.update({
   id: '/estoque',
   path: '/estoque',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsErrosRoute = AnalyticsErrosRouteImport.update({
+  id: '/erros',
+  path: '/erros',
   getParentRoute: () => AnalyticsRoute,
 } as any)
 const AnalyticsEngenhariaRoute = AnalyticsEngenhariaRouteImport.update({
@@ -343,7 +301,7 @@ export interface FileRoutesByFullPath {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRouteWithChildren
+  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -354,10 +312,15 @@ export interface FileRoutesByFullPath {
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
   '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/erros': typeof AnalyticsErrosRoute
   '/analytics/estoque': typeof AnalyticsEstoqueRoute
   '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
   '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/governanca': typeof AnalyticsGovernancaRoute
+  '/analytics/performance': typeof AnalyticsPerformanceRoute
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
+  '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
+  '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -365,18 +328,6 @@ export interface FileRoutesByFullPath {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
-  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
-  '/paineis/comercial': typeof PaineisComercialRoute
-  '/paineis/engenharia': typeof PaineisEngenhariaRoute
-  '/paineis/erros': typeof PaineisErrosRoute
-  '/paineis/estoque': typeof PaineisEstoqueRoute
-  '/paineis/financeiro': typeof PaineisFinanceiroRoute
-  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
-  '/paineis/governanca': typeof PaineisGovernancaRoute
-  '/paineis/performance': typeof PaineisPerformanceRoute
-  '/paineis/posvenda': typeof PaineisPosvendaRoute
-  '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
-  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -397,7 +348,7 @@ export interface FileRoutesByTo {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRouteWithChildren
+  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -408,10 +359,15 @@ export interface FileRoutesByTo {
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
   '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/erros': typeof AnalyticsErrosRoute
   '/analytics/estoque': typeof AnalyticsEstoqueRoute
   '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
   '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/governanca': typeof AnalyticsGovernancaRoute
+  '/analytics/performance': typeof AnalyticsPerformanceRoute
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
+  '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
+  '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -419,18 +375,6 @@ export interface FileRoutesByTo {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
-  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
-  '/paineis/comercial': typeof PaineisComercialRoute
-  '/paineis/engenharia': typeof PaineisEngenhariaRoute
-  '/paineis/erros': typeof PaineisErrosRoute
-  '/paineis/estoque': typeof PaineisEstoqueRoute
-  '/paineis/financeiro': typeof PaineisFinanceiroRoute
-  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
-  '/paineis/governanca': typeof PaineisGovernancaRoute
-  '/paineis/performance': typeof PaineisPerformanceRoute
-  '/paineis/posvenda': typeof PaineisPosvendaRoute
-  '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
-  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -452,7 +396,7 @@ export interface FileRoutesById {
   '/financiamentos': typeof FinanciamentosRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/paineis': typeof PaineisRouteWithChildren
+  '/paineis': typeof PaineisRoute
   '/pedidos-venda': typeof PedidosVendaRoute
   '/posvenda': typeof PosvendaRoute
   '/propostas': typeof PropostasRoute
@@ -463,10 +407,15 @@ export interface FileRoutesById {
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
   '/analytics/engenharia': typeof AnalyticsEngenhariaRoute
+  '/analytics/erros': typeof AnalyticsErrosRoute
   '/analytics/estoque': typeof AnalyticsEstoqueRoute
   '/analytics/financeiro': typeof AnalyticsFinanceiroRoute
   '/analytics/financiamentos': typeof AnalyticsFinanciamentosRoute
+  '/analytics/governanca': typeof AnalyticsGovernancaRoute
+  '/analytics/performance': typeof AnalyticsPerformanceRoute
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
+  '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
+  '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -474,18 +423,6 @@ export interface FileRoutesById {
   '/dashboards/financeiro': typeof DashboardsFinanceiroRoute
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
-  '/paineis/aprovacoes': typeof PaineisAprovacoesRoute
-  '/paineis/comercial': typeof PaineisComercialRoute
-  '/paineis/engenharia': typeof PaineisEngenhariaRoute
-  '/paineis/erros': typeof PaineisErrosRoute
-  '/paineis/estoque': typeof PaineisEstoqueRoute
-  '/paineis/financeiro': typeof PaineisFinanceiroRoute
-  '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
-  '/paineis/governanca': typeof PaineisGovernancaRoute
-  '/paineis/performance': typeof PaineisPerformanceRoute
-  '/paineis/posvenda': typeof PaineisPosvendaRoute
-  '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
-  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -519,10 +456,15 @@ export interface FileRouteTypes {
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
     | '/analytics/engenharia'
+    | '/analytics/erros'
     | '/analytics/estoque'
     | '/analytics/financeiro'
     | '/analytics/financiamentos'
+    | '/analytics/governanca'
+    | '/analytics/performance'
     | '/analytics/posvenda'
+    | '/analytics/saude-dados'
+    | '/analytics/saude-sistema'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -530,18 +472,6 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
-    | '/paineis/aprovacoes'
-    | '/paineis/comercial'
-    | '/paineis/engenharia'
-    | '/paineis/erros'
-    | '/paineis/estoque'
-    | '/paineis/financeiro'
-    | '/paineis/financiamentos'
-    | '/paineis/governanca'
-    | '/paineis/performance'
-    | '/paineis/posvenda'
-    | '/paineis/saude-dados'
-    | '/paineis/saude-sistema'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -573,10 +503,15 @@ export interface FileRouteTypes {
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
     | '/analytics/engenharia'
+    | '/analytics/erros'
     | '/analytics/estoque'
     | '/analytics/financeiro'
     | '/analytics/financiamentos'
+    | '/analytics/governanca'
+    | '/analytics/performance'
     | '/analytics/posvenda'
+    | '/analytics/saude-dados'
+    | '/analytics/saude-sistema'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -584,18 +519,6 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
-    | '/paineis/aprovacoes'
-    | '/paineis/comercial'
-    | '/paineis/engenharia'
-    | '/paineis/erros'
-    | '/paineis/estoque'
-    | '/paineis/financeiro'
-    | '/paineis/financiamentos'
-    | '/paineis/governanca'
-    | '/paineis/performance'
-    | '/paineis/posvenda'
-    | '/paineis/saude-dados'
-    | '/paineis/saude-sistema'
   id:
     | '__root__'
     | '/'
@@ -627,10 +550,15 @@ export interface FileRouteTypes {
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
     | '/analytics/engenharia'
+    | '/analytics/erros'
     | '/analytics/estoque'
     | '/analytics/financeiro'
     | '/analytics/financiamentos'
+    | '/analytics/governanca'
+    | '/analytics/performance'
     | '/analytics/posvenda'
+    | '/analytics/saude-dados'
+    | '/analytics/saude-sistema'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -638,18 +566,6 @@ export interface FileRouteTypes {
     | '/dashboards/financeiro'
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
-    | '/paineis/aprovacoes'
-    | '/paineis/comercial'
-    | '/paineis/engenharia'
-    | '/paineis/erros'
-    | '/paineis/estoque'
-    | '/paineis/financeiro'
-    | '/paineis/financiamentos'
-    | '/paineis/governanca'
-    | '/paineis/performance'
-    | '/paineis/posvenda'
-    | '/paineis/saude-dados'
-    | '/paineis/saude-sistema'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -671,7 +587,7 @@ export interface RootRouteChildren {
   FinanciamentosRoute: typeof FinanciamentosRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
-  PaineisRoute: typeof PaineisRouteWithChildren
+  PaineisRoute: typeof PaineisRoute
   PedidosVendaRoute: typeof PedidosVendaRoute
   PosvendaRoute: typeof PosvendaRoute
   PropostasRoute: typeof PropostasRoute
@@ -865,90 +781,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/paineis/saude-sistema': {
-      id: '/paineis/saude-sistema'
-      path: '/saude-sistema'
-      fullPath: '/paineis/saude-sistema'
-      preLoaderRoute: typeof PaineisSaudeSistemaRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/saude-dados': {
-      id: '/paineis/saude-dados'
-      path: '/saude-dados'
-      fullPath: '/paineis/saude-dados'
-      preLoaderRoute: typeof PaineisSaudeDadosRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/posvenda': {
-      id: '/paineis/posvenda'
-      path: '/posvenda'
-      fullPath: '/paineis/posvenda'
-      preLoaderRoute: typeof PaineisPosvendaRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/performance': {
-      id: '/paineis/performance'
-      path: '/performance'
-      fullPath: '/paineis/performance'
-      preLoaderRoute: typeof PaineisPerformanceRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/governanca': {
-      id: '/paineis/governanca'
-      path: '/governanca'
-      fullPath: '/paineis/governanca'
-      preLoaderRoute: typeof PaineisGovernancaRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/financiamentos': {
-      id: '/paineis/financiamentos'
-      path: '/financiamentos'
-      fullPath: '/paineis/financiamentos'
-      preLoaderRoute: typeof PaineisFinanciamentosRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/financeiro': {
-      id: '/paineis/financeiro'
-      path: '/financeiro'
-      fullPath: '/paineis/financeiro'
-      preLoaderRoute: typeof PaineisFinanceiroRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/estoque': {
-      id: '/paineis/estoque'
-      path: '/estoque'
-      fullPath: '/paineis/estoque'
-      preLoaderRoute: typeof PaineisEstoqueRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/erros': {
-      id: '/paineis/erros'
-      path: '/erros'
-      fullPath: '/paineis/erros'
-      preLoaderRoute: typeof PaineisErrosRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/engenharia': {
-      id: '/paineis/engenharia'
-      path: '/engenharia'
-      fullPath: '/paineis/engenharia'
-      preLoaderRoute: typeof PaineisEngenhariaRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/comercial': {
-      id: '/paineis/comercial'
-      path: '/comercial'
-      fullPath: '/paineis/comercial'
-      preLoaderRoute: typeof PaineisComercialRouteImport
-      parentRoute: typeof PaineisRoute
-    }
-    '/paineis/aprovacoes': {
-      id: '/paineis/aprovacoes'
-      path: '/aprovacoes'
-      fullPath: '/paineis/aprovacoes'
-      preLoaderRoute: typeof PaineisAprovacoesRouteImport
-      parentRoute: typeof PaineisRoute
-    }
     '/dashboards/posvenda': {
       id: '/dashboards/posvenda'
       path: '/posvenda'
@@ -998,11 +830,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsAprovacoesRouteImport
       parentRoute: typeof DashboardsRoute
     }
+    '/analytics/saude-sistema': {
+      id: '/analytics/saude-sistema'
+      path: '/saude-sistema'
+      fullPath: '/analytics/saude-sistema'
+      preLoaderRoute: typeof AnalyticsSaudeSistemaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/saude-dados': {
+      id: '/analytics/saude-dados'
+      path: '/saude-dados'
+      fullPath: '/analytics/saude-dados'
+      preLoaderRoute: typeof AnalyticsSaudeDadosRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
     '/analytics/posvenda': {
       id: '/analytics/posvenda'
       path: '/posvenda'
       fullPath: '/analytics/posvenda'
       preLoaderRoute: typeof AnalyticsPosvendaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/performance': {
+      id: '/analytics/performance'
+      path: '/performance'
+      fullPath: '/analytics/performance'
+      preLoaderRoute: typeof AnalyticsPerformanceRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/governanca': {
+      id: '/analytics/governanca'
+      path: '/governanca'
+      fullPath: '/analytics/governanca'
+      preLoaderRoute: typeof AnalyticsGovernancaRouteImport
       parentRoute: typeof AnalyticsRoute
     }
     '/analytics/financiamentos': {
@@ -1024,6 +884,13 @@ declare module '@tanstack/react-router' {
       path: '/estoque'
       fullPath: '/analytics/estoque'
       preLoaderRoute: typeof AnalyticsEstoqueRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/erros': {
+      id: '/analytics/erros'
+      path: '/erros'
+      fullPath: '/analytics/erros'
+      preLoaderRoute: typeof AnalyticsErrosRouteImport
       parentRoute: typeof AnalyticsRoute
     }
     '/analytics/engenharia': {
@@ -1054,20 +921,30 @@ interface AnalyticsRouteChildren {
   AnalyticsAprovacoesRoute: typeof AnalyticsAprovacoesRoute
   AnalyticsComercialRoute: typeof AnalyticsComercialRoute
   AnalyticsEngenhariaRoute: typeof AnalyticsEngenhariaRoute
+  AnalyticsErrosRoute: typeof AnalyticsErrosRoute
   AnalyticsEstoqueRoute: typeof AnalyticsEstoqueRoute
   AnalyticsFinanceiroRoute: typeof AnalyticsFinanceiroRoute
   AnalyticsFinanciamentosRoute: typeof AnalyticsFinanciamentosRoute
+  AnalyticsGovernancaRoute: typeof AnalyticsGovernancaRoute
+  AnalyticsPerformanceRoute: typeof AnalyticsPerformanceRoute
   AnalyticsPosvendaRoute: typeof AnalyticsPosvendaRoute
+  AnalyticsSaudeDadosRoute: typeof AnalyticsSaudeDadosRoute
+  AnalyticsSaudeSistemaRoute: typeof AnalyticsSaudeSistemaRoute
 }
 
 const AnalyticsRouteChildren: AnalyticsRouteChildren = {
   AnalyticsAprovacoesRoute: AnalyticsAprovacoesRoute,
   AnalyticsComercialRoute: AnalyticsComercialRoute,
   AnalyticsEngenhariaRoute: AnalyticsEngenhariaRoute,
+  AnalyticsErrosRoute: AnalyticsErrosRoute,
   AnalyticsEstoqueRoute: AnalyticsEstoqueRoute,
   AnalyticsFinanceiroRoute: AnalyticsFinanceiroRoute,
   AnalyticsFinanciamentosRoute: AnalyticsFinanciamentosRoute,
+  AnalyticsGovernancaRoute: AnalyticsGovernancaRoute,
+  AnalyticsPerformanceRoute: AnalyticsPerformanceRoute,
   AnalyticsPosvendaRoute: AnalyticsPosvendaRoute,
+  AnalyticsSaudeDadosRoute: AnalyticsSaudeDadosRoute,
+  AnalyticsSaudeSistemaRoute: AnalyticsSaudeSistemaRoute,
 }
 
 const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
@@ -1098,39 +975,6 @@ const DashboardsRouteWithChildren = DashboardsRoute._addFileChildren(
   DashboardsRouteChildren,
 )
 
-interface PaineisRouteChildren {
-  PaineisAprovacoesRoute: typeof PaineisAprovacoesRoute
-  PaineisComercialRoute: typeof PaineisComercialRoute
-  PaineisEngenhariaRoute: typeof PaineisEngenhariaRoute
-  PaineisErrosRoute: typeof PaineisErrosRoute
-  PaineisEstoqueRoute: typeof PaineisEstoqueRoute
-  PaineisFinanceiroRoute: typeof PaineisFinanceiroRoute
-  PaineisFinanciamentosRoute: typeof PaineisFinanciamentosRoute
-  PaineisGovernancaRoute: typeof PaineisGovernancaRoute
-  PaineisPerformanceRoute: typeof PaineisPerformanceRoute
-  PaineisPosvendaRoute: typeof PaineisPosvendaRoute
-  PaineisSaudeDadosRoute: typeof PaineisSaudeDadosRoute
-  PaineisSaudeSistemaRoute: typeof PaineisSaudeSistemaRoute
-}
-
-const PaineisRouteChildren: PaineisRouteChildren = {
-  PaineisAprovacoesRoute: PaineisAprovacoesRoute,
-  PaineisComercialRoute: PaineisComercialRoute,
-  PaineisEngenhariaRoute: PaineisEngenhariaRoute,
-  PaineisErrosRoute: PaineisErrosRoute,
-  PaineisEstoqueRoute: PaineisEstoqueRoute,
-  PaineisFinanceiroRoute: PaineisFinanceiroRoute,
-  PaineisFinanciamentosRoute: PaineisFinanciamentosRoute,
-  PaineisGovernancaRoute: PaineisGovernancaRoute,
-  PaineisPerformanceRoute: PaineisPerformanceRoute,
-  PaineisPosvendaRoute: PaineisPosvendaRoute,
-  PaineisSaudeDadosRoute: PaineisSaudeDadosRoute,
-  PaineisSaudeSistemaRoute: PaineisSaudeSistemaRoute,
-}
-
-const PaineisRouteWithChildren =
-  PaineisRoute._addFileChildren(PaineisRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalisesRoute: AnalisesRoute,
@@ -1150,7 +994,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanciamentosRoute: FinanciamentosRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
-  PaineisRoute: PaineisRouteWithChildren,
+  PaineisRoute: PaineisRoute,
   PedidosVendaRoute: PedidosVendaRoute,
   PosvendaRoute: PosvendaRoute,
   PropostasRoute: PropostasRoute,
@@ -1162,3 +1006,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

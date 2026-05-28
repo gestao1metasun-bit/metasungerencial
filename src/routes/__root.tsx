@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
+  Navigate,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
@@ -13,6 +14,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import { useEffect } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
+import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
 
@@ -121,13 +123,31 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const isAuth = path === "/login" || path === "/cadastrar";
+  const { user, loading } = useAuth();
+  const isPublicRoute = path === "/login" || path === "/cadastrar" || path === "/reset-password";
+  const shouldHoldPrivateRoute = !isPublicRoute && loading;
+  const shouldBlockPrivateRoute = !isPublicRoute && !loading && !user;
   useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isAuth ? <Outlet /> : <AppLayout />}
+      {shouldHoldPrivateRoute ? <AuthBootstrapScreen /> : shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}
       <Toaster />
     </QueryClientProvider>
+  );
+}
+
+function LoginRedirect() {
+  return <Navigate to="/login" replace />;
+}
+
+function AuthBootstrapScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="text-center">
+        <div className="text-sm font-medium text-foreground">Validando autenticação…</div>
+        <div className="mt-1 text-xs text-muted-foreground">Aguardando sessão segura do ERP.</div>
+      </div>
+    </div>
   );
 }

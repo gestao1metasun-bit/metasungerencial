@@ -81,7 +81,7 @@ function LoginPage() {
       <Card className="relative z-10 w-full max-w-md border-border bg-[image:var(--gradient-card)] p-8 shadow-[var(--shadow-elegant)]">
         <div className="mb-8 flex flex-col items-center gap-2">
           <img src={metaSunLogo} alt="Meta Sun Energia Solar" className="h-20 w-auto object-contain" />
-          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Plataforma interna</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">ERP - Enterprise</div>
         </div>
 
         <h1 className="text-2xl font-semibold">Bem-vindo de volta</h1>

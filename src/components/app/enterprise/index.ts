@@ -70,3 +70,8 @@ export { useColumnPrefs } from "@/lib/ui/column-prefs";
 export type { ColumnDef } from "@/lib/ui/column-prefs";
 export { FilterPanel } from "./FilterPanel";
 export type { FilterPanelProps } from "./FilterPanel";
+
+// D17.UI.3 — Seleção múltipla + ações em lote
+export { BulkActionBar } from "./BulkActionBar";
+export type { BulkAction, BulkActionBarProps, BulkActionTone } from "./BulkActionBar";
+export { useRowSelection } from "@/lib/ui/use-row-selection";

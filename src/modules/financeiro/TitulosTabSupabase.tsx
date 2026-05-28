@@ -20,7 +20,9 @@ import {
 import {
   RowActions, type RowActionKind,
   EnterpriseRecordToolbar, type StatusActionItem,
+  BulkActionBar, useRowSelection,
 } from "@/components/app/enterprise";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,8 +154,18 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
   const [novoOpen, setNovoOpen] = useState(false);
   const [parcelaSel, setParcelaSel] = useState<string | null>(null);
   const [cancelSel, setCancelSel] = useState<TituloFinanceiro | null>(null);
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+
+  // D17.UI.3 — seleção múltipla
+  const selection = useRowSelection(filtrados, (r) => r.id);
+  const cancelar = useCancelarTitulo();
 
   const titulo = tipo === "AR" ? "Contas a Receber" : "Contas a Pagar";
+
+  // Quantos da seleção ainda são canceláveis?
+  const selCancelaveis = selection.selectedRows.filter(
+    (r) => r.status !== "CANCELADO" && r.status !== "RECEBIDO",
+  );
 
   return (
     <div className="space-y-3">
@@ -305,6 +317,19 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[36px] px-2">
+                <Checkbox
+                  aria-label="Selecionar todos"
+                  checked={
+                    selection.allChecked
+                      ? true
+                      : selection.someChecked
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={selection.toggleAll}
+                />
+              </TableHead>
               <TableHead className="w-[110px]">Código</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Documento</TableHead>
@@ -317,11 +342,11 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                   <FileText className="size-4 inline mr-1" />
                   Nenhum título encontrado no Supabase.
                 </TableCell>
@@ -329,8 +354,16 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
             )}
             {filtrados.map((r) => {
               const status = (r.status as TFStatus) ?? "PENDENTE";
+              const checked = selection.isSelected(r.id);
               return (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} data-state={checked ? "selected" : undefined}>
+                  <TableCell className="px-2">
+                    <Checkbox
+                      aria-label={`Selecionar título ${r.codigo ?? r.id.slice(0, 8)}`}
+                      checked={checked}
+                      onCheckedChange={() => selection.toggle(r.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{r.codigo ?? r.id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">{r.origem_tipo ?? "—"}</TableCell>
                   <TableCell className="text-xs">{r.numero_documento ?? "—"}</TableCell>
@@ -391,7 +424,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           {filtrados.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={5} className="text-right text-xs">Totais</TableCell>
+                <TableCell colSpan={6} className="text-right text-xs">Totais</TableCell>
                 <TableCell className="text-right text-xs tabular-nums">{fmtBRL(totais.bruto)}</TableCell>
                 <TableCell className="text-right text-xs tabular-nums font-semibold">{fmtBRL(totais.saldo)}</TableCell>
                 <TableCell />
@@ -409,6 +442,81 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
       <CancelarDialog
         titulo={cancelSel}
         onClose={() => setCancelSel(null)}
+      />
+
+      {/* D17.UI.3 — Barra flutuante de ações em lote */}
+      <BulkActionBar
+        count={selection.count}
+        label={selection.count === 1 ? "título selecionado" : "títulos selecionados"}
+        onClear={selection.clear}
+        actions={[
+          {
+            key: "export",
+            label: "Exportar CSV",
+            tone: "azul",
+            icon: <FileText className="size-3.5" />,
+            onClick: () => {
+              const linhas = selection.selectedRows.map((r) => ({
+                codigo: r.codigo ?? r.id.slice(0, 8),
+                origem: r.origem_tipo ?? "",
+                documento: r.numero_documento ?? "",
+                vencimento: r.vencimento ?? "",
+                status: r.status ?? "",
+                bruto: Number(r.valor_bruto ?? 0).toFixed(2),
+                saldo: Number(r.saldo ?? 0).toFixed(2),
+              }));
+              const header = Object.keys(linhas[0] ?? {}).join(";");
+              const body = linhas.map((l) => Object.values(l).join(";")).join("\n");
+              const blob = new Blob(["\ufeff" + header + "\n" + body], {
+                type: "text/csv;charset=utf-8",
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `titulos-${tipo}-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success(`${linhas.length} título(s) exportado(s).`);
+            },
+          },
+          {
+            key: "cancelar-lote",
+            label: `Cancelar (${selCancelaveis.length})`,
+            tone: "vermelho",
+            icon: <XCircle className="size-3.5" />,
+            disabled: selCancelaveis.length === 0 || cancelar.isPending,
+            onClick: () => setBulkCancelOpen(true),
+          },
+        ]}
+      />
+
+      <BulkCancelDialog
+        open={bulkCancelOpen}
+        onClose={() => setBulkCancelOpen(false)}
+        titulos={selCancelaveis}
+        onConfirm={async (motivo) => {
+          let ok = 0, fail = 0;
+          for (const t of selCancelaveis) {
+            try {
+              await cancelar.mutateAsync({ tituloId: t.id, motivo });
+              ok++;
+            } catch (e) {
+              fail++;
+              await errorLogRepo.log({
+                modulo: "financeiro",
+                tela: tipo === "AR" ? "titulos.receber" : "titulos.pagar",
+                acao: "cancelar_lote",
+                mensagem: (e as Error)?.message ?? "Falha ao cancelar título em lote",
+                severidade: "error",
+                payload: { titulo_id: t.id },
+              });
+            }
+          }
+          setBulkCancelOpen(false);
+          selection.clear();
+          if (fail === 0) toast.success(`${ok} título(s) cancelado(s).`);
+          else toast.warning(`${ok} cancelado(s), ${fail} falha(s).`);
+        }}
       />
     </div>
   );
@@ -582,3 +690,55 @@ function NovoLancamentoDialog({ tipo, onDone }: { tipo: "receber" | "pagar"; onD
     </DialogContent>
   );
 }
+
+/* ============================================================================
+   D17.UI.3 — Cancelamento em lote
+   ========================================================================== */
+function BulkCancelDialog({
+  open, onClose, titulos, onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  titulos: TituloFinanceiro[];
+  onConfirm: (motivo: string) => void | Promise<void>;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (!open) { setMotivo(""); setBusy(false); } }, [open]);
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !busy) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cancelar {titulos.length} título(s) em lote</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="text-muted-foreground">
+            Cada cancelamento é registrado em auditoria individualmente.
+            Motivo obrigatório (≥ 5 caracteres) e será aplicado a todos.
+          </div>
+          <Textarea
+            rows={3}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Ex.: lote de duplicidade · cliente desistiu · acordo geral"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Voltar</Button>
+          <Button
+            variant="destructive"
+            disabled={motivo.trim().length < 5 || busy || titulos.length === 0}
+            onClick={async () => {
+              setBusy(true);
+              await onConfirm(motivo.trim());
+              setBusy(false);
+            }}
+          >
+            {busy ? "Cancelando…" : `Cancelar ${titulos.length} título(s)`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

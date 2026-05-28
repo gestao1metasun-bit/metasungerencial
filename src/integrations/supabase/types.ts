@@ -4555,6 +4555,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rescisoes_itens_rescisao_id_fkey"
+            columns: ["rescisao_id"]
+            isOneToOne: false
+            referencedRelation: "v_rescisoes_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rescisoes_itens_titulo_id_fkey"
             columns: ["titulo_id"]
             isOneToOne: false
@@ -5320,6 +5327,13 @@ export type Database = {
             columns: ["renegociacao_id"]
             isOneToOne: false
             referencedRelation: "titulos_renegociacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacao_itens_renegociacao_id_fkey"
+            columns: ["renegociacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_renegociacoes_enriquecido"
             referencedColumns: ["id"]
           },
           {
@@ -7128,6 +7142,118 @@ export type Database = {
         }
         Relationships: []
       }
+      v_renegociacoes_enriquecido: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          created_at: string | null
+          desconto_aplicado: number | null
+          id: string | null
+          juros_aplicado: number | null
+          motivo: string | null
+          multa_aplicada: number | null
+          observacao: string | null
+          qtd_titulos_consolidados: number | null
+          tipo: string | null
+          titulo_novo_codigo: string | null
+          titulo_novo_id: string | null
+          user_email: string | null
+          user_id: string | null
+          valor_original_total: number | null
+          valor_renegociado_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_renegociacoes_titulo_novo_id_fkey"
+            columns: ["titulo_novo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_rescisoes_enriquecido: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          codigo: string | null
+          contrato_codigo: string | null
+          contrato_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_rescisao: string | null
+          devolucao_liquida: number | null
+          id: string | null
+          motivo: string | null
+          multa_calculada: number | null
+          multa_tipo: string | null
+          multa_valor: number | null
+          observacoes: string | null
+          status: string | null
+          titulo_devolucao_id: string | null
+          titulos_cancelados: number | null
+          valor_recebido: number | null
+          vencimento_devolucao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescisoes_contrato_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "rescisoes_contrato_titulo_devolucao_id_fkey"
+            columns: ["titulo_devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_saldo_operacional_obra: {
         Row: {
           codigo: string | null
@@ -7182,6 +7308,71 @@ export type Database = {
           total_reservado: number | null
         }
         Relationships: []
+      }
+      v_taxas_titulo: {
+        Row: {
+          categoria: string | null
+          centro_resultado_id: string | null
+          centro_resultado_nome: string | null
+          created_at: string | null
+          data_aplicacao: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          id: string | null
+          motivo: string | null
+          natureza_id: string | null
+          natureza_nome: string | null
+          observacao: string | null
+          origem: string | null
+          parcela_id: string | null
+          parcela_numero: number | null
+          percentual: number | null
+          tipo: string | null
+          titulo_codigo: string | null
+          titulo_id: string | null
+          titulo_tipo: string | null
+          user_email: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_taxas_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_parcela_id_fkey"
+            columns: ["parcela_id"]
+            isOneToOne: false
+            referencedRelation: "parcelas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "titulos_taxas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_titulos_enriquecido: {
         Row: {
@@ -7827,6 +8018,40 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_rescisao_executar: {
+        Args: {
+          _conta_devolucao_id?: string
+          _contrato_id: string
+          _motivo: string
+          _multa_tipo: string
+          _multa_valor: number
+          _observacoes?: string
+          _request_id?: string
+          _vencimento_devolucao?: string
+        }
+        Returns: Json
+      }
+      rpc_taxa_aplicar: {
+        Args: {
+          _categoria?: string
+          _centro_resultado_id?: string
+          _data_aplicacao?: string
+          _motivo: string
+          _natureza_id?: string
+          _observacao?: string
+          _parcela_id?: string
+          _percentual?: number
+          _request_id?: string
+          _tipo: string
+          _titulo_id: string
+          _valor: number
+        }
+        Returns: Json
+      }
+      rpc_taxa_estornar: {
+        Args: { _motivo: string; _request_id?: string; _taxa_id: string }
+        Returns: Json
+      }
       rpc_titulo_baixar: {
         Args: {
           _conta_id: string
@@ -7978,6 +8203,8 @@ export type Database = {
         | "comercial.comissao.cancelar"
         | "comercial.comissao.estornar"
         | "comercial.comissao.alterar_percentual"
+        | "financeiro.rescindir"
+        | "financeiro.taxa.editar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -8212,6 +8439,8 @@ export const Constants = {
         "comercial.comissao.cancelar",
         "comercial.comissao.estornar",
         "comercial.comissao.alterar_percentual",
+        "financeiro.rescindir",
+        "financeiro.taxa.editar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

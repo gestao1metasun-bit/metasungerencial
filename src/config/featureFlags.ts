@@ -29,7 +29,11 @@ export type FeatureFlagName =
   // D15.3.a — TitulosTab Supabase (default ligado)
   | "D15_TITULOS_SUPABASE"
   // D15.3.b — AdiantamentosTab Supabase (default ligado)
-  | "D15_ADIANTAMENTOS_SUPABASE";
+  | "D15_ADIANTAMENTOS_SUPABASE"
+  // D15.3.c — Rescisões/Renegociações/Taxas Supabase (default ligado)
+  | "D15_RESCISOES_SUPABASE"
+  | "D15_RENEGOCIACAO_HIST_SUPABASE"
+  | "D15_TAXAS_SUPABASE";
 
 const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_FINANCEIRO: false,
@@ -41,10 +45,12 @@ const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_COMERCIAL: false,
   D15_SUPABASE_READ_COMERCIAL: false,
   D15_LS_COMERCIAL_DISABLED: false,
-  // D15.3.a: TitulosTab Supabase é o padrão; LS legado fica como rollback.
   D15_TITULOS_SUPABASE: true,
-  // D15.3.b: AdiantamentosTab Supabase é o padrão; LS legado fica como rollback.
   D15_ADIANTAMENTOS_SUPABASE: true,
+  // D15.3.c — Supabase é o padrão para rescisões/renegociações/taxas.
+  D15_RESCISOES_SUPABASE: true,
+  D15_RENEGOCIACAO_HIST_SUPABASE: true,
+  D15_TAXAS_SUPABASE: true,
 };
 
 

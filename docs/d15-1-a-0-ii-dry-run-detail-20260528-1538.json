@@ -1,0 +1,301 @@
+{
+  "snapshot_path": "docs/d15-1-a-0-ii-snapshot-20260528-1107-658dff81.json",
+  "layer1": {
+    "parse_ok": true,
+    "operador": "Renan Barcelos",
+    "fonte_canonica": true,
+    "wave_correta": true,
+    "hash_declarado": "658dff817942531667446769051f690dfe07b4496429b7fd4b6c44ffa34ae86a",
+    "hash_recomputado": "658dff817942531667446769051f690dfe07b4496429b7fd4b6c44ffa34ae86a",
+    "hash_confere": true,
+    "stores_presentes": "0/6",
+    "stores_ausentes": "fin-titulos, fin-renegociacao, fin-estornos, fin-adiantamentos, fin-compras, fin-conciliacao"
+  },
+  "layer2": {
+    "titulos_count": 0,
+    "renegs_count": 0,
+    "estornos_count": 0,
+    "adiants_count": 0,
+    "compras_count": 0,
+    "concilia_count": 0,
+    "titulos_orfaos_vinculo": 0,
+    "titulos_status_invalido": 0,
+    "titulos_tipo_invalido": 0,
+    "titulos_saldo_divergente": 0,
+    "parcelas_orfas": 0,
+    "movs_orfas_parcela": 0,
+    "renegs_orfas": 0,
+    "fornecedores_unicos": 0
+  },
+  "categorias": {
+    "OK": 0,
+    "CONVERTIDO": 0,
+    "DIVERGENTE": 0,
+    "ORFAO": 0,
+    "INCOMPATIVEL": 0,
+    "DUPLICIDADE": 0,
+    "STATUS_INVALIDO": 0,
+    "NATUREZA_INVALIDA": 0,
+    "CENTRO_RESULTADO_INVALIDO": 0,
+    "ANEXO_QUEBRADO": 0,
+    "VINCULO_AUSENTE": 0,
+    "SEM_DESTINO": 0,
+    "TRUNCADO": 0,
+    "INVALIDO": 0,
+    "PERDA_POTENCIAL": 0,
+    "SALDO_DIVERGENTE": 0,
+    "RENEGOCIACAO_INCONSISTENTE": 0,
+    "CONVERTIVEL_TITULO_RECEBER": 2,
+    "CONVERTIVEL_TITULO_PAGAR": 3,
+    "CONVERTIVEL_MOVIMENTACAO_REALIZADA": 8,
+    "CONVERTIVEL_MOVIMENTACAO_PREVISTA": 0,
+    "CONVERTIVEL_RECORRENTE": 9,
+    "LANCAMENTO_SEM_TITULO": 8,
+    "DATA_INVALIDA": 0,
+    "VALOR_INVALIDO": 0,
+    "OBRA_INVALIDA": 0,
+    "DUPLICIDADE_POTENCIAL": 0
+  },
+  "lancamentos_resumo": {
+    "total": 13,
+    "recorrentes": 0,
+    "entrada": 4,
+    "saida": 9,
+    "realizado": 8,
+    "previsto": 5,
+    "saldo_bruto_entradas": 659167,
+    "saldo_bruto_saidas": 538700,
+    "natureza_invalida": 0,
+    "centro_invalido": 0,
+    "obra_invalida": 0,
+    "status_invalido": 0,
+    "valor_invalido": 0,
+    "data_invalida": 0,
+    "duplicidade_potencial": 0,
+    "sem_destino": 0,
+    "lancamento_sem_titulo": 8,
+    "convertivel_titulo_receber": 2,
+    "convertivel_titulo_pagar": 3,
+    "convertivel_mov_realizada": 8,
+    "convertivel_mov_prevista": 0,
+    "convertivel_recorrente": 9,
+    "perda_potencial": 0
+  },
+  "lancamentos_rows": [
+    {
+      "id": "L-001",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 12000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-002",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 178000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-003",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Entrada",
+      "camada": "Realizado",
+      "valor": 360000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-004",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 42000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-005",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 3200,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-010",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Confirmado",
+      "valor": 142000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-011",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Entrada",
+      "camada": "Confirmado",
+      "valor": 29667,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-012",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Confirmado",
+      "valor": 18500,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-020",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "Previsto",
+      "valor": 22000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": []
+    },
+    {
+      "id": "L-021",
+      "categoria_dominante": "CONVERTIVEL_TITULO_RECEBER",
+      "tipo": "Entrada",
+      "camada": "Previsto",
+      "valor": 195000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    },
+    {
+      "id": "L-030",
+      "categoria_dominante": "CONVERTIVEL_TITULO_RECEBER",
+      "tipo": "Entrada",
+      "camada": "A realizar",
+      "valor": 74500,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    },
+    {
+      "id": "L-031",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "A realizar",
+      "valor": 86000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": []
+    },
+    {
+      "id": "L-040",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "Orçado futuro",
+      "valor": 35000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    }
+  ],
+  "totalRegistros": 22,
+  "migravel": 22,
+  "ajustaveis": 8,
+  "bloqueantes": 0,
+  "paridadePct": 100,
+  "readinessDualRead": true,
+  "findings": [
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-001",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-002",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-003",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-004",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-005",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-010",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-011",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "ref_id": "L-012",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    }
+  ]
+}

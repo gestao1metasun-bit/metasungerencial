@@ -7506,6 +7506,9 @@ export type Database = {
         | "comercial.comissao.visualizar"
         | "comercial.comissao.liberar"
         | "comercial.carteira.ver_historico"
+        | "comercial.contrato.assinar"
+        | "comercial.contrato.assinar_excecao"
+        | "comercial.contrato.ver_assinatura"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -7726,6 +7729,9 @@ export const Constants = {
         "comercial.comissao.visualizar",
         "comercial.comissao.liberar",
         "comercial.carteira.ver_historico",
+        "comercial.contrato.assinar",
+        "comercial.contrato.assinar_excecao",
+        "comercial.contrato.ver_assinatura",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

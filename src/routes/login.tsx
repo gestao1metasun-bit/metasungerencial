@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sun, Mail, Lock, ArrowRight, Loader2, KeyRound } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
+import metaSunLogo from "@/assets/meta-sun-logo.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -78,14 +79,9 @@ function LoginPage() {
       <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-info/15 blur-3xl" />
 
       <Card className="relative z-10 w-full max-w-md border-border bg-[image:var(--gradient-card)] p-8 shadow-[var(--shadow-elegant)]">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-xl bg-[image:var(--gradient-primary)] shadow-[var(--shadow-glow)]">
-            <Sun className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <div className="text-lg font-semibold tracking-tight">Meta Sun Gerencial</div>
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Plataforma interna</div>
-          </div>
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <img src={metaSunLogo} alt="Meta Sun Energia Solar" className="h-20 w-auto object-contain" />
+          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Plataforma interna</div>
         </div>
 
         <h1 className="text-2xl font-semibold">Bem-vindo de volta</h1>
@@ -122,19 +118,6 @@ function LoginPage() {
           <Button type="submit" disabled={submitting} className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>)}
           </Button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setRecoveryEmail(email.trim().toLowerCase() || "renanbarc16@gmail.com");
-              setForgotOpen(true);
-            }}
-            disabled={recovering || submitting}
-            className="flex w-full items-center justify-center gap-2 text-sm font-medium text-primary underline underline-offset-4 hover:opacity-80 disabled:pointer-events-none disabled:opacity-60"
-          >
-            <KeyRound className="h-4 w-4" />
-            Esqueci minha senha
-          </button>
         </form>
 
         <div className="mt-6 text-center text-sm">

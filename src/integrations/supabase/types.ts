@@ -7620,7 +7620,18 @@ export type Database = {
         | "comercial.contrato.assinar"
         | "comercial.contrato.assinar_excecao"
         | "comercial.contrato.ver_assinatura"
+        | "comercial.comissao.ver"
+        | "comercial.comissao.marcar_paga"
+        | "comercial.comissao.cancelar"
+        | "comercial.comissao.estornar"
+        | "comercial.comissao.alterar_percentual"
       app_role: "admin_master" | "admin_geral" | "usuario"
+      comercial_comissao_status:
+        | "PREVISTA"
+        | "LIBERADA"
+        | "PAGA"
+        | "CANCELADA"
+        | "ESTORNADA"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
       flag_escopo: "PESSOAL" | "EQUIPE" | "GLOBAL"
@@ -7843,8 +7854,20 @@ export const Constants = {
         "comercial.contrato.assinar",
         "comercial.contrato.assinar_excecao",
         "comercial.contrato.ver_assinatura",
+        "comercial.comissao.ver",
+        "comercial.comissao.marcar_paga",
+        "comercial.comissao.cancelar",
+        "comercial.comissao.estornar",
+        "comercial.comissao.alterar_percentual",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
+      comercial_comissao_status: [
+        "PREVISTA",
+        "LIBERADA",
+        "PAGA",
+        "CANCELADA",
+        "ESTORNADA",
+      ],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
       flag_cor: ["VERMELHO", "AMARELO", "VERDE", "AZUL", "ROXO", "CINZA"],
       flag_escopo: ["PESSOAL", "EQUIPE", "GLOBAL"],

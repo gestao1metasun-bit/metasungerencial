@@ -3,6 +3,7 @@ import { useSaudeSistema } from '@/lib/repositories/use-saude-sistema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Activity, Database, FileWarning, Clock, CheckCircle2 } from 'lucide-react';
+import { PurgaLegadoLSCard } from '@/components/app/PurgaLegadoLSCard';
 
 export const Route = createFileRoute('/paineis/saude-sistema')({
   component: SaudeSistemaPage,
@@ -83,6 +84,11 @@ function SaudeSistemaPage() {
           <Metric label="Aprovações pendentes" value={data.aprovacoes_pendentes} intent={apIntent(data.aprovacoes_pendentes)} />
           <Metric label="Atrasadas (>48h)" value={data.aprovacoes_atrasadas} intent={data.aprovacoes_atrasadas > 0 ? 'bad' : 'good'} />
         </div>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Plataforma — LocalStorage</h2>
+        <PurgaLegadoLSCard />
       </section>
     </div>
   );

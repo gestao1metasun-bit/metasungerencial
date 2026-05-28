@@ -33,6 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
+import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -382,7 +383,23 @@ function ContratoAssinadoTab({
 
   return (
     <div className="space-y-5">
+      {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar contrato, cliente, proposta…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Contratos atualizados.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
+          else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
+        }}
+      />
       <div className="grid gap-3 sm:grid-cols-3">
+
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assinados</div>
           <div className="mt-1 text-2xl font-bold text-success">{assinados.length}</div>

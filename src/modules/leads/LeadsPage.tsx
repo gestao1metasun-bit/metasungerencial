@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { toast } from "sonner";
 
 import {
@@ -83,8 +84,25 @@ export function LeadsPage() {
     consultores.find((c) => c.id === id)?.nome ?? id;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
+      <EnterpriseRecordToolbar
+        entityType="propostas"
+        selectedIds={detalhe ? [detalhe.id] : []}
+        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar"]}
+        searchPlaceholder="Buscar lead…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "novo") setNovoOpen(true);
+          else if (a === "atualizar") toast.info("Lista de leads atualizada.");
+          else if (a === "exportar") toast.info("Exportação CSV disponível em D17.UI.2.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega no próximo turno (LeadsPage).");
+          else if (a === "filtroAvancado") toast.info("Use os filtros abaixo (status / origem / consultor).");
+        }}
+      />
       <Card className="p-4">
+
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -156,12 +174,14 @@ export function LeadsPage() {
             {filtrados.map((l) => (
               <TableRow key={l.id}>
                 <TableCell>
-                  <ActionsMenu label={l.numero}>
-                    <DropdownMenuItem onSelect={() => setDetalhe(l)}>
-                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                    </DropdownMenuItem>
-                  </ActionsMenu>
+                  <RowActions
+                    rowId={l.id}
+                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
+                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
+                  />
                 </TableCell>
+
+
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>

@@ -1,99 +1,168 @@
 
-# D17.UI — Padrão UI Enterprise RM/TOTVS oficial
+# Onda F — Operações Financeiras (independente do fluxo comercial)
 
-## Diagnóstico rápido
+Objetivo: criar a camada **Operações Financeiras** dentro do módulo Financeiro
+para registrar empréstimos, aportes, capital de giro e aplicações sem
+contaminar contratos, propostas, PV, comissão, engenharia, faturamento ou
+indicadores comerciais (ticket médio, conversão).
 
-Boa parte do padrão já existe e está consolidado no barrel `@/components/app/enterprise`:
+Não há nada pré-existente no Supabase (`SELECT` confirmou: 0 tabelas
+`operac%` / `emprest%` / `aporte%`). Construção é greenfield, em cima do
+padrão enterprise já vigente (D5.1 workflow + D14.2 security + D14.3
+governance + D15 row_version/audit/idempotência).
 
-- `EnterpriseToolbar` — barra superior (Novo / Editar / Aprovar / Cancelar / Atualizar / Filtrar / Exportar / Imprimir / Histórico / Anexos / Processos / Mais ações).
-- `EnterpriseRecordToolbar` — variante RM (azul Novo, verde Salvar/Aprovar, vermelho Excluir/Cancelar, ícones puros, Anexos em pílula azul, Processos em pílula verde, Filtros em pílula índigo, Colunas/Visões à direita).
-- `EnterpriseDataGrid` — grid denso, seleção individual/lote, ordenação, paginação.
-- `ProcessosMenu` — dropdown de processos por módulo.
-- `HistoricoDrawer`, `AnexosButton`, `AttachmentPanel`, `EntityTimeline`, `EntityStatusBadge`, `GovernedActionButton`, `ServerPaginationFooter`.
+## Regra de pedra (gravada em memory)
 
-**Lacunas reais** (o que esta onda fecha):
+Operações Financeiras impactam **somente**:
+- `titulos_financeiros` (AR/AP gerados pela operação)
+- Tesouraria / Fluxo de Caixa / DRE financeiro
+- Conciliação bancária
 
-1. **`RowActions`** — botão de ações por linha padrão único (lápis/olho/clipe/relógio/X/lixeira) com cores azul/verde/vermelho/cinza. Hoje só existe `TituloRowActions` específico de Títulos.
-2. **`ColumnManager`** — livrinho que mostra/oculta, reordena, salva preferência em LS e restaura padrão.
-3. **`FilterPanel`** — painel padronizado (rápido + avançado: status, período, responsável, busca, limpar).
-4. **Diretriz oficial** — `docs/ui-enterprise-padrao-rm.md` + memory `mem://design/d17-ui-enterprise-rm` definindo regra de pedra para toda tela operacional nova.
+E **nunca** alteram: contratos, propostas, PV, engenharia,
+`comercial_comissoes`, faturamento, KPIs comerciais (`v_kpis_comercial_oficial`).
 
-## Escopo desta onda (D17.UI.1)
+Garantia técnica: títulos gerados nascem com
+`origem_tipo = 'OPERACAO_FINANCEIRA'` e `origem_id = operacao_id`.
+Triggers existentes de comissão (C6) só disparam em `assinatura_eventos`,
+não em títulos com essa origem. Views de KPI comercial filtram por
+`origem_tipo` ∈ {CONTRATO, PV} — operações financeiras ficam fora por
+construção.
 
-Criar componentes base + diretriz + aplicar no **Financeiro/TitulosTabSupabase** como referência canônica. Demais módulos seguem em D17.UI.2..N (sob demanda).
+## Subondas (entrega incremental, cada uma fecha sozinha)
 
-### Arquivos novos
+### F1 — Fundação DB (DDL puro, sem UI)
 
+Tabelas novas:
+- `operacoes_financeiras` (cabeçalho)
+- `operacoes_financeiras_parcelas` (cronograma)
+- `operacoes_financeiras_eventos` (append-only: criada/aprovada/quitada/renegociada/cancelada/estornada)
+
+Enums novos:
+- `op_fin_tipo`: `EMPRESTIMO_COLABORADOR | EMPRESTIMO_CLIENTE | EMPRESTIMO_FORNECEDOR | EMPRESTIMO_SOCIO_EMPRESA | EMPRESTIMO_EMPRESA_TERCEIRO | APORTE_CAPITAL | CAPITAL_DE_GIRO | APLICACAO_FINANCEIRA`
+- `op_fin_status`: `RASCUNHO | EM_APROVACAO | APROVADA | LIBERADA | EM_PAGAMENTO | QUITADA | RENEGOCIADA | CANCELADA`
+- `op_fin_natureza_caixa`: `ENTRADA | SAIDA` (derivada por tipo; aporte/sócio/giro/resgate=ENTRADA, demais empréstimos+aplicação=SAIDA)
+- `op_fin_forma_baixa`: `FOLHA | COMISSAO | MANUAL | PIX | TED | BOLETO | DESCONTO_TITULO`
+
+Campos universais já obrigatórios pelo charter:
+`row_version`, `created_by`, `deleted_at`, integrabilidade (`codigo_externo`,
+`sistema_destino`, `status_integracao`, `hash_remessa`, `lote`, etc.),
+`natureza_id`, `centro_resultado_id`, `conta_id`.
+
+Vínculo polimórfico para contraparte (1 só preenchido):
+`colaborador_id | cliente_id | fornecedor_id | socio_id | terceiro_nome`.
+
+CHECK: aporte e sócio→empresa não geram parcelas; demais sim.
+
+Permissões novas no enum `app_permission`:
+`operacao_financeira.criar/aprovar/liberar/quitar/renegociar/cancelar/estornar/visualizar`.
+
+Naturezas financeiras semeadas (idempotente, `categoria=OPERACAO`):
+`EMP_COLAB`, `EMP_CLIENTE`, `EMP_FORN`, `EMP_SOCIO_EMP`, `EMP_EMP_TERC`,
+`APORTE`, `CAPGIRO`, `APLICACAO`, `RESGATE`.
+
+RLS por permissão. Audit forward-only. Trigger `row_version`. Sem dados, sem
+flag ligada.
+
+### F2 — RPCs oficiais (motor da operação)
+
+Tudo `SECURITY DEFINER`, EXECUTE só `authenticated`, idempotência via
+`rpc_idempotente_check/commit` (Onda 6), flag de sessão
+`app.via_op_fin_rpc` para bloquear UPDATE direto.
+
+1. `rpc_op_fin_criar(payload jsonb)` → cria cabeçalho `RASCUNHO`.
+2. `rpc_op_fin_gerar_parcelas(op_id, parcelas jsonb[])` → cronograma (valida soma=valor_total).
+3. `rpc_op_fin_aprovar(op_id, motivo)` → entra na alçada D5.1 quando ≥ R$ 20k (reaproveita motor).
+4. `rpc_op_fin_liberar(op_id)` → gera os **títulos financeiros oficiais** em `titulos_financeiros` com `origem_tipo='OPERACAO_FINANCEIRA'`, `origem_id=op_id`, status `EM_ABERTO`, e — para tipos ENTRADA — registra movimentação em conta_id.
+5. `rpc_op_fin_renegociar(op_id, novo_cronograma, motivo)` → marca antigo `RENEGOCIADO`, mantém histórico, gera nova operação encadeada (`renegociacao_de`).
+6. `rpc_op_fin_cancelar(op_id, motivo)` → bloqueia se houver baixa.
+7. `rpc_op_fin_estornar_recebimento(parcela_id, motivo)` → reabre parcela, reverte movimentação, evento append-only.
+
+Baixa parcial e pagamento maior que parcela: reutiliza
+`rpc_titulo_baixar_parcela` existente (parcelas da operação **são** títulos
+após F2.4). Excedente vira amortização automática nas próximas parcelas via
+RPC já existente de adiantamento N:N — comportamento idêntico ao AR
+comercial, sem código novo.
+
+Conciliação: nada de novo — títulos com `origem_tipo='OPERACAO_FINANCEIRA'`
+já aparecem em `v_titulos_enriquecido` e na tela de conciliação.
+
+### F3 — UI (aba dentro do Financeiro)
+
+Nova aba `/financeiro` → **Operações Financeiras** usando 100% o barrel
+`@/components/app/enterprise`:
+
+- `EnterpriseRecordToolbar` (sem ação "Novo" cega — abre wizard tipado por tipo de operação)
+- `EnterpriseDataGrid` com colunas: nº, tipo, contraparte, valor, parcelas, saldo devedor, status, criado_em
+- `RowActions`: ✏ editar (só RASCUNHO), ✓ aprovar, ▶ liberar, ↻ renegociar, ✕ cancelar, 👁 visualizar, 📎 anexos, 🕐 histórico
+- `FilterPanel`: tipo, status, contraparte, período
+- `ColumnManager` + `BulkActionBar`
+- `ServerPaginationFooter`
+
+Wizard `NovaOperacaoFinanceiraDialog` em 3 passos:
+1. **Tipo** (cards visuais — colaborador, cliente, fornecedor, sócio→empresa, empresa→terceiro, aporte, capital de giro, aplicação)
+2. **Dados** (contraparte, valor, finalidade, conta, CR, natureza pré-selecionada)
+3. **Cronograma** (parcela única / fixo / personalizado, com validação de soma)
+
+Detalhe da operação (drawer / rota filha): cabeçalho + cronograma + títulos
+gerados + eventos (timeline append-only) + anexos (`anexos-repo`).
+
+Cor das ações: respeita matriz canônica D17.UI (azul/verde/vermelho/âmbar/índigo/cinza).
+
+Acesso por permissão; ribbon e workspace tabs já honram `accessKey`.
+
+### F4 — Relatórios e KPIs (read-only, alinhados à view oficial)
+
+View `v_op_fin_resumo` (security_invoker) sobre
+`operacoes_financeiras + parcelas + titulos_financeiros`:
+- valor emprestado / recebido / saldo devedor
+- parcelas em aberto / vencidas
+- inadimplência (% e R$)
+- operações ativas / quitadas / renegociadas / canceladas
+- breakdown por tipo
+
+Card em `/analytics/financeiro` (não em comercial). KPIs comerciais
+permanecem intocados.
+
+### F5 — Governança + Hardening
+
+- Linhas em `governance_matrix` para `operacao_financeira.*` (workflow,
+  motivo, audit, lote, estorno, SLA, criticidade) — segue padrão D14.3.
+- Workflow de alçada D5.1 com limites parametrizáveis (default 20k/50k/>50k).
+- Validação final no `v_saude_sistema`: KPI "operações financeiras com
+  títulos órfãos" deve ser 0.
+- Documento `docs/onda-f-operacoes-financeiras-spec.md` (regra de pedra,
+  matriz tipo×comportamento, mapeamento de naturezas).
+
+## O que NÃO entra nesta onda
+
+- Folha de pagamento real (baixa "FOLHA" apenas marca a forma; integração
+  com folha externa fica em ondas futuras de RH/Folha).
+- Mark-to-market de aplicação (rendimento entra como evento manual; cálculo
+  diário automático vira onda específica).
+- Liquidação automática banco-a-banco (já existe via conciliação atual).
+
+## Ordem de execução e gates
+
+```text
+F1 (schema) → aprovação manual → F2 (RPCs) → smoke test admin →
+F3 (UI nova aba) → F4 (view+card) → F5 (governance+docs+memory)
 ```
-src/components/app/enterprise/RowActions.tsx       # ações por linha (azul/verde/vermelho/cinza)
-src/components/app/enterprise/ColumnManager.tsx    # mostra/oculta/reordena + LS por usuário+entidade
-src/components/app/enterprise/FilterPanel.tsx      # rápido + avançado (status/período/responsável)
-src/lib/ui/column-prefs.ts                          # helper LS ui.cols.{user}.{entity}.v1
-docs/ui-enterprise-padrao-rm.md                    # diretriz oficial
-mem://design/d17-ui-enterprise-rm                  # memory rule
-```
 
-### Arquivos editados
+Cada subonda fecha sozinha (DB ok mesmo sem UI). Sem flags D15 paralelas:
+operação financeira é módulo novo, não migração — entra direto como
+single-source no Supabase desde F2.
 
-```
-src/components/app/enterprise/index.ts             # re-export dos 3 novos
-src/modules/financeiro/TitulosTabSupabase.tsx      # adota RowActions + ColumnManager + FilterPanel (referência)
-.lovable/plan.md                                    # registra D17.UI
-mem://index.md                                      # entrada da nova memory
-```
+## Riscos e mitigações
 
-## Especificação dos componentes
+| Risco | Mitigação |
+|---|---|
+| Contaminar KPI comercial | `origem_tipo='OPERACAO_FINANCEIRA'` + filtros já existentes nas views; teste em F5. |
+| Trigger de comissão disparar | Comissão (C6) só ouve `comercial_assinatura_eventos`. Não toca contratos → seguro por construção. |
+| Confundir com adiantamento de fornecedor | Naturezas separadas (`EMP_FORN` ≠ `ADIANTAMENTO`); UI usa wizard tipado, não campo livre. |
+| Edição direta de status | Trigger anti-edição com flag `app.via_op_fin_rpc` (padrão C2/C5). |
 
-### `RowActions`
+## Próximo passo
 
-Botão composto que aparece na primeira coluna sticky do grid. Recebe array tipado:
-
-```
-type RowActionKind = "visualizar"|"editar"|"duplicar"|"excluir"|"cancelar"
-                   |"anexos"|"historico"|"auditoria"|"aprovar"|"reprovar";
-
-<RowActions
-  rowId={t.id}
-  permissions={perms}
-  actions={[
-    { kind: "visualizar" },
-    { kind: "editar", permissao: "financeiro.editar" },
-    { kind: "anexos", badgeCount: t.qtd_anexos },
-    { kind: "historico" },
-    { kind: "cancelar", permissao: "financeiro.movimentar", confirm: true },
-  ]}
-  onAction={(kind, rowId) => ...}
-/>
-```
-
-Visual: ícones h-3.5, h-7 w-7, cores tom-on-hover: azul (visualizar/anexos), âmbar (editar), índigo (histórico/auditoria), verde (aprovar), vermelho (excluir/cancelar/reprovar), cinza (duplicar). Sem texto, só ícone + tooltip. Botões inline + opcional dropdown “⋯” para overflow.
-
-### `ColumnManager`
-
-Botão livrinho (`Columns3`) + popover. Recebe lista de colunas com `key/label/defaultVisible/locked`. Permite toggle, drag-reorder, “Restaurar padrão”. Persiste em `ui.cols.{userEmail}.{entityType}.v1`. Hook companion `useColumnPrefs(entityType, defaults)` retorna `{visibleKeys, order, setVisible, reorder, reset}`.
-
-### `FilterPanel`
-
-Trigger pílula índigo “Filtros: {resumo}”. Sheet/popover com slots: status (multi-select), período (range), responsável (combobox), busca (texto), + slot extra. “Aplicar” / “Limpar”. Estado controlado pelo consumidor; persistência LS opcional (`ui.filters.{entity}.v1`).
-
-## Regras de pedra (memory `d17-ui-enterprise-rm`)
-
-- Toda tela operacional nova OBRIGATÓRIA usar `EnterpriseRecordToolbar` + `EnterpriseDataGrid` + `RowActions` + `ColumnManager` + `FilterPanel` do barrel `@/components/app/enterprise`.
-- Proibido criar `<table>` cru ou Toolbar custom em telas listadas no escopo (Financeiro, Comercial, Contratos, PVs, Compras, Estoque, Engenharia, OS, Aprovações, Pós-venda, Configurações, Formulários).
-- Cores canônicas: **azul=criar/visualizar/anexos**, **verde=salvar/aprovar/avançar/baixar**, **vermelho=excluir/cancelar/reprovar/estornar**, **âmbar=editar**, **índigo=histórico/auditoria/filtros**, **cinza=neutro**.
-- Preferências de coluna/filtros podem ficar em LS (UI apenas) com prefixo `ui.`. Nunca persistir dado operacional em LS.
-- Backend, RLS, auditoria, workflow: **NÃO TOCAR** nesta onda. Apenas casca visual.
-
-## Critério de aceite
-
-- 3 componentes novos compilam, exportados pelo barrel, com tipos.
-- `TitulosTabSupabase` adota os 3 sem perder nenhuma funcionalidade existente (Receber/Pagar, RPC baixar, audit, filtros atuais).
-- Doc + memory publicados. Plano D17.UI registrado.
-- Demais módulos ficam para D17.UI.2 (com prioridade Financeiro → Comercial → PV/Contratos → Compras/Estoque → Engenharia/OS → Configurações).
-
-## Riscos
-
-- Refator do TitulosTabSupabase pode regredir filtros se mal feito → aplico mudança aditiva (RowActions na 1ª coluna + ColumnManager no slot direito + FilterPanel substitui filtros inline antigos só se equivalência total).
-- LS de colunas precisa namespacing por usuário pra não vazar entre contas.
-
-Aguardo aprovação para executar.
+Aprovação para começar por **F1 (migração de schema)**. F2..F5 entram em
+sequência, com relatório executivo em cada fechamento e atualização do
+índice de memória.

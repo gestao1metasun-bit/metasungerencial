@@ -598,87 +598,11 @@ function CancelarDialog({ titulo, onClose }: {
   );
 }
 
-/* ============================================================================
-   Novo lançamento — via RPC oficial rpc_lancamento_criar
-   ========================================================================== */
-function NovoLancamentoDialog({ tipo, onDone }: { tipo: "receber" | "pagar"; onDone: () => void }) {
-  const { data: naturezas = [] } = useCadastrosNaturezas();
-  const { data: centros = [] } = useCadastrosCentros();
-  const { data: contas = [] } = useCadastrosContas();
-  const { criar, pending } = useCriarLancamentoForm();
+/* Novo lançamento removido: títulos AR/AP devem nascer de contratos (Comercial)
+   ou pedidos de compra (Suprimentos). Lançamentos avulsos vão pela aba
+   Lançamentos, não por Receber/Pagar. */
 
-  const [valor, setValor] = useState("");
-  const [vencimento, setVencimento] = useState(() => new Date().toISOString().slice(0, 10));
-  const [naturezaId, setNaturezaId] = useState<string>("");
-  const [centroId, setCentroId] = useState<string>("");
-  const [contaId, setContaId] = useState<string>("");
-  const [descricao, setDescricao] = useState("");
 
-  const valorNum = Number(valor.replace(",", "."));
-  const invalido =
-    !Number.isFinite(valorNum) || valorNum <= 0 ||
-    !vencimento || !naturezaId || !centroId || !contaId;
-
-  return (
-    <DialogContent className="max-w-lg">
-      <DialogHeader>
-        <DialogTitle>Novo lançamento ({tipo === "receber" ? "Receber" : "Pagar"})</DialogTitle>
-      </DialogHeader>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Valor</Label>
-          <Input type="number" step="0.01" min="0" value={valor} onChange={(e) => setValor(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Vencimento</Label>
-          <Input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
-        </div>
-        <div className="space-y-1 col-span-2">
-          <Label className="text-xs">Natureza financeira *</Label>
-          <Select value={naturezaId} onValueChange={setNaturezaId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar natureza" /></SelectTrigger>
-            <SelectContent>
-              {naturezas.map((n) => <SelectItem key={n.id} value={n.id}>{n.codigo} — {n.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Centro de Resultado *</Label>
-          <Select value={centroId} onValueChange={setCentroId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar CR" /></SelectTrigger>
-            <SelectContent>
-              {centros.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Conta *</Label>
-          <Select value={contaId} onValueChange={setContaId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
-            <SelectContent>
-              {contas.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1 col-span-2">
-          <Label className="text-xs">Descrição</Label>
-          <Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
-        </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onDone}>Cancelar</Button>
-        <Button
-          disabled={invalido || pending}
-          onClick={() => criar({
-            tipo, valor: valorNum, vencimento,
-            natureza_id: naturezaId, centro_id: centroId, conta_id: contaId,
-            descricao: descricao.trim() || null,
-          }, onDone)}
-        >Criar via RPC oficial</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
 
 /* ============================================================================
    D17.UI.3 — Cancelamento em lote

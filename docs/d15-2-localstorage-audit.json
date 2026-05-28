@@ -1,13 +1,93 @@
 {
   "totals": {
-    "INDETERMINADO": 3
+    "INDETERMINADO": 9,
+    "OP_CONTRATO": 4,
+    "FEATURE_FLAG_OK": 3,
+    "OP_FINANCEIRO": 23,
+    "AUDIT_LEGADO_MIGRAR": 1,
+    "OP_COMERCIAL": 5,
+    "OP_ENGENHARIA": 1,
+    "OP_ESTOQUE_COMPRAS": 1,
+    "OP_PROPOSTA": 4,
+    "OP_GOVERNANCA": 2
   },
   "rows": [
+    {
+      "key": "<EXPR:KEY(gridId>",
+      "reads": 1,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/components/app/grid/useGridDensity.ts"
+      ]
+    },
+    {
+      "key": "<EXPR:STORAGE_PREFIX + id>",
+      "reads": 1,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/components/app/EnhancedTable.tsx"
+      ]
+    },
+    {
+      "key": "<EXPR:k>",
+      "reads": 3,
+      "writes": 4,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/lib/dev-seed.ts",
+        "src/lib/estoque-store.ts",
+        "src/lib/fin-compras-store.ts",
+        "src/lib/posvenda-store.ts"
+      ]
+    },
+    {
+      "key": "<EXPR:key>",
+      "reads": 6,
+      "writes": 7,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/components/app/KanbanColumns.tsx",
+        "src/lib/favoritos-store.ts",
+        "src/lib/feature-flags.ts",
+        "src/lib/financeiro-store.ts",
+        "src/modules/propostas/components/PropostaList.tsx",
+        "src/modules/propostas/store.ts"
+      ]
+    },
+    {
+      "key": "<EXPR:raw>",
+      "reads": 1,
+      "writes": 0,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/routes/comercial.tsx"
+      ]
+    },
+    {
+      "key": "<EXPR:storageKey>",
+      "reads": 1,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/components/app/OperacionalFinTable.tsx"
+      ]
+    },
+    {
+      "key": "contrato-base-overrides-v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_CONTRATO",
+      "files": [
+        "src/lib/contrato-base-store.ts"
+      ]
+    },
     {
       "key": "ff:${name}",
       "reads": 1,
       "writes": 0,
-      "classification": "INDETERMINADO",
+      "classification": "FEATURE_FLAG_OK",
       "files": [
         "src/config/featureFlags.ts"
       ]
@@ -16,7 +96,7 @@
       "key": "ff:<NAME>",
       "reads": 0,
       "writes": 1,
-      "classification": "INDETERMINADO",
+      "classification": "FEATURE_FLAG_OK",
       "files": [
         "src/config/featureFlags.ts"
       ]
@@ -25,10 +105,399 @@
       "key": "ff:enterprise-shell-full",
       "reads": 0,
       "writes": 1,
-      "classification": "INDETERMINADO",
+      "classification": "FEATURE_FLAG_OK",
       "files": [
         "src/lib/feature-flags.ts"
       ]
+    },
+    {
+      "key": "metasun.fin.lancamentos.v1",
+      "reads": 2,
+      "writes": 5,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/financeiro-store.ts"
+      ]
+    },
+    {
+      "key": "metasun.fin.recorrentes.v1",
+      "reads": 0,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/financeiro-store.ts"
+      ]
+    },
+    {
+      "key": "ms.aditivos.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_CONTRATO",
+      "files": [
+        "src/lib/aditivos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.audit.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "AUDIT_LEGADO_MIGRAR",
+      "files": [
+        "src/lib/audit-store.ts"
+      ]
+    },
+    {
+      "key": "ms.bancos.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/bancos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.clientes.extra.v1",
+      "reads": 1,
+      "writes": 0,
+      "classification": "OP_COMERCIAL",
+      "files": [
+        "src/lib/clientes-store.ts"
+      ]
+    },
+    {
+      "key": "ms.clientes.full.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_COMERCIAL",
+      "files": [
+        "src/lib/clientes-store.ts"
+      ]
+    },
+    {
+      "key": "ms.consultores.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_COMERCIAL",
+      "files": [
+        "src/lib/consultores-store.ts"
+      ]
+    },
+    {
+      "key": "ms.contratos.lastSync",
+      "reads": 0,
+      "writes": 1,
+      "classification": "OP_CONTRATO",
+      "files": [
+        "src/lib/contratos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.contratos.v2",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_CONTRATO",
+      "files": [
+        "src/lib/contratos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.engenharia.obras.snapshot.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_ENGENHARIA",
+      "files": [
+        "src/lib/obras-snapshot-store.ts"
+      ]
+    },
+    {
+      "key": "ms.equipes.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_COMERCIAL",
+      "files": [
+        "src/lib/equipes-store.ts"
+      ]
+    },
+    {
+      "key": "ms.estoque.compras.transito.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_ESTOQUE_COMPRAS",
+      "files": [
+        "src/lib/compras-transito-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.adiantamentos.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-adiantamentos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.centros.v2",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-centros-custo-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.conciliacao.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-conciliacao-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.contas.v1",
+      "reads": 1,
+      "writes": 0,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-contas-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.contas.v2",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-contas-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.fechamentos.v1",
+      "reads": 1,
+      "writes": 0,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-fechamento-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.fechamentos.v2",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-fechamento-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.fornecedores.v1",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-fornecedores-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.grupos.v1",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-grupos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.meios.v1",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-meios-pagamento-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.naturezas.v2",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-naturezas-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.parametros.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-parametros-financeiros-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.pendencias.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-pendencias.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.renegociacoes.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-renegociacao-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.rescisoes.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-rescisao-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.subgrupos.v1",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-grupos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.tipos-aplicacao.v1",
+      "reads": 2,
+      "writes": 2,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-tipos-aplicacao-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fin.titulos.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/fin-titulos-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fv.lastCidadeId.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/modules/propostas/store.ts"
+      ]
+    },
+    {
+      "key": "ms.fv.origens-captacao.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/modules/propostas/PropostasPage.tsx"
+      ]
+    },
+    {
+      "key": "ms.fv.proposta_config.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_PROPOSTA",
+      "files": [
+        "src/modules/propostas/proposta-config-store.ts"
+      ]
+    },
+    {
+      "key": "ms.fv.propostas.tabela.hidden.v2",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_PROPOSTA",
+      "files": [
+        "src/modules/propostas/components/PropostaList.tsx"
+      ]
+    },
+    {
+      "key": "ms.fv.propostas.tabela.order.v2",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_PROPOSTA",
+      "files": [
+        "src/modules/propostas/components/PropostaList.tsx"
+      ]
+    },
+    {
+      "key": "ms.fv.propostas.tabela.widths.v2",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_PROPOSTA",
+      "files": [
+        "src/modules/propostas/components/PropostaList.tsx"
+      ]
+    },
+    {
+      "key": "ms.gerentes.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_COMERCIAL",
+      "files": [
+        "src/lib/gerentes-store.ts"
+      ]
+    },
+    {
+      "key": "ms.grid.titulos.${tipo}.cols.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/modules/financeiro/TitulosTab.tsx"
+      ]
+    },
+    {
+      "key": "ms.obras.finalizacao.v1",
+      "reads": 1,
+      "writes": 1,
+      "classification": "OP_FINANCEIRO",
+      "files": [
+        "src/lib/obras-finalizacao-store.ts"
+      ]
+    },
+    {
+      "key": "ms.perfis.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/lib/perfis-store.ts"
+      ]
+    },
+    {
+      "key": "ms.usuarioAtual.v1",
+      "reads": 1,
+      "writes": 2,
+      "classification": "OP_GOVERNANCA",
+      "files": [
+        "src/lib/perfis-store.ts"
+      ]
+    },
+    {
+      "key": "ms.usuarios.v1",
+      "reads": 2,
+      "writes": 4,
+      "classification": "OP_GOVERNANCA",
+      "files": [
+        "src/lib/perfis-store.ts",
+        "src/lib/usuarios-store.ts"
+      ]
     }
-  ]
+  ],
+  "filesCount": 47
 }

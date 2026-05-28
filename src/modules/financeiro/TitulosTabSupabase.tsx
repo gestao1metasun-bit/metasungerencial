@@ -45,10 +45,6 @@ import {
   TF_STATUS_LABEL, TF_STATUS_TONE, type TFStatus,
 } from "@/hooks/useTitulosFinanceiros";
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
-import {
-  useCadastrosNaturezas, useCadastrosCentros, useCadastrosContas,
-  useCriarLancamentoForm,
-} from "./titulos-supabase.helpers";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
 
 const UI_PREF_KEY = "ui.fin.titulos.v1";

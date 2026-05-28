@@ -424,7 +424,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           {filtrados.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={5} className="text-right text-xs">Totais</TableCell>
+                <TableCell colSpan={6} className="text-right text-xs">Totais</TableCell>
                 <TableCell className="text-right text-xs tabular-nums">{fmtBRL(totais.bruto)}</TableCell>
                 <TableCell className="text-right text-xs tabular-nums font-semibold">{fmtBRL(totais.saldo)}</TableCell>
                 <TableCell />
@@ -442,6 +442,81 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
       <CancelarDialog
         titulo={cancelSel}
         onClose={() => setCancelSel(null)}
+      />
+
+      {/* D17.UI.3 — Barra flutuante de ações em lote */}
+      <BulkActionBar
+        count={selection.count}
+        label={selection.count === 1 ? "título selecionado" : "títulos selecionados"}
+        onClear={selection.clear}
+        actions={[
+          {
+            key: "export",
+            label: "Exportar CSV",
+            tone: "azul",
+            icon: <FileText className="size-3.5" />,
+            onClick: () => {
+              const linhas = selection.selectedRows.map((r) => ({
+                codigo: r.codigo ?? r.id.slice(0, 8),
+                origem: r.origem_tipo ?? "",
+                documento: r.numero_documento ?? "",
+                vencimento: r.vencimento ?? "",
+                status: r.status ?? "",
+                bruto: Number(r.valor_bruto ?? 0).toFixed(2),
+                saldo: Number(r.saldo ?? 0).toFixed(2),
+              }));
+              const header = Object.keys(linhas[0] ?? {}).join(";");
+              const body = linhas.map((l) => Object.values(l).join(";")).join("\n");
+              const blob = new Blob(["\ufeff" + header + "\n" + body], {
+                type: "text/csv;charset=utf-8",
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `titulos-${tipo}-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success(`${linhas.length} título(s) exportado(s).`);
+            },
+          },
+          {
+            key: "cancelar-lote",
+            label: `Cancelar (${selCancelaveis.length})`,
+            tone: "vermelho",
+            icon: <XCircle className="size-3.5" />,
+            disabled: selCancelaveis.length === 0 || cancelar.isPending,
+            onClick: () => setBulkCancelOpen(true),
+          },
+        ]}
+      />
+
+      <BulkCancelDialog
+        open={bulkCancelOpen}
+        onClose={() => setBulkCancelOpen(false)}
+        titulos={selCancelaveis}
+        onConfirm={async (motivo) => {
+          let ok = 0, fail = 0;
+          for (const t of selCancelaveis) {
+            try {
+              await cancelar.mutateAsync({ tituloId: t.id, motivo });
+              ok++;
+            } catch (e) {
+              fail++;
+              await errorLogRepo.log({
+                modulo: "financeiro",
+                tela: tipo === "AR" ? "titulos.receber" : "titulos.pagar",
+                acao: "cancelar_lote",
+                mensagem: (e as Error)?.message ?? "Falha ao cancelar título em lote",
+                severidade: "error",
+                detalhe: { titulo_id: t.id },
+              });
+            }
+          }
+          setBulkCancelOpen(false);
+          selection.clear();
+          if (fail === 0) toast.success(`${ok} título(s) cancelado(s).`);
+          else toast.warning(`${ok} cancelado(s), ${fail} falha(s).`);
+        }}
       />
     </div>
   );

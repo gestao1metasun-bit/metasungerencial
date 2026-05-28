@@ -6057,6 +6057,10 @@ export type Database = {
         | "workflow.aprovar.financeiro"
         | "workflow.aprovar.diretoria"
         | "financeiro.renegociar"
+        | "integracao.visualizar"
+        | "integracao.mapear"
+        | "integracao.exportar"
+        | "integracao.reprocessar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -6258,6 +6262,10 @@ export const Constants = {
         "workflow.aprovar.financeiro",
         "workflow.aprovar.diretoria",
         "financeiro.renegociar",
+        "integracao.visualizar",
+        "integracao.mapear",
+        "integracao.exportar",
+        "integracao.reprocessar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

@@ -118,30 +118,37 @@ export type Database = {
         Row: {
           cliente_id: string | null
           codigo: string | null
+          codigo_externo: string | null
           competencia: string | null
           consultor_id: string | null
           conta_id: string | null
           contrato_id: string | null
           created_at: string
           created_by: string | null
+          data_integracao: string | null
           data_movimento: string
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           direcao: string
           documento: string | null
+          erro_integracao: string | null
           forma_pagamento: string | null
           fornecedor_id: string | null
+          hash_remessa: string | null
           id: string
           legacy_id: string | null
           legacy_source: string | null
+          lote_integracao_id: string | null
           natureza: string
           observacao: string | null
           origem_id: string | null
           origem_tipo: string | null
           pv_id: string | null
           saldo: number | null
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           updated_at: string
           valor: number
           valor_abatido: number
@@ -149,30 +156,37 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id?: string | null
           conta_id?: string | null
           contrato_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_integracao?: string | null
           data_movimento?: string
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           direcao: string
           documento?: string | null
+          erro_integracao?: string | null
           forma_pagamento?: string | null
           fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
           legacy_id?: string | null
           legacy_source?: string | null
+          lote_integracao_id?: string | null
           natureza: string
           observacao?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
           pv_id?: string | null
           saldo?: number | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           updated_at?: string
           valor: number
           valor_abatido?: number
@@ -180,30 +194,37 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id?: string | null
           conta_id?: string | null
           contrato_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_integracao?: string | null
           data_movimento?: string
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           direcao?: string
           documento?: string | null
+          erro_integracao?: string | null
           forma_pagamento?: string | null
           fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
           legacy_id?: string | null
           legacy_source?: string | null
+          lote_integracao_id?: string | null
           natureza?: string
           observacao?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
           pv_id?: string | null
           saldo?: number | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           updated_at?: string
           valor?: number
           valor_abatido?: number
@@ -264,6 +285,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_bridge_pv"
             referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "fk_adi_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -562,21 +590,28 @@ export type Database = {
         Row: {
           cancelado_em: string | null
           codigo: string | null
+          codigo_externo: string | null
           created_at: string
           created_by: string | null
           dados: Json
           data_emissao: string | null
           data_entrada: string | null
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
+          erro_integracao: string | null
           fornecedor_id: string | null
+          hash_remessa: string | null
           id: string
+          lote_integracao_id: string | null
           motivo_cancelamento: string | null
           numero_boleto: string | null
           numero_nf: string | null
           observacoes: string | null
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           titulo_id: string | null
           updated_at: string
           valor_total: number
@@ -584,21 +619,28 @@ export type Database = {
         Insert: {
           cancelado_em?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           created_at?: string
           created_by?: string | null
           dados?: Json
           data_emissao?: string | null
           data_entrada?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          erro_integracao?: string | null
           fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           numero_boleto?: string | null
           numero_nf?: string | null
           observacoes?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor_total?: number
@@ -606,21 +648,28 @@ export type Database = {
         Update: {
           cancelado_em?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           created_at?: string
           created_by?: string | null
           dados?: Json
           data_emissao?: string | null
           data_entrada?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          erro_integracao?: string | null
           fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           numero_boleto?: string | null
           numero_nf?: string | null
           observacoes?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor_total?: number
@@ -652,6 +701,13 @@ export type Database = {
             columns: ["titulo_id"]
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bol_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
             referencedColumns: ["id"]
           },
         ]
@@ -1489,66 +1545,149 @@ export type Database = {
           },
         ]
       }
+      eventos_pendentes_integracao: {
+        Row: {
+          created_at: string
+          entidade: string
+          entidade_id: string
+          erro: string | null
+          hash_payload: string | null
+          id: string
+          lote_id: string | null
+          payload: Json
+          processado_em: string | null
+          proxima_tentativa: string | null
+          sistema_destino: string
+          status: string
+          tentativas: number
+          tipo_evento: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entidade: string
+          entidade_id: string
+          erro?: string | null
+          hash_payload?: string | null
+          id?: string
+          lote_id?: string | null
+          payload?: Json
+          processado_em?: string | null
+          proxima_tentativa?: string | null
+          sistema_destino: string
+          status?: string
+          tentativas?: number
+          tipo_evento: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entidade?: string
+          entidade_id?: string
+          erro?: string | null
+          hash_payload?: string | null
+          id?: string
+          lote_id?: string | null
+          payload?: Json
+          processado_em?: string | null
+          proxima_tentativa?: string | null
+          sistema_destino?: string
+          status?: string
+          tentativas?: number
+          tipo_evento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_pendentes_integracao_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extrato_banco: {
         Row: {
+          codigo_externo: string | null
           conta_id: string
           created_at: string
           dados: Json
           data: string
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           descricao: string
           documento: string | null
+          erro_integracao: string | null
           hash_linha: string | null
+          hash_remessa: string | null
           id: string
           importado_em: string
           importado_por: string | null
+          lote_integracao_id: string | null
           movimento_id: string | null
           observacao: string | null
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           titulo_id: string | null
           updated_at: string
           valor: number
         }
         Insert: {
+          codigo_externo?: string | null
           conta_id: string
           created_at?: string
           dados?: Json
           data: string
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao: string
           documento?: string | null
+          erro_integracao?: string | null
           hash_linha?: string | null
+          hash_remessa?: string | null
           id?: string
           importado_em?: string
           importado_por?: string | null
+          lote_integracao_id?: string | null
           movimento_id?: string | null
           observacao?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor: number
         }
         Update: {
+          codigo_externo?: string | null
           conta_id?: string
           created_at?: string
           dados?: Json
           data?: string
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao?: string
           documento?: string | null
+          erro_integracao?: string | null
           hash_linha?: string | null
+          hash_remessa?: string | null
           id?: string
           importado_em?: string
           importado_por?: string | null
+          lote_integracao_id?: string | null
           movimento_id?: string | null
           observacao?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor?: number
@@ -1587,6 +1726,13 @@ export type Database = {
             columns: ["titulo_id"]
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ext_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
             referencedColumns: ["id"]
           },
         ]
@@ -1968,15 +2114,202 @@ export type Database = {
         }
         Relationships: []
       }
+      logs_integracao: {
+        Row: {
+          acao: string
+          created_at: string
+          entidade: string | null
+          entidade_id: string | null
+          evento_id: string | null
+          id: string
+          lote_id: string | null
+          mensagem: string | null
+          nivel: string
+          payload: Json | null
+          sistema_destino: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          entidade?: string | null
+          entidade_id?: string | null
+          evento_id?: string | null
+          id?: string
+          lote_id?: string | null
+          mensagem?: string | null
+          nivel?: string
+          payload?: Json | null
+          sistema_destino: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          entidade?: string | null
+          entidade_id?: string | null
+          evento_id?: string | null
+          id?: string
+          lote_id?: string | null
+          mensagem?: string | null
+          nivel?: string
+          payload?: Json | null
+          sistema_destino?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_integracao_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos_pendentes_integracao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logs_integracao_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lotes_integracao: {
+        Row: {
+          codigo: string
+          competencia: string | null
+          created_at: string
+          created_by: string | null
+          dados: Json
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          erro: string | null
+          exportado_em: string | null
+          exportado_por: string | null
+          hash_remessa: string | null
+          id: string
+          integrado_em: string | null
+          observacoes: string | null
+          qtd_eventos: number
+          sistema_destino: string
+          status: string
+          tipo: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          codigo: string
+          competencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          erro?: string | null
+          exportado_em?: string | null
+          exportado_por?: string | null
+          hash_remessa?: string | null
+          id?: string
+          integrado_em?: string | null
+          observacoes?: string | null
+          qtd_eventos?: number
+          sistema_destino: string
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          codigo?: string
+          competencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          erro?: string | null
+          exportado_em?: string | null
+          exportado_por?: string | null
+          hash_remessa?: string | null
+          id?: string
+          integrado_em?: string | null
+          observacoes?: string | null
+          qtd_eventos?: number
+          sistema_destino?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: []
+      }
+      mapeamentos_externos: {
+        Row: {
+          ativo: boolean
+          chave_externa: string
+          chave_interna: string
+          created_at: string
+          created_by: string | null
+          dados: Json
+          descricao: string | null
+          entidade_interna: string | null
+          id: string
+          sistema_destino: string
+          tipo_mapeamento: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave_externa: string
+          chave_interna: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          descricao?: string | null
+          entidade_interna?: string | null
+          id?: string
+          sistema_destino: string
+          tipo_mapeamento: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          chave_externa?: string
+          chave_interna?: string
+          created_at?: string
+          created_by?: string | null
+          dados?: Json
+          descricao?: string | null
+          entidade_interna?: string | null
+          id?: string
+          sistema_destino?: string
+          tipo_mapeamento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       movimentacoes_financeiras: {
         Row: {
+          codigo_externo: string | null
           conta_id: string | null
           created_at: string
           data: string
+          data_integracao: string | null
+          erro_integracao: string | null
           forma_pagamento: string | null
+          hash_remessa: string | null
           id: string
+          lote_integracao_id: string | null
           observacao: string | null
           parcela_id: string | null
+          sistema_destino: string | null
+          status_integracao: string
           tipo: string
           titulo_id: string
           user_email: string | null
@@ -1984,13 +2317,20 @@ export type Database = {
           valor: number
         }
         Insert: {
+          codigo_externo?: string | null
           conta_id?: string | null
           created_at?: string
           data?: string
+          data_integracao?: string | null
+          erro_integracao?: string | null
           forma_pagamento?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           observacao?: string | null
           parcela_id?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo: string
           titulo_id: string
           user_email?: string | null
@@ -1998,13 +2338,20 @@ export type Database = {
           valor: number
         }
         Update: {
+          codigo_externo?: string | null
           conta_id?: string | null
           created_at?: string
           data?: string
+          data_integracao?: string | null
+          erro_integracao?: string | null
           forma_pagamento?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           observacao?: string | null
           parcela_id?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo?: string
           titulo_id?: string
           user_email?: string | null
@@ -2012,6 +2359,48 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_mf_conta"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_mf_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_mf_parcela"
+            columns: ["parcela_id"]
+            isOneToOne: false
+            referencedRelation: "parcelas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_mf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_mf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "fk_mf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_financeiras_conta_id_fkey"
             columns: ["conta_id"]
@@ -2360,45 +2749,97 @@ export type Database = {
       }
       parcelas_financeiras: {
         Row: {
+          codigo_externo: string | null
           created_at: string
+          created_by: string | null
+          data_integracao: string | null
+          erro_integracao: string | null
+          hash_remessa: string | null
           id: string
+          lote_integracao_id: string | null
           numero: number
           observacoes: string | null
           recebido_em: string | null
           saldo: number
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           titulo_id: string
           updated_at: string
           valor: number
           vencimento: string
         }
         Insert: {
+          codigo_externo?: string | null
           created_at?: string
+          created_by?: string | null
+          data_integracao?: string | null
+          erro_integracao?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           numero: number
           observacoes?: string | null
           recebido_em?: string | null
           saldo?: number
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id: string
           updated_at?: string
           valor: number
           vencimento: string
         }
         Update: {
+          codigo_externo?: string | null
           created_at?: string
+          created_by?: string | null
+          data_integracao?: string | null
+          erro_integracao?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           numero?: number
           observacoes?: string | null
           recebido_em?: string | null
           saldo?: number
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_id?: string
           updated_at?: string
           valor?: number
           vencimento?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_pf_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "fk_pf_titulo"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "parcelas_financeiras_titulo_id_fkey"
             columns: ["titulo_id"]
@@ -3165,24 +3606,31 @@ export type Database = {
         Row: {
           cliente_id: string | null
           codigo: string | null
+          codigo_externo: string | null
           conta_devolucao_id: string | null
           contrato_id: string
           created_at: string
           created_by: string | null
           dados: Json
+          data_integracao: string | null
           data_rescisao: string
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           devolucao_liquida: number
+          erro_integracao: string | null
+          hash_remessa: string | null
           id: string
+          lote_integracao_id: string | null
           motivo: string
           multa_calculada: number
           multa_tipo: string
           multa_valor: number
           observacoes: string | null
           responsavel_id: string | null
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           titulo_devolucao_id: string | null
           updated_at: string
           valor_recebido: number
@@ -3191,24 +3639,31 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           conta_devolucao_id?: string | null
           contrato_id: string
           created_at?: string
           created_by?: string | null
           dados?: Json
+          data_integracao?: string | null
           data_rescisao?: string
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           devolucao_liquida?: number
+          erro_integracao?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo: string
           multa_calculada?: number
           multa_tipo?: string
           multa_valor?: number
           observacoes?: string | null
           responsavel_id?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_devolucao_id?: string | null
           updated_at?: string
           valor_recebido?: number
@@ -3217,30 +3672,44 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           conta_devolucao_id?: string | null
           contrato_id?: string
           created_at?: string
           created_by?: string | null
           dados?: Json
+          data_integracao?: string | null
           data_rescisao?: string
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           devolucao_liquida?: number
+          erro_integracao?: string | null
+          hash_remessa?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo?: string
           multa_calculada?: number
           multa_tipo?: string
           multa_valor?: number
           observacoes?: string | null
           responsavel_id?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           titulo_devolucao_id?: string | null
           updated_at?: string
           valor_recebido?: number
           vencimento_devolucao?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_res_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rescisoes_contrato_cliente_id_fkey"
             columns: ["cliente_id"]
@@ -3688,32 +4157,48 @@ export type Database = {
         Row: {
           cancelado_em: string | null
           centro_id: string | null
+          chave_documento: string | null
           cliente_id: string | null
           codigo: string | null
+          codigo_externo: string | null
           competencia: string | null
           consultor_id: string | null
+          conta_contabil_externa: string | null
           conta_id: string | null
           contrato_id: string | null
           created_at: string
+          created_by: string | null
           dados: Json
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           desconto: number
+          erro_integracao: string | null
           forma_pagamento: string | null
+          fornecedor_id: string | null
+          hash_remessa: string | null
           id: string
           juros: number
+          lote_integracao_id: string | null
           motivo_cancelamento: string | null
           motivo_renegociacao: string | null
           multa: number
+          natureza_id: string | null
+          numero_documento: string | null
           observacoes: string | null
           origem_id: string
           origem_tipo: string
           renegociado_em: string | null
           renegociado_por: string | null
           saldo: number
+          serie_documento: string | null
+          sistema_destino: string | null
+          sistema_origem: string | null
           status: string
+          status_integracao: string
           tipo: string
+          tipo_documento: string | null
           titulo_substituto_id: string | null
           updated_at: string
           valor_bruto: number
@@ -3723,32 +4208,48 @@ export type Database = {
         Insert: {
           cancelado_em?: string | null
           centro_id?: string | null
+          chave_documento?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id?: string | null
+          conta_contabil_externa?: string | null
           conta_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          created_by?: string | null
           dados?: Json
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           desconto?: number
+          erro_integracao?: string | null
           forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
           juros?: number
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           motivo_renegociacao?: string | null
           multa?: number
+          natureza_id?: string | null
+          numero_documento?: string | null
           observacoes?: string | null
           origem_id: string
           origem_tipo: string
           renegociado_em?: string | null
           renegociado_por?: string | null
           saldo?: number
+          serie_documento?: string | null
+          sistema_destino?: string | null
+          sistema_origem?: string | null
           status?: string
+          status_integracao?: string
           tipo: string
+          tipo_documento?: string | null
           titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
@@ -3758,32 +4259,48 @@ export type Database = {
         Update: {
           cancelado_em?: string | null
           centro_id?: string | null
+          chave_documento?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id?: string | null
+          conta_contabil_externa?: string | null
           conta_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          created_by?: string | null
           dados?: Json
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           desconto?: number
+          erro_integracao?: string | null
           forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          hash_remessa?: string | null
           id?: string
           juros?: number
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           motivo_renegociacao?: string | null
           multa?: number
+          natureza_id?: string | null
+          numero_documento?: string | null
           observacoes?: string | null
           origem_id?: string
           origem_tipo?: string
           renegociado_em?: string | null
           renegociado_por?: string | null
           saldo?: number
+          serie_documento?: string | null
+          sistema_destino?: string | null
+          sistema_origem?: string | null
           status?: string
+          status_integracao?: string
           tipo?: string
+          tipo_documento?: string | null
           titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
@@ -3791,6 +4308,83 @@ export type Database = {
           vencimento?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tf_centro"
+            columns: ["centro_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_conta"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "fk_tf_fornecedor"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_lote"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_natureza"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "titulos_financeiros_centro_id_fkey"
             columns: ["centro_id"]
@@ -5034,7 +5628,29 @@ export type Database = {
           titulo_tipo: string | null
           valor_liquido: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_tf_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
       }
       v_origem_obra_completa: {
         Row: {
@@ -5613,6 +6229,62 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_tf_centro"
+            columns: ["centro_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_conta"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_contrato"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "fk_tf_titulo_substituto"
+            columns: ["titulo_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "titulos_financeiros_centro_id_fkey"
             columns: ["centro_id"]
             isOneToOne: false
@@ -6057,6 +6729,10 @@ export type Database = {
         | "workflow.aprovar.financeiro"
         | "workflow.aprovar.diretoria"
         | "financeiro.renegociar"
+        | "integracao.visualizar"
+        | "integracao.mapear"
+        | "integracao.exportar"
+        | "integracao.reprocessar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -6258,6 +6934,10 @@ export const Constants = {
         "workflow.aprovar.financeiro",
         "workflow.aprovar.diretoria",
         "financeiro.renegociar",
+        "integracao.visualizar",
+        "integracao.mapear",
+        "integracao.exportar",
+        "integracao.reprocessar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

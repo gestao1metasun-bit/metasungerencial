@@ -109,7 +109,47 @@ export type EnterpriseRecordToolbarProps = {
   extraLeft?: ReactNode;
   extraRight?: ReactNode;
 
+  // -------- D17.UI.2 — Modo RM 3 linhas (opt-in) --------
+  /** Navegação tipo "459/500" + setas. Quando passada, ativa a navegação. */
+  position?: { current: number; total: number };
+  onNavigate?: (dir: "first" | "prev" | "next" | "last") => void;
+  /** Linha 2 — ações de status circulares coloridas (aprovar/reprovar/baixar/etc). */
+  statusActions?: StatusActionItem[];
+  /** Linha 3 — barra de Layout estilo RM (presets + densidade + chart). */
+  layoutBar?: LayoutBarConfig;
+
   className?: string;
+};
+
+/** Ação de status redonda da Linha 2 (TOTVS RM). */
+export type StatusActionItem = {
+  key: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  /** Cor canônica D17. */
+  tone:
+    | "success" // verde — aprovar/baixar/confirmar
+    | "danger"  // vermelho — reprovar/cancelar/estornar
+    | "info"    // azul — visualizar/email/documento
+    | "warning" // âmbar — pendência/alerta
+    | "primary" // azul forte — ação principal
+    | "muted";  // cinza — neutro
+  onClick?: () => void;
+  disabled?: boolean;
+  /** Mostra um pequeno selo (ex.: contagem ou "•"). */
+  badge?: string;
+};
+
+/** Configuração da Linha 3 (Layout / densidade). */
+export type LayoutBarConfig = {
+  presets?: { key: string; label: string }[];
+  currentPreset?: string;
+  onPresetChange?: (key: string) => void;
+  /** Botões de densidade/visão de tabela. */
+  density?: "compact" | "comfortable" | "spacious";
+  onDensityChange?: (d: "compact" | "comfortable" | "spacious") => void;
+  /** Slot extra à direita (ex.: gráfico). */
+  extra?: ReactNode;
 };
 
 // ============================================================================

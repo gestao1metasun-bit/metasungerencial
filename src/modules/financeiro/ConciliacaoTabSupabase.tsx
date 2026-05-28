@@ -17,11 +17,11 @@ import {
   useDesconciliarExtrato,
   useIgnorarExtrato,
 } from "@/lib/repositories/conciliacao-repo";
-import { useContasFinanceiras } from "@/lib/fin-contas-store";
+import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
 
 export function ConciliacaoTabSupabase() {
-  const contas = useContasFinanceiras();
-  const contasAtivas = contas.filter((c) => c.ativa);
+  const { data: contas = [] } = useContasFinanceirasOficiais();
+  const contasAtivas = contas.filter((c) => c.ativo);
   const [contaSel, setContaSel] = useState<string>(contasAtivas[0]?.id ?? "");
   const [statusFilter, setStatusFilter] = useState<string>("PENDENTE");
 

@@ -8510,6 +8510,14 @@ export type Database = {
         | "comercial.comissao.alterar_percentual"
         | "financeiro.rescindir"
         | "financeiro.taxa.editar"
+        | "operacao_financeira.visualizar"
+        | "operacao_financeira.criar"
+        | "operacao_financeira.aprovar"
+        | "operacao_financeira.liberar"
+        | "operacao_financeira.quitar"
+        | "operacao_financeira.renegociar"
+        | "operacao_financeira.cancelar"
+        | "operacao_financeira.estornar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -8520,6 +8528,33 @@ export type Database = {
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
       flag_escopo: "PESSOAL" | "EQUIPE" | "GLOBAL"
+      op_fin_forma_baixa:
+        | "FOLHA"
+        | "COMISSAO"
+        | "MANUAL"
+        | "PIX"
+        | "TED"
+        | "BOLETO"
+        | "DESCONTO_TITULO"
+      op_fin_natureza_caixa: "ENTRADA" | "SAIDA"
+      op_fin_status:
+        | "RASCUNHO"
+        | "EM_APROVACAO"
+        | "APROVADA"
+        | "LIBERADA"
+        | "EM_PAGAMENTO"
+        | "QUITADA"
+        | "RENEGOCIADA"
+        | "CANCELADA"
+      op_fin_tipo:
+        | "EMPRESTIMO_COLABORADOR"
+        | "EMPRESTIMO_CLIENTE"
+        | "EMPRESTIMO_FORNECEDOR"
+        | "EMPRESTIMO_SOCIO_EMPRESA"
+        | "EMPRESTIMO_EMPRESA_TERCEIRO"
+        | "APORTE_CAPITAL"
+        | "CAPITAL_DE_GIRO"
+        | "APLICACAO_FINANCEIRA"
       ordem_compra_status:
         | "COTACAO"
         | "AGUARDANDO_APROVACAO_FIN"
@@ -8746,6 +8781,14 @@ export const Constants = {
         "comercial.comissao.alterar_percentual",
         "financeiro.rescindir",
         "financeiro.taxa.editar",
+        "operacao_financeira.visualizar",
+        "operacao_financeira.criar",
+        "operacao_financeira.aprovar",
+        "operacao_financeira.liberar",
+        "operacao_financeira.quitar",
+        "operacao_financeira.renegociar",
+        "operacao_financeira.cancelar",
+        "operacao_financeira.estornar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [
@@ -8758,6 +8801,36 @@ export const Constants = {
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
       flag_cor: ["VERMELHO", "AMARELO", "VERDE", "AZUL", "ROXO", "CINZA"],
       flag_escopo: ["PESSOAL", "EQUIPE", "GLOBAL"],
+      op_fin_forma_baixa: [
+        "FOLHA",
+        "COMISSAO",
+        "MANUAL",
+        "PIX",
+        "TED",
+        "BOLETO",
+        "DESCONTO_TITULO",
+      ],
+      op_fin_natureza_caixa: ["ENTRADA", "SAIDA"],
+      op_fin_status: [
+        "RASCUNHO",
+        "EM_APROVACAO",
+        "APROVADA",
+        "LIBERADA",
+        "EM_PAGAMENTO",
+        "QUITADA",
+        "RENEGOCIADA",
+        "CANCELADA",
+      ],
+      op_fin_tipo: [
+        "EMPRESTIMO_COLABORADOR",
+        "EMPRESTIMO_CLIENTE",
+        "EMPRESTIMO_FORNECEDOR",
+        "EMPRESTIMO_SOCIO_EMPRESA",
+        "EMPRESTIMO_EMPRESA_TERCEIRO",
+        "APORTE_CAPITAL",
+        "CAPITAL_DE_GIRO",
+        "APLICACAO_FINANCEIRA",
+      ],
       ordem_compra_status: [
         "COTACAO",
         "AGUARDANDO_APROVACAO_FIN",

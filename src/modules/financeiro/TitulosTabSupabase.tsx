@@ -267,17 +267,18 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
         entityType="titulos_financeiros"
         selectedIds={[]}
         availableActions={[
-          "novo", "editar", "excluir", "atualizar", "visualizar",
+          "editar", "excluir", "atualizar", "visualizar",
           "anexos", "historico", "auditoria",
           "exportar", "imprimir", "colunas", "filtroAvancado",
         ]}
         position={{ current: Math.min(1, filtrados.length), total: filtrados.length }}
         onNavigate={() => { /* navegação por registro (em breve) */ }}
         onAction={(a) => {
-          if (a === "novo") setNovoOpen(true);
-          else if (a === "atualizar") void refetch();
+          if (a === "atualizar") void refetch();
+          else if (a === "novo") toast.info("Títulos nascem de contratos ou pedidos de compra — não de lançamento avulso.");
           else toast.message(`Ação "${a}" — em breve no padrão Enterprise`);
         }}
+
         onFilter={() => toast.info("Filtros avançados — em breve")}
         statusActions={[
           { key: "aprovar",  label: "Aprovar",  icon: CheckCircle2, tone: "success", onClick: () => toast.message("Aprovar — em breve") },

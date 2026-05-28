@@ -35,6 +35,7 @@ import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AnalisesRouteImport } from './routes/analises'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PaineisSaudeSistemaRouteImport } from './routes/paineis.saude-sistema'
 import { Route as PaineisSaudeDadosRouteImport } from './routes/paineis.saude-dados'
 import { Route as PaineisPosvendaRouteImport } from './routes/paineis.posvenda'
 import { Route as PaineisGovernancaRouteImport } from './routes/paineis.governanca'
@@ -188,6 +189,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PaineisSaudeSistemaRoute = PaineisSaudeSistemaRouteImport.update({
+  id: '/saude-sistema',
+  path: '/saude-sistema',
+  getParentRoute: () => PaineisRoute,
 } as any)
 const PaineisSaudeDadosRoute = PaineisSaudeDadosRouteImport.update({
   id: '/saude-dados',
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
+  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
+  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -459,6 +467,7 @@ export interface FileRoutesById {
   '/paineis/governanca': typeof PaineisGovernancaRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
+  '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -512,6 +521,7 @@ export interface FileRouteTypes {
     | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
+    | '/paineis/saude-sistema'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
+    | '/paineis/saude-sistema'
   id:
     | '__root__'
     | '/'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/paineis/governanca'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
+    | '/paineis/saude-sistema'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -828,6 +840,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/paineis/saude-sistema': {
+      id: '/paineis/saude-sistema'
+      path: '/saude-sistema'
+      fullPath: '/paineis/saude-sistema'
+      preLoaderRoute: typeof PaineisSaudeSistemaRouteImport
+      parentRoute: typeof PaineisRoute
     }
     '/paineis/saude-dados': {
       id: '/paineis/saude-dados'
@@ -1051,6 +1070,7 @@ interface PaineisRouteChildren {
   PaineisGovernancaRoute: typeof PaineisGovernancaRoute
   PaineisPosvendaRoute: typeof PaineisPosvendaRoute
   PaineisSaudeDadosRoute: typeof PaineisSaudeDadosRoute
+  PaineisSaudeSistemaRoute: typeof PaineisSaudeSistemaRoute
 }
 
 const PaineisRouteChildren: PaineisRouteChildren = {
@@ -1063,6 +1083,7 @@ const PaineisRouteChildren: PaineisRouteChildren = {
   PaineisGovernancaRoute: PaineisGovernancaRoute,
   PaineisPosvendaRoute: PaineisPosvendaRoute,
   PaineisSaudeDadosRoute: PaineisSaudeDadosRoute,
+  PaineisSaudeSistemaRoute: PaineisSaudeSistemaRoute,
 }
 
 const PaineisRouteWithChildren =

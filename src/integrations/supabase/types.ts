@@ -145,6 +145,7 @@ export type Database = {
           origem_id: string | null
           origem_tipo: string | null
           pv_id: string | null
+          row_version: number
           saldo: number | null
           sistema_destino: string | null
           status: string
@@ -183,6 +184,7 @@ export type Database = {
           origem_id?: string | null
           origem_tipo?: string | null
           pv_id?: string | null
+          row_version?: number
           saldo?: number | null
           sistema_destino?: string | null
           status?: string
@@ -221,6 +223,7 @@ export type Database = {
           origem_id?: string | null
           origem_tipo?: string | null
           pv_id?: string | null
+          row_version?: number
           saldo?: number | null
           sistema_destino?: string | null
           status?: string
@@ -609,6 +612,7 @@ export type Database = {
           numero_boleto: string | null
           numero_nf: string | null
           observacoes: string | null
+          row_version: number
           sistema_destino: string | null
           status: string
           status_integracao: string
@@ -638,6 +642,7 @@ export type Database = {
           numero_boleto?: string | null
           numero_nf?: string | null
           observacoes?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
@@ -667,6 +672,7 @@ export type Database = {
           numero_boleto?: string | null
           numero_nf?: string | null
           observacoes?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
@@ -760,6 +766,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          row_version: number
           tipo: string
           updated_at: string
         }
@@ -769,6 +776,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          row_version?: number
           tipo?: string
           updated_at?: string
         }
@@ -778,6 +786,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          row_version?: number
           tipo?: string
           updated_at?: string
         }
@@ -903,6 +912,7 @@ export type Database = {
           id: string
           nome: string
           numero: string | null
+          row_version: number
           rua: string | null
           status: string
           telefone: string | null
@@ -925,6 +935,7 @@ export type Database = {
           id?: string
           nome: string
           numero?: string | null
+          row_version?: number
           rua?: string | null
           status?: string
           telefone?: string | null
@@ -947,6 +958,7 @@ export type Database = {
           id?: string
           nome?: string
           numero?: string | null
+          row_version?: number
           rua?: string | null
           status?: string
           telefone?: string | null
@@ -996,6 +1008,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          row_version: number
           saldo_inicial: number
           tipo: string
           tipo_conta: string | null
@@ -1010,6 +1023,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          row_version?: number
           saldo_inicial?: number
           tipo: string
           tipo_conta?: string | null
@@ -1024,6 +1038,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          row_version?: number
           saldo_inicial?: number
           tipo?: string
           tipo_conta?: string | null
@@ -1069,6 +1084,7 @@ export type Database = {
           possui_financiamento: boolean
           potencia_kwp: number | null
           proposta_id: string | null
+          row_version: number
           status: string
           updated_at: string
           valor_entrada: number
@@ -1112,6 +1128,7 @@ export type Database = {
           possui_financiamento?: boolean
           potencia_kwp?: number | null
           proposta_id?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           valor_entrada?: number
@@ -1155,6 +1172,7 @@ export type Database = {
           possui_financiamento?: boolean
           potencia_kwp?: number | null
           proposta_id?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           valor_entrada?: number
@@ -1182,6 +1200,7 @@ export type Database = {
           prazo_entrega_dias: number | null
           registrado_em: string
           registrado_por: string | null
+          row_version: number
           status: Database["public"]["Enums"]["cotacao_status"]
           validade_dias: number | null
           valor_total: number
@@ -1196,6 +1215,7 @@ export type Database = {
           prazo_entrega_dias?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          row_version?: number
           status?: Database["public"]["Enums"]["cotacao_status"]
           validade_dias?: number | null
           valor_total: number
@@ -1210,6 +1230,7 @@ export type Database = {
           prazo_entrega_dias?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          row_version?: number
           status?: Database["public"]["Enums"]["cotacao_status"]
           validade_dias?: number | null
           valor_total?: number
@@ -1792,6 +1813,7 @@ export type Database = {
           numero: string | null
           observacoes: string | null
           pix_chave: string | null
+          row_version: number
           rua: string | null
           telefone: string | null
           telefone2: string | null
@@ -1823,6 +1845,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           pix_chave?: string | null
+          row_version?: number
           rua?: string | null
           telefone?: string | null
           telefone2?: string | null
@@ -1854,6 +1877,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           pix_chave?: string | null
+          row_version?: number
           rua?: string | null
           telefone?: string | null
           telefone2?: string | null
@@ -2061,6 +2085,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          row_version: number
           tipo: string
           updated_at: string
         }
@@ -2070,6 +2095,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          row_version?: number
           tipo: string
           updated_at?: string
         }
@@ -2079,6 +2105,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          row_version?: number
           tipo?: string
           updated_at?: string
         }
@@ -2331,6 +2358,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          row_version: number
           tipo: string
           updated_at: string
         }
@@ -2340,6 +2368,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          row_version?: number
           tipo: string
           updated_at?: string
         }
@@ -2349,6 +2378,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          row_version?: number
           tipo?: string
           updated_at?: string
         }
@@ -2368,6 +2398,7 @@ export type Database = {
           lote_integracao_id: string | null
           observacao: string | null
           parcela_id: string | null
+          row_version: number
           sistema_destino: string | null
           status_integracao: string
           tipo: string
@@ -2389,6 +2420,7 @@ export type Database = {
           lote_integracao_id?: string | null
           observacao?: string | null
           parcela_id?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status_integracao?: string
           tipo: string
@@ -2410,6 +2442,7 @@ export type Database = {
           lote_integracao_id?: string | null
           observacao?: string | null
           parcela_id?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status_integracao?: string
           tipo?: string
@@ -2507,6 +2540,7 @@ export type Database = {
           grupo: string | null
           id: string
           nome: string
+          row_version: number
           subgrupo: string | null
           tipo: string
           updated_at: string
@@ -2519,6 +2553,7 @@ export type Database = {
           grupo?: string | null
           id?: string
           nome: string
+          row_version?: number
           subgrupo?: string | null
           tipo: string
           updated_at?: string
@@ -2531,6 +2566,7 @@ export type Database = {
           grupo?: string | null
           id?: string
           nome?: string
+          row_version?: number
           subgrupo?: string | null
           tipo?: string
           updated_at?: string
@@ -2559,6 +2595,7 @@ export type Database = {
           modulos_qtde: number | null
           observacoes: string | null
           potencia_kwp: number | null
+          row_version: number
           status: string
           telhado_tipo: string | null
           tipo: string | null
@@ -2585,6 +2622,7 @@ export type Database = {
           modulos_qtde?: number | null
           observacoes?: string | null
           potencia_kwp?: number | null
+          row_version?: number
           status?: string
           telhado_tipo?: string | null
           tipo?: string | null
@@ -2611,6 +2649,7 @@ export type Database = {
           modulos_qtde?: number | null
           observacoes?: string | null
           potencia_kwp?: number | null
+          row_version?: number
           status?: string
           telhado_tipo?: string | null
           tipo?: string | null
@@ -2746,6 +2785,7 @@ export type Database = {
           prazo_entrega_dias: number | null
           recebido_em: string | null
           recebido_por: string | null
+          row_version: number
           solicitacao_id: string | null
           status: Database["public"]["Enums"]["ordem_compra_status"]
           titulo_financeiro_id: string | null
@@ -2768,6 +2808,7 @@ export type Database = {
           prazo_entrega_dias?: number | null
           recebido_em?: string | null
           recebido_por?: string | null
+          row_version?: number
           solicitacao_id?: string | null
           status?: Database["public"]["Enums"]["ordem_compra_status"]
           titulo_financeiro_id?: string | null
@@ -2790,6 +2831,7 @@ export type Database = {
           prazo_entrega_dias?: number | null
           recebido_em?: string | null
           recebido_por?: string | null
+          row_version?: number
           solicitacao_id?: string | null
           status?: Database["public"]["Enums"]["ordem_compra_status"]
           titulo_financeiro_id?: string | null
@@ -2820,6 +2862,7 @@ export type Database = {
           numero: number
           observacoes: string | null
           recebido_em: string | null
+          row_version: number
           saldo: number
           sistema_destino: string | null
           status: string
@@ -2841,6 +2884,7 @@ export type Database = {
           numero: number
           observacoes?: string | null
           recebido_em?: string | null
+          row_version?: number
           saldo?: number
           sistema_destino?: string | null
           status?: string
@@ -2862,6 +2906,7 @@ export type Database = {
           numero?: number
           observacoes?: string | null
           recebido_em?: string | null
+          row_version?: number
           saldo?: number
           sistema_destino?: string | null
           status?: string
@@ -2983,6 +3028,7 @@ export type Database = {
           observacoes: string | null
           possui_financiamento: boolean
           projeto_contrato_id: string | null
+          row_version: number
           status: string
           updated_at: string
           valor_total: number
@@ -3010,6 +3056,7 @@ export type Database = {
           observacoes?: string | null
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           valor_total?: number
@@ -3037,6 +3084,7 @@ export type Database = {
           observacoes?: string | null
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           valor_total?: number
@@ -3688,6 +3736,7 @@ export type Database = {
           multa_valor: number
           observacoes: string | null
           responsavel_id: string | null
+          row_version: number
           sistema_destino: string | null
           status: string
           status_integracao: string
@@ -3721,6 +3770,7 @@ export type Database = {
           multa_valor?: number
           observacoes?: string | null
           responsavel_id?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
@@ -3754,6 +3804,7 @@ export type Database = {
           multa_valor?: number
           observacoes?: string | null
           responsavel_id?: string | null
+          row_version?: number
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
@@ -4050,6 +4101,7 @@ export type Database = {
           obra_id: string | null
           prioridade: string
           pv_id: string | null
+          row_version: number
           setor: string | null
           solicitante_email: string | null
           solicitante_id: string
@@ -4073,6 +4125,7 @@ export type Database = {
           obra_id?: string | null
           prioridade?: string
           pv_id?: string | null
+          row_version?: number
           setor?: string | null
           solicitante_email?: string | null
           solicitante_id: string
@@ -4096,6 +4149,7 @@ export type Database = {
           obra_id?: string | null
           prioridade?: string
           pv_id?: string | null
+          row_version?: number
           setor?: string | null
           solicitante_email?: string | null
           solicitante_id?: string
@@ -4114,6 +4168,7 @@ export type Database = {
           grupo_id: string
           id: string
           nome: string
+          row_version: number
           updated_at: string
         }
         Insert: {
@@ -4123,6 +4178,7 @@ export type Database = {
           grupo_id: string
           id?: string
           nome: string
+          row_version?: number
           updated_at?: string
         }
         Update: {
@@ -4132,6 +4188,7 @@ export type Database = {
           grupo_id?: string
           id?: string
           nome?: string
+          row_version?: number
           updated_at?: string
         }
         Relationships: [
@@ -4286,6 +4343,7 @@ export type Database = {
           id: string
           nome: string
           pos_venda: boolean
+          row_version: number
           updated_at: string
         }
         Insert: {
@@ -4295,6 +4353,7 @@ export type Database = {
           id?: string
           nome: string
           pos_venda?: boolean
+          row_version?: number
           updated_at?: string
         }
         Update: {
@@ -4304,6 +4363,7 @@ export type Database = {
           id?: string
           nome?: string
           pos_venda?: boolean
+          row_version?: number
           updated_at?: string
         }
         Relationships: []
@@ -4346,6 +4406,7 @@ export type Database = {
           origem_tipo: string
           renegociado_em: string | null
           renegociado_por: string | null
+          row_version: number
           saldo: number
           serie_documento: string | null
           sistema_destino: string | null
@@ -4397,6 +4458,7 @@ export type Database = {
           origem_tipo: string
           renegociado_em?: string | null
           renegociado_por?: string | null
+          row_version?: number
           saldo?: number
           serie_documento?: string | null
           sistema_destino?: string | null
@@ -4448,6 +4510,7 @@ export type Database = {
           origem_tipo?: string
           renegociado_em?: string | null
           renegociado_por?: string | null
+          row_version?: number
           saldo?: number
           serie_documento?: string | null
           sistema_destino?: string | null
@@ -4964,6 +5027,7 @@ export type Database = {
           motivo_solicitacao: string | null
           origem_id: string | null
           origem_tipo: string | null
+          row_version: number
           setor: string | null
           solicitado_em: string
           solicitante_email: string | null
@@ -4991,6 +5055,7 @@ export type Database = {
           motivo_solicitacao?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
+          row_version?: number
           setor?: string | null
           solicitado_em?: string
           solicitante_email?: string | null
@@ -5018,6 +5083,7 @@ export type Database = {
           motivo_solicitacao?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
+          row_version?: number
           setor?: string | null
           solicitado_em?: string
           solicitante_email?: string | null
@@ -6580,6 +6646,10 @@ export type Database = {
         Args: { _motivo: string; _titulo_id: string }
         Returns: undefined
       }
+      check_row_version: {
+        Args: { _expected_version: number; _id: string; _tabela: unknown }
+        Returns: undefined
+      }
       criar_solicitacao_material: {
         Args: {
           _itens: Json
@@ -6851,6 +6921,14 @@ export type Database = {
           _valor: number
         }
         Returns: Json
+      }
+      rpc_idempotente_check: {
+        Args: { _payload?: Json; _request_id: string; _rpc_nome: string }
+        Returns: Json
+      }
+      rpc_idempotente_commit: {
+        Args: { _request_id: string; _resultado: Json }
+        Returns: undefined
       }
       rpc_lancamento_criar: {
         Args: {

@@ -13,6 +13,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import { useEffect } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
+import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
 
@@ -121,13 +122,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const isAuth = path === "/login" || path === "/cadastrar";
+  const { user, loading } = useAuth();
+  const isPublicRoute = path === "/login" || path === "/cadastrar" || path === "/reset-password";
+  const shouldBlockPrivateRoute = !isPublicRoute && !loading && !user;
   useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isAuth ? <Outlet /> : <AppLayout />}
+      {shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}
       <Toaster />
     </QueryClientProvider>
   );
+}
+
+function LoginRedirect() {
+  return <Link to="/login" preload={false} className="hidden">login</Link>;
 }

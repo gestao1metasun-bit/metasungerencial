@@ -1,0 +1,510 @@
+/**
+ * D15.3.a — TitulosTab 100% Supabase
+ *
+ * Consome exclusivamente:
+ *   - useTitulosFinanceiros / useReceberParcela / useCancelarTitulo  (Supabase + RPCs)
+ *   - useCriarLancamento + lancamentos-repo.ts                        (RPC oficial)
+ *   - useCadastros (cadastros-repo: contas, centros, naturezas)
+ *
+ * NÃO importa stores LocalStorage de financeiro. Preferências de UI
+ * (filtros, colunas) ficam em chaves `ui.fin.titulos.*` — permitidas
+ * pelo ls-guard.
+ *
+ * Falhas viram toast + errorLogRepo.log({ modulo: 'financeiro', ... }).
+ */
+import { useEffect, useMemo, useState } from "react";
+import { Plus, XCircle, Wallet, AlertTriangle, FileText, Filter, RotateCcw } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
+} from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import {
+  useTitulosFinanceiros, type TituloFinanceiro,
+  useParcelasTitulo, useCancelarTitulo,
+  TF_STATUS_LABEL, TF_STATUS_TONE, type TFStatus,
+} from "@/hooks/useTitulosFinanceiros";
+import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
+import {
+  useCadastrosNaturezas, useCadastrosCentros, useCadastrosContas,
+  useCriarLancamentoForm,
+} from "./titulos-supabase.helpers";
+import { errorLogRepo } from "@/lib/repositories/error-log-repo";
+
+const UI_PREF_KEY = "ui.fin.titulos.v1";
+
+type UiPrefs = {
+  statusFiltro: TFStatus | "TODOS";
+  busca: string;
+  origem: string;
+};
+
+function loadPrefs(): UiPrefs {
+  if (typeof window === "undefined") return { statusFiltro: "TODOS", busca: "", origem: "TODOS" };
+  try {
+    const raw = window.localStorage.getItem(UI_PREF_KEY);
+    if (!raw) return { statusFiltro: "TODOS", busca: "", origem: "TODOS" };
+    return { statusFiltro: "TODOS", busca: "", origem: "TODOS", ...JSON.parse(raw) };
+  } catch {
+    return { statusFiltro: "TODOS", busca: "", origem: "TODOS" };
+  }
+}
+
+function savePrefs(p: UiPrefs) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(UI_PREF_KEY, JSON.stringify(p));
+  } catch {
+    /* silencioso — pref de UI */
+  }
+}
+
+const fmtBRL = (n: number | null | undefined) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+    .format(Number(n ?? 0));
+
+const fmtDate = (d: string | null | undefined) =>
+  d ? new Date(d).toLocaleDateString("pt-BR") : "—";
+
+export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
+  const [prefs, setPrefs] = useState<UiPrefs>(() => loadPrefs());
+  useEffect(() => { savePrefs(prefs); }, [prefs]);
+
+  const { data: rows = [], isLoading, isError, error, refetch } = useTitulosFinanceiros(
+    prefs.statusFiltro === "TODOS"
+      ? undefined
+      : { status: prefs.statusFiltro },
+  );
+
+  // Log erro Supabase (visível, sem fallback silencioso)
+  useEffect(() => {
+    if (isError) {
+      void errorLogRepo.log({
+        modulo: "financeiro",
+        tela: tipo === "AR" ? "titulos.receber" : "titulos.pagar",
+        acao: "list",
+        mensagem: (error as Error)?.message ?? "Falha ao listar títulos",
+        severidade: "error",
+      });
+    }
+  }, [isError, error, tipo]);
+
+  const filtrados = useMemo(() => {
+    const tipoUpper = tipo;
+    return rows.filter((r) => {
+      if (r.tipo !== tipoUpper) return false;
+      if (prefs.origem !== "TODOS" && r.origem_tipo !== prefs.origem) return false;
+      if (prefs.busca.trim()) {
+        const q = prefs.busca.trim().toLowerCase();
+        const hay = [r.codigo, r.numero_documento, r.observacoes, r.origem_tipo]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [rows, tipo, prefs.origem, prefs.busca]);
+
+  const totais = useMemo(() => {
+    let bruto = 0, saldo = 0, vencidos = 0;
+    const hoje = new Date().toISOString().slice(0, 10);
+    for (const r of filtrados) {
+      bruto += Number(r.valor_bruto ?? 0);
+      saldo += Number(r.saldo ?? 0);
+      if (r.vencimento && r.vencimento < hoje && (r.status === "PENDENTE" || r.status === "PARCIAL" || r.status === "ATRASADO")) {
+        vencidos += Number(r.saldo ?? 0);
+      }
+    }
+    return { bruto, saldo, vencidos, qtd: filtrados.length };
+  }, [filtrados]);
+
+  // Origens disponíveis (para filtro)
+  const origens = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of rows) if (r.tipo === tipo && r.origem_tipo) s.add(r.origem_tipo);
+    return Array.from(s).sort();
+  }, [rows, tipo]);
+
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [parcelaSel, setParcelaSel] = useState<string | null>(null);
+  const [cancelSel, setCancelSel] = useState<TituloFinanceiro | null>(null);
+
+  const titulo = tipo === "AR" ? "Contas a Receber" : "Contas a Pagar";
+
+  return (
+    <div className="space-y-3">
+      {/* Banner fonte oficial */}
+      <Card className="px-3 py-2 text-xs flex items-center gap-2 bg-emerald-500/5 border-emerald-500/30">
+        <Wallet className="size-3.5 text-emerald-600" />
+        <span className="font-medium">{titulo}</span>
+        <span className="text-muted-foreground">· fonte oficial: Supabase (D15.3.a)</span>
+        <span className="ml-auto text-muted-foreground">{totais.qtd} título(s)</span>
+      </Card>
+
+      {/* Toolbar + KPIs */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+        <Card className="p-3">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Bruto</div>
+          <div className="text-lg font-semibold mt-0.5">{fmtBRL(totais.bruto)}</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Saldo em aberto</div>
+          <div className="text-lg font-semibold mt-0.5">{fmtBRL(totais.saldo)}</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Vencido</div>
+          <div className={`text-lg font-semibold mt-0.5 ${totais.vencidos > 0 ? "text-rose-600" : ""}`}>
+            {fmtBRL(totais.vencidos)}
+          </div>
+        </Card>
+        <Card className="p-3 flex items-center justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => refetch()}>
+            <RotateCcw className="size-3.5 mr-1" /> Atualizar
+          </Button>
+          <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="size-3.5 mr-1" /> Novo lançamento
+              </Button>
+            </DialogTrigger>
+            <NovoLancamentoDialog
+              tipo={tipo === "AR" ? "receber" : "pagar"}
+              onDone={() => { setNovoOpen(false); refetch(); }}
+            />
+          </Dialog>
+        </Card>
+      </div>
+
+      {/* Filtros */}
+      <Card className="p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs flex items-center gap-1">
+              <Filter className="size-3" /> Status
+            </Label>
+            <Select
+              value={prefs.statusFiltro}
+              onValueChange={(v) => setPrefs({ ...prefs, statusFiltro: v as TFStatus | "TODOS" })}
+            >
+              <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todos</SelectItem>
+                {(Object.keys(TF_STATUS_LABEL) as TFStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>{TF_STATUS_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Origem</Label>
+            <Select
+              value={prefs.origem}
+              onValueChange={(v) => setPrefs({ ...prefs, origem: v })}
+            >
+              <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todas</SelectItem>
+                {origens.map((o) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1 flex-1 min-w-[200px]">
+            <Label className="text-xs">Buscar</Label>
+            <Input
+              className="h-8"
+              placeholder="código, documento, observação..."
+              value={prefs.busca}
+              onChange={(e) => setPrefs({ ...prefs, busca: e.target.value })}
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Erro visível */}
+      {isError && (
+        <Card className="p-3 border-rose-500/40 bg-rose-500/5 text-sm">
+          <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
+            <AlertTriangle className="size-4" />
+            <span className="font-medium">Erro ao consultar títulos no Supabase.</span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {(error as Error)?.message ?? "Erro desconhecido"} — registrado em /paineis/erros.
+          </div>
+        </Card>
+      )}
+
+      {/* Tabela */}
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[110px]">Código</TableHead>
+              <TableHead>Origem</TableHead>
+              <TableHead>Documento</TableHead>
+              <TableHead className="w-[110px]">Vencimento</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="text-right w-[120px]">Bruto</TableHead>
+              <TableHead className="text-right w-[120px]">Saldo</TableHead>
+              <TableHead className="w-[160px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>
+            )}
+            {!isLoading && filtrados.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                  <FileText className="size-4 inline mr-1" />
+                  Nenhum título encontrado no Supabase.
+                </TableCell>
+              </TableRow>
+            )}
+            {filtrados.map((r) => {
+              const status = (r.status as TFStatus) ?? "PENDENTE";
+              return (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-xs">{r.codigo ?? r.id.slice(0, 8)}</TableCell>
+                  <TableCell className="text-xs">{r.origem_tipo ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{r.numero_documento ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{fmtDate(r.vencimento)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={TF_STATUS_TONE[status]}>
+                      {TF_STATUS_LABEL[status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-xs">{fmtBRL(r.valor_bruto)}</TableCell>
+                  <TableCell className="text-right tabular-nums text-xs font-medium">{fmtBRL(r.saldo)}</TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <ReceberAcao tituloId={r.id} disabled={status === "CANCELADO" || status === "RECEBIDO"} onPickParcela={setParcelaSel} />
+                    <Button size="sm" variant="ghost"
+                      disabled={status === "CANCELADO" || status === "RECEBIDO"}
+                      onClick={() => setCancelSel(r)}>
+                      <XCircle className="size-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+          {filtrados.length > 0 && (
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={5} className="text-right text-xs">Totais</TableCell>
+                <TableCell className="text-right text-xs tabular-nums">{fmtBRL(totais.bruto)}</TableCell>
+                <TableCell className="text-right text-xs tabular-nums font-semibold">{fmtBRL(totais.saldo)}</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableFooter>
+          )}
+        </Table>
+      </Card>
+
+      <ReceberParcelaModalConnector
+        parcelaId={parcelaSel}
+        onClose={() => setParcelaSel(null)}
+      />
+
+      <CancelarDialog
+        titulo={cancelSel}
+        onClose={() => setCancelSel(null)}
+      />
+    </div>
+  );
+}
+
+/* ============================================================================
+   Helpers internos (mantidos no mesmo arquivo p/ coesão)
+   ========================================================================== */
+
+function ReceberAcao({ tituloId, disabled, onPickParcela }: {
+  tituloId: string; disabled: boolean; onPickParcela: (id: string) => void;
+}) {
+  const { data: parcelas = [] } = useParcelasTitulo(tituloId);
+  const abertas = parcelas.filter((p) => Number(p.saldo) > 0.001);
+  return (
+    <Button
+      size="sm" variant="outline" disabled={disabled || abertas.length === 0}
+      onClick={() => abertas[0] && onPickParcela(abertas[0].id)}
+      title={abertas.length === 0 ? "Sem parcelas em aberto" : `Receber parcela #${abertas[0].numero}`}
+    >
+      Receber
+    </Button>
+  );
+}
+
+function ReceberParcelaModalConnector({ parcelaId, onClose }: {
+  parcelaId: string | null; onClose: () => void;
+}) {
+  // Modal já é 100% Supabase (useReceberParcela)
+  const [parcela, setParcela] = useState<Parameters<typeof ReceberParcelaModal>[0]["parcela"]>(null);
+  // Quando parcelaId muda, busca a parcela via list e injeta.
+  // Simplificação: aqui recarrega list de parcelas pelo tituloId não disponível —
+  // estratégia: usar hook leve direto.
+  useParcelaLookup(parcelaId, setParcela);
+  return (
+    <ReceberParcelaModal
+      parcela={parcela}
+      open={!!parcela}
+      onOpenChange={(v) => { if (!v) { setParcela(null); onClose(); } }}
+    />
+  );
+}
+
+function useParcelaLookup(
+  parcelaId: string | null,
+  setParcela: (p: Parameters<typeof ReceberParcelaModal>[0]["parcela"]) => void,
+) {
+  useEffect(() => {
+    if (!parcelaId) { setParcela(null); return; }
+    let alive = true;
+    void import("@/integrations/supabase/client").then(async ({ supabase }) => {
+      const { data, error } = await supabase
+        .from("parcelas_financeiras").select("*").eq("id", parcelaId).maybeSingle();
+      if (!alive) return;
+      if (error) {
+        toast.error(error.message);
+        void errorLogRepo.log({
+          modulo: "financeiro", tela: "titulos.parcela", acao: "lookup",
+          mensagem: error.message, severidade: "error",
+        });
+        setParcela(null); return;
+      }
+      setParcela(data as Parameters<typeof ReceberParcelaModal>[0]["parcela"]);
+    });
+    return () => { alive = false; };
+  }, [parcelaId, setParcela]);
+}
+
+function CancelarDialog({ titulo, onClose }: {
+  titulo: TituloFinanceiro | null; onClose: () => void;
+}) {
+  const cancelar = useCancelarTitulo();
+  const [motivo, setMotivo] = useState("");
+  useEffect(() => { setMotivo(""); }, [titulo?.id]);
+  if (!titulo) return null;
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Cancelar título {titulo.codigo ?? titulo.id.slice(0, 8)}</DialogTitle></DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="text-muted-foreground">Operação registrada em auditoria. Motivo obrigatório (≥ 5 caracteres).</div>
+          <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: duplicidade · valor incorreto · acordo cancelado" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Voltar</Button>
+          <Button
+            variant="destructive"
+            disabled={motivo.trim().length < 5 || cancelar.isPending}
+            onClick={() => cancelar.mutate({ tituloId: titulo.id, motivo: motivo.trim() }, {
+              onSuccess: () => onClose(),
+              onError: (e: unknown) => {
+                void errorLogRepo.log({
+                  modulo: "financeiro", tela: "titulos.cancelar", acao: "rpc",
+                  mensagem: (e as Error)?.message ?? "falha cancelar",
+                  payload: { tituloId: titulo.id }, severidade: "error",
+                });
+              },
+            })}
+          >Cancelar título</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ============================================================================
+   Novo lançamento — via RPC oficial rpc_lancamento_criar
+   ========================================================================== */
+function NovoLancamentoDialog({ tipo, onDone }: { tipo: "receber" | "pagar"; onDone: () => void }) {
+  const { data: naturezas = [] } = useCadastrosNaturezas();
+  const { data: centros = [] } = useCadastrosCentros();
+  const { data: contas = [] } = useCadastrosContas();
+  const { criar, pending } = useCriarLancamentoForm();
+
+  const [valor, setValor] = useState("");
+  const [vencimento, setVencimento] = useState(() => new Date().toISOString().slice(0, 10));
+  const [naturezaId, setNaturezaId] = useState<string>("");
+  const [centroId, setCentroId] = useState<string>("");
+  const [contaId, setContaId] = useState<string>("");
+  const [descricao, setDescricao] = useState("");
+
+  const valorNum = Number(valor.replace(",", "."));
+  const invalido =
+    !Number.isFinite(valorNum) || valorNum <= 0 ||
+    !vencimento || !naturezaId || !centroId || !contaId;
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Novo lançamento ({tipo === "receber" ? "Receber" : "Pagar"})</DialogTitle>
+      </DialogHeader>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-xs">Valor</Label>
+          <Input type="number" step="0.01" min="0" value={valor} onChange={(e) => setValor(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Vencimento</Label>
+          <Input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
+        </div>
+        <div className="space-y-1 col-span-2">
+          <Label className="text-xs">Natureza financeira *</Label>
+          <Select value={naturezaId} onValueChange={setNaturezaId}>
+            <SelectTrigger><SelectValue placeholder="Selecionar natureza" /></SelectTrigger>
+            <SelectContent>
+              {naturezas.map((n) => <SelectItem key={n.id} value={n.id}>{n.codigo} — {n.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Centro de Resultado *</Label>
+          <Select value={centroId} onValueChange={setCentroId}>
+            <SelectTrigger><SelectValue placeholder="Selecionar CR" /></SelectTrigger>
+            <SelectContent>
+              {centros.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Conta *</Label>
+          <Select value={contaId} onValueChange={setContaId}>
+            <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
+            <SelectContent>
+              {contas.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1 col-span-2">
+          <Label className="text-xs">Descrição</Label>
+          <Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onDone}>Cancelar</Button>
+        <Button
+          disabled={invalido || pending}
+          onClick={() => criar({
+            tipo, valor: valorNum, vencimento,
+            natureza_id: naturezaId, centro_id: centroId, conta_id: contaId,
+            descricao: descricao.trim() || null,
+          }, onDone)}
+        >Criar via RPC oficial</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}

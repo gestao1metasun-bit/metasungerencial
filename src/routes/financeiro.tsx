@@ -30,6 +30,9 @@ import {
   type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia, type StatusFin,
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
+import { TitulosTabSupabase } from "@/modules/financeiro/TitulosTabSupabase";
+import { useFeatureFlag } from "@/config/featureFlags";
+
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
@@ -158,12 +161,13 @@ function FinanceiroPage() {
 
 
         <TabsContent value="receber" className="mt-5">
-          <TitulosTab tipo="AR" />
+          <TitulosTabSwitch tipo="AR" />
         </TabsContent>
 
         <TabsContent value="pagar" className="mt-5">
-          <TitulosTab tipo="AP" />
+          <TitulosTabSwitch tipo="AP" />
         </TabsContent>
+
 
         <TabsContent value="fornecedores" className="mt-5">
           <FornecedoresTab />

@@ -317,6 +317,19 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[36px] px-2">
+                <Checkbox
+                  aria-label="Selecionar todos"
+                  checked={
+                    selection.allChecked
+                      ? true
+                      : selection.someChecked
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={selection.toggleAll}
+                />
+              </TableHead>
               <TableHead className="w-[110px]">Código</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Documento</TableHead>
@@ -329,11 +342,11 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>
             )}
             {!isLoading && filtrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                   <FileText className="size-4 inline mr-1" />
                   Nenhum título encontrado no Supabase.
                 </TableCell>
@@ -341,8 +354,16 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
             )}
             {filtrados.map((r) => {
               const status = (r.status as TFStatus) ?? "PENDENTE";
+              const checked = selection.isSelected(r.id);
               return (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} data-state={checked ? "selected" : undefined}>
+                  <TableCell className="px-2">
+                    <Checkbox
+                      aria-label={`Selecionar título ${r.codigo ?? r.id.slice(0, 8)}`}
+                      checked={checked}
+                      onCheckedChange={() => selection.toggle(r.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{r.codigo ?? r.id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">{r.origem_tipo ?? "—"}</TableCell>
                   <TableCell className="text-xs">{r.numero_documento ?? "—"}</TableCell>

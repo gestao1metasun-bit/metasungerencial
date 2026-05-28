@@ -1079,6 +1079,219 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_comissao_eventos: {
+        Row: {
+          acao: string
+          comissao_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          motivo: string | null
+          percentual_anterior: number | null
+          percentual_novo: number | null
+          permissao_usada: string | null
+          status_anterior:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          status_novo:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          usuario_id: string
+          valor_anterior: number | null
+          valor_novo: number | null
+        }
+        Insert: {
+          acao: string
+          comissao_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          motivo?: string | null
+          percentual_anterior?: number | null
+          percentual_novo?: number | null
+          permissao_usada?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          usuario_id: string
+          valor_anterior?: number | null
+          valor_novo?: number | null
+        }
+        Update: {
+          acao?: string
+          comissao_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          motivo?: string | null
+          percentual_anterior?: number | null
+          percentual_novo?: number | null
+          permissao_usada?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["comercial_comissao_status"]
+            | null
+          usuario_id?: string
+          valor_anterior?: number | null
+          valor_novo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercial_comissao_eventos_comissao_id_fkey"
+            columns: ["comissao_id"]
+            isOneToOne: false
+            referencedRelation: "comercial_comissoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comercial_comissoes: {
+        Row: {
+          assinatura_evento_id: string | null
+          cancelada_em: string | null
+          cancelada_por: string | null
+          centro_resultado_id: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          conta_contabil_mapeavel: string | null
+          contrato_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          estornada_em: string | null
+          estornada_por: string | null
+          hash_remessa: string | null
+          id: string
+          liberada_em: string | null
+          liberada_por: string | null
+          lote_integracao_id: string | null
+          motivo_cancelamento: string | null
+          motivo_estorno: string | null
+          natureza_id: string | null
+          observacao: string | null
+          paga_em: string | null
+          paga_por: string | null
+          percentual: number
+          prevista_em: string
+          row_version: number
+          sistema_destino: string | null
+          status: Database["public"]["Enums"]["comercial_comissao_status"]
+          status_integracao: string | null
+          updated_at: string
+          valor_base: number
+          valor_calculado: number
+          vendedor_id: string | null
+          vendedor_nome: string | null
+        }
+        Insert: {
+          assinatura_evento_id?: string | null
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_contabil_mapeavel?: string | null
+          contrato_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          estornada_em?: string | null
+          estornada_por?: string | null
+          hash_remessa?: string | null
+          id?: string
+          liberada_em?: string | null
+          liberada_por?: string | null
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          motivo_estorno?: string | null
+          natureza_id?: string | null
+          observacao?: string | null
+          paga_em?: string | null
+          paga_por?: string | null
+          percentual: number
+          prevista_em?: string
+          row_version?: number
+          sistema_destino?: string | null
+          status?: Database["public"]["Enums"]["comercial_comissao_status"]
+          status_integracao?: string | null
+          updated_at?: string
+          valor_base: number
+          valor_calculado: number
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Update: {
+          assinatura_evento_id?: string | null
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_contabil_mapeavel?: string | null
+          contrato_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          estornada_em?: string | null
+          estornada_por?: string | null
+          hash_remessa?: string | null
+          id?: string
+          liberada_em?: string | null
+          liberada_por?: string | null
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          motivo_estorno?: string | null
+          natureza_id?: string | null
+          observacao?: string | null
+          paga_em?: string | null
+          paga_por?: string | null
+          percentual?: number
+          prevista_em?: string
+          row_version?: number
+          sistema_destino?: string | null
+          status?: Database["public"]["Enums"]["comercial_comissao_status"]
+          status_integracao?: string | null
+          updated_at?: string
+          valor_base?: number
+          valor_calculado?: number
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercial_comissoes_assinatura_evento_id_fkey"
+            columns: ["assinatura_evento_id"]
+            isOneToOne: false
+            referencedRelation: "comercial_assinatura_eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comercial_comissoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comercial_comissoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
       comercial_pipeline_etapas: {
         Row: {
           ativo: boolean
@@ -7040,6 +7253,17 @@ export type Database = {
       }
     }
     Functions: {
+      _comissao_transicionar: {
+        Args: {
+          p_acao: string
+          p_comissao_id: string
+          p_extra?: Json
+          p_motivo: string
+          p_novo_status: Database["public"]["Enums"]["comercial_comissao_status"]
+          p_permissao: string
+        }
+        Returns: string
+      }
       ajustar_estoque_manual_controlado: {
         Args: { _delta: number; _motivo: string; _produto_id: string }
         Returns: string
@@ -7383,6 +7607,34 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_comissao_alterar_percentual: {
+        Args: {
+          p_comissao_id: string
+          p_motivo: string
+          p_novo_percentual: number
+        }
+        Returns: string
+      }
+      rpc_comissao_cancelar: {
+        Args: { p_comissao_id: string; p_motivo: string }
+        Returns: string
+      }
+      rpc_comissao_estornar: {
+        Args: { p_comissao_id: string; p_motivo: string }
+        Returns: string
+      }
+      rpc_comissao_liberar: {
+        Args: { p_comissao_id: string; p_motivo?: string }
+        Returns: string
+      }
+      rpc_comissao_marcar_paga: {
+        Args: { p_comissao_id: string; p_motivo?: string }
+        Returns: string
+      }
+      rpc_comissao_reabrir: {
+        Args: { p_comissao_id: string; p_motivo: string }
+        Returns: string
+      }
       rpc_contrato_assinar: {
         Args: {
           p_contrato_id: string
@@ -7620,7 +7872,18 @@ export type Database = {
         | "comercial.contrato.assinar"
         | "comercial.contrato.assinar_excecao"
         | "comercial.contrato.ver_assinatura"
+        | "comercial.comissao.ver"
+        | "comercial.comissao.marcar_paga"
+        | "comercial.comissao.cancelar"
+        | "comercial.comissao.estornar"
+        | "comercial.comissao.alterar_percentual"
       app_role: "admin_master" | "admin_geral" | "usuario"
+      comercial_comissao_status:
+        | "PREVISTA"
+        | "LIBERADA"
+        | "PAGA"
+        | "CANCELADA"
+        | "ESTORNADA"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
       flag_escopo: "PESSOAL" | "EQUIPE" | "GLOBAL"
@@ -7843,8 +8106,20 @@ export const Constants = {
         "comercial.contrato.assinar",
         "comercial.contrato.assinar_excecao",
         "comercial.contrato.ver_assinatura",
+        "comercial.comissao.ver",
+        "comercial.comissao.marcar_paga",
+        "comercial.comissao.cancelar",
+        "comercial.comissao.estornar",
+        "comercial.comissao.alterar_percentual",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
+      comercial_comissao_status: [
+        "PREVISTA",
+        "LIBERADA",
+        "PAGA",
+        "CANCELADA",
+        "ESTORNADA",
+      ],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
       flag_cor: ["VERMELHO", "AMARELO", "VERDE", "AZUL", "ROXO", "CINZA"],
       flag_escopo: ["PESSOAL", "EQUIPE", "GLOBAL"],

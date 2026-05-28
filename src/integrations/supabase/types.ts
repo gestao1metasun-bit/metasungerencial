@@ -5750,33 +5750,26 @@ export type Database = {
       }
       v_lancamentos_derivados: {
         Row: {
-          centro_id: string | null
+          centro_resultado_id: string | null
           cliente_id: string | null
           codigo: string | null
-          codigo_externo: string | null
+          competencia: string | null
           conta_id: string | null
           contrato_id: string | null
           created_at: string | null
-          created_by: string | null
-          data_competencia: string | null
-          data_realizacao: string | null
-          data_vencimento: string | null
+          data_referencia: string | null
           descricao: string | null
-          direcao: string | null
-          documento: string | null
+          entidade_id: string | null
           fornecedor_id: string | null
           lancamento_id: string | null
-          lote_integracao_id: string | null
           natureza_id: string | null
-          obra_id: string | null
+          natureza_temporal: string | null
           origem: string | null
-          origem_id: string | null
           saldo: number | null
           status: string | null
-          status_integracao: string | null
-          tipo: string | null
-          valor_bruto: number | null
-          valor_liquido: number | null
+          tipo_lancamento: string | null
+          user_id: string | null
+          valor: number | null
         }
         Relationships: []
       }
@@ -6423,6 +6416,24 @@ export type Database = {
         }
         Relationships: []
       }
+      v_saude_sistema: {
+        Row: {
+          anexos_orfaos_titulos: number | null
+          aprovacoes_atrasadas: number | null
+          aprovacoes_pendentes: number | null
+          auditoria_24h: number | null
+          auditoria_7d: number | null
+          gerado_em: string | null
+          governance_pendentes: number | null
+          integracao_mov_erro: number | null
+          integracao_parcelas_erro: number | null
+          integracao_titulos_erro: number | null
+          titulos_alta_edicao: number | null
+          titulos_em_aberto: number | null
+          titulos_vencidos: number | null
+        }
+        Relationships: []
+      }
       v_status_material_obra: {
         Row: {
           obra_id: string | null
@@ -6930,25 +6941,44 @@ export type Database = {
         Args: { _request_id: string; _resultado: Json }
         Returns: undefined
       }
-      rpc_lancamento_criar: {
-        Args: {
-          _centro_id?: string
-          _cliente_id?: string
-          _competencia?: string
-          _conta_id?: string
-          _contrato_id?: string
-          _fornecedor_id?: string
-          _natureza_id: string
-          _observacoes?: string
-          _origem_id: string
-          _origem_tipo: string
-          _request_id?: string
-          _tipo: string
-          _valor: number
-          _vencimento: string
-        }
-        Returns: Json
-      }
+      rpc_lancamento_criar:
+        | {
+            Args: {
+              _centro_id: string
+              _cliente_id?: string
+              _competencia?: string
+              _conta_id: string
+              _contrato_id?: string
+              _descricao?: string
+              _forma_pagamento?: string
+              _fornecedor_id?: string
+              _natureza_id: string
+              _request_id: string
+              _tipo: string
+              _valor: number
+              _vencimento: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _centro_id?: string
+              _cliente_id?: string
+              _competencia?: string
+              _conta_id?: string
+              _contrato_id?: string
+              _fornecedor_id?: string
+              _natureza_id: string
+              _observacoes?: string
+              _origem_id: string
+              _origem_tipo: string
+              _request_id?: string
+              _tipo: string
+              _valor: number
+              _vencimento: string
+            }
+            Returns: Json
+          }
       rpc_renegociacao_aplicar: {
         Args: {
           _motivo: string

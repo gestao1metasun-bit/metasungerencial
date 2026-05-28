@@ -1,54 +1,77 @@
+# D16.PERF — Meta Oficial de Performance ERP Meta Sun
 
-# D15.3 — Fechamento Supabase da UI Financeira
+Objetivo: deixar o ERP **rápido como TOTVS RM** sem abrir mão de RLS, auditoria, governança ou D14/D15. Robusto **e** rápido.
 
-## Diagnóstico honesto
+## Metas oficiais (SLA interno)
 
-A UI financeira atual tem **~7.036 linhas** distribuídas em **30+ arquivos** que dependem de stores LocalStorage:
+| Indicador | Meta | Forma de medição |
+|---|---|---|
+| Auth Supabase (signIn) | ≤ 800 ms | `perf.mark('auth.start' → 'auth.ok')` |
+| Shell renderizado pós-login | ≤ 2 000 ms | `perf.mark('shell.ready')` |
+| Troca de módulo (cache quente) | ≤ 1 000 ms | `perf.mark('route.ready')` |
+| Primeira lista operacional | ≤ 1 500 ms | `perf.mark('data.ready')` |
+| Permissões carregadas | ≤ 500 ms | `perf.mark('perms.ready')` |
+| Bundle inicial (sem módulos) | ≤ 350 KB gzip | `vite build --report` |
 
-```text
-src/routes/financeiro.tsx                       1018  (mock-data + financeiro-store LS)
-src/routes/financeiro-titulos.tsx                673  (parcialmente Supabase)
-src/modules/financeiro/TitulosTab.tsx           2284  (fin-titulos-store LS)
-src/modules/financeiro/ConciliacaoTab.tsx        350  (fin-conciliacao-store LS)
-src/modules/financeiro/FechamentoTab.tsx         258  (fin-fechamento-store LS)
-src/modules/financeiro/CmvTab.tsx                457  (fin-titulos-store LS)
-src/modules/financeiro/CadastrosTab.tsx          688  (LS cadastros — D15.4)
-src/modules/financeiro/FornecedoresTab.tsx       164  (fin-fornecedores LS)
-src/components/app/financeiro/FluxoCaixaRealTab.tsx  237  (fin-fluxo-caixa LS)
-src/components/app/financeiro/AdiantamentosTab.tsx   355  (fin-adiantamentos LS)
-src/components/app/financeiro/RescisoesTab.tsx       301  (fin-rescisao LS)
-+ TituloRowActions, RenegociarTituloDialog, EdicaoRateioDialog, etc.
-```
+## Estratégia em 6 ondas
 
-Refatorar tudo em um único turno é tecnicamente possível mas produziria um diff de >5.000 linhas com altíssimo risco de regressão silenciosa em produção assistida. A diretriz oficial do projeto (memória D15) é virada incremental sob flags `D15_*`.
+### Onda P1 — Instrumentação (base de medição)
+- `src/lib/perf.ts`: helper `perfMark(label)`, `perfMeasure(from,to)`, ring buffer 200 entradas + `console.table` em dev.
+- Eventos oficiais: `login.start`, `auth.ok`, `perms.ready`, `shell.ready`, `route.<id>.ready`, `data.<key>.ready`.
+- Persistir P95 diário em tabela `perf_log` (id, evento, ms, rota, user_id, created_at) com RLS `admin` + insert via RPC `rpc_perf_log` (rate-limit por sessão). Sem PII.
+- Painel `/paineis/performance` (admin) com P50/P95 dos últimos 7 dias por evento.
 
-Por isso D15.3 é executada em **4 subwaves D15.3.a .. D15.3.d**, cada uma autocontida, com flag e relatório próprio.
+### Onda P2 — Login + Shell enxuto
+- `login.tsx`: remover qualquer prefetch de módulos. Só auth + redirect.
+- `__root.tsx` / shell: garantir que `MacroNav` e `Ribbon` não importem telas — só metadados de menu.
+- `usePermissoes`: 1 única query, `staleTime: 5min`, `gcTime: 30min`. Eliminar duplicações detectadas.
+- `SaudeSistema`, `DashboardReaisOverview`, `KpisOficiaisStrip`: **lazy + sob demanda** (não no boot). Carrega após `shell.ready` via `requestIdleCallback`.
+- Auditoria de imports síncronos no shell: nenhuma rota de módulo pode estar no grafo do root.
 
-## D15.3.a — TitulosTab Supabase (esta entrega)
+### Onda P3 — Lazy loading de módulos
+TanStack Start já suporta automatic code splitting. Validar/forçar:
+- Remover qualquer `export function` em route files (quebra splitting — ver `tanstack-code-splitting`).
+- Mover componentes pesados (`FinanceiroPage`, `ComercialPage`, `ContratosPage`, `ConfiguracoesPage`, `PaineisPage`, `EstoquePage`, `EngenhariaPage`) para `getRouteApi` + função interna não-exportada.
+- Garantir que charts (`recharts`), editores e libs grandes só sejam importados dentro do componente da rota, nunca no shell.
+- Conferir `vite build` → cada módulo vira chunk próprio.
 
-Escopo:
-- Novo arquivo `src/modules/financeiro/TitulosTabSupabase.tsx` consumindo `useTitulosFinanceiros`, `useParcelasTitulo`, `useMovimentacoesTitulo`, `useReceberParcela`, `useCancelarTitulo`, `useLancamentos`, `useCriarLancamento`, `lancamentosRepo`, `lancamentos-repo`, `propostas-revisao-repo`, `cadastros-repo`. Sem nenhum import de `@/lib/fin-*-store` nem de `useRepoFinanceiro`.
-- Flag `D15_TITULOS_SUPABASE` (default `true` em dev/preview, gateada por `useFlag` em produção) decide se a página `/financeiro` aba "Títulos" renderiza `TitulosTabSupabase` (novo) ou `TitulosTab` (legado). Permite rollback imediato sem revert.
-- Falha de Supabase: nada de fallback silencioso. Erro vira toast + `errorLogRepo.log({ modulo: 'financeiro', tela: 'titulos', acao, severidade: 'error' })`.
-- Preferências visuais permitidas em LS (mantidas): `ms.fin.titulos.colunas`, `ms.fin.titulos.filtros`, `ms.fin.titulos.larguras`, `ms.fin.titulos.abaAtiva`. Chaveadas com prefixo `ui.` para o `ls-guard` não bloquear.
-- Modal "Receber parcela" já existente (`ReceberParcelaModal`) é reutilizado — já é 100% Supabase.
-- Nova entrada de lançamento manual usa `useCriarLancamento` (RPC oficial). Sem gravação direta em `fin-titulos-store`.
-- Documento `docs/d15-3-a-titulos-supabase.md` com chaves LS removidas, chaves LS mantidas (com motivo), validação manual e impacto.
+### Onda P4 — React Query + paginação server-side
+- Auditar todos os `useQuery` operacionais: aplicar `staleTime: 30s` mínimo, `gcTime: 5min`, `refetchOnWindowFocus: false` por padrão (override só onde necessário).
+- Remover hooks duplicados (mesmo `queryKey` montado 2x).
+- Aplicar `useServerPagination` + `ServerPaginationFooter` (D14.5) nos grids ainda em client-side: Títulos, Lançamentos, Movimentações, Contratos, Propostas, Estoque, Fornecedores, Clientes, Compras, Aprovações.
+- Padrão: page 50, max 200, busca debounced 250ms, `count: 'exact'` só na primeira página.
+- Proibir `.select('*')` sem `.limit()` (regra já no charter D15, reforçar nas telas).
 
-Fora de escopo D15.3.a (vão em b/c/d):
-- Adiantamentos (D15.3.b)
-- Rescisões + Renegociações + Edição de rateio (D15.3.c)
-- Conciliação + Fechamento + Fluxo de Caixa Real + CMV + Fornecedores (D15.3.d)
-- `src/routes/financeiro.tsx` aba "Lançamentos" / "Mensal" / "Recorrentes" que ainda usam `financeiro-store` (D15.3.d) — esses são gerenciais sobre `v_lancamentos_derivados` e exigem virada cuidadosa.
-- `CadastrosTab` financeiro (vai em D15.4 junto com cadastros gerais)
+### Onda P5 — Dashboard + saúde controlados
+- `useSaudeSistema`: refresh manual + auto a cada **5 min** (era 2 min). `staleTime: 4min`.
+- `useKpisOficiais`: idem 5min, `enabled` só quando aba visível (`document.visibilityState === 'visible'`).
+- Zero polling no shell. Dashboard só monta na rota `/paineis/*`.
 
-## Como o usuário valida D15.3.a
+### Onda P6 — Supabase (queries, views, índices)
+- Rodar `pg_stat_statements` top 20 e EXPLAIN ANALYZE nas 6 views oficiais `v_kpis_*_oficial`, `v_saude_sistema`, `v_lancamentos_derivados`, `v_titulos_enriquecido`, `v_adiantamentos_enriquecido`, `v_reconciliacao_*`.
+- Criar índices faltantes (foco: filtros por `deleted_at IS NULL`, `created_at DESC`, `status`, `data_competencia`, `obra_id`, `cliente_id`).
+- Trocar `select('*')` por colunas explícitas nas views/RPCs consumidas pela UI.
+- Validar que nenhuma view oficial caiu de `security_invoker=on` (D14.2).
+- Medir RPCs críticas (`rpc_lancamento_criar`, `rpc_titulos_totais`, `rpc_contrato_assinar`, etc.) com timing client + log servidor.
 
-1. Abrir `/financeiro` → aba **Títulos** → confirma que listagem vem do Supabase (registros reais ou vazio se zerado).
-2. Criar um lançamento manual a Pagar/Receber → confirma que aparece em `/paineis/financeiro` via `v_lancamentos_derivados`.
-3. Executar **Purga LS** em `/paineis/saude-sistema` → aba Títulos continua funcional.
-4. Em `/paineis/erros`, confirma que erros financeiros aparecem com `modulo='financeiro'`.
+## Segurança (intocada)
+- RLS, policies, audit triggers, `security_invoker=on`, `error_log`, `governance_matrix`, workflow flags, idempotência → **nada removido**.
+- Cada otimização passa pelo linter Supabase. Baseline atual ~122 WARN (aceitos D14.2) — não pode subir por causa de performance.
+- `perf_log` e `rpc_perf_log` seguem padrão D14: RLS admin, EXECUTE só authenticated, search_path explícito, sem PII.
 
-## Após D15.3.a
+## Entrega
+1. `docs/d16-perf-relatorio.md`: gargalos identificados, antes/depois (ms), arquivos alterados, queries otimizadas, módulos lazy.
+2. Painel `/paineis/performance` (admin) com gráfico P50/P95 7 dias.
+3. Checklist de conformidade: RLS ok, linter estável, auditoria preservada.
 
-Relatório executivo + maturidade estimada (~97,8% → ~98,0%). Aprovação explícita do usuário antes de iniciar D15.3.b.
+## Sequência de execução
+P1 (instrumentação) → P2 (login/shell) → mede baseline real → P3 (lazy) → mede → P4 (Query+paginação) → P5 (dashboard) → P6 (Supabase) → relatório final.
+
+Cada onda commit isolado, com leitura do painel `/paineis/performance` antes/depois.
+
+## Riscos
+- Hooks duplicados podem estar em componentes muito acoplados → refator pode tocar várias telas; mitigado por flag `D16_PERF_*` quando o risco for alto.
+- Mexer em `usePermissoes` afeta TODO o ERP → mudança apenas em cache, não em lógica de permissão.
+- Lazy loading agressivo pode mostrar fallback chato → usar `pendingComponent` com skeleton do shell já carregado.
+
+Confirma para eu começar pela Onda P1 (instrumentação + painel)?

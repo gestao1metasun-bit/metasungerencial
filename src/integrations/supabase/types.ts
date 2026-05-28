@@ -1288,6 +1288,66 @@ export type Database = {
         }
         Relationships: []
       }
+      error_log: {
+        Row: {
+          acao: string | null
+          created_at: string
+          id: string
+          mensagem: string
+          modulo: string | null
+          ocorrido_em: string
+          payload: Json | null
+          resolucao_nota: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          severidade: string
+          stack: string | null
+          status: string
+          tela: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao?: string | null
+          created_at?: string
+          id?: string
+          mensagem: string
+          modulo?: string | null
+          ocorrido_em?: string
+          payload?: Json | null
+          resolucao_nota?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade?: string
+          stack?: string | null
+          status?: string
+          tela?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string | null
+          created_at?: string
+          id?: string
+          mensagem?: string
+          modulo?: string | null
+          ocorrido_em?: string
+          payload?: Json | null
+          resolucao_nota?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade?: string
+          stack?: string | null
+          status?: string
+          tela?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       estoque_entregas: {
         Row: {
           baixado_em: string | null

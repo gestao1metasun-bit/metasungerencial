@@ -508,7 +508,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
                 acao: "cancelar_lote",
                 mensagem: (e as Error)?.message ?? "Falha ao cancelar título em lote",
                 severidade: "error",
-                detalhe: { titulo_id: t.id },
+                payload: { titulo_id: t.id },
               });
             }
           }

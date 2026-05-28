@@ -373,21 +373,8 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
    Helpers internos (mantidos no mesmo arquivo p/ coesão)
    ========================================================================== */
 
-function ReceberAcao({ tituloId, disabled, onPickParcela }: {
-  tituloId: string; disabled: boolean; onPickParcela: (id: string) => void;
-}) {
-  const { data: parcelas = [] } = useParcelasTitulo(tituloId);
-  const abertas = parcelas.filter((p) => Number(p.saldo) > 0.001);
-  return (
-    <Button
-      size="sm" variant="outline" disabled={disabled || abertas.length === 0}
-      onClick={() => abertas[0] && onPickParcela(abertas[0].id)}
-      title={abertas.length === 0 ? "Sem parcelas em aberto" : `Receber parcela #${abertas[0].numero}`}
-    >
-      Receber
-    </Button>
-  );
-}
+// ReceberAcao removido em D17.UI.1 — substituído por RowActions (kind="baixar").
+
 
 function ReceberParcelaModalConnector({ parcelaId, onClose }: {
   parcelaId: string | null; onClose: () => void;

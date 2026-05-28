@@ -3835,6 +3835,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rpc_idempotencia: {
+        Row: {
+          created_at: string
+          payload_hash: string | null
+          request_id: string
+          resultado: Json | null
+          rpc_nome: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          payload_hash?: string | null
+          request_id: string
+          resultado?: Json | null
+          rpc_nome: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          payload_hash?: string | null
+          request_id?: string
+          resultado?: Json | null
+          rpc_nome?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       session_log: {
         Row: {
           created_at: string
@@ -5527,6 +5554,38 @@ export type Database = {
         }
         Relationships: []
       }
+      v_lancamentos_derivados: {
+        Row: {
+          centro_id: string | null
+          cliente_id: string | null
+          codigo: string | null
+          codigo_externo: string | null
+          conta_id: string | null
+          contrato_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_competencia: string | null
+          data_realizacao: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          direcao: string | null
+          documento: string | null
+          fornecedor_id: string | null
+          lancamento_id: string | null
+          lote_integracao_id: string | null
+          natureza_id: string | null
+          obra_id: string | null
+          origem: string | null
+          origem_id: string | null
+          saldo: number | null
+          status: string | null
+          status_integracao: string | null
+          tipo: string | null
+          valor_bruto: number | null
+          valor_liquido: number | null
+        }
+        Relationships: []
+      }
       v_obra_custo_realizado: {
         Row: {
           codigo: string | null
@@ -6446,6 +6505,17 @@ export type Database = {
         }
         Returns: string
       }
+      fn_audit_lancamento: {
+        Args: {
+          _acao: string
+          _entidade: string
+          _entidade_id: string
+          _modulo: string
+          _motivo?: string
+          _valor_novo: Json
+        }
+        Returns: undefined
+      }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
         Returns: string
@@ -6628,6 +6698,84 @@ export type Database = {
       restore_entidade: {
         Args: { _id: string; _modulo: string; _motivo: string }
         Returns: undefined
+      }
+      rpc_adiantamento_abater: {
+        Args: {
+          _adiantamento_id: string
+          _observacao?: string
+          _parcela_id: string
+          _request_id?: string
+          _valor: number
+        }
+        Returns: Json
+      }
+      rpc_adiantamento_registrar: {
+        Args: {
+          _cliente_id?: string
+          _competencia?: string
+          _conta_id: string
+          _contrato_id?: string
+          _data: string
+          _direcao: string
+          _fornecedor_id?: string
+          _observacao?: string
+          _request_id?: string
+          _valor: number
+        }
+        Returns: Json
+      }
+      rpc_lancamento_criar: {
+        Args: {
+          _centro_id?: string
+          _cliente_id?: string
+          _competencia?: string
+          _conta_id?: string
+          _contrato_id?: string
+          _fornecedor_id?: string
+          _natureza_id: string
+          _observacoes?: string
+          _origem_id: string
+          _origem_tipo: string
+          _request_id?: string
+          _tipo: string
+          _valor: number
+          _vencimento: string
+        }
+        Returns: Json
+      }
+      rpc_renegociacao_aplicar: {
+        Args: {
+          _motivo: string
+          _novo_valor: number
+          _novo_vencimento: string
+          _request_id?: string
+          _titulo_origem_id: string
+        }
+        Returns: Json
+      }
+      rpc_titulo_baixar: {
+        Args: {
+          _conta_id: string
+          _data: string
+          _forma: string
+          _observacao?: string
+          _parcela_id: string
+          _request_id?: string
+          _valor: number
+        }
+        Returns: Json
+      }
+      rpc_titulo_cancelar: {
+        Args: { _motivo: string; _request_id?: string; _titulo_id: string }
+        Returns: Json
+      }
+      rpc_titulo_estornar: {
+        Args: {
+          _motivo: string
+          _movimentacao_id: string
+          _request_id?: string
+        }
+        Returns: Json
       }
       rpc_titulos_totais: {
         Args: {

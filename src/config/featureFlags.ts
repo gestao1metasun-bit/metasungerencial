@@ -39,7 +39,11 @@ export type FeatureFlagName =
   | "D15_FECHAMENTO_SUPABASE"
   | "D15_CONCILIACAO_SUPABASE"
   | "D15_FLUXO_CAIXA_SUPABASE"
-  | "D15_CMV_SUPABASE";
+  | "D15_CMV_SUPABASE"
+  // D15.3.e — Lançamentos derivados / Recorrentes / Centros & Naturezas (default ligado)
+  | "D15_LANCAMENTOS_SUPABASE"
+  | "D15_RECORRENTES_SUPABASE"
+  | "D15_CENTROS_NATUREZAS_SUPABASE";
 
 const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_FINANCEIRO: false,
@@ -63,6 +67,10 @@ const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_CONCILIACAO_SUPABASE: true,
   D15_FLUXO_CAIXA_SUPABASE: true,
   D15_CMV_SUPABASE: true,
+  // D15.3.e — Supabase é o padrão para lançamentos derivados, recorrentes e centros/naturezas.
+  D15_LANCAMENTOS_SUPABASE: true,
+  D15_RECORRENTES_SUPABASE: true,
+  D15_CENTROS_NATUREZAS_SUPABASE: true,
 };
 
 

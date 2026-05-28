@@ -52,6 +52,9 @@ import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
 import { RescisoesTabSupabase } from "@/components/app/financeiro/RescisoesTabSupabase";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";
 import { FluxoCaixaRealTabSupabase } from "@/components/app/financeiro/FluxoCaixaRealTabSupabase";
+import { LancamentosTabSupabase } from "@/modules/financeiro/LancamentosTabSupabase";
+import { RecorrentesTabSupabase } from "@/modules/financeiro/RecorrentesTabSupabase";
+import { CentrosNaturezasTabSupabase } from "@/modules/financeiro/CentrosNaturezasTabSupabase";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/financeiro")({
@@ -143,12 +146,16 @@ function FinanceiroPage() {
 
         {/* LANÇAMENTOS */}
         <TabsContent value="lancamentos" className="mt-5">
-          <LancamentosTab lancs={lancs} setLancs={setLancs} centros={centros} naturezas={naturezas} />
+          {isFeatureEnabled("D15_LANCAMENTOS_SUPABASE")
+            ? <LancamentosTabSupabase />
+            : <LancamentosTab lancs={lancs} setLancs={setLancs} centros={centros} naturezas={naturezas} />}
         </TabsContent>
 
         {/* RECORRENTES */}
         <TabsContent value="recorrentes" className="mt-5">
-          <RecorrentesTab recs={recs} setRecs={setRecs} centros={centros} naturezas={naturezas} />
+          {isFeatureEnabled("D15_RECORRENTES_SUPABASE")
+            ? <RecorrentesTabSupabase />
+            : <RecorrentesTab recs={recs} setRecs={setRecs} centros={centros} naturezas={naturezas} />}
         </TabsContent>
 
         {/* GERENCIAL */}
@@ -158,10 +165,12 @@ function FinanceiroPage() {
 
         {/* CENTROS */}
         <TabsContent value="centros" className="mt-5">
-          <CentrosNaturezasTab
-            centros={centros} naturezas={naturezas}
-            setCentros={setCentros} setNaturezas={setNaturezas}
-          />
+          {isFeatureEnabled("D15_CENTROS_NATUREZAS_SUPABASE")
+            ? <CentrosNaturezasTabSupabase />
+            : <CentrosNaturezasTab
+                centros={centros} naturezas={naturezas}
+                setCentros={setCentros} setNaturezas={setNaturezas}
+              />}
         </TabsContent>
 
         <TabsContent value="cadastros" className="mt-5">

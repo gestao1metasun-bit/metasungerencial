@@ -16,8 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLancamentos, lancamentosRepo, type NovoLancamentoInput } from "@/lib/repositories/lancamentos-repo";
-import { useNaturezasFin, useCentrosResultado, useContasFinanceiras } from "@/lib/repositories/cadastros-repo";
-import { logError } from "@/lib/observability";
+import { useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
+import { logError } from "@/lib/repositories/error-log-repo";
 import { fmtBRL } from "@/lib/mock-data";
 
 const UI_KEY = "ui.fin.lancamentos.v1";

@@ -43,6 +43,7 @@ import { RenegociacaoHistoricoList } from "@/components/app/financeiro/Renegocia
 import { AdiantamentosTab } from "@/components/app/financeiro/AdiantamentosTab";
 import { AdiantamentosTabSupabase } from "@/modules/financeiro/AdiantamentosTabSupabase";
 import { isFeatureEnabled } from "@/config/featureFlags";
+
 import { RescisoesTab } from "@/components/app/financeiro/RescisoesTab";
 import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab";
 import { toast } from "sonner";

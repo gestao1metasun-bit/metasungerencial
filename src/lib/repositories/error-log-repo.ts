@@ -62,7 +62,7 @@ export const errorLogRepo = {
         acao: input.acao ?? null,
         mensagem: String(input.mensagem ?? "erro desconhecido").slice(0, 2000),
         stack: input.stack?.slice(0, 8000) ?? null,
-        payload: trimPayload(input.payload) ?? null,
+        payload: (trimPayload(input.payload) ?? null) as never,
         severidade: input.severidade ?? "error",
         user_agent: navigator.userAgent.slice(0, 500),
         url: window.location.href.slice(0, 500),

@@ -378,12 +378,191 @@ layer2.renegs_orfas = renegsOrfas;
 layer2.fornecedores_unicos = fornecsVistos.size;
 
 // ----------------------------------------------------------------------------
+// 4.7 CAMADA 4 — Lançamentos (metasun.fin.lancamentos.v1) + auxiliares
+// ----------------------------------------------------------------------------
+// Reclassifica a fonte canônica REAL da operação financeira Meta Sun.
+// Cada lançamento é classificado em UMA categoria dominante (destino oficial)
+// e pode acumular findings adicionais (natureza, centro, obra, dup, status).
+// ----------------------------------------------------------------------------
+
+const lancamentos = arr(stores['metasun.fin.lancamentos.v1']);
+const recorrentes = arr(stores['metasun.fin.recorrentes.v1']);
+const centrosCat = arr(stores['metasun.fin.centros.v1']);
+const naturezasCat = arr(stores['metasun.fin.naturezas.v1']);
+
+const norm = (s: any) => String(s ?? '').trim().toLowerCase();
+const centrosValidos = new Set(centrosCat.map((c: any) => norm(c?.nome)));
+const naturezasValidas = new Set(naturezasCat.map((n: any) => norm(n?.nome)));
+
+const CAMADA_REALIZADA = new Set(['realizado', 'confirmado', 'pago', 'recebido']);
+const CAMADA_PREVISTA  = new Set(['previsto', 'a realizar', 'a pagar', 'a receber', 'orçado futuro', 'orcado futuro', 'orçado', 'orcado']);
+const TIPO_ENTRADA = new Set(['entrada', 'receita', 'crédito', 'credito', 'recebimento']);
+const TIPO_SAIDA   = new Set(['saída', 'saida', 'despesa', 'débito', 'debito', 'pagamento']);
+
+type LancRow = {
+  id: string;
+  categoria_dominante: Categoria;
+  tipo: string;
+  camada: string;
+  valor: number;
+  natureza_ok: boolean;
+  centro_ok: boolean;
+  obra_match: boolean | null;
+  flags: string[];
+};
+
+const lancResumo = {
+  total: 0,
+  recorrentes: lancamentos.length === 0 ? 0 : 0,
+  entrada: 0,
+  saida: 0,
+  realizado: 0,
+  previsto: 0,
+  saldo_bruto_entradas: 0,
+  saldo_bruto_saidas: 0,
+  natureza_invalida: 0,
+  centro_invalido: 0,
+  obra_invalida: 0,
+  status_invalido: 0,
+  valor_invalido: 0,
+  data_invalida: 0,
+  duplicidade_potencial: 0,
+  sem_destino: 0,
+  lancamento_sem_titulo: 0,
+  convertivel_titulo_receber: 0,
+  convertivel_titulo_pagar: 0,
+  convertivel_mov_realizada: 0,
+  convertivel_mov_prevista: 0,
+  convertivel_recorrente: recorrentes.length,
+  perda_potencial: 0,
+};
+
+const lancRows: LancRow[] = [];
+const dupKey = new Map<string, number>();
+const isISODate = (s: string) => /^\d{4}-\d{2}-\d{2}/.test(String(s));
+
+for (const l of lancamentos) {
+  const id = String(l?.id ?? '(s/ id)');
+  lancResumo.total++;
+  const tipoRaw = norm(l?.tipo);
+  const camadaRaw = norm(l?.camada);
+  const valor = Number(l?.valor ?? 0);
+  const flags: string[] = [];
+
+  let categoria_dominante: Categoria = 'SEM_DESTINO';
+  const isEntrada = TIPO_ENTRADA.has(tipoRaw);
+  const isSaida   = TIPO_SAIDA.has(tipoRaw);
+  const isReal    = CAMADA_REALIZADA.has(camadaRaw);
+  const isPrev    = CAMADA_PREVISTA.has(camadaRaw);
+
+  // ---- Bloqueantes
+  if (!isISODate(l?.data ?? '')) {
+    lancResumo.data_invalida++;
+    flags.push('DATA_INVALIDA');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'DATA_INVALIDA', detalhe: `data '${l?.data}' não ISO YYYY-MM-DD` });
+  }
+  if (!(valor > 0)) {
+    lancResumo.valor_invalido++;
+    flags.push('VALOR_INVALIDO');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'VALOR_INVALIDO', detalhe: `valor inválido (${l?.valor})` });
+  }
+  if (!isEntrada && !isSaida) {
+    lancResumo.status_invalido++;
+    flags.push('TIPO_INVALIDO');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'STATUS_INVALIDO', detalhe: `tipo '${l?.tipo}' fora do enum (Entrada/Saída)` });
+  }
+  if (!isReal && !isPrev) {
+    lancResumo.status_invalido++;
+    flags.push('CAMADA_INVALIDA');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'STATUS_INVALIDO', detalhe: `camada '${l?.camada}' fora do enum (Realizado/Confirmado/Previsto/A realizar/Orçado futuro)` });
+  }
+
+  // ---- Natureza / Centro / Obra
+  const natOk = !!l?.natureza && naturezasValidas.has(norm(l.natureza));
+  const ccOk  = !!l?.centroCusto && centrosValidos.has(norm(l.centroCusto));
+  if (!natOk) {
+    lancResumo.natureza_invalida++;
+    flags.push('NATUREZA_INVALIDA');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'NATUREZA_INVALIDA', detalhe: `natureza '${l?.natureza}' fora do catálogo metasun.fin.naturezas.v1` });
+  }
+  if (!ccOk) {
+    lancResumo.centro_invalido++;
+    flags.push('CENTRO_RESULTADO_INVALIDO');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'CENTRO_RESULTADO_INVALIDO', detalhe: `centroCusto '${l?.centroCusto}' fora do catálogo metasun.fin.centros.v1` });
+  }
+  let obraMatch: boolean | null = null;
+  if (l?.obra != null && String(l.obra).trim() !== '') {
+    obraMatch = /^OB-?\d+/i.test(String(l.obra));
+    if (!obraMatch) {
+      lancResumo.obra_invalida++;
+      flags.push('OBRA_INVALIDA');
+      findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'OBRA_INVALIDA', detalhe: `obra '${l?.obra}' fora do padrão OB-####` });
+    }
+  }
+
+  // ---- Duplicidade potencial: data + valor + tipo + natureza
+  const dk = `${norm(l?.data)}|${valor}|${tipoRaw}|${norm(l?.natureza)}`;
+  dupKey.set(dk, (dupKey.get(dk) ?? 0) + 1);
+
+  // ---- Classificação dominante
+  if (isEntrada) { lancResumo.entrada++; lancResumo.saldo_bruto_entradas += valor; }
+  if (isSaida)   { lancResumo.saida++;   lancResumo.saldo_bruto_saidas   += valor; }
+  if (isReal)    lancResumo.realizado++;
+  if (isPrev)    lancResumo.previsto++;
+
+  if (isEntrada && isPrev) categoria_dominante = 'CONVERTIVEL_TITULO_RECEBER';
+  else if (isSaida && isPrev) categoria_dominante = 'CONVERTIVEL_TITULO_PAGAR';
+  else if (isReal && (isEntrada || isSaida)) {
+    // Realizado precisa de título-pai para virar movimentação atômica
+    categoria_dominante = 'CONVERTIVEL_MOVIMENTACAO_REALIZADA';
+    lancResumo.lancamento_sem_titulo++;
+    flags.push('LANCAMENTO_SEM_TITULO');
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'LANCAMENTO_SEM_TITULO', detalhe: 'realizado sem título-pai (RPC criar-título+baixa atômica)' });
+  } else {
+    categoria_dominante = 'SEM_DESTINO';
+    lancResumo.sem_destino++;
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: id, categoria: 'SEM_DESTINO', detalhe: `não classificável (tipo=${l?.tipo}, camada=${l?.camada})` });
+  }
+
+  lancRows.push({ id, categoria_dominante, tipo: l?.tipo ?? '', camada: l?.camada ?? '', valor, natureza_ok: natOk, centro_ok: ccOk, obra_match: obraMatch, flags });
+}
+
+// Duplicidade pós-loop
+for (const [k, n] of dupKey.entries()) {
+  if (n > 1) {
+    lancResumo.duplicidade_potencial += n;
+    findings.push({ store: 'metasun.fin.lancamentos.v1', ref_id: k, categoria: 'DUPLICIDADE_POTENCIAL', detalhe: `${n} lançamentos com mesma data+valor+tipo+natureza` });
+  }
+}
+
+// Recorrentes — validação do catálogo (não geram títulos agora; viram regra futura)
+for (const r of recorrentes) {
+  const id = String(r?.id ?? '(s/ id)');
+  const natOk = !!r?.natureza && naturezasValidas.has(norm(r.natureza));
+  const ccOk  = !!r?.centroCusto && centrosValidos.has(norm(r.centroCusto));
+  if (!natOk) findings.push({ store: 'metasun.fin.recorrentes.v1', ref_id: id, categoria: 'NATUREZA_INVALIDA', detalhe: `natureza '${r?.natureza}' fora do catálogo` });
+  if (!ccOk)  findings.push({ store: 'metasun.fin.recorrentes.v1', ref_id: id, categoria: 'CENTRO_RESULTADO_INVALIDO', detalhe: `centroCusto '${r?.centroCusto}' fora do catálogo` });
+  if (!(Number(r?.valor) > 0)) findings.push({ store: 'metasun.fin.recorrentes.v1', ref_id: id, categoria: 'VALOR_INVALIDO', detalhe: 'recorrente com valor inválido' });
+}
+
+// Distribuição final
+for (const row of lancRows) {
+  switch (row.categoria_dominante) {
+    case 'CONVERTIVEL_TITULO_RECEBER': lancResumo.convertivel_titulo_receber++; break;
+    case 'CONVERTIVEL_TITULO_PAGAR':   lancResumo.convertivel_titulo_pagar++;   break;
+    case 'CONVERTIVEL_MOVIMENTACAO_REALIZADA': lancResumo.convertivel_mov_realizada++; break;
+    case 'CONVERTIVEL_MOVIMENTACAO_PREVISTA':  lancResumo.convertivel_mov_prevista++;  break;
+  }
+}
+
+// ----------------------------------------------------------------------------
 // 5. CAMADA 3 — Mapeabilidade (já refletida nas findings)
 // ----------------------------------------------------------------------------
 
 // Marca como OK tudo que passou sem nenhuma finding bloqueante
 const idsComProblema = new Set(findings.map((f) => `${f.store}::${f.ref_id}`));
-const totalRegistros = titulos.length + renegs.length + estornos.length + adiants.length + compras.length + concilia.length;
+const totalRegistros = titulos.length + renegs.length + estornos.length + adiants.length + compras.length + concilia.length
+                     + lancamentos.length + recorrentes.length;
 
 const contadoresPorCategoria: Record<Categoria | 'OK', number> = {
   OK: 0,
@@ -403,18 +582,46 @@ const contadoresPorCategoria: Record<Categoria | 'OK', number> = {
   PERDA_POTENCIAL: 0,
   SALDO_DIVERGENTE: 0,
   RENEGOCIACAO_INCONSISTENTE: 0,
+  CONVERTIVEL_TITULO_RECEBER: 0,
+  CONVERTIVEL_TITULO_PAGAR: 0,
+  CONVERTIVEL_MOVIMENTACAO_REALIZADA: 0,
+  CONVERTIVEL_MOVIMENTACAO_PREVISTA: 0,
+  CONVERTIVEL_RECORRENTE: 0,
+  LANCAMENTO_SEM_TITULO: 0,
+  DATA_INVALIDA: 0,
+  VALOR_INVALIDO: 0,
+  OBRA_INVALIDA: 0,
+  DUPLICIDADE_POTENCIAL: 0,
 };
 for (const f of findings) contadoresPorCategoria[f.categoria]++;
-contadoresPorCategoria.OK = Math.max(0, totalRegistros - idsComProblema.size);
 
-const bloqueantes = contadoresPorCategoria.INVALIDO + contadoresPorCategoria.ORFAO + contadoresPorCategoria.INCOMPATIVEL;
+// Soma classificações dominantes da camada 4 (não vêm de findings)
+contadoresPorCategoria.CONVERTIVEL_TITULO_RECEBER += lancResumo.convertivel_titulo_receber;
+contadoresPorCategoria.CONVERTIVEL_TITULO_PAGAR   += lancResumo.convertivel_titulo_pagar;
+contadoresPorCategoria.CONVERTIVEL_MOVIMENTACAO_REALIZADA += lancResumo.convertivel_mov_realizada;
+contadoresPorCategoria.CONVERTIVEL_MOVIMENTACAO_PREVISTA  += lancResumo.convertivel_mov_prevista;
+contadoresPorCategoria.CONVERTIVEL_RECORRENTE += lancResumo.convertivel_recorrente;
+
+const lancsConvertiveis = lancResumo.convertivel_titulo_receber
+                        + lancResumo.convertivel_titulo_pagar
+                        + lancResumo.convertivel_mov_realizada
+                        + lancResumo.convertivel_mov_prevista;
+
+contadoresPorCategoria.OK = Math.max(0, (titulos.length + renegs.length + estornos.length + adiants.length + compras.length + concilia.length) - idsComProblema.size);
+
+const bloqueantes = contadoresPorCategoria.INVALIDO + contadoresPorCategoria.ORFAO + contadoresPorCategoria.INCOMPATIVEL
+                  + contadoresPorCategoria.VALOR_INVALIDO + contadoresPorCategoria.DATA_INVALIDA + contadoresPorCategoria.SEM_DESTINO;
 const ajustaveis = contadoresPorCategoria.DIVERGENTE + contadoresPorCategoria.STATUS_INVALIDO
                  + contadoresPorCategoria.NATUREZA_INVALIDA + contadoresPorCategoria.CENTRO_RESULTADO_INVALIDO
                  + contadoresPorCategoria.VINCULO_AUSENTE + contadoresPorCategoria.SALDO_DIVERGENTE
-                 + contadoresPorCategoria.RENEGOCIACAO_INCONSISTENTE + contadoresPorCategoria.DUPLICIDADE;
-const migravel = contadoresPorCategoria.OK + contadoresPorCategoria.CONVERTIDO;
+                 + contadoresPorCategoria.RENEGOCIACAO_INCONSISTENTE + contadoresPorCategoria.DUPLICIDADE
+                 + contadoresPorCategoria.OBRA_INVALIDA + contadoresPorCategoria.DUPLICIDADE_POTENCIAL
+                 + contadoresPorCategoria.LANCAMENTO_SEM_TITULO;
+const migravel = contadoresPorCategoria.OK + contadoresPorCategoria.CONVERTIDO + lancsConvertiveis + lancResumo.convertivel_recorrente;
 const paridadePct = totalRegistros > 0 ? (migravel / totalRegistros) * 100 : 0;
 const readinessDualRead = paridadePct >= 95 && bloqueantes === 0;
+
+
 
 // ----------------------------------------------------------------------------
 // 6. Geração de relatórios

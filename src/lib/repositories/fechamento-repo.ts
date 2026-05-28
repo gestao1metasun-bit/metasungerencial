@@ -37,7 +37,7 @@ export function useFechamentos(opts?: { conta_id?: string }) {
       if (opts?.conta_id) q = q.eq("conta_id", opts.conta_id);
       const { data, error } = await q;
       if (error) {
-        await logError("fechamentos.list", error.message, opts);
+        await logError({ modulo: "financeiro", acao: "fechamentos.list", mensagem: error.message, payload: opts, severidade: "error" });
         throw error;
       }
       return (data ?? []) as FechamentoPeriodo[];
@@ -56,7 +56,7 @@ export function useAbrirFechamento() {
         p_observacoes: i.observacoes ?? null,
       } as never);
       if (error) {
-        await logError("fechamentos.abrir", error.message, i);
+        await logError({ modulo: "financeiro", acao: "fechamentos.abrir", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
       return data as string;
@@ -74,7 +74,7 @@ export function useFecharFechamento() {
         p_saldo_apurado: i.saldo_apurado,
       } as never);
       if (error) {
-        await logError("fechamentos.fechar", error.message, i);
+        await logError({ modulo: "financeiro", acao: "fechamentos.fechar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
     },
@@ -91,7 +91,7 @@ export function useReabrirFechamento() {
         p_motivo: i.motivo,
       } as never);
       if (error) {
-        await logError("fechamentos.reabrir", error.message, i);
+        await logError({ modulo: "financeiro", acao: "fechamentos.reabrir", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
     },

@@ -36,7 +36,7 @@ export function useExtratoConta(conta_id: string | null | undefined, opts?: { st
       if (opts?.status) q = q.eq("status", opts.status);
       const { data, error } = await q;
       if (error) {
-        await logError("conciliacao.list", error.message, { conta_id });
+        await logError({ modulo: "financeiro", acao: "conciliacao.list", mensagem: error.message, payload: { conta_id }, severidade: "error" });
         throw error;
       }
       return (data ?? []) as ExtratoLinha[];
@@ -56,7 +56,7 @@ export function useConciliarExtrato() {
         p_observacao: i.observacao ?? null,
       } as never);
       if (error) {
-        await logError("conciliacao.conciliar", error.message, i);
+        await logError({ modulo: "financeiro", acao: "conciliacao.conciliar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
     },
@@ -73,7 +73,7 @@ export function useDesconciliarExtrato() {
         p_motivo: i.motivo,
       } as never);
       if (error) {
-        await logError("conciliacao.desconciliar", error.message, i);
+        await logError({ modulo: "financeiro", acao: "conciliacao.desconciliar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
     },
@@ -90,7 +90,7 @@ export function useIgnorarExtrato() {
         p_motivo: i.motivo,
       } as never);
       if (error) {
-        await logError("conciliacao.ignorar", error.message, i);
+        await logError({ modulo: "financeiro", acao: "conciliacao.ignorar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
       }
     },

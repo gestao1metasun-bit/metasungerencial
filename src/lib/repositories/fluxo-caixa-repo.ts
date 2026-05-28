@@ -30,7 +30,7 @@ export function useFluxoCaixaOficial(opts?: { from?: string; to?: string; conta_
       if (opts?.conta_id) q = q.eq("conta_id", opts.conta_id);
       const { data, error } = await q;
       if (error) {
-        await logError("fluxo-caixa.list", error.message, opts);
+        await logError({ modulo: "financeiro", acao: "fluxo-caixa.list", mensagem: error.message, payload: opts, severidade: "error" });
         throw error;
       }
       return (data ?? []) as FluxoCaixaLinha[];

@@ -41,7 +41,7 @@ export function useFornecedoresSupabase(opts?: { ativo?: boolean }) {
       if (opts?.ativo !== undefined) q = q.eq("ativo", opts.ativo);
       const { data, error } = await q;
       if (error) {
-        await logError("fornecedores.list", error.message, { opts });
+        await logError({ modulo: "financeiro", acao: "fornecedores.list", mensagem: error.message, payload: { opts }, severidade: "error" });
         throw error;
       }
       return (data ?? []) as Fornecedor[];
@@ -65,7 +65,7 @@ export function useUpsertFornecedor() {
         .select()
         .single();
       if (error) {
-        await logError("fornecedores.upsert", error.message, { payload });
+        await logError({ modulo: "financeiro", acao: "fornecedores.upsert", mensagem: error.message, payload: { payload }, severidade: "error" });
         throw error;
       }
       return data as Fornecedor;
@@ -87,7 +87,7 @@ export function useSoftDeleteFornecedor() {
         })
         .eq("id", id);
       if (error) {
-        await logError("fornecedores.delete", error.message, { id });
+        await logError({ modulo: "financeiro", acao: "fornecedores.delete", mensagem: error.message, payload: { id }, severidade: "error" });
         throw error;
       }
     },

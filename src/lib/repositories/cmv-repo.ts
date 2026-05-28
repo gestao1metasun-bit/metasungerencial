@@ -30,7 +30,7 @@ export function useCmvOficial(opts?: { from?: string; to?: string; centro_id?: s
       if (opts?.centro_id) q = q.eq("centro_resultado_id", opts.centro_id);
       const { data, error } = await q;
       if (error) {
-        await logError("cmv.list", error.message, opts);
+        await logError({ modulo: "financeiro", acao: "cmv.list", mensagem: error.message, payload: opts, severidade: "error" });
         throw error;
       }
       return (data ?? []) as CmvLinha[];

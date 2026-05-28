@@ -3799,6 +3799,36 @@ export type Database = {
         }
         Relationships: []
       }
+      perf_log: {
+        Row: {
+          created_at: string
+          evento: string
+          id: number
+          ms: number
+          rota: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          evento: string
+          id?: number
+          ms: number
+          rota?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          evento?: string
+          id?: number
+          ms?: number
+          rota?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       period_locks: {
         Row: {
           ano: number
@@ -7137,6 +7167,18 @@ export type Database = {
           },
         ]
       }
+      v_perf_p95_7d: {
+        Row: {
+          amostras: number | null
+          evento: string | null
+          max_ms: number | null
+          min_ms: number | null
+          p50_ms: number | null
+          p95_ms: number | null
+          rota: string | null
+        }
+        Relationships: []
+      }
       v_rastreabilidade_operacional: {
         Row: {
           contrato_codigo: string | null
@@ -8245,6 +8287,15 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_perf_log: {
+        Args: {
+          p_evento: string
+          p_ms: number
+          p_rota?: string
+          p_user_agent?: string
+        }
+        Returns: number
+      }
       rpc_proposta_decidir_aprovacao_excecao: {
         Args: { p_aprovacao_id: string; p_decisao: string; p_motivo: string }
         Returns: undefined

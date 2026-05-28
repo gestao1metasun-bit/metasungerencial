@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";

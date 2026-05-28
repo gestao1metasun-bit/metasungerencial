@@ -94,6 +94,11 @@ function EstoquePage() {
   const podeAjustarEstoque = isAdmin;
   const st = useEstoqueState();
 
+  // D16.PERF P2.1 — first-list.ready (estoque)
+  useEffect(() => {
+    void import("@/lib/perf").then((m) => m.reportFirstListReady("estoque.itens"));
+  }, []);
+
   const onExportar = () => {
     try {
       exportToCSV("estoque-itens", st.itens, [

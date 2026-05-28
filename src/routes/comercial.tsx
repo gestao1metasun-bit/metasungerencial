@@ -159,6 +159,11 @@ function ComercialPage() {
   const [vendedoresList, setVendedoresList] = useState<Vendedor[]>(vendedoresSeed);
   const [volume, setVolume] = useState<VolumeMes[]>(volumeSeed);
 
+  // D16.PERF P2.1 — first-list.ready (pipeline comercial)
+  useEffect(() => {
+    void import("@/lib/perf").then((m) => m.reportFirstListReady("comercial.pipeline"));
+  }, []);
+
   return (
     <>
       <PageHeader title="Comercial" subtitle="Propostas, contratos, vendedores e volume mensal." />

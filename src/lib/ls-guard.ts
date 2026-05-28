@@ -9,7 +9,7 @@
  * transição), mas torna toda violação visível.
  */
 
-import { logError } from '@/lib/error-log';
+import { logError } from '@/lib/repositories/error-log-repo';
 
 const FORBIDDEN_PREFIXES = [
   'metasun.fin.',

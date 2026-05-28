@@ -16,7 +16,7 @@
  *   - rodar 1x por máquina; idempotente (rodar de novo só remove resíduo)
  */
 
-import { logError } from '@/lib/error-log';
+import { logError } from '@/lib/repositories/error-log-repo';
 
 const WHITELIST_PREFIX = [
   // UI / preferências

@@ -44,7 +44,7 @@ export function LancamentosTabSupabase() {
   const { data: lancs = [], isLoading } = useLancamentos(filtro);
   const naturezas = useNaturezasFin();
   const centros = useCentrosResultado();
-  const contas = useContasFinanceiras();
+  const contas = useContasFinanceirasOficiais();
   const [open, setOpen] = useState(false);
 
   function updFiltro(p: Partial<typeof ui>) {

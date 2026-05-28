@@ -3354,6 +3354,265 @@ export type Database = {
           },
         ]
       }
+      operacoes_financeiras: {
+        Row: {
+          banco_contrato: string | null
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          codigo: string | null
+          codigo_externo: string | null
+          colaborador_nome: string | null
+          colaborador_user_id: string | null
+          competencia: string | null
+          conta_contabil_mapeavel: string | null
+          conta_id: string | null
+          created_at: string
+          created_by: string | null
+          data_operacao: string
+          deleted_at: string | null
+          finalidade: string | null
+          forma_baixa: Database["public"]["Enums"]["op_fin_forma_baixa"] | null
+          fornecedor_id: string | null
+          hash_remessa: string | null
+          id: string
+          instituicao: string | null
+          juros_pct: number | null
+          lote: string | null
+          natureza_caixa: Database["public"]["Enums"]["op_fin_natureza_caixa"]
+          natureza_id: string | null
+          observacoes: string | null
+          qtd_parcelas: number
+          renegociacao_de: string | null
+          row_version: number
+          sistema_destino: string | null
+          socio_nome: string | null
+          status: Database["public"]["Enums"]["op_fin_status"]
+          status_integracao: string | null
+          terceiro_documento: string | null
+          terceiro_nome: string | null
+          tipo: Database["public"]["Enums"]["op_fin_tipo"]
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          banco_contrato?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          codigo_externo?: string | null
+          colaborador_nome?: string | null
+          colaborador_user_id?: string | null
+          competencia?: string | null
+          conta_contabil_mapeavel?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_operacao?: string
+          deleted_at?: string | null
+          finalidade?: string | null
+          forma_baixa?: Database["public"]["Enums"]["op_fin_forma_baixa"] | null
+          fornecedor_id?: string | null
+          hash_remessa?: string | null
+          id?: string
+          instituicao?: string | null
+          juros_pct?: number | null
+          lote?: string | null
+          natureza_caixa: Database["public"]["Enums"]["op_fin_natureza_caixa"]
+          natureza_id?: string | null
+          observacoes?: string | null
+          qtd_parcelas?: number
+          renegociacao_de?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          socio_nome?: string | null
+          status?: Database["public"]["Enums"]["op_fin_status"]
+          status_integracao?: string | null
+          terceiro_documento?: string | null
+          terceiro_nome?: string | null
+          tipo: Database["public"]["Enums"]["op_fin_tipo"]
+          updated_at?: string
+          valor_total: number
+        }
+        Update: {
+          banco_contrato?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          codigo_externo?: string | null
+          colaborador_nome?: string | null
+          colaborador_user_id?: string | null
+          competencia?: string | null
+          conta_contabil_mapeavel?: string | null
+          conta_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_operacao?: string
+          deleted_at?: string | null
+          finalidade?: string | null
+          forma_baixa?: Database["public"]["Enums"]["op_fin_forma_baixa"] | null
+          fornecedor_id?: string | null
+          hash_remessa?: string | null
+          id?: string
+          instituicao?: string | null
+          juros_pct?: number | null
+          lote?: string | null
+          natureza_caixa?: Database["public"]["Enums"]["op_fin_natureza_caixa"]
+          natureza_id?: string | null
+          observacoes?: string | null
+          qtd_parcelas?: number
+          renegociacao_de?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          socio_nome?: string | null
+          status?: Database["public"]["Enums"]["op_fin_status"]
+          status_integracao?: string | null
+          terceiro_documento?: string | null
+          terceiro_nome?: string | null
+          tipo?: Database["public"]["Enums"]["op_fin_tipo"]
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacoes_financeiras_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_renegociacao_de_fkey"
+            columns: ["renegociacao_de"]
+            isOneToOne: false
+            referencedRelation: "operacoes_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operacoes_financeiras_eventos: {
+        Row: {
+          ator: string | null
+          criado_em: string
+          detalhes: Json
+          evento: string
+          id: string
+          motivo: string | null
+          operacao_id: string
+        }
+        Insert: {
+          ator?: string | null
+          criado_em?: string
+          detalhes?: Json
+          evento: string
+          id?: string
+          motivo?: string | null
+          operacao_id: string
+        }
+        Update: {
+          ator?: string | null
+          criado_em?: string
+          detalhes?: Json
+          evento?: string
+          id?: string
+          motivo?: string | null
+          operacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacoes_financeiras_eventos_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "operacoes_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operacoes_financeiras_parcelas: {
+        Row: {
+          created_at: string
+          id: string
+          numero: number
+          operacao_id: string
+          row_version: number
+          titulo_id: string | null
+          updated_at: string
+          valor: number
+          vencimento: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          numero: number
+          operacao_id: string
+          row_version?: number
+          titulo_id?: string | null
+          updated_at?: string
+          valor: number
+          vencimento: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          numero?: number
+          operacao_id?: string
+          row_version?: number
+          titulo_id?: string | null
+          updated_at?: string
+          valor?: number
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacoes_financeiras_parcelas_operacao_id_fkey"
+            columns: ["operacao_id"]
+            isOneToOne: false
+            referencedRelation: "operacoes_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_parcelas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_parcelas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "operacoes_financeiras_parcelas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordem_compra_itens: {
         Row: {
           created_at: string

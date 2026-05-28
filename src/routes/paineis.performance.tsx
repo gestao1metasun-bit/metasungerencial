@@ -50,10 +50,10 @@ function PerformancePage() {
     queryKey: ['perf', 'p95-7d'],
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase
-        .from('v_perf_p95_7d' as never)
-        .select('evento, rota, amostras, p50_ms, p95_ms, max_ms, min_ms') as { data: Row[] | null; error: { message: string } | null };
+        .from('v_perf_p95_7d')
+        .select('evento, rota, amostras, p50_ms, p95_ms, max_ms, min_ms');
       if (error) throw new Error(error.message);
-      return data ?? [];
+      return (data ?? []) as Row[];
     },
     staleTime: 60_000,
     refetchOnWindowFocus: false,

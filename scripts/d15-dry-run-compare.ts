@@ -776,6 +776,8 @@ writeFileSync(detailPath, JSON.stringify({
   layer1,
   layer2,
   categorias: contadoresPorCategoria,
+  lancamentos_resumo: lancResumo,
+  lancamentos_rows: lancRows,
   totalRegistros,
   migravel,
   ajustaveis,
@@ -783,6 +785,7 @@ writeFileSync(detailPath, JSON.stringify({
   paridadePct,
   readinessDualRead,
   findings,
+
 }, null, 2));
 
 console.log(`\n✅ Relatório markdown:  ${reportPath}`);

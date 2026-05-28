@@ -58,3 +58,13 @@ export { ProcessosMenu } from "@/components/app/grid/ProcessosMenu";
 export type { ProcessoItem } from "@/components/app/grid/ProcessosMenu";
 export { FlagPicker } from "@/components/app/flags/FlagPicker";
 export { CommandPalette } from "@/components/app/CommandPalette";
+
+// D17.UI.1 — Padrão UI Enterprise RM/TOTVS
+export { RowActions } from "./RowActions";
+export type { RowAction, RowActionKind, RowActionsProps } from "./RowActions";
+export { ColumnManager } from "./ColumnManager";
+export type { ColumnManagerProps, ColumnManagerPrefs } from "./ColumnManager";
+export { useColumnPrefs } from "@/lib/ui/column-prefs";
+export type { ColumnDef } from "@/lib/ui/column-prefs";
+export { FilterPanel } from "./FilterPanel";
+export type { FilterPanelProps } from "./FilterPanel";

@@ -132,6 +132,16 @@ function RootComponent() {
   const shouldBlockPrivateRoute = !isPublicRoute && !loading && !hasValidSession;
   useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); installLsGuard(); }, []);
 
+  // D16.PERF — marca shell.ready uma vez quando rota privada renderiza com sessão válida
+  useEffect(() => {
+    if (!isPublicRoute && hasValidSession && !loading) {
+      perfMark("shell.ready");
+      // Se houve login nesta sessão, mede login → shell
+      perfMeasure("login.start", "shell.ready", "shell.ready");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasValidSession, loading, isPublicRoute]);
+
   return (
     <QueryClientProvider client={queryClient}>
       {shouldHoldPrivateRoute ? <AuthBootstrapScreen /> : shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}

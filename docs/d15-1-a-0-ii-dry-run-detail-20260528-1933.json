@@ -1,0 +1,575 @@
+{
+  "snapshot_path": "docs/d15-1-a-0-ii-snapshot-20260528-1530-a0145662.json",
+  "snapshot_version": "v2",
+  "layer1": {
+    "parse_ok": true,
+    "snapshot_version": "v2",
+    "operador": "Renan Barcelos",
+    "fonte_canonica": true,
+    "wave_correta": true,
+    "hash_declarado": "a014566231a14d739d56bd9c51befe8e6f1f88700bb7a0eca88dc3ef8bf45675",
+    "hash_recomputado": "a014566231a14d739d56bd9c51befe8e6f1f88700bb7a0eca88dc3ef8bf45675",
+    "hash_confere": true
+  },
+  "layer2": {
+    "titulos_count": 0,
+    "renegs_count": 0,
+    "estornos_count": 0,
+    "adiants_count": 0,
+    "compras_count": 0,
+    "concilia_count": 0,
+    "titulos_orfaos_vinculo": 0,
+    "titulos_status_invalido": 0,
+    "titulos_tipo_invalido": 0,
+    "titulos_saldo_divergente": 0,
+    "parcelas_orfas": 0,
+    "movs_orfas_parcela": 0,
+    "renegs_orfas": 0,
+    "fornecedores_unicos": 0
+  },
+  "cobertura": {
+    "financeiro": {
+      "total_chaves_esperadas": 30,
+      "chaves_presentes": 12,
+      "chaves_ausentes": [
+        "fin-titulos",
+        "fin-renegociacao",
+        "fin-estornos",
+        "fin-adiantamentos",
+        "fin-compras",
+        "fin-conciliacao",
+        "ms.fin.titulos.v1",
+        "ms.fin.renegociacoes.v1",
+        "ms.fin.rescisoes.v1",
+        "ms.fin.adiantamentos.v1",
+        "ms.fin.compras.v1",
+        "ms.fin.conciliacao.v1",
+        "ms.fin.pendencias.v1",
+        "ms.fin.fechamentos.v1",
+        "ms.fin.fechamentos.v2",
+        "ms.fin.contas.v1",
+        "ms.fin.parametros.v1",
+        "fin-parametros"
+      ],
+      "total_registros": 136,
+      "bytes": 16636,
+      "findings_count": 8,
+      "bloqueantes": 0,
+      "ajustaveis": 8,
+      "ok": 128
+    },
+    "auditoria": {
+      "total_chaves_esperadas": 1,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.audit.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "comercial_contratos": {
+      "total_chaves_esperadas": 10,
+      "chaves_presentes": 3,
+      "chaves_ausentes": [
+        "contrato-base-overrides-v1",
+        "ms.aditivos.v1",
+        "ms.fv.propostas.v1",
+        "ms.fv.proposta_config.v1",
+        "ms.fv.kanban.cols.v5",
+        "ms.fv.kanban.assign-leads.v1",
+        "ms.clientes.extra.v1"
+      ],
+      "total_registros": 16,
+      "bytes": 3191,
+      "findings_count": 7,
+      "bloqueantes": 0,
+      "ajustaveis": 7,
+      "ok": 9
+    },
+    "engenharia_obras": {
+      "total_chaves_esperadas": 3,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.engenharia.obras.kanban",
+        "ms.engenharia.obras.snapshot.v1",
+        "ms.obras.finalizacao.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "estoque": {
+      "total_chaves_esperadas": 5,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.estoque.itens.v1",
+        "ms.estoque.mov.v1",
+        "ms.estoque.log.v1",
+        "ms.estoque.necessidades.v1",
+        "ms.estoque.compras.transito.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "posvenda": {
+      "total_chaves_esperadas": 4,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.posvenda.chamados.v1",
+        "ms.posvenda.tipos.v1",
+        "ms.posvenda.gatilhos.v1",
+        "ms.posvenda.seq.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "cadastros_identidade": {
+      "total_chaves_esperadas": 7,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.consultores.v1",
+        "ms.gerentes.v1",
+        "ms.equipes.v1",
+        "ms.bancos.v1",
+        "ms.perfis.v1",
+        "ms.usuarios.v1",
+        "ms.usuarioAtual.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "engenharia_fv": {
+      "total_chaves_esperadas": 10,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.fv.params.v1",
+        "ms.fv.modulos.v1",
+        "ms.fv.inversores.v2",
+        "ms.fv.tarifas.v1",
+        "ms.fv.hist_irradiacao.v1",
+        "ms.fv.cidades.v3",
+        "ms.fv.concs.v3",
+        "ms.fv.distribs.v1",
+        "ms.fv.custos.v1",
+        "ms.fv.origens-captacao.v1"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    },
+    "ui_preferencias": {
+      "total_chaves_esperadas": 4,
+      "chaves_presentes": 0,
+      "chaves_ausentes": [
+        "ms.fv.propostas.view",
+        "ms.fv.propostas.tabela.hidden.v2",
+        "ms.fv.propostas.tabela.order.v2",
+        "ms.fv.propostas.tabela.widths.v2"
+      ],
+      "total_registros": 0,
+      "bytes": 0,
+      "findings_count": 0,
+      "bloqueantes": 0,
+      "ajustaveis": 0,
+      "ok": 0
+    }
+  },
+  "categorias": {
+    "LANCAMENTO_SEM_TITULO": 8,
+    "CLIENTE_SEM_DOCUMENTO": 7,
+    "CONVERTIVEL_TITULO_RECEBER": 0,
+    "CONVERTIVEL_TITULO_PAGAR": 0,
+    "CONVERTIVEL_MOVIMENTACAO_REALIZADA": 0,
+    "CONVERTIVEL_MOVIMENTACAO_PREVISTA": 0,
+    "CONVERTIVEL_RECORRENTE": 9
+  },
+  "lancamentos_resumo": {
+    "total": 13,
+    "entrada": 4,
+    "saida": 9,
+    "realizado": 8,
+    "previsto": 5,
+    "saldo_bruto_entradas": 659167,
+    "saldo_bruto_saidas": 538700,
+    "natureza_invalida": 0,
+    "centro_invalido": 0,
+    "obra_invalida": 0,
+    "status_invalido": 0,
+    "valor_invalido": 0,
+    "data_invalida": 0,
+    "duplicidade_potencial": 0,
+    "sem_destino": 0,
+    "lancamento_sem_titulo": 8,
+    "convertivel_titulo_receber": 0,
+    "convertivel_titulo_pagar": 0,
+    "convertivel_mov_realizada": 0,
+    "convertivel_mov_prevista": 0,
+    "convertivel_recorrente": 9,
+    "perda_potencial": 0
+  },
+  "lancamentos_rows": [
+    {
+      "id": "L-001",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 12000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-002",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 178000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-003",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Entrada",
+      "camada": "Realizado",
+      "valor": 360000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-004",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 42000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-005",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Realizado",
+      "valor": 3200,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-010",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Confirmado",
+      "valor": 142000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-011",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Entrada",
+      "camada": "Confirmado",
+      "valor": 29667,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-012",
+      "categoria_dominante": "CONVERTIVEL_MOVIMENTACAO_REALIZADA",
+      "tipo": "Saída",
+      "camada": "Confirmado",
+      "valor": 18500,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": [
+        "LANCAMENTO_SEM_TITULO"
+      ]
+    },
+    {
+      "id": "L-020",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "Previsto",
+      "valor": 22000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": []
+    },
+    {
+      "id": "L-021",
+      "categoria_dominante": "CONVERTIVEL_TITULO_RECEBER",
+      "tipo": "Entrada",
+      "camada": "Previsto",
+      "valor": 195000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    },
+    {
+      "id": "L-030",
+      "categoria_dominante": "CONVERTIVEL_TITULO_RECEBER",
+      "tipo": "Entrada",
+      "camada": "A realizar",
+      "valor": 74500,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    },
+    {
+      "id": "L-031",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "A realizar",
+      "valor": 86000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": true,
+      "flags": []
+    },
+    {
+      "id": "L-040",
+      "categoria_dominante": "CONVERTIVEL_TITULO_PAGAR",
+      "tipo": "Saída",
+      "camada": "Orçado futuro",
+      "valor": 35000,
+      "natureza_ok": true,
+      "centro_ok": true,
+      "obra_match": null,
+      "flags": []
+    }
+  ],
+  "auditoria": {
+    "total": 0,
+    "entidades_distintas": [],
+    "acoes_distintas": [],
+    "atores_distintos": [],
+    "sem_entidade": 0,
+    "sem_acao": 0,
+    "sem_timestamp": 0,
+    "sem_ator": 0,
+    "data_min": null,
+    "data_max": null
+  },
+  "comercial": {
+    "contratos_total": 8,
+    "contratos_sem_cliente": 0,
+    "contratos_sem_valor": 0,
+    "contratos_duplicados": 0,
+    "propostas_total": 0,
+    "propostas_sem_cliente": 0,
+    "propostas_orfas": 0,
+    "leads_total": 0,
+    "leads_sem_coluna": 0,
+    "leads_duplicados": 0,
+    "kanban_colunas": 0,
+    "aditivos_total": 0,
+    "aditivos_orfaos": 0,
+    "clientes_total": 7,
+    "clientes_sem_documento": 7,
+    "clientes_duplicados": 0
+  },
+  "cadastros": {
+    "consultores": 0,
+    "gerentes": 0,
+    "equipes": 0,
+    "bancos": 0,
+    "perfis": 0,
+    "usuarios": 0,
+    "usuario_atual_ok": false,
+    "fornecedores_legado": 3,
+    "duplicados": 0
+  },
+  "estoque": {
+    "itens_total": 0,
+    "movimentos_total": 0,
+    "log_total": 0,
+    "necessidades_total": 0,
+    "transito_total": 0,
+    "itens_sem_codigo": 0,
+    "saldos_negativos": 0,
+    "movs_orfas": 0
+  },
+  "obras": {
+    "kanban_total": 0,
+    "snapshot_total": 0,
+    "finalizacao_total": 0,
+    "sem_contrato": 0,
+    "status_invalido": 0
+  },
+  "posvenda": {
+    "chamados_total": 0,
+    "tipos_total": 0,
+    "gatilhos_total": 0,
+    "seq_keys": 0,
+    "sem_tipo": 0
+  },
+  "chaves_extras": [
+    "ms.grid.titulos.AR.cols.v1",
+    "ms.grid.titulos.AP.cols.v1"
+  ],
+  "totalRegistros": 152,
+  "migravel": 146,
+  "ajustaveis": 15,
+  "bloqueantes": 0,
+  "paridadePct": 96.05263157894737,
+  "readinessDualRead": true,
+  "findings": [
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-001",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-002",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-003",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-004",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-005",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-010",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-011",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "metasun.fin.lancamentos.v1",
+      "dominio": "financeiro",
+      "ref_id": "L-012",
+      "categoria": "LANCAMENTO_SEM_TITULO",
+      "detalhe": "realizado sem título-pai (RPC criar-título+baixa atômica)"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-001",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-002",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-003",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-004",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-005",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-006",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    },
+    {
+      "store": "ms.clientes.full.v1",
+      "dominio": "comercial_contratos",
+      "ref_id": "CLI-007",
+      "categoria": "CLIENTE_SEM_DOCUMENTO",
+      "detalhe": "cliente sem CPF/CNPJ"
+    }
+  ]
+}

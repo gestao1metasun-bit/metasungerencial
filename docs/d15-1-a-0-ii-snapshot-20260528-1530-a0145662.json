@@ -1,0 +1,1977 @@
+{
+  "manifest": {
+    "wave": "D15.1.a.0.ii",
+    "passo": "Passo 2 — snapshot ampliado (audit + comercial + estoque + obras + pós-venda)",
+    "purpose": "snapshot-canonico-meta-sun",
+    "operador": {
+      "nome": "Renan Barcelos",
+      "funcao": "Gerência / Financeiro"
+    },
+    "maquina": {
+      "descricao": "Notebook/PC principal — operação financeira diária Meta Sun",
+      "navegador": "Google Chrome",
+      "perfil": "Perfil operacional principal Meta Sun"
+    },
+    "origem": "https://metasungerencial.lovable.app/financeiro",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "timestamp_iso": "2026-05-28T19:30:54.087Z",
+    "timezone": "America/Manaus",
+    "versao_erp": null
+  },
+  "catalogo": {
+    "financeiro": [
+      "fin-titulos",
+      "fin-renegociacao",
+      "fin-estornos",
+      "fin-adiantamentos",
+      "fin-compras",
+      "fin-conciliacao",
+      "ms.fin.titulos.v1",
+      "ms.fin.renegociacoes.v1",
+      "ms.fin.rescisoes.v1",
+      "ms.fin.adiantamentos.v1",
+      "ms.fin.compras.v1",
+      "ms.fin.conciliacao.v1",
+      "ms.fin.fornecedores.v1",
+      "ms.fin.pendencias.v1",
+      "ms.fin.fechamentos.v1",
+      "ms.fin.fechamentos.v2",
+      "ms.fin.contas.v1",
+      "ms.fin.contas.v2",
+      "ms.fin.centros.v2",
+      "ms.fin.naturezas.v2",
+      "ms.fin.grupos.v1",
+      "ms.fin.subgrupos.v1",
+      "ms.fin.meios.v1",
+      "ms.fin.tipos-aplicacao.v1",
+      "ms.fin.parametros.v1",
+      "fin-parametros",
+      "metasun.fin.lancamentos.v1",
+      "metasun.fin.recorrentes.v1",
+      "metasun.fin.centros.v1",
+      "metasun.fin.naturezas.v1"
+    ],
+    "auditoria": [
+      "ms.audit.v1"
+    ],
+    "comercial_contratos": [
+      "ms.contratos.v2",
+      "ms.contratos.lastSync",
+      "contrato-base-overrides-v1",
+      "ms.aditivos.v1",
+      "ms.fv.propostas.v1",
+      "ms.fv.proposta_config.v1",
+      "ms.fv.kanban.cols.v5",
+      "ms.fv.kanban.assign-leads.v1",
+      "ms.clientes.full.v1",
+      "ms.clientes.extra.v1"
+    ],
+    "engenharia_obras": [
+      "ms.engenharia.obras.kanban",
+      "ms.engenharia.obras.snapshot.v1",
+      "ms.obras.finalizacao.v1"
+    ],
+    "estoque": [
+      "ms.estoque.itens.v1",
+      "ms.estoque.mov.v1",
+      "ms.estoque.log.v1",
+      "ms.estoque.necessidades.v1",
+      "ms.estoque.compras.transito.v1"
+    ],
+    "posvenda": [
+      "ms.posvenda.chamados.v1",
+      "ms.posvenda.tipos.v1",
+      "ms.posvenda.gatilhos.v1",
+      "ms.posvenda.seq.v1"
+    ],
+    "cadastros_identidade": [
+      "ms.consultores.v1",
+      "ms.gerentes.v1",
+      "ms.equipes.v1",
+      "ms.bancos.v1",
+      "ms.perfis.v1",
+      "ms.usuarios.v1",
+      "ms.usuarioAtual.v1"
+    ],
+    "engenharia_fv": [
+      "ms.fv.params.v1",
+      "ms.fv.modulos.v1",
+      "ms.fv.inversores.v2",
+      "ms.fv.tarifas.v1",
+      "ms.fv.hist_irradiacao.v1",
+      "ms.fv.cidades.v3",
+      "ms.fv.concs.v3",
+      "ms.fv.distribs.v1",
+      "ms.fv.custos.v1",
+      "ms.fv.origens-captacao.v1"
+    ],
+    "ui_preferencias": [
+      "ms.fv.propostas.view",
+      "ms.fv.propostas.tabela.hidden.v2",
+      "ms.fv.propostas.tabela.order.v2",
+      "ms.fv.propostas.tabela.widths.v2"
+    ]
+  },
+  "cobertura_resumo": {
+    "financeiro": {
+      "total": 30,
+      "presentes": 12,
+      "ausentes": [
+        "fin-titulos",
+        "fin-renegociacao",
+        "fin-estornos",
+        "fin-adiantamentos",
+        "fin-compras",
+        "fin-conciliacao",
+        "ms.fin.titulos.v1",
+        "ms.fin.renegociacoes.v1",
+        "ms.fin.rescisoes.v1",
+        "ms.fin.adiantamentos.v1",
+        "ms.fin.compras.v1",
+        "ms.fin.conciliacao.v1",
+        "ms.fin.pendencias.v1",
+        "ms.fin.fechamentos.v1",
+        "ms.fin.fechamentos.v2",
+        "ms.fin.contas.v1",
+        "ms.fin.parametros.v1",
+        "fin-parametros"
+      ],
+      "bytes": 16636
+    },
+    "auditoria": {
+      "total": 1,
+      "presentes": 0,
+      "ausentes": [
+        "ms.audit.v1"
+      ],
+      "bytes": 0
+    },
+    "comercial_contratos": {
+      "total": 10,
+      "presentes": 3,
+      "ausentes": [
+        "contrato-base-overrides-v1",
+        "ms.aditivos.v1",
+        "ms.fv.propostas.v1",
+        "ms.fv.proposta_config.v1",
+        "ms.fv.kanban.cols.v5",
+        "ms.fv.kanban.assign-leads.v1",
+        "ms.clientes.extra.v1"
+      ],
+      "bytes": 3191
+    },
+    "engenharia_obras": {
+      "total": 3,
+      "presentes": 0,
+      "ausentes": [
+        "ms.engenharia.obras.kanban",
+        "ms.engenharia.obras.snapshot.v1",
+        "ms.obras.finalizacao.v1"
+      ],
+      "bytes": 0
+    },
+    "estoque": {
+      "total": 5,
+      "presentes": 0,
+      "ausentes": [
+        "ms.estoque.itens.v1",
+        "ms.estoque.mov.v1",
+        "ms.estoque.log.v1",
+        "ms.estoque.necessidades.v1",
+        "ms.estoque.compras.transito.v1"
+      ],
+      "bytes": 0
+    },
+    "posvenda": {
+      "total": 4,
+      "presentes": 0,
+      "ausentes": [
+        "ms.posvenda.chamados.v1",
+        "ms.posvenda.tipos.v1",
+        "ms.posvenda.gatilhos.v1",
+        "ms.posvenda.seq.v1"
+      ],
+      "bytes": 0
+    },
+    "cadastros_identidade": {
+      "total": 7,
+      "presentes": 0,
+      "ausentes": [
+        "ms.consultores.v1",
+        "ms.gerentes.v1",
+        "ms.equipes.v1",
+        "ms.bancos.v1",
+        "ms.perfis.v1",
+        "ms.usuarios.v1",
+        "ms.usuarioAtual.v1"
+      ],
+      "bytes": 0
+    },
+    "engenharia_fv": {
+      "total": 10,
+      "presentes": 0,
+      "ausentes": [
+        "ms.fv.params.v1",
+        "ms.fv.modulos.v1",
+        "ms.fv.inversores.v2",
+        "ms.fv.tarifas.v1",
+        "ms.fv.hist_irradiacao.v1",
+        "ms.fv.cidades.v3",
+        "ms.fv.concs.v3",
+        "ms.fv.distribs.v1",
+        "ms.fv.custos.v1",
+        "ms.fv.origens-captacao.v1"
+      ],
+      "bytes": 0
+    },
+    "ui_preferencias": {
+      "total": 4,
+      "presentes": 0,
+      "ausentes": [
+        "ms.fv.propostas.view",
+        "ms.fv.propostas.tabela.hidden.v2",
+        "ms.fv.propostas.tabela.order.v2",
+        "ms.fv.propostas.tabela.widths.v2"
+      ],
+      "bytes": 0
+    }
+  },
+  "stores_por_dominio": {
+    "financeiro": {
+      "fin-titulos": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-renegociacao": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-estornos": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-adiantamentos": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-compras": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-conciliacao": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.titulos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.renegociacoes.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.rescisoes.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.adiantamentos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.compras.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.conciliacao.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.fornecedores.v1": {
+        "present": true,
+        "raw_bytes": 196,
+        "parsed": [
+          {
+            "id": "F-001",
+            "nome": "Canadian Solar",
+            "documento": "12.345.678/0001-00",
+            "ativo": true
+          },
+          {
+            "id": "F-002",
+            "nome": "WEG Inversores",
+            "ativo": true
+          },
+          {
+            "id": "F-003",
+            "nome": "Transportadora Norte",
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.pendencias.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.fechamentos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.fechamentos.v2": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.contas.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fin.contas.v2": {
+        "present": true,
+        "raw_bytes": 675,
+        "parsed": [
+          {
+            "id": "CF-001",
+            "nome": "Sicredi",
+            "tipo": "Banco",
+            "banco": "Sicredi",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-002",
+            "nome": "Basa",
+            "tipo": "Banco",
+            "banco": "BASA",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-003",
+            "nome": "Banco do Brasil",
+            "tipo": "Banco",
+            "banco": "BB",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-004",
+            "nome": "Nubank PJ",
+            "tipo": "Banco",
+            "banco": "Nubank",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-005",
+            "nome": "Caixa interno",
+            "tipo": "Caixa",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-006",
+            "nome": "Cartão Itaú",
+            "tipo": "Cartão",
+            "banco": "Itaú",
+            "saldoInicial": 0,
+            "ativo": true
+          },
+          {
+            "id": "CF-007",
+            "nome": "Cartão Sicredi",
+            "tipo": "Cartão",
+            "banco": "Sicredi",
+            "saldoInicial": 0,
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.centros.v2": {
+        "present": true,
+        "raw_bytes": 668,
+        "parsed": [
+          {
+            "id": "CC-01",
+            "codigo": "01",
+            "nome": "Engenharia",
+            "tipo": "Operacional",
+            "ativo": true
+          },
+          {
+            "id": "CC-02",
+            "codigo": "02",
+            "nome": "Comercial",
+            "tipo": "Comercial",
+            "ativo": true
+          },
+          {
+            "id": "CC-03",
+            "codigo": "03",
+            "nome": "Financeiro",
+            "tipo": "Administrativo",
+            "ativo": true
+          },
+          {
+            "id": "CC-04",
+            "codigo": "04",
+            "nome": "Estoque",
+            "tipo": "Operacional",
+            "ativo": true
+          },
+          {
+            "id": "CC-05",
+            "codigo": "05",
+            "nome": "Administrativo",
+            "tipo": "Administrativo",
+            "ativo": true
+          },
+          {
+            "id": "CC-06",
+            "codigo": "06",
+            "nome": "Diretoria",
+            "tipo": "Administrativo",
+            "ativo": true
+          },
+          {
+            "id": "CC-07",
+            "codigo": "07",
+            "nome": "Marketing",
+            "tipo": "Comercial",
+            "ativo": true
+          },
+          {
+            "id": "CC-08",
+            "codigo": "08",
+            "nome": "Pós-venda",
+            "tipo": "Operacional",
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.naturezas.v2": {
+        "present": true,
+        "raw_bytes": 5027,
+        "parsed": [
+          {
+            "id": "N-001",
+            "codigo": "1.1.01",
+            "nome": "Receita venda FV",
+            "grupoId": "G-01",
+            "subgrupoId": "S-0101",
+            "tipo": "Receber",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-002",
+            "codigo": "1.2.01",
+            "nome": "Receita manutenção",
+            "grupoId": "G-01",
+            "subgrupoId": "S-0102",
+            "tipo": "Receber",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-003",
+            "codigo": "1.3.01",
+            "nome": "Liberação financiamento",
+            "grupoId": "G-01",
+            "subgrupoId": "S-0103",
+            "tipo": "Receber",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-101",
+            "codigo": "2.1.01",
+            "nome": "Material aplicado em obra",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0201",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": true,
+            "ativo": true
+          },
+          {
+            "id": "N-102",
+            "codigo": "2.1.02",
+            "nome": "Material manutenção",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0201",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": true,
+            "ativo": true
+          },
+          {
+            "id": "N-103",
+            "codigo": "2.2.01",
+            "nome": "Mão de obra instalação",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0202",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-104",
+            "codigo": "2.2.02",
+            "nome": "Mão de obra manutenção",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0202",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-105",
+            "codigo": "2.3.01",
+            "nome": "Frete obra",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0203",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-106",
+            "codigo": "2.3.02",
+            "nome": "Frete manutenção",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0203",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-107",
+            "codigo": "2.4.01",
+            "nome": "Terceiros / empreitada",
+            "grupoId": "G-02",
+            "subgrupoId": "S-0204",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-201",
+            "codigo": "3.1.01",
+            "nome": "Engenharia / projetos",
+            "grupoId": "G-03",
+            "subgrupoId": "S-0301",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-202",
+            "codigo": "3.2.01",
+            "nome": "Combustível frota",
+            "grupoId": "G-03",
+            "subgrupoId": "S-0302",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-203",
+            "codigo": "3.2.02",
+            "nome": "Manutenção veículos",
+            "grupoId": "G-03",
+            "subgrupoId": "S-0302",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-301",
+            "codigo": "4.1.01",
+            "nome": "Folha administrativa",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0401",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-302",
+            "codigo": "4.1.02",
+            "nome": "Pró-labore",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0401",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-303",
+            "codigo": "4.1.03",
+            "nome": "Benefícios / encargos",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0401",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-304",
+            "codigo": "4.2.01",
+            "nome": "Aluguel",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0402",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-305",
+            "codigo": "4.2.02",
+            "nome": "Energia / Água",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0402",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-306",
+            "codigo": "4.2.03",
+            "nome": "Internet / Telefonia",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0402",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-307",
+            "codigo": "4.3.01",
+            "nome": "Software / Licenças",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0403",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-308",
+            "codigo": "4.4.01",
+            "nome": "Contabilidade",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0404",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-309",
+            "codigo": "4.4.02",
+            "nome": "Serviços profissionais (jurídico, etc.)",
+            "grupoId": "G-04",
+            "subgrupoId": "S-0404",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-401",
+            "codigo": "5.1.01",
+            "nome": "Marketing",
+            "grupoId": "G-05",
+            "subgrupoId": "S-0501",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-402",
+            "codigo": "5.2.01",
+            "nome": "Comissões",
+            "grupoId": "G-05",
+            "subgrupoId": "S-0502",
+            "tipo": "Pagar",
+            "permiteVinculoObra": true,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-701",
+            "codigo": "7.1.01",
+            "nome": "Impostos (DAS, ISS, etc.)",
+            "grupoId": "G-07",
+            "subgrupoId": "S-0701",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-702",
+            "codigo": "7.2.01",
+            "nome": "Tarifas bancárias",
+            "grupoId": "G-07",
+            "subgrupoId": "S-0702",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          },
+          {
+            "id": "N-703",
+            "codigo": "7.3.01",
+            "nome": "Parcelas de financiamento",
+            "grupoId": "G-07",
+            "subgrupoId": "S-0703",
+            "tipo": "Pagar",
+            "permiteVinculoObra": false,
+            "permiteVinculoEstoque": false,
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.grupos.v1": {
+        "present": true,
+        "raw_bytes": 640,
+        "parsed": [
+          {
+            "id": "G-01",
+            "codigo": "1",
+            "nome": "Receitas",
+            "tipo": "Receita",
+            "ativo": true
+          },
+          {
+            "id": "G-02",
+            "codigo": "2",
+            "nome": "Custos Diretos",
+            "tipo": "Custo Direto",
+            "ativo": true
+          },
+          {
+            "id": "G-03",
+            "codigo": "3",
+            "nome": "Custos Indiretos",
+            "tipo": "Custo Indireto",
+            "ativo": true
+          },
+          {
+            "id": "G-04",
+            "codigo": "4",
+            "nome": "Despesas Administrativas",
+            "tipo": "Despesa Administrativa",
+            "ativo": true
+          },
+          {
+            "id": "G-05",
+            "codigo": "5",
+            "nome": "Despesas Comerciais",
+            "tipo": "Despesa Comercial",
+            "ativo": true
+          },
+          {
+            "id": "G-06",
+            "codigo": "6",
+            "nome": "Imobilizado",
+            "tipo": "Imobilizado",
+            "ativo": true
+          },
+          {
+            "id": "G-07",
+            "codigo": "7",
+            "nome": "Financeiro/Patrimonial",
+            "tipo": "Financeiro/Patrimonial",
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.subgrupos.v1": {
+        "present": true,
+        "raw_bytes": 1649,
+        "parsed": [
+          {
+            "id": "S-0101",
+            "grupoId": "G-01",
+            "codigo": "1.1",
+            "nome": "Vendas de sistemas FV",
+            "ativo": true
+          },
+          {
+            "id": "S-0102",
+            "grupoId": "G-01",
+            "codigo": "1.2",
+            "nome": "Manutenção / Pós-venda",
+            "ativo": true
+          },
+          {
+            "id": "S-0103",
+            "grupoId": "G-01",
+            "codigo": "1.3",
+            "nome": "Liberações de financiamento",
+            "ativo": true
+          },
+          {
+            "id": "S-0201",
+            "grupoId": "G-02",
+            "codigo": "2.1",
+            "nome": "Material aplicado em obra",
+            "ativo": true
+          },
+          {
+            "id": "S-0202",
+            "grupoId": "G-02",
+            "codigo": "2.2",
+            "nome": "Mão de obra de instalação",
+            "ativo": true
+          },
+          {
+            "id": "S-0203",
+            "grupoId": "G-02",
+            "codigo": "2.3",
+            "nome": "Frete / Logística obra",
+            "ativo": true
+          },
+          {
+            "id": "S-0204",
+            "grupoId": "G-02",
+            "codigo": "2.4",
+            "nome": "Terceiros (empreitada)",
+            "ativo": true
+          },
+          {
+            "id": "S-0301",
+            "grupoId": "G-03",
+            "codigo": "3.1",
+            "nome": "Engenharia / Projetos",
+            "ativo": true
+          },
+          {
+            "id": "S-0302",
+            "grupoId": "G-03",
+            "codigo": "3.2",
+            "nome": "Frota / Combustível",
+            "ativo": true
+          },
+          {
+            "id": "S-0401",
+            "grupoId": "G-04",
+            "codigo": "4.1",
+            "nome": "Folha administrativa",
+            "ativo": true
+          },
+          {
+            "id": "S-0402",
+            "grupoId": "G-04",
+            "codigo": "4.2",
+            "nome": "Ocupação (aluguel, energia)",
+            "ativo": true
+          },
+          {
+            "id": "S-0403",
+            "grupoId": "G-04",
+            "codigo": "4.3",
+            "nome": "Software / TI",
+            "ativo": true
+          },
+          {
+            "id": "S-0404",
+            "grupoId": "G-04",
+            "codigo": "4.4",
+            "nome": "Serviços profissionais",
+            "ativo": true
+          },
+          {
+            "id": "S-0501",
+            "grupoId": "G-05",
+            "codigo": "5.1",
+            "nome": "Marketing",
+            "ativo": true
+          },
+          {
+            "id": "S-0502",
+            "grupoId": "G-05",
+            "codigo": "5.2",
+            "nome": "Comissões",
+            "ativo": true
+          },
+          {
+            "id": "S-0701",
+            "grupoId": "G-07",
+            "codigo": "7.1",
+            "nome": "Impostos",
+            "ativo": true
+          },
+          {
+            "id": "S-0702",
+            "grupoId": "G-07",
+            "codigo": "7.2",
+            "nome": "Despesas bancárias",
+            "ativo": true
+          },
+          {
+            "id": "S-0703",
+            "grupoId": "G-07",
+            "codigo": "7.3",
+            "nome": "Financiamentos (parcelas)",
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.meios.v1": {
+        "present": true,
+        "raw_bytes": 479,
+        "parsed": [
+          {
+            "id": "MP-01",
+            "nome": "PIX",
+            "tipo": "PIX",
+            "ativo": true
+          },
+          {
+            "id": "MP-02",
+            "nome": "Boleto",
+            "tipo": "Boleto",
+            "ativo": true
+          },
+          {
+            "id": "MP-03",
+            "nome": "Cartão crédito",
+            "tipo": "Cartão crédito",
+            "ativo": true
+          },
+          {
+            "id": "MP-04",
+            "nome": "Cartão débito",
+            "tipo": "Cartão débito",
+            "ativo": true
+          },
+          {
+            "id": "MP-05",
+            "nome": "Transferência",
+            "tipo": "Transferência",
+            "ativo": true
+          },
+          {
+            "id": "MP-06",
+            "nome": "Dinheiro",
+            "tipo": "Dinheiro",
+            "ativo": true
+          },
+          {
+            "id": "MP-07",
+            "nome": "Reembolso",
+            "tipo": "Reembolso",
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.tipos-aplicacao.v1": {
+        "present": true,
+        "raw_bytes": 467,
+        "parsed": [
+          {
+            "id": "TA-01",
+            "nome": "Instalação",
+            "posVenda": false,
+            "ativo": true
+          },
+          {
+            "id": "TA-02",
+            "nome": "Manutenção",
+            "posVenda": true,
+            "ativo": true
+          },
+          {
+            "id": "TA-03",
+            "nome": "Garantia",
+            "posVenda": true,
+            "ativo": true
+          },
+          {
+            "id": "TA-04",
+            "nome": "Adequação",
+            "posVenda": false,
+            "ativo": true
+          },
+          {
+            "id": "TA-05",
+            "nome": "Retorno técnico",
+            "posVenda": true,
+            "ativo": true
+          },
+          {
+            "id": "TA-06",
+            "nome": "Uso interno",
+            "posVenda": false,
+            "ativo": true
+          },
+          {
+            "id": "TA-07",
+            "nome": "Administrativo",
+            "posVenda": false,
+            "ativo": true
+          }
+        ]
+      },
+      "ms.fin.parametros.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "fin-parametros": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "metasun.fin.lancamentos.v1": {
+        "present": true,
+        "raw_bytes": 2978,
+        "parsed": [
+          {
+            "id": "L-001",
+            "data": "2026-05-20",
+            "descricao": "Aluguel sede",
+            "tipo": "Saída",
+            "valor": 12000,
+            "camada": "Realizado",
+            "natureza": "Aluguel",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-002",
+            "data": "2026-05-23",
+            "descricao": "Folha de pagamento",
+            "tipo": "Saída",
+            "valor": 178000,
+            "camada": "Realizado",
+            "natureza": "Folha de pagamento",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-003",
+            "data": "2026-05-24",
+            "descricao": "Liberação BASA — FIN-0087",
+            "tipo": "Entrada",
+            "valor": 360000,
+            "camada": "Realizado",
+            "natureza": "Liberação financiamento",
+            "centroCusto": "Comercial",
+            "obra": "OB-0230",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-004",
+            "data": "2026-05-25",
+            "descricao": "Material — OB-0231 (módulos)",
+            "tipo": "Saída",
+            "valor": 42000,
+            "camada": "Realizado",
+            "natureza": "Material",
+            "centroCusto": "Engenharia/Operação",
+            "obra": "OB-0231",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-005",
+            "data": "2026-05-26",
+            "descricao": "Combustível frota",
+            "tipo": "Saída",
+            "valor": 3200,
+            "camada": "Realizado",
+            "natureza": "Combustível",
+            "centroCusto": "Frota",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-010",
+            "data": "2026-05-30",
+            "descricao": "Boleto Canadian Solar",
+            "tipo": "Saída",
+            "valor": 142000,
+            "camada": "Confirmado",
+            "natureza": "Material",
+            "centroCusto": "Engenharia/Operação",
+            "obra": "OB-0230",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-011",
+            "data": "2026-06-01",
+            "descricao": "Recebimento cliente — CT-0142 P1",
+            "tipo": "Entrada",
+            "valor": 29667,
+            "camada": "Confirmado",
+            "natureza": "Recebimento de cliente",
+            "centroCusto": "Comercial",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-012",
+            "data": "2026-06-02",
+            "descricao": "Impostos DAS",
+            "tipo": "Saída",
+            "valor": 18500,
+            "camada": "Confirmado",
+            "natureza": "Impostos",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-020",
+            "data": "2026-06-06",
+            "descricao": "Mão de obra OB-0228",
+            "tipo": "Saída",
+            "valor": 22000,
+            "camada": "Previsto",
+            "natureza": "Mão de obra",
+            "centroCusto": "Engenharia/Operação",
+            "obra": "OB-0228",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-021",
+            "data": "2026-06-09",
+            "descricao": "Liberação SICREDI prevista",
+            "tipo": "Entrada",
+            "valor": 195000,
+            "camada": "Previsto",
+            "natureza": "Liberação financiamento",
+            "centroCusto": "Comercial",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-030",
+            "data": "2026-06-15",
+            "descricao": "Recebimento parcela CT-0138",
+            "tipo": "Entrada",
+            "valor": 74500,
+            "camada": "A realizar",
+            "natureza": "Recebimento de cliente",
+            "centroCusto": "Comercial",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-031",
+            "data": "2026-06-19",
+            "descricao": "Material OB-0228",
+            "tipo": "Saída",
+            "valor": 86000,
+            "camada": "A realizar",
+            "natureza": "Material",
+            "centroCusto": "Engenharia/Operação",
+            "obra": "OB-0228",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          },
+          {
+            "id": "L-040",
+            "data": "2026-07-12",
+            "descricao": "Campanha marketing trimestre",
+            "tipo": "Saída",
+            "valor": 35000,
+            "camada": "Orçado futuro",
+            "natureza": "Marketing",
+            "centroCusto": "Marketing",
+            "empresa": "Meta Sun",
+            "filial": "Manaus"
+          }
+        ]
+      },
+      "metasun.fin.recorrentes.v1": {
+        "present": true,
+        "raw_bytes": 2244,
+        "parsed": [
+          {
+            "id": "R-001",
+            "descricao": "Aluguel sede",
+            "tipo": "Saída",
+            "valor": 12000,
+            "recorrencia": "Mensal",
+            "diaVencimento": 5,
+            "natureza": "Aluguel",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "aluguel"
+          },
+          {
+            "id": "R-002",
+            "descricao": "Folha de pagamento",
+            "tipo": "Saída",
+            "valor": 178000,
+            "recorrencia": "Mensal",
+            "diaVencimento": 5,
+            "natureza": "Folha de pagamento",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "folha"
+          },
+          {
+            "id": "R-003",
+            "descricao": "Pró-labore sócios",
+            "tipo": "Saída",
+            "valor": 28000,
+            "recorrencia": "Mensal",
+            "diaVencimento": 10,
+            "natureza": "Pró-labore",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "folha"
+          },
+          {
+            "id": "R-004",
+            "descricao": "Energia elétrica",
+            "tipo": "Saída",
+            "valor": 4200,
+            "recorrencia": "Mensal",
+            "diaVencimento": 15,
+            "natureza": "Energia/Água",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "manual"
+          },
+          {
+            "id": "R-005",
+            "descricao": "Internet + telefonia",
+            "tipo": "Saída",
+            "valor": 1800,
+            "recorrencia": "Mensal",
+            "diaVencimento": 12,
+            "natureza": "Internet/Telefonia",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "assinatura"
+          },
+          {
+            "id": "R-006",
+            "descricao": "Software CRM/ERP",
+            "tipo": "Saída",
+            "valor": 2400,
+            "recorrencia": "Mensal",
+            "diaVencimento": 20,
+            "natureza": "Software/Licenças",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "assinatura"
+          },
+          {
+            "id": "R-007",
+            "descricao": "Contabilidade",
+            "tipo": "Saída",
+            "valor": 3500,
+            "recorrencia": "Mensal",
+            "diaVencimento": 8,
+            "natureza": "Contabilidade",
+            "centroCusto": "Administrativo",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "assinatura"
+          },
+          {
+            "id": "R-008",
+            "descricao": "Seguros frota",
+            "tipo": "Saída",
+            "valor": 1900,
+            "recorrencia": "Mensal",
+            "diaVencimento": 18,
+            "natureza": "Veículos/Seguros",
+            "centroCusto": "Frota",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "manual"
+          },
+          {
+            "id": "R-009",
+            "descricao": "Recebimento parcelas CT (carteira)",
+            "tipo": "Entrada",
+            "valor": 86000,
+            "recorrencia": "Mensal",
+            "diaVencimento": 10,
+            "natureza": "Parcelas/Recorrentes",
+            "centroCusto": "Comercial",
+            "empresa": "Meta Sun",
+            "filial": "Manaus",
+            "ativa": true,
+            "origem": "contrato"
+          }
+        ]
+      },
+      "metasun.fin.centros.v1": {
+        "present": true,
+        "raw_bytes": 278,
+        "parsed": [
+          {
+            "id": "c1",
+            "nome": "Administrativo",
+            "tipo": "Administrativo"
+          },
+          {
+            "id": "c2",
+            "nome": "Comercial",
+            "tipo": "Comercial"
+          },
+          {
+            "id": "c3",
+            "nome": "Engenharia/Operação",
+            "tipo": "Operacional"
+          },
+          {
+            "id": "c4",
+            "nome": "Frota",
+            "tipo": "Operacional"
+          },
+          {
+            "id": "c5",
+            "nome": "Marketing",
+            "tipo": "Administrativo"
+          }
+        ]
+      },
+      "metasun.fin.naturezas.v1": {
+        "present": true,
+        "raw_bytes": 1335,
+        "parsed": [
+          {
+            "id": "n1",
+            "nome": "Material",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n2",
+            "nome": "Mão de obra",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n3",
+            "nome": "Logística/Frete",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n4",
+            "nome": "Combustível",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n5",
+            "nome": "Hospedagem",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n6",
+            "nome": "Terceiros",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n7",
+            "nome": "Aluguel",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n8",
+            "nome": "Folha de pagamento",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n9",
+            "nome": "Pró-labore",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n10",
+            "nome": "Energia/Água",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n11",
+            "nome": "Internet/Telefonia",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n12",
+            "nome": "Software/Licenças",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n13",
+            "nome": "Contabilidade",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n14",
+            "nome": "Marketing",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n15",
+            "nome": "Manutenção/Limpeza",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n16",
+            "nome": "Impostos",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n17",
+            "nome": "Financiamentos",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n18",
+            "nome": "Veículos/Seguros",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n19",
+            "nome": "Benefícios/Encargos",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n20",
+            "nome": "Comissões",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n21",
+            "nome": "Despesas bancárias",
+            "tipo": "Saída"
+          },
+          {
+            "id": "n50",
+            "nome": "Recebimento de cliente",
+            "tipo": "Entrada"
+          },
+          {
+            "id": "n51",
+            "nome": "Liberação financiamento",
+            "tipo": "Entrada"
+          },
+          {
+            "id": "n52",
+            "nome": "Parcelas/Recorrentes",
+            "tipo": "Entrada"
+          },
+          {
+            "id": "n53",
+            "nome": "Outras receitas",
+            "tipo": "Entrada"
+          }
+        ]
+      }
+    },
+    "auditoria": {
+      "ms.audit.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "comercial_contratos": {
+      "ms.contratos.v2": {
+        "present": true,
+        "raw_bytes": 1953,
+        "parsed": [
+          {
+            "id": "CT-2025-0142",
+            "cliente": "João Pereira da Silva",
+            "vendedor": "Rafael Mendes",
+            "valor": 89000,
+            "kwp": 12.5,
+            "status": "Assinado",
+            "data": "2025-05-02",
+            "pagamento": "Financiamento",
+            "banco": "BASA",
+            "modulos": 25,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0141",
+            "cliente": "Construtora Norte LTDA",
+            "vendedor": "Patrícia Lopes",
+            "valor": 245000,
+            "kwp": 38.4,
+            "status": "Assinado",
+            "data": "2025-04-28",
+            "pagamento": "Entrada + Financiamento",
+            "banco": "BASA",
+            "modulos": 77,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0140",
+            "cliente": "Maria Souza Rodrigues",
+            "vendedor": "Diego Almeida",
+            "valor": 62000,
+            "kwp": 8.1,
+            "status": "Pendente",
+            "data": "2025-05-01",
+            "pagamento": "Cartão",
+            "banco": "BASA",
+            "modulos": 16,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0139",
+            "cliente": "Agropecuária Sol Nascente",
+            "vendedor": "Rafael Mendes",
+            "valor": 410000,
+            "kwp": 65,
+            "status": "Assinado",
+            "data": "2025-04-20",
+            "pagamento": "Financiamento",
+            "banco": "BASA",
+            "modulos": 130,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0138",
+            "cliente": "Carlos Eduardo Lima",
+            "vendedor": "Juliana Reis",
+            "valor": 74500,
+            "kwp": 10.2,
+            "status": "Gerado",
+            "data": "2025-05-09",
+            "pagamento": "À vista",
+            "banco": "BASA",
+            "modulos": 20,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0137",
+            "cliente": "Supermercado Bom Preço",
+            "vendedor": "Patrícia Lopes",
+            "valor": 320000,
+            "kwp": 52,
+            "status": "Assinado",
+            "data": "2025-04-15",
+            "pagamento": "Financiamento",
+            "banco": "BASA",
+            "modulos": 104,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0136",
+            "cliente": "Ana Beatriz Castro",
+            "vendedor": "Diego Almeida",
+            "valor": 56000,
+            "kwp": 7.5,
+            "status": "Cancelado",
+            "data": "2025-04-10",
+            "pagamento": "Financiamento",
+            "banco": "BASA",
+            "modulos": 15,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          },
+          {
+            "id": "CT-2025-0135",
+            "cliente": "João Pereira da Silva",
+            "vendedor": "Rafael Mendes",
+            "valor": 134000,
+            "kwp": 18.2,
+            "status": "Assinado",
+            "data": "2025-04-05",
+            "pagamento": "Entrada + Financiamento",
+            "banco": "BASA",
+            "modulos": 36,
+            "obs": "",
+            "projetos": [],
+            "auditoria": []
+          }
+        ]
+      },
+      "ms.contratos.lastSync": {
+        "present": true,
+        "raw_bytes": 13,
+        "parsed": 1779979442565
+      },
+      "contrato-base-overrides-v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.aditivos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.propostas.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.proposta_config.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.kanban.cols.v5": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.kanban.assign-leads.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.clientes.full.v1": {
+        "present": true,
+        "raw_bytes": 1225,
+        "parsed": [
+          {
+            "id": "CLI-001",
+            "nome": "João Pereira da Silva",
+            "doc": "123.456.789-00",
+            "telefone": "(92) 99999-1234",
+            "cidade": "Manaus",
+            "uf": "AM",
+            "status": "Ativo",
+            "atualizado": "2025-05-08"
+          },
+          {
+            "id": "CLI-002",
+            "nome": "Construtora Norte LTDA",
+            "doc": "12.345.678/0001-90",
+            "telefone": "(91) 98888-2345",
+            "cidade": "Belém",
+            "uf": "PA",
+            "status": "Ativo",
+            "atualizado": "2025-05-09"
+          },
+          {
+            "id": "CLI-003",
+            "nome": "Maria Souza Rodrigues",
+            "doc": "987.654.321-00",
+            "telefone": "(95) 97777-3456",
+            "cidade": "Boa Vista",
+            "uf": "RR",
+            "status": "Ativo",
+            "atualizado": "2025-05-04"
+          },
+          {
+            "id": "CLI-004",
+            "nome": "Agropecuária Sol Nascente",
+            "doc": "98.765.432/0001-10",
+            "telefone": "(69) 96666-4567",
+            "cidade": "Porto Velho",
+            "uf": "RO",
+            "status": "Inativo",
+            "atualizado": "2025-04-22"
+          },
+          {
+            "id": "CLI-005",
+            "nome": "Carlos Eduardo Lima",
+            "doc": "456.789.123-00",
+            "telefone": "(92) 95555-5678",
+            "cidade": "Manaus",
+            "uf": "AM",
+            "status": "Ativo",
+            "atualizado": "2025-05-10"
+          },
+          {
+            "id": "CLI-006",
+            "nome": "Supermercado Bom Preço",
+            "doc": "11.222.333/0001-44",
+            "telefone": "(96) 94444-6789",
+            "cidade": "Macapá",
+            "uf": "AP",
+            "status": "Ativo",
+            "atualizado": "2025-05-07"
+          },
+          {
+            "id": "CLI-007",
+            "nome": "Ana Beatriz Castro",
+            "doc": "321.654.987-00",
+            "telefone": "(92) 93333-7890",
+            "cidade": "Manaus",
+            "uf": "AM",
+            "status": "Ativo",
+            "atualizado": "2025-05-06"
+          }
+        ]
+      },
+      "ms.clientes.extra.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "engenharia_obras": {
+      "ms.engenharia.obras.kanban": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.engenharia.obras.snapshot.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.obras.finalizacao.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "estoque": {
+      "ms.estoque.itens.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.estoque.mov.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.estoque.log.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.estoque.necessidades.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.estoque.compras.transito.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "posvenda": {
+      "ms.posvenda.chamados.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.posvenda.tipos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.posvenda.gatilhos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.posvenda.seq.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "cadastros_identidade": {
+      "ms.consultores.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.gerentes.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.equipes.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.bancos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.perfis.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.usuarios.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.usuarioAtual.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "engenharia_fv": {
+      "ms.fv.params.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.modulos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.inversores.v2": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.tarifas.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.hist_irradiacao.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.cidades.v3": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.concs.v3": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.distribs.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.custos.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.origens-captacao.v1": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    },
+    "ui_preferencias": {
+      "ms.fv.propostas.view": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.propostas.tabela.hidden.v2": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.propostas.tabela.order.v2": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      },
+      "ms.fv.propostas.tabela.widths.v2": {
+        "present": false,
+        "raw_bytes": 0,
+        "parsed": null
+      }
+    }
+  },
+  "stores_extras": {
+    "ms.grid.titulos.AR.cols.v1": {
+      "present": true,
+      "raw_bytes": 2,
+      "parsed": []
+    },
+    "ms.grid.titulos.AP.cols.v1": {
+      "present": true,
+      "raw_bytes": 2,
+      "parsed": []
+    }
+  },
+  "contadores": {
+    "total_keys_localStorage": 20,
+    "total_enumeradas": 74,
+    "total_extras_capturadas": 2
+  },
+  "integrity": {
+    "algo": "SHA-256",
+    "hash_full": "a014566231a14d739d56bd9c51befe8e6f1f88700bb7a0eca88dc3ef8bf45675",
+    "hash_short": "a0145662",
+    "canonical_bytes": 29750,
+    "schema_version": "d15-snapshot/v2-ampliado"
+  }
+}

@@ -38,8 +38,11 @@ function LoginPage() {
       return;
     }
     setSubmitting(true);
+    perfMark("login.start");
     try {
       await signInEmail(email.trim().toLowerCase(), senha);
+      perfMark("auth.ok");
+      perfMeasure("login.start", "auth.ok", "auth.ok");
       toast.success("Login efetuado.");
       void navigate({ to: "/dashboard" });
     } catch (err) {

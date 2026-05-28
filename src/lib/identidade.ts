@@ -77,7 +77,7 @@ export function useIdentidade(): Identidade {
     null;
 
   const displayName = !isAuthenticated
-    ? "Visitante"
+    ? "Acesso restrito"
     : metaName || email || "Usuário";
 
   const perfilNome =
@@ -88,7 +88,7 @@ export function useIdentidade(): Identidade {
       : role === "usuario"
       ? "Usuário"
       : !isAuthenticated
-      ? "Sem sessão"
+      ? "Autenticação obrigatória"
       : "Carregando…";
 
   const iniciais = !isAuthenticated ? "—" : calcIniciais(displayName);

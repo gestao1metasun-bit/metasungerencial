@@ -123,10 +123,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { user, loading } = useAuth();
+  const { user, session, loading } = useAuth();
   const isPublicRoute = path === "/login" || path === "/cadastrar" || path === "/reset-password";
   const shouldHoldPrivateRoute = !isPublicRoute && loading;
-  const shouldBlockPrivateRoute = !isPublicRoute && !loading && !user;
+  const hasValidSession = !!session && !!user;
+  const shouldBlockPrivateRoute = !isPublicRoute && !loading && !hasValidSession;
   useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); }, []);
 
   return (

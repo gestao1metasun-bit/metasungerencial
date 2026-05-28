@@ -25,7 +25,7 @@ function write(key: string, value: unknown) {
 }
 
 function uidOf(auth: ReturnType<typeof useAuth>): string {
-  return auth.user?.id ?? "anon";
+  return auth.user?.id ?? "__signed_out__";
 }
 
 function sameItem(a: Favorito, b: Favorito) {

@@ -22,6 +22,12 @@ function emit() {
   _listeners.forEach((l) => l());
 }
 
+function setAnonymousState() {
+  _state = { session: null, user: null, role: null, loading: false };
+  emit();
+  void hydrateFunnel(false);
+}
+
 async function loadRole(userId: string): Promise<AppRole | null> {
   const { data } = await supabase
     .from("user_roles")
@@ -36,7 +42,57 @@ async function loadRole(userId: string): Promise<AppRole | null> {
   return "usuario";
 }
 
+async function validateActiveSession(seedSession?: Session | null) {
+  const candidateUserId = seedSession?.user?.id ?? null;
+  const preserveCurrentUser = !!_state.user && _state.user.id === candidateUserId;
+
+  if (!preserveCurrentUser) {
+    _state = { session: null, user: null, role: null, loading: true };
+    emit();
+  }
+
+  const [{ data: userData, error: userError }, { data: sessionData, error: sessionError }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+
+  const session = sessionData.session ?? seedSession ?? null;
+  const user = userData.user ?? session?.user ?? null;
+
+  console.info("[auth-session] validateActiveSession()", {
+    hasSeedSession: !!seedSession,
+    hasValidatedSession: !!session,
+    userId: user?.id ?? null,
+    email: user?.email ?? null,
+    userError: userError?.message ?? null,
+    sessionError: sessionError?.message ?? null,
+  });
+
+  if (userError || sessionError || !session || !user) {
+    setAnonymousState();
+    void supabase.auth.signOut();
+    return;
+  }
+
+  _state = {
+    session,
+    user,
+    role: _state.user?.id === user.id ? _state.role : null,
+    loading: false,
+  };
+  emit();
+
+  const role = await loadRole(user.id);
+  _state = { session, user, role, loading: false };
+  console.info("[auth-session] sessão validada", { role, userId: user.id });
+  emit();
+  void hydrateFunnel(true);
+}
+
 async function refresh() {
+  _state = { ..._state, loading: true };
+  emit();
+
   const { data, error } = await supabase.auth.getSession();
   console.info("[auth-session] getSession()", {
     hasSession: !!data.session,
@@ -44,21 +100,13 @@ async function refresh() {
     email: data.session?.user?.email ?? null,
     error: error?.message ?? null,
   });
-  const session = data.session;
-  if (!session?.user) {
-    _state = { session: null, user: null, role: null, loading: false };
-    emit();
-    void hydrateFunnel(false);
-  } else {
-    // Emite imediatamente com o usuário (sem esperar role) p/ header sair de "Visitante"
-    _state = { session, user: session.user, role: _state.role, loading: false };
-    emit();
-    const role = await loadRole(session.user.id);
-    _state = { session, user: session.user, role, loading: false };
-    console.info("[auth-session] role carregada", { role });
-    emit();
-    void hydrateFunnel(true);
+
+  if (!data.session?.user) {
+    setAnonymousState();
+    return;
   }
+
+  await validateActiveSession(data.session);
 }
 
 async function hydrateFunnel(loggedIn: boolean) {
@@ -91,23 +139,13 @@ function ensureInit() {
       userId: session?.user?.id ?? null,
       email: session?.user?.email ?? null,
     });
-    if (!session?.user) {
-      _state = { session: null, user: null, role: null, loading: false };
-      emit();
-      void hydrateFunnel(false);
+    if (!session?.user || event === "SIGNED_OUT") {
+      setAnonymousState();
       return;
     }
-    // Atualiza imediatamente com o usuário (UI sai de "Visitante" no ato)
-    _state = { session, user: session.user, role: _state.role, loading: false };
-    emit();
-    // Carrega role em seguida (fora do callback p/ evitar deadlock)
+
     setTimeout(() => {
-      void loadRole(session.user.id).then((role) => {
-        _state = { session, user: session.user, role, loading: false };
-        console.info("[auth-session] role atualizada via onAuthStateChange", { role });
-        emit();
-        void hydrateFunnel(true);
-      });
+      void validateActiveSession(session);
     }, 0);
   });
 }
@@ -148,17 +186,8 @@ export async function signInEmail(email: string, password: string) {
     error: error?.message ?? null,
   });
   if (error) throw error;
-  // Set imediato do estado global — não esperar onAuthStateChange
   if (data?.session && data?.user) {
-    _state = { session: data.session, user: data.user, role: _state.role, loading: false };
-    emit();
-    setTimeout(() => {
-      void loadRole(data.user!.id).then((role) => {
-        _state = { session: data.session, user: data.user, role, loading: false };
-        emit();
-        void hydrateFunnel(true);
-      });
-    }, 0);
+    await validateActiveSession(data.session);
   }
 }
 

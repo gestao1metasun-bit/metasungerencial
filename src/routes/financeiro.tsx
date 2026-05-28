@@ -30,6 +30,9 @@ import {
   type Lancamento, type Camada, type Tipo, type DespesaRecorrente, type Recorrencia, type StatusFin,
 } from "@/lib/financeiro-store";
 import { TitulosTab } from "@/modules/financeiro/TitulosTab";
+import { TitulosTabSupabase } from "@/modules/financeiro/TitulosTabSupabase";
+import { useFeatureFlag } from "@/config/featureFlags";
+
 import { FornecedoresTab } from "@/modules/financeiro/FornecedoresTab";
 import { FechamentoTab } from "@/modules/financeiro/FechamentoTab";
 import { ConciliacaoTab } from "@/modules/financeiro/ConciliacaoTab";
@@ -158,12 +161,13 @@ function FinanceiroPage() {
 
 
         <TabsContent value="receber" className="mt-5">
-          <TitulosTab tipo="AR" />
+          <TitulosTabSwitch tipo="AR" />
         </TabsContent>
 
         <TabsContent value="pagar" className="mt-5">
-          <TitulosTab tipo="AP" />
+          <TitulosTabSwitch tipo="AP" />
         </TabsContent>
+
 
         <TabsContent value="fornecedores" className="mt-5">
           <FornecedoresTab />
@@ -204,6 +208,12 @@ function FinanceiroPage() {
       </Tabs>
     </>
   );
+}
+
+/* ============== TitulosTab switch (D15.3.a: Supabase por padrão) ============== */
+function TitulosTabSwitch({ tipo }: { tipo: "AR" | "AP" }) {
+  const useSupabase = useFeatureFlag("D15_TITULOS_SUPABASE");
+  return useSupabase ? <TitulosTabSupabase tipo={tipo} /> : <TitulosTab tipo={tipo} />;
 }
 
 /* ============== Projeção / Gráficos ============== */

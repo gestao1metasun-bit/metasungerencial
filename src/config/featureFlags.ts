@@ -25,7 +25,9 @@ export type FeatureFlagName =
   // Onda 3 — Comercial / Contratos
   | "D15_DUAL_READ_COMERCIAL"
   | "D15_SUPABASE_READ_COMERCIAL"
-  | "D15_LS_COMERCIAL_DISABLED";
+  | "D15_LS_COMERCIAL_DISABLED"
+  // D15.3.a — TitulosTab Supabase (default ligado)
+  | "D15_TITULOS_SUPABASE";
 
 const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_FINANCEIRO: false,
@@ -37,7 +39,10 @@ const DEFAULTS: Record<FeatureFlagName, boolean> = {
   D15_DUAL_READ_COMERCIAL: false,
   D15_SUPABASE_READ_COMERCIAL: false,
   D15_LS_COMERCIAL_DISABLED: false,
+  // D15.3.a: TitulosTab Supabase é o padrão; LS legado fica como rollback.
+  D15_TITULOS_SUPABASE: true,
 };
+
 
 function readOverride(name: FeatureFlagName): boolean | null {
   if (typeof window === "undefined") return null;

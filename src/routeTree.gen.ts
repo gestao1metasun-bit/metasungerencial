@@ -38,6 +38,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaineisSaudeSistemaRouteImport } from './routes/paineis.saude-sistema'
 import { Route as PaineisSaudeDadosRouteImport } from './routes/paineis.saude-dados'
 import { Route as PaineisPosvendaRouteImport } from './routes/paineis.posvenda'
+import { Route as PaineisPerformanceRouteImport } from './routes/paineis.performance'
 import { Route as PaineisGovernancaRouteImport } from './routes/paineis.governanca'
 import { Route as PaineisFinanciamentosRouteImport } from './routes/paineis.financiamentos'
 import { Route as PaineisFinanceiroRouteImport } from './routes/paineis.financeiro'
@@ -206,6 +207,11 @@ const PaineisPosvendaRoute = PaineisPosvendaRouteImport.update({
   path: '/posvenda',
   getParentRoute: () => PaineisRoute,
 } as any)
+const PaineisPerformanceRoute = PaineisPerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => PaineisRoute,
+} as any)
 const PaineisGovernancaRoute = PaineisGovernancaRouteImport.update({
   id: '/governanca',
   path: '/governanca',
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
   '/paineis/governanca': typeof PaineisGovernancaRoute
+  '/paineis/performance': typeof PaineisPerformanceRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
   '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
@@ -420,6 +427,7 @@ export interface FileRoutesByTo {
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
   '/paineis/governanca': typeof PaineisGovernancaRoute
+  '/paineis/performance': typeof PaineisPerformanceRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
   '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
@@ -474,6 +482,7 @@ export interface FileRoutesById {
   '/paineis/financeiro': typeof PaineisFinanceiroRoute
   '/paineis/financiamentos': typeof PaineisFinanciamentosRoute
   '/paineis/governanca': typeof PaineisGovernancaRoute
+  '/paineis/performance': typeof PaineisPerformanceRoute
   '/paineis/posvenda': typeof PaineisPosvendaRoute
   '/paineis/saude-dados': typeof PaineisSaudeDadosRoute
   '/paineis/saude-sistema': typeof PaineisSaudeSistemaRoute
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
     | '/paineis/governanca'
+    | '/paineis/performance'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
     | '/paineis/saude-sistema'
@@ -582,6 +592,7 @@ export interface FileRouteTypes {
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
     | '/paineis/governanca'
+    | '/paineis/performance'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
     | '/paineis/saude-sistema'
@@ -635,6 +646,7 @@ export interface FileRouteTypes {
     | '/paineis/financeiro'
     | '/paineis/financiamentos'
     | '/paineis/governanca'
+    | '/paineis/performance'
     | '/paineis/posvenda'
     | '/paineis/saude-dados'
     | '/paineis/saude-sistema'
@@ -874,6 +886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaineisPosvendaRouteImport
       parentRoute: typeof PaineisRoute
     }
+    '/paineis/performance': {
+      id: '/paineis/performance'
+      path: '/performance'
+      fullPath: '/paineis/performance'
+      preLoaderRoute: typeof PaineisPerformanceRouteImport
+      parentRoute: typeof PaineisRoute
+    }
     '/paineis/governanca': {
       id: '/paineis/governanca'
       path: '/governanca'
@@ -1088,6 +1107,7 @@ interface PaineisRouteChildren {
   PaineisFinanceiroRoute: typeof PaineisFinanceiroRoute
   PaineisFinanciamentosRoute: typeof PaineisFinanciamentosRoute
   PaineisGovernancaRoute: typeof PaineisGovernancaRoute
+  PaineisPerformanceRoute: typeof PaineisPerformanceRoute
   PaineisPosvendaRoute: typeof PaineisPosvendaRoute
   PaineisSaudeDadosRoute: typeof PaineisSaudeDadosRoute
   PaineisSaudeSistemaRoute: typeof PaineisSaudeSistemaRoute
@@ -1102,6 +1122,7 @@ const PaineisRouteChildren: PaineisRouteChildren = {
   PaineisFinanceiroRoute: PaineisFinanceiroRoute,
   PaineisFinanciamentosRoute: PaineisFinanciamentosRoute,
   PaineisGovernancaRoute: PaineisGovernancaRoute,
+  PaineisPerformanceRoute: PaineisPerformanceRoute,
   PaineisPosvendaRoute: PaineisPosvendaRoute,
   PaineisSaudeDadosRoute: PaineisSaudeDadosRoute,
   PaineisSaudeSistemaRoute: PaineisSaudeSistemaRoute,

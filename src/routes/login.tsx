@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
+import { perfMark, perfMeasure } from "@/lib/perf";
 import metaSunLogo from "@/assets/meta-sun-logo.png";
 
 export const Route = createFileRoute("/login")({
@@ -37,8 +38,11 @@ function LoginPage() {
       return;
     }
     setSubmitting(true);
+    perfMark("login.start");
     try {
       await signInEmail(email.trim().toLowerCase(), senha);
+      perfMark("auth.ok");
+      perfMeasure("login.start", "auth.ok", "auth.ok");
       toast.success("Login efetuado.");
       void navigate({ to: "/dashboard" });
     } catch (err) {

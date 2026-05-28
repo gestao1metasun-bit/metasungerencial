@@ -197,8 +197,9 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="adiantamentos" className="mt-5">
-          <AdiantamentosTab />
+          {isFeatureEnabled("D15_ADIANTAMENTOS_SUPABASE") ? <AdiantamentosTabSupabase /> : <AdiantamentosTab />}
         </TabsContent>
+
 
         <TabsContent value="rescisoes" className="mt-5">
           <RescisoesTab />

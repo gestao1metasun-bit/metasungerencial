@@ -87,6 +87,13 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
       : { status: prefs.statusFiltro },
   );
 
+  // D16.PERF P2.1 — first-list.ready quando primeiro dataset chega
+  useEffect(() => {
+    if (!isLoading && rows !== undefined) {
+      void import("@/lib/perf").then((m) => m.reportFirstListReady(`titulos.${tipo}`));
+    }
+  }, [isLoading, rows, tipo]);
+
   // Log erro Supabase (visível, sem fallback silencioso)
   useEffect(() => {
     if (isError) {

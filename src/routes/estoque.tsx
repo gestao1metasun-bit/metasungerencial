@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Package, ShoppingCart, Truck, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, ListChecks,
 } from "lucide-react";
@@ -93,6 +93,11 @@ function EstoquePage() {
   const podeEntregar = isAdmin;
   const podeAjustarEstoque = isAdmin;
   const st = useEstoqueState();
+
+  // D16.PERF P2.1 — first-list.ready (estoque)
+  useEffect(() => {
+    void import("@/lib/perf").then((m) => m.reportFirstListReady("estoque.itens"));
+  }, []);
 
   const onExportar = () => {
     try {

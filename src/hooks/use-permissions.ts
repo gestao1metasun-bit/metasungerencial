@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getMyPermissions, type MyPermissions } from "@/lib/permissions.functions";
-import { perfMark, perfMeasure } from "@/lib/perf";
+import { perfMark, perfMarkIfAbsent, perfMeasure } from "@/lib/perf";
 
 const EMPTY: MyPermissions = {
   userId: "",
@@ -36,6 +36,8 @@ export function useMyPermissions() {
   useEffect(() => {
     if (!marked.current && q.data && !q.isLoading) {
       marked.current = true;
+      // Garante anchor para usuários já autenticados (sem login.start)
+      perfMarkIfAbsent("auth.ok");
       perfMark("perms.ready");
       perfMeasure("auth.ok", "perms.ready", "perms.ready");
     }

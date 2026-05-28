@@ -147,7 +147,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
     return Array.from(s).sort();
   }, [rows, tipo]);
 
-  const [novoOpen, setNovoOpen] = useState(false);
+  // "Novo lançamento" removido: títulos vêm de contratos / pedidos de compra
   const [parcelaSel, setParcelaSel] = useState<string | null>(null);
   const [cancelSel, setCancelSel] = useState<TituloFinanceiro | null>(null);
   const [bulkCancelOpen, setBulkCancelOpen] = useState(false);

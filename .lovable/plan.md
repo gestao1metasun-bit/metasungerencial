@@ -1,9 +1,39 @@
 
 # Plano Mestre D15 → ~90% Maturidade Enterprise
 
-Objetivo: levar Meta Sun de **~68/100** ("ERP parcial com fundação enterprise") para **88–92/100** ("ERP enterprise operacional confiável"), eliminando dependência operacional de localStorage e consolidando Supabase como fonte única da verdade. Sem refator cego, sem mexer no Shell D6, sem abrir D8/D9/D10/D11.
+Objetivo: levar Meta Sun de **~68/100** para **88–92/100**, eliminando dependência operacional de localStorage e consolidando Supabase como fonte única. 11 ondas reversíveis com flags. Sem refator cego, sem tocar no Shell D6.
 
-Execução em **11 ondas pequenas, reversíveis e auditáveis** (Onda 0 a Onda 10). Cada onda entrega: diagnóstico → migração SQL → migração de dados → dual-read → corte → rollback documentado.
+---
+
+## Charter D15 (oficial — 2026-05-28) — diretrizes-pedra
+
+**F1 — Congelamento arquitetural (vigente JÁ):**
+- PROIBIDO nova store LS operacional.
+- PROIBIDO nova entidade crítica fora do Supabase.
+- Todo fluxo novo nasce com: tabela + RPC + RLS + auditoria + repository. Sem `localStorage` direto.
+- LS permitido só para: cache, draft, preferências UI, feature flags, fallback temporário.
+
+**F2 — Supabase = única verdade.** Dashboards leem views/RPCs/MVs, nunca stores.
+
+**F3 — Ordem obrigatória por domínio:** Financeiro → Comercial → Contratos → Engenharia → Estoque → Compras → Pós-venda → Analytics.
+
+**F5 — Repository layer:** `localStorage.getItem/setItem` proibido fora da camada de persistência.
+
+**F6 — Dual write / read / shadow:** flags `D15_SUPABASE_READ_*`, `D15_SUPABASE_WRITE_*`, `D15_LS_FALLBACK_*` (Onda 0). Toda virada incremental e reversível.
+
+**F7 — Auditoria enterprise universal:** Onda 5 **promovida** para imediatamente após Onda 1.B (risco `ms.audit.v1` em LS).
+
+**F8 — Concorrência:** `row_version` + optimistic lock + realtime + invalidation granular.
+
+**F9 — Governança/RLS/Actions matrix:** nada via UPDATE direto; tudo via RPC governada.
+
+**F10 — Morte controlada do LS** só após estabilização.
+
+**F11 — Testes:** multiusuário, concorrência, fechamento, rollback, permissão.
+
+**F12 — Meta:** ERP multiusuário real, backend autoritativo, transacional, auditável, escalável. UX RM/Sankhya preservada.
+
+**Regras absolutas:** não quebrar UX, não reescrever telas sem motivo, não destruir stores existentes, não big-bang, toda migração sob flag.
 
 ---
 

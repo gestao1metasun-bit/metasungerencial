@@ -43,11 +43,13 @@ export type ClienteRow = {
 };
 
 const TTL = 60_000;
-const opts = (key: string, fn: () => Promise<unknown>) => ({
-  queryKey: ["cadastros", key],
-  queryFn: fn,
-  staleTime: TTL,
-});
+function opts<T>(key: string, fn: () => Promise<T>) {
+  return {
+    queryKey: ["cadastros", key] as const,
+    queryFn: fn,
+    staleTime: TTL,
+  };
+}
 
 // ===== Hooks =====
 export const useGruposFin = () =>

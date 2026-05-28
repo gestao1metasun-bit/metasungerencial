@@ -22,15 +22,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
 
-  // ── Macro módulo PAINÉIS (D6.E — Gestão / KPIs centralizados) ─────────
-  "/paineis": {
-    default: "geral",
-    tabs: [
-      { value: "geral", label: "Geral", group: "Visão Geral" },
-      { value: "executivo", label: "Executivo", group: "Visão Geral" },
-      { value: "indicadores", label: "Indicadores", group: "Visão Geral" },
-    ],
-  },
+  // ── Macro módulo ANALYTICS (consolidado em 2026-05-28: paineis absorvido) ─
   "/analytics/comercial": {
     default: "funil",
     tabs: [

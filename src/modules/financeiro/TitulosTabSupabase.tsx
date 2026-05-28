@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Wallet, AlertTriangle, FileText, Filter, RotateCcw,
+  Wallet, AlertTriangle, FileText, Filter, RotateCcw,
   CheckCircle2, XCircle, Banknote, Undo2, Printer, Mail, Eye, Send,
 } from "lucide-react";
 import {
@@ -45,10 +45,6 @@ import {
   TF_STATUS_LABEL, TF_STATUS_TONE, type TFStatus,
 } from "@/hooks/useTitulosFinanceiros";
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";
-import {
-  useCadastrosNaturezas, useCadastrosCentros, useCadastrosContas,
-  useCriarLancamentoForm,
-} from "./titulos-supabase.helpers";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
 
 const UI_PREF_KEY = "ui.fin.titulos.v1";
@@ -151,7 +147,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
     return Array.from(s).sort();
   }, [rows, tipo]);
 
-  const [novoOpen, setNovoOpen] = useState(false);
+  // "Novo lançamento" removido: títulos vêm de contratos / pedidos de compra
   const [parcelaSel, setParcelaSel] = useState<string | null>(null);
   const [cancelSel, setCancelSel] = useState<TituloFinanceiro | null>(null);
   const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
@@ -197,19 +193,12 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
           <Button size="sm" variant="outline" onClick={() => refetch()}>
             <RotateCcw className="size-3.5 mr-1" /> Atualizar
           </Button>
-          <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="size-3.5 mr-1" /> Novo lançamento
-              </Button>
-            </DialogTrigger>
-            <NovoLancamentoDialog
-              tipo={tipo === "AR" ? "receber" : "pagar"}
-              onDone={() => { setNovoOpen(false); refetch(); }}
-            />
-          </Dialog>
+          <div className="text-[11px] text-muted-foreground text-right max-w-[180px] leading-tight">
+            Títulos nascem de <strong>contratos</strong> ou <strong>pedidos de compra</strong>.
+          </div>
         </Card>
       </div>
+
 
       {/* Filtros */}
       <Card className="p-3">
@@ -278,17 +267,18 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
         entityType="titulos_financeiros"
         selectedIds={[]}
         availableActions={[
-          "novo", "editar", "excluir", "atualizar", "visualizar",
+          "editar", "excluir", "atualizar", "visualizar",
           "anexos", "historico", "auditoria",
           "exportar", "imprimir", "colunas", "filtroAvancado",
         ]}
         position={{ current: Math.min(1, filtrados.length), total: filtrados.length }}
         onNavigate={() => { /* navegação por registro (em breve) */ }}
         onAction={(a) => {
-          if (a === "novo") setNovoOpen(true);
-          else if (a === "atualizar") void refetch();
+          if (a === "atualizar") void refetch();
+          else if (a === "novo") toast.info("Títulos nascem de contratos ou pedidos de compra — não de lançamento avulso.");
           else toast.message(`Ação "${a}" — em breve no padrão Enterprise`);
         }}
+
         onFilter={() => toast.info("Filtros avançados — em breve")}
         statusActions={[
           { key: "aprovar",  label: "Aprovar",  icon: CheckCircle2, tone: "success", onClick: () => toast.message("Aprovar — em breve") },
@@ -609,87 +599,11 @@ function CancelarDialog({ titulo, onClose }: {
   );
 }
 
-/* ============================================================================
-   Novo lançamento — via RPC oficial rpc_lancamento_criar
-   ========================================================================== */
-function NovoLancamentoDialog({ tipo, onDone }: { tipo: "receber" | "pagar"; onDone: () => void }) {
-  const { data: naturezas = [] } = useCadastrosNaturezas();
-  const { data: centros = [] } = useCadastrosCentros();
-  const { data: contas = [] } = useCadastrosContas();
-  const { criar, pending } = useCriarLancamentoForm();
+/* Novo lançamento removido: títulos AR/AP devem nascer de contratos (Comercial)
+   ou pedidos de compra (Suprimentos). Lançamentos avulsos vão pela aba
+   Lançamentos, não por Receber/Pagar. */
 
-  const [valor, setValor] = useState("");
-  const [vencimento, setVencimento] = useState(() => new Date().toISOString().slice(0, 10));
-  const [naturezaId, setNaturezaId] = useState<string>("");
-  const [centroId, setCentroId] = useState<string>("");
-  const [contaId, setContaId] = useState<string>("");
-  const [descricao, setDescricao] = useState("");
 
-  const valorNum = Number(valor.replace(",", "."));
-  const invalido =
-    !Number.isFinite(valorNum) || valorNum <= 0 ||
-    !vencimento || !naturezaId || !centroId || !contaId;
-
-  return (
-    <DialogContent className="max-w-lg">
-      <DialogHeader>
-        <DialogTitle>Novo lançamento ({tipo === "receber" ? "Receber" : "Pagar"})</DialogTitle>
-      </DialogHeader>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Valor</Label>
-          <Input type="number" step="0.01" min="0" value={valor} onChange={(e) => setValor(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Vencimento</Label>
-          <Input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
-        </div>
-        <div className="space-y-1 col-span-2">
-          <Label className="text-xs">Natureza financeira *</Label>
-          <Select value={naturezaId} onValueChange={setNaturezaId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar natureza" /></SelectTrigger>
-            <SelectContent>
-              {naturezas.map((n) => <SelectItem key={n.id} value={n.id}>{n.codigo} — {n.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Centro de Resultado *</Label>
-          <Select value={centroId} onValueChange={setCentroId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar CR" /></SelectTrigger>
-            <SelectContent>
-              {centros.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Conta *</Label>
-          <Select value={contaId} onValueChange={setContaId}>
-            <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
-            <SelectContent>
-              {contas.map((c) => <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1 col-span-2">
-          <Label className="text-xs">Descrição</Label>
-          <Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
-        </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onDone}>Cancelar</Button>
-        <Button
-          disabled={invalido || pending}
-          onClick={() => criar({
-            tipo, valor: valorNum, vencimento,
-            natureza_id: naturezaId, centro_id: centroId, conta_id: contaId,
-            descricao: descricao.trim() || null,
-          }, onDone)}
-        >Criar via RPC oficial</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
 
 /* ============================================================================
    D17.UI.3 — Cancelamento em lote

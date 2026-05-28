@@ -13,8 +13,14 @@
  * Falhas viram toast + errorLogRepo.log({ modulo: 'financeiro', ... }).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Wallet, AlertTriangle, FileText, Filter, RotateCcw } from "lucide-react";
-import { RowActions, type RowActionKind } from "@/components/app/enterprise";
+import {
+  Plus, Wallet, AlertTriangle, FileText, Filter, RotateCcw,
+  CheckCircle2, XCircle, Banknote, Undo2, Printer, Mail, Eye, Send,
+} from "lucide-react";
+import {
+  RowActions, type RowActionKind,
+  EnterpriseRecordToolbar, type StatusActionItem,
+} from "@/components/app/enterprise";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

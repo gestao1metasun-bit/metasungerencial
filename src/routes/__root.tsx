@@ -14,6 +14,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import { useEffect } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
+import { installLsGuard } from "@/lib/ls-guard";
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
@@ -128,7 +129,7 @@ function RootComponent() {
   const shouldHoldPrivateRoute = !isPublicRoute && loading;
   const hasValidSession = !!session && !!user;
   const shouldBlockPrivateRoute = !isPublicRoute && !loading && !hasValidSession;
-  useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); }, []);
+  useEffect(() => { bootstrapSeedIfPending(); wireSessionLogger(); installLsGuard(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

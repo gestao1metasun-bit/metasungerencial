@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import {
   useTitulosFinanceiros, type TituloFinanceiro,
-  useParcelasTitulo, useCancelarTitulo,
+  useCancelarTitulo,
   TF_STATUS_LABEL, TF_STATUS_TONE, type TFStatus,
 } from "@/hooks/useTitulosFinanceiros";
 import { ReceberParcelaModal } from "@/components/app/financeiro/ReceberParcelaModal";

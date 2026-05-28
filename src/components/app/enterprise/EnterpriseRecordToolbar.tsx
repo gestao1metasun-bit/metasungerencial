@@ -328,7 +328,9 @@ export function EnterpriseRecordToolbar({
     });
   }, [availableProcesses, count, permissions]);
 
-  return (
+  const hasRmRows = !!(statusActions?.length || layoutBar);
+
+  const row1 = (
     <div
       role="toolbar"
       aria-label="Barra Operacional de Registro"
@@ -337,8 +339,8 @@ export function EnterpriseRecordToolbar({
       data-selection-count={count}
       className={cn(
         "flex items-center gap-0.5 border border-slate-200",
-        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 rounded-sm overflow-x-auto shadow-sm",
-        className,
+        "bg-gradient-to-b from-white to-slate-50 px-1.5 py-1 overflow-x-auto shadow-sm",
+        hasRmRows ? "rounded-t-sm border-b-0" : "rounded-sm",
       )}
     >
       {/* CRUD — ícones puros estilo RM */}
@@ -352,6 +354,20 @@ export function EnterpriseRecordToolbar({
       {/* Estado */}
       {renderActionBtn("atualizar")}
       {renderActionBtn("visualizar")}
+
+      {/* Navegação RM (459/500 com setas) */}
+      {position && onNavigate && (
+        <>
+          <Sep />
+          <IconBtn icon={ChevronsLeft} label="Primeiro" tone="muted" onClick={() => onNavigate("first")} />
+          <IconBtn icon={ChevronLeft} label="Anterior" tone="muted" onClick={() => onNavigate("prev")} />
+          <span className="px-1.5 font-mono text-[11.5px] text-slate-700 tabular-nums select-none">
+            {position.current}/{position.total}
+          </span>
+          <IconBtn icon={ChevronRight} label="Próximo" tone="muted" onClick={() => onNavigate("next")} />
+          <IconBtn icon={ChevronsRight} label="Último" tone="muted" onClick={() => onNavigate("last")} />
+        </>
+      )}
       <Sep />
 
       {/* Busca rápida (quando o consumidor injetar) */}

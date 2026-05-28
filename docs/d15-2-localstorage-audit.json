@@ -1,0 +1,34 @@
+{
+  "totals": {
+    "INDETERMINADO": 3
+  },
+  "rows": [
+    {
+      "key": "ff:${name}",
+      "reads": 1,
+      "writes": 0,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/config/featureFlags.ts"
+      ]
+    },
+    {
+      "key": "ff:<NAME>",
+      "reads": 0,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/config/featureFlags.ts"
+      ]
+    },
+    {
+      "key": "ff:enterprise-shell-full",
+      "reads": 0,
+      "writes": 1,
+      "classification": "INDETERMINADO",
+      "files": [
+        "src/lib/feature-flags.ts"
+      ]
+    }
+  ]
+}

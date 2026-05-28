@@ -13,7 +13,8 @@
  * Falhas viram toast + errorLogRepo.log({ modulo: 'financeiro', ... }).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Plus, XCircle, Wallet, AlertTriangle, FileText, Filter, RotateCcw } from "lucide-react";
+import { Plus, Wallet, AlertTriangle, FileText, Filter, RotateCcw } from "lucide-react";
+import { RowActions, type RowActionKind } from "@/components/app/enterprise";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,13 +297,47 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-xs">{fmtBRL(r.valor_bruto)}</TableCell>
                   <TableCell className="text-right tabular-nums text-xs font-medium">{fmtBRL(r.saldo)}</TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <ReceberAcao tituloId={r.id} disabled={status === "CANCELADO" || status === "RECEBIDO"} onPickParcela={setParcelaSel} />
-                    <Button size="sm" variant="ghost"
-                      disabled={status === "CANCELADO" || status === "RECEBIDO"}
-                      onClick={() => setCancelSel(r)}>
-                      <XCircle className="size-3.5" />
-                    </Button>
+                  <TableCell className="text-right">
+                    <RowActions
+                      rowId={r.id}
+                      actions={[
+                        { kind: "visualizar" },
+                        {
+                          kind: "baixar",
+                          label: "Receber",
+                          disabled: status === "CANCELADO" || status === "RECEBIDO",
+                        },
+                        { kind: "anexos" },
+                        { kind: "historico" },
+                        {
+                          kind: "cancelar",
+                          disabled: status === "CANCELADO" || status === "RECEBIDO",
+                        },
+                      ]}
+                      onAction={(kind) => {
+                        const k = kind as RowActionKind;
+                        if (k === "cancelar") setCancelSel(r);
+                        else if (k === "baixar") {
+                          // Receber: delega ao primeiro parcela aberta (mantém comportamento atual)
+                          void import("@/integrations/supabase/client").then(async ({ supabase }) => {
+                            const { data } = await supabase
+                              .from("parcelas_financeiras")
+                              .select("id,saldo,numero")
+                              .eq("titulo_id", r.id)
+                              .gt("saldo", 0.001)
+                              .order("numero", { ascending: true })
+                              .limit(1)
+                              .maybeSingle();
+                            if (data?.id) setParcelaSel(data.id);
+                            else toast.info("Nenhuma parcela em aberto");
+                          });
+                        } else if (k === "visualizar") {
+                          toast.info(`Título ${r.codigo ?? r.id.slice(0, 8)}`);
+                        } else if (k === "anexos" || k === "historico") {
+                          toast.message("Em breve no padrão Enterprise D17.UI");
+                        }
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               );

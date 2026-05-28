@@ -1,77 +1,99 @@
-# D16.PERF — Meta Oficial de Performance ERP Meta Sun
 
-Objetivo: deixar o ERP **rápido como TOTVS RM** sem abrir mão de RLS, auditoria, governança ou D14/D15. Robusto **e** rápido.
+# D17.UI — Padrão UI Enterprise RM/TOTVS oficial
 
-## Metas oficiais (SLA interno)
+## Diagnóstico rápido
 
-| Indicador | Meta | Forma de medição |
-|---|---|---|
-| Auth Supabase (signIn) | ≤ 800 ms | `perf.mark('auth.start' → 'auth.ok')` |
-| Shell renderizado pós-login | ≤ 2 000 ms | `perf.mark('shell.ready')` |
-| Troca de módulo (cache quente) | ≤ 1 000 ms | `perf.mark('route.ready')` |
-| Primeira lista operacional | ≤ 1 500 ms | `perf.mark('data.ready')` |
-| Permissões carregadas | ≤ 500 ms | `perf.mark('perms.ready')` |
-| Bundle inicial (sem módulos) | ≤ 350 KB gzip | `vite build --report` |
+Boa parte do padrão já existe e está consolidado no barrel `@/components/app/enterprise`:
 
-## Estratégia em 6 ondas
+- `EnterpriseToolbar` — barra superior (Novo / Editar / Aprovar / Cancelar / Atualizar / Filtrar / Exportar / Imprimir / Histórico / Anexos / Processos / Mais ações).
+- `EnterpriseRecordToolbar` — variante RM (azul Novo, verde Salvar/Aprovar, vermelho Excluir/Cancelar, ícones puros, Anexos em pílula azul, Processos em pílula verde, Filtros em pílula índigo, Colunas/Visões à direita).
+- `EnterpriseDataGrid` — grid denso, seleção individual/lote, ordenação, paginação.
+- `ProcessosMenu` — dropdown de processos por módulo.
+- `HistoricoDrawer`, `AnexosButton`, `AttachmentPanel`, `EntityTimeline`, `EntityStatusBadge`, `GovernedActionButton`, `ServerPaginationFooter`.
 
-### Onda P1 — Instrumentação (base de medição)
-- `src/lib/perf.ts`: helper `perfMark(label)`, `perfMeasure(from,to)`, ring buffer 200 entradas + `console.table` em dev.
-- Eventos oficiais: `login.start`, `auth.ok`, `perms.ready`, `shell.ready`, `route.<id>.ready`, `data.<key>.ready`.
-- Persistir P95 diário em tabela `perf_log` (id, evento, ms, rota, user_id, created_at) com RLS `admin` + insert via RPC `rpc_perf_log` (rate-limit por sessão). Sem PII.
-- Painel `/paineis/performance` (admin) com P50/P95 dos últimos 7 dias por evento.
+**Lacunas reais** (o que esta onda fecha):
 
-### Onda P2 — Login + Shell enxuto
-- `login.tsx`: remover qualquer prefetch de módulos. Só auth + redirect.
-- `__root.tsx` / shell: garantir que `MacroNav` e `Ribbon` não importem telas — só metadados de menu.
-- `usePermissoes`: 1 única query, `staleTime: 5min`, `gcTime: 30min`. Eliminar duplicações detectadas.
-- `SaudeSistema`, `DashboardReaisOverview`, `KpisOficiaisStrip`: **lazy + sob demanda** (não no boot). Carrega após `shell.ready` via `requestIdleCallback`.
-- Auditoria de imports síncronos no shell: nenhuma rota de módulo pode estar no grafo do root.
+1. **`RowActions`** — botão de ações por linha padrão único (lápis/olho/clipe/relógio/X/lixeira) com cores azul/verde/vermelho/cinza. Hoje só existe `TituloRowActions` específico de Títulos.
+2. **`ColumnManager`** — livrinho que mostra/oculta, reordena, salva preferência em LS e restaura padrão.
+3. **`FilterPanel`** — painel padronizado (rápido + avançado: status, período, responsável, busca, limpar).
+4. **Diretriz oficial** — `docs/ui-enterprise-padrao-rm.md` + memory `mem://design/d17-ui-enterprise-rm` definindo regra de pedra para toda tela operacional nova.
 
-### Onda P3 — Lazy loading de módulos
-TanStack Start já suporta automatic code splitting. Validar/forçar:
-- Remover qualquer `export function` em route files (quebra splitting — ver `tanstack-code-splitting`).
-- Mover componentes pesados (`FinanceiroPage`, `ComercialPage`, `ContratosPage`, `ConfiguracoesPage`, `PaineisPage`, `EstoquePage`, `EngenhariaPage`) para `getRouteApi` + função interna não-exportada.
-- Garantir que charts (`recharts`), editores e libs grandes só sejam importados dentro do componente da rota, nunca no shell.
-- Conferir `vite build` → cada módulo vira chunk próprio.
+## Escopo desta onda (D17.UI.1)
 
-### Onda P4 — React Query + paginação server-side
-- Auditar todos os `useQuery` operacionais: aplicar `staleTime: 30s` mínimo, `gcTime: 5min`, `refetchOnWindowFocus: false` por padrão (override só onde necessário).
-- Remover hooks duplicados (mesmo `queryKey` montado 2x).
-- Aplicar `useServerPagination` + `ServerPaginationFooter` (D14.5) nos grids ainda em client-side: Títulos, Lançamentos, Movimentações, Contratos, Propostas, Estoque, Fornecedores, Clientes, Compras, Aprovações.
-- Padrão: page 50, max 200, busca debounced 250ms, `count: 'exact'` só na primeira página.
-- Proibir `.select('*')` sem `.limit()` (regra já no charter D15, reforçar nas telas).
+Criar componentes base + diretriz + aplicar no **Financeiro/TitulosTabSupabase** como referência canônica. Demais módulos seguem em D17.UI.2..N (sob demanda).
 
-### Onda P5 — Dashboard + saúde controlados
-- `useSaudeSistema`: refresh manual + auto a cada **5 min** (era 2 min). `staleTime: 4min`.
-- `useKpisOficiais`: idem 5min, `enabled` só quando aba visível (`document.visibilityState === 'visible'`).
-- Zero polling no shell. Dashboard só monta na rota `/paineis/*`.
+### Arquivos novos
 
-### Onda P6 — Supabase (queries, views, índices)
-- Rodar `pg_stat_statements` top 20 e EXPLAIN ANALYZE nas 6 views oficiais `v_kpis_*_oficial`, `v_saude_sistema`, `v_lancamentos_derivados`, `v_titulos_enriquecido`, `v_adiantamentos_enriquecido`, `v_reconciliacao_*`.
-- Criar índices faltantes (foco: filtros por `deleted_at IS NULL`, `created_at DESC`, `status`, `data_competencia`, `obra_id`, `cliente_id`).
-- Trocar `select('*')` por colunas explícitas nas views/RPCs consumidas pela UI.
-- Validar que nenhuma view oficial caiu de `security_invoker=on` (D14.2).
-- Medir RPCs críticas (`rpc_lancamento_criar`, `rpc_titulos_totais`, `rpc_contrato_assinar`, etc.) com timing client + log servidor.
+```
+src/components/app/enterprise/RowActions.tsx       # ações por linha (azul/verde/vermelho/cinza)
+src/components/app/enterprise/ColumnManager.tsx    # mostra/oculta/reordena + LS por usuário+entidade
+src/components/app/enterprise/FilterPanel.tsx      # rápido + avançado (status/período/responsável)
+src/lib/ui/column-prefs.ts                          # helper LS ui.cols.{user}.{entity}.v1
+docs/ui-enterprise-padrao-rm.md                    # diretriz oficial
+mem://design/d17-ui-enterprise-rm                  # memory rule
+```
 
-## Segurança (intocada)
-- RLS, policies, audit triggers, `security_invoker=on`, `error_log`, `governance_matrix`, workflow flags, idempotência → **nada removido**.
-- Cada otimização passa pelo linter Supabase. Baseline atual ~122 WARN (aceitos D14.2) — não pode subir por causa de performance.
-- `perf_log` e `rpc_perf_log` seguem padrão D14: RLS admin, EXECUTE só authenticated, search_path explícito, sem PII.
+### Arquivos editados
 
-## Entrega
-1. `docs/d16-perf-relatorio.md`: gargalos identificados, antes/depois (ms), arquivos alterados, queries otimizadas, módulos lazy.
-2. Painel `/paineis/performance` (admin) com gráfico P50/P95 7 dias.
-3. Checklist de conformidade: RLS ok, linter estável, auditoria preservada.
+```
+src/components/app/enterprise/index.ts             # re-export dos 3 novos
+src/modules/financeiro/TitulosTabSupabase.tsx      # adota RowActions + ColumnManager + FilterPanel (referência)
+.lovable/plan.md                                    # registra D17.UI
+mem://index.md                                      # entrada da nova memory
+```
 
-## Sequência de execução
-P1 (instrumentação) → P2 (login/shell) → mede baseline real → P3 (lazy) → mede → P4 (Query+paginação) → P5 (dashboard) → P6 (Supabase) → relatório final.
+## Especificação dos componentes
 
-Cada onda commit isolado, com leitura do painel `/paineis/performance` antes/depois.
+### `RowActions`
+
+Botão composto que aparece na primeira coluna sticky do grid. Recebe array tipado:
+
+```
+type RowActionKind = "visualizar"|"editar"|"duplicar"|"excluir"|"cancelar"
+                   |"anexos"|"historico"|"auditoria"|"aprovar"|"reprovar";
+
+<RowActions
+  rowId={t.id}
+  permissions={perms}
+  actions={[
+    { kind: "visualizar" },
+    { kind: "editar", permissao: "financeiro.editar" },
+    { kind: "anexos", badgeCount: t.qtd_anexos },
+    { kind: "historico" },
+    { kind: "cancelar", permissao: "financeiro.movimentar", confirm: true },
+  ]}
+  onAction={(kind, rowId) => ...}
+/>
+```
+
+Visual: ícones h-3.5, h-7 w-7, cores tom-on-hover: azul (visualizar/anexos), âmbar (editar), índigo (histórico/auditoria), verde (aprovar), vermelho (excluir/cancelar/reprovar), cinza (duplicar). Sem texto, só ícone + tooltip. Botões inline + opcional dropdown “⋯” para overflow.
+
+### `ColumnManager`
+
+Botão livrinho (`Columns3`) + popover. Recebe lista de colunas com `key/label/defaultVisible/locked`. Permite toggle, drag-reorder, “Restaurar padrão”. Persiste em `ui.cols.{userEmail}.{entityType}.v1`. Hook companion `useColumnPrefs(entityType, defaults)` retorna `{visibleKeys, order, setVisible, reorder, reset}`.
+
+### `FilterPanel`
+
+Trigger pílula índigo “Filtros: {resumo}”. Sheet/popover com slots: status (multi-select), período (range), responsável (combobox), busca (texto), + slot extra. “Aplicar” / “Limpar”. Estado controlado pelo consumidor; persistência LS opcional (`ui.filters.{entity}.v1`).
+
+## Regras de pedra (memory `d17-ui-enterprise-rm`)
+
+- Toda tela operacional nova OBRIGATÓRIA usar `EnterpriseRecordToolbar` + `EnterpriseDataGrid` + `RowActions` + `ColumnManager` + `FilterPanel` do barrel `@/components/app/enterprise`.
+- Proibido criar `<table>` cru ou Toolbar custom em telas listadas no escopo (Financeiro, Comercial, Contratos, PVs, Compras, Estoque, Engenharia, OS, Aprovações, Pós-venda, Configurações, Formulários).
+- Cores canônicas: **azul=criar/visualizar/anexos**, **verde=salvar/aprovar/avançar/baixar**, **vermelho=excluir/cancelar/reprovar/estornar**, **âmbar=editar**, **índigo=histórico/auditoria/filtros**, **cinza=neutro**.
+- Preferências de coluna/filtros podem ficar em LS (UI apenas) com prefixo `ui.`. Nunca persistir dado operacional em LS.
+- Backend, RLS, auditoria, workflow: **NÃO TOCAR** nesta onda. Apenas casca visual.
+
+## Critério de aceite
+
+- 3 componentes novos compilam, exportados pelo barrel, com tipos.
+- `TitulosTabSupabase` adota os 3 sem perder nenhuma funcionalidade existente (Receber/Pagar, RPC baixar, audit, filtros atuais).
+- Doc + memory publicados. Plano D17.UI registrado.
+- Demais módulos ficam para D17.UI.2 (com prioridade Financeiro → Comercial → PV/Contratos → Compras/Estoque → Engenharia/OS → Configurações).
 
 ## Riscos
-- Hooks duplicados podem estar em componentes muito acoplados → refator pode tocar várias telas; mitigado por flag `D16_PERF_*` quando o risco for alto.
-- Mexer em `usePermissoes` afeta TODO o ERP → mudança apenas em cache, não em lógica de permissão.
-- Lazy loading agressivo pode mostrar fallback chato → usar `pendingComponent` com skeleton do shell já carregado.
 
-Confirma para eu começar pela Onda P1 (instrumentação + painel)?
+- Refator do TitulosTabSupabase pode regredir filtros se mal feito → aplico mudança aditiva (RowActions na 1ª coluna + ColumnManager no slot direito + FilterPanel substitui filtros inline antigos só se equivalência total).
+- LS de colunas precisa namespacing por usuário pra não vazar entre contas.
+
+Aguardo aprovação para executar.

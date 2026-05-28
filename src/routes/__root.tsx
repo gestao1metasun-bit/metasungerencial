@@ -158,19 +158,18 @@ function RootComponent() {
 
   // D16.PERF P2 — route.ready + module.switch a cada troca de rota privada
   const lastPath = useRef<string | null>(null);
+  const routeStartRef = useRef<number | null>(null);
   useEffect(() => {
     if (isPublicRoute || !hasValidSession) return;
     const prev = lastPath.current;
     perfMark("route.ready");
     if (prev && prev !== path) {
-      // mede troca entre módulos (rota anterior → nova rota)
       perfReport("module.switch", performance.now() - (routeStartRef.current ?? performance.now()), path);
     }
     routeStartRef.current = performance.now();
     lastPath.current = path;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, hasValidSession, isPublicRoute]);
-  const routeStartRef = useRef<number | null>(null);
 
   return (
     <QueryClientProvider client={queryClient}>

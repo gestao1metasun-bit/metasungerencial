@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
+import { perfMark, perfMeasure } from "@/lib/perf";
 import metaSunLogo from "@/assets/meta-sun-logo.png";
 
 export const Route = createFileRoute("/login")({

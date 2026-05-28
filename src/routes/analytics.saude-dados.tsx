@@ -11,7 +11,7 @@ import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck, Activity } from "l
 import { useSaudeDados, type SaudeDadosRow } from "@/lib/repositories/use-kpis-oficiais";
 import { useQueryClient } from "@tanstack/react-query";
 
-export const Route = createFileRoute("/paineis/saude-dados")({
+export const Route = createFileRoute("/analytics/saude-dados")({
   head: () => ({ meta: [{ title: "Saúde dos Dados — Meta Sun Gerencial" }] }),
   component: SaudeDados,
 });

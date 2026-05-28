@@ -11,7 +11,7 @@
  * homologação/teste/simulação. Nenhuma chave operacional é preservada.
  *
  * Execução:
- *   - manual via /paineis/saude-sistema (botão "Purgar legado LS")
+ *   - manual via /analytics/saude-sistema (botão "Purgar legado LS")
  *   - registra evento em audit_log + error_log (info)
  *   - rodar 1x por máquina; idempotente (rodar de novo só remove resíduo)
  */

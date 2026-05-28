@@ -60,7 +60,7 @@ export type MacroModule = {
 
 // ── Macro módulos (D6.11 — ERP clássico: departamentos separados no topo) ──
 export const MACRO_MODULES: MacroModule[] = [
-  { key: "paineis",        label: "Painéis",        to: "/paineis",                icon: LayoutDashboard, matches: ["/paineis", "/dashboards", "/dashboard", "/tarefas"], accessKey: "dashboard" },
+  { key: "analytics",      label: "Analytics",      to: "/analytics",              icon: LayoutDashboard, matches: ["/analytics", "/paineis", "/dashboards", "/dashboard", "/analises", "/relatorios", "/tarefas"], accessKey: "dashboard" },
   { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
   { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda"], accessKey: "financeiro" },
   { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
@@ -69,27 +69,28 @@ export const MACRO_MODULES: MacroModule[] = [
   { key: "estoque",        label: "Estoque",        to: "/estoque",                icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
   { key: "aprovacoes",     label: "Aprovações",     to: "/aprovacoes",             icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
   { key: "posvenda",       label: "Pós-venda",      to: "/posvenda",               icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
-  { key: "analytics",      label: "Analytics",      to: "/analises",               icon: LineChart,       matches: ["/analises", "/analytics", "/relatorios"], accessKey: "analytics" },
   { key: "configuracoes",  label: "Configurações",  to: "/configuracoes",          icon: Settings,        matches: ["/configuracoes", "/cadastros"], accessKey: "configuracoes" },
 ];
 
 // ── Rotas (sidebar legada + mapeamento para macro) ────────────────────────
 export const NAV_ITEMS: NavItem[] = [
-  // Macro Painéis (gestão / KPIs)
-  { to: "/paineis",                label: "Visão Geral",              icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 5,  critica: true },
-  { to: "/dashboard",              label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 8 },
-  { to: "/paineis/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "paineis",       ordem: 10 },
-  { to: "/paineis/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "paineis",       ordem: 20 },
-  { to: "/paineis/engenharia",     label: "Engenharia",               icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "paineis",       ordem: 30 },
-  { to: "/paineis/estoque",        label: "Estoque",                  icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "paineis",       ordem: 40 },
-  { to: "/paineis/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "paineis",       ordem: 50 },
-  { to: "/paineis/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 60 },
-  { to: "/paineis/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "paineis",       ordem: 70 },
-  { to: "/paineis/saude-dados",    label: "Saúde dos Dados",          icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "paineis",       ordem: 75, critica: true },
-  { to: "/paineis/governanca",     label: "Governança",               icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "paineis",       ordem: 76, critica: true },
-  { to: "/analises",               label: "Análises / Executivo",     icon: LineChart,       accessKey: "analytics",     tier: "controle",  macro: "paineis",       ordem: 80 },
-  { to: "/relatorios",             label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "paineis",       ordem: 90 },
-  { to: "/tarefas",                label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "paineis",       ordem: 100 },
+  // Macro Analytics (gestão / KPIs — consolidado 2026-05-28: paineis absorvido)
+  { to: "/analytics",                label: "Visão Executiva",          icon: LineChart,       accessKey: "analytics",     tier: "operacao",  macro: "analytics",      ordem: 1,  critica: true },
+  { to: "/dashboard",                label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "analytics",      ordem: 8 },
+  { to: "/analytics/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "analytics",      ordem: 10 },
+  { to: "/analytics/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "analytics",      ordem: 20 },
+  { to: "/analytics/engenharia",     label: "Engenharia",               icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "analytics",      ordem: 30 },
+  { to: "/analytics/estoque",        label: "Estoque",                  icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "analytics",      ordem: 40 },
+  { to: "/analytics/financiamentos", label: "Financiamentos",           icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "analytics",      ordem: 50 },
+  { to: "/analytics/aprovacoes",     label: "Aprovações",               icon: ClipboardCheck,  accessKey: "dashboard",     tier: "operacao",  macro: "analytics",      ordem: 60 },
+  { to: "/analytics/posvenda",       label: "Pós-venda",                icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "analytics",      ordem: 70 },
+  { to: "/analytics/saude-dados",    label: "Saúde dos Dados",          icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 75, critica: true },
+  { to: "/analytics/saude-sistema",  label: "Saúde do Sistema",         icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 76, critica: true },
+  { to: "/analytics/governanca",     label: "Governança",               icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 77, critica: true },
+  { to: "/analytics/performance",    label: "Performance",              icon: LineChart,       accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 78 },
+  { to: "/analytics/erros",          label: "Erros",                    icon: FileBarChart,    accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 79 },
+  { to: "/relatorios",               label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "analytics",      ordem: 90 },
+  { to: "/tarefas",                  label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "analytics",      ordem: 100 },
 
   // Operação
   { to: "/comercial",          label: "Comercial",          icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "comercial",     ordem: 10, critica: true },

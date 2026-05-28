@@ -268,7 +268,7 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
             <span className="font-medium">Erro ao consultar títulos no Supabase.</span>
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            {(error as Error)?.message ?? "Erro desconhecido"} — registrado em /paineis/erros.
+            {(error as Error)?.message ?? "Erro desconhecido"} — registrado em /analytics/erros.
           </div>
         </Card>
       )}

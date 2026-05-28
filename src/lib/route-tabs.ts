@@ -22,16 +22,8 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     ],
   },
 
-  // ── Macro módulo PAINÉIS (D6.E — Gestão / KPIs centralizados) ─────────
-  "/paineis": {
-    default: "geral",
-    tabs: [
-      { value: "geral", label: "Geral", group: "Visão Geral" },
-      { value: "executivo", label: "Executivo", group: "Visão Geral" },
-      { value: "indicadores", label: "Indicadores", group: "Visão Geral" },
-    ],
-  },
-  "/paineis/comercial": {
+  // ── Macro módulo ANALYTICS (consolidado em 2026-05-28: paineis absorvido) ─
+  "/analytics/comercial": {
     default: "funil",
     tabs: [
       { value: "funil", label: "Funil", group: "Comercial" },
@@ -41,7 +33,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "conversao", label: "Conversão", group: "Comercial" },
     ],
   },
-  "/paineis/financeiro": {
+  "/analytics/financeiro": {
     default: "fluxo",
     tabs: [
       { value: "fluxo", label: "Fluxo de Caixa", group: "Financeiro" },
@@ -51,7 +43,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "resultado", label: "Resultado Operacional", group: "Financeiro" },
     ],
   },
-  "/paineis/engenharia": {
+  "/analytics/engenharia": {
     default: "obras",
     tabs: [
       { value: "obras", label: "Obras", group: "Engenharia" },
@@ -61,7 +53,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "pendencias", label: "Pendências", group: "Engenharia" },
     ],
   },
-  "/paineis/estoque": {
+  "/analytics/estoque": {
     default: "saldo",
     tabs: [
       { value: "saldo", label: "Saldo", group: "Estoque" },
@@ -71,7 +63,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "custo", label: "Custo Estoque", group: "Estoque" },
     ],
   },
-  "/paineis/financiamentos": {
+  "/analytics/financiamentos": {
     default: "carteira",
     tabs: [
       { value: "carteira", label: "Carteira", group: "Financiamentos" },
@@ -81,7 +73,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "pendencias", label: "Pendências", group: "Financiamentos" },
     ],
   },
-  "/paineis/aprovacoes": {
+  "/analytics/aprovacoes": {
     default: "sla",
     tabs: [
       { value: "sla", label: "SLA", group: "Aprovações" },
@@ -91,7 +83,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "aprovador", label: "Por Aprovador", group: "Aprovações" },
     ],
   },
-  "/paineis/posvenda": {
+  "/analytics/posvenda": {
     default: "chamados",
     tabs: [
       { value: "chamados", label: "Chamados", group: "Pós-venda" },
@@ -100,13 +92,13 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "recorrencias", label: "Recorrências", group: "Pós-venda" },
     ],
   },
-  "/paineis/saude-dados": {
+  "/analytics/saude-dados": {
     default: "indicadores",
     tabs: [
       { value: "indicadores", label: "Indicadores", group: "Saúde dos Dados" },
     ],
   },
-  "/paineis/governanca": {
+  "/analytics/governanca": {
     default: "matriz",
     tabs: [
       { value: "matriz", label: "Matriz", group: "Governança" },

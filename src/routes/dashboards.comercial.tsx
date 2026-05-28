@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboards/comercial")({
-  beforeLoad: () => { throw redirect({ to: "/paineis/comercial", replace: true }); },
+  beforeLoad: () => { throw redirect({ to: "/analytics/comercial", replace: true }); },
 });

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useErrorLog, useMarcarErroResolvido, type ErrorStatus } from "@/lib/repositories/error-log-repo";
 
-export const Route = createFileRoute("/paineis/erros")({
+export const Route = createFileRoute("/analytics/erros")({
   component: PainelErros,
 });
 

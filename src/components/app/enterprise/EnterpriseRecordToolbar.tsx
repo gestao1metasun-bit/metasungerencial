@@ -498,5 +498,126 @@ export function EnterpriseRecordToolbar({
       </div>
     </div>
   );
+
+  // ------- Linha 2: ações de status (RM circulares coloridas) -------
+  const STATUS_TONE: Record<StatusActionItem["tone"], string> = {
+    success: "bg-emerald-500 text-white hover:bg-emerald-600",
+    danger:  "bg-rose-500 text-white hover:bg-rose-600",
+    info:    "bg-sky-500 text-white hover:bg-sky-600",
+    warning: "bg-amber-500 text-white hover:bg-amber-600",
+    primary: "bg-indigo-500 text-white hover:bg-indigo-600",
+    muted:   "bg-slate-300 text-slate-700 hover:bg-slate-400",
+  };
+
+  const row2 = statusActions?.length ? (
+    <div
+      role="toolbar"
+      aria-label="Ações de status"
+      className="flex items-center gap-1 border-x border-slate-200 bg-slate-50 px-1.5 py-1 overflow-x-auto"
+    >
+      {statusActions.map((s) => {
+        const Icon = s.icon;
+        return (
+          <button
+            key={s.key}
+            type="button"
+            disabled={s.disabled}
+            onClick={s.onClick}
+            title={s.label}
+            aria-label={s.label}
+            className={cn(
+              "relative inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 transition",
+              "disabled:opacity-40 disabled:cursor-not-allowed",
+              STATUS_TONE[s.tone],
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {s.badge && (
+              <span className="absolute -top-1 -right-1 rounded-full bg-white text-[9px] font-mono text-slate-700 border border-slate-300 px-1 leading-none">
+                {s.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
+  // ------- Linha 3: Layout / densidade (estilo "Layout: Padrão ▼ ...") -------
+  const row3 = layoutBar ? (
+    <div
+      role="toolbar"
+      aria-label="Layout"
+      className="flex items-center gap-1 border border-slate-200 bg-white px-1.5 py-1 rounded-b-sm overflow-x-auto"
+    >
+      <span className="text-[11.5px] text-slate-600 px-1">Layout:</span>
+      {layoutBar.presets && layoutBar.presets.length > 0 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 gap-1 rounded-sm text-[11.5px]"
+            >
+              {layoutBar.presets.find((p) => p.key === layoutBar.currentPreset)?.label ?? "Padrão"}
+              <ChevronDown className="h-3 w-3 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {layoutBar.presets.map((p) => (
+              <DropdownMenuItem
+                key={p.key}
+                onClick={() => layoutBar.onPresetChange?.(p.key)}
+                className="text-[12px]"
+              >
+                {p.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <span className="text-[11.5px] font-medium text-slate-700 px-1">Padrão</span>
+      )}
+      <Sep />
+      <IconBtn
+        icon={Rows3}
+        label="Densidade compacta"
+        tone={layoutBar.density === "compact" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("compact")}
+      />
+      <IconBtn
+        icon={Rows}
+        label="Densidade confortável"
+        tone={layoutBar.density === "comfortable" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("comfortable")}
+      />
+      <IconBtn
+        icon={SquareStack}
+        label="Densidade espaçosa"
+        tone={layoutBar.density === "spacious" ? "info" : "muted"}
+        onClick={() => layoutBar.onDensityChange?.("spacious")}
+      />
+      <Sep />
+      <IconBtn icon={Square} label="Visão tabela" tone="muted" />
+      <IconBtn icon={BarChart3} label="Visão gráfico" tone="muted" />
+      <Sep />
+      <IconBtn icon={Mail} label="Enviar" tone="muted" />
+      <div className="ml-auto">{layoutBar.extra}</div>
+    </div>
+  ) : null;
+
+  if (!hasRmRows && !position) {
+    return <div className={className}>{row1}</div>;
+  }
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      {row1}
+      {row2}
+      {row3}
+    </div>
+  );
 }
+
 

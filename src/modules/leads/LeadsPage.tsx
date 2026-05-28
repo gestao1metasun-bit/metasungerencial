@@ -174,12 +174,13 @@ export function LeadsPage() {
             {filtrados.map((l) => (
               <TableRow key={l.id}>
                 <TableCell>
-                  <ActionsMenu label={l.numero}>
-                    <DropdownMenuItem onSelect={() => setDetalhe(l)}>
-                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                    </DropdownMenuItem>
-                  </ActionsMenu>
+                  <RowActions
+                    actions={[
+                      { kind: "view", label: `Ver ${l.numero}`, onClick: () => setDetalhe(l) },
+                    ]}
+                  />
                 </TableCell>
+
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>

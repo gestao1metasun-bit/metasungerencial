@@ -175,11 +175,12 @@ export function LeadsPage() {
               <TableRow key={l.id}>
                 <TableCell>
                   <RowActions
-                    actions={[
-                      { kind: "view", label: `Ver ${l.numero}`, onClick: () => setDetalhe(l) },
-                    ]}
+                    rowId={l.id}
+                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
+                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
                   />
                 </TableCell>
+
 
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>

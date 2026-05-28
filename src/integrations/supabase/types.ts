@@ -7978,6 +7978,8 @@ export type Database = {
         | "comercial.comissao.cancelar"
         | "comercial.comissao.estornar"
         | "comercial.comissao.alterar_percentual"
+        | "financeiro.rescindir"
+        | "financeiro.taxa.editar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -8212,6 +8214,8 @@ export const Constants = {
         "comercial.comissao.cancelar",
         "comercial.comissao.estornar",
         "comercial.comissao.alterar_percentual",
+        "financeiro.rescindir",
+        "financeiro.taxa.editar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

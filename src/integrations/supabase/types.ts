@@ -968,6 +968,69 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_assinatura_eventos: {
+        Row: {
+          assinado_em: string
+          assinado_por: string
+          contrato_id: string
+          created_at: string
+          dispatched_eng: boolean
+          dispatched_fin: boolean
+          hash_evento: string | null
+          id: string
+          ip_origem: string | null
+          metadata: Json
+          observacao: string | null
+          permissao_usada: string
+          user_agent: string | null
+        }
+        Insert: {
+          assinado_em?: string
+          assinado_por: string
+          contrato_id: string
+          created_at?: string
+          dispatched_eng?: boolean
+          dispatched_fin?: boolean
+          hash_evento?: string | null
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json
+          observacao?: string | null
+          permissao_usada: string
+          user_agent?: string | null
+        }
+        Update: {
+          assinado_em?: string
+          assinado_por?: string
+          contrato_id?: string
+          created_at?: string
+          dispatched_eng?: boolean
+          dispatched_fin?: boolean
+          hash_evento?: string | null
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json
+          observacao?: string | null
+          permissao_usada?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercial_assinatura_eventos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comercial_assinatura_eventos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
       comercial_carteira_transferencias: {
         Row: {
           contexto: Json
@@ -1147,9 +1210,13 @@ export type Database = {
       }
       contratos: {
         Row: {
+          assinado: boolean
           assinado_aprovado: boolean
           assinado_aprovado_em: string | null
           assinado_aprovado_por: string | null
+          assinado_em: string | null
+          assinado_por: string | null
+          assinatura_evento_id: string | null
           cancelado: boolean
           cliente_id: string
           codigo: string | null
@@ -1176,10 +1243,16 @@ export type Database = {
           liberacao_obs: string | null
           liberado_em: string | null
           liberado_para_contrato: boolean
+          liberado_para_engenharia: boolean
+          liberado_para_engenharia_em: string | null
+          liberado_para_financeiro: boolean
+          liberado_para_financeiro_em: string | null
           liberado_por: string | null
           modulos_qtde: number | null
           motivo_cancelamento: string | null
           observacoes: string | null
+          pendente_engenharia: boolean
+          pendente_financeiro: boolean
           possui_financiamento: boolean
           potencia_kwp: number | null
           proposta_id: string | null
@@ -1191,9 +1264,13 @@ export type Database = {
           vendedor: string | null
         }
         Insert: {
+          assinado?: boolean
           assinado_aprovado?: boolean
           assinado_aprovado_em?: string | null
           assinado_aprovado_por?: string | null
+          assinado_em?: string | null
+          assinado_por?: string | null
+          assinatura_evento_id?: string | null
           cancelado?: boolean
           cliente_id: string
           codigo?: string | null
@@ -1220,10 +1297,16 @@ export type Database = {
           liberacao_obs?: string | null
           liberado_em?: string | null
           liberado_para_contrato?: boolean
+          liberado_para_engenharia?: boolean
+          liberado_para_engenharia_em?: string | null
+          liberado_para_financeiro?: boolean
+          liberado_para_financeiro_em?: string | null
           liberado_por?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
           observacoes?: string | null
+          pendente_engenharia?: boolean
+          pendente_financeiro?: boolean
           possui_financiamento?: boolean
           potencia_kwp?: number | null
           proposta_id?: string | null
@@ -1235,9 +1318,13 @@ export type Database = {
           vendedor?: string | null
         }
         Update: {
+          assinado?: boolean
           assinado_aprovado?: boolean
           assinado_aprovado_em?: string | null
           assinado_aprovado_por?: string | null
+          assinado_em?: string | null
+          assinado_por?: string | null
+          assinatura_evento_id?: string | null
           cancelado?: boolean
           cliente_id?: string
           codigo?: string | null
@@ -1264,10 +1351,16 @@ export type Database = {
           liberacao_obs?: string | null
           liberado_em?: string | null
           liberado_para_contrato?: boolean
+          liberado_para_engenharia?: boolean
+          liberado_para_engenharia_em?: string | null
+          liberado_para_financeiro?: boolean
+          liberado_para_financeiro_em?: string | null
           liberado_por?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
           observacoes?: string | null
+          pendente_engenharia?: boolean
+          pendente_financeiro?: boolean
           possui_financiamento?: boolean
           potencia_kwp?: number | null
           proposta_id?: string | null
@@ -7290,6 +7383,24 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_contrato_assinar: {
+        Args: {
+          p_contrato_id: string
+          p_ip?: string
+          p_observacao?: string
+          p_row_version?: number
+          p_user_agent?: string
+        }
+        Returns: string
+      }
+      rpc_contrato_marcar_engenharia_liberada: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: boolean
+      }
+      rpc_contrato_marcar_financeiro_liberado: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: boolean
+      }
       rpc_idempotente_check: {
         Args: { _payload?: Json; _request_id: string; _rpc_nome: string }
         Returns: Json
@@ -7506,6 +7617,9 @@ export type Database = {
         | "comercial.comissao.visualizar"
         | "comercial.comissao.liberar"
         | "comercial.carteira.ver_historico"
+        | "comercial.contrato.assinar"
+        | "comercial.contrato.assinar_excecao"
+        | "comercial.contrato.ver_assinatura"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -7726,6 +7840,9 @@ export const Constants = {
         "comercial.comissao.visualizar",
         "comercial.comissao.liberar",
         "comercial.carteira.ver_historico",
+        "comercial.contrato.assinar",
+        "comercial.contrato.assinar_excecao",
+        "comercial.contrato.ver_assinatura",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

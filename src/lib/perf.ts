@@ -55,8 +55,8 @@ async function flushQueue() {
       await supabase.rpc('rpc_perf_log', {
         p_evento: item.evento,
         p_ms: Math.round(item.ms),
-        p_rota: item.rota ?? null,
-        p_user_agent: navigator?.userAgent?.slice(0, 256) ?? null,
+        p_rota: item.rota ?? undefined,
+        p_user_agent: navigator?.userAgent?.slice(0, 256) ?? undefined,
       });
     } catch {
       // best-effort: nunca quebra UI

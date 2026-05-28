@@ -171,7 +171,7 @@ function NovoLancamentoDialog({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error(`Falha: ${msg}`);
-      logError({ scope: "lancamento.criar", message: msg, payload: form });
+      logError({ modulo: "financeiro", acao: "lancamento.criar", mensagem: msg, payload: form, severidade: "error" });
     } finally {
       setBusy(false);
     }

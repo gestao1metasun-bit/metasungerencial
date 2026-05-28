@@ -30,6 +30,13 @@
     'fin-adiantamentos',
     'fin-compras',
     'fin-conciliacao',
+    // D15 — Lançamentos vira visão derivada (decisão oficial).
+    // Snapshot precisa capturar o LS atual antes do corte para mapear cada
+    // lançamento → título/parcela/movimentação no dry-run.
+    'metasun.fin.lancamentos.v1',
+    'metasun.fin.recorrentes.v1',
+    'metasun.fin.centros.v1',
+    'metasun.fin.naturezas.v1',
   ];
 
   const MANIFEST = {

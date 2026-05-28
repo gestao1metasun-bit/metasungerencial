@@ -75,7 +75,7 @@ export const MACRO_MODULES: MacroModule[] = [
 // ── Rotas (sidebar legada + mapeamento para macro) ────────────────────────
 export const NAV_ITEMS: NavItem[] = [
   // Macro Analytics (gestão / KPIs — consolidado 2026-05-28: paineis absorvido)
-  { to: "/analytics",                label: "Visão Executiva",          icon: LineChart,       accessKey: "analytics",     tier: "visao",     macro: "analytics",      ordem: 1,  critica: true },
+  { to: "/analytics",                label: "Visão Executiva",          icon: LineChart,       accessKey: "analytics",     tier: "operacao",  macro: "analytics",      ordem: 1,  critica: true },
   { to: "/dashboard",                label: "Dashboard Geral (legado)", icon: LayoutDashboard, accessKey: "dashboard",     tier: "operacao",  macro: "analytics",      ordem: 8 },
   { to: "/analytics/comercial",      label: "Comercial",                icon: Briefcase,       accessKey: "comercial",     tier: "operacao",  macro: "analytics",      ordem: 10 },
   { to: "/analytics/financeiro",     label: "Financeiro",               icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "analytics",      ordem: 20 },

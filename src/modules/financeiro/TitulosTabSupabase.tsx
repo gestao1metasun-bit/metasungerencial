@@ -154,8 +154,18 @@ export function TitulosTabSupabase({ tipo }: { tipo: "AR" | "AP" }) {
   const [novoOpen, setNovoOpen] = useState(false);
   const [parcelaSel, setParcelaSel] = useState<string | null>(null);
   const [cancelSel, setCancelSel] = useState<TituloFinanceiro | null>(null);
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+
+  // D17.UI.3 — seleção múltipla
+  const selection = useRowSelection(filtrados, (r) => r.id);
+  const cancelar = useCancelarTitulo();
 
   const titulo = tipo === "AR" ? "Contas a Receber" : "Contas a Pagar";
+
+  // Quantos da seleção ainda são canceláveis?
+  const selCancelaveis = selection.selectedRows.filter(
+    (r) => r.status !== "CANCELADO" && r.status !== "RECEBIDO",
+  );
 
   return (
     <div className="space-y-3">

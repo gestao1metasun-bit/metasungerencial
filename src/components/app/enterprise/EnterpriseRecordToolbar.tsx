@@ -252,6 +252,9 @@ export function EnterpriseRecordToolbar({
   onAction, onProcess,
   onAttach, onHistory, onFilter,
   extraLeft, extraRight,
+  position, onNavigate,
+  statusActions,
+  layoutBar,
   className,
 }: EnterpriseRecordToolbarProps) {
   const count = selectedIds.length;

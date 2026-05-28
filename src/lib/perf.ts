@@ -1,15 +1,20 @@
 /**
  * D16.PERF — Helper de instrumentação de performance.
  *
- * Uso:
- *   perfMark('login.start')
- *   perfMark('auth.ok')
- *   const ms = perfMeasure('login.start', 'auth.ok') // grava em ring + envia rpc_perf_log
+ * P2.1: telemetria saneada
+ *  - flush rápido (1.5s) + flush em visibilitychange/pagehide/beforeunload
+ *  - fallback de medição usando performance.timeOrigin quando o anchor
+ *    (login.start / auth.ok) não existe (ex.: usuário já autenticado entra
+ *    direto em rota privada).
+ *  - route.ready agora é REPORTADO ao banco (não só perfMark).
+ *  - markRouteStart()/getRouteStart() permitem que grids meçam
+ *    first-list.ready de forma consistente.
  *
  * Regras:
- * - 100% client-side, seguro em SSR (no-op se window indefinido).
- * - Ring buffer local (200) para debugging via `window.__perfRing()`.
- * - Envia para Supabase via RPC com batching (5s) e best-effort (nunca quebra UI).
+ *  - 100% client-side, seguro em SSR (no-op se window indefinido).
+ *  - Ring buffer local (200) para debugging via `window.__perfRing()`.
+ *  - Envia para Supabase via RPC com batching, best-effort.
+ *  - Nunca quebra UI. Não toca em RLS, Auth, auditoria.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -26,8 +31,11 @@ const RING_MAX = 200;
 type PendingLog = { evento: string; ms: number; rota?: string };
 const queue: PendingLog[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
-const FLUSH_DELAY_MS = 5000;
+const FLUSH_DELAY_MS = 1500; // P2.1: 5s → 1.5s
 const QUEUE_MAX = 50;
+
+// route-start por rota (para first-list.ready)
+const routeStarts: Record<string, number> = {};
 
 function pushRing(entry: RingEntry) {
   ring.push(entry);
@@ -59,12 +67,20 @@ async function flushQueue() {
         p_user_agent: navigator?.userAgent?.slice(0, 256) ?? undefined,
       });
     } catch {
-      // best-effort: nunca quebra UI
+      // best-effort
     }
   }
 }
 
-/** Marca um ponto no tempo. */
+function flushNow() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  void flushQueue();
+}
+
+/** Marca um ponto no tempo (idempotente: não sobrescreve marca existente). */
 export function perfMark(label: string): void {
   if (!isClient) return;
   marks[label] = performance.now();
@@ -74,54 +90,106 @@ export function perfMark(label: string): void {
   }
 }
 
+/** Garante uma marca: só cria se ainda não existir. */
+export function perfMarkIfAbsent(label: string): void {
+  if (!isClient) return;
+  if (marks[label] == null) marks[label] = performance.now();
+}
+
+function enqueue(evento: string, ms: number, rota?: string) {
+  pushRing({ evento, ms, rota, at: Date.now() });
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.debug(`[perf] ${evento}: ${ms.toFixed(0)}ms ${rota ? `(${rota})` : ''}`);
+  }
+  if (queue.length < QUEUE_MAX) {
+    queue.push({ evento, ms, rota });
+    scheduleFlush();
+  }
+}
+
 /**
- * Mede a diferença entre dois marks, registra no ring buffer e envia para Supabase.
- * Retorna ms (ou null se algum mark faltar).
+ * Mede a diferença entre dois marks. Se `from` não existir, usa o primeiro
+ * fallback disponível: login.start → auth.ok → performance.timeOrigin (0).
+ * Retorna ms (ou null se nem o destino existir).
  */
-export function perfMeasure(from: string, to: string, evento?: string, rota?: string): number | null {
+export function perfMeasure(
+  from: string,
+  to: string,
+  evento?: string,
+  rota?: string,
+): number | null {
   if (!isClient) return null;
-  const a = marks[from];
   const b = marks[to];
-  if (a == null || b == null) return null;
+  if (b == null) return null;
+
+  // Cascata de fallback de origem
+  const candidates = [from, 'login.start', 'auth.ok'];
+  let a: number | undefined;
+  for (const k of candidates) {
+    if (marks[k] != null) {
+      a = marks[k];
+      break;
+    }
+  }
+  // Último recurso: tempo de carregamento da página (timeOrigin → b)
+  if (a == null) a = 0;
+
   const ms = b - a;
   if (ms < 0 || ms > 600000) return null;
 
-  const ev = evento ?? to;
-  const r = rota ?? currentRoute();
-
-  pushRing({ evento: ev, ms, rota: r, at: Date.now() });
-
-  if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
-    console.debug(`[perf] ${ev}: ${ms.toFixed(0)}ms ${r ? `(${r})` : ''}`);
-  }
-
-  if (queue.length < QUEUE_MAX) {
-    queue.push({ evento: ev, ms, rota: r });
-    scheduleFlush();
-  }
+  enqueue(evento ?? to, ms, rota ?? currentRoute());
   return ms;
 }
 
-/** Registra direto sem usar marks (ex: tempo medido externamente). */
+/** Registra direto sem usar marks (ex.: tempo medido externamente). */
 export function perfReport(evento: string, ms: number, rota?: string): void {
   if (!isClient) return;
   if (ms < 0 || ms > 600000) return;
-  const r = rota ?? currentRoute();
-  pushRing({ evento, ms, rota: r, at: Date.now() });
-  if (queue.length < QUEUE_MAX) {
-    queue.push({ evento, ms, rota: r });
-    scheduleFlush();
-  }
+  enqueue(evento, ms, rota ?? currentRoute());
 }
 
-/** Dev helper: ver buffer no console. */
+/** Registra o início de uma rota (usado pelo root para correlacionar first-list). */
+export function markRouteStart(path: string): void {
+  if (!isClient) return;
+  routeStarts[path] = performance.now();
+}
+
+export function getRouteStart(path: string): number | undefined {
+  return routeStarts[path];
+}
+
+/**
+ * Hook-friendly: reporta `first-list.ready` a partir do route.start daquela
+ * rota. Se não houver route.start, mede a partir de timeOrigin (carga da
+ * página) — útil em hard reload direto na rota.
+ *
+ * Idempotente por rota+escopo via `once` cache.
+ */
+const firstListReported = new Set<string>();
+export function reportFirstListReady(scope: string, path?: string): void {
+  if (!isClient) return;
+  const rota = path ?? currentRoute() ?? 'unknown';
+  const key = `${rota}::${scope}`;
+  if (firstListReported.has(key)) return;
+  firstListReported.add(key);
+
+  const start = routeStarts[rota];
+  const ms = start != null ? performance.now() - start : performance.now();
+  enqueue('first-list.ready', ms, rota);
+}
+
+/** Dev helper e listeners de flush. */
 if (isClient) {
-  (window as unknown as { __perfRing?: () => RingEntry[] }).__perfRing = () => [...ring];
-  // Flush ao sair da página
-  window.addEventListener('beforeunload', () => {
-    void flushQueue();
+  (window as unknown as { __perfRing?: () => RingEntry[] }).__perfRing = () =>
+    [...ring];
+
+  // Flush oportunista quando a página fica oculta ou está saindo
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushNow();
   });
+  window.addEventListener('pagehide', () => flushNow());
+  window.addEventListener('beforeunload', () => flushNow());
 }
 
 export const _perfRingForTest = ring;

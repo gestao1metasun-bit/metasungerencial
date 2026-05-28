@@ -7409,6 +7409,7 @@ export type Database = {
         | "comercial.parametro.configurar"
         | "comercial.comissao.visualizar"
         | "comercial.comissao.liberar"
+        | "comercial.carteira.ver_historico"
       app_role: "admin_master" | "admin_geral" | "usuario"
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
@@ -7628,6 +7629,7 @@ export const Constants = {
         "comercial.parametro.configurar",
         "comercial.comissao.visualizar",
         "comercial.comissao.liberar",
+        "comercial.carteira.ver_historico",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],

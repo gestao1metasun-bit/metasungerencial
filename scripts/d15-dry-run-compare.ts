@@ -680,11 +680,57 @@ const md = `# D15.1.a.0.ii — Dry-Run Report
 
 ---
 
+## Camada 4 — Lançamentos (fonte canônica real Meta Sun)
+
+> Stores: \`metasun.fin.lancamentos.v1\`, \`metasun.fin.recorrentes.v1\`, \`metasun.fin.centros.v1\`, \`metasun.fin.naturezas.v1\`.
+
+| Métrica | Valor |
+|---|---:|
+| Lançamentos totais | ${lancResumo.total} |
+| Recorrentes (regra futura) | ${lancResumo.convertivel_recorrente} |
+| Entradas | ${lancResumo.entrada} |
+| Saídas | ${lancResumo.saida} |
+| Realizado/Confirmado | ${lancResumo.realizado} |
+| Previsto/A realizar/Orçado | ${lancResumo.previsto} |
+| Saldo bruto entradas (R$) | ${lancResumo.saldo_bruto_entradas.toFixed(2)} |
+| Saldo bruto saídas (R$) | ${lancResumo.saldo_bruto_saidas.toFixed(2)} |
+| Saldo líquido (R$) | ${(lancResumo.saldo_bruto_entradas - lancResumo.saldo_bruto_saidas).toFixed(2)} |
+| Natureza inválida (fora do catálogo) | ${lancResumo.natureza_invalida} |
+| Centro de custo inválido | ${lancResumo.centro_invalido} |
+| Obra inválida (fora do padrão OB-####) | ${lancResumo.obra_invalida} |
+| Tipo/camada inválida | ${lancResumo.status_invalido} |
+| Valor inválido | ${lancResumo.valor_invalido} |
+| Data inválida | ${lancResumo.data_invalida} |
+| Duplicidade potencial (data+valor+tipo+natureza) | ${lancResumo.duplicidade_potencial} |
+| Sem destino oficial | ${lancResumo.sem_destino} |
+| Lançamento realizado sem título-pai | ${lancResumo.lancamento_sem_titulo} |
+| **Convertível → titulos_financeiros + parcelas (RECEBER)** | **${lancResumo.convertivel_titulo_receber}** |
+| **Convertível → titulos_financeiros + parcelas (PAGAR)** | **${lancResumo.convertivel_titulo_pagar}** |
+| **Convertível → títulos + parcelas + movimentação realizada** | **${lancResumo.convertivel_mov_realizada}** |
+| **Convertível → títulos + parcelas (movimentação prevista)** | **${lancResumo.convertivel_mov_prevista}** |
+| **Convertível → regra de recorrência (motor futuro)** | **${lancResumo.convertivel_recorrente}** |
+
+### Mapping oficial aplicado
+
+\`\`\`text
+Previsto/A realizar/Orçado + Entrada → titulos_financeiros (RECEBER) + parcelas_titulo
+Previsto/A realizar/Orçado + Saída   → titulos_financeiros (PAGAR)   + parcelas_titulo
+Realizado/Confirmado       + qualquer → titulos_financeiros + parcelas_titulo + movimentacoes_financeiras
+                                        (RPC atômica — exige título-pai sintético)
+Recorrente (ativa)         → regra/modelo de recorrência (motor futuro emite títulos por competência)
+Natureza   → natureza financeira oficial (catálogo metasun.fin.naturezas.v1 → naturezas_financeiras)
+Centro     → centro_resultado oficial   (catálogo metasun.fin.centros.v1   → centros_resultado)
+Obra       → projeto/obra quando match OB-####
+\`\`\`
+
+---
+
 ## Camada 3 — Mapeabilidade ao esquema oficial
 
 | Categoria | Contagem |
 |---|---:|
 ${Object.entries(contadoresPorCategoria).map(([c, n]) => `| \`${c}\` | ${n} |`).join('\n')}
+
 
 ---
 

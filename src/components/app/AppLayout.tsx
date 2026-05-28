@@ -12,6 +12,7 @@ import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMen
 import { TopNav, MacroNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
+import { WorkspaceTabBar } from "@/components/app/WorkspaceTabBar";
 import { featureFlags } from "@/lib/feature-flags";
 
 export function AppLayout() {
@@ -111,6 +112,7 @@ export function AppLayout() {
       </header>
       <MaintenanceBanner />
       <TopNav />
+      <WorkspaceTabBar />
 
       <main className="flex-1 overflow-x-hidden p-2">
         <Outlet />

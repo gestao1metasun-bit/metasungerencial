@@ -3793,11 +3793,18 @@ export type Database = {
           motivo_status: string | null
           numero: string | null
           potencia_kwp: number | null
+          renovacao_motivo: string | null
+          renovada_em: string | null
+          revisada_em: string | null
+          revisao_motivo: string | null
+          row_version: number
           status: string
           updated_at: string
           validade: string | null
           valor_final: number | null
           versao: string | null
+          versao_num: number
+          versao_pai_id: string | null
         }
         Insert: {
           cliente_doc?: string | null
@@ -3818,11 +3825,18 @@ export type Database = {
           motivo_status?: string | null
           numero?: string | null
           potencia_kwp?: number | null
+          renovacao_motivo?: string | null
+          renovada_em?: string | null
+          revisada_em?: string | null
+          revisao_motivo?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           validade?: string | null
           valor_final?: number | null
           versao?: string | null
+          versao_num?: number
+          versao_pai_id?: string | null
         }
         Update: {
           cliente_doc?: string | null
@@ -3843,13 +3857,28 @@ export type Database = {
           motivo_status?: string | null
           numero?: string | null
           potencia_kwp?: number | null
+          renovacao_motivo?: string | null
+          renovada_em?: string | null
+          revisada_em?: string | null
+          revisao_motivo?: string | null
+          row_version?: number
           status?: string
           updated_at?: string
           validade?: string | null
           valor_final?: number | null
           versao?: string | null
+          versao_num?: number
+          versao_pai_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "propostas_versao_pai_id_fkey"
+            columns: ["versao_pai_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       record_flags: {
         Row: {
@@ -7219,6 +7248,15 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_proposta_marcar_vencidas: { Args: never; Returns: number }
+      rpc_proposta_renovar_validade: {
+        Args: { _dias?: number; _id: string; _motivo: string }
+        Returns: undefined
+      }
+      rpc_proposta_solicitar_revisao: {
+        Args: { _id: string; _motivo: string }
+        Returns: string
+      }
       rpc_renegociacao_aplicar: {
         Args: {
           _motivo: string

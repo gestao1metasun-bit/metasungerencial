@@ -19,7 +19,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -447,27 +447,35 @@ function EngenhariaPage() {
         <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/80">Engenharia · operação</span>
       </div>
 
-      {/* EnterpriseToolbar padronizado */}
+      {/* D17.UI Fase 4 — Engenharia: barra Enterprise RM/TOTVS oficial */}
       <div className="mb-2">
-        <EnterpriseToolbar
-          title="Engenharia"
-          count={totalObras}
-          hint={`${ativas} ativas · ${pendsAbertas} pend.`}
-          onAtualizar={() => reloadObrasReais()}
-          onExportar={() =>
-            exportToCSV("obras-engenharia.csv", obras as any[], [
-              { key: "id", label: "ID" },
-              { key: "contrato", label: "Contrato" },
-              { key: "cliente", label: "Cliente" },
-              { key: "status", label: "Status" },
-              { key: "equipe", label: "Equipe" },
-              { key: "modulos", label: "Módulos" },
-              { key: "potencia", label: "kWp" },
-              { key: "inicio", label: "Início" },
-              { key: "previsto", label: "Previsto" },
-              { key: "finalizacao", label: "Finalização" },
-            ])
-          }
+        <EnterpriseRecordToolbar
+          entityType="engenharia"
+          selectedIds={[]}
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          searchPlaceholder="Buscar obra, contrato, cliente, equipe…"
+          onAction={(a) => {
+            if (a === "atualizar") reloadObrasReais();
+            else if (a === "novo") setTab("ativas");
+            else if (a === "historico") setTab("finalizados");
+            else if (a === "imprimir") window.print();
+            else if (a === "exportar") {
+              exportToCSV("obras-engenharia.csv", obras as any[], [
+                { key: "id", label: "ID" },
+                { key: "contrato", label: "Contrato" },
+                { key: "cliente", label: "Cliente" },
+                { key: "status", label: "Status" },
+                { key: "equipe", label: "Equipe" },
+                { key: "modulos", label: "Módulos" },
+                { key: "potencia", label: "kWp" },
+                { key: "inicio", label: "Início" },
+                { key: "previsto", label: "Previsto" },
+                { key: "finalizacao", label: "Finalização" },
+              ]);
+            }
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+            else if (a === "filtroAvancado") toast.info("Use os filtros internos das abas — filtros avançados em D17.UI.4.");
+          }}
         />
       </div>
       {(() => {
@@ -1708,7 +1716,17 @@ function EquipesTab({
                   <div className="text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
                 </div>
               </div>
-              <StatusBadge status={e.status} />
+              <div className="flex items-center gap-2">
+                <StatusBadge status={e.status} />
+                <RowActions
+                  rowId={String(e.id)}
+                  actions={[{ kind: "visualizar" }, { kind: "historico" }]}
+                  onAction={(kind) => {
+                    if (kind === "visualizar") toast.info(`Detalhe da equipe ${e.nome}`);
+                    else if (kind === "historico") toast.info(`Histórico da equipe ${e.nome}`);
+                  }}
+                />
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-4 gap-2 text-center">
               <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Exec.</div><div className="font-bold text-success">{exec}</div></div>

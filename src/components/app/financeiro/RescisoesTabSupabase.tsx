@@ -19,6 +19,8 @@ import {
   type ContratoElegivelRescisao,
 } from "@/lib/repositories/rescisoes-repo";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);

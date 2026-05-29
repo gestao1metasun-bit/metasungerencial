@@ -551,6 +551,14 @@ function EngenhariaPage() {
         <TabsContent value="cancelados" className="mt-5"><CanceladosEngTab contratos={contratos} /></TabsContent>
 
       </Tabs>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Engenharia"
+        modulos={["comercial"]}
+        entidades={["obra", "projeto"]}
+      />
     </>
   );
 }

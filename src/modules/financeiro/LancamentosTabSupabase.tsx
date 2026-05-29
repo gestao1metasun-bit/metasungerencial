@@ -55,8 +55,14 @@ export function LancamentosTabSupabase() {
     saveUi(next);
   }
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-3">
+      <RmTabHeader
+        onNovo={() => setOpen(true)}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["lancamentos-derivados"] })}
+        searchPlaceholder="Buscar lançamento…"
+      />
       <Card className="p-3 flex flex-wrap items-end gap-3">
         <div>
           <Label className="text-xs">Origem</Label>

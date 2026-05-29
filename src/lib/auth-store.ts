@@ -120,7 +120,7 @@ async function resolveAuthenticatedSession(session: Session, source: string) {
       tela: "auth-store",
       acao: "loadRole",
       mensagem: error instanceof Error ? error.message : "Falha ao carregar papel do usuário",
-      payload: { userId, source },
+      payload: { userId: user.id, source },
       severidade: "warn",
     });
   }
@@ -212,6 +212,10 @@ function ensureInit() {
       userId: session?.user?.id ?? null,
       email: session?.user?.email ?? null,
     });
+    if (!session?.user && event !== "SIGNED_OUT" && _state.session?.user) {
+      console.warn("[auth-session] evento nulo tardio ignorado: sessão já resolvida", { event });
+      return;
+    }
     if (!session?.user || event === "SIGNED_OUT") {
       setAnonymousState(undefined, true);
       return;

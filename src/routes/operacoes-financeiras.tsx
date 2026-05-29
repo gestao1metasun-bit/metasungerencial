@@ -171,6 +171,10 @@ function NovaOperacaoDialog({
   open, onClose, tipoDefault, naturezaDefault,
 }: { open: boolean; onClose: () => void; tipoDefault: OpFinTipo; naturezaDefault: "ENTRADA" | "SAIDA"; }) {
   const criar = useCriarOperacao();
+  const { data: naturezas = [] } = useNaturezasFin();
+  const { data: centros = [] } = useCentrosResultado();
+  const { data: contas = [] } = useContasFinanceirasOficiais();
+
   const [tipo, setTipo] = useState<OpFinTipo>(tipoDefault);
   const [natureza, setNatureza] = useState<"ENTRADA" | "SAIDA">(naturezaDefault);
   const [valor, setValor] = useState("");
@@ -181,11 +185,15 @@ function NovaOperacaoDialog({
   const [instituicao, setInstituicao] = useState("");
   const [contraparte, setContraparte] = useState("");
   const [jurosPct, setJurosPct] = useState("");
+  const [naturezaId, setNaturezaId] = useState<string>("");
+  const [centroId, setCentroId] = useState<string>("");
+  const [contaId, setContaId] = useState<string>("");
 
   const reset = () => {
     setTipo(tipoDefault); setNatureza(naturezaDefault);
     setValor(""); setQtdParcelas("1"); setFinalidade(""); setObservacoes("");
     setInstituicao(""); setContraparte(""); setJurosPct("");
+    setNaturezaId(""); setCentroId(""); setContaId("");
   };
 
   const submit = () => {
@@ -193,11 +201,16 @@ function NovaOperacaoDialog({
     const qtd = parseInt(qtdParcelas, 10);
     if (!v || v <= 0) { toast.error("Informe um valor válido."); return; }
     if (!qtd || qtd < 1) { toast.error("Qtd de parcelas inválida."); return; }
+    if (!naturezaId) { toast.error("Selecione a natureza financeira."); return; }
+    if (!centroId) { toast.error("Selecione o centro de resultado."); return; }
+    if (!contaId) { toast.error("Selecione a conta financeira."); return; }
     const isSocio = tipo === "EMPRESTIMO_SOCIO_EMPRESA" || tipo === "APORTE_CAPITAL";
     const isTerceiro = tipo === "EMPRESTIMO_EMPRESA_TERCEIRO";
     const isColab = tipo === "EMPRESTIMO_COLABORADOR";
     criar.mutate({
-      tipo, natureza_caixa: natureza, valor_total: v, data_operacao: dataOp,
+      tipo, natureza_caixa: natureza,
+      natureza_id: naturezaId, centro_resultado_id: centroId, conta_id: contaId,
+      valor_total: v, data_operacao: dataOp,
       qtd_parcelas: qtd, finalidade: finalidade || undefined,
       observacoes: observacoes || undefined,
       instituicao: instituicao || undefined,

@@ -18,6 +18,8 @@ import {
   useIgnorarExtrato,
 } from "@/lib/repositories/conciliacao-repo";
 import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ConciliacaoTabSupabase() {
   const { data: contas = [] } = useContasFinanceirasOficiais();

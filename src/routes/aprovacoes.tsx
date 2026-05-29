@@ -192,6 +192,27 @@ function AprovacoesPage() {
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
+        {tab === "historico" && (
+          <div className="flex flex-wrap items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2 py-1 text-[11px] mt-2">
+            <span className="font-bold uppercase tracking-wider text-muted-foreground/80 mr-2">Status</span>
+            {(["TODOS","APROVADA","NEGADA","EXPIRADA","CANCELADA"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setStatusHist(k)}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition ${
+                  statusHist === k ? "bg-primary/15 text-primary ring-1 ring-primary/30" : "hover:bg-background"
+                }`}
+              >
+                <span className="text-muted-foreground">{k === "TODOS" ? "Todos" : WF_STATUS_LABEL[k] ?? k}</span>
+                <span className="font-mono font-semibold tabular-nums">
+                  {k === "TODOS" ? (historico.data ?? []).length : (historico.data ?? []).filter((r) => r.status === k).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <TabsContent value={tab} className="pt-3">
           <EnterpriseDataGrid
             gridId={`aprovacoes-${tab}`}

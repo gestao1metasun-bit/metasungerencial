@@ -59,6 +59,7 @@ function PosVendaPage() {
   const state = usePosVendaState();
   const { user } = useUsuarioAtual();
   const usuario = user?.nome ?? "Sistema";
+  const [histOpen, setHistOpen] = useState(false);
 
   const contagem = useMemo(() => contagemPorStatus(), [state.chamados]);
   const abertos = PV_STATUS_ABERTOS.reduce((s, k) => s + contagem[k], 0);

@@ -7,7 +7,7 @@ export function wireSessionLogger() {
   if (wired || typeof window === "undefined") return;
   wired = true;
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (!session?.user) return;
     if (!["SIGNED_IN", "SIGNED_OUT", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) return;
 
@@ -16,15 +16,13 @@ export function wireSessionLogger() {
     if (sig === lastSig && event !== "SIGNED_OUT") return;
     lastSig = sig;
 
-    try {
-      await supabase.from("session_log").insert({
+    setTimeout(() => {
+      void supabase.from("session_log").insert({
         user_id: session.user.id,
         user_email: session.user.email ?? null,
         evento: event,
         user_agent: navigator.userAgent,
       });
-    } catch {
-      // silent
-    }
+    }, 0);
   });
 }

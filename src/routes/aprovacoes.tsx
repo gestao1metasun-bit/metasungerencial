@@ -82,6 +82,9 @@ function AprovacoesPage() {
   const filtrados = useMemo(() => {
     let rows = ativa.data ?? [];
     if (tipoFiltro !== "TODOS") rows = rows.filter((r) => r.tipo_operacao === tipoFiltro);
+    if (tab === "historico" && statusHist !== "TODOS") {
+      rows = rows.filter((r) => r.status === statusHist);
+    }
     if (busca.trim()) {
       const t = busca.trim().toLowerCase();
       rows = rows.filter((r) =>
@@ -91,7 +94,7 @@ function AprovacoesPage() {
       );
     }
     return rows;
-  }, [ativa.data, tipoFiltro, busca]);
+  }, [ativa.data, tipoFiltro, busca, tab, statusHist]);
 
   const counts = useMemo(() => {
     const pend = pendentesParaMim.data ?? [];

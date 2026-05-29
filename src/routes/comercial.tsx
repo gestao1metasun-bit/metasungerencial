@@ -394,16 +394,22 @@ function ContratoAssinadoTab({
   return (
     <div className="space-y-5">
       {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
-      <ComercialHistoricoToolbar
+      <EnterpriseRecordToolbar
         entityType="contratos"
-        titulo="Contratos · Assinados"
-        modulos={["comercial"]}
-        entidades={["contrato"]}
-        busca={busca}
-        setBusca={setBusca}
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
-        onAtualizar={() => toast.info("Contratos atualizados.")}
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Contratos atualizados.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
+          else if (a === "historico") { const evt = new CustomEvent("ms.hist.open", { detail: { titulo: "Contratos · Assinados", modulos: ["comercial"], entidades: ["contrato"] } }); window.dispatchEvent(evt); }
+          else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
+        }}
       />
+
 
       <div className="grid gap-3 sm:grid-cols-3">
 

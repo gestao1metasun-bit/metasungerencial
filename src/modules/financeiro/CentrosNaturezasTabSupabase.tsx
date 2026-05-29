@@ -67,6 +67,7 @@ export function CentrosNaturezasTabSupabase() {
           </TableBody>
         </Table>
       </Card>
+      </div>
     </div>
   );
 }

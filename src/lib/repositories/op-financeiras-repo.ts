@@ -162,9 +162,15 @@ export interface CriarPayload {
   observacoes?: string;
   instituicao?: string;
   banco_contrato?: string;
+  competencia?: string;
+  // contraparte estruturada
+  cliente_id?: string;
+  fornecedor_id?: string;
+  colaborador_user_id?: string;
+  colaborador_nome?: string;
   socio_nome?: string;
   terceiro_nome?: string;
-  colaborador_nome?: string;
+  terceiro_documento?: string;
   juros_pct?: number;
 }
 
@@ -182,8 +188,30 @@ export function useCriarOperacao() {
           logError("op-fin:criar", error.message, { payload });
           throw error;
         }
-        return data;
+        return data as unknown as { id: string; codigo: string; status: string };
       });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
+  });
+}
+
+/** Atualiza valor/vencimento de uma parcela (RLS: operacao_financeira.criar). */
+export function useUpdateParcela() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, valor, vencimento }: { id: string; valor?: number; vencimento?: string }) => {
+      const patch: { valor?: number; vencimento?: string } = {};
+      if (valor !== undefined) patch.valor = valor;
+      if (vencimento !== undefined) patch.vencimento = vencimento;
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase
+        .from("operacoes_financeiras_parcelas")
+        .update(patch)
+        .eq("id", id);
+      if (error) {
+        logError("op-fin:update-parcela", error.message, { id });
+        throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });

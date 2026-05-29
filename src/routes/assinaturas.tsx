@@ -152,6 +152,14 @@ function AssinaturasPage() {
           </ol>
         )}
       </Card>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Assinaturas"
+        modulos={["comercial"]}
+        entidades={["contrato", "proposta"]}
+      />
     </div>
   );
 }

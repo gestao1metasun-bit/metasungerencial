@@ -79,7 +79,7 @@ function FinanciamentosPage() {
       />
       <div className="mb-3">
         <EnterpriseRecordToolbar
-          entityType="financeiro"
+          entityType="financiamentos"
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           searchPlaceholder="Buscar contrato, cliente, banco, gerente…"
           onAction={(a) => {

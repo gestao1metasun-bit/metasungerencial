@@ -28,6 +28,9 @@ import { OperacoesFinanceirasGrid } from "@/components/op-financeiras/OperacoesF
 import {
   type OpFinTipo, useCriarOperacao,
 } from "@/lib/repositories/op-financeiras-repo";
+import {
+  useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais,
+} from "@/lib/repositories/cadastros-repo";
 
 export const Route = createFileRoute("/operacoes-financeiras")({
   head: () => ({ meta: [{ title: "Operações Financeiras — Meta Sun" }] }),

@@ -197,14 +197,19 @@ export function useCriarOperacao() {
   });
 }
 
-/** Atualiza valor/vencimento de uma parcela (RLS: operacao_financeira.criar). */
+/** Atualiza valor/vencimento/competência/observação de uma parcela. */
 export function useUpdateParcela() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, valor, vencimento }: { id: string; valor?: number; vencimento?: string }) => {
-      const patch: { valor?: number; vencimento?: string } = {};
+    mutationFn: async ({ id, valor, vencimento, competencia, observacao }: {
+      id: string; valor?: number; vencimento?: string;
+      competencia?: string | null; observacao?: string | null;
+    }) => {
+      const patch: Record<string, unknown> = {};
       if (valor !== undefined) patch.valor = valor;
       if (vencimento !== undefined) patch.vencimento = vencimento;
+      if (competencia !== undefined) patch.competencia = competencia;
+      if (observacao !== undefined) patch.observacao = observacao;
       if (Object.keys(patch).length === 0) return;
       const { error } = await supabase
         .from("operacoes_financeiras_parcelas")

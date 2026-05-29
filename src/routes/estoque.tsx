@@ -124,23 +124,20 @@ function EstoquePage() {
       <div className="mb-2"><EstoqueStrip /></div>
 
       <div className="mb-2">
-        <EnterpriseToolbar
-          title="Estoque"
-          onNovo={() => setTab("itens")}
-          onEditar={() => setTab("itens")}
-          onAprovar={() => setTab("obras")}
-          onCancelar={undefined}
-          onExportar={onExportar}
-          onImprimir={() => window.print()}
-          onAtualizar={() => window.location.reload()}
-          onHistorico={() => setTab("entregas")}
-          onAnexos={undefined}
-          selecionado
-          extraActions={
-            <span className="text-[10.5px] text-muted-foreground hidden lg:inline">
-              Reservar · Entregar · Ajustar · Inventário via aba <b>Obras</b> / <b>Itens</b>
-            </span>
-          }
+        <EnterpriseRecordToolbar
+          entityType="estoque"
+          selectedIds={[]}
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          searchPlaceholder="Buscar item, código, categoria…"
+          onAction={(a) => {
+            if (a === "novo") setTab("itens");
+            else if (a === "atualizar") window.location.reload();
+            else if (a === "exportar") onExportar();
+            else if (a === "imprimir") window.print();
+            else if (a === "historico") setTab("entregas");
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+            else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
+          }}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,19 +17,30 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, errorMessage } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [recovering, setRecovering] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("renanbarc16@gmail.com");
+  const lastAuthError = useRef<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
       void navigate({ to: "/dashboard" });
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (!loading && !user && errorMessage && lastAuthError.current !== errorMessage) {
+      lastAuthError.current = errorMessage;
+      toast.error(errorMessage);
+    }
+    if (!errorMessage) {
+      lastAuthError.current = null;
+    }
+  }, [errorMessage, loading, user]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

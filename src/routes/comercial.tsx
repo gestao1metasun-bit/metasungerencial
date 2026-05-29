@@ -409,6 +409,8 @@ function ContratoAssinadoTab({
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <ModuloHistoricoDrawer
         open={histOpen}

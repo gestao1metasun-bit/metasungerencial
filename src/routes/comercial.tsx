@@ -394,20 +394,17 @@ function ContratoAssinadoTab({
   return (
     <div className="space-y-5">
       {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
-      <EnterpriseRecordToolbar
+      <ComercialHistoricoToolbar
         entityType="contratos"
-        selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        titulo="Contratos · Assinados"
+        modulos={["comercial"]}
+        entidades={["contrato"]}
+        busca={busca}
+        setBusca={setBusca}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
-        search={busca}
-        onSearchChange={setBusca}
-        onAction={(a) => {
-          if (a === "atualizar") toast.info("Contratos atualizados.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
-          else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
-        }}
+        onAtualizar={() => toast.info("Contratos atualizados.")}
       />
+
       <div className="grid gap-3 sm:grid-cols-3">
 
         <Card className="p-4">

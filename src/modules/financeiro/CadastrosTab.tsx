@@ -62,13 +62,14 @@ export function CadastrosTab() {
           <TabsTrigger value="aplicacoes">Tipos de Aplicação</TabsTrigger>
           <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
         </TabsList>
-      <TabsContent value="grupos"><GruposPanel /></TabsContent>
-      <TabsContent value="naturezas"><NaturezasPanel /></TabsContent>
-      <TabsContent value="centros"><CentrosPanel /></TabsContent>
-      <TabsContent value="meios"><MeiosPanel /></TabsContent>
-      <TabsContent value="aplicacoes"><AplicacoesPanel /></TabsContent>
-      <TabsContent value="contas"><ContasPanel /></TabsContent>
-    </Tabs>
+        <TabsContent value="grupos"><GruposPanel /></TabsContent>
+        <TabsContent value="naturezas"><NaturezasPanel /></TabsContent>
+        <TabsContent value="centros"><CentrosPanel /></TabsContent>
+        <TabsContent value="meios"><MeiosPanel /></TabsContent>
+        <TabsContent value="aplicacoes"><AplicacoesPanel /></TabsContent>
+        <TabsContent value="contas"><ContasPanel /></TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

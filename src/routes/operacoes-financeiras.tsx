@@ -550,7 +550,23 @@ function NovaOperacaoDialog({
               </div>
               <div>
                 <Label className="text-[11px]">Intervalo (dias)</Label>
-                <Input type="number" min={1} className="h-8" value={intervalo} onChange={(e) => setIntervalo(e.target.value)} />
+                <Input type="number" min={1} className="h-8" value={intervalo} onChange={(e) => setIntervalo(e.target.value)} disabled={mesmoVencimento} />
+              </div>
+              <div>
+                <Label className="text-[11px]">1ª competência *</Label>
+                <Input type="month" className="h-8"
+                  value={competenciaBase ? competenciaBase.slice(0, 7) : ""}
+                  onChange={(e) => setCompetenciaBase(e.target.value ? e.target.value + "-01" : "")} />
+              </div>
+              <div className="col-span-3 flex flex-col gap-1 justify-end pb-1">
+                <label className="flex items-center gap-2 text-[11.5px] cursor-pointer">
+                  <Checkbox checked={mesmoVencimento} onCheckedChange={(c) => setMesmoVencimento(c === true)} />
+                  Usar mesmo vencimento para todas as parcelas
+                </label>
+                <label className="flex items-center gap-2 text-[11.5px] cursor-pointer">
+                  <Checkbox checked={mesmaCompetencia} onCheckedChange={(c) => setMesmaCompetencia(c === true)} />
+                  Usar mesma competência para todas as parcelas
+                </label>
               </div>
             </div>
 
@@ -567,13 +583,15 @@ function NovaOperacaoDialog({
                     </Button>
                   </div>
                 </div>
-                <div className="max-h-56 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   <table className="w-full text-[11.5px]">
                     <thead className="bg-muted/20 text-[10.5px] uppercase text-muted-foreground">
                       <tr>
                         <th className="px-2 py-1 text-left w-12">#</th>
                         <th className="px-2 py-1 text-left">Vencimento</th>
+                        <th className="px-2 py-1 text-left">Competência</th>
                         <th className="px-2 py-1 text-right">Valor (R$)</th>
+                        <th className="px-2 py-1 text-left">Observação</th>
                         <th className="px-2 py-1 w-8" />
                       </tr>
                     </thead>
@@ -585,9 +603,19 @@ function NovaOperacaoDialog({
                             <Input type="date" className="h-7 text-[11.5px]" value={p.vencimento}
                               onChange={(e) => updateParcelaLocal(idx, { vencimento: e.target.value })} />
                           </td>
+                          <td className="px-2 py-1">
+                            <Input type="month" className="h-7 text-[11.5px]"
+                              value={p.competencia ? p.competencia.slice(0, 7) : ""}
+                              onChange={(e) => updateParcelaLocal(idx, { competencia: e.target.value ? e.target.value + "-01" : "" })} />
+                          </td>
                           <td className="px-2 py-1 text-right">
                             <Input className="h-7 text-[11.5px] text-right" value={p.valor.toFixed(2)}
                               onChange={(e) => updateParcelaLocal(idx, { valor: parseFloat(e.target.value.replace(",", ".")) || 0 })} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input className="h-7 text-[11.5px]" value={p.observacao}
+                              onChange={(e) => updateParcelaLocal(idx, { observacao: e.target.value })}
+                              placeholder="—" />
                           </td>
                           <td className="px-2 py-1 text-center text-muted-foreground">
                             <Trash2 className="h-3 w-3 opacity-30" />

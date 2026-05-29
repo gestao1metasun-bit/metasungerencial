@@ -32,8 +32,10 @@ import {
   type SolicitacaoMaterial,
 } from "@/hooks/useSolicitacoesMaterial";
 import {
-  Plus, Send, Ban, Eye, ShoppingCart, CheckCircle2, FileText,
+  Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({
   head: () => ({

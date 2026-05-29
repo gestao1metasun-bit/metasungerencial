@@ -733,6 +733,7 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
         </Table>
       )}
     </Card>
+    </div>
   );
 }
 

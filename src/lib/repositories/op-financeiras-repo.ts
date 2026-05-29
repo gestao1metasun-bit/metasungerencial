@@ -11,6 +11,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/observability";
+import { withPerf } from "@/lib/perf";
 const logError = (op: string, msg: string, meta?: Record<string, unknown>) =>
   logger.error("op-fin", op, msg, meta);
 
@@ -169,15 +170,17 @@ export function useCriarOperacao() {
   return useMutation({
     mutationFn: async (payload: CriarPayload) => {
       const requestId = crypto.randomUUID();
-      const { data, error } = await supabase.rpc("rpc_op_fin_criar", {
-        _request_id: requestId,
-        _payload: payload as never,
+      return withPerf("rpc.op_fin_criar", async () => {
+        const { data, error } = await supabase.rpc("rpc_op_fin_criar", {
+          _request_id: requestId,
+          _payload: payload as never,
+        });
+        if (error) {
+          logError("op-fin:criar", error.message, { payload });
+          throw error;
+        }
+        return data;
       });
-      if (error) {
-        logError("op-fin:criar", error.message, { payload });
-        throw error;
-      }
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });
@@ -203,12 +206,17 @@ export function useLiberarOperacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_liberar", {
-        _request_id: crypto.randomUUID(),
-        _operacao_id: id,
+      return withPerf("rpc.op_fin_liberar", async () => {
+        const { data, error } = await supabase.rpc("rpc_op_fin_liberar", {
+          _request_id: crypto.randomUUID(),
+          _operacao_id: id,
+        });
+        if (error) {
+          logError("op-fin:liberar", error.message, { id });
+          throw error;
+        }
+        return data;
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });

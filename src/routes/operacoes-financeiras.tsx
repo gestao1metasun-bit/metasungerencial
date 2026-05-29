@@ -193,22 +193,56 @@ function defaultContraparteParaTipo(tipo: OpFinTipo): ContraparteTipo {
   }
 }
 
-interface ParcelaLocal { numero: number; valor: number; vencimento: string; }
+interface ParcelaLocal {
+  numero: number;
+  valor: number;
+  vencimento: string;
+  competencia: string; // YYYY-MM-01
+  observacao: string;
+}
 
-/** Gera grade uniforme: valor/qtd dividido em N, sobra na última; vencimentos primeiroVenc + (n-1)*intervalo. */
-function gerarGradeLocal(valorTotal: number, qtd: number, primeiroVenc: string, intervalo: number): ParcelaLocal[] {
+/** Deriva competência (YYYY-MM-01) a partir de uma data YYYY-MM-DD. */
+function competenciaDe(dataISO: string): string {
+  if (!dataISO) return "";
+  return dataISO.slice(0, 7) + "-01";
+}
+
+interface GerarOpts {
+  valorTotal: number;
+  qtd: number;
+  primeiroVenc: string;
+  intervalo: number;
+  mesmoVencimento: boolean;
+  competenciaBase: string; // YYYY-MM-01
+  mesmaCompetencia: boolean;
+}
+
+/** Gera grade uniforme respeitando opções de mesmo vencimento / mesma competência. */
+function gerarGradeLocal(opts: GerarOpts): ParcelaLocal[] {
+  const { valorTotal, qtd, primeiroVenc, intervalo, mesmoVencimento, competenciaBase, mesmaCompetencia } = opts;
   if (!valorTotal || !qtd || qtd < 1 || !primeiroVenc) return [];
-  const base = new Date(primeiroVenc + "T00:00:00");
+  const baseV = new Date(primeiroVenc + "T00:00:00");
+  const baseC = competenciaBase ? new Date(competenciaBase + "T00:00:00") : baseV;
   const valorBase = Math.floor((valorTotal / qtd) * 100) / 100;
   const grade: ParcelaLocal[] = [];
   let acumulado = 0;
   for (let i = 0; i < qtd; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i * intervalo);
+    // vencimento
+    let venc = primeiroVenc;
+    if (!mesmoVencimento) {
+      const d = new Date(baseV); d.setDate(baseV.getDate() + i * intervalo);
+      venc = d.toISOString().slice(0, 10);
+    }
+    // competência
+    let comp = competenciaBase || competenciaDe(primeiroVenc);
+    if (!mesmaCompetencia) {
+      const c = new Date(baseC); c.setMonth(baseC.getMonth() + i);
+      comp = c.toISOString().slice(0, 10).slice(0, 7) + "-01";
+    }
     const isLast = i === qtd - 1;
     const valor = isLast ? Math.round((valorTotal - acumulado) * 100) / 100 : valorBase;
     acumulado += valor;
-    grade.push({ numero: i + 1, valor, vencimento: d.toISOString().slice(0, 10) });
+    grade.push({ numero: i + 1, valor, vencimento: venc, competencia: comp, observacao: "" });
   }
   return grade;
 }

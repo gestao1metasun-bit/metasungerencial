@@ -56,6 +56,10 @@ export { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
 export { EnterpriseDataGrid } from "@/components/app/grid/EnterpriseDataGrid";
 export { EnterpriseDialog } from "@/components/app/grid/EnterpriseDialog";
 export { HistoricoDrawer } from "@/components/app/grid/HistoricoDrawer";
+
+// D17.UI.4c — Drawer universal de histórico (per-record + per-module)
+export { ModuloHistoricoDrawer } from "./ModuloHistoricoDrawer";
+export type { ModuloHistoricoDrawerProps } from "./ModuloHistoricoDrawer";
 export { ProcessosMenu } from "@/components/app/grid/ProcessosMenu";
 export type { ProcessoItem } from "@/components/app/grid/ProcessosMenu";
 export { FlagPicker } from "@/components/app/flags/FlagPicker";

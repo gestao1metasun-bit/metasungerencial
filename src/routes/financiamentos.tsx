@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -66,6 +66,7 @@ function FinanciamentosPage() {
   const [ops, setOps] = useState<FinOp[]>(() => finSeed);
   const [pend] = useFinPendencias();
   const pendCount = pend.filter((p) => p.status === "Pendente").length;
+  const [histOpen, setHistOpen] = useState(false);
 
   const updateOp = (id: string, patch: Partial<FinOp>) => {
     setOps((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
@@ -86,7 +87,7 @@ function FinanciamentosPage() {
           onAction={(a) => {
             if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
             else if (a === "novo") setTab("sem");
-            else if (a === "historico") setTab("finalizados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");
@@ -126,6 +127,13 @@ function FinanciamentosPage() {
         </TabsContent>
         <TabsContent value="cancelados" className="mt-5"><CanceladosFinTab /></TabsContent>
       </Tabs>
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Financiamentos"
+        modulos={["financeiro"]}
+        entidades={["financiamento"]}
+      />
     </>
   );
 }

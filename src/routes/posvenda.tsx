@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -59,6 +59,7 @@ function PosVendaPage() {
   const state = usePosVendaState();
   const { user } = useUsuarioAtual();
   const usuario = user?.nome ?? "Sistema";
+  const [histOpen, setHistOpen] = useState(false);
 
   const contagem = useMemo(() => contagemPorStatus(), [state.chamados]);
   const abertos = PV_STATUS_ABERTOS.reduce((s, k) => s + contagem[k], 0);
@@ -84,7 +85,7 @@ function PosVendaPage() {
           onAction={(a) => {
             if (a === "novo") setTab("chamados");
             else if (a === "atualizar") toast.success("Pós-venda recarregada.");
-            else if (a === "historico") setTab("chamados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");
@@ -130,6 +131,13 @@ function PosVendaPage() {
           <TiposTab />
         </TabsContent>
       </Tabs>
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Pós-venda"
+        modulos={["comercial"]}
+        entidades={["obra", "contrato"]}
+      />
     </>
   );
 }

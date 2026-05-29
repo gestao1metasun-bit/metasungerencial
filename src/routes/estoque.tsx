@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
@@ -93,6 +93,7 @@ function EstoquePage() {
   const podeEntregar = isAdmin;
   const podeAjustarEstoque = isAdmin;
   const st = useEstoqueState();
+  const [histOpen, setHistOpen] = useState(false);
 
   // D16.PERF P2.1 — first-list.ready (estoque)
   useEffect(() => {
@@ -134,7 +135,7 @@ function EstoquePage() {
             else if (a === "atualizar") window.location.reload();
             else if (a === "exportar") onExportar();
             else if (a === "imprimir") window.print();
-            else if (a === "historico") setTab("entregas");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
           }}
@@ -155,6 +156,13 @@ function EstoquePage() {
         <TabsContent value="itens" className="mt-2"><ItensTab podeAjustar={podeAjustarEstoque} /></TabsContent>
         <TabsContent value="entregas" className="mt-2"><EntregasTab /></TabsContent>
       </Tabs>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Estoque"
+        modulos={["estoque"]}
+      />
     </>
   );
 }

@@ -34,7 +34,7 @@ import {
 import {
   Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({
@@ -58,6 +58,7 @@ function SolicitacoesMaterialPage() {
   const [criar, setCriar] = useState(false);
   const [detalheId, setDetalheId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
   const stats = useMemo(() => {
     return {
@@ -97,7 +98,7 @@ function SolicitacoesMaterialPage() {
       <EnterpriseRecordToolbar
         entityType="compras"
         selectedIds={detalheId ? [detalheId] : []}
-        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar código, setor, motivo, solicitante…"
         search={busca}
         onSearchChange={setBusca}
@@ -105,6 +106,7 @@ function SolicitacoesMaterialPage() {
           if (a === "novo") setCriar(true);
           else if (a === "atualizar") toast.info("Lista atualizada.");
           else if (a === "imprimir") window.print();
+          else if (a === "historico") setHistOpen(true);
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
           else if (a === "colunas") toast.info("Gestor de colunas chega no próximo turno.");
           else if (a === "filtroAvancado") toast.info("Use a busca canônica acima — filtros avançados em D17.UI.4.");
@@ -159,6 +161,13 @@ function SolicitacoesMaterialPage() {
 
       <CriarDialog open={criar} onOpenChange={setCriar} />
       <DetalheSheet id={detalheId} onClose={() => setDetalheId(null)} />
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Compras / Solicitações"
+        modulos={["estoque"]}
+      />
     </div>
   );
 }

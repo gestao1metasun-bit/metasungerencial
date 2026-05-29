@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,7 @@ function OperacoesFinanceirasPage() {
   const [tab, setTab] = useState<Tab>("emprestimos");
   const [search, setSearch] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [histOpen, setHistOpen] = useState(false);
   const meta = TAB_META[tab];
 
   return (
@@ -96,7 +97,7 @@ function OperacoesFinanceirasPage() {
           onAction={(a) => {
             if (a === "novo") setNovoOpen(true);
             else if (a === "atualizar") toast.success("Lista recarregada.");
-            else if (a === "historico") toast.info("Use o ícone de relógio em cada linha para ver a timeline.");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas universal chega em D17.UI.4c.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4c (data, status, instituição).");
@@ -139,6 +140,12 @@ function OperacoesFinanceirasPage() {
         onClose={() => setNovoOpen(false)}
         tipoDefault={meta.tipoNovoDefault}
         naturezaDefault={meta.natureza}
+      />
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Operações Financeiras"
+        modulos={["financeiro"]}
       />
     </>
   );

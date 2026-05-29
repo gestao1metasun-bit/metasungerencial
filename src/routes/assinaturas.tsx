@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { FileSignature, CheckCircle2, Wrench, Banknote, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,6 +61,7 @@ function useAssinaturasGlobais() {
 function AssinaturasPage() {
   const { data = [], isLoading, refetch, isFetching } = useAssinaturasGlobais();
   const [busca, setBusca] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -91,7 +92,7 @@ function AssinaturasPage() {
           if (a === "atualizar") void refetch();
           else if (a === "imprimir") window.print();
           else if (a === "colunas") toast.info("Gestor de colunas universal chega em D17.UI.4c.");
-          else if (a === "historico") toast.info("Esta tela já é a timeline de histórico oficial.");
+          else if (a === "historico") setHistOpen(true);
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4c.");
         }}
       />
@@ -151,6 +152,14 @@ function AssinaturasPage() {
           </ol>
         )}
       </Card>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Assinaturas"
+        modulos={["comercial"]}
+        entidades={["contrato", "proposta"]}
+      />
     </div>
   );
 }

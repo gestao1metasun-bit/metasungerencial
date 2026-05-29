@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { CarteiraTab } from "@/modules/comercial/CarteiraTab";
 import { ComissoesTab } from "@/modules/comercial/ComissoesTab";
 import { useTabFromHash } from "@/lib/route-tabs";
@@ -365,6 +365,7 @@ function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {
   const [busca, setBusca] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
   const isAdmin = useIsAdmin();
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
   const assinados = useMemo(() => {
@@ -397,7 +398,7 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
@@ -405,9 +406,20 @@ function ContratoAssinadoTab({
           if (a === "atualizar") toast.info("Contratos atualizados.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
+          else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
       />
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Contratos · Assinados"
+        modulos={["comercial"]}
+        entidades={["contrato"]}
+      />
+
+
+
       <div className="grid gap-3 sm:grid-cols-3">
 
         <Card className="p-4">

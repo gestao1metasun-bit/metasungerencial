@@ -19,7 +19,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -206,6 +206,7 @@ function EngenhariaPage() {
   const setEquipes = setEquipesStore;
   const [tab, setTab] = useTabFromHash("/engenharia");
   const clientesAll = useClientesAll();
+  const [histOpen, setHistOpen] = useState(false);
 
   // ────────────────────────────────────────────────────────────────
   // ONDA B — Engenharia Real (leitura Supabase + dedup com seed/mock)
@@ -457,7 +458,7 @@ function EngenhariaPage() {
           onAction={(a) => {
             if (a === "atualizar") reloadObrasReais();
             else if (a === "novo") setTab("ativas");
-            else if (a === "historico") setTab("finalizados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "exportar") {
               exportToCSV("obras-engenharia.csv", obras as any[], [
@@ -550,6 +551,14 @@ function EngenhariaPage() {
         <TabsContent value="cancelados" className="mt-5"><CanceladosEngTab contratos={contratos} /></TabsContent>
 
       </Tabs>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Engenharia"
+        modulos={["comercial"]}
+        entidades={["obra", "projeto"]}
+      />
     </>
   );
 }

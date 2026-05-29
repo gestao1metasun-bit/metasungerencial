@@ -447,27 +447,35 @@ function EngenhariaPage() {
         <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/80">Engenharia · operação</span>
       </div>
 
-      {/* EnterpriseToolbar padronizado */}
+      {/* D17.UI Fase 4 — Engenharia: barra Enterprise RM/TOTVS oficial */}
       <div className="mb-2">
-        <EnterpriseToolbar
-          title="Engenharia"
-          count={totalObras}
-          hint={`${ativas} ativas · ${pendsAbertas} pend.`}
-          onAtualizar={() => reloadObrasReais()}
-          onExportar={() =>
-            exportToCSV("obras-engenharia.csv", obras as any[], [
-              { key: "id", label: "ID" },
-              { key: "contrato", label: "Contrato" },
-              { key: "cliente", label: "Cliente" },
-              { key: "status", label: "Status" },
-              { key: "equipe", label: "Equipe" },
-              { key: "modulos", label: "Módulos" },
-              { key: "potencia", label: "kWp" },
-              { key: "inicio", label: "Início" },
-              { key: "previsto", label: "Previsto" },
-              { key: "finalizacao", label: "Finalização" },
-            ])
-          }
+        <EnterpriseRecordToolbar
+          entityType="engenharia"
+          selectedIds={[]}
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          searchPlaceholder="Buscar obra, contrato, cliente, equipe…"
+          onAction={(a) => {
+            if (a === "atualizar") reloadObrasReais();
+            else if (a === "novo") setTab("ativas");
+            else if (a === "historico") setTab("finalizados");
+            else if (a === "imprimir") window.print();
+            else if (a === "exportar") {
+              exportToCSV("obras-engenharia.csv", obras as any[], [
+                { key: "id", label: "ID" },
+                { key: "contrato", label: "Contrato" },
+                { key: "cliente", label: "Cliente" },
+                { key: "status", label: "Status" },
+                { key: "equipe", label: "Equipe" },
+                { key: "modulos", label: "Módulos" },
+                { key: "potencia", label: "kWp" },
+                { key: "inicio", label: "Início" },
+                { key: "previsto", label: "Previsto" },
+                { key: "finalizacao", label: "Finalização" },
+              ]);
+            }
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+            else if (a === "filtroAvancado") toast.info("Use os filtros internos das abas — filtros avançados em D17.UI.4.");
+          }}
         />
       </div>
       {(() => {

@@ -10,7 +10,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { logError } from "@/lib/observability";
+import { logger } from "@/lib/observability";
+const logError = (ctx: string, msg: string, meta?: unknown) => logger.error(`[${ctx}] ${msg}`, meta);
 
 export type OpFinTipo =
   | "EMPRESTIMO_COLABORADOR"

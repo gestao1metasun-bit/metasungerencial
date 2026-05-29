@@ -205,7 +205,10 @@ export function useUpdateParcela() {
       id: string; valor?: number; vencimento?: string;
       competencia?: string | null; observacao?: string | null;
     }) => {
-      const patch: Record<string, unknown> = {};
+      const patch: {
+        valor?: number; vencimento?: string;
+        competencia?: string | null; observacao?: string | null;
+      } = {};
       if (valor !== undefined) patch.valor = valor;
       if (vencimento !== undefined) patch.vencimento = vencimento;
       if (competencia !== undefined) patch.competencia = competencia;

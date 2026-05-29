@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
 import { CarteiraTab } from "@/modules/comercial/CarteiraTab";
 import { ComissoesTab } from "@/modules/comercial/ComissoesTab";
 import { useTabFromHash } from "@/lib/route-tabs";
@@ -409,6 +409,8 @@ function ContratoAssinadoTab({
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <ModuloHistoricoDrawer
         open={histOpen}
@@ -701,6 +703,8 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <Card className="p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -930,6 +934,8 @@ function ContratosTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-end">
         <ModeloBaseContratoDialog />
@@ -4845,6 +4851,8 @@ function VendedoresTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">{filtrados.length} de {vendedoresList.length} vendedor(es)</div>
@@ -5603,6 +5611,8 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

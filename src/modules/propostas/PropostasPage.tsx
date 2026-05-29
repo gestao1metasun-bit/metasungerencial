@@ -55,7 +55,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
 
 export { PropostasPage, CadastrosFV };
 
@@ -284,6 +284,8 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
             else if (a === "filtroAvancado") toast.info("Use filtros da PropostaList abaixo.");
           }}
+          statusActions={ribbonRm()}
+          layoutBar={layoutBarRm()}
         />
       </div>
 

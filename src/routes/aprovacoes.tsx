@@ -59,6 +59,7 @@ function AprovacoesPage() {
 
   const [tab, setTab] = useState<Filtro>("pendentes_para_mim");
   const [tipoFiltro, setTipoFiltro] = useState<string>("TODOS");
+  const [statusHist, setStatusHist] = useState<"TODOS" | "APROVADA" | "NEGADA" | "EXPIRADA" | "CANCELADA">("TODOS");
   const [busca, setBusca] = useState("");
   const [detalhe, setDetalhe] = useState<WorkflowAprovacao | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);

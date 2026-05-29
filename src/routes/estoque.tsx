@@ -807,20 +807,25 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
                 <TableCell className="text-right text-xs">{i.custoMedio ? i.custoMedio.toFixed(2) : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(i.atualizadoEm)}</TableCell>
                 <TableCell className="text-right">
-                  {podeAjustar && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        if (confirm(`Remover item "${i.nome}"?`)) {
-                          removeEstoqueItem(i.id);
-                          toast.success("Item removido.");
+                  {podeAjustar ? (
+                    <RowActions
+                      rowId={i.id}
+                      actions={[
+                        { kind: "editar" },
+                        { kind: "excluir" },
+                      ]}
+                      onAction={(kind, id) => {
+                        if (kind === "excluir") {
+                          if (confirm(`Remover item "${i.nome}"?`)) {
+                            removeEstoqueItem(id);
+                            toast.success("Item removido.");
+                          }
+                        } else if (kind === "editar") {
+                          toast.info("Edição inline disponível na coluna Qtd.");
                         }
                       }}
-                    >
-                      Remover
-                    </Button>
-                  )}
+                    />
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}

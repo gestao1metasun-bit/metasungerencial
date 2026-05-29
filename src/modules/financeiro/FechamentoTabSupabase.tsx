@@ -18,6 +18,8 @@ import {
   useReabrirFechamento,
 } from "@/lib/repositories/fechamento-repo";
 import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 function fmtMonth(d: string) {
   const [y, m] = d.split("-");

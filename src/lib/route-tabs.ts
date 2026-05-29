@@ -1,7 +1,17 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export type SubTab = { value: string; label: string; group?: string; hidden?: boolean; icon?: string };
+export type SubTab = {
+  value: string;
+  label: string;
+  group?: string;
+  hidden?: boolean;
+  icon?: string;
+  /** D19.NAV — quando preenchido, a aba navega para outra rota (sem hash) em
+   *  vez de virar `#tab=<value>` da rota atual. Usado para expor páginas
+   *  irmãs (ex.: /operacoes-financeiras) dentro do ribbon do macro. */
+  to?: string;
+};
 
 /**
  * Grupos padronizados em todo o ERP:

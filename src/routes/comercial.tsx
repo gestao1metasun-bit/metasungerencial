@@ -405,10 +405,18 @@ function ContratoAssinadoTab({
           if (a === "atualizar") toast.info("Contratos atualizados.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
-          else if (a === "historico") { const evt = new CustomEvent("ms.hist.open", { detail: { titulo: "Contratos · Assinados", modulos: ["comercial"], entidades: ["contrato"] } }); window.dispatchEvent(evt); }
+          else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
       />
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Contratos · Assinados"
+        modulos={["comercial"]}
+        entidades={["contrato"]}
+      />
+
 
 
       <div className="grid gap-3 sm:grid-cols-3">

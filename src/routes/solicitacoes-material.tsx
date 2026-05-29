@@ -35,6 +35,7 @@ import {
   Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({

@@ -87,7 +87,7 @@ function FinanciamentosPage() {
           onAction={(a) => {
             if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
             else if (a === "novo") setTab("sem");
-            else if (a === "historico") setTab("finalizados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");

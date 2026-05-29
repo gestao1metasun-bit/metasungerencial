@@ -131,6 +131,13 @@ function PosVendaPage() {
           <TiposTab />
         </TabsContent>
       </Tabs>
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Pós-venda"
+        modulos={["comercial"]}
+        entidades={["obra", "contrato"]}
+      />
     </>
   );
 }

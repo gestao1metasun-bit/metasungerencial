@@ -170,15 +170,17 @@ export function useCriarOperacao() {
   return useMutation({
     mutationFn: async (payload: CriarPayload) => {
       const requestId = crypto.randomUUID();
-      const { data, error } = await supabase.rpc("rpc_op_fin_criar", {
-        _request_id: requestId,
-        _payload: payload as never,
+      return withPerf("rpc.op_fin_criar", async () => {
+        const { data, error } = await supabase.rpc("rpc_op_fin_criar", {
+          _request_id: requestId,
+          _payload: payload as never,
+        });
+        if (error) {
+          logError("op-fin:criar", error.message, { payload });
+          throw error;
+        }
+        return data;
       });
-      if (error) {
-        logError("op-fin:criar", error.message, { payload });
-        throw error;
-      }
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });

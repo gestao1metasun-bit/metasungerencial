@@ -152,6 +152,9 @@ export function useOpFinParcelas(operacaoId: string | null) {
 export interface CriarPayload {
   tipo: OpFinTipo;
   natureza_caixa: "ENTRADA" | "SAIDA";
+  natureza_id: string;
+  centro_resultado_id: string;
+  conta_id: string;
   valor_total: number;
   data_operacao: string;
   qtd_parcelas: number;

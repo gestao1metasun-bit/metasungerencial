@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, FileSearch } from "lucide-react";
 import { StatCard } from "@/components/app/StatCard";
 import { useRenegociacoes } from "@/lib/repositories/renegociacoes-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -39,8 +41,15 @@ export function RenegociacaoHistoricoListSupabase() {
   const descontoConcedido = renegs.reduce((s, r) => s + Number(r.desconto_aplicado || 0), 0);
   const jurosRecuperado = renegs.reduce((s, r) => s + Number(r.juros_aplicado || 0) + Number(r.multa_aplicada || 0), 0);
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-4">
+      <RmTabHeader
+        search={q}
+        onSearchChange={setQ}
+        searchPlaceholder="Buscar renegociação…"
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["renegociacoes"] })}
+      />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Renegociações" value={String(renegs.length)} hint="No histórico" />
         <StatCard label="Valor renegociado" value={fmtBRL(valorRenegociado)} tone="primary" />

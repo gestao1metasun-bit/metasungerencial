@@ -9,6 +9,7 @@ import {
   useParametrosFinanceiros, salvarParametrosFinanceiros,
   type ParametrosFinanceiros,
 } from "@/lib/fin-parametros-financeiros-store";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
 
 export function ParametrosFinanceirosForm() {
   const atuais = useParametrosFinanceiros();
@@ -28,6 +29,11 @@ export function ParametrosFinanceirosForm() {
 
   return (
     <div className="space-y-5">
+      <RmTabHeader
+        availableActions={["editar", "atualizar", "historico", "exportar", "imprimir"]}
+        onEditar={salvar}
+        searchPlaceholder="Buscar parâmetro…"
+      />
       <Card className="p-5 bg-[image:var(--gradient-card)]">
         <div className="mb-2 text-sm font-semibold">Política de Juros, Multa e Desconto</div>
         <p className="mb-4 text-xs text-muted-foreground">

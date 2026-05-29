@@ -19,6 +19,8 @@ import {
   type ContratoElegivelRescisao,
 } from "@/lib/repositories/rescisoes-repo";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -61,8 +63,17 @@ export function RescisoesTabSupabase() {
   const totalDevolvido = rescs.reduce((s, r) => s + Number(r.devolucao_liquida || 0), 0);
   const totalMulta = rescs.reduce((s, r) => s + Number(r.multa_calculada || 0), 0);
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-4">
+      <RmTabHeader
+        variant="aprovacao"
+        search={filtro}
+        onSearchChange={setFiltro}
+        searchPlaceholder="Buscar rescisão…"
+        onNovo={() => contratos.length > 0 && setOpen(true)}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["rescisoes"] })}
+      />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Rescisões" value={String(rescs.length)} />
         <StatCard label="Multa total cobrada" value={fmtBRL(totalMulta)} tone="warning" />

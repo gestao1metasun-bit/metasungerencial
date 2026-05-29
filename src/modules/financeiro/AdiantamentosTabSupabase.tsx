@@ -47,6 +47,8 @@ import {
 } from "@/lib/repositories/cadastros-repo";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
 import { promptDialog } from "@/components/app/confirm-dialog";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const UI_PREF_KEY = "ui.fin.adiantamentos.v1";
 
@@ -137,8 +139,16 @@ export function AdiantamentosTabSupabase() {
     }
   }
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-4">
+      <RmTabHeader
+        search={filtro}
+        onSearchChange={setFiltro}
+        searchPlaceholder="Buscar adiantamento…"
+        onNovo={() => setNovoOpen(true)}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["adiantamentos"] })}
+      />
       <Tabs value={tipo} onValueChange={(v) => setTipo(v as AdiantamentoTipoUI)}>
         <div className="flex items-center justify-between gap-3">
           <TabsList>

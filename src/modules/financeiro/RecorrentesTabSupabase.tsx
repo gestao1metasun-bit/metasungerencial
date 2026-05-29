@@ -20,6 +20,8 @@ import {
 import { useNaturezasFin, useCentrosResultado } from "@/lib/repositories/cadastros-repo";
 import { logError } from "@/lib/repositories/error-log-repo";
 import { fmtBRL } from "@/lib/mock-data";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function RecorrentesTabSupabase() {
   const { data: recs = [], isLoading } = useRecorrentesSupabase();
@@ -30,8 +32,14 @@ export function RecorrentesTabSupabase() {
   const excluir = useExcluirRecorrente();
   const [open, setOpen] = useState(false);
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-3">
+      <RmTabHeader
+        onNovo={() => setOpen(true)}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["recorrentes-supabase"] })}
+        searchPlaceholder="Buscar despesa fixa…"
+      />
       <Card className="p-3 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">{recs.length} recorrência(s)</div>
         <NovoRecorrenteDialog

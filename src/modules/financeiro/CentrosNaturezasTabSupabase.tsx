@@ -7,12 +7,23 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import { useNaturezasFin, useCentrosResultado } from "@/lib/repositories/cadastros-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CentrosNaturezasTabSupabase() {
   const naturezas = useNaturezasFin();
   const centros = useCentrosResultado();
+  const qc = useQueryClient();
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="space-y-3">
+      <RmTabHeader
+        searchPlaceholder="Buscar centro/natureza…"
+        onAtualizar={() => {
+          qc.invalidateQueries({ queryKey: ["naturezas-fin"] });
+          qc.invalidateQueries({ queryKey: ["centros-resultado"] });
+        }}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <Card className="overflow-auto">
         <div className="px-3 py-2 border-b font-semibold text-sm">Centros de resultado</div>
         <Table>
@@ -56,6 +67,7 @@ export function CentrosNaturezasTabSupabase() {
           </TableBody>
         </Table>
       </Card>
+      </div>
     </div>
   );
 }

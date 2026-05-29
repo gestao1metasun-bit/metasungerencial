@@ -19,6 +19,8 @@ import { useLancamentos, lancamentosRepo, type NovoLancamentoInput } from "@/lib
 import { useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
 import { logError } from "@/lib/repositories/error-log-repo";
 import { fmtBRL } from "@/lib/mock-data";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const UI_KEY = "ui.fin.lancamentos.v1";
 
@@ -53,8 +55,14 @@ export function LancamentosTabSupabase() {
     saveUi(next);
   }
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-3">
+      <RmTabHeader
+        onNovo={() => setOpen(true)}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["lancamentos-derivados"] })}
+        searchPlaceholder="Buscar lançamento…"
+      />
       <Card className="p-3 flex flex-wrap items-end gap-3">
         <div>
           <Label className="text-xs">Origem</Label>

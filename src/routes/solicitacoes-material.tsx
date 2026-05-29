@@ -32,8 +32,10 @@ import {
   type SolicitacaoMaterial,
 } from "@/hooks/useSolicitacoesMaterial";
 import {
-  Plus, Send, Ban, Eye, ShoppingCart, CheckCircle2, FileText,
+  Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({
   head: () => ({
@@ -55,6 +57,7 @@ function SolicitacoesMaterialPage() {
   const { data: lista = [], isLoading } = useSolicitacoesMaterial();
   const [criar, setCriar] = useState(false);
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
 
   const stats = useMemo(() => {
     return {
@@ -65,16 +68,22 @@ function SolicitacoesMaterialPage() {
     };
   }, [lista]);
 
+  const listaFiltrada = useMemo(() => {
+    const f = busca.trim().toLowerCase();
+    if (!f) return lista;
+    return lista.filter((s) =>
+      (s.codigo ?? "").toLowerCase().includes(f) ||
+      (s.setor ?? "").toLowerCase().includes(f) ||
+      (s.motivo ?? "").toLowerCase().includes(f) ||
+      (s.solicitante_email ?? "").toLowerCase().includes(f),
+    );
+  }, [lista, busca]);
+
   return (
     <div className="space-y-6 p-6">
       <PageHeader
         title="Solicitações de Material"
         subtitle="Solicite, aprove e acompanhe materiais — o sistema desvia para compra apenas o que falta no estoque."
-        actions={
-          <Button onClick={() => setCriar(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova solicitação
-          </Button>
-        }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -83,6 +92,24 @@ function SolicitacoesMaterialPage() {
         <StatCard label="Atendidas pelo estoque" value={String(stats.atendidas)} icon={CheckCircle2} tone="success" />
         <StatCard label="Em compra" value={String(stats.compra)} icon={ShoppingCart} tone="info" />
       </div>
+
+      {/* D17.UI Fase 3 — Compras: barra Enterprise RM/TOTVS oficial */}
+      <EnterpriseRecordToolbar
+        entityType="compras"
+        selectedIds={detalheId ? [detalheId] : []}
+        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar código, setor, motivo, solicitante…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "novo") setCriar(true);
+          else if (a === "atualizar") toast.info("Lista atualizada.");
+          else if (a === "imprimir") window.print();
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega no próximo turno.");
+          else if (a === "filtroAvancado") toast.info("Use a busca canônica acima — filtros avançados em D17.UI.4.");
+        }}
+      />
 
       <div className="rounded-lg border bg-card">
         <Table>
@@ -101,10 +128,12 @@ function SolicitacoesMaterialPage() {
             {isLoading && (
               <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
-            {!isLoading && lista.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma solicitação ainda.</TableCell></TableRow>
+            {!isLoading && listaFiltrada.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                {lista.length === 0 ? "Nenhuma solicitação ainda." : "Nenhum resultado para a busca."}
+              </TableCell></TableRow>
             )}
-            {lista.map((s) => (
+            {listaFiltrada.map((s) => (
               <TableRow key={s.id} className="hover:bg-muted/40">
                 <TableCell className="font-mono text-xs">{s.codigo}</TableCell>
                 <TableCell>{s.setor ?? "—"}</TableCell>
@@ -115,15 +144,18 @@ function SolicitacoesMaterialPage() {
                   <Badge variant="outline" className={SM_STATUS_TONE[s.status]}>{SM_STATUS_LABEL[s.status]}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" variant="ghost" onClick={() => setDetalheId(s.id)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <RowActions
+                    rowId={s.id}
+                    actions={[{ kind: "visualizar" }, { kind: "historico" }]}
+                    onAction={(_, id) => setDetalheId(id)}
+                  />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
 
       <CriarDialog open={criar} onOpenChange={setCriar} />
       <DetalheSheet id={detalheId} onClose={() => setDetalheId(null)} />

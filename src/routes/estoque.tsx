@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
-import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
@@ -124,23 +124,20 @@ function EstoquePage() {
       <div className="mb-2"><EstoqueStrip /></div>
 
       <div className="mb-2">
-        <EnterpriseToolbar
-          title="Estoque"
-          onNovo={() => setTab("itens")}
-          onEditar={() => setTab("itens")}
-          onAprovar={() => setTab("obras")}
-          onCancelar={undefined}
-          onExportar={onExportar}
-          onImprimir={() => window.print()}
-          onAtualizar={() => window.location.reload()}
-          onHistorico={() => setTab("entregas")}
-          onAnexos={undefined}
-          selecionado
-          extraActions={
-            <span className="text-[10.5px] text-muted-foreground hidden lg:inline">
-              Reservar · Entregar · Ajustar · Inventário via aba <b>Obras</b> / <b>Itens</b>
-            </span>
-          }
+        <EnterpriseRecordToolbar
+          entityType="estoque"
+          selectedIds={[]}
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          searchPlaceholder="Buscar item, código, categoria…"
+          onAction={(a) => {
+            if (a === "novo") setTab("itens");
+            else if (a === "atualizar") window.location.reload();
+            else if (a === "exportar") onExportar();
+            else if (a === "imprimir") window.print();
+            else if (a === "historico") setTab("entregas");
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+            else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
+          }}
         />
       </div>
 
@@ -810,20 +807,25 @@ function ItensTab({ podeAjustar }: { podeAjustar: boolean }) {
                 <TableCell className="text-right text-xs">{i.custoMedio ? i.custoMedio.toFixed(2) : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{fmtDate(i.atualizadoEm)}</TableCell>
                 <TableCell className="text-right">
-                  {podeAjustar && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        if (confirm(`Remover item "${i.nome}"?`)) {
-                          removeEstoqueItem(i.id);
-                          toast.success("Item removido.");
+                  {podeAjustar ? (
+                    <RowActions
+                      rowId={i.id}
+                      actions={[
+                        { kind: "editar" },
+                        { kind: "excluir" },
+                      ]}
+                      onAction={(kind, id) => {
+                        if (kind === "excluir") {
+                          if (confirm(`Remover item "${i.nome}"?`)) {
+                            removeEstoqueItem(id);
+                            toast.success("Item removido.");
+                          }
+                        } else if (kind === "editar") {
+                          toast.info("Edição inline disponível na coluna Qtd.");
                         }
                       }}
-                    >
-                      Remover
-                    </Button>
-                  )}
+                    />
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}
@@ -907,8 +909,22 @@ function EntregasTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Input placeholder="Buscar por cliente ou item…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
+      <EnterpriseRecordToolbar
+        entityType="estoque"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar por cliente ou item…"
+        search={q}
+        onSearchChange={setQ}
+        onAction={(a) => {
+          if (a === "atualizar") window.location.reload();
+          else if (a === "imprimir") window.print();
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
+        }}
+      />
+      <div className="flex items-center justify-end">
         <span className="text-xs text-muted-foreground">{list.length} registro(s)</span>
       </div>
       <Card className="p-2">

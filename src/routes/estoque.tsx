@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
@@ -128,14 +129,21 @@ function EstoquePage() {
         <EnterpriseRecordToolbar
           entityType="estoque"
           selectedIds={[]}
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           searchPlaceholder="Buscar item, código, categoria…"
+          statusActions={ribbonRm({
+            visualizar: () => setTab("itens"),
+          })}
+          layoutBar={layoutBarRm()}
           onAction={(a) => {
             if (a === "novo") setTab("itens");
+            else if (a === "editar") setTab("itens");
+            else if (a === "cancelar") toast.info("Cancelamento de movimento requer seleção em Movimentos / Entregas.");
             else if (a === "atualizar") window.location.reload();
             else if (a === "exportar") onExportar();
             else if (a === "imprimir") window.print();
             else if (a === "historico") setHistOpen(true);
+            else if (a === "anexos") toast.info("Anexos universais chegam em D17.UI.4b.");
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
           }}
@@ -920,13 +928,16 @@ function EntregasTab() {
       <EnterpriseRecordToolbar
         entityType="estoque"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar por cliente ou item…"
         search={q}
         onSearchChange={setQ}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "atualizar") window.location.reload();
           else if (a === "imprimir") window.print();
+          else if (a === "anexos") toast.info("Anexos universais chegam em D17.UI.4b.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");

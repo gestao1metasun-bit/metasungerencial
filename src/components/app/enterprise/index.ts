@@ -75,6 +75,10 @@ export type { ColumnDef } from "@/lib/ui/column-prefs";
 export { FilterPanel } from "./FilterPanel";
 export type { FilterPanelProps } from "./FilterPanel";
 
+// D17.UI Fase 6.A — Presets canônicos de ribbon RM (Linha 2 + Linha 3)
+export { ribbonRm, ribbonRmAprovacao, layoutBarRm } from "./rm-ribbon-presets";
+export type { RmRibbonOverrides } from "./rm-ribbon-presets";
+
 // D17.UI.3 — Seleção múltipla + ações em lote
 export { BulkActionBar } from "./BulkActionBar";
 export type { BulkAction, BulkActionBarProps, BulkActionTone } from "./BulkActionBar";

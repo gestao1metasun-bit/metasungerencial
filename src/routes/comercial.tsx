@@ -512,115 +512,6 @@ function ContratoAssinadoRow({
       categoriaPadrao="contrato"
     />
     <TableRow>
-      <TableCell>
-        {anexoInput}
-        <ActionsMenu label={fmtContratoId(c.id)}>
-          {temAnexo && (
-            <DropdownMenuItem onSelect={() => abrirAnexoContrato(c)}>
-              <Eye className="mr-2 h-4 w-4" /> Visualizar anexo
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onSelect={abrirSeletor}>
-            <Paperclip className="mr-2 h-4 w-4" /> {temAnexo ? "Reanexar contrato" : "Anexar contrato"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setAnexosOpen(true)}>
-            <Paperclip className="mr-2 h-4 w-4 text-sky-600" /> Anexos do contrato (todos)
-          </DropdownMenuItem>
-          {!aprovado && (
-            <DropdownMenuItem
-              disabled={!temAnexo}
-              onSelect={() => {
-                const r = aprovarContratoAssinado(c.id, "Comercial");
-                if (!r.ok) { toast.error(r.motivo); return; }
-                const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
-                toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
-              }}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar contrato
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            disabled={!aprovado || !(c.comissaoValor && c.comissaoValor > 0)}
-            title={
-              !aprovado ? "Disponível após aprovação do contrato"
-              : !(c.comissaoValor && c.comissaoValor > 0) ? "Contrato sem valor de comissão"
-              : undefined
-            }
-            onSelect={() => {
-              const apId = `AP-COM-${c.id}`;
-              const ja = getTitulos().find((t) => t.id === apId);
-              if (ja) { toast.info(`Comissão já liberada (${apId}).`); return; }
-              const beneficiario = c.vendedor || prompt("Beneficiário da comissão:") || "";
-              if (!beneficiario.trim()) { toast.error("Informe o beneficiário."); return; }
-              const vencDefault = new Date(); vencDefault.setDate(vencDefault.getDate() + 30);
-              const venc = prompt("Vencimento (AAAA-MM-DD):", vencDefault.toISOString().slice(0, 10)) || "";
-              if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) { toast.error("Data inválida."); return; }
-              try {
-                gerarAPdeComissao({
-                  id: apId, contratoId: c.id, cliente: c.cliente,
-                  valor: c.comissaoValor!, vencimento: venc, beneficiario: beneficiario.trim(),
-                }, "Comercial");
-                toast.success(`Comissão liberada: AP gerada no Financeiro (${apId}).`);
-              } catch (e: any) { toast.error(e?.message ?? "Erro ao liberar comissão."); }
-            }}
-          >
-            <HandCoins className="mr-2 h-4 w-4" /> Liberar comissão
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => setAditivosOpen(true)}
-            disabled={!aprovado}
-            title={!aprovado ? "Disponível após aprovação do contrato" : undefined}
-          >
-            <Layers className="mr-2 h-4 w-4" />
-            <span>Gerenciar aditivos</span>
-            {pendentesAditivos > 0 && (
-              <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-warning/15 text-warning border border-warning/30 px-1.5 text-[10px] font-semibold">
-                {pendentesAditivos}
-              </span>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setEditOpen(true)} disabled={!aprovado} title={!aprovado ? "Disponível após aprovação do contrato" : undefined}>
-            <SquarePen className="mr-2 h-4 w-4" /> Criar / aprovar projetos
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onSelect={() => onImprimir(c)}>
-            <Printer className="mr-2 h-4 w-4" /> Imprimir
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onRetornar(c)}>
-            <Undo2 className="mr-2 h-4 w-4" /> Retornar
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              const motivo = prompt(
-                `Cancelar contrato ${fmtContratoId(c.id)}?\n\n` +
-                `Ao cancelar, ele sai da Engenharia e do Financiamento e vai para a aba "Cancelados".\n` +
-                `Você poderá reativá-lo depois.\n\n` +
-                `Motivo (obrigatório):`,
-              );
-              if (!motivo || !motivo.trim()) { toast.error("Informe um motivo."); return; }
-              const r = cancelarContrato(c.id, motivo.trim(), "Comercial");
-              if (!r.ok) { toast.error(r.motivo); return; }
-              toast.success(`Contrato ${fmtContratoId(c.id)} cancelado.`);
-            }}
-          >
-            <Ban className="mr-2 h-4 w-4 text-destructive" />
-            <span className="text-destructive">Cancelar contrato</span>
-          </DropdownMenuItem>
-        </ActionsMenu>
-        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
-        <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
-            </DialogHeader>
-            <AditivosPanel contrato={c} usuario={aditivoUser} podeGerenciar={podeGerenciarAditivos} />
-          </DialogContent>
-        </Dialog>
-
-      </TableCell>
       <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -671,6 +562,92 @@ function ContratoAssinadoRow({
             <AlertTriangle className="h-3 w-3" /> {pendentes}
           </span>
         )}
+      </TableCell>
+      <TableCell className="text-right">
+        {anexoInput}
+        <RowActions
+          rowId={c.id}
+          actions={[
+            { kind: "visualizar", label: temAnexo ? "Visualizar anexo" : "Sem anexo", disabled: !temAnexo },
+            { kind: "anexos", label: "Anexos do contrato", badgeCount: pendentesAditivos },
+            { kind: "aprovar", label: "Aprovar contrato", disabled: aprovado || !temAnexo },
+            { kind: "editar", label: "Criar / aprovar projetos", disabled: !aprovado },
+            { kind: "baixar", label: "Liberar comissão", disabled: !aprovado || !(c.comissaoValor && c.comissaoValor > 0), overflow: true },
+            { kind: "duplicar", label: "Gerenciar aditivos", icon: Layers, badgeCount: pendentesAditivos, disabled: !aprovado, overflow: true },
+            { kind: "historico", label: "Imprimir contrato", icon: Printer, overflow: true },
+            { kind: "estornar", label: "Retornar contrato", icon: Undo2, overflow: true },
+            { kind: "cancelar", label: "Cancelar contrato", overflow: true },
+          ]}
+          onAction={(kind) => {
+            switch (kind) {
+              case "visualizar":
+                if (temAnexo) abrirAnexoContrato(c);
+                break;
+              case "anexos":
+                setAnexosOpen(true);
+                break;
+              case "aprovar": {
+                const r = aprovarContratoAssinado(c.id, "Comercial");
+                if (!r.ok) { toast.error(r.motivo); return; }
+                const temFin = (c.pagamentoDetalhes?.formas ?? []).some((f) => f.tipo === "Financiamento");
+                toast.success(`Contrato ${fmtContratoId(c.id)} aprovado. Liberado para Engenharia${temFin ? " e Financiamento" : ""}.`);
+                break;
+              }
+              case "editar":
+                setEditOpen(true);
+                break;
+              case "baixar": {
+                const apId = `AP-COM-${c.id}`;
+                const ja = getTitulos().find((t) => t.id === apId);
+                if (ja) { toast.info(`Comissão já liberada (${apId}).`); return; }
+                const beneficiario = c.vendedor || prompt("Beneficiário da comissão:") || "";
+                if (!beneficiario.trim()) { toast.error("Informe o beneficiário."); return; }
+                const vencDefault = new Date(); vencDefault.setDate(vencDefault.getDate() + 30);
+                const venc = prompt("Vencimento (AAAA-MM-DD):", vencDefault.toISOString().slice(0, 10)) || "";
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) { toast.error("Data inválida."); return; }
+                try {
+                  gerarAPdeComissao({
+                    id: apId, contratoId: c.id, cliente: c.cliente,
+                    valor: c.comissaoValor!, vencimento: venc, beneficiario: beneficiario.trim(),
+                  }, "Comercial");
+                  toast.success(`Comissão liberada: AP gerada no Financeiro (${apId}).`);
+                } catch (e: any) { toast.error(e?.message ?? "Erro ao liberar comissão."); }
+                break;
+              }
+              case "duplicar":
+                setAditivosOpen(true);
+                break;
+              case "historico":
+                onImprimir(c);
+                break;
+              case "estornar":
+                onRetornar(c);
+                break;
+              case "cancelar": {
+                const motivo = prompt(
+                  `Cancelar contrato ${fmtContratoId(c.id)}?\n\n` +
+                  `Ao cancelar, ele sai da Engenharia e do Financiamento e vai para a aba "Cancelados".\n` +
+                  `Você poderá reativá-lo depois.\n\n` +
+                  `Motivo (obrigatório):`,
+                );
+                if (!motivo || !motivo.trim()) { toast.error("Informe um motivo."); return; }
+                const r = cancelarContrato(c.id, motivo.trim(), "Comercial");
+                if (!r.ok) { toast.error(r.motivo); return; }
+                toast.success(`Contrato ${fmtContratoId(c.id)} cancelado.`);
+                break;
+              }
+            }
+          }}
+        />
+        <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
+        <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
+          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
+            </DialogHeader>
+            <AditivosPanel contrato={c} usuario={aditivoUser} podeGerenciar={podeGerenciarAditivos} />
+          </DialogContent>
+        </Dialog>
       </TableCell>
     </TableRow>
     </>

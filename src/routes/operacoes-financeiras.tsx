@@ -95,7 +95,9 @@ function OperacoesFinanceirasPage() {
       <div className="mb-3">
         <EnterpriseRecordToolbar
           entityType="operacoes_financeiras"
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          statusActions={ribbonRmAprovacao()}
+          layoutBar={layoutBarRm()}
           selectedIds={[]}
           searchPlaceholder="Buscar código, contraparte, banco, finalidade…"
           search={search}

@@ -2059,24 +2059,62 @@ export type Database = {
           },
         ]
       }
+      estoque_eventos_catalogo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          evento: string
+          evento_canonico: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao: string
+          evento: string
+          evento_canonico: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          evento?: string
+          evento_canonico?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       estoque_movimentos: {
         Row: {
           categoria_contabil: string | null
           centro_custo_id: string | null
           centro_resultado_id: string | null
+          codigo_externo: string | null
           created_at: string
           custo_total: number
           custo_unitario: number
           entrega_id: string | null
+          hash_integracao: string | null
           id: string
           motivo: string | null
           obra_id: string | null
+          origem_id: string | null
           origem_tipo: string | null
           produto_id: string
           projeto_id: string | null
           pv_id: string | null
           quantidade: number
           reserva_id: string | null
+          sistema_destino: string | null
+          status_integracao: string
           tipo: string
           user_email: string | null
           user_id: string | null
@@ -2085,19 +2123,24 @@ export type Database = {
           categoria_contabil?: string | null
           centro_custo_id?: string | null
           centro_resultado_id?: string | null
+          codigo_externo?: string | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
           entrega_id?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo?: string | null
           obra_id?: string | null
+          origem_id?: string | null
           origem_tipo?: string | null
           produto_id: string
           projeto_id?: string | null
           pv_id?: string | null
           quantidade: number
           reserva_id?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo: string
           user_email?: string | null
           user_id?: string | null
@@ -2106,19 +2149,24 @@ export type Database = {
           categoria_contabil?: string | null
           centro_custo_id?: string | null
           centro_resultado_id?: string | null
+          codigo_externo?: string | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
           entrega_id?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo?: string | null
           obra_id?: string | null
+          origem_id?: string | null
           origem_tipo?: string | null
           produto_id?: string
           projeto_id?: string | null
           pv_id?: string | null
           quantidade?: number
           reserva_id?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo?: string
           user_email?: string | null
           user_id?: string | null
@@ -4291,20 +4339,31 @@ export type Database = {
           aprovado_em: string | null
           aprovado_por: string | null
           cancelado_em: string | null
+          categoria_contabil: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          conta_financeira_id: string | null
           cotacao_escolhida_id: string | null
           created_at: string
           dados: Json
           fornecedor_doc: string | null
+          fornecedor_id: string | null
           fornecedor_nome: string | null
+          hash_integracao: string | null
           id: string
           motivo_cancelamento: string | null
+          natureza_financeira_id: string | null
           prazo_entrega_dias: number | null
           recebido_em: string | null
           recebido_por: string | null
           row_version: number
+          sistema_destino: string | null
           solicitacao_id: string | null
           status: Database["public"]["Enums"]["ordem_compra_status"]
+          status_integracao: string
           titulo_financeiro_id: string | null
           updated_at: string
           valor_total: number
@@ -4314,20 +4373,31 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           cancelado_em?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_financeira_id?: string | null
           cotacao_escolhida_id?: string | null
           created_at?: string
           dados?: Json
           fornecedor_doc?: string | null
+          fornecedor_id?: string | null
           fornecedor_nome?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo_cancelamento?: string | null
+          natureza_financeira_id?: string | null
           prazo_entrega_dias?: number | null
           recebido_em?: string | null
           recebido_por?: string | null
           row_version?: number
+          sistema_destino?: string | null
           solicitacao_id?: string | null
           status?: Database["public"]["Enums"]["ordem_compra_status"]
+          status_integracao?: string
           titulo_financeiro_id?: string | null
           updated_at?: string
           valor_total?: number
@@ -4337,26 +4407,72 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           cancelado_em?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_financeira_id?: string | null
           cotacao_escolhida_id?: string | null
           created_at?: string
           dados?: Json
           fornecedor_doc?: string | null
+          fornecedor_id?: string | null
           fornecedor_nome?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo_cancelamento?: string | null
+          natureza_financeira_id?: string | null
           prazo_entrega_dias?: number | null
           recebido_em?: string | null
           recebido_por?: string | null
           row_version?: number
+          sistema_destino?: string | null
           solicitacao_id?: string | null
           status?: Database["public"]["Enums"]["ordem_compra_status"]
+          status_integracao?: string
           titulo_financeiro_id?: string | null
           updated_at?: string
           valor_total?: number
           workflow_fin_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ordens_compra_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_compra_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_compra_conta_financeira_id_fkey"
+            columns: ["conta_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_compra_natureza_financeira_id_fkey"
+            columns: ["natureza_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ordens_compra_solicitacao_id_fkey"
             columns: ["solicitacao_id"]
@@ -5909,22 +6025,33 @@ export type Database = {
           aprovado_setor_em: string | null
           aprovado_setor_por: string | null
           cancelado_em: string | null
+          categoria_contabil: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
           concluido_em: string | null
+          conta_financeira_id: string | null
           created_at: string
           dados: Json
+          fornecedor_id: string | null
+          hash_integracao: string | null
           id: string
           motivo: string | null
           motivo_cancelamento: string | null
           motivo_negacao: string | null
+          natureza_financeira_id: string | null
           obra_id: string | null
           prioridade: string
           pv_id: string | null
           row_version: number
           setor: string | null
+          sistema_destino: string | null
           solicitante_email: string | null
           solicitante_id: string
           status: Database["public"]["Enums"]["solicitacao_material_status"]
+          status_integracao: string
           updated_at: string
           valor_estimado: number
           workflow_setor_id: string | null
@@ -5933,22 +6060,33 @@ export type Database = {
           aprovado_setor_em?: string | null
           aprovado_setor_por?: string | null
           cancelado_em?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           concluido_em?: string | null
+          conta_financeira_id?: string | null
           created_at?: string
           dados?: Json
+          fornecedor_id?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo?: string | null
           motivo_cancelamento?: string | null
           motivo_negacao?: string | null
+          natureza_financeira_id?: string | null
           obra_id?: string | null
           prioridade?: string
           pv_id?: string | null
           row_version?: number
           setor?: string | null
+          sistema_destino?: string | null
           solicitante_email?: string | null
           solicitante_id: string
           status?: Database["public"]["Enums"]["solicitacao_material_status"]
+          status_integracao?: string
           updated_at?: string
           valor_estimado?: number
           workflow_setor_id?: string | null
@@ -5957,27 +6095,74 @@ export type Database = {
           aprovado_setor_em?: string | null
           aprovado_setor_por?: string | null
           cancelado_em?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           concluido_em?: string | null
+          conta_financeira_id?: string | null
           created_at?: string
           dados?: Json
+          fornecedor_id?: string | null
+          hash_integracao?: string | null
           id?: string
           motivo?: string | null
           motivo_cancelamento?: string | null
           motivo_negacao?: string | null
+          natureza_financeira_id?: string | null
           obra_id?: string | null
           prioridade?: string
           pv_id?: string | null
           row_version?: number
           setor?: string | null
+          sistema_destino?: string | null
           solicitante_email?: string | null
           solicitante_id?: string
           status?: Database["public"]["Enums"]["solicitacao_material_status"]
+          status_integracao?: string
           updated_at?: string
           valor_estimado?: number
           workflow_setor_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_material_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_material_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_material_conta_financeira_id_fkey"
+            columns: ["conta_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "contas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_material_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_material_natureza_financeira_id_fkey"
+            columns: ["natureza_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subgrupos_financeiros: {
         Row: {
@@ -7373,6 +7558,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "centros_resultado"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_cmv_preparado: {
+        Row: {
+          categoria_contabil: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          created_at: string | null
+          custo_total: number | null
+          custo_unitario: number | null
+          evento_canonico: string | null
+          hash_integracao: string | null
+          movimento_id: string | null
+          movimento_tipo: string | null
+          obra_id: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          produto_codigo: string | null
+          produto_id: string | null
+          produto_nome: string | null
+          projeto_id: string | null
+          pv_id: string | null
+          quantidade: number | null
+          status_integracao: string | null
+          tipo_item: string | null
+          user_id: string | null
+          valor_cmv_preparado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentos_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
           },
         ]
       }

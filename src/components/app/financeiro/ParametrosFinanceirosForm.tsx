@@ -9,6 +9,7 @@ import {
   useParametrosFinanceiros, salvarParametrosFinanceiros,
   type ParametrosFinanceiros,
 } from "@/lib/fin-parametros-financeiros-store";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
 
 export function ParametrosFinanceirosForm() {
   const atuais = useParametrosFinanceiros();

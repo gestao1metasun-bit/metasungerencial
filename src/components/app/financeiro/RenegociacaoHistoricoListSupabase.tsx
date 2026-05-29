@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, FileSearch } from "lucide-react";
 import { StatCard } from "@/components/app/StatCard";
 import { useRenegociacoes } from "@/lib/repositories/renegociacoes-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);

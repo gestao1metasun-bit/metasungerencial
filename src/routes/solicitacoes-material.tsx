@@ -161,6 +161,13 @@ function SolicitacoesMaterialPage() {
 
       <CriarDialog open={criar} onOpenChange={setCriar} />
       <DetalheSheet id={detalheId} onClose={() => setDetalheId(null)} />
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Compras / Solicitações"
+        modulos={["estoque"]}
+      />
     </div>
   );
 }

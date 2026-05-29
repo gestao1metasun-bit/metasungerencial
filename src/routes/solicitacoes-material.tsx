@@ -99,15 +99,18 @@ function SolicitacoesMaterialPage() {
       <EnterpriseRecordToolbar
         entityType="compras"
         selectedIds={detalheId ? [detalheId] : []}
-        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar código, setor, motivo, solicitante…"
         search={busca}
         onSearchChange={setBusca}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "novo") setCriar(true);
           else if (a === "atualizar") toast.info("Lista atualizada.");
           else if (a === "imprimir") window.print();
           else if (a === "historico") setHistOpen(true);
+          else if (a === "anexos") toast.info("Anexos universais chegam em D17.UI.4b.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
           else if (a === "colunas") toast.info("Gestor de colunas chega no próximo turno.");
           else if (a === "filtroAvancado") toast.info("Use a busca canônica acima — filtros avançados em D17.UI.4.");

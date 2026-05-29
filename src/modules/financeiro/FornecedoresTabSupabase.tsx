@@ -93,7 +93,7 @@ export function FornecedoresTabSupabase() {
   return (
     <div className="space-y-3">
       <RmTabHeader
-        entityType="fornecedores"
+        entityType="cliente"
         search={busca}
         onSearchChange={(v) => { setBusca(v); savePref({ ...pref, busca: v }); }}
         searchPlaceholder="Buscar por nome, CPF/CNPJ ou código…"

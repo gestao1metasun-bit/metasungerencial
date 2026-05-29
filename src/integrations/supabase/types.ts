@@ -2524,6 +2524,142 @@ export type Database = {
           },
         ]
       }
+      exportacoes_geradas: {
+        Row: {
+          ambiente: string
+          categoria: string
+          competencia: string | null
+          created_at: string
+          exportador_id: string
+          gerado_por: string | null
+          hash_payload: string | null
+          id: string
+          lote_id: string | null
+          mensagem: string | null
+          payload: Json | null
+          status: string
+          total_registros: number
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string
+          categoria: string
+          competencia?: string | null
+          created_at?: string
+          exportador_id: string
+          gerado_por?: string | null
+          hash_payload?: string | null
+          id?: string
+          lote_id?: string | null
+          mensagem?: string | null
+          payload?: Json | null
+          status?: string
+          total_registros?: number
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string
+          categoria?: string
+          competencia?: string | null
+          created_at?: string
+          exportador_id?: string
+          gerado_por?: string | null
+          hash_payload?: string | null
+          id?: string
+          lote_id?: string | null
+          mensagem?: string | null
+          payload?: Json | null
+          status?: string
+          total_registros?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exportacoes_geradas_exportador_id_fkey"
+            columns: ["exportador_id"]
+            isOneToOne: false
+            referencedRelation: "exportadores_externos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exportacoes_geradas_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao_contabil"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exportacoes_geradas_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_auditoria_integridade_integracao"
+            referencedColumns: ["lote_id"]
+          },
+        ]
+      }
+      exportadores_externos: {
+        Row: {
+          ambiente: string
+          ativo: boolean
+          categoria: string
+          codigo: string
+          conector_id: string | null
+          created_at: string
+          formato_padrao: string
+          id: string
+          layout_id: string | null
+          nome: string
+          observacao: string | null
+          sistema_destino: string
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string
+          ativo?: boolean
+          categoria: string
+          codigo: string
+          conector_id?: string | null
+          created_at?: string
+          formato_padrao: string
+          id?: string
+          layout_id?: string | null
+          nome: string
+          observacao?: string | null
+          sistema_destino: string
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string
+          ativo?: boolean
+          categoria?: string
+          codigo?: string
+          conector_id?: string | null
+          created_at?: string
+          formato_padrao?: string
+          id?: string
+          layout_id?: string | null
+          nome?: string
+          observacao?: string | null
+          sistema_destino?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exportadores_externos_conector_id_fkey"
+            columns: ["conector_id"]
+            isOneToOne: false
+            referencedRelation: "conectores_externos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exportadores_externos_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts_exportacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extrato_banco: {
         Row: {
           codigo_externo: string | null
@@ -3644,6 +3780,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lotes_integracao_contabil"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lote_registros_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_auditoria_integridade_integracao"
+            referencedColumns: ["lote_id"]
           },
         ]
       }
@@ -5218,6 +5361,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lotes_integracao_contabil"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_auditoria_integridade_integracao"
+            referencedColumns: ["lote_id"]
           },
           {
             foreignKeyName: "partidas_contabeis_virtuais_natureza_id_fkey"
@@ -8144,6 +8294,24 @@ export type Database = {
         }
         Relationships: []
       }
+      v_auditoria_integridade_integracao: {
+        Row: {
+          competencia: string | null
+          conector_ativo: boolean | null
+          conector_codigo: string | null
+          layout_codigo: string | null
+          layout_formato: string | null
+          lote_codigo: string | null
+          lote_id: string | null
+          lote_status: string | null
+          qtd_registros: number | null
+          registros_em_erro: number | null
+          registros_sem_codigo_externo: number | null
+          registros_sem_hash: number | null
+          tipo_lote: string | null
+        }
+        Relationships: []
+      }
       v_cmv_oficial: {
         Row: {
           centro_resultado_id: string | null
@@ -8264,6 +8432,18 @@ export type Database = {
           },
         ]
       }
+      v_cobertura_eventos_canonicos: {
+        Row: {
+          evento_canonico: string | null
+          modulo: string | null
+          qtd_lotes: number | null
+          qtd_lotes_registros: number | null
+          qtd_mapeamentos: number | null
+          qtd_partidas: number | null
+          status_cobertura: string | null
+        }
+        Relationships: []
+      }
       v_custo_obra_previsto: {
         Row: {
           custo_previsto: number | null
@@ -8284,6 +8464,14 @@ export type Database = {
           custo_realizado: number | null
           obra_id: string | null
           qtd_movimentos: number | null
+        }
+        Relationships: []
+      }
+      v_d18_cobertura_consolidada: {
+        Row: {
+          dimensao: string | null
+          observacao: string | null
+          total: number | null
         }
         Relationships: []
       }
@@ -8659,6 +8847,14 @@ export type Database = {
         }
         Relationships: []
       }
+      v_lacunas_mapeamento_contabil: {
+        Row: {
+          evento_canonico: string | null
+          modulo: string | null
+          status_cobertura: string | null
+        }
+        Relationships: []
+      }
       v_lancamentos_derivados: {
         Row: {
           centro_resultado_id: string | null
@@ -8701,6 +8897,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lotes_integracao_contabil"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lote_registros_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_auditoria_integridade_integracao"
+            referencedColumns: ["lote_id"]
           },
         ]
       }

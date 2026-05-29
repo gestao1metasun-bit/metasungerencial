@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";

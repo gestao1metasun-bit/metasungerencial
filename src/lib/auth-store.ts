@@ -43,50 +43,34 @@ async function loadRole(userId: string): Promise<AppRole | null> {
 }
 
 async function validateActiveSession(seedSession?: Session | null) {
-  const candidateUserId = seedSession?.user?.id ?? null;
-  const preserveCurrentUser = !!_state.user && _state.user.id === candidateUserId;
-
-  if (!preserveCurrentUser) {
-    _state = { session: null, user: null, role: null, loading: true };
+  // D19.1.fix.b — caminho rápido: se já temos seedSession válida
+  // (vinda de onAuthStateChange/getSession/signInWithPassword), confiamos
+  // nela em vez de fazer getUser+getSession redundantes. Esses dois calls
+  // podiam travar quando o Auth Worker reciclava e nunca rejeitavam —
+  // causa raiz do "Validando autenticação..." infinito.
+  if (seedSession?.user) {
+    const session = seedSession;
+    const user = seedSession.user;
+    const preserveRole = _state.user?.id === user.id ? _state.role : null;
+    _state = { session, user, role: preserveRole, loading: false };
+    console.info("[auth-session] fast-path (seed)", { userId: user.id, email: user.email });
     emit();
-  }
-
-  const [{ data: userData, error: userError }, { data: sessionData, error: sessionError }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-
-  const session = sessionData.session ?? seedSession ?? null;
-  const user = userData.user ?? session?.user ?? null;
-
-  console.info("[auth-session] validateActiveSession()", {
-    hasSeedSession: !!seedSession,
-    hasValidatedSession: !!session,
-    userId: user?.id ?? null,
-    email: user?.email ?? null,
-    userError: userError?.message ?? null,
-    sessionError: sessionError?.message ?? null,
-  });
-
-  if (userError || sessionError || !session || !user) {
-    setAnonymousState();
-    void supabase.auth.signOut();
+    void loadRole(user.id).then((role) => {
+      _state = { session, user, role, loading: false };
+      console.info("[auth-session] role carregado", { role, userId: user.id });
+      emit();
+      void hydrateFunnel(true);
+    });
     return;
   }
 
-  _state = {
-    session,
-    user,
-    role: _state.user?.id === user.id ? _state.role : null,
-    loading: false,
-  };
-  emit();
-
-  const role = await loadRole(user.id);
-  _state = { session, user, role, loading: false };
-  console.info("[auth-session] sessão validada", { role, userId: user.id });
-  emit();
-  void hydrateFunnel(true);
+  // Sem seed: tenta resgatar sessão persistida.
+  const { data } = await supabase.auth.getSession();
+  if (!data.session?.user) {
+    setAnonymousState();
+    return;
+  }
+  await validateActiveSession(data.session);
 }
 
 async function refresh() {
@@ -131,7 +115,20 @@ function ensureInit() {
   if (_initialized) return;
   _initialized = true;
   console.info("[auth-session] ensureInit() — assinando onAuthStateChange");
-  void refresh();
+
+  // D19.1.fix.b — safety net: se em 4s ainda estivermos loading=true
+  // (Auth Worker reciclando / getSession pendurado), libera estado anônimo
+  // para o guard do __root redirecionar para /login em vez de prender o
+  // usuário na tela "Validando autenticação…".
+  const safetyTimer = setTimeout(() => {
+    if (_state.loading) {
+      console.warn("[auth-session] safety-net acionado: loading=true >4s, forçando anônimo");
+      setAnonymousState();
+    }
+  }, 4000);
+
+  void refresh().finally(() => clearTimeout(safetyTimer));
+
   supabase.auth.onAuthStateChange((event, session) => {
     console.info("[auth-session] onAuthStateChange", {
       event,

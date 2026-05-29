@@ -4779,33 +4779,45 @@ export type Database = {
       }
       operacoes_financeiras_parcelas: {
         Row: {
+          competencia: string | null
           created_at: string
+          hash_integracao: string | null
           id: string
           numero: number
+          observacao: string | null
           operacao_id: string
           row_version: number
+          status_integracao: string
           titulo_id: string | null
           updated_at: string
           valor: number
           vencimento: string
         }
         Insert: {
+          competencia?: string | null
           created_at?: string
+          hash_integracao?: string | null
           id?: string
           numero: number
+          observacao?: string | null
           operacao_id: string
           row_version?: number
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor: number
           vencimento: string
         }
         Update: {
+          competencia?: string | null
           created_at?: string
+          hash_integracao?: string | null
           id?: string
           numero?: number
+          observacao?: string | null
           operacao_id?: string
           row_version?: number
+          status_integracao?: string
           titulo_id?: string | null
           updated_at?: string
           valor?: number
@@ -10610,15 +10622,26 @@ export type Database = {
         Args: { _motivo: string; _request_id: string; _titulo_id: string }
         Returns: Json
       }
-      rpc_op_fin_gerar_parcelas: {
-        Args: {
-          _intervalo_dias?: number
-          _operacao_id: string
-          _request_id: string
-          _vencimento_primeiro: string
-        }
-        Returns: Json
-      }
+      rpc_op_fin_gerar_parcelas:
+        | {
+            Args: {
+              _intervalo_dias?: number
+              _operacao_id: string
+              _request_id: string
+              _vencimento_primeiro: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _intervalo_dias?: number
+              _operacao_id: string
+              _parcelas?: Json
+              _request_id: string
+              _vencimento_primeiro: string
+            }
+            Returns: Json
+          }
       rpc_op_fin_liberar: {
         Args: { _operacao_id: string; _request_id: string }
         Returns: Json

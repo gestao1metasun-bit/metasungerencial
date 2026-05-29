@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { FileSignature, CheckCircle2, Wrench, Banknote, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 

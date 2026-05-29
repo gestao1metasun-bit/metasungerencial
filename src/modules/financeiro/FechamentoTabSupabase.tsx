@@ -158,6 +158,7 @@ export function FechamentoTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

@@ -23,7 +23,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   EnterpriseDataGrid, exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
-import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { EnterpriseRecordToolbar, ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise";
 import {
   useWorkflowAprovacoes, useWorkflowHistorico,
   useAprovarSolicitacao, useNegarSolicitacao, useCancelarSolicitacao,

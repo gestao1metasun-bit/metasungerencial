@@ -58,6 +58,7 @@ function SolicitacoesMaterialPage() {
   const [criar, setCriar] = useState(false);
   const [detalheId, setDetalheId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
   const stats = useMemo(() => {
     return {

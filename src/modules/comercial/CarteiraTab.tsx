@@ -232,7 +232,9 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "exportar", "imprimir"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar número, cliente, cidade, status…"
         search={busca}
         onSearchChange={setBusca}

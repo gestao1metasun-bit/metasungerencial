@@ -279,17 +279,29 @@ export function useCancelarOperacao() {
   });
 }
 
+export interface ParcelaGradeInput {
+  numero: number;
+  valor: number;
+  vencimento: string;
+  competencia?: string | null;
+  observacao?: string | null;
+}
+
 export function useGerarParcelas() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      id, vencimentoPrimeiro, intervaloDias,
-    }: { id: string; vencimentoPrimeiro: string; intervaloDias?: number }) => {
+      id, vencimentoPrimeiro, intervaloDias, parcelas,
+    }: {
+      id: string; vencimentoPrimeiro: string; intervaloDias?: number;
+      parcelas?: ParcelaGradeInput[];
+    }) => {
       const { data, error } = await supabase.rpc("rpc_op_fin_gerar_parcelas", {
         _request_id: crypto.randomUUID(),
         _operacao_id: id,
         _vencimento_primeiro: vencimentoPrimeiro,
         _intervalo_dias: intervaloDias ?? 30,
+        _parcelas: parcelas && parcelas.length > 0 ? (parcelas as never) : undefined,
       });
       if (error) throw error;
       return data;

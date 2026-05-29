@@ -206,6 +206,7 @@ export function FornecedoresTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

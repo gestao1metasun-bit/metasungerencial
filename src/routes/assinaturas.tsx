@@ -61,6 +61,7 @@ function useAssinaturasGlobais() {
 function AssinaturasPage() {
   const { data = [], isLoading, refetch, isFetching } = useAssinaturasGlobais();
   const [busca, setBusca] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();

@@ -703,6 +703,8 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <Card className="p-5">
       <div className="mb-3 flex items-center justify-between gap-3">

@@ -139,6 +139,7 @@ export function ConciliacaoTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

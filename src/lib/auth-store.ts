@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 export type AppRole = "admin_master" | "admin_geral" | "usuario";
 
@@ -13,19 +14,59 @@ interface AuthState {
   user: User | null;
   role: AppRole | null;
   loading: boolean;
+  errorMessage: string | null;
 }
 
-let _state: AuthState = { session: null, user: null, role: null, loading: true };
+let _state: AuthState = { session: null, user: null, role: null, loading: true, errorMessage: null };
 const _listeners = new Set<() => void>();
+let _bootTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function emit() {
   _listeners.forEach((l) => l());
 }
 
-function setAnonymousState() {
-  _state = { session: null, user: null, role: null, loading: false };
+function clearBootTimeout() {
+  if (_bootTimeout) {
+    clearTimeout(_bootTimeout);
+    _bootTimeout = null;
+  }
+}
+
+function scheduleBootTimeout() {
+  clearBootTimeout();
+  _bootTimeout = setTimeout(() => {
+    if (_state.loading) {
+      console.warn("[auth-session] timeout defensivo: loading=true >5s, forçando login");
+      void handleAuthFailure(
+        "Não foi possível validar sua sessão com segurança. Faça login novamente.",
+        new Error("auth boot timeout"),
+        "auth.timeout"
+      );
+    }
+  }, 5000);
+}
+
+function setAnonymousState(reason?: string, force = false) {
+  if (!force && _state.session?.user) {
+    console.warn("[auth-session] fallback anônimo ignorado: sessão válida já resolvida");
+    return;
+  }
+  clearBootTimeout();
+  _state = { session: null, user: null, role: null, loading: false, errorMessage: reason ?? null };
   emit();
   void hydrateFunnel(false);
+}
+
+function setLoadingState() {
+  _state = { ..._state, loading: true, errorMessage: null };
+  emit();
+  scheduleBootTimeout();
+}
+
+function setAuthenticatedState(session: Session, user: User, role: AppRole | null) {
+  clearBootTimeout();
+  _state = { session, user, role, loading: false, errorMessage: null };
+  emit();
 }
 
 async function loadRole(userId: string): Promise<AppRole | null> {
@@ -42,55 +83,115 @@ async function loadRole(userId: string): Promise<AppRole | null> {
   return "usuario";
 }
 
-async function validateActiveSession(seedSession?: Session | null) {
-  // D19.1.fix.b — caminho rápido: se já temos seedSession válida
-  // (vinda de onAuthStateChange/getSession/signInWithPassword), confiamos
-  // nela em vez de fazer getUser+getSession redundantes. Esses dois calls
-  // podiam travar quando o Auth Worker reciclava e nunca rejeitavam —
-  // causa raiz do "Validando autenticação..." infinito.
-  if (seedSession?.user) {
-    const session = seedSession;
-    const user = seedSession.user;
-    const preserveRole = _state.user?.id === user.id ? _state.role : null;
-    _state = { session, user, role: preserveRole, loading: false };
-    console.info("[auth-session] fast-path (seed)", { userId: user.id, email: user.email });
-    emit();
-    void loadRole(user.id).then((role) => {
-      _state = { session, user, role, loading: false };
-      console.info("[auth-session] role carregado", { role, userId: user.id });
-      emit();
-      void hydrateFunnel(true);
-    });
-    return;
-  }
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timeout após ${ms}ms`));
+    }, ms);
 
-  // Sem seed: tenta resgatar sessão persistida.
-  const { data } = await supabase.auth.getSession();
-  if (!data.session?.user) {
-    setAnonymousState();
-    return;
-  }
-  await validateActiveSession(data.session);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
 
-async function refresh() {
-  _state = { ..._state, loading: true };
-  emit();
+async function resolveAuthenticatedSession(session: Session, source: string) {
+  const user = session.user;
+  const preserveRole = _state.user?.id === user.id ? _state.role : null;
+  setAuthenticatedState(session, user, preserveRole);
+  console.info("[auth-session] sessão autenticada", { source, userId: user.id, email: user.email });
 
-  const { data, error } = await supabase.auth.getSession();
-  console.info("[auth-session] getSession()", {
-    hasSession: !!data.session,
-    userId: data.session?.user?.id ?? null,
-    email: data.session?.user?.email ?? null,
-    error: error?.message ?? null,
+  try {
+    const role = await loadRole(user.id);
+    if (_state.user?.id !== user.id) return;
+    setAuthenticatedState(session, user, role);
+    console.info("[auth-session] role carregado", { role, userId: user.id, source });
+  } catch (error) {
+    console.error("[auth-session] loadRole falhou", error);
+    logError({
+      modulo: "auth",
+      tela: "auth-store",
+      acao: "loadRole",
+      mensagem: error instanceof Error ? error.message : "Falha ao carregar papel do usuário",
+      payload: { userId: user.id, source },
+      severidade: "warn",
+    });
+  }
+
+  if (_state.user?.id === user.id) {
+    void hydrateFunnel(true);
+  }
+}
+
+async function handleAuthFailure(message: string, error: unknown, action: string) {
+  console.error(`[auth-session] ${action}`, error);
+  logError({
+    modulo: "auth",
+    tela: "auth-store",
+    acao: action,
+    mensagem: message,
+    stack: error instanceof Error ? error.stack : undefined,
+    payload: error instanceof Error ? { name: error.name, message: error.message } : { error },
+    severidade: "error",
   });
+  setAnonymousState(message);
+}
 
-  if (!data.session?.user) {
-    setAnonymousState();
+async function validateActiveSession(seedSession?: Session | null, source = "seed") {
+  if (seedSession?.user) {
+    await resolveAuthenticatedSession(seedSession, source);
     return;
   }
 
-  await validateActiveSession(data.session);
+  await refresh(source);
+}
+
+async function refresh(source = "refresh") {
+  setLoadingState();
+
+  try {
+    const { data, error } = await withTimeout(supabase.auth.getSession(), 5000, "supabase.auth.getSession");
+    console.info("[auth-session] getSession()", {
+      source,
+      hasSession: !!data.session,
+      userId: data.session?.user?.id ?? null,
+      email: data.session?.user?.email ?? null,
+      error: error?.message ?? null,
+    });
+
+    if (error) {
+      if (_state.session?.user) {
+        console.warn("[auth-session] getSession com erro ignorado: sessão válida já resolvida", { source, error: error.message });
+        return;
+      }
+      await handleAuthFailure("Falha ao consultar sua sessão. Faça login novamente.", error, "auth.getSession");
+      return;
+    }
+
+    if (!data.session?.user) {
+      if (_state.session?.user) {
+        console.warn("[auth-session] getSession sem sessão ignorado: sessão válida já resolvida", { source });
+        return;
+      }
+      setAnonymousState(undefined, true);
+      return;
+    }
+
+    await resolveAuthenticatedSession(data.session, source);
+  } catch (error) {
+    if (_state.session?.user) {
+      console.warn("[auth-session] refresh falhou, mas sessão válida já existe; ignorando fallback", { source });
+      return;
+    }
+    await handleAuthFailure("Falha ao validar sua sessão. Faça login novamente.", error, "auth.refresh");
+  }
 }
 
 async function hydrateFunnel(loggedIn: boolean) {
@@ -116,19 +217,6 @@ function ensureInit() {
   _initialized = true;
   console.info("[auth-session] ensureInit() — assinando onAuthStateChange");
 
-  // D19.1.fix.b — safety net: se em 4s ainda estivermos loading=true
-  // (Auth Worker reciclando / getSession pendurado), libera estado anônimo
-  // para o guard do __root redirecionar para /login em vez de prender o
-  // usuário na tela "Validando autenticação…".
-  const safetyTimer = setTimeout(() => {
-    if (_state.loading) {
-      console.warn("[auth-session] safety-net acionado: loading=true >4s, forçando anônimo");
-      setAnonymousState();
-    }
-  }, 4000);
-
-  void refresh().finally(() => clearTimeout(safetyTimer));
-
   supabase.auth.onAuthStateChange((event, session) => {
     console.info("[auth-session] onAuthStateChange", {
       event,
@@ -136,23 +224,32 @@ function ensureInit() {
       userId: session?.user?.id ?? null,
       email: session?.user?.email ?? null,
     });
+    if (!session?.user && event !== "SIGNED_OUT" && _state.session?.user) {
+      console.warn("[auth-session] evento nulo tardio ignorado: sessão já resolvida", { event });
+      return;
+    }
     if (!session?.user || event === "SIGNED_OUT") {
-      setAnonymousState();
+      setAnonymousState(undefined, true);
       return;
     }
 
-    setTimeout(() => {
-      void validateActiveSession(session);
-    }, 0);
+    queueMicrotask(() => {
+      void validateActiveSession(session, `auth:${event}`).catch((error) => {
+        void handleAuthFailure("Falha ao atualizar sua sessão. Faça login novamente.", error, "auth.onAuthStateChange");
+      });
+    });
   });
+
+  void refresh("boot");
 }
 
 export function useAuth() {
   const [, force] = useState(0);
   useEffect(() => {
-    ensureInit();
     const l = () => force((n) => n + 1);
     _listeners.add(l);
+    ensureInit();
+    force((n) => n + 1);
     return () => {
       _listeners.delete(l);
     };
@@ -188,17 +285,7 @@ export async function signInEmail(email: string, password: string) {
     // signInWithPassword JÁ retorna sessão+user validados pelo Supabase Auth.
     // Não fazemos getUser+getSession redundantes (era o gargalo de ~1.6s).
     // Apenas carrega o papel; estado de usuário é exposto imediatamente.
-    const session = data.session;
-    const user = data.user;
-    _state = { session, user, role: _state.user?.id === user.id ? _state.role : null, loading: false };
-    emit();
-    // Papel em paralelo — não bloqueia navegação para o dashboard.
-    void loadRole(user.id).then((role) => {
-      _state = { session, user, role, loading: false };
-      console.info("[auth-session] role carregado (fast-path)", { role, userId: user.id });
-      emit();
-      void hydrateFunnel(true);
-    });
+    await resolveAuthenticatedSession(data.session, "signInWithPassword");
   }
 }
 

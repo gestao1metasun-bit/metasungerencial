@@ -1716,7 +1716,17 @@ function EquipesTab({
                   <div className="text-xs text-muted-foreground">Líder: {e.lider} · {e.membros} membros</div>
                 </div>
               </div>
-              <StatusBadge status={e.status} />
+              <div className="flex items-center gap-2">
+                <StatusBadge status={e.status} />
+                <RowActions
+                  rowId={String(e.id)}
+                  actions={[{ kind: "visualizar" }, { kind: "historico" }]}
+                  onAction={(kind) => {
+                    if (kind === "visualizar") toast.info(`Detalhe da equipe ${e.nome}`);
+                    else if (kind === "historico") toast.info(`Histórico da equipe ${e.nome}`);
+                  }}
+                />
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-4 gap-2 text-center">
               <div className="rounded-md bg-success/10 p-2"><div className="text-[10px] uppercase text-muted-foreground">Exec.</div><div className="font-bold text-success">{exec}</div></div>

@@ -56,6 +56,15 @@ export function OperacoesFinanceirasGrid({ tipos, apenasParceladas, search, empt
       onError: (e) => toast.error(`Falha ao aprovar: ${(e as Error).message}`),
     });
   };
+  const handleAprovarELiberar = async (o: OperacaoFinanceira) => {
+    try {
+      await aprovar.mutateAsync({ id: o.id });
+      await liberar.mutateAsync(o.id);
+      toast.success(`Operação ${o.codigo ?? ""} aprovada e liberada — títulos gerados.`);
+    } catch (e) {
+      toast.error(`Falha no fluxo: ${(e as Error).message}`);
+    }
+  };
   const handleLiberar = (o: OperacaoFinanceira) => {
     liberar.mutate(o.id, {
       onSuccess: () => toast.success(`Operação ${o.codigo ?? ""} liberada — títulos gerados.`),
@@ -128,10 +137,18 @@ export function OperacoesFinanceirasGrid({ tipos, apenasParceladas, search, empt
                           title="Visualizar" onClick={() => setDetalheId(o.id)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        {o.status === "EM_APROVACAO" && (
+                        {(o.status === "RASCUNHO" || o.status === "EM_APROVACAO") && (
                           <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600"
                             title="Aprovar" onClick={() => handleAprovar(o)} disabled={aprovar.isPending}>
                             <CheckCircle2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {(o.status === "RASCUNHO" || o.status === "EM_APROVACAO") && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-700"
+                            title="Aprovar e Liberar (gera títulos)"
+                            onClick={() => handleAprovarELiberar(o)}
+                            disabled={aprovar.isPending || liberar.isPending}>
+                            <PlayCircle className="h-3.5 w-3.5" />
                           </Button>
                         )}
                         {o.status === "APROVADA" && (

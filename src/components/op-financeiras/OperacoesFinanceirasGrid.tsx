@@ -137,10 +137,18 @@ export function OperacoesFinanceirasGrid({ tipos, apenasParceladas, search, empt
                           title="Visualizar" onClick={() => setDetalheId(o.id)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        {o.status === "EM_APROVACAO" && (
+                        {(o.status === "RASCUNHO" || o.status === "EM_APROVACAO") && (
                           <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600"
                             title="Aprovar" onClick={() => handleAprovar(o)} disabled={aprovar.isPending}>
                             <CheckCircle2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {(o.status === "RASCUNHO" || o.status === "EM_APROVACAO") && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-700"
+                            title="Aprovar e Liberar (gera títulos)"
+                            onClick={() => handleAprovarELiberar(o)}
+                            disabled={aprovar.isPending || liberar.isPending}>
+                            <PlayCircle className="h-3.5 w-3.5" />
                           </Button>
                         )}
                         {o.status === "APROVADA" && (

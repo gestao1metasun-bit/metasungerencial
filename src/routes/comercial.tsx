@@ -893,10 +893,26 @@ function ContratosTab({
   const showAssinatura = filtroStatus === "assinatura" || filtroStatus === "ambos";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      {/* D17.UI Fase 2 — Contratos (geração/assinatura): toolbar Enterprise RM */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar contrato, cliente, proposta…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Lista atualizada.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
+        }}
+      />
       <div className="flex items-center justify-end">
         <ModeloBaseContratoDialog />
       </div>
+
 
       {showGeracao && (
       <Card className="p-5">

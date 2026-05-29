@@ -5549,7 +5549,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
     <div className="space-y-4">
       {/* D17.UI Fase 2b — Aditivos: barra Enterprise RM/TOTVS */}
       <EnterpriseRecordToolbar
-        entityType="aditivos"
+        entityType="contratos"
         selectedIds={[]}
         availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
         searchPlaceholder="Buscar contrato, cliente…"

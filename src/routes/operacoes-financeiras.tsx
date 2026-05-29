@@ -141,6 +141,12 @@ function OperacoesFinanceirasPage() {
         tipoDefault={meta.tipoNovoDefault}
         naturezaDefault={meta.natureza}
       />
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Operações Financeiras"
+        modulos={["financeiro"]}
+      />
     </>
   );
 }

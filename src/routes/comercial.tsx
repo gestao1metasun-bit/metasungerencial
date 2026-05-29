@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -4801,15 +4801,35 @@ function VendedoresTab({
   contratos, vendedoresList, setVendedoresList,
 }: { contratos: Contrato[]; vendedoresList: Vendedor[]; setVendedoresList: (v: Vendedor[]) => void }) {
   const remove = (id: string) => { setVendedoresList(vendedoresList.filter((v) => v.id !== id)); toast.success("Vendedor removido"); };
-
+  const [busca, setBusca] = useState("");
+  const filtrados = vendedoresList.filter((v) => {
+    if (!busca) return true;
+    const q = busca.toLowerCase();
+    return v.nome.toLowerCase().includes(q) || (v.email || "").toLowerCase().includes(q);
+  });
   return (
     <div className="space-y-4">
+      {/* D17.UI Fase 2b — Vendedores: barra Enterprise RM/TOTVS */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar vendedor, e-mail…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Lista de vendedores atualizada.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
+        }}
+      />
       <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">{vendedoresList.length} vendedor(es) cadastrado(s)</div>
+        <div className="text-sm text-muted-foreground">{filtrados.length} de {vendedoresList.length} vendedor(es)</div>
         <NovoVendedorDialog onSave={(v) => setVendedoresList([...vendedoresList, v])} nextId={`VEN-${String(vendedoresList.length + 1).padStart(2, "0")}`} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {vendedoresList.map((v) => {
+        {filtrados.map((v) => {
           const meus = contratos.filter((c) => c.vendedor === v.nome);
           const valor = meus.reduce((s, c) => s + c.valor, 0);
           const ass = meus.filter((c) => c.status === "Assinado").length;
@@ -5547,6 +5567,22 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
 
   return (
     <div className="space-y-4">
+      {/* D17.UI Fase 2b — Aditivos: barra Enterprise RM/TOTVS */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar contrato, cliente…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Aditivos atualizados.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
+        }}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatCard label="Pendentes" value={pendentesCount} icon={AlertTriangle} tone="warning" />
         <StatCard label="Aprovados" value={aprovadosCount} icon={CheckCircle2} tone="success" />
@@ -5561,10 +5597,6 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
                 {f === "pendentes" ? "Pendentes" : f === "aprovados" ? "Aprovados" : "Todos os contratos assinados"}
               </Button>
             ))}
-          </div>
-          <div className="ml-auto relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar contrato/cliente..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-7 h-8 w-64" />
           </div>
         </div>
       </Card>
@@ -5584,7 +5616,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
               <TableHead className="text-right">Valor consolidado</TableHead>
               <TableHead className="text-right">Aditivos</TableHead>
               <TableHead>Situação</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="text-right w-[160px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -5607,7 +5639,17 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
                     {pend ? <AditivoBadge contratoId={c.id} size="sm" /> : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => setOpenId(c.id)}>Abrir</Button>
+                    <RowActions
+                      rowId={c.id}
+                      actions={[
+                        { kind: "visualizar", label: "Abrir aditivos do contrato" },
+                        { kind: "anexos", label: "Anexos do contrato", badgeCount: aDoContrato.length || undefined },
+                        { kind: "historico", label: "Histórico de aditivos", overflow: true },
+                      ]}
+                      onAction={(kind) => {
+                        if (kind === "visualizar" || kind === "anexos" || kind === "historico") setOpenId(c.id);
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               );

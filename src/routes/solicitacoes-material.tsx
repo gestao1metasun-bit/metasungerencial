@@ -57,6 +57,7 @@ function SolicitacoesMaterialPage() {
   const { data: lista = [], isLoading } = useSolicitacoesMaterial();
   const [criar, setCriar] = useState(false);
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
 
   const stats = useMemo(() => {
     return {
@@ -66,6 +67,17 @@ function SolicitacoesMaterialPage() {
       compra: lista.filter((s) => s.status === "AGUARDANDO_COMPRA").length,
     };
   }, [lista]);
+
+  const listaFiltrada = useMemo(() => {
+    const f = busca.trim().toLowerCase();
+    if (!f) return lista;
+    return lista.filter((s) =>
+      (s.codigo ?? "").toLowerCase().includes(f) ||
+      (s.setor ?? "").toLowerCase().includes(f) ||
+      (s.motivo ?? "").toLowerCase().includes(f) ||
+      (s.solicitante_email ?? "").toLowerCase().includes(f),
+    );
+  }, [lista, busca]);
 
   return (
     <div className="space-y-6 p-6">

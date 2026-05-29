@@ -166,11 +166,11 @@ export function FornecedoresTabSupabase() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       <div className="text-xs text-muted-foreground">
         {isLoading ? "Carregando…" : `${filtrados.length} fornecedor(es) — fonte oficial: Supabase`}
       </div>
+
 
       <Table>
         <TableHeader>

@@ -67,6 +67,8 @@ export interface OpFinParcela {
   numero: number;
   valor: number;
   vencimento: string;
+  competencia: string | null;
+  observacao: string | null;
   titulo_id: string | null;
 }
 
@@ -195,14 +197,22 @@ export function useCriarOperacao() {
   });
 }
 
-/** Atualiza valor/vencimento de uma parcela (RLS: operacao_financeira.criar). */
+/** Atualiza valor/vencimento/competência/observação de uma parcela. */
 export function useUpdateParcela() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, valor, vencimento }: { id: string; valor?: number; vencimento?: string }) => {
-      const patch: { valor?: number; vencimento?: string } = {};
+    mutationFn: async ({ id, valor, vencimento, competencia, observacao }: {
+      id: string; valor?: number; vencimento?: string;
+      competencia?: string | null; observacao?: string | null;
+    }) => {
+      const patch: {
+        valor?: number; vencimento?: string;
+        competencia?: string | null; observacao?: string | null;
+      } = {};
       if (valor !== undefined) patch.valor = valor;
       if (vencimento !== undefined) patch.vencimento = vencimento;
+      if (competencia !== undefined) patch.competencia = competencia;
+      if (observacao !== undefined) patch.observacao = observacao;
       if (Object.keys(patch).length === 0) return;
       const { error } = await supabase
         .from("operacoes_financeiras_parcelas")
@@ -269,17 +279,29 @@ export function useCancelarOperacao() {
   });
 }
 
+export interface ParcelaGradeInput {
+  numero: number;
+  valor: number;
+  vencimento: string;
+  competencia?: string | null;
+  observacao?: string | null;
+}
+
 export function useGerarParcelas() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      id, vencimentoPrimeiro, intervaloDias,
-    }: { id: string; vencimentoPrimeiro: string; intervaloDias?: number }) => {
+      id, vencimentoPrimeiro, intervaloDias, parcelas,
+    }: {
+      id: string; vencimentoPrimeiro: string; intervaloDias?: number;
+      parcelas?: ParcelaGradeInput[];
+    }) => {
       const { data, error } = await supabase.rpc("rpc_op_fin_gerar_parcelas", {
         _request_id: crypto.randomUUID(),
         _operacao_id: id,
         _vencimento_primeiro: vencimentoPrimeiro,
         _intervalo_dias: intervaloDias ?? 30,
+        _parcelas: parcelas && parcelas.length > 0 ? (parcelas as never) : undefined,
       });
       if (error) throw error;
       return data;

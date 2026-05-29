@@ -27,13 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { OperacoesFinanceirasGrid } from "@/components/op-financeiras/OperacoesFinanceirasGrid";
 import {
-  type OpFinTipo, useCriarOperacao, useGerarParcelas, useUpdateParcela,
+  type OpFinTipo, useCriarOperacao, useGerarParcelas,
 } from "@/lib/repositories/op-financeiras-repo";
 import {
   useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais,
   useFornecedoresOficiais, useClientesOficiais,
 } from "@/lib/repositories/cadastros-repo";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/operacoes-financeiras")({
   head: () => ({ meta: [{ title: "Operações Financeiras — Meta Sun" }] }),
@@ -252,7 +251,7 @@ function NovaOperacaoDialog({
 }: { open: boolean; onClose: () => void; tipoDefault: OpFinTipo; naturezaDefault: "ENTRADA" | "SAIDA"; }) {
   const criar = useCriarOperacao();
   const gerarParcelas = useGerarParcelas();
-  const updateParcela = useUpdateParcela();
+  
   const { data: naturezas = [] } = useNaturezasFin();
   const { data: centros = [] } = useCentrosResultado();
   const { data: contas = [] } = useContasFinanceirasOficiais();
@@ -405,34 +404,19 @@ function NovaOperacaoDialog({
         ...contraFields,
       });
 
-      // 2) gera parcelas uniformes a partir do primeiro vencimento
+      // 2) gera parcelas com a grade explícita (valor + vencimento + competência + observação)
       await gerarParcelas.mutateAsync({
         id: created.id,
         vencimentoPrimeiro: primeiroVenc,
         intervaloDias: interv,
+        parcelas: parcelas.map((p) => ({
+          numero: p.numero,
+          valor: p.valor,
+          vencimento: p.vencimento,
+          competencia: p.competencia || null,
+          observacao: p.observacao || null,
+        })),
       });
-
-      // 3) aplica edições manuais por parcela (se diferem da grade uniforme)
-      const { data: geradas, error: errParc } = await supabase
-        .from("operacoes_financeiras_parcelas")
-        .select("id,numero,valor,vencimento")
-        .eq("operacao_id", created.id)
-        .order("numero");
-      if (errParc) throw errParc;
-
-      for (const local of parcelas) {
-        const persistida = geradas?.find((p) => p.numero === local.numero);
-        if (!persistida) continue;
-        const valorMudou = Math.abs(Number(persistida.valor) - local.valor) > 0.005;
-        const vencMudou = persistida.vencimento !== local.vencimento;
-        if (valorMudou || vencMudou) {
-          await updateParcela.mutateAsync({
-            id: persistida.id,
-            valor: valorMudou ? local.valor : undefined,
-            vencimento: vencMudou ? local.vencimento : undefined,
-          });
-        }
-      }
 
       toast.success(`Operação ${created.codigo} criada em RASCUNHO com ${qtd} parcela(s).`);
       reset(); onClose();
@@ -441,7 +425,7 @@ function NovaOperacaoDialog({
     }
   };
 
-  const isPending = criar.isPending || gerarParcelas.isPending || updateParcela.isPending;
+  const isPending = criar.isPending || gerarParcelas.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>

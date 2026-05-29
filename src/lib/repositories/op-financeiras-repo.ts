@@ -190,7 +190,7 @@ export function useAprovarOperacao() {
       const { data, error } = await supabase.rpc("rpc_op_fin_aprovar", {
         _request_id: crypto.randomUUID(),
         _operacao_id: id,
-        _observacao: observacao ?? null,
+        _observacao: observacao ?? undefined,
       });
       if (error) throw error;
       return data;

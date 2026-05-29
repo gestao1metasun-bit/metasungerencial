@@ -156,6 +156,13 @@ function EstoquePage() {
         <TabsContent value="itens" className="mt-2"><ItensTab podeAjustar={podeAjustarEstoque} /></TabsContent>
         <TabsContent value="entregas" className="mt-2"><EntregasTab /></TabsContent>
       </Tabs>
+
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Estoque"
+        modulos={["estoque"]}
+      />
     </>
   );
 }

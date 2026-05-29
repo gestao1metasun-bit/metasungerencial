@@ -201,15 +201,23 @@ function DetalheOperacao({ op }: { op: OperacaoFinanceira }) {
         ) : (
           <table className="w-full text-[11.5px] border border-border/60 rounded">
             <thead className="bg-muted/40 text-muted-foreground">
-              <tr><th className="px-2 py-1 text-left">#</th><th className="px-2 py-1 text-left">Vencimento</th>
-                <th className="px-2 py-1 text-right">Valor</th><th className="px-2 py-1 text-left">Título</th></tr>
+              <tr>
+                <th className="px-2 py-1 text-left">#</th>
+                <th className="px-2 py-1 text-left">Vencimento</th>
+                <th className="px-2 py-1 text-left">Competência</th>
+                <th className="px-2 py-1 text-right">Valor</th>
+                <th className="px-2 py-1 text-left">Observação</th>
+                <th className="px-2 py-1 text-left">Título</th>
+              </tr>
             </thead>
             <tbody>
               {parcelas.map((p) => (
                 <tr key={p.id} className="border-t border-border/60">
                   <td className="px-2 py-1">{p.numero}</td>
                   <td className="px-2 py-1">{format(new Date(p.vencimento), "dd/MM/yyyy")}</td>
+                  <td className="px-2 py-1">{p.competencia ? format(new Date(p.competencia), "MM/yyyy") : "—"}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{fmtBRL(p.valor)}</td>
+                  <td className="px-2 py-1 text-muted-foreground">{p.observacao || "—"}</td>
                   <td className="px-2 py-1 font-mono text-[10.5px]">{p.titulo_id ? p.titulo_id.slice(0,8) : "—"}</td>
                 </tr>
               ))}

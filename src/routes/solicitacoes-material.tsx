@@ -84,11 +84,6 @@ function SolicitacoesMaterialPage() {
       <PageHeader
         title="Solicitações de Material"
         subtitle="Solicite, aprove e acompanhe materiais — o sistema desvia para compra apenas o que falta no estoque."
-        actions={
-          <Button onClick={() => setCriar(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova solicitação
-          </Button>
-        }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

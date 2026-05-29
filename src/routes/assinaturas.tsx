@@ -85,7 +85,9 @@ function AssinaturasPage() {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar contrato, assinante, observação…"
         search={busca}
         onSearchChange={setBusca}

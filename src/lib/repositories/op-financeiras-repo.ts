@@ -200,7 +200,7 @@ export function useUpdateParcela() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, valor, vencimento }: { id: string; valor?: number; vencimento?: string }) => {
-      const patch: Record<string, unknown> = {};
+      const patch: { valor?: number; vencimento?: string } = {};
       if (valor !== undefined) patch.valor = valor;
       if (vencimento !== undefined) patch.vencimento = vencimento;
       if (Object.keys(patch).length === 0) return;

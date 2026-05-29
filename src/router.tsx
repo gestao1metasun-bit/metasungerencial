@@ -26,6 +26,10 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // D19.1.fix F6 — prefetch ao hover/foco em <Link>. Reduz first-paint
+    // percebido em troca de módulo sem alterar RLS/auditoria/regras.
+    defaultPreload: 'intent',
+    defaultPreloadDelay: 50,
   });
 
   return router;

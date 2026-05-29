@@ -164,13 +164,12 @@ export function Ribbon({ routePath, tabs, activeValue, defaultValue, currentPath
                 {g.tabs.map((t) => {
                   const Icon = iconFor(t);
                   // D19.NAV — tab cross-route (t.to) ativa quando currentPath bate;
-                  // tab por hash ativa quando effectiveActive bate.
+                  // tab por hash ativa só quando estamos na própria routePath.
                   const isCrossRoute = !!t.to;
+                  const onOwnRoute = currentPath === undefined || currentPath === routePath;
                   const isActive = isCrossRoute
                     ? currentPath === t.to
-                    : effectiveActive === t.value && currentPath !== undefined
-                      ? currentPath === routePath
-                      : effectiveActive === t.value;
+                    : onOwnRoute && effectiveActive === t.value;
                   const linkProps = isCrossRoute
                     ? { to: t.to! }
                     : { to: routePath, hash: `tab=${t.value}` };

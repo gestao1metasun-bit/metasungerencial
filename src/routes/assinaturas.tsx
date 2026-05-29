@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { FileSignature, CheckCircle2, Wrench, Banknote, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 

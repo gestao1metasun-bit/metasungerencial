@@ -67,6 +67,8 @@ export interface OpFinParcela {
   numero: number;
   valor: number;
   vencimento: string;
+  competencia: string | null;
+  observacao: string | null;
   titulo_id: string | null;
 }
 

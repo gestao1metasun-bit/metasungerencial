@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,

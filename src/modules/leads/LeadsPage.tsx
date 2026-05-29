@@ -90,7 +90,9 @@ export function LeadsPage() {
       <EnterpriseRecordToolbar
         entityType="propostas"
         selectedIds={detalhe ? [detalhe.id] : []}
-        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar"]}
+        availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm({ visualizar: () => detalhe && setDetalhe(detalhe) })}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar lead…"
         search={busca}
         onSearchChange={setBusca}

@@ -405,34 +405,19 @@ function NovaOperacaoDialog({
         ...contraFields,
       });
 
-      // 2) gera parcelas uniformes a partir do primeiro vencimento
+      // 2) gera parcelas com a grade explícita (valor + vencimento + competência + observação)
       await gerarParcelas.mutateAsync({
         id: created.id,
         vencimentoPrimeiro: primeiroVenc,
         intervaloDias: interv,
+        parcelas: parcelas.map((p) => ({
+          numero: p.numero,
+          valor: p.valor,
+          vencimento: p.vencimento,
+          competencia: p.competencia || null,
+          observacao: p.observacao || null,
+        })),
       });
-
-      // 3) aplica edições manuais por parcela (se diferem da grade uniforme)
-      const { data: geradas, error: errParc } = await supabase
-        .from("operacoes_financeiras_parcelas")
-        .select("id,numero,valor,vencimento")
-        .eq("operacao_id", created.id)
-        .order("numero");
-      if (errParc) throw errParc;
-
-      for (const local of parcelas) {
-        const persistida = geradas?.find((p) => p.numero === local.numero);
-        if (!persistida) continue;
-        const valorMudou = Math.abs(Number(persistida.valor) - local.valor) > 0.005;
-        const vencMudou = persistida.vencimento !== local.vencimento;
-        if (valorMudou || vencMudou) {
-          await updateParcela.mutateAsync({
-            id: persistida.id,
-            valor: valorMudou ? local.valor : undefined,
-            vencimento: vencMudou ? local.vencimento : undefined,
-          });
-        }
-      }
 
       toast.success(`Operação ${created.codigo} criada em RASCUNHO com ${qtd} parcela(s).`);
       reset(); onClose();

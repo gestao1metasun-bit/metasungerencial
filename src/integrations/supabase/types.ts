@@ -1868,6 +1868,53 @@ export type Database = {
           },
         ]
       }
+      engenharia_eventos_catalogo: {
+        Row: {
+          ativo: boolean
+          centro_resultado_default_id: string | null
+          codigo: string
+          created_at: string
+          descricao: string
+          evento_canonico: string
+          id: string
+          natureza_default: string | null
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          centro_resultado_default_id?: string | null
+          codigo: string
+          created_at?: string
+          descricao: string
+          evento_canonico: string
+          id?: string
+          natureza_default?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          centro_resultado_default_id?: string | null
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          evento_canonico?: string
+          id?: string
+          natureza_default?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engenharia_eventos_catalogo_centro_resultado_default_id_fkey"
+            columns: ["centro_resultado_default_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entidade_versoes: {
         Row: {
           created_at: string
@@ -1903,6 +1950,69 @@ export type Database = {
           versao?: number
         }
         Relationships: []
+      }
+      equipes_engenharia: {
+        Row: {
+          ativo: boolean
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          codigo_externo: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          lider: string | null
+          nome: string
+          observacoes: string | null
+          sistema_destino: string | null
+          status_integracao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          lider?: string | null
+          nome: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          lider?: string | null
+          nome?: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipes_engenharia_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_engenharia_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       error_log: {
         Row: {
@@ -3135,6 +3245,59 @@ export type Database = {
         }
         Relationships: []
       }
+      instaladores_engenharia: {
+        Row: {
+          ativo: boolean
+          codigo_externo: string | null
+          created_at: string
+          deleted_at: string | null
+          documento: string | null
+          equipe_id: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          sistema_destino: string | null
+          status_integracao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo_externo?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          documento?: string | null
+          equipe_id?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo_externo?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          documento?: string | null
+          equipe_id?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instaladores_engenharia_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes_engenharia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_origens: {
         Row: {
           ativo: boolean
@@ -3855,26 +4018,35 @@ export type Database = {
           centro_resultado_id: string | null
           cliente_id: string | null
           codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
           consultor_id: string | null
+          conta_contabil_referencia: string | null
           contrato_id: string | null
           created_at: string
           custo_previsto: number
           dados: Json
           data_finalizacao: string | null
           data_inicio: string | null
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           equipe: string | null
+          hash_integracao: string | null
           id: string
           inv2: string | null
           inv3: string | null
           inversor: string | null
           modulos_qtde: number | null
+          natureza_operacional: string | null
           observacoes: string | null
           potencia_kwp: number | null
           row_version: number
+          sistema_destino: string | null
           status: string
+          status_contabil: string
+          status_integracao: string
           telhado_tipo: string | null
           tipo: string | null
           updated_at: string
@@ -3884,26 +4056,35 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           consultor_id?: string | null
+          conta_contabil_referencia?: string | null
           contrato_id?: string | null
           created_at?: string
           custo_previsto?: number
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           equipe?: string | null
+          hash_integracao?: string | null
           id?: string
           inv2?: string | null
           inv3?: string | null
           inversor?: string | null
           modulos_qtde?: number | null
+          natureza_operacional?: string | null
           observacoes?: string | null
           potencia_kwp?: number | null
           row_version?: number
+          sistema_destino?: string | null
           status?: string
+          status_contabil?: string
+          status_integracao?: string
           telhado_tipo?: string | null
           tipo?: string | null
           updated_at?: string
@@ -3913,26 +4094,35 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           consultor_id?: string | null
+          conta_contabil_referencia?: string | null
           contrato_id?: string | null
           created_at?: string
           custo_previsto?: number
           dados?: Json
           data_finalizacao?: string | null
           data_inicio?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           equipe?: string | null
+          hash_integracao?: string | null
           id?: string
           inv2?: string | null
           inv3?: string | null
           inversor?: string | null
           modulos_qtde?: number | null
+          natureza_operacional?: string | null
           observacoes?: string | null
           potencia_kwp?: number | null
           row_version?: number
+          sistema_destino?: string | null
           status?: string
+          status_contabil?: string
+          status_integracao?: string
           telhado_tipo?: string | null
           tipo?: string | null
           updated_at?: string
@@ -5130,21 +5320,30 @@ export type Database = {
       projetos: {
         Row: {
           centro_custo_id: string | null
+          centro_resultado_id: string | null
           cidade: string | null
           cliente_id: string | null
           codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
           consultor_id: string | null
           contrato_id: string | null
           created_at: string
           dados: Json
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
+          hash_integracao: string | null
           id: string
           inversor: string | null
           modulos_qtde: number | null
+          natureza_operacional: string | null
           potencia_kwp: number | null
+          sistema_destino: string | null
           status: string
+          status_contabil: string
+          status_integracao: string
           tipo: string
           uf: string | null
           updated_at: string
@@ -5152,21 +5351,30 @@ export type Database = {
         }
         Insert: {
           centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cidade?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           consultor_id?: string | null
           contrato_id?: string | null
           created_at?: string
           dados?: Json
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          hash_integracao?: string | null
           id?: string
           inversor?: string | null
           modulos_qtde?: number | null
+          natureza_operacional?: string | null
           potencia_kwp?: number | null
+          sistema_destino?: string | null
           status?: string
+          status_contabil?: string
+          status_integracao?: string
           tipo?: string
           uf?: string | null
           updated_at?: string
@@ -5174,21 +5382,30 @@ export type Database = {
         }
         Update: {
           centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cidade?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
           consultor_id?: string | null
           contrato_id?: string | null
           created_at?: string
           dados?: Json
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          hash_integracao?: string | null
           id?: string
           inversor?: string | null
           modulos_qtde?: number | null
+          natureza_operacional?: string | null
           potencia_kwp?: number | null
+          sistema_destino?: string | null
           status?: string
+          status_contabil?: string
+          status_integracao?: string
           tipo?: string
           uf?: string | null
           updated_at?: string
@@ -5200,6 +5417,13 @@ export type Database = {
             columns: ["centro_custo_id"]
             isOneToOne: false
             referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
             referencedColumns: ["id"]
           },
           {
@@ -8719,6 +8943,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_rentabilidade_obra: {
+        Row: {
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          codigo: string | null
+          competencia: string | null
+          contrato_id: string | null
+          custo_previsto: number | null
+          custo_realizado: number | null
+          obra_id: string | null
+          saldo_operacional: number | null
+          status: string | null
+        }
+        Insert: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          custo_previsto?: never
+          custo_realizado?: never
+          obra_id?: string | null
+          saldo_operacional?: never
+          status?: string | null
+        }
+        Update: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          custo_previsto?: never
+          custo_realizado?: never
+          obra_id?: string | null
+          saldo_operacional?: never
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
           },
         ]
       }

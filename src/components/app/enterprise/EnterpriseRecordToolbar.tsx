@@ -49,7 +49,8 @@ export type EnterpriseEntityType =
   | "contas_receber" | "contas_pagar" | "titulos_financeiros"
   | "propostas" | "contratos" | "pedidos_venda"
   | "engenharia" | "estoque" | "aprovacoes"
-  | "financiamentos" | "compras";
+  | "financiamentos" | "compras"
+  | "posvenda" | "operacoes_financeiras";
 
 /** Ações básicas do CRUD/registro (chave canônica). */
 export type EnterpriseRecordAction =

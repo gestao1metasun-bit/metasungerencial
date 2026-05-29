@@ -77,7 +77,7 @@ function PosVendaPage() {
       />
       <div className="mb-3">
         <EnterpriseRecordToolbar
-          entityType="aprovacoes"
+          entityType="posvenda"
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           searchPlaceholder="Buscar chamado, cliente, tipo, status…"
           onAction={(a) => {

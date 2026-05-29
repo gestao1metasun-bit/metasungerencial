@@ -264,6 +264,39 @@ function NovaOperacaoDialog({
             <Input type="number" min={1} className="h-8" value={qtdParcelas} onChange={(e) => setQtdParcelas(e.target.value)} />
           </div>
           <div>
+            <Label className="text-[11px]">Natureza financeira *</Label>
+            <Select value={naturezaId} onValueChange={setNaturezaId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {naturezas.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>{n.codigo} — {n.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[11px]">Centro de resultado *</Label>
+            <Select value={centroId} onValueChange={setCentroId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {centros.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[11px]">Conta financeira *</Label>
+            <Select value={contaId} onValueChange={setContaId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {contas.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label className="text-[11px]">Instituição / banco</Label>
             <Input className="h-8" value={instituicao} onChange={(e) => setInstituicao(e.target.value)} />
           </div>

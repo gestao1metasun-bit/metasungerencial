@@ -77,6 +77,7 @@ function OperacoesFinanceirasPage() {
   const [tab, setTab] = useState<Tab>("emprestimos");
   const [search, setSearch] = useState("");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [histOpen, setHistOpen] = useState(false);
   const meta = TAB_META[tab];
 
   return (

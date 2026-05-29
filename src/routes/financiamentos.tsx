@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -81,12 +82,20 @@ function FinanciamentosPage() {
       <div className="mb-3">
         <EnterpriseRecordToolbar
           entityType="financiamentos"
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           selectedIds={[]}
           searchPlaceholder="Buscar contrato, cliente, banco, gerente…"
+          statusActions={ribbonRm({
+            cancelar: () => { setTab("cancelados"); toast.message("Use a aba Cancelados para revisar/cancelar operações."); },
+            visualizar: () => setTab("carteira"),
+          })}
+          layoutBar={layoutBarRm()}
           onAction={(a) => {
             if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
             else if (a === "novo") setTab("sem");
+            else if (a === "editar") setTab("pendencias");
+            else if (a === "cancelar") setTab("cancelados");
+            else if (a === "anexos") toast.info("Anexos universais chegam em D17.UI.4b.");
             else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
@@ -94,6 +103,7 @@ function FinanciamentosPage() {
             else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4b.");
           }}
         />
+
       </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">

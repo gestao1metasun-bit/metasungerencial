@@ -32,6 +32,7 @@ import {
   useColumnPrefs,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { useLeads } from "@/modules/leads/store";
 import { usePropostas } from "@/modules/propostas/store";
 import { useContratos } from "@/lib/contratos-store";

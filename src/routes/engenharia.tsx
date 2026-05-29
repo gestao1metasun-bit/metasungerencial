@@ -458,7 +458,7 @@ function EngenhariaPage() {
           onAction={(a) => {
             if (a === "atualizar") reloadObrasReais();
             else if (a === "novo") setTab("ativas");
-            else if (a === "historico") setTab("finalizados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "exportar") {
               exportToCSV("obras-engenharia.csv", obras as any[], [

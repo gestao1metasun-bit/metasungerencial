@@ -123,7 +123,7 @@ const GROUP_STRIP_CLASS: Record<string, string> = {
 };
 
 export type RibbonProps = {
-  /** rota ativa (usada para href dos botões) */
+  /** rota ativa (usada para href das tabs por hash) */
   routePath: string;
   /** tabs já filtradas (sem hidden) */
   tabs: SubTab[];
@@ -131,9 +131,11 @@ export type RibbonProps = {
   activeValue: string;
   /** tab default se nenhuma estiver na URL */
   defaultValue: string;
+  /** rota corrente real do router — usada para marcar como ativa abas cross-route (`SubTab.to`). */
+  currentPath?: string;
 };
 
-export function Ribbon({ routePath, tabs, activeValue, defaultValue }: RibbonProps) {
+export function Ribbon({ routePath, tabs, activeValue, defaultValue, currentPath }: RibbonProps) {
   // Agrupa preservando ordem original (groupBy estável)
   const groups: { name: string; tabs: SubTab[] }[] = [];
   for (const t of tabs) {
@@ -161,12 +163,20 @@ export function Ribbon({ routePath, tabs, activeValue, defaultValue }: RibbonPro
               <div className="flex flex-1 items-center px-3 py-1 gap-1">
                 {g.tabs.map((t) => {
                   const Icon = iconFor(t);
-                  const isActive = effectiveActive === t.value;
+                  // D19.NAV — tab cross-route (t.to) ativa quando currentPath bate;
+                  // tab por hash ativa só quando estamos na própria routePath.
+                  const isCrossRoute = !!t.to;
+                  const onOwnRoute = currentPath === undefined || currentPath === routePath;
+                  const isActive = isCrossRoute
+                    ? currentPath === t.to
+                    : onOwnRoute && effectiveActive === t.value;
+                  const linkProps = isCrossRoute
+                    ? { to: t.to! }
+                    : { to: routePath, hash: `tab=${t.value}` };
                   return (
                     <Link
                       key={t.value}
-                      to={routePath}
-                      hash={`tab=${t.value}`}
+                      {...linkProps}
                       className={`group inline-flex flex-col items-center justify-center gap-0.5 rounded-[0.375rem] px-2.5 h-14 min-w-[64px] transition-colors ${
                         isActive
                           ? "bg-meta-bar/10 text-meta-bar"

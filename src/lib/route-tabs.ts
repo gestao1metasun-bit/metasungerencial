@@ -1,7 +1,17 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export type SubTab = { value: string; label: string; group?: string; hidden?: boolean; icon?: string };
+export type SubTab = {
+  value: string;
+  label: string;
+  group?: string;
+  hidden?: boolean;
+  icon?: string;
+  /** D19.NAV — quando preenchido, a aba navega para outra rota (sem hash) em
+   *  vez de virar `#tab=<value>` da rota atual. Usado para expor páginas
+   *  irmãs (ex.: /operacoes-financeiras) dentro do ribbon do macro. */
+  to?: string;
+};
 
 /**
  * Grupos padronizados em todo o ERP:
@@ -255,7 +265,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "renegociacoes", label: "Renegociações", group: "Controle" },
       { value: "adiantamentos", label: "Adiantamentos", group: "Operação" },
       { value: "rescisoes", label: "Rescisões", group: "Controle" },
-      { value: "fornecedores", label: "Fornecedores", group: "Estrutura", hidden: true },
+      { value: "op-fin", label: "Operações Financeiras", group: "Operação", to: "/operacoes-financeiras", icon: "Banknote" },
       { value: "cadastros", label: "Plano de Contas & Categorias", group: "Estrutura" },
       { value: "parametros-fin", label: "Parâmetros Financeiros", group: "Estrutura" },
       { value: "centros", label: "Centros & Naturezas (legado)", group: "Estrutura", hidden: true },

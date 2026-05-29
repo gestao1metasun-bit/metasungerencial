@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";

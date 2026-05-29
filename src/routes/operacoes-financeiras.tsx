@@ -28,6 +28,9 @@ import { OperacoesFinanceirasGrid } from "@/components/op-financeiras/OperacoesF
 import {
   type OpFinTipo, useCriarOperacao,
 } from "@/lib/repositories/op-financeiras-repo";
+import {
+  useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais,
+} from "@/lib/repositories/cadastros-repo";
 
 export const Route = createFileRoute("/operacoes-financeiras")({
   head: () => ({ meta: [{ title: "Operações Financeiras — Meta Sun" }] }),
@@ -168,6 +171,10 @@ function NovaOperacaoDialog({
   open, onClose, tipoDefault, naturezaDefault,
 }: { open: boolean; onClose: () => void; tipoDefault: OpFinTipo; naturezaDefault: "ENTRADA" | "SAIDA"; }) {
   const criar = useCriarOperacao();
+  const { data: naturezas = [] } = useNaturezasFin();
+  const { data: centros = [] } = useCentrosResultado();
+  const { data: contas = [] } = useContasFinanceirasOficiais();
+
   const [tipo, setTipo] = useState<OpFinTipo>(tipoDefault);
   const [natureza, setNatureza] = useState<"ENTRADA" | "SAIDA">(naturezaDefault);
   const [valor, setValor] = useState("");
@@ -178,11 +185,15 @@ function NovaOperacaoDialog({
   const [instituicao, setInstituicao] = useState("");
   const [contraparte, setContraparte] = useState("");
   const [jurosPct, setJurosPct] = useState("");
+  const [naturezaId, setNaturezaId] = useState<string>("");
+  const [centroId, setCentroId] = useState<string>("");
+  const [contaId, setContaId] = useState<string>("");
 
   const reset = () => {
     setTipo(tipoDefault); setNatureza(naturezaDefault);
     setValor(""); setQtdParcelas("1"); setFinalidade(""); setObservacoes("");
     setInstituicao(""); setContraparte(""); setJurosPct("");
+    setNaturezaId(""); setCentroId(""); setContaId("");
   };
 
   const submit = () => {
@@ -190,11 +201,16 @@ function NovaOperacaoDialog({
     const qtd = parseInt(qtdParcelas, 10);
     if (!v || v <= 0) { toast.error("Informe um valor válido."); return; }
     if (!qtd || qtd < 1) { toast.error("Qtd de parcelas inválida."); return; }
+    if (!naturezaId) { toast.error("Selecione a natureza financeira."); return; }
+    if (!centroId) { toast.error("Selecione o centro de resultado."); return; }
+    if (!contaId) { toast.error("Selecione a conta financeira."); return; }
     const isSocio = tipo === "EMPRESTIMO_SOCIO_EMPRESA" || tipo === "APORTE_CAPITAL";
     const isTerceiro = tipo === "EMPRESTIMO_EMPRESA_TERCEIRO";
     const isColab = tipo === "EMPRESTIMO_COLABORADOR";
     criar.mutate({
-      tipo, natureza_caixa: natureza, valor_total: v, data_operacao: dataOp,
+      tipo, natureza_caixa: natureza,
+      natureza_id: naturezaId, centro_resultado_id: centroId, conta_id: contaId,
+      valor_total: v, data_operacao: dataOp,
       qtd_parcelas: qtd, finalidade: finalidade || undefined,
       observacoes: observacoes || undefined,
       instituicao: instituicao || undefined,
@@ -246,6 +262,39 @@ function NovaOperacaoDialog({
           <div>
             <Label className="text-[11px]">Qtd. parcelas</Label>
             <Input type="number" min={1} className="h-8" value={qtdParcelas} onChange={(e) => setQtdParcelas(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-[11px]">Natureza financeira *</Label>
+            <Select value={naturezaId} onValueChange={setNaturezaId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {naturezas.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>{n.codigo} — {n.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[11px]">Centro de resultado *</Label>
+            <Select value={centroId} onValueChange={setCentroId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {centros.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[11px]">Conta financeira *</Label>
+            <Select value={contaId} onValueChange={setContaId}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectContent>
+                {contas.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.codigo} — {c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-[11px]">Instituição / banco</Label>

@@ -1527,6 +1527,45 @@ export type Database = {
         }
         Relationships: []
       }
+      conectores_externos: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          codigo: string
+          config: Json
+          created_at: string
+          fornecedor: string
+          id: string
+          nome: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          codigo: string
+          config?: Json
+          created_at?: string
+          fornecedor: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: string
+          config?: Json
+          created_at?: string
+          fornecedor?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contas_financeiras: {
         Row: {
           agencia: string | null
@@ -3334,6 +3373,59 @@ export type Database = {
           },
         ]
       }
+      layouts_exportacao: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          codigo: string
+          conector_id: string | null
+          created_at: string
+          formato: string
+          id: string
+          nome: string
+          observacoes: string | null
+          schema_layout: Json
+          updated_at: string
+          versao: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          codigo: string
+          conector_id?: string | null
+          created_at?: string
+          formato?: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          schema_layout?: Json
+          updated_at?: string
+          versao?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: string
+          conector_id?: string | null
+          created_at?: string
+          formato?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          schema_layout?: Json
+          updated_at?: string
+          versao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "layouts_exportacao_conector_id_fkey"
+            columns: ["conector_id"]
+            isOneToOne: false
+            referencedRelation: "conectores_externos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_origens: {
         Row: {
           ativo: boolean
@@ -3499,6 +3591,62 @@ export type Database = {
           },
         ]
       }
+      lote_registros: {
+        Row: {
+          codigo_externo: string | null
+          created_at: string
+          evento_canonico: string | null
+          hash_registro: string | null
+          id: string
+          lote_id: string
+          mensagem_retorno: string | null
+          origem_id: string
+          origem_tipo: string
+          payload: Json | null
+          status: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          codigo_externo?: string | null
+          created_at?: string
+          evento_canonico?: string | null
+          hash_registro?: string | null
+          id?: string
+          lote_id: string
+          mensagem_retorno?: string | null
+          origem_id: string
+          origem_tipo: string
+          payload?: Json | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          codigo_externo?: string | null
+          created_at?: string
+          evento_canonico?: string | null
+          hash_registro?: string | null
+          id?: string
+          lote_id?: string
+          mensagem_retorno?: string | null
+          origem_id?: string
+          origem_tipo?: string
+          payload?: Json | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lote_registros_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao_contabil"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes_integracao: {
         Row: {
           codigo: string
@@ -3575,50 +3723,80 @@ export type Database = {
         Row: {
           codigo: string
           competencia: string | null
+          conector_id: string | null
           created_at: string
           created_by: string | null
+          data_exportacao: string | null
+          data_geracao: string
+          data_integracao: string | null
           descricao: string | null
           hash_integracao: string | null
           id: string
+          layout_id: string | null
+          mensagem_retorno: string | null
           observacoes: string | null
+          payload_export: Json | null
           sistema_destino: string | null
           status: string
+          tipo_lote: string
           total_credito: number
           total_debito: number
           total_partidas: number
+          total_registros: number
           updated_at: string
+          usuario_integracao: string | null
         }
         Insert: {
           codigo: string
           competencia?: string | null
+          conector_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_exportacao?: string | null
+          data_geracao?: string
+          data_integracao?: string | null
           descricao?: string | null
           hash_integracao?: string | null
           id?: string
+          layout_id?: string | null
+          mensagem_retorno?: string | null
           observacoes?: string | null
+          payload_export?: Json | null
           sistema_destino?: string | null
           status?: string
+          tipo_lote?: string
           total_credito?: number
           total_debito?: number
           total_partidas?: number
+          total_registros?: number
           updated_at?: string
+          usuario_integracao?: string | null
         }
         Update: {
           codigo?: string
           competencia?: string | null
+          conector_id?: string | null
           created_at?: string
           created_by?: string | null
+          data_exportacao?: string | null
+          data_geracao?: string
+          data_integracao?: string | null
           descricao?: string | null
           hash_integracao?: string | null
           id?: string
+          layout_id?: string | null
+          mensagem_retorno?: string | null
           observacoes?: string | null
+          payload_export?: Json | null
           sistema_destino?: string | null
           status?: string
+          tipo_lote?: string
           total_credito?: number
           total_debito?: number
           total_partidas?: number
+          total_registros?: number
           updated_at?: string
+          usuario_integracao?: string | null
         }
         Relationships: []
       }
@@ -8503,6 +8681,38 @@ export type Database = {
           tipo_lancamento: string | null
           user_id: string | null
           valor: number | null
+        }
+        Relationships: []
+      }
+      v_lote_registros_status: {
+        Row: {
+          lote_codigo: string | null
+          lote_id: string | null
+          origem_tipo: string | null
+          qtd: number | null
+          status: string | null
+          tipo_lote: string | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lote_registros_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao_contabil"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_lotes_integracao_resumo: {
+        Row: {
+          competencia: string | null
+          qtd_lotes: number | null
+          status: string | null
+          tipo_lote: string | null
+          total_credito: number | null
+          total_debito: number | null
+          total_registros: number | null
         }
         Relationships: []
       }

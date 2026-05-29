@@ -383,6 +383,10 @@ function NovaOperacaoDialog({
       toast.error(`Soma das parcelas (${somaParcelas.toFixed(2)}) difere do valor total (${v.toFixed(2)}).`);
       return;
     }
+    const semVenc = parcelas.find((p) => !p.vencimento);
+    if (semVenc) { toast.error(`Parcela ${semVenc.numero} sem vencimento.`); return; }
+    const semComp = parcelas.find((p) => !p.competencia);
+    if (semComp) { toast.error(`Parcela ${semComp.numero} sem competência.`); return; }
 
     const contraFields = montarContraparte();
 
@@ -396,6 +400,7 @@ function NovaOperacaoDialog({
         finalidade,
         observacoes: observacoes || undefined,
         instituicao: instituicao || undefined,
+        competencia: competenciaBase || competenciaDe(primeiroVenc) || undefined,
         juros_pct: jurosPct ? parseFloat(jurosPct.replace(",", ".")) : undefined,
         ...contraFields,
       });

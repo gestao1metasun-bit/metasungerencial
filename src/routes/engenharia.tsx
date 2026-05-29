@@ -206,6 +206,7 @@ function EngenhariaPage() {
   const setEquipes = setEquipesStore;
   const [tab, setTab] = useTabFromHash("/engenharia");
   const clientesAll = useClientesAll();
+  const [histOpen, setHistOpen] = useState(false);
 
   // ────────────────────────────────────────────────────────────────
   // ONDA B — Engenharia Real (leitura Supabase + dedup com seed/mock)

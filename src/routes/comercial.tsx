@@ -934,6 +934,8 @@ function ContratosTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-end">
         <ModeloBaseContratoDialog />

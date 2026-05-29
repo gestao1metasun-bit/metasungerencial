@@ -278,7 +278,11 @@ export function useKpisReais(enabled: boolean = true): KpisReais {
     })();
     const onFocus = () => { reload(); };
     window.addEventListener("focus", onFocus);
-    const { data: sub } = supabase.auth.onAuthStateChange(() => { reload(); });
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      setTimeout(() => {
+        void reload();
+      }, 0);
+    });
     return () => {
       alive = false;
       if (timer) clearInterval(timer);

@@ -1,6 +1,7 @@
 /**
  * Hook de autenticação Supabase + papel (admin).
- * NÃO mexe nos stores existentes (consultores, leads etc.) — é adicional.
+ * Fluxo propositalmente simples e seguro: boot por getSession(),
+ * onAuthStateChange sem awaits, papel/perfil em background.
  */
 import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -17,8 +18,17 @@ interface AuthState {
   errorMessage: string | null;
 }
 
-let _state: AuthState = { session: null, user: null, role: null, loading: true, errorMessage: null };
+const AUTH_TIMEOUT_MS = 5000;
+
+let _state: AuthState = {
+  session: null,
+  user: null,
+  role: null,
+  loading: true,
+  errorMessage: null,
+};
 const _listeners = new Set<() => void>();
+let _initialized = false;
 let _bootTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function emit() {
@@ -32,51 +42,41 @@ function clearBootTimeout() {
   }
 }
 
-function scheduleBootTimeout() {
-  clearBootTimeout();
-  _bootTimeout = setTimeout(() => {
-    if (_state.loading) {
-      console.warn("[auth-session] timeout defensivo: loading=true >5s, forçando login");
-      void handleAuthFailure(
-        "Não foi possível validar sua sessão com segurança. Faça login novamente.",
-        new Error("auth boot timeout"),
-        "auth.timeout"
-      );
-    }
-  }, 5000);
+function logLoadingFalse(context: string) {
+  console.info("auth.loading.false", { context });
 }
 
-function setAnonymousState(reason?: string, force = false) {
-  if (!force && _state.session?.user) {
-    console.warn("[auth-session] fallback anônimo ignorado: sessão válida já resolvida");
-    return;
-  }
-  clearBootTimeout();
-  _state = { session: null, user: null, role: null, loading: false, errorMessage: reason ?? null };
+function setState(next: AuthState, context: string) {
+  _state = next;
   emit();
+  if (!next.loading) {
+    clearBootTimeout();
+    logLoadingFalse(context);
+  }
+}
+
+function setAnonymousState(reason?: string) {
+  setState(
+    { session: null, user: null, role: null, loading: false, errorMessage: reason ?? null },
+    reason ? "anonymous:error" : "anonymous"
+  );
   void hydrateFunnel(false);
 }
 
-function setLoadingState() {
-  _state = { ..._state, loading: true, errorMessage: null };
-  emit();
-  scheduleBootTimeout();
-}
-
-function setAuthenticatedState(session: Session, user: User, role: AppRole | null) {
-  clearBootTimeout();
-  _state = { session, user, role, loading: false, errorMessage: null };
-  emit();
+function setAuthenticatedState(session: Session, user: User, role: AppRole | null, context: string) {
+  setState({ session, user, role, loading: false, errorMessage: null }, context);
 }
 
 async function loadRole(userId: string): Promise<AppRole | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .order("role", { ascending: true });
+
+  if (error) throw error;
   if (!data || data.length === 0) return "usuario";
-  // prioridade: admin_master > admin_geral > usuario
+
   const roles = data.map((r) => r.role as AppRole);
   if (roles.includes("admin_master")) return "admin_master";
   if (roles.includes("admin_geral")) return "admin_geral";
@@ -85,10 +85,7 @@ async function loadRole(userId: string): Promise<AppRole | null> {
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`${label} timeout após ${ms}ms`));
-    }, ms);
-
+    const timer = setTimeout(() => reject(new Error(`${label} timeout após ${ms}ms`)), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -102,35 +99,39 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function resolveAuthenticatedSession(session: Session, source: string) {
+function hydrateRoleAndCaches(session: Session, source: string) {
   const user = session.user;
-  const preserveRole = _state.user?.id === user.id ? _state.role : null;
-  setAuthenticatedState(session, user, preserveRole);
-  console.info("[auth-session] sessão autenticada", { source, userId: user.id, email: user.email });
+  setTimeout(() => {
+    void (async () => {
+      try {
+        const role = await loadRole(user.id);
+        if (_state.user?.id !== user.id) return;
+        setAuthenticatedState(session, user, role, `${source}:role`);
+      } catch (error) {
+        console.error("[auth-session] loadRole falhou", error);
+        logError({
+          modulo: "auth",
+          tela: "auth-store",
+          acao: "loadRole",
+          mensagem: error instanceof Error ? error.message : "Falha ao carregar papel do usuário",
+          payload: { userId: user.id, source },
+          severidade: "warn",
+        });
+      }
 
-  try {
-    const role = await loadRole(user.id);
-    if (_state.user?.id !== user.id) return;
-    setAuthenticatedState(session, user, role);
-    console.info("[auth-session] role carregado", { role, userId: user.id, source });
-  } catch (error) {
-    console.error("[auth-session] loadRole falhou", error);
-    logError({
-      modulo: "auth",
-      tela: "auth-store",
-      acao: "loadRole",
-      mensagem: error instanceof Error ? error.message : "Falha ao carregar papel do usuário",
-      payload: { userId: user.id, source },
-      severidade: "warn",
-    });
-  }
-
-  if (_state.user?.id === user.id) {
-    void hydrateFunnel(true);
-  }
+      if (_state.user?.id === user.id) {
+        void hydrateFunnel(true);
+      }
+    })();
+  }, 0);
 }
 
-async function handleAuthFailure(message: string, error: unknown, action: string) {
+function resolveSession(session: Session, source: string) {
+  setAuthenticatedState(session, session.user, _state.user?.id === session.user.id ? _state.role : null, source);
+  hydrateRoleAndCaches(session, source);
+}
+
+function handleAuthError(message: string, error: unknown, action: string) {
   console.error(`[auth-session] ${action}`, error);
   logError({
     modulo: "auth",
@@ -142,56 +143,6 @@ async function handleAuthFailure(message: string, error: unknown, action: string
     severidade: "error",
   });
   setAnonymousState(message);
-}
-
-async function validateActiveSession(seedSession?: Session | null, source = "seed") {
-  if (seedSession?.user) {
-    await resolveAuthenticatedSession(seedSession, source);
-    return;
-  }
-
-  await refresh(source);
-}
-
-async function refresh(source = "refresh") {
-  setLoadingState();
-
-  try {
-    const { data, error } = await withTimeout(supabase.auth.getSession(), 5000, "supabase.auth.getSession");
-    console.info("[auth-session] getSession()", {
-      source,
-      hasSession: !!data.session,
-      userId: data.session?.user?.id ?? null,
-      email: data.session?.user?.email ?? null,
-      error: error?.message ?? null,
-    });
-
-    if (error) {
-      if (_state.session?.user) {
-        console.warn("[auth-session] getSession com erro ignorado: sessão válida já resolvida", { source, error: error.message });
-        return;
-      }
-      await handleAuthFailure("Falha ao consultar sua sessão. Faça login novamente.", error, "auth.getSession");
-      return;
-    }
-
-    if (!data.session?.user) {
-      if (_state.session?.user) {
-        console.warn("[auth-session] getSession sem sessão ignorado: sessão válida já resolvida", { source });
-        return;
-      }
-      setAnonymousState(undefined, true);
-      return;
-    }
-
-    await resolveAuthenticatedSession(data.session, source);
-  } catch (error) {
-    if (_state.session?.user) {
-      console.warn("[auth-session] refresh falhou, mas sessão válida já existe; ignorando fallback", { source });
-      return;
-    }
-    await handleAuthFailure("Falha ao validar sua sessão. Faça login novamente.", error, "auth.refresh");
-  }
 }
 
 async function hydrateFunnel(loggedIn: boolean) {
@@ -211,36 +162,71 @@ async function hydrateFunnel(loggedIn: boolean) {
   }
 }
 
-let _initialized = false;
+async function initializeAuth() {
+  console.info("auth.init.start");
+  clearBootTimeout();
+  _bootTimeout = setTimeout(() => {
+    if (_state.loading) {
+      handleAuthError(
+        "Não foi possível validar sua sessão com segurança. Faça login novamente.",
+        new Error("auth boot timeout"),
+        "auth.timeout"
+      );
+    }
+  }, AUTH_TIMEOUT_MS);
+
+  try {
+    console.info("auth.getSession.start");
+    const { data, error } = await withTimeout(supabase.auth.getSession(), AUTH_TIMEOUT_MS, "supabase.auth.getSession");
+    if (error) {
+      handleAuthError("Falha ao consultar sua sessão. Faça login novamente.", error, "auth.getSession");
+      return;
+    }
+
+    if (data.session?.user) {
+      console.info("auth.getSession.ok", { userId: data.session.user.id });
+      resolveSession(data.session, "boot:getSession");
+      return;
+    }
+
+    console.info("auth.getSession.empty");
+    setAnonymousState();
+  } catch (error) {
+    handleAuthError("Falha ao validar sua sessão. Faça login novamente.", error, "auth.init.catch");
+  }
+}
+
 function ensureInit() {
   if (_initialized) return;
   _initialized = true;
   console.info("[auth-session] ensureInit() — assinando onAuthStateChange");
 
   supabase.auth.onAuthStateChange((event, session) => {
-    console.info("[auth-session] onAuthStateChange", {
-      event,
-      hasSession: !!session,
-      userId: session?.user?.id ?? null,
-      email: session?.user?.email ?? null,
-    });
-    if (!session?.user && event !== "SIGNED_OUT" && _state.session?.user) {
-      console.warn("[auth-session] evento nulo tardio ignorado: sessão já resolvida", { event });
-      return;
-    }
-    if (!session?.user || event === "SIGNED_OUT") {
-      setAnonymousState(undefined, true);
+    if (event === "SIGNED_IN" && session?.user) {
+      console.info("auth.state.signed_in", { userId: session.user.id });
+      resolveSession(session, "auth:SIGNED_IN");
       return;
     }
 
-    queueMicrotask(() => {
-      void validateActiveSession(session, `auth:${event}`).catch((error) => {
-        void handleAuthFailure("Falha ao atualizar sua sessão. Faça login novamente.", error, "auth.onAuthStateChange");
-      });
-    });
+    if (event === "SIGNED_OUT") {
+      console.info("auth.state.signed_out");
+      setAnonymousState();
+      return;
+    }
+
+    if ((event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") && session?.user) {
+      console.info(`auth.state.${event.toLowerCase()}`, { userId: session.user.id });
+      resolveSession(session, `auth:${event}`);
+      return;
+    }
+
+    if ((event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") && !session?.user) {
+      console.info("auth.getSession.empty", { source: event });
+      setAnonymousState();
+    }
   });
 
-  void refresh("boot");
+  void initializeAuth();
 }
 
 export function useAuth() {
@@ -262,10 +248,6 @@ export function useIsAdmin(): boolean {
   return role === "admin_master" || role === "admin_geral";
 }
 
-/**
- * Permissão para gerenciar aditivos contratuais (criar, aprovar, reprovar, substituir).
- * Restrito a Financeiro/Diretoria (representados aqui por admin_master e admin_geral).
- */
 export function usePodeGerenciarAditivos(): boolean {
   return useIsAdmin();
 }
@@ -281,11 +263,8 @@ export async function signInEmail(email: string, password: string) {
   });
   if (error) throw error;
   if (data?.session && data?.user) {
-    // D19.1.fix F3 — boot de auth paralelo.
-    // signInWithPassword JÁ retorna sessão+user validados pelo Supabase Auth.
-    // Não fazemos getUser+getSession redundantes (era o gargalo de ~1.6s).
-    // Apenas carrega o papel; estado de usuário é exposto imediatamente.
-    await resolveAuthenticatedSession(data.session, "signInWithPassword");
+    console.info("auth.state.signed_in", { userId: data.user.id, source: "signInWithPassword" });
+    resolveSession(data.session, "signInWithPassword");
   }
 }
 

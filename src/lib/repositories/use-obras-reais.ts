@@ -76,8 +76,12 @@ export function useObrasReais(enabled: boolean = true) {
     const onFocus = () => { reload(); };
     window.addEventListener("focus", onFocus);
 
-    // invalidar em login/logout
-    const { data: sub } = supabase.auth.onAuthStateChange(() => { reload(); });
+    // invalidar em login/logout sem bloquear o callback de auth
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      setTimeout(() => {
+        void reload();
+      }, 0);
+    });
 
     return () => {
       alive = false;

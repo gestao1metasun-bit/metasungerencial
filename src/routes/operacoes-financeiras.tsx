@@ -317,10 +317,11 @@ function NovaOperacaoDialog({
     }));
   }, [valor, qtdParcelas, primeiroVenc, intervalo, mesmoVencimento, mesmaCompetencia, competenciaBase]);
 
-  // Quando o tipo muda, ajusta sugestão de contraparte
+  // Quando o tipo muda, ajusta contraparte E natureza canônica (D17.UI.6 — regra de pedra).
   useEffect(() => {
     setContraTipo(defaultContraparteParaTipo(tipo));
     setContraId(""); setContraNome(""); setContraDoc("");
+    setNatureza(naturezaCanonicaParaTipo(tipo));
   }, [tipo]);
 
   const somaParcelas = useMemo(

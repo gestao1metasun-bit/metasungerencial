@@ -18,6 +18,8 @@ import {
   useReabrirFechamento,
 } from "@/lib/repositories/fechamento-repo";
 import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 function fmtMonth(d: string) {
   const [y, m] = d.split("-");
@@ -72,8 +74,14 @@ export function FechamentoTabSupabase() {
     }
   }
 
+  const qc = useQueryClient();
   return (
-    <Card className="p-4 space-y-4">
+    <div className="space-y-3">
+      <RmTabHeader
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["fechamentos"] })}
+        searchPlaceholder="Buscar fechamento…"
+      />
+      <Card className="p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div>
           <Label>Conta</Label>
@@ -150,6 +158,7 @@ export function FechamentoTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

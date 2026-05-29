@@ -33,26 +33,43 @@ import {
   useContasFinanceiras, upsertConta, removeConta, newContaId, type ContaFinanceira,
 } from "@/lib/fin-contas-store";
 import { confirmDialog } from "@/components/app/confirm-dialog";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CadastrosTab() {
   const [sub, setSub] = useState("naturezas");
+  const qc = useQueryClient();
   return (
-    <Tabs value={sub} onValueChange={setSub} className="space-y-4">
-      <TabsList className="w-full justify-start overflow-x-auto">
-        <TabsTrigger value="grupos">Grupos & Subgrupos</TabsTrigger>
-        <TabsTrigger value="naturezas">Naturezas</TabsTrigger>
-        <TabsTrigger value="centros">Centros de Custo</TabsTrigger>
-        <TabsTrigger value="meios">Meios de Pagamento</TabsTrigger>
-        <TabsTrigger value="aplicacoes">Tipos de Aplicação</TabsTrigger>
-        <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
-      </TabsList>
-      <TabsContent value="grupos"><GruposPanel /></TabsContent>
-      <TabsContent value="naturezas"><NaturezasPanel /></TabsContent>
-      <TabsContent value="centros"><CentrosPanel /></TabsContent>
-      <TabsContent value="meios"><MeiosPanel /></TabsContent>
-      <TabsContent value="aplicacoes"><AplicacoesPanel /></TabsContent>
-      <TabsContent value="contas"><ContasPanel /></TabsContent>
-    </Tabs>
+    <div className="space-y-3">
+      <RmTabHeader
+        onAtualizar={() => {
+          qc.invalidateQueries({ queryKey: ["grupos-fin"] });
+          qc.invalidateQueries({ queryKey: ["subgrupos-fin"] });
+          qc.invalidateQueries({ queryKey: ["naturezas-fin"] });
+          qc.invalidateQueries({ queryKey: ["centros-custo-fin"] });
+          qc.invalidateQueries({ queryKey: ["meios-pagamento"] });
+          qc.invalidateQueries({ queryKey: ["tipos-aplicacao"] });
+          qc.invalidateQueries({ queryKey: ["contas-financeiras"] });
+        }}
+        searchPlaceholder="Buscar cadastro…"
+      />
+      <Tabs value={sub} onValueChange={setSub} className="space-y-4">
+        <TabsList className="w-full justify-start overflow-x-auto">
+          <TabsTrigger value="grupos">Grupos & Subgrupos</TabsTrigger>
+          <TabsTrigger value="naturezas">Naturezas</TabsTrigger>
+          <TabsTrigger value="centros">Centros de Custo</TabsTrigger>
+          <TabsTrigger value="meios">Meios de Pagamento</TabsTrigger>
+          <TabsTrigger value="aplicacoes">Tipos de Aplicação</TabsTrigger>
+          <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
+        </TabsList>
+        <TabsContent value="grupos"><GruposPanel /></TabsContent>
+        <TabsContent value="naturezas"><NaturezasPanel /></TabsContent>
+        <TabsContent value="centros"><CentrosPanel /></TabsContent>
+        <TabsContent value="meios"><MeiosPanel /></TabsContent>
+        <TabsContent value="aplicacoes"><AplicacoesPanel /></TabsContent>
+        <TabsContent value="contas"><ContasPanel /></TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

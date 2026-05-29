@@ -18,6 +18,8 @@ import {
   useIgnorarExtrato,
 } from "@/lib/repositories/conciliacao-repo";
 import { useContasFinanceirasOficiais } from "@/lib/repositories/cadastros-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ConciliacaoTabSupabase() {
   const { data: contas = [] } = useContasFinanceirasOficiais();
@@ -54,9 +56,15 @@ export function ConciliacaoTabSupabase() {
     } catch (e) { toast.error("Falha: " + (e as Error).message); }
   }
 
+  const qc = useQueryClient();
   return (
-    <Card className="p-4 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+    <div className="space-y-3">
+      <RmTabHeader
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["extrato-conta"] })}
+        searchPlaceholder="Buscar extrato…"
+      />
+      <Card className="p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
         <div>
           <Label>Conta</Label>
           <Select value={contaSel} onValueChange={setContaSel}>
@@ -131,6 +139,7 @@ export function ConciliacaoTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/app/StatCard";
 import { TrendingDown, Package } from "lucide-react";
 import { useCmvOficial } from "@/lib/repositories/cmv-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 function fmtBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -48,8 +50,13 @@ export function CmvTabSupabase() {
     return [...m.entries()].sort(([a], [b]) => b.localeCompare(a));
   }, [linhas]);
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-4">
+      <RmTabHeader
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["cmv-oficial"] })}
+        searchPlaceholder="Buscar competência…"
+      />
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="Custo total (AP)" value={fmtBRL(totais.tot)} icon={TrendingDown} tone="destructive" />
         <StatCard label="Custo realizado" value={fmtBRL(totais.real)} icon={Package} tone="success" />

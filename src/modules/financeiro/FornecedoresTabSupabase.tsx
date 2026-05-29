@@ -19,6 +19,8 @@ import {
   useSoftDeleteFornecedor,
   type Fornecedor,
 } from "@/lib/repositories/fornecedores-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Draft = Partial<Fornecedor> & { nome: string };
 const EMPTY: Draft = { nome: "", tipo_pessoa: "PJ", ativo: true };
@@ -87,24 +89,21 @@ export function FornecedoresTabSupabase() {
     }
   }
 
+  const qc = useQueryClient();
   return (
-    <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex-1 max-w-sm">
-          <Input
-            placeholder="Buscar por nome, CPF/CNPJ ou código…"
-            value={busca}
-            onChange={(e) => {
-              setBusca(e.target.value);
-              savePref({ ...pref, busca: e.target.value });
-            }}
-          />
-        </div>
+    <div className="space-y-3">
+      <RmTabHeader
+        
+        search={busca}
+        onSearchChange={(v) => { setBusca(v); savePref({ ...pref, busca: v }); }}
+        searchPlaceholder="Buscar por nome, CPF/CNPJ ou código…"
+        onNovo={novo}
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["fornecedores-supabase"] })}
+      />
+      <Card className="p-4 space-y-4">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={novo} className="gap-2">
-              <Plus className="h-4 w-4" /> Novo Fornecedor
-            </Button>
+            <span className="hidden" />
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -167,11 +166,11 @@ export function FornecedoresTabSupabase() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       <div className="text-xs text-muted-foreground">
         {isLoading ? "Carregando…" : `${filtrados.length} fornecedor(es) — fonte oficial: Supabase`}
       </div>
+
 
       <Table>
         <TableHeader>
@@ -207,6 +206,7 @@ export function FornecedoresTabSupabase() {
           )}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   );
 }

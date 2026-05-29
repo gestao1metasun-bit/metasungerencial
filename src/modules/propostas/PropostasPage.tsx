@@ -284,6 +284,8 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
             else if (a === "filtroAvancado") toast.info("Use filtros da PropostaList abaixo.");
           }}
+          statusActions={ribbonRm()}
+          layoutBar={layoutBarRm()}
         />
       </div>
 

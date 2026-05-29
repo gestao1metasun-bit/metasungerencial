@@ -425,7 +425,7 @@ function NovaOperacaoDialog({
     }
   };
 
-  const isPending = criar.isPending || gerarParcelas.isPending || updateParcela.isPending;
+  const isPending = criar.isPending || gerarParcelas.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>

@@ -265,7 +265,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "renegociacoes", label: "Renegociações", group: "Controle" },
       { value: "adiantamentos", label: "Adiantamentos", group: "Operação" },
       { value: "rescisoes", label: "Rescisões", group: "Controle" },
-      { value: "fornecedores", label: "Fornecedores", group: "Estrutura", hidden: true },
+      { value: "op-fin", label: "Operações Financeiras", group: "Operação", to: "/operacoes-financeiras", icon: "Banknote" },
       { value: "cadastros", label: "Plano de Contas & Categorias", group: "Estrutura" },
       { value: "parametros-fin", label: "Parâmetros Financeiros", group: "Estrutura" },
       { value: "centros", label: "Centros & Naturezas (legado)", group: "Estrutura", hidden: true },

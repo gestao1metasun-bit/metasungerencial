@@ -909,8 +909,22 @@ function EntregasTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Input placeholder="Buscar por cliente ou item…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
+      <EnterpriseRecordToolbar
+        entityType="estoque"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar por cliente ou item…"
+        search={q}
+        onSearchChange={setQ}
+        onAction={(a) => {
+          if (a === "atualizar") window.location.reload();
+          else if (a === "imprimir") window.print();
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
+        }}
+      />
+      <div className="flex items-center justify-end">
         <span className="text-xs text-muted-foreground">{list.length} registro(s)</span>
       </div>
       <Card className="p-2">

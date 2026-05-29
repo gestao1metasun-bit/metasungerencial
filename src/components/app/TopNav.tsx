@@ -71,6 +71,7 @@ export function TopNav() {
         tabs={ribbonTabs}
         activeValue={activeTab}
         defaultValue={defaultTab}
+        currentPath={path}
       />
     </div>
   );

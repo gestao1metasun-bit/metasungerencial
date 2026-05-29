@@ -20,6 +20,8 @@ import {
 import { useNaturezasFin, useCentrosResultado } from "@/lib/repositories/cadastros-repo";
 import { logError } from "@/lib/repositories/error-log-repo";
 import { fmtBRL } from "@/lib/mock-data";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function RecorrentesTabSupabase() {
   const { data: recs = [], isLoading } = useRecorrentesSupabase();

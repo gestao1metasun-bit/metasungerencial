@@ -40,6 +40,8 @@ const ALLOWED_MIME = new Set([
 export const ENTIDADES_ANEXAVEIS = [
   "clientes", "contratos", "pedidos_venda", "titulos_financeiros",
   "obras", "workflow_aprovacoes", "estoque_movimentos", "financiamentos",
+  // D17.UI.6 — Operações Financeiras (contrato, comprovante, termo, autorização, recibo)
+  "operacoes_financeiras", "operacoes_financeiras_parcelas",
 ] as const;
 
 export const CATEGORIAS_ANEXO = [

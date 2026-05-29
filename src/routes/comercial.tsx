@@ -5611,6 +5611,8 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

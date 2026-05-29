@@ -27,13 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { OperacoesFinanceirasGrid } from "@/components/op-financeiras/OperacoesFinanceirasGrid";
 import {
-  type OpFinTipo, useCriarOperacao, useGerarParcelas, useUpdateParcela,
+  type OpFinTipo, useCriarOperacao, useGerarParcelas,
 } from "@/lib/repositories/op-financeiras-repo";
 import {
   useNaturezasFin, useCentrosResultado, useContasFinanceirasOficiais,
   useFornecedoresOficiais, useClientesOficiais,
 } from "@/lib/repositories/cadastros-repo";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/operacoes-financeiras")({
   head: () => ({ meta: [{ title: "Operações Financeiras — Meta Sun" }] }),

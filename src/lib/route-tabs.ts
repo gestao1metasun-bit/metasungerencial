@@ -194,6 +194,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "orcamentos", label: "Propostas", group: "Operação" },
       { value: "contratos", label: "Contratos", group: "Operação" },
       { value: "aditivos", label: "Aditivos", group: "Operação" },
+      { value: "carteira", label: "Carteira", group: "Operação" },
+      { value: "comissoes", label: "Comissões", group: "Controle" },
+      { value: "vendedores", label: "Vendedores", group: "Estrutura" },
     ],
   },
   "/propostas": {

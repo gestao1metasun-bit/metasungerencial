@@ -206,12 +206,17 @@ export function useLiberarOperacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_liberar", {
-        _request_id: crypto.randomUUID(),
-        _operacao_id: id,
+      return withPerf("rpc.op_fin_liberar", async () => {
+        const { data, error } = await supabase.rpc("rpc_op_fin_liberar", {
+          _request_id: crypto.randomUUID(),
+          _operacao_id: id,
+        });
+        if (error) {
+          logError("op-fin:liberar", error.message, { id });
+          throw error;
+        }
+        return data;
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });

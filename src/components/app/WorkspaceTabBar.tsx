@@ -66,6 +66,9 @@ export function WorkspaceTabBar() {
   useEffect(() => {
     if (identidade.sessionLoading) return;
     if (!identidade.isAuthenticated) return;
+    // D19.1.fix: role carrega em background após signIn. Não decidir
+    // permissão enquanto role ainda é null — geraria falso "forbidden".
+    if (!identidade.role) return;
     if (!isKnownRoute(pathname)) return;
     const res = openTabForRoute(pathname, identidade);
     if (!res.ok && res.reason === "forbidden") {

@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { toast } from "sonner";
 
 import {

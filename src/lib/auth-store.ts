@@ -167,17 +167,29 @@ async function refresh(source = "refresh") {
     });
 
     if (error) {
+      if (_state.session?.user) {
+        console.warn("[auth-session] getSession com erro ignorado: sessão válida já resolvida", { source, error: error.message });
+        return;
+      }
       await handleAuthFailure("Falha ao consultar sua sessão. Faça login novamente.", error, "auth.getSession");
       return;
     }
 
     if (!data.session?.user) {
+      if (_state.session?.user) {
+        console.warn("[auth-session] getSession sem sessão ignorado: sessão válida já resolvida", { source });
+        return;
+      }
       setAnonymousState(undefined, true);
       return;
     }
 
     await resolveAuthenticatedSession(data.session, source);
   } catch (error) {
+    if (_state.session?.user) {
+      console.warn("[auth-session] refresh falhou, mas sessão válida já existe; ignorando fallback", { source });
+      return;
+    }
     await handleAuthFailure("Falha ao validar sua sessão. Faça login novamente.", error, "auth.refresh");
   }
 }

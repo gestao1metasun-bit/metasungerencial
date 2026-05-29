@@ -23,7 +23,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   EnterpriseDataGrid, exportToCSV,
 } from "@/components/app/grid/EnterpriseDataGrid";
-import { EnterpriseToolbar } from "@/components/app/grid/EnterpriseToolbar";
+import { EnterpriseRecordToolbar, ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise";
 import {
   useWorkflowAprovacoes, useWorkflowHistorico,
   useAprovarSolicitacao, useNegarSolicitacao, useCancelarSolicitacao,
@@ -151,23 +151,28 @@ function AprovacoesPage() {
         subtitle="Fila operacional por alçada — compras, materiais e descontos."
       />
 
-      <EnterpriseToolbar
-        title="Aprovações"
-        count={filtrados.length}
-        hint={selectedRow ? `${selectedRow.codigo ?? selectedRow.id.slice(0, 8)} selecionada` : undefined}
-        selecionado={!!selectedRow}
-        onAtualizar={refreshAll}
-        onExportar={exportarAtual}
-        onImprimir={() => window.print()}
-        onAprovar={podeAprovarSelecionada ? () => setAcao({ kind: "aprovar", row: selectedRow! }) : undefined}
-        onCancelar={
-          podeCancelarSelecionada
-            ? () => setAcao({ kind: "cancelar", row: selectedRow! })
-            : selectedRow?.status === "PENDENTE" && selectedRow.solicitante_id !== uid
-              ? () => setAcao({ kind: "negar", row: selectedRow! })
-              : undefined
-        }
-        onHistorico={selectedRow ? () => setDetalhe(selectedRow) : undefined}
+      <EnterpriseRecordToolbar
+        entityType="aprovacoes"
+        availableActions={["visualizar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        selectedIds={selectedRow ? [selectedRow.id] : []}
+        searchPlaceholder="Buscar código, título, setor, solicitante…"
+        search={busca}
+        onSearchChange={setBusca}
+        statusActions={ribbonRmAprovacao({
+          aprovar: podeAprovarSelecionada ? () => setAcao({ kind: "aprovar", row: selectedRow! }) : undefined,
+          reprovar: selectedRow?.status === "PENDENTE" && selectedRow.solicitante_id !== uid
+            ? () => setAcao({ kind: "negar", row: selectedRow! }) : undefined,
+          cancelar: podeCancelarSelecionada ? () => setAcao({ kind: "cancelar", row: selectedRow! }) : undefined,
+          visualizar: selectedRow ? () => setDetalhe(selectedRow) : undefined,
+        })}
+        layoutBar={layoutBarRm()}
+        onAction={(a) => {
+          if (a === "atualizar") refreshAll();
+          else if (a === "exportar") exportarAtual();
+          else if (a === "imprimir") window.print();
+          else if (a === "visualizar" && selectedRow) setDetalhe(selectedRow);
+          else if (a === "historico" && selectedRow) setDetalhe(selectedRow);
+        }}
       />
 
 

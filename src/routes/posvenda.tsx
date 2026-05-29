@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -79,17 +79,21 @@ function PosVendaPage() {
       <div className="mb-3">
         <EnterpriseRecordToolbar
           entityType="posvenda"
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           selectedIds={[]}
           searchPlaceholder="Buscar chamado, cliente, tipo, status…"
+          statusActions={ribbonRm()}
+          layoutBar={layoutBarRm()}
           onAction={(a) => {
             if (a === "novo") setTab("chamados");
-            else if (a === "atualizar") toast.success("Pós-venda recarregada.");
+            else if (a === "atualizar") toast.success("Pós-venda atualizada.");
             else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");
             else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4b.");
+            else if (a === "anexos") toast.info("Anexos chegam em D17.UI.4b.");
+            else if (a === "editar" || a === "cancelar") toast.info("Selecione um chamado na aba Chamados.");
           }}
         />
       </div>

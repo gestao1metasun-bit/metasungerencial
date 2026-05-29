@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";

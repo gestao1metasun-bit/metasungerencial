@@ -74,8 +74,14 @@ export function FechamentoTabSupabase() {
     }
   }
 
+  const qc = useQueryClient();
   return (
-    <Card className="p-4 space-y-4">
+    <div className="space-y-3">
+      <RmTabHeader
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["fechamentos"] })}
+        searchPlaceholder="Buscar fechamento…"
+      />
+      <Card className="p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div>
           <Label>Conta</Label>

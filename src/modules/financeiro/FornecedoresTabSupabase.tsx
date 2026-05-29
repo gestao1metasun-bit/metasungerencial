@@ -19,6 +19,8 @@ import {
   useSoftDeleteFornecedor,
   type Fornecedor,
 } from "@/lib/repositories/fornecedores-repo";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Draft = Partial<Fornecedor> & { nome: string };
 const EMPTY: Draft = { nome: "", tipo_pessoa: "PJ", ativo: true };

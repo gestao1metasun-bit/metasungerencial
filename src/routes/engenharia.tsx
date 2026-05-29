@@ -1602,11 +1602,11 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
         {rows.map((p) => (
           <TableRow key={p.id}>
             <TableCell>
-              <ActionsMenu label={p.id}>
-                <DropdownMenuItem onSelect={() => onEdit(p)}>
-                  <SquarePen className="mr-2 h-4 w-4" /> Editar
-                </DropdownMenuItem>
-              </ActionsMenu>
+              <RowActions
+                rowId={p.id}
+                actions={[{ kind: "editar" }]}
+                onAction={(k) => { if (k === "editar") onEdit(p); }}
+              />
             </TableCell>
             <TableCell className="font-mono text-xs text-primary">{p.id}</TableCell>
             <TableCell>{p.equipe}</TableCell>
@@ -2391,11 +2391,11 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {cards.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <ActionsMenu label={p.id}>
-                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={p.id}
+                      actions={[{ kind: "editar" }]}
+                      onAction={(k) => { if (k === "editar") setEditing({ c, p }); }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>

@@ -12,8 +12,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/observability";
 import { withPerf } from "@/lib/perf";
+import { logError as logAppError } from "@/lib/repositories/error-log-repo";
 const logError = (op: string, msg: string, meta?: Record<string, unknown>) =>
   logger.error("op-fin", op, msg, meta);
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "Erro inesperado.";
+}
+
+function reportMutationError(acao: string, error: unknown, payload?: Record<string, unknown>) {
+  const mensagem = getErrorMessage(error);
+  logError(acao, mensagem, payload);
+  void logAppError({
+    modulo: "financeiro",
+    tela: "/operacoes-financeiras",
+    acao,
+    mensagem,
+    payload,
+    stack: error instanceof Error ? error.stack : undefined,
+    severidade: "error",
+  });
+}
 
 export type OpFinTipo =
   | "EMPRESTIMO_COLABORADOR"
@@ -70,6 +91,20 @@ export interface OpFinParcela {
   competencia: string | null;
   observacao: string | null;
   titulo_id: string | null;
+}
+
+export interface OpFinTitulo {
+  id: string;
+  codigo: string | null;
+  tipo: string;
+  origem_tipo: string;
+  origem_id: string;
+  valor_liquido: number;
+  vencimento: string | null;
+  competencia: string | null;
+  status: string;
+  observacoes: string | null;
+  dados: Record<string, unknown> | null;
 }
 
 /* ───────────────── queries ───────────────── */
@@ -145,6 +180,27 @@ export function useOpFinParcelas(operacaoId: string | null) {
         .order("numero", { ascending: true });
       if (error) throw error;
       return (data ?? []) as OpFinParcela[];
+    },
+  });
+}
+
+export function useOpFinTitulos(operacaoId: string | null) {
+  return useQuery({
+    queryKey: ["op-fin", "titulos", operacaoId],
+    enabled: !!operacaoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("titulos_financeiros")
+        .select("id, codigo, tipo, origem_tipo, origem_id, valor_liquido, vencimento, competencia, status, observacoes, dados")
+        .eq("origem_tipo", "OPERACAO_FINANCEIRA")
+        .eq("origem_id", operacaoId!)
+        .is("deleted_at", null)
+        .order("vencimento", { ascending: true, nullsFirst: false });
+      if (error) {
+        reportMutationError("op-fin:list-titulos", error, { operacaoId });
+        throw error;
+      }
+      return (data ?? []) as OpFinTitulo[];
     },
   });
 }
@@ -231,13 +287,18 @@ export function useAprovarOperacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, observacao }: { id: string; observacao?: string }) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_aprovar", {
-        _request_id: crypto.randomUUID(),
-        _operacao_id: id,
-        _observacao: observacao ?? undefined,
+      return withPerf("rpc.op_fin_aprovar", async () => {
+        const { data, error } = await supabase.rpc("rpc_op_fin_aprovar", {
+          _request_id: crypto.randomUUID(),
+          _operacao_id: id,
+          _observacao: observacao ?? undefined,
+        });
+        if (error) {
+          reportMutationError("op-fin:aprovar", error, { id, observacao });
+          throw error;
+        }
+        return data;
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
   });
@@ -253,7 +314,7 @@ export function useLiberarOperacao() {
           _operacao_id: id,
         });
         if (error) {
-          logError("op-fin:liberar", error.message, { id });
+          reportMutationError("op-fin:liberar", error, { id });
           throw error;
         }
         return data;
@@ -272,10 +333,35 @@ export function useCancelarOperacao() {
         _operacao_id: id,
         _motivo: motivo,
       });
-      if (error) throw error;
+      if (error) {
+        reportMutationError("op-fin:cancelar", error, { id, motivo });
+        throw error;
+      }
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),
+  });
+}
+
+export function useEstornarOperacao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tituloId, motivo }: { tituloId: string; motivo: string }) => {
+      const { data, error } = await supabase.rpc("rpc_op_fin_estornar_recebimento", {
+        _request_id: crypto.randomUUID(),
+        _titulo_id: tituloId,
+        _motivo: motivo,
+      });
+      if (error) {
+        reportMutationError("op-fin:estornar", error, { tituloId, motivo });
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["op-fin"] });
+      qc.invalidateQueries({ queryKey: ["titulos_financeiros"] });
+    },
   });
 }
 
@@ -303,7 +389,10 @@ export function useGerarParcelas() {
         _intervalo_dias: intervaloDias ?? 30,
         _parcelas: parcelas && parcelas.length > 0 ? (parcelas as never) : undefined,
       });
-      if (error) throw error;
+      if (error) {
+        reportMutationError("op-fin:gerar-parcelas", error, { id, vencimentoPrimeiro, intervaloDias });
+        throw error;
+      }
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["op-fin"] }),

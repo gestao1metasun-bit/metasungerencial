@@ -219,7 +219,9 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "exportar", "imprimir"]}
+        availableActions={["editar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRmAprovacao()}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar contrato, vendedor, observação…"
         search={busca}
         onSearchChange={setBusca}

@@ -56,6 +56,15 @@ export function OperacoesFinanceirasGrid({ tipos, apenasParceladas, search, empt
       onError: (e) => toast.error(`Falha ao aprovar: ${(e as Error).message}`),
     });
   };
+  const handleAprovarELiberar = async (o: OperacaoFinanceira) => {
+    try {
+      await aprovar.mutateAsync({ id: o.id });
+      await liberar.mutateAsync(o.id);
+      toast.success(`Operação ${o.codigo ?? ""} aprovada e liberada — títulos gerados.`);
+    } catch (e) {
+      toast.error(`Falha no fluxo: ${(e as Error).message}`);
+    }
+  };
   const handleLiberar = (o: OperacaoFinanceira) => {
     liberar.mutate(o.id, {
       onSuccess: () => toast.success(`Operação ${o.codigo ?? ""} liberada — títulos gerados.`),

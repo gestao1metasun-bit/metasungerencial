@@ -10,6 +10,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
+import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -76,6 +77,23 @@ function FinanciamentosPage() {
         title="Financiamentos"
         subtitle="Painel executivo de operações bancárias, prazos, liberações e recebimentos."
       />
+      <div className="mb-3">
+        <EnterpriseRecordToolbar
+          entityType="financiamentos"
+          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          selectedIds={[]}
+          searchPlaceholder="Buscar contrato, cliente, banco, gerente…"
+          onAction={(a) => {
+            if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
+            else if (a === "novo") setTab("sem");
+            else if (a === "historico") setTab("finalizados");
+            else if (a === "imprimir") window.print();
+            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
+            else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");
+            else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4b.");
+          }}
+        />
+      </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>

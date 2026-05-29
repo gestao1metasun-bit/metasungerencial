@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Card } from "@/components/ui/card";

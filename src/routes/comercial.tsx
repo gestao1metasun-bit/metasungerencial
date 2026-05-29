@@ -4801,11 +4801,31 @@ function VendedoresTab({
   contratos, vendedoresList, setVendedoresList,
 }: { contratos: Contrato[]; vendedoresList: Vendedor[]; setVendedoresList: (v: Vendedor[]) => void }) {
   const remove = (id: string) => { setVendedoresList(vendedoresList.filter((v) => v.id !== id)); toast.success("Vendedor removido"); };
-
+  const [busca, setBusca] = useState("");
+  const filtrados = vendedoresList.filter((v) => {
+    if (!busca) return true;
+    const q = busca.toLowerCase();
+    return v.nome.toLowerCase().includes(q) || (v.email || "").toLowerCase().includes(q);
+  });
   return (
     <div className="space-y-4">
+      {/* D17.UI Fase 2b — Vendedores: barra Enterprise RM/TOTVS */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar vendedor, e-mail…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Lista de vendedores atualizada.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
+        }}
+      />
       <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">{vendedoresList.length} vendedor(es) cadastrado(s)</div>
+        <div className="text-sm text-muted-foreground">{filtrados.length} de {vendedoresList.length} vendedor(es)</div>
         <NovoVendedorDialog onSave={(v) => setVendedoresList([...vendedoresList, v])} nextId={`VEN-${String(vendedoresList.length + 1).padStart(2, "0")}`} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

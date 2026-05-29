@@ -35,6 +35,7 @@ import {
   EntityTimeline,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import {
   useLiberarComissao,
   useMarcarComissaoPaga,

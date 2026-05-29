@@ -34,6 +34,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { CarteiraTab } from "@/modules/comercial/CarteiraTab";
+import { ComissoesTab } from "@/modules/comercial/ComissoesTab";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -174,6 +176,8 @@ function ComercialPage() {
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
           <TabsTrigger value="contratos">Contratos</TabsTrigger>
           <TabsTrigger value="aditivos">Aditivos</TabsTrigger>
+          <TabsTrigger value="carteira">Carteira</TabsTrigger>
+          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
           <TabsTrigger value="analise">Análise Executiva</TabsTrigger>
         </TabsList>
@@ -188,6 +192,12 @@ function ComercialPage() {
         </TabsContent>
         <TabsContent value="aditivos" className="mt-5">
           <AditivosTab contratos={contratos} />
+        </TabsContent>
+        <TabsContent value="carteira" className="mt-5">
+          <CarteiraTab onChangeTab={setTab} />
+        </TabsContent>
+        <TabsContent value="comissoes" className="mt-5">
+          <ComissoesTab onChangeTab={setTab} />
         </TabsContent>
         <TabsContent value="vendedores" className="mt-5">
           <VendedoresTab contratos={contratos} vendedoresList={vendedoresList} setVendedoresList={setVendedoresList} />

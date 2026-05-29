@@ -135,7 +135,7 @@ function EstoquePage() {
             else if (a === "atualizar") window.location.reload();
             else if (a === "exportar") onExportar();
             else if (a === "imprimir") window.print();
-            else if (a === "historico") setTab("entregas");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4.");
           }}

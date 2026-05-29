@@ -251,7 +251,7 @@ function NovaOperacaoDialog({
 }: { open: boolean; onClose: () => void; tipoDefault: OpFinTipo; naturezaDefault: "ENTRADA" | "SAIDA"; }) {
   const criar = useCriarOperacao();
   const gerarParcelas = useGerarParcelas();
-  const updateParcela = useUpdateParcela();
+  
   const { data: naturezas = [] } = useNaturezasFin();
   const { data: centros = [] } = useCentrosResultado();
   const { data: contas = [] } = useContasFinanceirasOficiais();

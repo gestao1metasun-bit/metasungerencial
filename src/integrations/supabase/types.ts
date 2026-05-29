@@ -2922,6 +2922,42 @@ export type Database = {
           },
         ]
       }
+      financeiro_eventos_catalogo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string
+          evento_canonico: string
+          id: string
+          natureza_default: string | null
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao: string
+          evento_canonico: string
+          id?: string
+          natureza_default?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          evento_canonico?: string
+          id?: string
+          natureza_default?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           ativo: boolean
@@ -3532,6 +3568,57 @@ export type Database = {
           tipo?: string
           updated_at?: string
           valor_total?: number
+        }
+        Relationships: []
+      }
+      lotes_integracao_contabil: {
+        Row: {
+          codigo: string
+          competencia: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          hash_integracao: string | null
+          id: string
+          observacoes: string | null
+          sistema_destino: string | null
+          status: string
+          total_credito: number
+          total_debito: number
+          total_partidas: number
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          competencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          hash_integracao?: string | null
+          id?: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status?: string
+          total_credito?: number
+          total_debito?: number
+          total_partidas?: number
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          competencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          hash_integracao?: string | null
+          id?: string
+          observacoes?: string | null
+          sistema_destino?: string | null
+          status?: string
+          total_credito?: number
+          total_debito?: number
+          total_partidas?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4826,6 +4913,142 @@ export type Database = {
           titulo?: string
         }
         Relationships: []
+      }
+      partidas_contabeis_virtuais: {
+        Row: {
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          conta_credito_codigo: string | null
+          conta_credito_id: string | null
+          conta_debito_codigo: string | null
+          conta_debito_id: string | null
+          created_at: string
+          created_by: string | null
+          data_evento: string
+          data_integracao: string | null
+          evento_canonico: string
+          evento_id: string | null
+          hash_integracao: string | null
+          id: string
+          lote_id: string | null
+          modulo_origem: string
+          natureza_id: string | null
+          observacoes: string | null
+          origem_id: string | null
+          origem_payload: Json | null
+          origem_tipo: string
+          sistema_destino: string | null
+          status: string
+          status_integracao: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_credito_codigo?: string | null
+          conta_credito_id?: string | null
+          conta_debito_codigo?: string | null
+          conta_debito_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_evento?: string
+          data_integracao?: string | null
+          evento_canonico: string
+          evento_id?: string | null
+          hash_integracao?: string | null
+          id?: string
+          lote_id?: string | null
+          modulo_origem: string
+          natureza_id?: string | null
+          observacoes?: string | null
+          origem_id?: string | null
+          origem_payload?: Json | null
+          origem_tipo: string
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          conta_credito_codigo?: string | null
+          conta_credito_id?: string | null
+          conta_debito_codigo?: string | null
+          conta_debito_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_evento?: string
+          data_integracao?: string | null
+          evento_canonico?: string
+          evento_id?: string | null
+          hash_integracao?: string | null
+          id?: string
+          lote_id?: string | null
+          modulo_origem?: string
+          natureza_id?: string | null
+          observacoes?: string | null
+          origem_id?: string | null
+          origem_payload?: Json | null
+          origem_tipo?: string
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_conta_credito_id_fkey"
+            columns: ["conta_credito_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_conta_debito_id_fkey"
+            columns: ["conta_debito_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao_contabil"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pedidos_venda: {
         Row: {
@@ -8010,6 +8233,16 @@ export type Database = {
         }
         Relationships: []
       }
+      v_eventos_canonicos_catalogo: {
+        Row: {
+          ativo: boolean | null
+          codigo: string | null
+          descricao: string | null
+          evento_canonico: string | null
+          modulo: string | null
+        }
+        Relationships: []
+      }
       v_fluxo_caixa_oficial: {
         Row: {
           centro_resultado_id: string | null
@@ -8441,6 +8674,62 @@ export type Database = {
             referencedColumns: ["contrato_id"]
           },
         ]
+      }
+      v_partidas_contabeis_pendentes: {
+        Row: {
+          centro_custo_id: string | null
+          centro_custo_nome: string | null
+          centro_resultado_id: string | null
+          centro_resultado_nome: string | null
+          competencia: string | null
+          conta_credito_codigo: string | null
+          conta_debito_codigo: string | null
+          data_evento: string | null
+          evento_canonico: string | null
+          id: string | null
+          modulo_origem: string | null
+          natureza_id: string | null
+          natureza_nome: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          status: string | null
+          status_integracao: string | null
+          valor: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partidas_contabeis_virtuais_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_partidas_contabeis_resumo: {
+        Row: {
+          competencia: string | null
+          evento_canonico: string | null
+          modulo_origem: string | null
+          qtde: number | null
+          status: string | null
+          valor_total: number | null
+        }
+        Relationships: []
       }
       v_pend_entregas_pendentes: {
         Row: {

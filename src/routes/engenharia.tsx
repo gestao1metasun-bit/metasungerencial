@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -453,7 +454,9 @@ function EngenhariaPage() {
         <EnterpriseRecordToolbar
           entityType="engenharia"
           selectedIds={[]}
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          statusActions={ribbonRm({ visualizar: () => setTab("ativas") })}
+          layoutBar={layoutBarRm()}
           searchPlaceholder="Buscar obra, contrato, cliente, equipe…"
           onAction={(a) => {
             if (a === "atualizar") reloadObrasReais();

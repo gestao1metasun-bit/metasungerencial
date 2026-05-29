@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EnterpriseRecordToolbar, ModuloHistoricoDrawer } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { FileSignature, CheckCircle2, Wrench, Banknote, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,7 +85,9 @@ function AssinaturasPage() {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar contrato, assinante, observação…"
         search={busca}
         onSearchChange={setBusca}

@@ -32,6 +32,7 @@ import {
   useColumnPrefs,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { useLeads } from "@/modules/leads/store";
 import { usePropostas } from "@/modules/propostas/store";
 import { useContratos } from "@/lib/contratos-store";
@@ -231,7 +232,9 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "exportar", "imprimir"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm()}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar número, cliente, cidade, status…"
         search={busca}
         onSearchChange={setBusca}

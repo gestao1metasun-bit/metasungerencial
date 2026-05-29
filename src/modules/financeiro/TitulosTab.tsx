@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EnterpriseRecordToolbar, ENTERPRISE_PROCESS_ICON_HINT } from "@/components/app/enterprise/EnterpriseRecordToolbar";
 import type { EnterpriseProcessItem } from "@/components/app/enterprise/EnterpriseRecordToolbar";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
+import { ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 
 import { toast } from "sonner";
 import {
@@ -696,6 +697,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               "exportar", "imprimir",
               "filtroRapido", "filtroAvancado", "colunas",
             ]}
+            statusActions={ribbonRmAprovacao()}
+            layoutBar={layoutBarRm()}
             availableProcesses={availableProcesses}
             onAction={(a) => handleAction(a)}
             onProcess={(k) => handleProcess(k)}

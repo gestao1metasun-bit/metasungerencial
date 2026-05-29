@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { toast } from "sonner";
 
 import {
@@ -89,7 +90,9 @@ export function LeadsPage() {
       <EnterpriseRecordToolbar
         entityType="propostas"
         selectedIds={detalhe ? [detalhe.id] : []}
-        availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar"]}
+        availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        statusActions={ribbonRm({ visualizar: () => detalhe && setDetalhe(detalhe) })}
+        layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar lead…"
         search={busca}
         onSearchChange={setBusca}

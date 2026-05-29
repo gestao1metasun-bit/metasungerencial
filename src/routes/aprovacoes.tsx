@@ -59,6 +59,7 @@ function AprovacoesPage() {
 
   const [tab, setTab] = useState<Filtro>("pendentes_para_mim");
   const [tipoFiltro, setTipoFiltro] = useState<string>("TODOS");
+  const [statusHist, setStatusHist] = useState<"TODOS" | "APROVADA" | "NEGADA" | "EXPIRADA" | "CANCELADA">("TODOS");
   const [busca, setBusca] = useState("");
   const [detalhe, setDetalhe] = useState<WorkflowAprovacao | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -81,6 +82,9 @@ function AprovacoesPage() {
   const filtrados = useMemo(() => {
     let rows = ativa.data ?? [];
     if (tipoFiltro !== "TODOS") rows = rows.filter((r) => r.tipo_operacao === tipoFiltro);
+    if (tab === "historico" && statusHist !== "TODOS") {
+      rows = rows.filter((r) => r.status === statusHist);
+    }
     if (busca.trim()) {
       const t = busca.trim().toLowerCase();
       rows = rows.filter((r) =>
@@ -90,7 +94,7 @@ function AprovacoesPage() {
       );
     }
     return rows;
-  }, [ativa.data, tipoFiltro, busca]);
+  }, [ativa.data, tipoFiltro, busca, tab, statusHist]);
 
   const counts = useMemo(() => {
     const pend = pendentesParaMim.data ?? [];
@@ -187,6 +191,27 @@ function AprovacoesPage() {
           <TabsTrigger value="minhas">Minhas solicitações</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
+
+        {tab === "historico" && (
+          <div className="flex flex-wrap items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2 py-1 text-[11px] mt-2">
+            <span className="font-bold uppercase tracking-wider text-muted-foreground/80 mr-2">Status</span>
+            {(["TODOS","APROVADA","NEGADA","EXPIRADA","CANCELADA"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setStatusHist(k)}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition ${
+                  statusHist === k ? "bg-primary/15 text-primary ring-1 ring-primary/30" : "hover:bg-background"
+                }`}
+              >
+                <span className="text-muted-foreground">{k === "TODOS" ? "Todos" : WF_STATUS_LABEL[k] ?? k}</span>
+                <span className="font-mono font-semibold tabular-nums">
+                  {k === "TODOS" ? (historico.data ?? []).length : (historico.data ?? []).filter((r) => r.status === k).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <TabsContent value={tab} className="pt-3">
           <EnterpriseDataGrid

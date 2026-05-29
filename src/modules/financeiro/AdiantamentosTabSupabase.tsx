@@ -47,6 +47,8 @@ import {
 } from "@/lib/repositories/cadastros-repo";
 import { errorLogRepo } from "@/lib/repositories/error-log-repo";
 import { promptDialog } from "@/components/app/confirm-dialog";
+import { RmTabHeader } from "@/components/app/financeiro/RmTabHeader";
+import { useQueryClient } from "@tanstack/react-query";
 
 const UI_PREF_KEY = "ui.fin.adiantamentos.v1";
 

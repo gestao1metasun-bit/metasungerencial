@@ -97,7 +97,7 @@ function OperacoesFinanceirasPage() {
           onAction={(a) => {
             if (a === "novo") setNovoOpen(true);
             else if (a === "atualizar") toast.success("Lista recarregada.");
-            else if (a === "historico") toast.info("Use o ícone de relógio em cada linha para ver a timeline.");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas universal chega em D17.UI.4c.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4c (data, status, instituição).");

@@ -85,7 +85,7 @@ function PosVendaPage() {
           onAction={(a) => {
             if (a === "novo") setTab("chamados");
             else if (a === "atualizar") toast.success("Pós-venda recarregada.");
-            else if (a === "historico") setTab("chamados");
+            else if (a === "historico") setHistOpen(true);
             else if (a === "imprimir") window.print();
             else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.4b.");
             else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.4b.");

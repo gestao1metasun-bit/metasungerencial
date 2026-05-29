@@ -697,6 +697,8 @@ export function TitulosTab({ tipo }: { tipo: TituloTipo }) {
               "exportar", "imprimir",
               "filtroRapido", "filtroAvancado", "colunas",
             ]}
+            statusActions={ribbonRmAprovacao()}
+            layoutBar={layoutBarRm()}
             availableProcesses={availableProcesses}
             onAction={(a) => handleAction(a)}
             onProcess={(k) => handleProcess(k)}

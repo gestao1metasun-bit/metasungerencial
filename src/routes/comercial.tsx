@@ -456,7 +456,6 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -467,6 +466,7 @@ function ContratoAssinadoTab({
               <TableHead className="text-center">Aprovação</TableHead>
               <TableHead className="text-center">Projetos</TableHead>
               <TableHead className="text-center">Pendentes Eng.</TableHead>
+              <TableHead className="w-[200px] text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {assinados.map((c) => (

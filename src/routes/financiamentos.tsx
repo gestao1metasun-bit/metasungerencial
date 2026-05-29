@@ -127,6 +127,13 @@ function FinanciamentosPage() {
         </TabsContent>
         <TabsContent value="cancelados" className="mt-5"><CanceladosFinTab /></TabsContent>
       </Tabs>
+      <ModuloHistoricoDrawer
+        open={histOpen}
+        onOpenChange={setHistOpen}
+        titulo="Financiamentos"
+        modulos={["financeiro"]}
+        entidades={["financiamento"]}
+      />
     </>
   );
 }

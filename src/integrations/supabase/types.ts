@@ -766,34 +766,118 @@ export type Database = {
           },
         ]
       }
-      centros_resultado: {
+      centros_custo: {
         Row: {
+          area_default: string | null
           ativo: boolean
           codigo: string
+          codigo_externo: string | null
           created_at: string
+          data_integracao: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          hash_integracao: string | null
           id: string
           nome: string
+          observacoes: string | null
           row_version: number
+          sistema_destino: string | null
+          status_integracao: string
           tipo: string
           updated_at: string
         }
         Insert: {
+          area_default?: string | null
           ativo?: boolean
           codigo: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
           id?: string
           nome: string
+          observacoes?: string | null
           row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo?: string
           updated_at?: string
         }
         Update: {
+          area_default?: string | null
           ativo?: boolean
           codigo?: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
           id?: string
           nome?: string
+          observacoes?: string | null
           row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      centros_resultado: {
+        Row: {
+          area_default: string | null
+          ativo: boolean
+          codigo: string
+          codigo_externo: string | null
+          created_at: string
+          data_integracao: string | null
+          hash_integracao: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          row_version: number
+          sistema_destino: string | null
+          status_integracao: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          area_default?: string | null
+          ativo?: boolean
+          codigo: string
+          codigo_externo?: string | null
+          created_at?: string
+          data_integracao?: string | null
+          hash_integracao?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          area_default?: string | null
+          ativo?: boolean
+          codigo?: string
+          codigo_externo?: string | null
+          created_at?: string
+          data_integracao?: string | null
+          hash_integracao?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo?: string
           updated_at?: string
         }
@@ -1438,6 +1522,8 @@ export type Database = {
           assinado_por: string | null
           assinatura_evento_id: string | null
           cancelado: boolean
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           cliente_id: string
           codigo: string | null
           comissao_pct: number | null
@@ -1470,6 +1556,7 @@ export type Database = {
           liberado_por: string | null
           modulos_qtde: number | null
           motivo_cancelamento: string | null
+          natureza_receita_id: string | null
           observacoes: string | null
           pendente_engenharia: boolean
           pendente_financeiro: boolean
@@ -1492,6 +1579,8 @@ export type Database = {
           assinado_por?: string | null
           assinatura_evento_id?: string | null
           cancelado?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id: string
           codigo?: string | null
           comissao_pct?: number | null
@@ -1524,6 +1613,7 @@ export type Database = {
           liberado_por?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
           observacoes?: string | null
           pendente_engenharia?: boolean
           pendente_financeiro?: boolean
@@ -1546,6 +1636,8 @@ export type Database = {
           assinado_por?: string | null
           assinatura_evento_id?: string | null
           cancelado?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id?: string
           codigo?: string | null
           comissao_pct?: number | null
@@ -1578,6 +1670,7 @@ export type Database = {
           liberado_por?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
           observacoes?: string | null
           pendente_engenharia?: boolean
           pendente_financeiro?: boolean
@@ -1593,10 +1686,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "contratos_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contratos_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_natureza_receita_id_fkey"
+            columns: ["natureza_receita_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
             referencedColumns: ["id"]
           },
         ]
@@ -1857,6 +1971,9 @@ export type Database = {
       }
       estoque_movimentos: {
         Row: {
+          categoria_contabil: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           created_at: string
           custo_total: number
           custo_unitario: number
@@ -1875,6 +1992,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
@@ -1893,6 +2013,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           created_at?: string
           custo_total?: number
           custo_unitario?: number
@@ -1911,6 +2034,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_movimentos_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_movimentos_produto_id_fkey"
             columns: ["produto_id"]
@@ -2894,6 +3031,82 @@ export type Database = {
         }
         Relationships: []
       }
+      mapeamentos_contabeis: {
+        Row: {
+          ativo: boolean
+          centro_resultado_default_id: string | null
+          codigo_externo: string | null
+          created_at: string
+          data_integracao: string | null
+          evento_canonico: string
+          hash_integracao: string | null
+          id: string
+          natureza_id: string | null
+          observacoes: string | null
+          plano_conta_id: string | null
+          row_version: number
+          sistema_destino: string | null
+          status_integracao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          centro_resultado_default_id?: string | null
+          codigo_externo?: string | null
+          created_at?: string
+          data_integracao?: string | null
+          evento_canonico: string
+          hash_integracao?: string | null
+          id?: string
+          natureza_id?: string | null
+          observacoes?: string | null
+          plano_conta_id?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          centro_resultado_default_id?: string | null
+          codigo_externo?: string | null
+          created_at?: string
+          data_integracao?: string | null
+          evento_canonico?: string
+          hash_integracao?: string | null
+          id?: string
+          natureza_id?: string | null
+          observacoes?: string | null
+          plano_conta_id?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapeamentos_contabeis_centro_resultado_default_id_fkey"
+            columns: ["centro_resultado_default_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapeamentos_contabeis_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mapeamentos_contabeis_plano_conta_id_fkey"
+            columns: ["plano_conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mapeamentos_externos: {
         Row: {
           ativo: boolean
@@ -3209,47 +3422,96 @@ export type Database = {
       naturezas_financeiras: {
         Row: {
           ativo: boolean
+          categoria_canonica: string | null
           classificacao_contabil: string | null
           codigo: string
+          codigo_externo: string | null
           created_at: string
+          data_integracao: string | null
           grupo: string | null
+          hash_integracao: string | null
           id: string
           nome: string
+          plano_conta_id: string | null
+          retencao_cofins_pct: number
+          retencao_csll_pct: number
+          retencao_inss_pct: number
+          retencao_irrf_pct: number
+          retencao_iss_pct: number
+          retencao_pis_pct: number
           row_version: number
+          sistema_destino: string | null
+          status_integracao: string
           subgrupo: string | null
           tipo: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          categoria_canonica?: string | null
           classificacao_contabil?: string | null
           codigo: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
           grupo?: string | null
+          hash_integracao?: string | null
           id?: string
           nome: string
+          plano_conta_id?: string | null
+          retencao_cofins_pct?: number
+          retencao_csll_pct?: number
+          retencao_inss_pct?: number
+          retencao_irrf_pct?: number
+          retencao_iss_pct?: number
+          retencao_pis_pct?: number
           row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
           subgrupo?: string | null
           tipo: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          categoria_canonica?: string | null
           classificacao_contabil?: string | null
           codigo?: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
           grupo?: string | null
+          hash_integracao?: string | null
           id?: string
           nome?: string
+          plano_conta_id?: string | null
+          retencao_cofins_pct?: number
+          retencao_csll_pct?: number
+          retencao_inss_pct?: number
+          retencao_irrf_pct?: number
+          retencao_iss_pct?: number
+          retencao_pis_pct?: number
           row_version?: number
+          sistema_destino?: string | null
+          status_integracao?: string
           subgrupo?: string | null
           tipo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "naturezas_financeiras_plano_conta_id_fkey"
+            columns: ["plano_conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       obras: {
         Row: {
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           cliente_id: string | null
           codigo: string | null
           consultor_id: string | null
@@ -3277,6 +3539,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
           consultor_id?: string | null
@@ -3304,6 +3568,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
           consultor_id?: string | null
@@ -3332,6 +3598,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "obras_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
@@ -3357,6 +3637,7 @@ export type Database = {
       operacoes_financeiras: {
         Row: {
           banco_contrato: string | null
+          centro_custo_id: string | null
           centro_resultado_id: string | null
           cliente_id: string | null
           codigo: string | null
@@ -3396,6 +3677,7 @@ export type Database = {
         }
         Insert: {
           banco_contrato?: string | null
+          centro_custo_id?: string | null
           centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -3435,6 +3717,7 @@ export type Database = {
         }
         Update: {
           banco_contrato?: string | null
+          centro_custo_id?: string | null
           centro_resultado_id?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -3473,6 +3756,13 @@ export type Database = {
           valor_total?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "operacoes_financeiras_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "operacoes_financeiras_centro_resultado_id_fkey"
             columns: ["centro_resultado_id"]
@@ -3943,8 +4233,11 @@ export type Database = {
           aprovado_em: string | null
           aprovado_por: string | null
           cancelado_em: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
           cliente_id: string
           codigo: string | null
+          competencia: string | null
           consultor_id: string
           contrato_id: string
           created_at: string
@@ -3958,12 +4251,14 @@ export type Database = {
           gerente_id: string | null
           id: string
           motivo_cancelamento: string | null
+          natureza_receita_id: string | null
           obra_id: string | null
           observacoes: string | null
           possui_financiamento: boolean
           projeto_contrato_id: string | null
           row_version: number
           status: string
+          status_faturamento: string
           updated_at: string
           valor_total: number
         }
@@ -3971,8 +4266,11 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           cancelado_em?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id: string
           codigo?: string | null
+          competencia?: string | null
           consultor_id: string
           contrato_id: string
           created_at?: string
@@ -3986,12 +4284,14 @@ export type Database = {
           gerente_id?: string | null
           id?: string
           motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
           obra_id?: string | null
           observacoes?: string | null
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
           row_version?: number
           status?: string
+          status_faturamento?: string
           updated_at?: string
           valor_total?: number
         }
@@ -3999,8 +4299,11 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           cancelado_em?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
           cliente_id?: string
           codigo?: string | null
+          competencia?: string | null
           consultor_id?: string
           contrato_id?: string
           created_at?: string
@@ -4014,16 +4317,40 @@ export type Database = {
           gerente_id?: string | null
           id?: string
           motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
           obra_id?: string | null
           observacoes?: string | null
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
           row_version?: number
           status?: string
+          status_faturamento?: string
           updated_at?: string
           valor_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_venda_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_natureza_receita_id_fkey"
+            columns: ["natureza_receita_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pedidos_venda_status_historico: {
         Row: {
@@ -4121,37 +4448,58 @@ export type Database = {
       plano_contas: {
         Row: {
           ativo: boolean
+          categoria: string | null
           codigo: string
+          codigo_externo: string | null
           created_at: string
+          data_integracao: string | null
+          hash_integracao: string | null
           id: string
           natureza_id: string | null
           nivel: number
           nome: string
           pai_id: string | null
+          retencao_padrao_pct: number | null
+          sistema_destino: string | null
+          status_integracao: string
           tipo: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          categoria?: string | null
           codigo: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
+          hash_integracao?: string | null
           id?: string
           natureza_id?: string | null
           nivel?: number
           nome: string
           pai_id?: string | null
+          retencao_padrao_pct?: number | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          categoria?: string | null
           codigo?: string
+          codigo_externo?: string | null
           created_at?: string
+          data_integracao?: string | null
+          hash_integracao?: string | null
           id?: string
           natureza_id?: string | null
           nivel?: number
           nome?: string
           pai_id?: string | null
+          retencao_padrao_pct?: number | null
+          sistema_destino?: string | null
+          status_integracao?: string
           tipo?: string
           updated_at?: string
         }
@@ -4239,6 +4587,7 @@ export type Database = {
         Row: {
           ativo: boolean
           categoria: string | null
+          categoria_contabil: string | null
           codigo: string
           created_at: string
           custo_unitario: number
@@ -4253,6 +4602,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           categoria?: string | null
+          categoria_contabil?: string | null
           codigo: string
           created_at?: string
           custo_unitario?: number
@@ -4267,6 +4617,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           categoria?: string | null
+          categoria_contabil?: string | null
           codigo?: string
           created_at?: string
           custo_unitario?: number
@@ -4318,6 +4669,7 @@ export type Database = {
       }
       projetos: {
         Row: {
+          centro_custo_id: string | null
           cidade: string | null
           cliente_id: string | null
           codigo: string | null
@@ -4339,6 +4691,7 @@ export type Database = {
           valor_estimado: number | null
         }
         Insert: {
+          centro_custo_id?: string | null
           cidade?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -4360,6 +4713,7 @@ export type Database = {
           valor_estimado?: number | null
         }
         Update: {
+          centro_custo_id?: string | null
           cidade?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -4381,6 +4735,13 @@ export type Database = {
           valor_estimado?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projetos_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projetos_cliente_id_fkey"
             columns: ["cliente_id"]
@@ -5485,6 +5846,7 @@ export type Database = {
       titulos_financeiros: {
         Row: {
           cancelado_em: string | null
+          centro_custo_id: string | null
           centro_id: string | null
           chave_documento: string | null
           cliente_id: string | null
@@ -5520,6 +5882,12 @@ export type Database = {
           origem_tipo: string
           renegociado_em: string | null
           renegociado_por: string | null
+          retencao_cofins: number
+          retencao_csll: number
+          retencao_inss: number
+          retencao_irrf: number
+          retencao_iss: number
+          retencao_pis: number
           row_version: number
           saldo: number
           serie_documento: string | null
@@ -5537,6 +5905,7 @@ export type Database = {
         }
         Insert: {
           cancelado_em?: string | null
+          centro_custo_id?: string | null
           centro_id?: string | null
           chave_documento?: string | null
           cliente_id?: string | null
@@ -5572,6 +5941,12 @@ export type Database = {
           origem_tipo: string
           renegociado_em?: string | null
           renegociado_por?: string | null
+          retencao_cofins?: number
+          retencao_csll?: number
+          retencao_inss?: number
+          retencao_irrf?: number
+          retencao_iss?: number
+          retencao_pis?: number
           row_version?: number
           saldo?: number
           serie_documento?: string | null
@@ -5589,6 +5964,7 @@ export type Database = {
         }
         Update: {
           cancelado_em?: string | null
+          centro_custo_id?: string | null
           centro_id?: string | null
           chave_documento?: string | null
           cliente_id?: string | null
@@ -5624,6 +6000,12 @@ export type Database = {
           origem_tipo?: string
           renegociado_em?: string | null
           renegociado_por?: string | null
+          retencao_cofins?: number
+          retencao_csll?: number
+          retencao_inss?: number
+          retencao_irrf?: number
+          retencao_iss?: number
+          retencao_pis?: number
           row_version?: number
           saldo?: number
           serie_documento?: string | null
@@ -5715,6 +6097,13 @@ export type Database = {
             columns: ["titulo_substituto_id"]
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
             referencedColumns: ["id"]
           },
           {

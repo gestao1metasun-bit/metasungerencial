@@ -93,6 +93,7 @@ function EstoquePage() {
   const podeEntregar = isAdmin;
   const podeAjustarEstoque = isAdmin;
   const st = useEstoqueState();
+  const [histOpen, setHistOpen] = useState(false);
 
   // D16.PERF P2.1 — first-list.ready (estoque)
   useEffect(() => {

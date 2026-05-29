@@ -82,13 +82,16 @@ function AssinaturasPage() {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "exportar", "imprimir"]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         searchPlaceholder="Buscar contrato, assinante, observação…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") void refetch();
           else if (a === "imprimir") window.print();
+          else if (a === "colunas") toast.info("Gestor de colunas universal chega em D17.UI.4c.");
+          else if (a === "historico") toast.info("Esta tela já é a timeline de histórico oficial.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4c.");
         }}
       />
 

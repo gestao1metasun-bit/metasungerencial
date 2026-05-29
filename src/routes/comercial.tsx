@@ -5622,9 +5622,9 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
                     <RowActions
                       rowId={c.id}
                       actions={[
-                        { kind: "visualizar", tooltip: "Abrir aditivos do contrato" },
-                        { kind: "anexos", tooltip: "Anexos do contrato", badgeCount: aDoContrato.length || undefined },
-                        { kind: "historico", tooltip: "Histórico de aditivos", overflow: true },
+                        { kind: "visualizar", label: "Abrir aditivos do contrato" },
+                        { kind: "anexos", label: "Anexos do contrato", badgeCount: aDoContrato.length || undefined },
+                        { kind: "historico", label: "Histórico de aditivos", overflow: true },
                       ]}
                       onAction={(kind) => {
                         if (kind === "visualizar" || kind === "anexos" || kind === "historico") setOpenId(c.id);

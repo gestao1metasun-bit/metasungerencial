@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar, RowActions, type RowActionKind } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

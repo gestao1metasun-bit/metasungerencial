@@ -4829,7 +4829,7 @@ function VendedoresTab({
         <NovoVendedorDialog onSave={(v) => setVendedoresList([...vendedoresList, v])} nextId={`VEN-${String(vendedoresList.length + 1).padStart(2, "0")}`} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {vendedoresList.map((v) => {
+        {filtrados.map((v) => {
           const meus = contratos.filter((c) => c.vendedor === v.nome);
           const valor = meus.reduce((s, c) => s + c.valor, 0);
           const ass = meus.filter((c) => c.status === "Assinado").length;

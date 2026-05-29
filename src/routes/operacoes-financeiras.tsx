@@ -192,6 +192,24 @@ function defaultContraparteParaTipo(tipo: OpFinTipo): ContraparteTipo {
   }
 }
 
+/** Tipo da operação → natureza de caixa canônica (regra de pedra). */
+function naturezaCanonicaParaTipo(tipo: OpFinTipo): "ENTRADA" | "SAIDA" {
+  switch (tipo) {
+    // Empresa CONCEDE → saída de caixa, gera A Receber
+    case "EMPRESTIMO_CLIENTE":
+    case "EMPRESTIMO_FORNECEDOR":
+    case "EMPRESTIMO_COLABORADOR":
+    case "EMPRESTIMO_EMPRESA_TERCEIRO":
+    case "APLICACAO_FINANCEIRA":
+      return "SAIDA";
+    // Empresa RECEBE / sócio aporta → entrada de caixa, gera A Pagar (quando há contraparte)
+    case "EMPRESTIMO_SOCIO_EMPRESA":
+    case "CAPITAL_DE_GIRO":
+    case "APORTE_CAPITAL":
+      return "ENTRADA";
+  }
+}
+
 interface ParcelaLocal {
   numero: number;
   valor: number;
@@ -299,10 +317,11 @@ function NovaOperacaoDialog({
     }));
   }, [valor, qtdParcelas, primeiroVenc, intervalo, mesmoVencimento, mesmaCompetencia, competenciaBase]);
 
-  // Quando o tipo muda, ajusta sugestão de contraparte
+  // Quando o tipo muda, ajusta contraparte E natureza canônica (D17.UI.6 — regra de pedra).
   useEffect(() => {
     setContraTipo(defaultContraparteParaTipo(tipo));
     setContraId(""); setContraNome(""); setContraDoc("");
+    setNatureza(naturezaCanonicaParaTipo(tipo));
   }, [tipo]);
 
   const somaParcelas = useMemo(

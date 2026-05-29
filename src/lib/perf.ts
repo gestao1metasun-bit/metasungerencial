@@ -96,7 +96,28 @@ export function perfMarkIfAbsent(label: string): void {
   if (marks[label] == null) marks[label] = performance.now();
 }
 
+// D19.1.fix F1+F2 — limites de sanidade da telemetria
+const MAX_TRUSTED_MS = 15_000; // > 15s = quase certamente outlier de aba ociosa
+
 function enqueue(evento: string, ms: number, rota?: string) {
+  // F1: descartar quando a aba não estava visível no momento do registro.
+  // Performance API conta tempo total da aba, então uma medição feita após
+  // a aba ficar oculta contamina o P95.
+  if (
+    typeof document !== 'undefined' &&
+    document.visibilityState &&
+    document.visibilityState !== 'visible'
+  ) {
+    pushRing({ evento: `[skip:hidden]${evento}`, ms, rota, at: Date.now() });
+    return;
+  }
+  // F2: drop hard outliers (>15s) — ainda registrados no ring local para debug,
+  // mas nunca enviados ao banco (mantém P95 confiável).
+  if (ms > MAX_TRUSTED_MS) {
+    pushRing({ evento: `[skip:outlier]${evento}`, ms, rota, at: Date.now() });
+    return;
+  }
+
   pushRing({ evento, ms, rota, at: Date.now() });
   if (import.meta.env.DEV) {
     // eslint-disable-next-line no-console
@@ -193,3 +214,26 @@ if (isClient) {
 }
 
 export const _perfRingForTest = ring;
+
+/**
+ * D19.1.fix F5 — wrapper de instrumentação para RPCs críticas.
+ * Mede o tempo client-side da chamada (rede + execução server) e reporta
+ * como `rpc.<nome>` na telemetria.
+ *
+ * Uso:
+ *   const data = await withPerf('rpc.lancamento_criar', () =>
+ *     supabase.rpc('rpc_lancamento_criar', { ... })
+ *   );
+ *
+ * Nunca afeta o resultado/erro — apenas envolve.
+ */
+export async function withPerf<T>(label: string, fn: () => PromiseLike<T> | T): Promise<T> {
+  if (!isClient) return Promise.resolve(fn());
+  const t0 = performance.now();
+  try {
+    return await Promise.resolve(fn());
+  } finally {
+    const ms = performance.now() - t0;
+    enqueue(label.startsWith('rpc.') ? label : `rpc.${label}`, ms, currentRoute());
+  }
+}

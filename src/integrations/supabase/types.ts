@@ -9378,6 +9378,23 @@ export type Database = {
         }
         Relationships: []
       }
+      v_perf_p95_filtrado_7d: {
+        Row: {
+          amostras: number | null
+          amostras_outlier: number | null
+          amostras_validas: number | null
+          evento: string | null
+          max_filtrado: number | null
+          max_ms: number | null
+          p50_filtrado: number | null
+          p50_ms: number | null
+          p95_filtrado: number | null
+          p95_ms: number | null
+          p99_filtrado: number | null
+          rota: string | null
+        }
+        Relationships: []
+      }
       v_rastreabilidade_operacional: {
         Row: {
           contrato_codigo: string | null

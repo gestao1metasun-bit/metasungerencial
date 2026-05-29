@@ -77,21 +77,25 @@ export const lancamentosRepo = {
   /** Cria lançamento via RPC oficial (atômico + idempotente). */
   async criar(input: NovoLancamentoInput, requestId?: string): Promise<string> {
     const reqId = requestId ?? novoRequestId();
-    const { data, error } = await supabase.rpc('rpc_lancamento_criar', {
-      _request_id: reqId,
-      _tipo: input.tipo,
-      _valor: input.valor,
-      _vencimento: input.vencimento,
-      _natureza_id: input.natureza_id,
-      _centro_id: input.centro_id,
-      _conta_id: input.conta_id,
-      _cliente_id: input.cliente_id ?? null,
-      _fornecedor_id: input.fornecedor_id ?? null,
-      _contrato_id: input.contrato_id ?? null,
-      _descricao: input.descricao ?? null,
-      _competencia: input.competencia ?? null,
-      _forma_pagamento: input.forma_pagamento ?? null,
-    } as never);
+    // D19.1.fix F5 — instrumentação client-side da RPC crítica.
+    const { withPerf } = await import('@/lib/perf');
+    const { data, error } = await withPerf('rpc.lancamento_criar', () =>
+      supabase.rpc('rpc_lancamento_criar', {
+        _request_id: reqId,
+        _tipo: input.tipo,
+        _valor: input.valor,
+        _vencimento: input.vencimento,
+        _natureza_id: input.natureza_id,
+        _centro_id: input.centro_id,
+        _conta_id: input.conta_id,
+        _cliente_id: input.cliente_id ?? null,
+        _fornecedor_id: input.fornecedor_id ?? null,
+        _contrato_id: input.contrato_id ?? null,
+        _descricao: input.descricao ?? null,
+        _competencia: input.competencia ?? null,
+        _forma_pagamento: input.forma_pagamento ?? null,
+      } as never),
+    );
     if (error) throw error;
     return data as unknown as string;
   },

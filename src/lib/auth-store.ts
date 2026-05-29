@@ -187,7 +187,21 @@ export async function signInEmail(email: string, password: string) {
   });
   if (error) throw error;
   if (data?.session && data?.user) {
-    await validateActiveSession(data.session);
+    // D19.1.fix F3 — boot de auth paralelo.
+    // signInWithPassword JÁ retorna sessão+user validados pelo Supabase Auth.
+    // Não fazemos getUser+getSession redundantes (era o gargalo de ~1.6s).
+    // Apenas carrega o papel; estado de usuário é exposto imediatamente.
+    const session = data.session;
+    const user = data.user;
+    _state = { session, user, role: _state.user?.id === user.id ? _state.role : null, loading: false };
+    emit();
+    // Papel em paralelo — não bloqueia navegação para o dashboard.
+    void loadRole(user.id).then((role) => {
+      _state = { session, user, role, loading: false };
+      console.info("[auth-session] role carregado (fast-path)", { role, userId: user.id });
+      emit();
+      void hydrateFunnel(true);
+    });
   }
 }
 

@@ -55,7 +55,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
 
 export { PropostasPage, CadastrosFV };
 

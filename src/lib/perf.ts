@@ -227,11 +227,11 @@ export const _perfRingForTest = ring;
  *
  * Nunca afeta o resultado/erro — apenas envolve.
  */
-export async function withPerf<T>(label: string, fn: () => Promise<T>): Promise<T> {
-  if (!isClient) return fn();
+export async function withPerf<T>(label: string, fn: () => PromiseLike<T> | T): Promise<T> {
+  if (!isClient) return Promise.resolve(fn());
   const t0 = performance.now();
   try {
-    return await fn();
+    return await Promise.resolve(fn());
   } finally {
     const ms = performance.now() - t0;
     enqueue(label.startsWith('rpc.') ? label : `rpc.${label}`, ms, currentRoute());

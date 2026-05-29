@@ -66,6 +66,7 @@ function FinanciamentosPage() {
   const [ops, setOps] = useState<FinOp[]>(() => finSeed);
   const [pend] = useFinPendencias();
   const pendCount = pend.filter((p) => p.status === "Pendente").length;
+  const [histOpen, setHistOpen] = useState(false);
 
   const updateOp = (id: string, patch: Partial<FinOp>) => {
     setOps((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));

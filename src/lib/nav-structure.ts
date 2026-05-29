@@ -100,6 +100,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/pedidos-venda",      label: "Pedidos de Venda",   icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 15, critica: true },
   { to: "/financeiro",         label: "Financeiro",         icon: Wallet,          accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 10, critica: true },
   { to: "/financeiro-titulos", label: "Títulos Financeiros",icon: Receipt,         accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 20, critica: true },
+  { to: "/operacoes-financeiras", label: "Operações Financeiras", icon: Banknote,   accessKey: "financeiro",    tier: "operacao",  macro: "financeiro",    ordem: 25 },
   { to: "/financiamentos",     label: "Financiamentos",     icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "financiamentos",ordem: 10 },
   { to: "/engenharia",         label: "Engenharia",         icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "engenharia",    ordem: 10, critica: true },
   { to: "/posvenda",           label: "Pós-venda",          icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "posvenda",      ordem: 10, critica: true },

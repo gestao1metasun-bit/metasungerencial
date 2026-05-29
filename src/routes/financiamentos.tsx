@@ -81,6 +81,7 @@ function FinanciamentosPage() {
         <EnterpriseRecordToolbar
           entityType="financiamentos"
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          selectedIds={[]}
           searchPlaceholder="Buscar contrato, cliente, banco, gerente…"
           onAction={(a) => {
             if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }

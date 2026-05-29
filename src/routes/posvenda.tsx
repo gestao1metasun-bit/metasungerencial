@@ -79,6 +79,7 @@ function PosVendaPage() {
         <EnterpriseRecordToolbar
           entityType="posvenda"
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          selectedIds={[]}
           searchPlaceholder="Buscar chamado, cliente, tipo, status…"
           onAction={(a) => {
             if (a === "novo") setTab("chamados");

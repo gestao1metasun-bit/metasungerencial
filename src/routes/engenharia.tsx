@@ -454,7 +454,9 @@ function EngenhariaPage() {
         <EnterpriseRecordToolbar
           entityType="engenharia"
           selectedIds={[]}
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+          statusActions={ribbonRm({ visualizar: () => setTab("ativas") })}
+          layoutBar={layoutBarRm()}
           searchPlaceholder="Buscar obra, contrato, cliente, equipe…"
           onAction={(a) => {
             if (a === "atualizar") reloadObrasReais();

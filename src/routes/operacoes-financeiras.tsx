@@ -274,6 +274,11 @@ function NovaOperacaoDialog({
   const [centroId, setCentroId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
 
+  // Opções de parcelamento
+  const [mesmoVencimento, setMesmoVencimento] = useState(false);
+  const [mesmaCompetencia, setMesmaCompetencia] = useState(false);
+  const [competenciaBase, setCompetenciaBase] = useState(competenciaDe(new Date().toISOString().slice(0, 10)));
+
   // Contraparte estruturada
   const [contraTipo, setContraTipo] = useState<ContraparteTipo>(defaultContraparteParaTipo(tipoDefault));
   const [contraId, setContraId] = useState<string>("");
@@ -283,14 +288,17 @@ function NovaOperacaoDialog({
   // Grade local de parcelas (editável)
   const [parcelas, setParcelas] = useState<ParcelaLocal[]>([]);
 
-  // Recalcula grade ao mudar valor/qtd/venc/intervalo
+  // Recalcula grade ao mudar inputs base
   useEffect(() => {
     const v = parseFloat(valor.replace(",", "."));
     const qtd = parseInt(qtdParcelas, 10);
     const interv = parseInt(intervalo, 10) || 30;
     if (!v || v <= 0 || !qtd || !primeiroVenc) { setParcelas([]); return; }
-    setParcelas(gerarGradeLocal(v, qtd, primeiroVenc, interv));
-  }, [valor, qtdParcelas, primeiroVenc, intervalo]);
+    setParcelas(gerarGradeLocal({
+      valorTotal: v, qtd, primeiroVenc, intervalo: interv,
+      mesmoVencimento, competenciaBase: competenciaBase || competenciaDe(primeiroVenc), mesmaCompetencia,
+    }));
+  }, [valor, qtdParcelas, primeiroVenc, intervalo, mesmoVencimento, mesmaCompetencia, competenciaBase]);
 
   // Quando o tipo muda, ajusta sugestão de contraparte
   useEffect(() => {
@@ -314,6 +322,8 @@ function NovaOperacaoDialog({
     setContraId(""); setContraNome(""); setContraDoc("");
     setPrimeiroVenc(new Date().toISOString().slice(0, 10));
     setIntervalo("30"); setParcelas([]);
+    setMesmoVencimento(false); setMesmaCompetencia(false);
+    setCompetenciaBase(competenciaDe(new Date().toISOString().slice(0, 10)));
   };
 
   const updateParcelaLocal = (idx: number, patch: Partial<ParcelaLocal>) => {
@@ -324,7 +334,10 @@ function NovaOperacaoDialog({
     const v = parseFloat(valor.replace(",", "."));
     const qtd = parseInt(qtdParcelas, 10);
     const interv = parseInt(intervalo, 10) || 30;
-    setParcelas(gerarGradeLocal(v, qtd, primeiroVenc, interv));
+    setParcelas(gerarGradeLocal({
+      valorTotal: v, qtd, primeiroVenc, intervalo: interv,
+      mesmoVencimento, competenciaBase: competenciaBase || competenciaDe(primeiroVenc), mesmaCompetencia,
+    }));
   };
 
   /** Monta os campos de contraparte conforme tipo selecionado. */

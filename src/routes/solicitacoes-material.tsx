@@ -34,7 +34,7 @@ import {
 import {
   Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({

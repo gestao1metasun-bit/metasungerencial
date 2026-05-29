@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { OperacoesFinanceirasGrid } from "@/components/op-financeiras/OperacoesFinanceirasGrid";
 import {
@@ -192,22 +193,56 @@ function defaultContraparteParaTipo(tipo: OpFinTipo): ContraparteTipo {
   }
 }
 
-interface ParcelaLocal { numero: number; valor: number; vencimento: string; }
+interface ParcelaLocal {
+  numero: number;
+  valor: number;
+  vencimento: string;
+  competencia: string; // YYYY-MM-01
+  observacao: string;
+}
 
-/** Gera grade uniforme: valor/qtd dividido em N, sobra na última; vencimentos primeiroVenc + (n-1)*intervalo. */
-function gerarGradeLocal(valorTotal: number, qtd: number, primeiroVenc: string, intervalo: number): ParcelaLocal[] {
+/** Deriva competência (YYYY-MM-01) a partir de uma data YYYY-MM-DD. */
+function competenciaDe(dataISO: string): string {
+  if (!dataISO) return "";
+  return dataISO.slice(0, 7) + "-01";
+}
+
+interface GerarOpts {
+  valorTotal: number;
+  qtd: number;
+  primeiroVenc: string;
+  intervalo: number;
+  mesmoVencimento: boolean;
+  competenciaBase: string; // YYYY-MM-01
+  mesmaCompetencia: boolean;
+}
+
+/** Gera grade uniforme respeitando opções de mesmo vencimento / mesma competência. */
+function gerarGradeLocal(opts: GerarOpts): ParcelaLocal[] {
+  const { valorTotal, qtd, primeiroVenc, intervalo, mesmoVencimento, competenciaBase, mesmaCompetencia } = opts;
   if (!valorTotal || !qtd || qtd < 1 || !primeiroVenc) return [];
-  const base = new Date(primeiroVenc + "T00:00:00");
+  const baseV = new Date(primeiroVenc + "T00:00:00");
+  const baseC = competenciaBase ? new Date(competenciaBase + "T00:00:00") : baseV;
   const valorBase = Math.floor((valorTotal / qtd) * 100) / 100;
   const grade: ParcelaLocal[] = [];
   let acumulado = 0;
   for (let i = 0; i < qtd; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i * intervalo);
+    // vencimento
+    let venc = primeiroVenc;
+    if (!mesmoVencimento) {
+      const d = new Date(baseV); d.setDate(baseV.getDate() + i * intervalo);
+      venc = d.toISOString().slice(0, 10);
+    }
+    // competência
+    let comp = competenciaBase || competenciaDe(primeiroVenc);
+    if (!mesmaCompetencia) {
+      const c = new Date(baseC); c.setMonth(baseC.getMonth() + i);
+      comp = c.toISOString().slice(0, 10).slice(0, 7) + "-01";
+    }
     const isLast = i === qtd - 1;
     const valor = isLast ? Math.round((valorTotal - acumulado) * 100) / 100 : valorBase;
     acumulado += valor;
-    grade.push({ numero: i + 1, valor, vencimento: d.toISOString().slice(0, 10) });
+    grade.push({ numero: i + 1, valor, vencimento: venc, competencia: comp, observacao: "" });
   }
   return grade;
 }
@@ -239,6 +274,11 @@ function NovaOperacaoDialog({
   const [centroId, setCentroId] = useState<string>("");
   const [contaId, setContaId] = useState<string>("");
 
+  // Opções de parcelamento
+  const [mesmoVencimento, setMesmoVencimento] = useState(false);
+  const [mesmaCompetencia, setMesmaCompetencia] = useState(false);
+  const [competenciaBase, setCompetenciaBase] = useState(competenciaDe(new Date().toISOString().slice(0, 10)));
+
   // Contraparte estruturada
   const [contraTipo, setContraTipo] = useState<ContraparteTipo>(defaultContraparteParaTipo(tipoDefault));
   const [contraId, setContraId] = useState<string>("");
@@ -248,14 +288,17 @@ function NovaOperacaoDialog({
   // Grade local de parcelas (editável)
   const [parcelas, setParcelas] = useState<ParcelaLocal[]>([]);
 
-  // Recalcula grade ao mudar valor/qtd/venc/intervalo
+  // Recalcula grade ao mudar inputs base
   useEffect(() => {
     const v = parseFloat(valor.replace(",", "."));
     const qtd = parseInt(qtdParcelas, 10);
     const interv = parseInt(intervalo, 10) || 30;
     if (!v || v <= 0 || !qtd || !primeiroVenc) { setParcelas([]); return; }
-    setParcelas(gerarGradeLocal(v, qtd, primeiroVenc, interv));
-  }, [valor, qtdParcelas, primeiroVenc, intervalo]);
+    setParcelas(gerarGradeLocal({
+      valorTotal: v, qtd, primeiroVenc, intervalo: interv,
+      mesmoVencimento, competenciaBase: competenciaBase || competenciaDe(primeiroVenc), mesmaCompetencia,
+    }));
+  }, [valor, qtdParcelas, primeiroVenc, intervalo, mesmoVencimento, mesmaCompetencia, competenciaBase]);
 
   // Quando o tipo muda, ajusta sugestão de contraparte
   useEffect(() => {
@@ -279,6 +322,8 @@ function NovaOperacaoDialog({
     setContraId(""); setContraNome(""); setContraDoc("");
     setPrimeiroVenc(new Date().toISOString().slice(0, 10));
     setIntervalo("30"); setParcelas([]);
+    setMesmoVencimento(false); setMesmaCompetencia(false);
+    setCompetenciaBase(competenciaDe(new Date().toISOString().slice(0, 10)));
   };
 
   const updateParcelaLocal = (idx: number, patch: Partial<ParcelaLocal>) => {
@@ -289,7 +334,10 @@ function NovaOperacaoDialog({
     const v = parseFloat(valor.replace(",", "."));
     const qtd = parseInt(qtdParcelas, 10);
     const interv = parseInt(intervalo, 10) || 30;
-    setParcelas(gerarGradeLocal(v, qtd, primeiroVenc, interv));
+    setParcelas(gerarGradeLocal({
+      valorTotal: v, qtd, primeiroVenc, intervalo: interv,
+      mesmoVencimento, competenciaBase: competenciaBase || competenciaDe(primeiroVenc), mesmaCompetencia,
+    }));
   };
 
   /** Monta os campos de contraparte conforme tipo selecionado. */
@@ -335,6 +383,10 @@ function NovaOperacaoDialog({
       toast.error(`Soma das parcelas (${somaParcelas.toFixed(2)}) difere do valor total (${v.toFixed(2)}).`);
       return;
     }
+    const semVenc = parcelas.find((p) => !p.vencimento);
+    if (semVenc) { toast.error(`Parcela ${semVenc.numero} sem vencimento.`); return; }
+    const semComp = parcelas.find((p) => !p.competencia);
+    if (semComp) { toast.error(`Parcela ${semComp.numero} sem competência.`); return; }
 
     const contraFields = montarContraparte();
 
@@ -348,6 +400,7 @@ function NovaOperacaoDialog({
         finalidade,
         observacoes: observacoes || undefined,
         instituicao: instituicao || undefined,
+        competencia: competenciaBase || competenciaDe(primeiroVenc) || undefined,
         juros_pct: jurosPct ? parseFloat(jurosPct.replace(",", ".")) : undefined,
         ...contraFields,
       });
@@ -497,7 +550,23 @@ function NovaOperacaoDialog({
               </div>
               <div>
                 <Label className="text-[11px]">Intervalo (dias)</Label>
-                <Input type="number" min={1} className="h-8" value={intervalo} onChange={(e) => setIntervalo(e.target.value)} />
+                <Input type="number" min={1} className="h-8" value={intervalo} onChange={(e) => setIntervalo(e.target.value)} disabled={mesmoVencimento} />
+              </div>
+              <div>
+                <Label className="text-[11px]">1ª competência *</Label>
+                <Input type="month" className="h-8"
+                  value={competenciaBase ? competenciaBase.slice(0, 7) : ""}
+                  onChange={(e) => setCompetenciaBase(e.target.value ? e.target.value + "-01" : "")} />
+              </div>
+              <div className="col-span-3 flex flex-col gap-1 justify-end pb-1">
+                <label className="flex items-center gap-2 text-[11.5px] cursor-pointer">
+                  <Checkbox checked={mesmoVencimento} onCheckedChange={(c) => setMesmoVencimento(c === true)} />
+                  Usar mesmo vencimento para todas as parcelas
+                </label>
+                <label className="flex items-center gap-2 text-[11.5px] cursor-pointer">
+                  <Checkbox checked={mesmaCompetencia} onCheckedChange={(c) => setMesmaCompetencia(c === true)} />
+                  Usar mesma competência para todas as parcelas
+                </label>
               </div>
             </div>
 
@@ -514,13 +583,15 @@ function NovaOperacaoDialog({
                     </Button>
                   </div>
                 </div>
-                <div className="max-h-56 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   <table className="w-full text-[11.5px]">
                     <thead className="bg-muted/20 text-[10.5px] uppercase text-muted-foreground">
                       <tr>
                         <th className="px-2 py-1 text-left w-12">#</th>
                         <th className="px-2 py-1 text-left">Vencimento</th>
+                        <th className="px-2 py-1 text-left">Competência</th>
                         <th className="px-2 py-1 text-right">Valor (R$)</th>
+                        <th className="px-2 py-1 text-left">Observação</th>
                         <th className="px-2 py-1 w-8" />
                       </tr>
                     </thead>
@@ -532,9 +603,19 @@ function NovaOperacaoDialog({
                             <Input type="date" className="h-7 text-[11.5px]" value={p.vencimento}
                               onChange={(e) => updateParcelaLocal(idx, { vencimento: e.target.value })} />
                           </td>
+                          <td className="px-2 py-1">
+                            <Input type="month" className="h-7 text-[11.5px]"
+                              value={p.competencia ? p.competencia.slice(0, 7) : ""}
+                              onChange={(e) => updateParcelaLocal(idx, { competencia: e.target.value ? e.target.value + "-01" : "" })} />
+                          </td>
                           <td className="px-2 py-1 text-right">
                             <Input className="h-7 text-[11.5px] text-right" value={p.valor.toFixed(2)}
                               onChange={(e) => updateParcelaLocal(idx, { valor: parseFloat(e.target.value.replace(",", ".")) || 0 })} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input className="h-7 text-[11.5px]" value={p.observacao}
+                              onChange={(e) => updateParcelaLocal(idx, { observacao: e.target.value })}
+                              placeholder="—" />
                           </td>
                           <td className="px-2 py-1 text-center text-muted-foreground">
                             <Trash2 className="h-3 w-3 opacity-30" />

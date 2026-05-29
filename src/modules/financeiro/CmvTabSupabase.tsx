@@ -50,8 +50,13 @@ export function CmvTabSupabase() {
     return [...m.entries()].sort(([a], [b]) => b.localeCompare(a));
   }, [linhas]);
 
+  const qc = useQueryClient();
   return (
     <div className="space-y-4">
+      <RmTabHeader
+        onAtualizar={() => qc.invalidateQueries({ queryKey: ["cmv-oficial"] })}
+        searchPlaceholder="Buscar competência…"
+      />
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="Custo total (AP)" value={fmtBRL(totais.tot)} icon={TrendingDown} tone="destructive" />
         <StatCard label="Custo realizado" value={fmtBRL(totais.real)} icon={Package} tone="success" />

@@ -92,7 +92,7 @@ function AssinaturasPage() {
           if (a === "atualizar") void refetch();
           else if (a === "imprimir") window.print();
           else if (a === "colunas") toast.info("Gestor de colunas universal chega em D17.UI.4c.");
-          else if (a === "historico") toast.info("Esta tela já é a timeline de histórico oficial.");
+          else if (a === "historico") setHistOpen(true);
           else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.4c.");
         }}
       />

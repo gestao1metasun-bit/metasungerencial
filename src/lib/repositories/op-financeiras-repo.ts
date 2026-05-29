@@ -11,6 +11,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/observability";
+import { withPerf } from "@/lib/perf";
 const logError = (op: string, msg: string, meta?: Record<string, unknown>) =>
   logger.error("op-fin", op, msg, meta);
 

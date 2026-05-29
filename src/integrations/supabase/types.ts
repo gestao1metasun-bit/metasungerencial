@@ -992,22 +992,32 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cidade: string | null
+          codigo_externo: string | null
           complemento: string | null
           consultor_id: string | null
           created_at: string
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           doc: string | null
           email: string | null
+          hash_integracao: string | null
           id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           nome: string
           numero: string | null
+          regime_tributario: string | null
+          rg: string | null
           row_version: number
           rua: string | null
+          sistema_destino: string | null
           status: string
+          status_integracao: string
           telefone: string | null
           telefone2: string | null
+          tipo_pessoa: string
           uf: string | null
           updated_at: string
         }
@@ -1015,22 +1025,32 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          codigo_externo?: string | null
           complemento?: string | null
           consultor_id?: string | null
           created_at?: string
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           doc?: string | null
           email?: string | null
+          hash_integracao?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           nome: string
           numero?: string | null
+          regime_tributario?: string | null
+          rg?: string | null
           row_version?: number
           rua?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           telefone?: string | null
           telefone2?: string | null
+          tipo_pessoa?: string
           uf?: string | null
           updated_at?: string
         }
@@ -1038,22 +1058,32 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          codigo_externo?: string | null
           complemento?: string | null
           consultor_id?: string | null
           created_at?: string
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           doc?: string | null
           email?: string | null
+          hash_integracao?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           nome?: string
           numero?: string | null
+          regime_tributario?: string | null
+          rg?: string | null
           row_version?: number
           rua?: string | null
+          sistema_destino?: string | null
           status?: string
+          status_integracao?: string
           telefone?: string | null
           telefone2?: string | null
+          tipo_pessoa?: string
           uf?: string | null
           updated_at?: string
         }
@@ -1383,6 +1413,39 @@ export type Database = {
           },
         ]
       }
+      comercial_eventos_catalogo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          evento: string
+          evento_canonico: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao: string
+          evento: string
+          evento_canonico: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          evento?: string
+          evento_canonico?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comercial_pipeline_etapas: {
         Row: {
           ativo: boolean
@@ -1526,8 +1589,10 @@ export type Database = {
           centro_resultado_id: string | null
           cliente_id: string
           codigo: string | null
+          codigo_externo: string | null
           comissao_pct: number | null
           comissao_valor: number | null
+          competencia: string | null
           consultor_id: string | null
           contrato_redigido: boolean
           created_at: string
@@ -1535,6 +1600,7 @@ export type Database = {
           data_assinatura: string | null
           data_fim: string | null
           data_inicio: string | null
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
@@ -1543,6 +1609,7 @@ export type Database = {
           financiamento_status: string | null
           financiamento_valor: number | null
           forma_pagamento: string | null
+          hash_integracao: string | null
           id: string
           inversor: string | null
           lead_id: string | null
@@ -1554,6 +1621,7 @@ export type Database = {
           liberado_para_financeiro: boolean
           liberado_para_financeiro_em: string | null
           liberado_por: string | null
+          lote_integracao_id: string | null
           modulos_qtde: number | null
           motivo_cancelamento: string | null
           natureza_receita_id: string | null
@@ -1564,7 +1632,11 @@ export type Database = {
           potencia_kwp: number | null
           proposta_id: string | null
           row_version: number
+          sistema_destino: string | null
+          situacao_fiscal: string
           status: string
+          status_integracao: string
+          tipo_documento_fiscal: string | null
           updated_at: string
           valor_entrada: number
           valor_total: number
@@ -1583,8 +1655,10 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id: string
           codigo?: string | null
+          codigo_externo?: string | null
           comissao_pct?: number | null
           comissao_valor?: number | null
+          competencia?: string | null
           consultor_id?: string | null
           contrato_redigido?: boolean
           created_at?: string
@@ -1592,6 +1666,7 @@ export type Database = {
           data_assinatura?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
@@ -1600,6 +1675,7 @@ export type Database = {
           financiamento_status?: string | null
           financiamento_valor?: number | null
           forma_pagamento?: string | null
+          hash_integracao?: string | null
           id?: string
           inversor?: string | null
           lead_id?: string | null
@@ -1611,6 +1687,7 @@ export type Database = {
           liberado_para_financeiro?: boolean
           liberado_para_financeiro_em?: string | null
           liberado_por?: string | null
+          lote_integracao_id?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
           natureza_receita_id?: string | null
@@ -1621,7 +1698,11 @@ export type Database = {
           potencia_kwp?: number | null
           proposta_id?: string | null
           row_version?: number
+          sistema_destino?: string | null
+          situacao_fiscal?: string
           status?: string
+          status_integracao?: string
+          tipo_documento_fiscal?: string | null
           updated_at?: string
           valor_entrada?: number
           valor_total?: number
@@ -1640,8 +1721,10 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id?: string
           codigo?: string | null
+          codigo_externo?: string | null
           comissao_pct?: number | null
           comissao_valor?: number | null
+          competencia?: string | null
           consultor_id?: string | null
           contrato_redigido?: boolean
           created_at?: string
@@ -1649,6 +1732,7 @@ export type Database = {
           data_assinatura?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
@@ -1657,6 +1741,7 @@ export type Database = {
           financiamento_status?: string | null
           financiamento_valor?: number | null
           forma_pagamento?: string | null
+          hash_integracao?: string | null
           id?: string
           inversor?: string | null
           lead_id?: string | null
@@ -1668,6 +1753,7 @@ export type Database = {
           liberado_para_financeiro?: boolean
           liberado_para_financeiro_em?: string | null
           liberado_por?: string | null
+          lote_integracao_id?: string | null
           modulos_qtde?: number | null
           motivo_cancelamento?: string | null
           natureza_receita_id?: string | null
@@ -1678,7 +1764,11 @@ export type Database = {
           potencia_kwp?: number | null
           proposta_id?: string | null
           row_version?: number
+          sistema_destino?: string | null
+          situacao_fiscal?: string
           status?: string
+          status_integracao?: string
+          tipo_documento_fiscal?: string | null
           updated_at?: string
           valor_entrada?: number
           valor_total?: number
@@ -2364,6 +2454,209 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lotes_integracao"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturamentos_comercial: {
+        Row: {
+          cancelado: boolean
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          chave_nfe: string | null
+          cliente_id: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          contrato_id: string | null
+          created_at: string
+          data_emissao: string
+          data_emissao_nf: string | null
+          data_integracao: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          hash_integracao: string | null
+          id: string
+          lote_integracao_id: string | null
+          motivo_cancelamento: string | null
+          natureza_receita_id: string | null
+          numero_interno: string | null
+          numero_nf: string | null
+          observacao: string | null
+          pedido_venda_id: string | null
+          row_version: number
+          serie_nf: string | null
+          sistema_destino: string | null
+          situacao: string
+          status_integracao: string
+          tipo_documento_fiscal: string | null
+          updated_at: string
+          valor_acrescimo: number
+          valor_bruto: number
+          valor_cofins: number
+          valor_csll: number
+          valor_desconto: number
+          valor_inss: number
+          valor_irrf: number
+          valor_iss: number
+          valor_liquido: number
+          valor_pis: number
+        }
+        Insert: {
+          cancelado?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          chave_nfe?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_emissao_nf?: string | null
+          data_integracao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
+          id?: string
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
+          numero_interno?: string | null
+          numero_nf?: string | null
+          observacao?: string | null
+          pedido_venda_id?: string | null
+          row_version?: number
+          serie_nf?: string | null
+          sistema_destino?: string | null
+          situacao?: string
+          status_integracao?: string
+          tipo_documento_fiscal?: string | null
+          updated_at?: string
+          valor_acrescimo?: number
+          valor_bruto?: number
+          valor_cofins?: number
+          valor_csll?: number
+          valor_desconto?: number
+          valor_inss?: number
+          valor_irrf?: number
+          valor_iss?: number
+          valor_liquido?: number
+          valor_pis?: number
+        }
+        Update: {
+          cancelado?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          chave_nfe?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_emissao_nf?: string | null
+          data_integracao?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
+          id?: string
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          natureza_receita_id?: string | null
+          numero_interno?: string | null
+          numero_nf?: string | null
+          observacao?: string | null
+          pedido_venda_id?: string | null
+          row_version?: number
+          serie_nf?: string | null
+          sistema_destino?: string | null
+          situacao?: string
+          status_integracao?: string
+          tipo_documento_fiscal?: string | null
+          updated_at?: string
+          valor_acrescimo?: number
+          valor_bruto?: number
+          valor_cofins?: number
+          valor_csll?: number
+          valor_desconto?: number
+          valor_inss?: number
+          valor_irrf?: number
+          valor_iss?: number
+          valor_liquido?: number
+          valor_pis?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturamentos_comercial_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_natureza_receita_id_fkey"
+            columns: ["natureza_receita_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "faturamentos_comercial_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["pv_id"]
           },
         ]
       }
@@ -4237,11 +4530,14 @@ export type Database = {
           centro_resultado_id: string | null
           cliente_id: string
           codigo: string | null
+          codigo_externo: string | null
           competencia: string | null
           consultor_id: string
           contrato_id: string
           created_at: string
           dados: Json
+          data_faturamento: string | null
+          data_integracao: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
@@ -4249,7 +4545,9 @@ export type Database = {
           financiamento_valor: number | null
           forma_pagamento: string | null
           gerente_id: string | null
+          hash_integracao: string | null
           id: string
+          lote_integracao_id: string | null
           motivo_cancelamento: string | null
           natureza_receita_id: string | null
           obra_id: string | null
@@ -4257,9 +4555,12 @@ export type Database = {
           possui_financiamento: boolean
           projeto_contrato_id: string | null
           row_version: number
+          sistema_destino: string | null
           status: string
           status_faturamento: string
+          status_integracao: string
           updated_at: string
+          valor_faturado: number
           valor_total: number
         }
         Insert: {
@@ -4270,11 +4571,14 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id: string
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id: string
           contrato_id: string
           created_at?: string
           dados?: Json
+          data_faturamento?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
@@ -4282,7 +4586,9 @@ export type Database = {
           financiamento_valor?: number | null
           forma_pagamento?: string | null
           gerente_id?: string | null
+          hash_integracao?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           natureza_receita_id?: string | null
           obra_id?: string | null
@@ -4290,9 +4596,12 @@ export type Database = {
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
           row_version?: number
+          sistema_destino?: string | null
           status?: string
           status_faturamento?: string
+          status_integracao?: string
           updated_at?: string
+          valor_faturado?: number
           valor_total?: number
         }
         Update: {
@@ -4303,11 +4612,14 @@ export type Database = {
           centro_resultado_id?: string | null
           cliente_id?: string
           codigo?: string | null
+          codigo_externo?: string | null
           competencia?: string | null
           consultor_id?: string
           contrato_id?: string
           created_at?: string
           dados?: Json
+          data_faturamento?: string | null
+          data_integracao?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
@@ -4315,7 +4627,9 @@ export type Database = {
           financiamento_valor?: number | null
           forma_pagamento?: string | null
           gerente_id?: string | null
+          hash_integracao?: string | null
           id?: string
+          lote_integracao_id?: string | null
           motivo_cancelamento?: string | null
           natureza_receita_id?: string | null
           obra_id?: string | null
@@ -4323,9 +4637,12 @@ export type Database = {
           possui_financiamento?: boolean
           projeto_contrato_id?: string | null
           row_version?: number
+          sistema_destino?: string | null
           status?: string
           status_faturamento?: string
+          status_integracao?: string
           updated_at?: string
+          valor_faturado?: number
           valor_total?: number
         }
         Relationships: [
@@ -4588,14 +4905,23 @@ export type Database = {
           ativo: boolean
           categoria: string | null
           categoria_contabil: string | null
+          cfop_padrao: string | null
           codigo: string
+          codigo_externo: string | null
+          codigo_servico_lc116: string | null
           created_at: string
+          cst_padrao: string | null
           custo_unitario: number
           dados: Json
           deleted_at: string | null
           estoque_minimo: number
           id: string
+          ncm: string | null
           nome: string
+          origem_fiscal: string | null
+          sistema_destino: string | null
+          status_integracao: string
+          tipo_item: string
           unidade: string
           updated_at: string
         }
@@ -4603,14 +4929,23 @@ export type Database = {
           ativo?: boolean
           categoria?: string | null
           categoria_contabil?: string | null
+          cfop_padrao?: string | null
           codigo: string
+          codigo_externo?: string | null
+          codigo_servico_lc116?: string | null
           created_at?: string
+          cst_padrao?: string | null
           custo_unitario?: number
           dados?: Json
           deleted_at?: string | null
           estoque_minimo?: number
           id?: string
+          ncm?: string | null
           nome: string
+          origem_fiscal?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          tipo_item?: string
           unidade?: string
           updated_at?: string
         }
@@ -4618,14 +4953,23 @@ export type Database = {
           ativo?: boolean
           categoria?: string | null
           categoria_contabil?: string | null
+          cfop_padrao?: string | null
           codigo?: string
+          codigo_externo?: string | null
+          codigo_servico_lc116?: string | null
           created_at?: string
+          cst_padrao?: string | null
           custo_unitario?: number
           dados?: Json
           deleted_at?: string | null
           estoque_minimo?: number
           id?: string
+          ncm?: string | null
           nome?: string
+          origem_fiscal?: string | null
+          sistema_destino?: string | null
+          status_integracao?: string
+          tipo_item?: string
           unidade?: string
           updated_at?: string
         }
@@ -5900,7 +6244,13 @@ export type Database = {
           titulo_substituto_id: string | null
           updated_at: string
           valor_bruto: number
+          valor_cofins: number
+          valor_csll: number
+          valor_inss: number
+          valor_irrf: number
+          valor_iss: number
           valor_liquido: number
+          valor_pis: number
           vencimento: string | null
         }
         Insert: {
@@ -5959,7 +6309,13 @@ export type Database = {
           titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
+          valor_cofins?: number
+          valor_csll?: number
+          valor_inss?: number
+          valor_irrf?: number
+          valor_iss?: number
           valor_liquido?: number
+          valor_pis?: number
           vencimento?: string | null
         }
         Update: {
@@ -6018,7 +6374,13 @@ export type Database = {
           titulo_substituto_id?: string | null
           updated_at?: string
           valor_bruto?: number
+          valor_cofins?: number
+          valor_csll?: number
+          valor_inss?: number
+          valor_irrf?: number
+          valor_iss?: number
           valor_liquido?: number
+          valor_pis?: number
           vencimento?: string | null
         }
         Relationships: [

@@ -664,14 +664,26 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
   }, [contratos, busca]);
 
   return (
-    <Card className="p-5">
+    <div className="space-y-4">
+      {/* D17.UI Fase 2 — Contratos cancelados: toolbar Enterprise RM */}
+      <EnterpriseRecordToolbar
+        entityType="contratos"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        searchPlaceholder="Buscar contrato ou cliente…"
+        search={busca}
+        onSearchChange={setBusca}
+        onAction={(a) => {
+          if (a === "atualizar") toast.info("Lista atualizada.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
+        }}
+      />
+      <Card className="p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold">
           <Ban className="h-4 w-4 text-destructive" /> Contratos cancelados
-        </div>
-        <div className="relative w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato ou cliente…" className="h-9 pl-9" />
         </div>
       </div>
       {cancelados.length === 0 ? (

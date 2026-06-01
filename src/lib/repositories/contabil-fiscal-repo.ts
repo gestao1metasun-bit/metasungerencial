@@ -231,9 +231,11 @@ export function useExportadores() {
 
 // ============ Logs (lotes + exportações geradas) ============
 export type LoteIntegracaoRow = {
-  id: string; tipo_lote: string | null; status: string;
-  conector: string | null; layout: string | null;
-  created_at: string; data_envio: string | null; usuario_id: string | null;
+  id: string; codigo: string; tipo_lote: string; status: string;
+  competencia: string | null; sistema_destino: string | null;
+  total_registros: number; total_partidas: number;
+  data_geracao: string; data_exportacao: string | null; data_integracao: string | null;
+  created_by: string | null;
 };
 
 export function useLotesIntegracao() {
@@ -242,8 +244,8 @@ export function useLotesIntegracao() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lotes_integracao_contabil")
-        .select("id,tipo_lote,status,conector,layout,created_at,data_envio,usuario_id")
-        .order("created_at", { ascending: false }).limit(200);
+        .select("id,codigo,tipo_lote,status,competencia,sistema_destino,total_registros,total_partidas,data_geracao,data_exportacao,data_integracao,created_by")
+        .order("data_geracao", { ascending: false }).limit(200);
       if (error) throw error;
       return (data ?? []) as LoteIntegracaoRow[];
     },
@@ -252,9 +254,10 @@ export function useLotesIntegracao() {
 }
 
 export type ExportacaoGeradaRow = {
-  id: string; exportador_id: string | null; tipo_dado: string | null;
-  total_registros: number | null; status: string | null;
-  data_geracao: string | null; gerado_por: string | null;
+  id: string; exportador_id: string; lote_id: string | null;
+  categoria: string; competencia: string | null;
+  total_registros: number; status: string; ambiente: string;
+  mensagem: string | null; gerado_por: string | null; created_at: string;
 };
 
 export function useExportacoesGeradas() {
@@ -263,14 +266,15 @@ export function useExportacoesGeradas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("exportacoes_geradas")
-        .select("*")
+        .select("id,exportador_id,lote_id,categoria,competencia,total_registros,status,ambiente,mensagem,gerado_por,created_at")
         .order("created_at", { ascending: false }).limit(200);
       if (error) throw error;
-      return (data ?? []) as any as ExportacaoGeradaRow[];
+      return (data ?? []) as ExportacaoGeradaRow[];
     },
     ...baseOpts,
   });
 }
+
 
 // ============ Exportação CSV client-side (sem API) ============
 export function toCSV(rows: Record<string, any>[]): string {

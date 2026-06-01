@@ -2112,7 +2112,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[80px]">Opções</TableHead>
+              <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -2125,16 +2125,17 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {flat.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <ActionsMenu label={p.id}>
-                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      {!p.enviadoEngenharia && (
-                        <DropdownMenuItem onSelect={() => enviarUm(c, p)}>
-                          <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar
-                        </DropdownMenuItem>
-                      )}
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={p.id}
+                      actions={[
+                        { kind: "editar" },
+                        ...(!p.enviadoEngenharia ? [{ kind: "aprovar" as const, label: "Enviar" }] : []),
+                      ]}
+                      onAction={(k) => {
+                        if (k === "editar") setEditing({ c, p });
+                        else if (k === "aprovar") enviarUm(c, p);
+                      }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>

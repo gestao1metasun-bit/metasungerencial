@@ -9,12 +9,6 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-// D19.2.fix.50u.5 — Toaster também sai do bundle inicial. /login só carrega
-// sonner se o usuário disparar um toast de erro (raro). AppLayout monta o
-// Toaster real pós-auth.
-const Toaster = lazy(() =>
-  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })),
-);
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
@@ -23,6 +17,13 @@ import { perfMark, perfMarkIfAbsent, perfMeasure, perfReport, markRouteStart, ge
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
+
+// D19.2.fix.50u.5 — Toaster também sai do bundle inicial. /login só carrega
+// sonner se o usuário disparar um toast de erro (raro). AppLayout monta o
+// Toaster real pós-auth.
+const Toaster = lazy(() =>
+  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })),
+);
 
 // D19.2.fix.50u.4 — Code-split agressivo: AppLayout (MacroNav, TopNav,
 // CommandPalette, WorkspaceTabBar, ContextualSidebar, FavoritosMenu,

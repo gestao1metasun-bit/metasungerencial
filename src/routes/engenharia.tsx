@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ActionsMenu } from "@/components/app/ActionsMenu";
+// D17.3 — ActionsMenu legado removido; padronizado em RowActions enterprise.
 import { DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import {
   obras as obrasSeed, pendencias as pendenciasSeed, equipes as equipesSeed,
@@ -877,7 +877,7 @@ function ObrasAtivasTab({
       <div className="overflow-auto">
         <Table>
           <TableHeader><TableRow className="hover:bg-transparent">
-            <TableHead className="w-[80px]">Opções</TableHead>
+            <TableHead className="w-[110px]">Ações</TableHead>
             <TableHead className="w-12">#</TableHead>
             <TableHead>Contrato</TableHead>
             <TableHead>Projeto</TableHead>
@@ -893,24 +893,22 @@ function ObrasAtivasTab({
               return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <ActionsMenu>
-                      <DropdownMenuItem onSelect={() => setEditing(o)}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      {link && (
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
-                              retornar(o.id);
-                            }
-                          }}
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4 text-warning" />
-                          <span className="text-warning">Retornar ao Comercial</span>
-                        </DropdownMenuItem>
-                      )}
-                    </ActionsMenu>
+                  <div className="flex items-center gap-1 justify-end">
+                    <RowActions
+                      rowId={o.id}
+                      actions={[
+                        { kind: "editar" },
+                        ...(link ? [{ kind: "cancelar" as const, label: "Retornar ao Comercial", overflow: true }] : []),
+                      ]}
+                      onAction={(k) => {
+                        if (k === "editar") setEditing(o);
+                        else if (k === "cancelar" && link) {
+                          if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
+                            retornar(o.id);
+                          }
+                        }
+                      }}
+                    />
                     <AnexosButton
                       entidade="obras"
                       entidadeId={o.id}
@@ -1605,7 +1603,7 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
   return (
     <Table>
       <TableHeader><TableRow className="hover:bg-transparent">
-        <TableHead className="w-[80px]">Opções</TableHead>
+        <TableHead className="w-[80px]">Ações</TableHead>
         <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
         <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
         <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>
@@ -1873,7 +1871,7 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead className="w-[80px]">Opções</TableHead>
+          <TableHead className="w-[110px]">Ações</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
@@ -1886,24 +1884,21 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
             return (
               <TableRow key={o.id}>
                 <TableCell>
-                  <ActionsMenu label={o.id}>
-                    <DropdownMenuItem onSelect={() => setDetail(o)}>
-                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setHistorico(o)}>
-                      <History className="mr-2 h-4 w-4" /> Histórico de alterações
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {!liberada && (
-                      <DropdownMenuItem onSelect={() => handleLiberar(o)}>
-                        <Unlock className="mr-2 h-4 w-4 text-success" />
-                        <span className="text-success">Liberar edição (até fim do dia)</span>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onSelect={() => setEditing(o)}>
-                      <SquarePen className="mr-2 h-4 w-4" /> Editar obra
-                    </DropdownMenuItem>
-                  </ActionsMenu>
+                  <RowActions
+                    rowId={o.id}
+                    actions={[
+                      { kind: "visualizar" },
+                      { kind: "historico", label: "Histórico de alterações" },
+                      { kind: "editar", label: "Editar obra", overflow: true },
+                      ...(!liberada ? [{ kind: "aprovar" as const, label: "Liberar edição (até fim do dia)", overflow: true }] : []),
+                    ]}
+                    onAction={(k) => {
+                      if (k === "visualizar") setDetail(o);
+                      else if (k === "historico") setHistorico(o);
+                      else if (k === "editar") setEditing(o);
+                      else if (k === "aprovar") handleLiberar(o);
+                    }}
+                  />
                 </TableCell>
                 <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>
@@ -2117,7 +2112,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[80px]">Opções</TableHead>
+              <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -2130,16 +2125,17 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
               {flat.map(({ p, c }) => (
                 <TableRow key={p.id}>
                   <TableCell>
-                    <ActionsMenu label={p.id}>
-                      <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      {!p.enviadoEngenharia && (
-                        <DropdownMenuItem onSelect={() => enviarUm(c, p)}>
-                          <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar
-                        </DropdownMenuItem>
-                      )}
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={p.id}
+                      actions={[
+                        { kind: "editar" },
+                        ...(!p.enviadoEngenharia ? [{ kind: "aprovar" as const, label: "Enviar" }] : []),
+                      ]}
+                      onAction={(k) => {
+                        if (k === "editar") setEditing({ c, p });
+                        else if (k === "aprovar") enviarUm(c, p);
+                      }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.id}</TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
@@ -2214,7 +2210,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           ) : (
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent">
-                <TableHead className="w-[80px]">Opções</TableHead>
+                <TableHead className="w-[110px]">Ações</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Endereço</TableHead>
@@ -2227,12 +2223,16 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 {projetos.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
-                      <ActionsMenu label={p.id}>
-                        <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
-                          <SquarePen className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        {!p.enviadoEngenharia && (
-                          <DropdownMenuItem onSelect={() => {
+                      <RowActions
+                        rowId={p.id}
+                        actions={[
+                          { kind: "editar" },
+                          ...(!p.enviadoEngenharia ? [{ kind: "aprovar" as const, label: "Enviar p/ Engenharia" }] : []),
+                          { kind: "excluir", label: "Remover projeto", overflow: true },
+                        ]}
+                        onAction={(k) => {
+                          if (k === "editar") setEditing({ c, p });
+                          else if (k === "aprovar") {
                             updateProjeto(c.id, p.id, {
                               enviadoEngenharia: true,
                               aprovado: true,
@@ -2240,19 +2240,13 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                               usuarioAprovacao: "Engenharia",
                             });
                             toast.success(`Projeto ${p.id} enviado para Engenharia (Gestão de projetos).`);
-                          }}>
-                            <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar p/ Engenharia
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onSelect={() => {
-                          if (!confirm(`Remover projeto ${p.id}?`)) return;
-                          removeProjeto(c.id, p.id);
-                          toast.success("Projeto removido");
-                        }}>
-                          <RotateCcw className="mr-2 h-4 w-4" /> Remover projeto
-                        </DropdownMenuItem>
-                      </ActionsMenu>
+                          } else if (k === "excluir") {
+                            if (!confirm(`Remover projeto ${p.id}?`)) return;
+                            removeProjeto(c.id, p.id);
+                            toast.success("Projeto removido");
+                          }
+                        }}
+                      />
                     </TableCell>
                     <TableCell className="font-mono text-xs">{p.id}</TableCell>
                     <TableCell className="text-xs">{p.tipo}</TableCell>
@@ -2384,7 +2378,7 @@ function ProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[80px]">Opções</TableHead>
+              <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Projeto</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
@@ -2835,23 +2829,15 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                 return (
                 <TableRow key={o.id}>
                   <TableCell>
-                    <ActionsMenu label={fmtContrato(o.contrato)}>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>Alterar etapa</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
-                          {ETAPA_COLS.map((c) => (
-                            <DropdownMenuItem key={c.key} onSelect={() => moveTo(o.id, c.key)}>
-                              {c.label}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => retornarComercial(o)}>
-                        <RotateCcw className="mr-2 h-4 w-4 text-warning" />
-                        <span className="text-warning">Retornar ao Comercial (Assinados)</span>
-                      </DropdownMenuItem>
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={o.id}
+                      actions={[
+                        { kind: "cancelar", label: "Retornar ao Comercial (Assinados)", overflow: true },
+                      ]}
+                      onAction={(k) => {
+                        if (k === "cancelar") retornarComercial(o);
+                      }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{fmtContrato(o.contrato)}</TableCell>
                   <TableCell className="font-medium">{o.cliente}</TableCell>
@@ -2862,11 +2848,18 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                   <TableCell className="text-xs">{fmtBR(o.inicioReal || o.inicio)}</TableCell>
                   <TableCell className="text-xs">{fmtBR(o.previsto)}</TableCell>
                   <TableCell className="text-xs">
-                    {etapa ? (
-                      <span className="inline-flex rounded-md border px-2 py-0.5 text-xs">{etapa.label}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    <Select value={o.status} onValueChange={(v) => moveTo(o.id, v)}>
+                      <SelectTrigger className="h-7 text-xs w-full min-w-[170px]">
+                        <SelectValue placeholder="—">
+                          {etapa ? etapa.label : "—"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[60vh]">
+                        {ETAPA_COLS.map((c) => (
+                          <SelectItem key={c.key} value={c.key} className="text-xs">{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                 </TableRow>
                 );
@@ -2907,7 +2900,7 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Motivo</TableHead>
@@ -2917,15 +2910,17 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
               {cancelados.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
-                    <ActionsMenu label={c.id}>
-                      <DropdownMenuItem onSelect={() => {
-                        const r = reativarContrato(c.id, "Engenharia");
-                        if (!r.ok) { toast.error(r.motivo); return; }
-                        toast.success(`Contrato ${c.id} reativado. Reaprovar para retornar à Engenharia.`);
-                      }}>
-                        Reativar
-                      </DropdownMenuItem>
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={c.id}
+                      actions={[{ kind: "aprovar", label: "Reativar" }]}
+                      onAction={(k) => {
+                        if (k === "aprovar") {
+                          const r = reativarContrato(c.id, "Engenharia");
+                          if (!r.ok) { toast.error(r.motivo); return; }
+                          toast.success(`Contrato ${c.id} reativado. Reaprovar para retornar à Engenharia.`);
+                        }
+                      }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>

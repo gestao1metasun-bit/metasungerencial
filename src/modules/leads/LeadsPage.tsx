@@ -155,7 +155,6 @@ export function LeadsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Nº</TableHead>
               <TableHead>Criado</TableHead>
               <TableHead>Nome</TableHead>
@@ -164,6 +163,7 @@ export function LeadsPage() {
               <TableHead>Consultor</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[80px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -176,15 +176,6 @@ export function LeadsPage() {
             )}
             {filtrados.map((l) => (
               <TableRow key={l.id}>
-                <TableCell>
-                  <RowActions
-                    rowId={l.id}
-                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
-                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
-                  />
-                </TableCell>
-
-
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>
@@ -196,6 +187,13 @@ export function LeadsPage() {
                   <Badge variant="outline" className={`${statusClass(l.status)} font-medium`}>
                     {LEAD_STATUS_LABEL[l.status] ?? l.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <RowActions
+                    rowId={l.id}
+                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
+                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -863,12 +861,12 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
         <Table>
           <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Opções</TableHead>
                 <TableHead className="w-16">Versão</TableHead>
                 <TableHead>Número</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Contrato</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="w-[120px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -877,49 +875,22 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                 const valor = calcPrecificacao(p).valorFinal;
                 const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
                 const contrato = contratos.find((c) => c.propostaId === p.id);
+                const rowActions: import("@/components/app/enterprise").RowAction[] = [
+                  { kind: "aprovar", label: "Aprovar", disabled: !podeAprovar },
+                  { kind: "reprovar", label: "Não aprovar", disabled: !podeAprovar, overflow: true },
+                  { kind: "cancelar", label: "Cancelar proposta", disabled: p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato, overflow: true },
+                ];
+                if (contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado) {
+                  rowActions.push({ kind: "anexos", label: "Anexar assinado", overflow: true });
+                }
+                if (contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado) {
+                  rowActions.push({ kind: "baixar", label: "Enviar p/ engenharia", overflow: true });
+                }
+                if (contrato && !contrato.cancelado) {
+                  rowActions.push({ kind: "excluir", label: "Cancelar contrato", overflow: true });
+                }
                 return (
                   <TableRow key={p.id}>
-                    <TableCell>
-                      <ActionsMenu label={p.numero}>
-                        <DropdownMenuItem disabled={!podeAprovar} onSelect={() => setAcao({ proposta: p, tipo: "aprovar" })}>
-                          Aprovar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={!podeAprovar} onSelect={() => setAcao({ proposta: p, tipo: "recusar" })}>
-                          Não aprovar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato}
-                          onSelect={() => setAcao({ proposta: p, tipo: "cancelar" })}
-                        >
-                          Cancelar proposta
-                        </DropdownMenuItem>
-                        {contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={() => setAnexarAlvo(contrato.id)}>
-                              Anexar assinado
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado && (
-                          <DropdownMenuItem onSelect={() => {
-                            const r = enviarContratoParaEngenharia(contrato.id, usuario);
-                            if (!r.ok) toast.error(r.motivo);
-                            else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
-                          }}>
-                            Enviar p/ engenharia
-                          </DropdownMenuItem>
-                        )}
-                        {contrato && !contrato.cancelado && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onSelect={() => setCancelarContratoAlvo(contrato.id)}>
-                              Cancelar contrato
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </ActionsMenu>
-                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
                     <TableCell className="text-xs">{p.numero}</TableCell>
                     <TableCell>
@@ -936,6 +907,24 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                       ) : "—"}
                     </TableCell>
                     <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
+                    <TableCell>
+                      <RowActions
+                        rowId={p.id}
+                        actions={rowActions}
+                        onAction={(kind) => {
+                          if (kind === "aprovar") setAcao({ proposta: p, tipo: "aprovar" });
+                          else if (kind === "reprovar") setAcao({ proposta: p, tipo: "recusar" });
+                          else if (kind === "cancelar") setAcao({ proposta: p, tipo: "cancelar" });
+                          else if (kind === "anexos" && contrato) setAnexarAlvo(contrato.id);
+                          else if (kind === "baixar" && contrato) {
+                            const r = enviarContratoParaEngenharia(contrato.id, usuario);
+                            if (!r.ok) toast.error(r.motivo);
+                            else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
+                          }
+                          else if (kind === "excluir" && contrato) setCancelarContratoAlvo(contrato.id);
+                        }}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}

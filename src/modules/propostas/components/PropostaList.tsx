@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
+import { RowActions, type RowAction } from "@/components/app/enterprise";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { toast } from "sonner";
 import {
@@ -825,11 +826,11 @@ function LeadDetail({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]">Opções</TableHead>
                     <TableHead>Nº</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Criada</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[110px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -840,45 +841,30 @@ function LeadDetail({
                     const podeExcluir = ehRascunho && !lead.bloqueado;
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     const podeReativar = p.status === "CANCELADA";
+                    const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
+                    if (podeEditar) actions.push({ kind: "editar", label: "Editar rascunho" });
+                    if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
+                    if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
+                    if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
                     return (
                       <TableRow key={p.id}>
-                        <TableCell>
-                          <ActionsMenu label={p.numero}>
-                            <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
-                              <Eye className="mr-2 h-4 w-4" /> Visualizar
-                            </DropdownMenuItem>
-                            {podeEditar && (
-                              <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
-                                <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
-                              </DropdownMenuItem>
-                            )}
-                            {podeReativar && (
-                              <DropdownMenuItem onSelect={() => reativarProposta(p)}>
-                                <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                                <span className="text-success">Reativar</span>
-                              </DropdownMenuItem>
-                            )}
-                            {podeCancelar && (
-                              <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
-                                <Ban className="mr-2 h-4 w-4 text-destructive" />
-                                <span className="text-destructive">Cancelar</span>
-                              </DropdownMenuItem>
-                            )}
-                            {podeExcluir && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => excluirProposta(p)}>
-                                  <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                                  <span className="text-destructive">Excluir rascunho</span>
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </ActionsMenu>
-                        </TableCell>
                         <TableCell className="font-medium">{p.numero}</TableCell>
                         <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
                         <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                        <TableCell>
+                          <RowActions
+                            rowId={p.id}
+                            actions={actions}
+                            onAction={(kind) => {
+                              if (kind === "visualizar") onVisualizar(p.id);
+                              else if (kind === "editar") { onEditar(p); onClose(); }
+                              else if (kind === "aprovar") reativarProposta(p);
+                              else if (kind === "cancelar") cancelarProposta(p);
+                              else if (kind === "excluir") excluirProposta(p);
+                            }}
+                          />
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -1224,45 +1210,36 @@ function KanbanView({
                     </div>
                     <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
-                      <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
-                        <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                          <Eye className="mr-2 h-4 w-4" /> Abrir lead
-                        </DropdownMenuItem>
-                        {!l.bloqueado && onAprovar && (() => {
-                          const alvo = propostaAprovavelDoLead(l);
-                          return alvo ? (
-                            <DropdownMenuItem onSelect={() => onAprovar(alvo)}>
-                              <Check className="mr-2 h-4 w-4 text-success" />
-                              <span className="text-success">Aprovar e gerar contrato</span>
-                            </DropdownMenuItem>
-                          ) : null;
-                        })()}
-                        {l.bloqueado && (
-                          <DropdownMenuItem onSelect={irParaContratos}>
-                            <FileText className="mr-2 h-4 w-4 text-primary" />
-                            <span className="text-primary">Ver contrato no Comercial</span>
-                            <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-                          </DropdownMenuItem>
-                        )}
-                        {!l.bloqueado && l.status === "CANCELADA" && (
-                          <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                            <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                            <span className="text-success">Reativar última proposta</span>
-                          </DropdownMenuItem>
-                        )}
-                        {!l.bloqueado && (
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                              if (!p) { toast.info("Não há proposta cancelável."); return; }
-                              cancelarProposta(p);
+                      {(() => {
+                        const alvo = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : null;
+                        const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
+                        if (alvo && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato", overflow: true });
+                        if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
+                        if (!l.bloqueado && l.status === "CANCELADA") actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
+                        if (!l.bloqueado) actions.push({ kind: "cancelar", label: "Cancelar última proposta", overflow: true });
+                        return (
+                          <RowActions
+                            rowId={l.key}
+                            actions={actions}
+                            onAction={(_kind, _id) => {
+                              // Não dá pra distinguir overflow homônimos por kind apenas; usar label
+                              // mas RowActions só passa kind. Fallback: tratar pela ordem das ações.
+                              const last = actions[actions.length - 1];
+                              const a = actions.find((x) => x.kind === _kind) ?? last;
+                              const lbl = a.label;
+                              if (lbl === "Abrir lead") onAbrirLead(l);
+                              else if (lbl === "Aprovar e gerar contrato" && alvo && onAprovar) onAprovar(alvo);
+                              else if (lbl === "Ver contrato no Comercial") irParaContratos();
+                              else if (lbl === "Reativar última proposta") reativarProposta(l.ultima);
+                              else if (lbl === "Cancelar última proposta") {
+                                const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                                if (!p) { toast.info("Não há proposta cancelável."); return; }
+                                cancelarProposta(p);
+                              }
                             }}
-                          >
-                            <Ban className="mr-2 h-4 w-4 text-destructive" />
-                            <span className="text-destructive">Cancelar última proposta</span>
-                          </DropdownMenuItem>
-                        )}
-                      </ActionsMenu>
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
@@ -1295,7 +1272,7 @@ type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "opcoes",     label: "Opções",          align: "center", defaultWidth: 90 },
+  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 90 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
@@ -1418,42 +1395,32 @@ function TabelaView({
         const alvoAprovar = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : undefined;
         return (
           <div onClick={(e) => e.stopPropagation()} className="inline-flex">
-            <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
-              <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                <Eye className="mr-2 h-4 w-4" /> Abrir lead
-              </DropdownMenuItem>
-              {alvoAprovar && onAprovar && (
-                <DropdownMenuItem onSelect={() => onAprovar(alvoAprovar)}>
-                  <Check className="mr-2 h-4 w-4 text-success" />
-                  <span className="text-success">Aprovar e gerar contrato</span>
-                </DropdownMenuItem>
-              )}
-              {l.bloqueado && (
-                <DropdownMenuItem onSelect={irParaContratos}>
-                  <FileText className="mr-2 h-4 w-4 text-primary" />
-                  <span className="text-primary">Ver contrato no Comercial</span>
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-                </DropdownMenuItem>
-              )}
-              {podeReativar && (
-                <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                  <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                  <span className="text-success">Reativar última proposta</span>
-                </DropdownMenuItem>
-              )}
-              {podeCancelar && (
-                <DropdownMenuItem
-                  onSelect={() => {
-                    const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                    if (!p) { toast.info("Não há proposta cancelável."); return; }
-                    cancelarProposta(p);
+            {(() => {
+              const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
+              if (alvoAprovar && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato", overflow: true });
+              if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
+              if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
+              if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar última proposta", overflow: true });
+              return (
+                <RowActions
+                  rowId={l.key}
+                  actions={actions}
+                  onAction={(kind) => {
+                    const a = actions.find((x) => x.kind === kind);
+                    const lbl = a?.label ?? "";
+                    if (lbl === "Abrir lead") onAbrirLead(l);
+                    else if (lbl === "Aprovar e gerar contrato" && alvoAprovar && onAprovar) onAprovar(alvoAprovar);
+                    else if (lbl === "Ver contrato no Comercial") irParaContratos();
+                    else if (lbl === "Reativar última proposta") reativarProposta(l.ultima);
+                    else if (lbl === "Cancelar última proposta") {
+                      const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                      if (!p) { toast.info("Não há proposta cancelável."); return; }
+                      cancelarProposta(p);
+                    }
                   }}
-                >
-                  <Ban className="mr-2 h-4 w-4 text-destructive" />
-                  <span className="text-destructive">Cancelar última proposta</span>
-                </DropdownMenuItem>
-              )}
-            </ActionsMenu>
+                />
+              );
+            })()}
           </div>
         );
       }

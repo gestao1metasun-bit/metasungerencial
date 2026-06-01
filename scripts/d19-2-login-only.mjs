@@ -57,6 +57,13 @@ async function runUser(idx) {
     // 2) Espera o formulário aparecer (React hidratou)
     await page.waitForSelector('input[type="email"]', { timeout: 30_000 });
 
+    // 2b) Espera React de fato hidratar (marca login.react.ready) — sem isso o
+    // submit dispara o form nativo (GET /login?) antes do handler React montar.
+    await page.waitForFunction(
+      () => typeof window.__perfMarks === 'function' && window.__perfMarks()['login.react.ready'] != null,
+      { timeout: 30_000 },
+    );
+
     // 3) Submete
     await page.fill('input[type="email"]', cred.email);
     await page.fill('input[type="password"]', cred.password);

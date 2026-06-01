@@ -1,0 +1,1112 @@
+{
+  "base_url": "https://metasungerencial.lovable.app",
+  "users": 50,
+  "ramp_ms": 30000,
+  "timestamp": "2026-06-01T23:00:22.870Z",
+  "ok": 44,
+  "error": 6,
+  "console_errors": 56,
+  "phases": {
+    "t_navigate": {
+      "n": 50,
+      "p50": 658,
+      "p95": 824,
+      "p99": 847,
+      "min": 185,
+      "max": 847,
+      "avg": 678
+    },
+    "t_react_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_supabase_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_auth": {
+      "n": 44,
+      "p50": 258,
+      "p95": 429,
+      "p99": 454,
+      "min": 239,
+      "max": 454,
+      "avg": 274
+    },
+    "t_redirect": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_submit_to_dashboard": {
+      "n": 44,
+      "p50": 328,
+      "p95": 491,
+      "p99": 528,
+      "min": 301,
+      "max": 528,
+      "avg": 343
+    },
+    "t_total": {
+      "n": 44,
+      "p50": 1499,
+      "p95": 1749,
+      "p99": 1972,
+      "min": 1035,
+      "max": 1972,
+      "avg": 1525
+    }
+  },
+  "sample_console_errors": [
+    {
+      "user": 0,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 1,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 2,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 3,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 4,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 5,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 6,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 7,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 8,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 9,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 10,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 11,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 12,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 13,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 14,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 15,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 16,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 17,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 18,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 19,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    }
+  ],
+  "samples": [
+    {
+      "user": 0,
+      "t_navigate": 621,
+      "t_total": 1467,
+      "t_submit_to_dashboard": 426,
+      "t_react_ready": -123,
+      "t_supabase_ready": -134,
+      "t_auth": 349,
+      "marks": {
+        "login.page.mount": 1102.3000000002794,
+        "login.supabase.ready": 968.1000000000931,
+        "login.react.ready": 979.4000000003725,
+        "login.start": 1097.3000000002794,
+        "login.auth.start": 1097.3000000002794,
+        "auth.ok": 1446.5,
+        "login.auth.ok": 1446.6000000000931,
+        "login.redirect.start": 1447,
+        "shell.ready": 1465.9000000003725,
+        "route.ready": 1466
+      }
+    },
+    {
+      "user": 1,
+      "t_navigate": 659,
+      "t_total": 1693,
+      "t_submit_to_dashboard": 528,
+      "t_react_ready": -119,
+      "t_supabase_ready": -129,
+      "t_auth": 454,
+      "marks": {
+        "login.page.mount": 1219.8999999999069,
+        "login.supabase.ready": 1091.2999999998137,
+        "login.react.ready": 1100.3999999999069,
+        "login.start": 1216.6000000000931,
+        "login.auth.start": 1216.6000000000931,
+        "auth.ok": 1670.5,
+        "login.auth.ok": 1670.5,
+        "login.redirect.start": 1670.7999999998137,
+        "shell.ready": 1704.5,
+        "route.ready": 1704.6000000000931
+      }
+    },
+    {
+      "user": 2,
+      "t_navigate": 623,
+      "t_total": 1414,
+      "t_submit_to_dashboard": 322,
+      "t_react_ready": -118,
+      "t_supabase_ready": -132,
+      "t_auth": 257,
+      "marks": {
+        "login.page.mount": 1141.0999999996275,
+        "login.supabase.ready": 1008.6999999997206,
+        "login.react.ready": 1023.2999999998137,
+        "login.start": 1138.1999999997206,
+        "login.auth.start": 1138.1999999997206,
+        "auth.ok": 1394.6999999997206,
+        "login.auth.ok": 1394.6999999997206,
+        "login.redirect.start": 1395,
+        "shell.ready": 1415.1999999997206,
+        "route.ready": 1415.1999999997206
+      }
+    },
+    {
+      "user": 3,
+      "t_navigate": 626,
+      "t_total": 1405,
+      "t_submit_to_dashboard": 335,
+      "t_react_ready": -96,
+      "t_supabase_ready": -100,
+      "t_auth": 272,
+      "marks": {
+        "login.page.mount": 1118.1000000000931,
+        "login.supabase.ready": 1017.6000000000931,
+        "login.react.ready": 1021.8000000002794,
+        "login.start": 1114.3000000002794,
+        "login.auth.start": 1114.3000000002794,
+        "auth.ok": 1385.8000000002794,
+        "login.auth.ok": 1385.8000000002794,
+        "login.redirect.start": 1386.2000000001863,
+        "shell.ready": 1407.1000000000931,
+        "route.ready": 1407.1000000000931
+      }
+    },
+    {
+      "user": 4,
+      "t_navigate": 598,
+      "t_total": 1374,
+      "t_submit_to_dashboard": 325,
+      "t_react_ready": -101,
+      "t_supabase_ready": -120,
+      "t_auth": 269,
+      "marks": {
+        "login.page.mount": 1094.7999999998137,
+        "login.supabase.ready": 974.5,
+        "login.react.ready": 993.7000000001863,
+        "login.start": 1090.2000000001863,
+        "login.auth.start": 1090.2000000001863,
+        "auth.ok": 1359.2000000001863,
+        "login.auth.ok": 1359.2000000001863,
+        "login.redirect.start": 1359.3999999999069,
+        "shell.ready": 1377.2000000001863,
+        "route.ready": 1377.2999999998137
+      }
+    },
+    {
+      "user": 5,
+      "t_navigate": 628,
+      "t_total": 1460,
+      "t_submit_to_dashboard": 330,
+      "t_react_ready": -117,
+      "t_supabase_ready": -127,
+      "t_auth": 261,
+      "marks": {
+        "login.page.mount": 1178.4000000003725,
+        "login.supabase.ready": 1051.4000000003725,
+        "login.react.ready": 1061.3000000002794,
+        "login.start": 1175.1000000000931,
+        "login.auth.start": 1175.1000000000931,
+        "auth.ok": 1436.3000000002794,
+        "login.auth.ok": 1436.3000000002794,
+        "login.redirect.start": 1436.7000000001863,
+        "shell.ready": 1466.2000000001863,
+        "route.ready": 1466.3000000002794
+      }
+    },
+    {
+      "user": 6,
+      "t_navigate": 818,
+      "t_total": 1920,
+      "t_submit_to_dashboard": 520,
+      "t_react_ready": -126,
+      "t_supabase_ready": -124,
+      "t_auth": 438,
+      "marks": {
+        "login.page.mount": 1457.7000000001863,
+        "login.react.ready": 1331.2999999998137,
+        "login.supabase.ready": 1333.8999999999069,
+        "login.start": 1451.3999999999069,
+        "login.auth.start": 1451.3999999999069,
+        "auth.ok": 1889,
+        "login.auth.ok": 1889.1000000000931,
+        "login.redirect.start": 1889.3999999999069,
+        "shell.ready": 1920.3999999999069,
+        "route.ready": 1920.3999999999069
+      }
+    },
+    {
+      "user": 7,
+      "t_navigate": 679,
+      "t_total": 1565,
+      "t_submit_to_dashboard": 348,
+      "t_react_ready": -117,
+      "t_supabase_ready": -118,
+      "t_auth": 272,
+      "marks": {
+        "login.page.mount": 1264.6999999997206,
+        "login.supabase.ready": 1146.6000000000931,
+        "login.react.ready": 1147.3999999999069,
+        "login.start": 1261.2999999998137,
+        "login.auth.start": 1261.2999999998137,
+        "auth.ok": 1533.3999999999069,
+        "login.auth.ok": 1533.3999999999069,
+        "login.redirect.start": 1533.7999999998137,
+        "shell.ready": 1560,
+        "route.ready": 1560.1000000000931
+      }
+    },
+    {
+      "user": 8,
+      "t_navigate": 839,
+      "t_total": 1749,
+      "t_submit_to_dashboard": 346,
+      "t_react_ready": -118,
+      "t_supabase_ready": -138,
+      "t_auth": 265,
+      "marks": {
+        "login.page.mount": 1460.7999999998137,
+        "login.supabase.ready": 1322.7000000001863,
+        "login.react.ready": 1342.3999999999069,
+        "login.start": 1456.7000000001863,
+        "login.auth.start": 1456.7999999998137,
+        "auth.ok": 1721.7999999998137,
+        "login.auth.ok": 1721.7999999998137,
+        "login.redirect.start": 1722.2000000001863,
+        "shell.ready": 1750.2999999998137,
+        "route.ready": 1750.2999999998137
+      }
+    },
+    {
+      "user": 9,
+      "t_navigate": 663,
+      "t_total": 1472,
+      "t_submit_to_dashboard": 331,
+      "t_react_ready": -116,
+      "t_supabase_ready": -119,
+      "t_auth": 255,
+      "marks": {
+        "login.page.mount": 1192.3000000002794,
+        "login.supabase.ready": 1073.2000000001863,
+        "login.react.ready": 1075.8999999999069,
+        "login.start": 1189.3000000002794,
+        "login.auth.start": 1189.3000000002794,
+        "auth.ok": 1444.5,
+        "login.auth.ok": 1444.5,
+        "login.redirect.start": 1444.7000000001863,
+        "shell.ready": 1466.7000000001863,
+        "route.ready": 1466.7000000001863
+      }
+    },
+    {
+      "user": 10,
+      "t_navigate": 668,
+      "t_total": 1523,
+      "t_submit_to_dashboard": 314,
+      "t_react_ready": -101,
+      "t_supabase_ready": -104,
+      "t_auth": 255,
+      "marks": {
+        "login.page.mount": 1247.5,
+        "login.supabase.ready": 1143.3999999999069,
+        "login.react.ready": 1146.6000000000931,
+        "login.start": 1244,
+        "login.auth.start": 1244,
+        "auth.ok": 1498.8999999999069,
+        "login.auth.ok": 1498.8999999999069,
+        "login.redirect.start": 1499.1000000000931,
+        "shell.ready": 1521.3999999999069,
+        "route.ready": 1521.3999999999069
+      }
+    },
+    {
+      "user": 11,
+      "t_navigate": 637,
+      "t_total": 1483,
+      "t_submit_to_dashboard": 314,
+      "t_react_ready": -115,
+      "t_supabase_ready": -125,
+      "t_auth": 246,
+      "marks": {
+        "login.page.mount": 1221.7999999998137,
+        "login.supabase.ready": 1096.8999999999069,
+        "login.react.ready": 1106.3999999999069,
+        "login.start": 1218.2000000001863,
+        "login.auth.start": 1218.2999999998137,
+        "auth.ok": 1464.7000000001863,
+        "login.auth.ok": 1464.7000000001863,
+        "login.redirect.start": 1464.8999999999069,
+        "shell.ready": 1488.1000000000931,
+        "route.ready": 1488.1000000000931
+      }
+    },
+    {
+      "user": 12,
+      "t_navigate": 815,
+      "t_total": 1695,
+      "t_submit_to_dashboard": 344,
+      "t_react_ready": -112,
+      "t_supabase_ready": -123,
+      "t_auth": 267,
+      "marks": {
+        "login.page.mount": 1410.5,
+        "login.supabase.ready": 1287.5,
+        "login.react.ready": 1298.5,
+        "login.start": 1406.8000000002794,
+        "login.auth.start": 1406.8000000002794,
+        "auth.ok": 1673.3999999999069,
+        "login.auth.ok": 1673.3999999999069,
+        "login.redirect.start": 1673.7000000001863,
+        "shell.ready": 1698.3000000002794,
+        "route.ready": 1698.3000000002794
+      }
+    },
+    {
+      "user": 13,
+      "t_navigate": 640,
+      "t_total": 1613,
+      "t_submit_to_dashboard": 491,
+      "t_react_ready": -98,
+      "t_supabase_ready": -110,
+      "t_auth": 429,
+      "marks": {
+        "login.page.mount": 1166.3999999999069,
+        "login.supabase.ready": 1056,
+        "login.react.ready": 1068.3999999999069,
+        "login.start": 1163.1000000000931,
+        "login.auth.start": 1163.1000000000931,
+        "auth.ok": 1592.5,
+        "login.auth.ok": 1592.5,
+        "login.redirect.start": 1592.8999999999069,
+        "shell.ready": 1627.7000000001863,
+        "route.ready": 1627.7999999998137
+      }
+    },
+    {
+      "user": 14,
+      "t_navigate": 794,
+      "t_total": 1670,
+      "t_submit_to_dashboard": 326,
+      "t_react_ready": -103,
+      "t_supabase_ready": -108,
+      "t_auth": 261,
+      "marks": {
+        "login.page.mount": 1394.5999999996275,
+        "login.supabase.ready": 1286.0999999996275,
+        "login.react.ready": 1291.6999999997206,
+        "login.start": 1391.2999999998137,
+        "login.auth.start": 1391.2999999998137,
+        "auth.ok": 1651.8999999999069,
+        "login.auth.ok": 1652,
+        "login.redirect.start": 1652.3999999999069,
+        "shell.ready": 1675.5999999996275,
+        "route.ready": 1675.5999999996275
+      }
+    },
+    {
+      "user": 15,
+      "t_navigate": 682,
+      "t_total": 1529,
+      "t_submit_to_dashboard": 353,
+      "t_react_ready": -129,
+      "t_supabase_ready": -142,
+      "t_auth": 282,
+      "marks": {
+        "login.page.mount": 1239.8999999999069,
+        "login.supabase.ready": 1097.8000000002794,
+        "login.react.ready": 1110.7000000001863,
+        "login.start": 1229.1000000000931,
+        "login.auth.start": 1229.1000000000931,
+        "auth.ok": 1511.3999999999069,
+        "login.auth.ok": 1511.3999999999069,
+        "login.redirect.start": 1512.8000000002794,
+        "shell.ready": 1531.8000000002794,
+        "route.ready": 1531.8999999999069
+      }
+    },
+    {
+      "user": 16,
+      "t_navigate": 658,
+      "t_total": 1469,
+      "t_submit_to_dashboard": 326,
+      "t_react_ready": -98,
+      "t_supabase_ready": -104,
+      "t_auth": 263,
+      "marks": {
+        "login.page.mount": 1188.1000000000931,
+        "login.supabase.ready": 1084.2000000001863,
+        "login.react.ready": 1090.2000000001863,
+        "login.start": 1184.2999999998137,
+        "login.auth.start": 1184.2999999998137,
+        "auth.ok": 1447.5,
+        "login.auth.ok": 1447.5,
+        "login.redirect.start": 1447.8999999999069,
+        "shell.ready": 1472.2000000001863,
+        "route.ready": 1472.2999999998137
+      }
+    },
+    {
+      "user": 17,
+      "t_navigate": 782,
+      "t_total": 1618,
+      "t_submit_to_dashboard": 311,
+      "t_react_ready": -115,
+      "t_supabase_ready": -122,
+      "t_auth": 243,
+      "marks": {
+        "login.page.mount": 1357.5,
+        "login.supabase.ready": 1235,
+        "login.react.ready": 1242.8999999999069,
+        "login.start": 1354.2000000001863,
+        "login.auth.start": 1354.2000000001863,
+        "auth.ok": 1596.8999999999069,
+        "login.auth.ok": 1596.8999999999069,
+        "login.redirect.start": 1597.1000000000931,
+        "shell.ready": 1618.6000000000931,
+        "route.ready": 1618.7000000001863
+      }
+    },
+    {
+      "user": 18,
+      "t_navigate": 806,
+      "t_total": 1708,
+      "t_submit_to_dashboard": 394,
+      "t_react_ready": -99,
+      "t_supabase_ready": -99,
+      "t_auth": 289,
+      "marks": {
+        "login.page.mount": 1366.2999999998137,
+        "login.react.ready": 1266.8999999999069,
+        "login.supabase.ready": 1267.2999999998137,
+        "login.start": 1362.7000000001863,
+        "login.auth.start": 1362.7000000001863,
+        "auth.ok": 1651.2000000001863,
+        "login.auth.ok": 1651.2000000001863,
+        "login.redirect.start": 1651.6000000000931,
+        "shell.ready": 1701.7999999998137,
+        "route.ready": 1701.8999999999069
+      }
+    },
+    {
+      "user": 20,
+      "t_navigate": 289,
+      "t_total": 1292,
+      "t_submit_to_dashboard": 309,
+      "t_react_ready": -104,
+      "t_supabase_ready": -109,
+      "t_auth": 250,
+      "marks": {
+        "login.page.mount": 1026,
+        "login.supabase.ready": 916.7999999998137,
+        "login.react.ready": 921.7000000001863,
+        "login.start": 1022.7000000001863,
+        "login.auth.start": 1022.7000000001863,
+        "auth.ok": 1272.5,
+        "login.auth.ok": 1272.5,
+        "login.redirect.start": 1273.1000000000931,
+        "shell.ready": 1297.1000000000931,
+        "route.ready": 1297.2000000001863
+      }
+    },
+    {
+      "user": 19,
+      "t_navigate": 847,
+      "t_total": 1972,
+      "t_submit_to_dashboard": 328,
+      "t_react_ready": -117,
+      "t_supabase_ready": -134,
+      "t_auth": 265,
+      "marks": {
+        "login.page.mount": 1686.3000000002794,
+        "login.supabase.ready": 1552.2000000001863,
+        "login.react.ready": 1569.1000000000931,
+        "login.start": 1683,
+        "login.auth.start": 1683.1000000000931,
+        "auth.ok": 1947.9000000003725,
+        "login.auth.ok": 1947.9000000003725,
+        "login.redirect.start": 1948.1000000000931,
+        "shell.ready": 1974.2000000001863,
+        "route.ready": 1974.2000000001863
+      }
+    },
+    {
+      "user": 21,
+      "t_navigate": 728,
+      "t_total": 1562,
+      "t_submit_to_dashboard": 334,
+      "t_react_ready": -102,
+      "t_supabase_ready": -112,
+      "t_auth": 270,
+      "marks": {
+        "login.page.mount": 1280.3999999999069,
+        "login.supabase.ready": 1168.7000000001863,
+        "login.react.ready": 1178.8000000002794,
+        "login.start": 1274.1000000000931,
+        "login.auth.start": 1274.1000000000931,
+        "auth.ok": 1544.2000000001863,
+        "login.auth.ok": 1544.2000000001863,
+        "login.redirect.start": 1544.6000000000931,
+        "shell.ready": 1565.3999999999069,
+        "route.ready": 1565.3999999999069
+      }
+    },
+    {
+      "user": 22,
+      "t_navigate": 620,
+      "t_total": 1445,
+      "t_submit_to_dashboard": 349,
+      "t_react_ready": -114,
+      "t_supabase_ready": -129,
+      "t_auth": 273,
+      "marks": {
+        "login.page.mount": 1137.1999999997206,
+        "login.supabase.ready": 1007.8999999999069,
+        "login.react.ready": 1023,
+        "login.start": 1134.2999999998137,
+        "login.auth.start": 1134.2999999998137,
+        "auth.ok": 1407.1999999997206,
+        "login.auth.ok": 1407.1999999997206,
+        "login.redirect.start": 1408.8999999999069,
+        "shell.ready": 1431.5,
+        "route.ready": 1431.6000000000931
+      }
+    },
+    {
+      "user": 23,
+      "t_navigate": 615,
+      "t_total": 1454,
+      "t_submit_to_dashboard": 306,
+      "t_react_ready": -100,
+      "t_supabase_ready": -105,
+      "t_auth": 251,
+      "marks": {
+        "login.page.mount": 1187.3000000002794,
+        "login.supabase.ready": 1082.4000000003725,
+        "login.react.ready": 1087,
+        "login.start": 1184,
+        "login.auth.start": 1184,
+        "auth.ok": 1435,
+        "login.auth.ok": 1435,
+        "login.redirect.start": 1435.3000000002794,
+        "shell.ready": 1462,
+        "route.ready": 1462.1000000000931
+      }
+    },
+    {
+      "user": 24,
+      "t_navigate": 633,
+      "t_total": 1459,
+      "t_submit_to_dashboard": 329,
+      "t_react_ready": -120,
+      "t_supabase_ready": -124,
+      "t_auth": 252,
+      "marks": {
+        "login.page.mount": 1191.4000000003725,
+        "login.supabase.ready": 1067.2000000001863,
+        "login.react.ready": 1071.5,
+        "login.start": 1187.5,
+        "login.auth.start": 1187.6000000000931,
+        "auth.ok": 1439.1000000000931,
+        "login.auth.ok": 1439.2000000001863,
+        "login.redirect.start": 1439.5,
+        "shell.ready": 1465.4000000003725,
+        "route.ready": 1465.4000000003725
+      }
+    },
+    {
+      "user": 25,
+      "t_navigate": 786,
+      "t_total": 1612,
+      "t_submit_to_dashboard": 321,
+      "t_react_ready": -101,
+      "t_supabase_ready": -116,
+      "t_auth": 259,
+      "marks": {
+        "login.page.mount": 1323.7999999998137,
+        "login.supabase.ready": 1207.2999999998137,
+        "login.react.ready": 1223.0999999996275,
+        "login.start": 1320.2999999998137,
+        "login.auth.start": 1320.2999999998137,
+        "auth.ok": 1578.8999999999069,
+        "login.auth.ok": 1578.8999999999069,
+        "login.redirect.start": 1579.1999999997206,
+        "shell.ready": 1603.8999999999069,
+        "route.ready": 1603.8999999999069
+      }
+    },
+    {
+      "user": 26,
+      "t_navigate": 655,
+      "t_total": 1472,
+      "t_submit_to_dashboard": 343,
+      "t_react_ready": -140,
+      "t_supabase_ready": -142,
+      "t_auth": 253,
+      "marks": {
+        "login.page.mount": 1207,
+        "login.supabase.ready": 1064.5,
+        "login.react.ready": 1067.2999999998137,
+        "login.start": 1199,
+        "login.auth.start": 1199,
+        "auth.ok": 1451.8999999999069,
+        "login.auth.ok": 1451.8999999999069,
+        "login.redirect.start": 1452.2000000001863,
+        "shell.ready": 1473.2999999998137,
+        "route.ready": 1473.3999999999069
+      }
+    },
+    {
+      "user": 27,
+      "t_navigate": 679,
+      "t_total": 1466,
+      "t_submit_to_dashboard": 337,
+      "t_react_ready": -99,
+      "t_supabase_ready": -113,
+      "t_auth": 275,
+      "marks": {
+        "login.page.mount": 1173.5,
+        "login.supabase.ready": 1060.3000000002794,
+        "login.react.ready": 1074.2000000001863,
+        "login.start": 1167.6000000000931,
+        "login.auth.start": 1167.7000000001863,
+        "auth.ok": 1442.3000000002794,
+        "login.auth.ok": 1442.3000000002794,
+        "login.redirect.start": 1442.6000000000931,
+        "shell.ready": 1467.3000000002794,
+        "route.ready": 1467.3999999999069
+      }
+    },
+    {
+      "user": 28,
+      "t_navigate": 649,
+      "t_total": 1464,
+      "t_submit_to_dashboard": 328,
+      "t_react_ready": -105,
+      "t_supabase_ready": -108,
+      "t_auth": 257,
+      "marks": {
+        "login.page.mount": 1193.7000000001863,
+        "login.supabase.ready": 1085.2000000001863,
+        "login.react.ready": 1088.8999999999069,
+        "login.start": 1190.1000000000931,
+        "login.auth.start": 1190.1000000000931,
+        "auth.ok": 1446.7000000001863,
+        "login.auth.ok": 1446.7000000001863,
+        "login.redirect.start": 1447,
+        "shell.ready": 1468.7000000001863,
+        "route.ready": 1468.7999999998137
+      }
+    },
+    {
+      "user": 29,
+      "t_navigate": 789,
+      "t_total": 1619,
+      "t_submit_to_dashboard": 313,
+      "t_react_ready": -96,
+      "t_supabase_ready": -107,
+      "t_auth": 251,
+      "marks": {
+        "login.page.mount": 1345.8999999999069,
+        "login.supabase.ready": 1239.2999999998137,
+        "login.react.ready": 1250,
+        "login.start": 1342.8999999999069,
+        "login.auth.start": 1342.8999999999069,
+        "auth.ok": 1593.3999999999069,
+        "login.auth.ok": 1593.3999999999069,
+        "login.redirect.start": 1593.6999999997206,
+        "shell.ready": 1616.7999999998137,
+        "route.ready": 1616.8999999999069
+      }
+    },
+    {
+      "user": 30,
+      "t_navigate": 795,
+      "t_total": 1642,
+      "t_submit_to_dashboard": 329,
+      "t_react_ready": -127,
+      "t_supabase_ready": -131,
+      "t_auth": 250,
+      "marks": {
+        "login.page.mount": 1370.8000000002794,
+        "login.supabase.ready": 1239.3000000002794,
+        "login.react.ready": 1243.7000000001863,
+        "login.start": 1367.4000000003725,
+        "login.auth.start": 1367.4000000003725,
+        "auth.ok": 1617.2000000001863,
+        "login.auth.ok": 1617.2000000001863,
+        "login.redirect.start": 1617.3000000002794,
+        "shell.ready": 1643.9000000003725,
+        "route.ready": 1644.1000000000931
+      }
+    },
+    {
+      "user": 31,
+      "t_navigate": 653,
+      "t_total": 1541,
+      "t_submit_to_dashboard": 323,
+      "t_react_ready": -116,
+      "t_supabase_ready": -128,
+      "t_auth": 250,
+      "marks": {
+        "login.page.mount": 1270.1000000000931,
+        "login.supabase.ready": 1141.8000000002794,
+        "login.react.ready": 1153.6000000000931,
+        "login.start": 1266,
+        "login.auth.start": 1266,
+        "auth.ok": 1516.3000000002794,
+        "login.auth.ok": 1516.3000000002794,
+        "login.redirect.start": 1516.6000000000931,
+        "shell.ready": 1551.4000000003725,
+        "route.ready": 1551.5
+      }
+    },
+    {
+      "user": 32,
+      "t_navigate": 789,
+      "t_total": 1673,
+      "t_submit_to_dashboard": 326,
+      "t_react_ready": -105,
+      "t_supabase_ready": -111,
+      "t_auth": 258,
+      "marks": {
+        "login.page.mount": 1396.2000000001863,
+        "login.supabase.ready": 1284.9000000003725,
+        "login.react.ready": 1291.5,
+        "login.start": 1392.7000000001863,
+        "login.auth.start": 1392.7000000001863,
+        "auth.ok": 1650.2000000001863,
+        "login.auth.ok": 1650.2000000001863,
+        "login.redirect.start": 1650.5,
+        "shell.ready": 1674.1000000000931,
+        "route.ready": 1674.2000000001863
+      }
+    },
+    {
+      "user": 33,
+      "t_navigate": 682,
+      "t_total": 1560,
+      "t_submit_to_dashboard": 315,
+      "t_react_ready": -95,
+      "t_supabase_ready": -98,
+      "t_auth": 258,
+      "marks": {
+        "login.page.mount": 1284.5,
+        "login.supabase.ready": 1186.6000000000931,
+        "login.react.ready": 1189,
+        "login.start": 1281.3999999999069,
+        "login.auth.start": 1281.3999999999069,
+        "auth.ok": 1539.5,
+        "login.auth.ok": 1539.6000000000931,
+        "login.redirect.start": 1539.8999999999069,
+        "shell.ready": 1561.5,
+        "route.ready": 1561.6000000000931
+      }
+    },
+    {
+      "user": 34,
+      "t_navigate": 185,
+      "t_total": 1035,
+      "t_submit_to_dashboard": 331,
+      "t_react_ready": -115,
+      "t_supabase_ready": -123,
+      "t_auth": 257,
+      "marks": {
+        "login.page.mount": 762.8999999999069,
+        "login.supabase.ready": 640.2999999998137,
+        "login.react.ready": 647.6999999997206,
+        "login.start": 759.3999999999069,
+        "login.auth.start": 759.3999999999069,
+        "auth.ok": 1016.7999999998137,
+        "login.auth.ok": 1016.7999999998137,
+        "login.redirect.start": 1017.1999999997206,
+        "shell.ready": 1041.1000000000931,
+        "route.ready": 1041.1999999997206
+      }
+    },
+    {
+      "user": 35,
+      "t_navigate": 758,
+      "t_total": 1499,
+      "t_submit_to_dashboard": 301,
+      "t_react_ready": -94,
+      "t_supabase_ready": -102,
+      "t_auth": 239,
+      "marks": {
+        "login.page.mount": 1243.3000000002794,
+        "login.supabase.ready": 1141.1000000000931,
+        "login.react.ready": 1149.2000000001863,
+        "login.start": 1240.8000000002794,
+        "login.auth.start": 1240.8000000002794,
+        "auth.ok": 1479.5,
+        "login.auth.ok": 1479.5,
+        "login.redirect.start": 1479.8000000002794,
+        "shell.ready": 1501.3999999999069,
+        "route.ready": 1501.5
+      }
+    },
+    {
+      "user": 36,
+      "t_navigate": 638,
+      "t_total": 1401,
+      "t_submit_to_dashboard": 321,
+      "t_react_ready": -118,
+      "t_supabase_ready": -133,
+      "t_auth": 253,
+      "marks": {
+        "login.page.mount": 1134,
+        "login.supabase.ready": 1000.8999999999069,
+        "login.react.ready": 1015.6999999997206,
+        "login.start": 1129.6000000000931,
+        "login.auth.start": 1129.6000000000931,
+        "auth.ok": 1382.6999999997206,
+        "login.auth.ok": 1382.6999999997206,
+        "login.redirect.start": 1383,
+        "shell.ready": 1402,
+        "route.ready": 1402.1000000000931
+      }
+    },
+    {
+      "user": 37,
+      "t_navigate": 811,
+      "t_total": 1573,
+      "t_submit_to_dashboard": 312,
+      "t_react_ready": -99,
+      "t_supabase_ready": -105,
+      "t_auth": 247,
+      "marks": {
+        "login.page.mount": 1310.0999999996275,
+        "login.supabase.ready": 1204.8999999999069,
+        "login.react.ready": 1210.8999999999069,
+        "login.start": 1305.5,
+        "login.auth.start": 1305.5,
+        "auth.ok": 1552.7999999998137,
+        "login.auth.ok": 1552.7999999998137,
+        "login.redirect.start": 1553.1999999997206,
+        "shell.ready": 1577.8999999999069,
+        "route.ready": 1577.8999999999069
+      }
+    },
+    {
+      "user": 38,
+      "t_navigate": 605,
+      "t_total": 1280,
+      "t_submit_to_dashboard": 310,
+      "t_react_ready": -96,
+      "t_supabase_ready": -115,
+      "t_auth": 249,
+      "marks": {
+        "login.page.mount": 1020.1999999997206,
+        "login.supabase.ready": 905.5999999996275,
+        "login.react.ready": 924.3999999999069,
+        "login.start": 1017.2999999998137,
+        "login.auth.start": 1017.2999999998137,
+        "auth.ok": 1266.3999999999069,
+        "login.auth.ok": 1266.3999999999069,
+        "login.redirect.start": 1266.5999999996275,
+        "shell.ready": 1285.3999999999069,
+        "route.ready": 1285.5
+      }
+    },
+    {
+      "user": 39,
+      "t_navigate": 797,
+      "t_total": 1581,
+      "t_submit_to_dashboard": 348,
+      "t_react_ready": -93,
+      "t_supabase_ready": -104,
+      "t_auth": 285,
+      "marks": {
+        "login.page.mount": 1280.7999999998137,
+        "login.supabase.ready": 1177,
+        "login.react.ready": 1187.5,
+        "login.start": 1278.3999999999069,
+        "login.auth.start": 1278.3999999999069,
+        "auth.ok": 1563.7999999998137,
+        "login.auth.ok": 1563.7999999998137,
+        "login.redirect.start": 1564,
+        "shell.ready": 1583.7999999998137,
+        "route.ready": 1583.7999999998137
+      }
+    },
+    {
+      "user": 40,
+      "t_navigate": 602,
+      "t_total": 1334,
+      "t_submit_to_dashboard": 330,
+      "t_react_ready": -112,
+      "t_supabase_ready": -120,
+      "t_auth": 258,
+      "marks": {
+        "login.page.mount": 1065.1999999997206,
+        "login.supabase.ready": 944.6999999997206,
+        "login.react.ready": 953.2999999998137,
+        "login.start": 1061.8999999999069,
+        "login.auth.start": 1061.8999999999069,
+        "auth.ok": 1319.5,
+        "login.auth.ok": 1319.5,
+        "login.redirect.start": 1319.6999999997206,
+        "shell.ready": 1336.7999999998137,
+        "route.ready": 1336.7999999998137
+      }
+    },
+    {
+      "user": 41,
+      "t_navigate": 604,
+      "t_total": 1304,
+      "t_submit_to_dashboard": 312,
+      "t_react_ready": -97,
+      "t_supabase_ready": -108,
+      "t_auth": 243,
+      "marks": {
+        "login.page.mount": 1039.8000000002794,
+        "login.supabase.ready": 932.2000000001863,
+        "login.react.ready": 942.7000000001863,
+        "login.start": 1036.8000000002794,
+        "login.auth.start": 1036.8000000002794,
+        "auth.ok": 1279.8000000002794,
+        "login.auth.ok": 1279.9000000003725,
+        "login.redirect.start": 1280.2000000001863,
+        "shell.ready": 1310.4000000003725,
+        "route.ready": 1310.4000000003725
+      }
+    },
+    {
+      "user": 43,
+      "t_navigate": 751,
+      "t_total": 1581,
+      "t_submit_to_dashboard": 344,
+      "t_react_ready": -146,
+      "t_supabase_ready": -153,
+      "t_auth": 252,
+      "marks": {
+        "login.page.mount": 1319.5,
+        "login.supabase.ready": 1166.3000000002794,
+        "login.react.ready": 1173.6000000000931,
+        "login.start": 1313.5,
+        "login.auth.start": 1313.5,
+        "auth.ok": 1565.3000000002794,
+        "login.auth.ok": 1565.3000000002794,
+        "login.redirect.start": 1565.5,
+        "shell.ready": 1588.8000000002794,
+        "route.ready": 1588.8000000002794
+      }
+    },
+    {
+      "user": 46,
+      "t_navigate": 630,
+      "t_total": 1432,
+      "t_submit_to_dashboard": 312,
+      "t_react_ready": -100,
+      "t_supabase_ready": -114,
+      "t_auth": 252,
+      "marks": {
+        "login.page.mount": 1166.1000000000931,
+        "login.supabase.ready": 1052.3999999999069,
+        "login.react.ready": 1065.8999999999069,
+        "login.start": 1160.7999999998137,
+        "login.auth.start": 1160.7999999998137,
+        "auth.ok": 1412.6000000000931,
+        "login.auth.ok": 1412.6000000000931,
+        "login.redirect.start": 1412.8999999999069,
+        "shell.ready": 1433.5,
+        "route.ready": 1433.5
+      }
+    },
+    {
+      "user": 42,
+      "t_navigate": 632,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "user": 44,
+      "t_navigate": 615,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "user": 45,
+      "t_navigate": 824,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "user": 47,
+      "t_navigate": 623,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "user": 48,
+      "t_navigate": 786,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "user": 49,
+      "t_navigate": 608,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    }
+  ]
+}

@@ -1,0 +1,328 @@
+{
+  "base_url": "https://metasungerencial.lovable.app",
+  "users": 10,
+  "ramp_ms": 10000,
+  "timestamp": "2026-06-01T22:58:43.533Z",
+  "ok": 10,
+  "error": 0,
+  "console_errors": 10,
+  "phases": {
+    "t_navigate": {
+      "n": 10,
+      "p50": 662,
+      "p95": 1378,
+      "p99": 1378,
+      "min": 606,
+      "max": 1378,
+      "avg": 771
+    },
+    "t_react_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_supabase_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_auth": {
+      "n": 10,
+      "p50": 344,
+      "p95": 608,
+      "p99": 608,
+      "min": 256,
+      "max": 608,
+      "avg": 378
+    },
+    "t_redirect": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_submit_to_dashboard": {
+      "n": 10,
+      "p50": 409,
+      "p95": 701,
+      "p99": 701,
+      "min": 313,
+      "max": 701,
+      "avg": 447
+    },
+    "t_total": {
+      "n": 10,
+      "p50": 1645,
+      "p95": 2494,
+      "p99": 2494,
+      "min": 1425,
+      "max": 2494,
+      "avg": 1688
+    }
+  },
+  "sample_console_errors": [
+    {
+      "user": 1,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 0,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 2,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 3,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 4,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 5,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 6,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 7,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 8,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "user": 9,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    }
+  ],
+  "samples": [
+    {
+      "user": 0,
+      "t_navigate": 1378,
+      "t_total": 2494,
+      "t_submit_to_dashboard": 701,
+      "t_react_ready": -139,
+      "t_supabase_ready": -146,
+      "t_auth": 608,
+      "marks": {
+        "login.page.mount": 1869.6999999997206,
+        "login.supabase.ready": 1724,
+        "login.react.ready": 1730.6999999997206,
+        "login.start": 1866,
+        "login.auth.start": 1866.0999999996275,
+        "auth.ok": 2474.0999999996275,
+        "login.auth.ok": 2474.0999999996275,
+        "login.redirect.start": 2474.399999999907,
+        "shell.ready": 2493.899999999907,
+        "route.ready": 2493.899999999907
+      }
+    },
+    {
+      "user": 1,
+      "t_navigate": 616,
+      "t_total": 1468,
+      "t_submit_to_dashboard": 409,
+      "t_react_ready": -98,
+      "t_supabase_ready": -110,
+      "t_auth": 344,
+      "marks": {
+        "login.page.mount": 1106.2000000001863,
+        "login.supabase.ready": 995.9000000003725,
+        "login.react.ready": 1007.9000000003725,
+        "login.start": 1101.9000000003725,
+        "login.auth.start": 1101.9000000003725,
+        "auth.ok": 1445.9000000003725,
+        "login.auth.ok": 1445.9000000003725,
+        "login.redirect.start": 1446.5,
+        "shell.ready": 1469.1000000000931,
+        "route.ready": 1469.2000000001863
+      }
+    },
+    {
+      "user": 2,
+      "t_navigate": 768,
+      "t_total": 1799,
+      "t_submit_to_dashboard": 515,
+      "t_react_ready": -118,
+      "t_supabase_ready": -126,
+      "t_auth": 430,
+      "marks": {
+        "login.page.mount": 1343.3000000002794,
+        "login.supabase.ready": 1217.6000000000931,
+        "login.react.ready": 1225.4000000003725,
+        "login.start": 1340.5,
+        "login.auth.start": 1340.6000000000931,
+        "auth.ok": 1771,
+        "login.auth.ok": 1771,
+        "login.redirect.start": 1771.3000000002794,
+        "shell.ready": 1808.7000000001863,
+        "route.ready": 1808.7000000001863
+      }
+    },
+    {
+      "user": 3,
+      "t_navigate": 821,
+      "t_total": 1648,
+      "t_submit_to_dashboard": 351,
+      "t_react_ready": -116,
+      "t_supabase_ready": -124,
+      "t_auth": 274,
+      "marks": {
+        "login.page.mount": 1354.5,
+        "login.supabase.ready": 1230.1999999997206,
+        "login.react.ready": 1238.8999999999069,
+        "login.start": 1351.1999999997206,
+        "login.auth.start": 1351.1999999997206,
+        "auth.ok": 1625.1000000000931,
+        "login.auth.ok": 1625.1000000000931,
+        "login.redirect.start": 1625.6999999997206,
+        "shell.ready": 1650.6999999997206,
+        "route.ready": 1650.7999999998137
+      }
+    },
+    {
+      "user": 4,
+      "t_navigate": 733,
+      "t_total": 1645,
+      "t_submit_to_dashboard": 497,
+      "t_react_ready": -97,
+      "t_supabase_ready": -106,
+      "t_auth": 431,
+      "marks": {
+        "login.page.mount": 1196.5,
+        "login.supabase.ready": 1090.3999999999069,
+        "login.react.ready": 1099.3000000002794,
+        "login.start": 1192.1000000000931,
+        "login.auth.start": 1192.1000000000931,
+        "auth.ok": 1622.7000000001863,
+        "login.auth.ok": 1622.7000000001863,
+        "login.redirect.start": 1623.5,
+        "shell.ready": 1646.5,
+        "route.ready": 1646.6000000000931
+      }
+    },
+    {
+      "user": 5,
+      "t_navigate": 832,
+      "t_total": 1717,
+      "t_submit_to_dashboard": 347,
+      "t_react_ready": -100,
+      "t_supabase_ready": -111,
+      "t_auth": 284,
+      "marks": {
+        "login.page.mount": 1418.3999999999069,
+        "login.supabase.ready": 1307.5,
+        "login.react.ready": 1318,
+        "login.start": 1413.5999999996275,
+        "login.auth.start": 1413.6999999997206,
+        "auth.ok": 1697.2999999998137,
+        "login.auth.ok": 1697.2999999998137,
+        "login.redirect.start": 1697.5999999996275,
+        "shell.ready": 1722.0999999996275,
+        "route.ready": 1722.0999999996275
+      }
+    },
+    {
+      "user": 6,
+      "t_navigate": 662,
+      "t_total": 1696,
+      "t_submit_to_dashboard": 491,
+      "t_react_ready": -96,
+      "t_supabase_ready": -109,
+      "t_auth": 442,
+      "marks": {
+        "login.page.mount": 1238.6000000000931,
+        "login.supabase.ready": 1130,
+        "login.react.ready": 1142.3999999999069,
+        "login.start": 1235.7000000001863,
+        "login.auth.start": 1235.7999999998137,
+        "auth.ok": 1678,
+        "login.auth.ok": 1678,
+        "login.redirect.start": 1678.2000000001863,
+        "shell.ready": 1700.2999999998137,
+        "route.ready": 1700.2999999998137
+      }
+    },
+    {
+      "user": 7,
+      "t_navigate": 650,
+      "t_total": 1453,
+      "t_submit_to_dashboard": 337,
+      "t_react_ready": -105,
+      "t_supabase_ready": -104,
+      "t_auth": 267,
+      "marks": {
+        "login.page.mount": 1171.8000000002794,
+        "login.react.ready": 1067,
+        "login.supabase.ready": 1067.3000000002794,
+        "login.start": 1168.5,
+        "login.auth.start": 1168.5,
+        "auth.ok": 1435,
+        "login.auth.ok": 1435,
+        "login.redirect.start": 1435.3000000002794,
+        "shell.ready": 1457.5,
+        "route.ready": 1457.6000000000931
+      }
+    },
+    {
+      "user": 8,
+      "t_navigate": 639,
+      "t_total": 1425,
+      "t_submit_to_dashboard": 313,
+      "t_react_ready": -98,
+      "t_supabase_ready": -109,
+      "t_auth": 256,
+      "marks": {
+        "login.page.mount": 1150.2999999998137,
+        "login.supabase.ready": 1041.5,
+        "login.react.ready": 1052.2000000001863,
+        "login.start": 1147.7999999998137,
+        "login.auth.start": 1147.7999999998137,
+        "auth.ok": 1404.1000000000931,
+        "login.auth.ok": 1404.1000000000931,
+        "login.redirect.start": 1404.3999999999069,
+        "shell.ready": 1429.6000000000931,
+        "route.ready": 1429.6000000000931
+      }
+    },
+    {
+      "user": 9,
+      "t_navigate": 606,
+      "t_total": 1535,
+      "t_submit_to_dashboard": 508,
+      "t_react_ready": -101,
+      "t_supabase_ready": -111,
+      "t_auth": 442,
+      "marks": {
+        "login.page.mount": 1072.5,
+        "login.supabase.ready": 961.1000000000931,
+        "login.react.ready": 971.6000000000931,
+        "login.start": 1069.8999999999069,
+        "login.auth.start": 1069.8999999999069,
+        "auth.ok": 1512.3000000002794,
+        "login.auth.ok": 1512.3000000002794,
+        "login.redirect.start": 1512.6000000000931,
+        "shell.ready": 1532.8999999999069,
+        "route.ready": 1533.2000000001863
+      }
+    }
+  ]
+}

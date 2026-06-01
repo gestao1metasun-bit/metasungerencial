@@ -5,7 +5,7 @@
 //
 // Não toca RLS / banco / workflow / regra de negócio.
 
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Copy, Check, AlertTriangle, Gauge, Upload, FileJson } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";

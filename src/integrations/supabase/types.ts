@@ -10886,6 +10886,20 @@ export type Database = {
         | "operacao_financeira.renegociar"
         | "operacao_financeira.cancelar"
         | "operacao_financeira.estornar"
+        | "os.visualizar"
+        | "os.criar"
+        | "os.editar"
+        | "os.cancelar"
+        | "os.finalizar"
+        | "os.excluir"
+        | "os.gerar_pv"
+        | "os.tarefa.executar"
+        | "os.tarefa.atribuir"
+        | "os.formulario.responder"
+        | "os.cadastros.editar"
+        | "os.modelo.editar"
+        | "os.relatorio.ver"
+        | "os.dashboard.ver"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -11157,6 +11171,20 @@ export const Constants = {
         "operacao_financeira.renegociar",
         "operacao_financeira.cancelar",
         "operacao_financeira.estornar",
+        "os.visualizar",
+        "os.criar",
+        "os.editar",
+        "os.cancelar",
+        "os.finalizar",
+        "os.excluir",
+        "os.gerar_pv",
+        "os.tarefa.executar",
+        "os.tarefa.atribuir",
+        "os.formulario.responder",
+        "os.cadastros.editar",
+        "os.modelo.editar",
+        "os.relatorio.ver",
+        "os.dashboard.ver",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

@@ -103,7 +103,9 @@ function SolicitacoesMaterialPage() {
         searchPlaceholder="Buscar código, setor, motivo, solicitante…"
         search={busca}
         onSearchChange={setBusca}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmCompras({
+          historico: () => setHistOpen(true),
+        })}
         layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "novo") setCriar(true);

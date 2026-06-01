@@ -288,7 +288,13 @@ async function syncFromSupabase(): Promise<void> {
   syncInFlight = true;
   try {
     const mod = await import("./contratos.functions");
-    const json = await mod.listarContratos();
+    // Timeout client-side (8s) para evitar 504 do proxy dev virar RUNTIME_ERROR.
+    const json = await Promise.race<string>([
+      mod.listarContratos(),
+      new Promise<string>((_, rej) =>
+        setTimeout(() => rej(new Error("listarContratos timeout (8s)")), 8000),
+      ),
+    ]);
     const rows = JSON.parse(json) as import("./contratos-mapper").ContratoRow[];
     const mapper = await import("./contratos-mapper");
     const remote = rows.map(mapper.contratoFromRow);

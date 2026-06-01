@@ -53,10 +53,23 @@ function trimPayload(p: unknown): Record<string, unknown> | undefined {
 export const errorLogRepo = {
   async log(input: ErrorLogInput): Promise<void> {
     if (typeof window === "undefined") return;
+    // D19.2 — descarta telemetria de agentes sintéticos (Playwright/headless)
+    // para não poluir error_log durante testes de carga. Usuários reais OK.
     try {
+      const nav = navigator as Navigator & { webdriver?: boolean };
+      const ua = nav.userAgent || "";
+      if (nav.webdriver || /HeadlessChrome|Playwright|puppeteer/i.test(ua)) return;
+    } catch { /* ignore */ }
+    try {
+      // RLS exige sessão. Sem usuário, INSERT é negado — pula silenciosamente
+      // (cai em console.warn local) para não gerar 401/400 ruidoso.
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn("[errorLogRepo.log] sem sessão; erro só em console:", input.mensagem);
+        return;
+      }
       await supabase.from("error_log").insert({
-        user_id: user?.id ?? null,
+        user_id: user.id,
         modulo: input.modulo ?? null,
         tela: input.tela ?? window.location.pathname,
         acao: input.acao ?? null,
@@ -67,6 +80,7 @@ export const errorLogRepo = {
         user_agent: navigator.userAgent.slice(0, 500),
         url: window.location.href.slice(0, 500),
       });
+
     } catch (e) {
       // Nunca quebrar a app por causa do logger
       console.warn("[errorLogRepo.log] falhou ao registrar erro", e);

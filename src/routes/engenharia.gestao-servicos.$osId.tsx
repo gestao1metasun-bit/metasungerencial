@@ -145,12 +145,20 @@ function PainelOsPage() {
         }}
       />
 
-      <Tabs defaultValue="os" className="w-full">
+      <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="h-8">
+          <TabsTrigger value="dashboard" className="text-[12px]">Dashboard</TabsTrigger>
           <TabsTrigger value="os" className="text-[12px]">Ordem de Serviço</TabsTrigger>
+          <TabsTrigger value="orcado" className="text-[12px]">Orçado x Realizado</TabsTrigger>
+          <TabsTrigger value="custos" className="text-[12px]">Custos</TabsTrigger>
           <TabsTrigger value="tarefas" className="text-[12px]">Tarefas</TabsTrigger>
           <TabsTrigger value="historico" className="text-[12px]">Histórico</TabsTrigger>
         </TabsList>
+
+        {/* ─── Dashboard ─── */}
+        <TabsContent value="dashboard" className="mt-2">
+          <DashboardTab osId={os.id} />
+        </TabsContent>
 
         {/* ─── OS ─── */}
         <TabsContent value="os" className="mt-2">
@@ -176,6 +184,16 @@ function PainelOsPage() {
           </Card>
         </TabsContent>
 
+        {/* ─── Orçado x Realizado ─── */}
+        <TabsContent value="orcado" className="mt-2">
+          <OrcadoRealizadoTab osId={os.id} />
+        </TabsContent>
+
+        {/* ─── Custos ─── */}
+        <TabsContent value="custos" className="mt-2">
+          <CustosTab osId={os.id} />
+        </TabsContent>
+
         {/* ─── Tarefas ─── */}
         <TabsContent value="tarefas" className="mt-2">
           <TarefasTab osId={os.id} />
@@ -186,6 +204,7 @@ function PainelOsPage() {
           <HistoricoTab osId={os.id} />
         </TabsContent>
       </Tabs>
+
 
       {/* ─── Dialogs ─── */}
       <MudarStatusDialog

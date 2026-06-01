@@ -11417,6 +11417,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      fn_os_log_evento: {
+        Args: {
+          p_descricao: string
+          p_os_id: string
+          p_payload?: Json
+          p_tarefa_id: string
+          p_tipo: string
+        }
+        Returns: string
+      }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
         Returns: string
@@ -11828,6 +11838,129 @@ export type Database = {
           _request_id: string
         }
         Returns: Json
+      }
+      rpc_os_atualizar: {
+        Args: { p_os_id: string; p_patch: Json; p_row_version: number }
+        Returns: string
+      }
+      rpc_os_cancelar: {
+        Args: { p_motivo: string; p_os_id: string; p_row_version: number }
+        Returns: undefined
+      }
+      rpc_os_criar: {
+        Args: {
+          p_area_negocio_id?: string
+          p_cliente_id: string
+          p_contrato_id?: string
+          p_custo_orcado?: number
+          p_data_prev_inicio?: string
+          p_data_prev_termino?: string
+          p_endereco_bairro?: string
+          p_endereco_cep?: string
+          p_endereco_cidade?: string
+          p_endereco_logradouro?: string
+          p_endereco_numero?: string
+          p_endereco_uf?: string
+          p_idempotency_key?: string
+          p_obra_id?: string
+          p_observacoes?: string
+          p_ocorrencia_id?: string
+          p_pedido_venda_id?: string
+          p_pipeline_id?: string
+          p_projeto_id?: string
+          p_proposta_id?: string
+          p_status_codigo?: string
+          p_tecnico_responsavel_id?: string
+          p_valor_em_pv?: number
+          p_valor_orcado?: number
+        }
+        Returns: string
+      }
+      rpc_os_evento_registrar: {
+        Args: {
+          p_descricao: string
+          p_os_id: string
+          p_payload?: Json
+          p_tarefa_id: string
+          p_tipo: string
+        }
+        Returns: string
+      }
+      rpc_os_excluir: {
+        Args: { p_motivo: string; p_os_id: string }
+        Returns: undefined
+      }
+      rpc_os_finalizar: {
+        Args: { p_observacao?: string; p_os_id: string; p_row_version: number }
+        Returns: undefined
+      }
+      rpc_os_formulario_responder: {
+        Args: {
+          p_formulario_id: string
+          p_idempotency_key?: string
+          p_respostas: Json
+          p_tarefa_id: string
+        }
+        Returns: string
+      }
+      rpc_os_gerar_pv: {
+        Args: { p_os_id: string; p_pedido_venda_id: string }
+        Returns: string
+      }
+      rpc_os_mudar_status: {
+        Args: {
+          p_motivo?: string
+          p_novo_status: string
+          p_os_id: string
+          p_row_version: number
+        }
+        Returns: undefined
+      }
+      rpc_os_tarefa_atribuir: {
+        Args: {
+          p_funcao_tecnico_id?: string
+          p_row_version: number
+          p_tarefa_id: string
+          p_tecnico_id: string
+        }
+        Returns: undefined
+      }
+      rpc_os_tarefa_atualizar: {
+        Args: { p_patch: Json; p_row_version: number; p_tarefa_id: string }
+        Returns: string
+      }
+      rpc_os_tarefa_concluir: {
+        Args: {
+          p_observacao?: string
+          p_row_version: number
+          p_tarefa_id: string
+        }
+        Returns: undefined
+      }
+      rpc_os_tarefa_criar: {
+        Args: {
+          p_data_prevista?: string
+          p_descricao?: string
+          p_duracao_min?: number
+          p_formulario_id?: string
+          p_funcao_tecnico_id?: string
+          p_modelo_id?: string
+          p_nome: string
+          p_obrigatorio?: boolean
+          p_ordem?: number
+          p_os_id: string
+          p_tecnico_id?: string
+        }
+        Returns: string
+      }
+      rpc_os_tarefa_mudar_status: {
+        Args: {
+          p_motivo?: string
+          p_novo_status: string
+          p_row_version: number
+          p_tarefa_id: string
+        }
+        Returns: undefined
       }
       rpc_perf_log: {
         Args: {

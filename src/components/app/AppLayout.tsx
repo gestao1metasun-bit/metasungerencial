@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
-import { MACRO_MODULES } from "@/lib/nav-structure";
+
 import { Bell, LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useState } from "react";
@@ -30,25 +30,16 @@ export function AppLayout() {
   const navigate = useNavigate();
   const router = useRouter();
 
-  // D19.2.fix.50u P0-2 — prefetch dos macro módulos em idle após sessão pronta.
-  // Reduz módulo.switch (cold chunk fetch dominava 6s P95 em 50u). Roda 1x por
-  // sessão, em janelas de idle, sem bloquear o primeiro paint.
-  useEffect(() => {
-    if (identidade.sessionLoading || !identidade.isAuthenticated) return;
-    const win = window as unknown as {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    };
-    const idle = win.requestIdleCallback;
-    const schedule = (fn: () => void) =>
-      idle ? idle.call(window, fn, { timeout: 4000 }) : setTimeout(fn, 800);
-    schedule(() => {
-      for (const m of MACRO_MODULES) {
-        schedule(() => {
-          void router.preloadRoute({ to: m.to }).catch(() => {});
-        });
-      }
-    });
-  }, [identidade.sessionLoading, identidade.isAuthenticated, router]);
+  // D19.2.fix.50u.3 — Loop massivo `router.preloadRoute` em rAF foi REMOVIDO.
+  // Causa: TanStack Router 1.168.25 materializava `match` no pool sem
+  // `_nonReactive` populado em concorrência, gerando
+  // `TypeError: Cannot read properties of undefined (reading '_nonReactive')`
+  // no MatchInner (node_modules/@tanstack/react-router/src/Match.tsx).
+  // O ganho do P0-2 fica preservado pelo `defaultPreload: 'intent'` +
+  // `defaultPreloadDelay: 50` já configurados em src/router.tsx (D19.1.fix F6):
+  // o chunk aquece no hover do MacroNav, que é o caminho real do usuário.
+  void router;
+
 
   useRegisterRecente();
   const displayName = identidade.displayName;

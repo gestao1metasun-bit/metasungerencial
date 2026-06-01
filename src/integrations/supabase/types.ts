@@ -5092,6 +5092,1180 @@ export type Database = {
           },
         ]
       }
+      os_area_negocio: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_categorias_equipamento: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_equipamentos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_eventos: {
+        Row: {
+          ator_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          os_id: string
+          payload: Json
+          tarefa_id: string | null
+          tipo: string
+        }
+        Insert: {
+          ator_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          os_id: string
+          payload?: Json
+          tarefa_id?: string | null
+          tipo: string
+        }
+        Update: {
+          ator_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          os_id?: string
+          payload?: Json
+          tarefa_id?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_eventos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_eventos_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_formulario_respostas: {
+        Row: {
+          created_at: string
+          formulario_id: string
+          id: string
+          respondido_em: string
+          respondido_por: string | null
+          respostas: Json
+          tarefa_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          formulario_id: string
+          id?: string
+          respondido_em?: string
+          respondido_por?: string | null
+          respostas?: Json
+          tarefa_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          formulario_id?: string
+          id?: string
+          respondido_em?: string
+          respondido_por?: string | null
+          respostas?: Json
+          tarefa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_formulario_respostas_formulario_id_fkey"
+            columns: ["formulario_id"]
+            isOneToOne: false
+            referencedRelation: "os_formularios_definicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_formulario_respostas_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_formularios_definicao: {
+        Row: {
+          ativo: boolean
+          campos: Json
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          obrigatorio: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          campos?: Json
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          campos?: Json
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_funcoes_tecnico: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_motoristas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_ocorrencias: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_ordens: {
+        Row: {
+          area_negocio_id: string | null
+          categoria_contabil: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          contrato_id: string | null
+          created_at: string
+          created_by: string | null
+          custo_orcado: number
+          custo_total: number
+          data_cadastro: string
+          data_fim: string | null
+          data_inicio: string | null
+          data_prev_inicio: string | null
+          data_prev_termino: string | null
+          delete_motivo: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
+          endereco_uf: string | null
+          hash_remessa: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          lote_integracao_id: string | null
+          motorista_id: string | null
+          natureza_id: string | null
+          numero: number
+          obra_id: string | null
+          observacoes: string | null
+          ocorrencia_id: string | null
+          pedido_venda_id: string | null
+          pipeline_id: string | null
+          projeto_id: string | null
+          proposta_id: string | null
+          row_version: number
+          sistema_destino: string | null
+          status_codigo: string
+          status_integracao: string | null
+          tecnico_responsavel_id: string | null
+          updated_at: string
+          valor_em_pv: number
+          valor_orcado: number
+          veiculo_id: string | null
+        }
+        Insert: {
+          area_negocio_id?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custo_orcado?: number
+          custo_total?: number
+          data_cadastro?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_prev_inicio?: string | null
+          data_prev_termino?: string | null
+          delete_motivo?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
+          hash_remessa?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          lote_integracao_id?: string | null
+          motorista_id?: string | null
+          natureza_id?: string | null
+          numero?: number
+          obra_id?: string | null
+          observacoes?: string | null
+          ocorrencia_id?: string | null
+          pedido_venda_id?: string | null
+          pipeline_id?: string | null
+          projeto_id?: string | null
+          proposta_id?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_codigo: string
+          status_integracao?: string | null
+          tecnico_responsavel_id?: string | null
+          updated_at?: string
+          valor_em_pv?: number
+          valor_orcado?: number
+          veiculo_id?: string | null
+        }
+        Update: {
+          area_negocio_id?: string | null
+          categoria_contabil?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custo_orcado?: number
+          custo_total?: number
+          data_cadastro?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_prev_inicio?: string | null
+          data_prev_termino?: string | null
+          delete_motivo?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
+          hash_remessa?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          lote_integracao_id?: string | null
+          motorista_id?: string | null
+          natureza_id?: string | null
+          numero?: number
+          obra_id?: string | null
+          observacoes?: string | null
+          ocorrencia_id?: string | null
+          pedido_venda_id?: string | null
+          pipeline_id?: string | null
+          projeto_id?: string | null
+          proposta_id?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status_codigo?: string
+          status_integracao?: string | null
+          tecnico_responsavel_id?: string | null
+          updated_at?: string
+          valor_em_pv?: number
+          valor_orcado?: number
+          veiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_ordens_area_negocio_id_fkey"
+            columns: ["area_negocio_id"]
+            isOneToOne: false
+            referencedRelation: "os_area_negocio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_lote_integracao_id_fkey"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_integracao_contabil"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_lote_integracao_id_fkey"
+            columns: ["lote_integracao_id"]
+            isOneToOne: false
+            referencedRelation: "v_auditoria_integridade_integracao"
+            referencedColumns: ["lote_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "os_motoristas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_previsto"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_desvio_custo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_obras_atrasadas"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_custo_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_tempo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_obra_sem_reserva"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rastreabilidade_operacional"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rentabilidade_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldo_operacional_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_status_material_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "os_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_pedido_venda_id_fkey"
+            columns: ["pedido_venda_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["pv_id"]
+          },
+          {
+            foreignKeyName: "os_ordens_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "os_pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_status_codigo_fkey"
+            columns: ["status_codigo"]
+            isOneToOne: false
+            referencedRelation: "os_status_catalogo"
+            referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "os_ordens_tecnico_responsavel_id_fkey"
+            columns: ["tecnico_responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "os_tecnicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_ordens_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "os_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_pipelines: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          etapas: Json
+          id: string
+          is_default: boolean
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          etapas?: Json
+          id?: string
+          is_default?: boolean
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          etapas?: Json
+          id?: string
+          is_default?: boolean
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_requisicoes_equipamento: {
+        Row: {
+          created_at: string
+          descricao: string
+          equipamento_id: string | null
+          id: string
+          observacoes: string | null
+          os_id: string
+          quantidade: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          equipamento_id?: string | null
+          id?: string
+          observacoes?: string | null
+          os_id: string
+          quantidade?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          equipamento_id?: string | null
+          id?: string
+          observacoes?: string | null
+          os_id?: string
+          quantidade?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_requisicoes_equipamento_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "os_equipamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_requisicoes_equipamento_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_servicos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_servicos_faturar: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          oriundo_orcamento: boolean
+          os_id: string
+          quantidade: number
+          recorrencia: string | null
+          servico_id: string | null
+          updated_at: string
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          oriundo_orcamento?: boolean
+          os_id: string
+          quantidade?: number
+          recorrencia?: string | null
+          servico_id?: string | null
+          updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          oriundo_orcamento?: boolean
+          os_id?: string
+          quantidade?: number
+          recorrencia?: string | null
+          servico_id?: string | null
+          updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_servicos_faturar_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_servicos_faturar_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "os_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_status_catalogo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          cor: string
+          created_at: string
+          id: string
+          is_final: boolean
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          cor?: string
+          created_at?: string
+          id?: string
+          is_final?: boolean
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          is_final?: boolean
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_tarefa_modelos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          tarefas: Json
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          tarefas?: Json
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tarefas?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_tarefas: {
+        Row: {
+          assinatura_em: string | null
+          assinatura_url: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          data_prevista: string | null
+          deleted_at: string | null
+          descricao: string | null
+          duracao_estimada_min: number | null
+          formulario_id: string | null
+          funcao_tecnico_id: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          modelo_id: string | null
+          nome: string
+          obrigatorio: boolean
+          observacoes: string | null
+          ordem: number
+          os_id: string
+          row_version: number
+          status: string
+          tecnico_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assinatura_em?: string | null
+          assinatura_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_prevista?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          duracao_estimada_min?: number | null
+          formulario_id?: string | null
+          funcao_tecnico_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          modelo_id?: string | null
+          nome: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          ordem?: number
+          os_id: string
+          row_version?: number
+          status?: string
+          tecnico_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assinatura_em?: string | null
+          assinatura_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_prevista?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          duracao_estimada_min?: number | null
+          formulario_id?: string | null
+          funcao_tecnico_id?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          modelo_id?: string | null
+          nome?: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          ordem?: number
+          os_id?: string
+          row_version?: number
+          status?: string
+          tecnico_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_tarefas_formulario_id_fkey"
+            columns: ["formulario_id"]
+            isOneToOne: false
+            referencedRelation: "os_formularios_definicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_tarefas_funcao_tecnico_id_fkey"
+            columns: ["funcao_tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "os_funcoes_tecnico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_tarefas_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefa_modelos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_tarefas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "os_tarefas_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "os_tecnicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_tecnicos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      os_veiculos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          deleted_at: string | null
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parcelas_financeiras: {
         Row: {
           codigo_externo: string | null
@@ -10886,6 +12060,20 @@ export type Database = {
         | "operacao_financeira.renegociar"
         | "operacao_financeira.cancelar"
         | "operacao_financeira.estornar"
+        | "os.visualizar"
+        | "os.criar"
+        | "os.editar"
+        | "os.cancelar"
+        | "os.finalizar"
+        | "os.excluir"
+        | "os.gerar_pv"
+        | "os.tarefa.executar"
+        | "os.tarefa.atribuir"
+        | "os.formulario.responder"
+        | "os.cadastros.editar"
+        | "os.modelo.editar"
+        | "os.relatorio.ver"
+        | "os.dashboard.ver"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -11157,6 +12345,20 @@ export const Constants = {
         "operacao_financeira.renegociar",
         "operacao_financeira.cancelar",
         "operacao_financeira.estornar",
+        "os.visualizar",
+        "os.criar",
+        "os.editar",
+        "os.cancelar",
+        "os.finalizar",
+        "os.excluir",
+        "os.gerar_pv",
+        "os.tarefa.executar",
+        "os.tarefa.atribuir",
+        "os.formulario.responder",
+        "os.cadastros.editar",
+        "os.modelo.editar",
+        "os.relatorio.ver",
+        "os.dashboard.ver",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

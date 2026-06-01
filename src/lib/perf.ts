@@ -110,9 +110,12 @@ const isSyntheticAgent = (() => {
 })();
 
 function enqueue(evento: string, ms: number, rota?: string) {
+  // D19.2.fix.50u.5 — bots sintéticos não geram telemetria (não polui P95 + zera rate-limit).
+  if (isSyntheticAgent) {
+    pushRing({ evento: `[skip:bot]${evento}`, ms, rota, at: Date.now() });
+    return;
+  }
   // F1: descartar quando a aba não estava visível no momento do registro.
-  // Performance API conta tempo total da aba, então uma medição feita após
-  // a aba ficar oculta contamina o P95.
   if (
     typeof document !== 'undefined' &&
     document.visibilityState &&

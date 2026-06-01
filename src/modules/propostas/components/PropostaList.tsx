@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ActionsMenu } from "@/components/app/ActionsMenu";
+import { RowActions, type RowAction } from "@/components/app/enterprise";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { toast } from "sonner";
 import {

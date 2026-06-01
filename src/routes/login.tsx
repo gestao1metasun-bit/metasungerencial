@@ -19,11 +19,16 @@ function LoginPage() {
   const navigate = useNavigate();
   const { user, loading, errorMessage } = useAuth();
 
-  // D19.2.fix.50u.2 — REVERTIDO P0-1: preload do shell na montagem disputava
-  // banda com o bundle de auth no ramp concorrente (/login P95 28,7s→47,5s em 50u).
-  // Durante /login: carregar apenas o necessário para autenticar.
-  // Pré-carregamento do shell/módulos agora ocorre APÓS auth.ok no AppLayout
-  // (P0-2 preservado — MacroNav prefetch dos 11 módulos em idle pós-login).
+  // D19.2.fix.50u.6 — instrumentação granular do /login:
+  //   login.page.mount       primeira execução do componente (script parseado + React montou)
+  //   login.react.ready      pós-paint (rAF aninhado) — DOM interativo, formulário visível
+  //   login.supabase.ready   auth-store terminou a hidratação inicial (loading=false)
+  //   login.auth.start       imediatamente antes de signInWithPassword
+  //   login.auth.ok          imediatamente após o token chegar
+  //   login.redirect.start   chamada navigate({to:"/dashboard"})
+  //   login.redirect.ok      useEffect detectou user populado (auth-state-change concluído)
+  perfMark("login.page.mount");
+
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,9 +36,36 @@ function LoginPage() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("renanbarc16@gmail.com");
   const lastAuthError = useRef<string | null>(null);
+  const supabaseReadyMarked = useRef(false);
+  const redirectStartedRef = useRef(false);
+
+  // react.ready: pós primeiro paint
+  useEffect(() => {
+    const id1 = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        perfMark("login.react.ready");
+        perfMeasure("login.page.mount", "login.react.ready", "login.react.ready");
+      });
+    });
+    return () => cancelAnimationFrame(id1);
+  }, []);
+
+  // supabase.ready: assim que o auth-store fecha o loading inicial
+  useEffect(() => {
+    if (!loading && !supabaseReadyMarked.current) {
+      supabaseReadyMarked.current = true;
+      perfMark("login.supabase.ready");
+      perfMeasure("login.page.mount", "login.supabase.ready", "login.supabase.ready");
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (!loading && user) {
+      // redirect.ok = user populado E ainda estamos em /login → próxima navegação fecha o ciclo
+      if (redirectStartedRef.current) {
+        perfMark("login.redirect.ok");
+        perfMeasure("login.redirect.start", "login.redirect.ok", "login.redirect.ok");
+      }
       void navigate({ to: "/dashboard" });
     }
   }, [user, loading, navigate]);
@@ -56,11 +88,16 @@ function LoginPage() {
     }
     setSubmitting(true);
     perfMark("login.start");
+    perfMark("login.auth.start");
     try {
       await signInEmail(email.trim().toLowerCase(), senha);
       perfMark("auth.ok");
+      perfMark("login.auth.ok");
+      perfMeasure("login.auth.start", "login.auth.ok", "login.auth.ok");
       perfMeasure("login.start", "auth.ok", "auth.ok");
       toast.success("Login efetuado.");
+      perfMark("login.redirect.start");
+      redirectStartedRef.current = true;
       void navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao entrar.";
@@ -73,6 +110,7 @@ function LoginPage() {
       setSubmitting(false);
     }
   }
+
 
   async function handleForgotPassword() {
     if (!recoveryEmail) {

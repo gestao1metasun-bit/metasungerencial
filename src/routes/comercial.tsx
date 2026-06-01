@@ -697,39 +697,36 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>Cancelado em</TableHead>
               <TableHead>Motivo</TableHead>
+              <TableHead className="w-[90px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {cancelados.map((c) => (
               <TableRow key={c.id}>
-                <TableCell>
-                  <ActionsMenu label={fmtContratoId(c.id)}>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        if (!confirm(`Reativar contrato ${fmtContratoId(c.id)}?\n\nEle voltará para "Assinado" (precisa ser aprovado novamente para liberar Engenharia/Financiamento).`)) return;
-                        const r = reativarContrato(c.id, "Comercial");
-                        if (!r.ok) { toast.error(r.motivo); return; }
-                        toast.success(`Contrato ${fmtContratoId(c.id)} reativado.`);
-                      }}
-                    >
-                      <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                      <span className="text-success">Reativar contrato</span>
-                    </DropdownMenuItem>
-                  </ActionsMenu>
-                </TableCell>
                 <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
                 <TableCell className="font-medium">{c.cliente}</TableCell>
                 <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                 <TableCell className="text-right font-semibold">{fmtBRL(valorContrato(c))}</TableCell>
                 <TableCell className="text-xs">{fmtDataBR((c.auditoria ?? []).filter((a) => a.campo === "status" && /Cancel/i.test(a.para)).pop()?.data?.slice(0,10)) || "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={c.motivoCancelamento || ""}>{c.motivoCancelamento || "—"}</TableCell>
+                <TableCell>
+                  <RowActions
+                    rowId={c.id}
+                    actions={[{ kind: "aprovar", label: "Reativar contrato", icon: RotateCcw }]}
+                    onAction={() => {
+                      if (!confirm(`Reativar contrato ${fmtContratoId(c.id)}?\n\nEle voltará para "Assinado" (precisa ser aprovado novamente para liberar Engenharia/Financiamento).`)) return;
+                      const r = reativarContrato(c.id, "Comercial");
+                      if (!r.ok) { toast.error(r.motivo); return; }
+                      toast.success(`Contrato ${fmtContratoId(c.id)} reativado.`);
+                    }}
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

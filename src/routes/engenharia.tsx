@@ -1871,7 +1871,7 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
       </div>
       <Table>
         <TableHeader><TableRow className="hover:bg-transparent">
-          <TableHead className="w-[80px]">Opções</TableHead>
+          <TableHead className="w-[110px]">Ações</TableHead>
           <TableHead>Obra</TableHead><TableHead>Cliente</TableHead><TableHead>Equipe</TableHead>
           <TableHead className="text-center">Mód.</TableHead><TableHead className="text-right">kWp</TableHead>
           <TableHead>Início</TableHead><TableHead>Finalização</TableHead>
@@ -1884,24 +1884,21 @@ function FinalizadosTab({ obras, setObras: _setObras }: { obras: Obra[]; setObra
             return (
               <TableRow key={o.id}>
                 <TableCell>
-                  <ActionsMenu label={o.id}>
-                    <DropdownMenuItem onSelect={() => setDetail(o)}>
-                      <Eye className="mr-2 h-4 w-4" /> Ver detalhes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setHistorico(o)}>
-                      <History className="mr-2 h-4 w-4" /> Histórico de alterações
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {!liberada && (
-                      <DropdownMenuItem onSelect={() => handleLiberar(o)}>
-                        <Unlock className="mr-2 h-4 w-4 text-success" />
-                        <span className="text-success">Liberar edição (até fim do dia)</span>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onSelect={() => setEditing(o)}>
-                      <SquarePen className="mr-2 h-4 w-4" /> Editar obra
-                    </DropdownMenuItem>
-                  </ActionsMenu>
+                  <RowActions
+                    rowId={o.id}
+                    actions={[
+                      { kind: "visualizar" },
+                      { kind: "historico", label: "Histórico de alterações" },
+                      { kind: "editar", label: "Editar obra", overflow: true },
+                      ...(!liberada ? [{ kind: "aprovar" as const, label: "Liberar edição (até fim do dia)", overflow: true }] : []),
+                    ]}
+                    onAction={(k) => {
+                      if (k === "visualizar") setDetail(o);
+                      else if (k === "historico") setHistorico(o);
+                      else if (k === "editar") setEditing(o);
+                      else if (k === "aprovar") handleLiberar(o);
+                    }}
+                  />
                 </TableCell>
                 <TableCell className="font-mono text-xs text-primary">{o.id}</TableCell>
                 <TableCell className="font-medium">{o.cliente}</TableCell>

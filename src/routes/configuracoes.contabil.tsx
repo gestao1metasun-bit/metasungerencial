@@ -243,7 +243,7 @@ function MapeamentosTab() {
                   <TableCell className="text-[12px]">{pc ? `${pc.codigo} — ${pc.nome}` : <span className="text-amber-600">pendente</span>}</TableCell>
                   <TableCell className="text-[12px]">{cr ? `${cr.codigo} — ${cr.nome}` : "—"}</TableCell>
                   <TableCell>{r.ativo ? <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">SIM</Badge> : <Badge variant="secondary" className="text-[10px]">NÃO</Badge>}</TableCell>
-                  <TableCell><RowActions actions={[{ kind: "editar", onClick: () => setEditing(r) }]} /></TableCell>
+                  <TableCell><RowActions rowId={r.id} actions={[{ kind: "editar" }]} onAction={() => setEditing(r)} /></TableCell>
                 </TableRow>
               );
             })}
@@ -319,10 +319,14 @@ function CentrosCustoTab() {
   return (
     <Card className="p-3">
       <EnterpriseRecordToolbar
-        entityType="parametro"
-        title={`Centros de Custo (${rows.length})`}
-        primaryAction={{ label: "Novo", icon: Plus, onClick: () => setEditing({ codigo: "", nome: "", tipo: "ADMINISTRATIVO", ativo: true }) }}
-        search={{ value: busca, onChange: setBusca, placeholder: "Buscar por código ou nome…" }}
+        entityType="compras"
+        selectedIds={[]}
+        availableActions={["novo"]}
+        onAction={(a) => { if (a === "novo") setEditing({ codigo: "", nome: "", tipo: "ADMINISTRATIVO", ativo: true }); }}
+        search={busca}
+        onSearchChange={setBusca}
+        searchPlaceholder="Buscar por código ou nome…"
+        extraLeft={<span className="text-[12px] font-medium px-2">{`Centros de Custo (${rows.length})`}</span>}
       />
       <div className="mt-3 overflow-auto">
         <Table>
@@ -346,7 +350,7 @@ function CentrosCustoTab() {
                 <TableCell><Badge variant="outline" className="text-[10px]">{r.tipo}</Badge></TableCell>
                 <TableCell className="text-[12px] text-muted-foreground">{r.area_default ?? "—"}</TableCell>
                 <TableCell>{r.ativo ? <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">SIM</Badge> : <Badge variant="secondary" className="text-[10px]">NÃO</Badge>}</TableCell>
-                <TableCell><RowActions actions={[{ kind: "editar", onClick: () => setEditing(r) }]} /></TableCell>
+                <TableCell><RowActions rowId={r.id} actions={[{ kind: "editar" }]} onAction={() => setEditing(r)} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -404,9 +408,12 @@ function EventosTab() {
   return (
     <Card className="p-3">
       <EnterpriseRecordToolbar
-        entityType="parametro"
-        title={`Eventos Contábeis Canônicos (${rows.length})`}
-        search={{ value: busca, onChange: setBusca, placeholder: "Buscar evento…" }}
+        entityType="compras"
+        selectedIds={[]}
+        search={busca}
+        onSearchChange={setBusca}
+        searchPlaceholder="Buscar evento…"
+        extraLeft={<span className="text-[12px] font-medium px-2">{`Eventos Contábeis Canônicos (${rows.length})`}</span>}
       />
       <div className="mt-2 mb-3 flex items-center gap-2 text-[12px]">
         <span className="text-muted-foreground">Módulo:</span>
@@ -468,9 +475,12 @@ function ProdutosFiscaisTab() {
   return (
     <Card className="p-3">
       <EnterpriseRecordToolbar
-        entityType="parametro"
-        title={`Cadastro Fiscal de Produtos (${rows.length})${pendentes ? ` · ${pendentes} pendente(s) de NCM` : ""}`}
-        search={{ value: busca, onChange: setBusca, placeholder: "Buscar por código, nome ou NCM…" }}
+        entityType="compras"
+        selectedIds={[]}
+        search={busca}
+        onSearchChange={setBusca}
+        searchPlaceholder="Buscar por código, nome ou NCM…"
+        extraLeft={<span className="text-[12px] font-medium px-2">{`Cadastro Fiscal de Produtos (${rows.length})${pendentes ? ` · ${pendentes} pendente(s) de NCM` : ""}`}</span>}
       />
       <div className="mt-3 overflow-auto">
         <Table>
@@ -500,7 +510,7 @@ function ProdutosFiscaisTab() {
                 <TableCell className="text-[12px]">{r.cfop_padrao ?? "—"}</TableCell>
                 <TableCell className="text-[12px]">{r.cst_padrao ?? "—"}</TableCell>
                 <TableCell className="text-[12px]">{r.origem_fiscal ?? "—"}</TableCell>
-                <TableCell><RowActions actions={[{ kind: "editar", onClick: () => setEditing(r) }]} /></TableCell>
+                <TableCell><RowActions rowId={r.id} actions={[{ kind: "editar" }]} onAction={() => setEditing(r)} /></TableCell>
               </TableRow>
             ))}
           </TableBody>

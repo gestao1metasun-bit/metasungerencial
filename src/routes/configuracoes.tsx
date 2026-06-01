@@ -55,6 +55,18 @@ function ConfigPage() {
           Abrir
         </Link>
       </Card>
+      <Card className="mb-4 p-4 flex items-center justify-between gap-3 border-amber-200 bg-amber-50/40">
+        <div className="flex items-center gap-3">
+          <SettingsIcon className="h-5 w-5 text-amber-700" />
+          <div>
+            <div className="text-sm font-semibold text-amber-900">Testes de Carga — Login Only (Admin)</div>
+            <div className="text-[12px] text-amber-800/80">D19.2.fix.50u.8 — comandos prontos, upload de JSON e diagnóstico do gargalo de /login. Somente Admin Master.</div>
+          </div>
+        </div>
+        <Link to="/configuracoes/testes-carga" className="inline-flex h-8 items-center rounded-md bg-amber-600 px-3 text-[12px] font-medium text-white hover:bg-amber-700">
+          Abrir
+        </Link>
+      </Card>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="empresa"><Building2 className="mr-2 h-4 w-4" /> Empresa</TabsTrigger>

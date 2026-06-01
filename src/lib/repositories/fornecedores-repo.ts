@@ -46,7 +46,10 @@ export function useFornecedoresSupabase(opts?: { ativo?: boolean }) {
       }
       return (data ?? []) as Fornecedor[];
     },
-    staleTime: 30_000,
+    // D19.2.P0 — fornecedor é cadastro auxiliar; cache 5min reduz reconsulta.
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 

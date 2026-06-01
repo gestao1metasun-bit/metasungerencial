@@ -42,12 +42,19 @@ export type ClienteRow = {
   cidade: string | null; uf: string | null; status: string;
 };
 
-const TTL = 60_000;
+// D19.2.P0 — cadastros auxiliares mudam pouco; cache agressivo evita
+// recarregamento a cada troca de tela (impacto direto em module.switch
+// e first-list.ready). 5min staleTime + 30min gcTime.
+const TTL = 5 * 60_000;
+const GC = 30 * 60_000;
 function opts<T>(key: string, fn: () => Promise<T>) {
   return {
     queryKey: ["cadastros", key] as const,
     queryFn: fn,
     staleTime: TTL,
+    gcTime: GC,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   };
 }
 

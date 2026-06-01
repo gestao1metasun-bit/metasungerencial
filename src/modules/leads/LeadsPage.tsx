@@ -155,7 +155,6 @@ export function LeadsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Opções</TableHead>
               <TableHead>Nº</TableHead>
               <TableHead>Criado</TableHead>
               <TableHead>Nome</TableHead>
@@ -164,6 +163,7 @@ export function LeadsPage() {
               <TableHead>Consultor</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[80px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -176,15 +176,6 @@ export function LeadsPage() {
             )}
             {filtrados.map((l) => (
               <TableRow key={l.id}>
-                <TableCell>
-                  <RowActions
-                    rowId={l.id}
-                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
-                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
-                  />
-                </TableCell>
-
-
                 <TableCell className="font-mono text-xs">{l.numero}</TableCell>
                 <TableCell className="text-xs">{fmtDate(l.criadoEm)}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>
@@ -196,6 +187,13 @@ export function LeadsPage() {
                   <Badge variant="outline" className={`${statusClass(l.status)} font-medium`}>
                     {LEAD_STATUS_LABEL[l.status] ?? l.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <RowActions
+                    rowId={l.id}
+                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
+                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
+                  />
                 </TableCell>
               </TableRow>
             ))}

@@ -826,11 +826,11 @@ function LeadDetail({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]">Opções</TableHead>
                     <TableHead>Nº</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Criada</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[110px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -841,45 +841,30 @@ function LeadDetail({
                     const podeExcluir = ehRascunho && !lead.bloqueado;
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     const podeReativar = p.status === "CANCELADA";
+                    const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
+                    if (podeEditar) actions.push({ kind: "editar", label: "Editar rascunho" });
+                    if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
+                    if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
+                    if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
                     return (
                       <TableRow key={p.id}>
-                        <TableCell>
-                          <ActionsMenu label={p.numero}>
-                            <DropdownMenuItem onSelect={() => onVisualizar(p.id)}>
-                              <Eye className="mr-2 h-4 w-4" /> Visualizar
-                            </DropdownMenuItem>
-                            {podeEditar && (
-                              <DropdownMenuItem onSelect={() => { onEditar(p); onClose(); }}>
-                                <Pencil className="mr-2 h-4 w-4" /> Editar rascunho
-                              </DropdownMenuItem>
-                            )}
-                            {podeReativar && (
-                              <DropdownMenuItem onSelect={() => reativarProposta(p)}>
-                                <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                                <span className="text-success">Reativar</span>
-                              </DropdownMenuItem>
-                            )}
-                            {podeCancelar && (
-                              <DropdownMenuItem onSelect={() => cancelarProposta(p)}>
-                                <Ban className="mr-2 h-4 w-4 text-destructive" />
-                                <span className="text-destructive">Cancelar</span>
-                              </DropdownMenuItem>
-                            )}
-                            {podeExcluir && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => excluirProposta(p)}>
-                                  <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                                  <span className="text-destructive">Excluir rascunho</span>
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </ActionsMenu>
-                        </TableCell>
                         <TableCell className="font-medium">{p.numero}</TableCell>
                         <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
                         <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
                         <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                        <TableCell>
+                          <RowActions
+                            rowId={p.id}
+                            actions={actions}
+                            onAction={(kind) => {
+                              if (kind === "visualizar") onVisualizar(p.id);
+                              else if (kind === "editar") { onEditar(p); onClose(); }
+                              else if (kind === "aprovar") reativarProposta(p);
+                              else if (kind === "cancelar") cancelarProposta(p);
+                              else if (kind === "excluir") excluirProposta(p);
+                            }}
+                          />
+                        </TableCell>
                       </TableRow>
                     );
                   })}

@@ -9,7 +9,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { Toaster } from "@/components/ui/sonner";
+// D19.2.fix.50u.5 — Toaster também sai do bundle inicial. /login só carrega
+// sonner se o usuário disparar um toast de erro (raro). AppLayout monta o
+// Toaster real pós-auth.
+const Toaster = lazy(() =>
+  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })),
+);
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";

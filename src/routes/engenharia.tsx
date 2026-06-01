@@ -2862,7 +2862,6 @@ function KanbanTab({ obras, setObras }: { obras: Obra[]; setObras: (v: Obra[]) =
                     </Select>
                   </TableCell>
                 </TableRow>
-                </TableRow>
                 );
               })}
             </TableBody>

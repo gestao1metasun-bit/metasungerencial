@@ -7,7 +7,7 @@
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Loader2, FileText } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import {
   EnterpriseRecordToolbar, RowActions, type RowAction,

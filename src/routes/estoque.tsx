@@ -131,8 +131,8 @@ function EstoquePage() {
           selectedIds={[]}
           availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           searchPlaceholder="Buscar item, código, categoria…"
-          statusActions={ribbonRm({
-            visualizar: () => setTab("itens"),
+          statusActions={ribbonRmEstoque({
+            historico: () => setHistOpen(true),
           })}
           layoutBar={layoutBarRm()}
           onAction={(a) => {

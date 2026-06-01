@@ -105,10 +105,14 @@ function PlanoContasTab() {
   return (
     <Card className="p-3">
       <EnterpriseRecordToolbar
-        entityType="parametro"
-        title={`Plano de Contas (${rows.length})`}
-        primaryAction={{ label: "Novo", icon: Plus, onClick: () => setEditing({ codigo: "", nome: "", tipo: "DESPESA", ativo: true }) }}
-        search={{ value: busca, onChange: setBusca, placeholder: "Buscar por código ou nome…" }}
+        entityType="compras"
+        selectedIds={[]}
+        availableActions={["novo"]}
+        onAction={(a) => { if (a === "novo") setEditing({ codigo: "", nome: "", tipo: "DESPESA", ativo: true }); }}
+        search={busca}
+        onSearchChange={setBusca}
+        searchPlaceholder="Buscar por código ou nome…"
+        extraLeft={<span className="text-[12px] font-medium px-2">{`Plano de Contas (${rows.length})`}</span>}
       />
       <div className="mt-3 overflow-auto">
         <Table>

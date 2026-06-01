@@ -93,6 +93,24 @@ async function runUser(idx) {
 
 console.log(`▶ D19.2 Camada B · ${USERS} usuários, ramp ${RAMP_MS}ms, hold ${HOLD_MS}ms`);
 console.log(`  Base: ${BASE_URL}`);
+
+// D19.2.fix.50u.5 — warm-up controlado do edge worker antes do ramp.
+// Separa cold-start real do worker da carga concorrente de login.
+console.log('🔥 warm-up edge (3×/login + 1×/dashboard, +4s settle)');
+const tWarm = Date.now();
+try {
+  await Promise.all([
+    fetch(`${BASE_URL}/login`, { redirect: 'manual' }).catch(() => {}),
+    fetch(`${BASE_URL}/login`, { redirect: 'manual' }).catch(() => {}),
+    fetch(`${BASE_URL}/login`, { redirect: 'manual' }).catch(() => {}),
+    fetch(`${BASE_URL}/dashboard`, { redirect: 'manual' }).catch(() => {}),
+  ]);
+  console.log(`  warm-up concluído em ${Date.now() - tWarm}ms`);
+} catch (e) {
+  console.log(`  warm-up parcial: ${String(e).slice(0, 120)}`);
+}
+await new Promise((r) => setTimeout(r, 4000));
+
 const tAll = Date.now();
 await Promise.all(
   Array.from({ length: USERS }, async (_, i) => {

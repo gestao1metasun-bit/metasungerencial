@@ -38,6 +38,8 @@ export const Route = createFileRoute("/configuracoes")({
 });
 
 function ConfigPage() {
+  const childMatches = useChildMatches();
+  if (childMatches.length > 0) return <Outlet />;
   const [tab, setTab] = useTabFromHash("/configuracoes");
   return (
     <>

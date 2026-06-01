@@ -68,7 +68,19 @@ export const errorLogRepo = {
         console.warn("[errorLogRepo.log] sem sessão; erro só em console:", input.mensagem);
         return;
       }
-      await supabase.from("error_log").insert({
+      // D19.2.fix.50u.7 — saneamento defensivo contra 400 do PostgREST:
+      // clampar severidade ao CHECK (info|warn|error|fatal) e nunca enviar
+      // 'status' (default 'aberto' no banco). Sinônimos comuns mapeados.
+      const SEV_OK = new Set(["info", "warn", "error", "fatal"]);
+      const sevRaw = String(input.severidade ?? "error").toLowerCase();
+      const sevMap: Record<string, ErrorSeveridade> = {
+        warning: "warn", err: "error", critical: "fatal", debug: "info",
+      };
+      const severidade: ErrorSeveridade = (
+        SEV_OK.has(sevRaw) ? sevRaw : (sevMap[sevRaw] ?? "error")
+      ) as ErrorSeveridade;
+
+      const { error } = await supabase.from("error_log").insert({
         user_id: user.id,
         modulo: input.modulo ?? null,
         tela: input.tela ?? window.location.pathname,
@@ -76,15 +88,19 @@ export const errorLogRepo = {
         mensagem: String(input.mensagem ?? "erro desconhecido").slice(0, 2000),
         stack: input.stack?.slice(0, 8000) ?? null,
         payload: (trimPayload(input.payload) ?? null) as never,
-        severidade: input.severidade ?? "error",
+        severidade,
         user_agent: navigator.userAgent.slice(0, 500),
         url: window.location.href.slice(0, 500),
       });
-
+      if (error) {
+        // 400/permission/check — não relança para não cascatear; só loga local.
+        console.warn("[errorLogRepo.log] insert rejeitado:", error.code, error.message);
+      }
     } catch (e) {
       // Nunca quebrar a app por causa do logger
       console.warn("[errorLogRepo.log] falhou ao registrar erro", e);
     }
+
   },
 
   async list(params: { status?: ErrorStatus; limit?: number } = {}): Promise<ErrorLogRow[]> {

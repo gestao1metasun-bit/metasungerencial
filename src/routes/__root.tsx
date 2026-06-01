@@ -10,8 +10,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
-import { AppLayout } from "@/components/app/AppLayout";
-import { useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { bootstrapSeedIfPending } from "@/lib/dev-seed";
 import { wireSessionLogger } from "@/lib/session-logger";
 import { installLsGuard } from "@/lib/ls-guard";
@@ -19,6 +18,14 @@ import { perfMark, perfMarkIfAbsent, perfMeasure, perfReport, markRouteStart, ge
 import { useAuth } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
+
+// D19.2.fix.50u.4 — Code-split agressivo: AppLayout (MacroNav, TopNav,
+// CommandPalette, WorkspaceTabBar, ContextualSidebar, FavoritosMenu,
+// MaintenanceBanner + ícones do shell) sai do bundle inicial.
+// /login nunca toca nesse chunk; só carrega após sessão válida.
+const AppLayout = lazy(() =>
+  import("@/components/app/AppLayout").then((m) => ({ default: m.AppLayout })),
+);
 
 function NotFoundComponent() {
   return (

@@ -893,24 +893,22 @@ function ObrasAtivasTab({
               return (
               <TableRow key={o.id} className={STATUS_ROW_BG[o.status] || ""}>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <ActionsMenu>
-                      <DropdownMenuItem onSelect={() => setEditing(o)}>
-                        <SquarePen className="mr-2 h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      {link && (
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
-                              retornar(o.id);
-                            }
-                          }}
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4 text-warning" />
-                          <span className="text-warning">Retornar ao Comercial</span>
-                        </DropdownMenuItem>
-                      )}
-                    </ActionsMenu>
+                  <div className="flex items-center gap-1 justify-end">
+                    <RowActions
+                      rowId={o.id}
+                      actions={[
+                        { kind: "editar" },
+                        ...(link ? [{ kind: "cancelar" as const, label: "Retornar ao Comercial", overflow: true }] : []),
+                      ]}
+                      onAction={(k) => {
+                        if (k === "editar") setEditing(o);
+                        else if (k === "cancelar" && link) {
+                          if (window.confirm(`Retornar o projeto de ${o.cliente} para o Comercial? Ele sairá da Engenharia e poderá ser editado e ter aprovação revogada no Comercial.`)) {
+                            retornar(o.id);
+                          }
+                        }
+                      }}
+                    />
                     <AnexosButton
                       entidade="obras"
                       entidadeId={o.id}

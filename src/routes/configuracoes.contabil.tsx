@@ -140,7 +140,7 @@ function PlanoContasTab() {
                 <TableCell className="text-[12px] text-muted-foreground">{r.categoria ?? "—"}</TableCell>
                 <TableCell><StatusIntegracaoBadge s={r.status_integracao} /></TableCell>
                 <TableCell>{r.ativo ? <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">SIM</Badge> : <Badge variant="secondary" className="text-[10px]">NÃO</Badge>}</TableCell>
-                <TableCell><RowActions actions={[{ kind: "editar", onClick: () => setEditing(r) }]} /></TableCell>
+                <TableCell><RowActions rowId={r.id} actions={[{ kind: "editar" }]} onAction={() => setEditing(r)} /></TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -942,7 +942,6 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -951,6 +950,7 @@ function ContratosTab({
               <TableHead>Liberação</TableHead>
               <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Endereço</TableHead>
+              <TableHead className="w-[140px] text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {aRedigir.map((c) => {
@@ -964,69 +964,32 @@ function ContratosTab({
                 if (!temEndereco) faltando.push("Endereço");
                 const dadosOk = faltando.length === 0;
                 const motivoPendente = `Dados pendentes: ${faltando.join(" e ")}. Use "Completar dados do cliente" para preencher.`;
+                const rowActions: import("@/components/app/enterprise").RowAction[] = [];
+                if (!dadosOk) rowActions.push({ kind: "editar", label: "Completar dados do cliente", icon: PenLine });
+                rowActions.push({
+                  kind: "visualizar",
+                  label: "Cadastrar · gerar contrato",
+                  icon: MapPin,
+                  disabled: !liberado || !dadosOk,
+                });
+                if (!liberado) {
+                  rowActions.push({
+                    kind: "aprovar",
+                    label: "Liberar para gerar contrato",
+                    disabled: !isAdmin || !dadosOk,
+                    overflow: true,
+                  });
+                } else {
+                  rowActions.push({
+                    kind: "estornar",
+                    label: "Revogar liberação",
+                    disabled: !isAdmin,
+                    overflow: true,
+                  });
+                }
+                rowActions.push({ kind: "cancelar", label: "Retornar para Orçamentos", icon: Undo2, overflow: true });
                 return (
                   <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined}>
-                    <TableCell>
-                      <ActionsMenu label={c.id}>
-                        {!dadosOk && (
-                          <>
-                            <DropdownMenuItem
-                              onSelect={() => setCompletarDados(c)}
-                              className="text-primary focus:text-primary"
-                              title="Preencher CPF/CNPJ e endereço para liberar a geração do contrato"
-                            >
-                              <PenLine className="mr-2 h-4 w-4" /> Completar dados do cliente
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
-                            if (!liberado) { e.preventDefault(); toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
-                            setAberto(c);
-                          }}
-                          disabled={!liberado || !dadosOk}
-                          title={!dadosOk ? motivoPendente : (liberado ? undefined : "Aguardando liberação do Admin Master para gerar o contrato.")}
-                        >
-                          <MapPin className="mr-2 h-4 w-4" /> Cadastrar · gerar contrato
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {!liberado ? (
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              if (!dadosOk) { e.preventDefault(); toast.error(motivoPendente); return; }
-                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
-                              liberarParaGerar(c);
-                            }}
-                            disabled={!isAdmin || !dadosOk}
-                            title={
-                              !dadosOk
-                                ? motivoPendente
-                                : (isAdmin ? "Liberar para que o Comercial gere o contrato" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria"))
-                            }
-                            className={isAdmin && dadosOk ? "text-success focus:text-success" : undefined}
-                          >
-                            <CheckCircle2 className="mr-2 h-4 w-4" /> Liberar para gerar contrato
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              if (!isAdmin) { e.preventDefault(); toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
-                              revogarLiberacao(c);
-                            }}
-                            disabled={!isAdmin}
-                            title={isAdmin ? "Revogar liberação (volta para aguardando)" : (identidade.mensagemBloqueio ?? "Disponível apenas para Admin Master/Diretoria")}
-                          >
-                            <Undo2 className="mr-2 h-4 w-4" /> Revogar liberação
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => retornarParaOrcamento(c)}>
-                          <Undo2 className="mr-2 h-4 w-4" /> Retornar para Orçamentos
-                        </DropdownMenuItem>
-                      </ActionsMenu>
-                    </TableCell>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                     <TableCell className="font-medium">{c.cliente}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -1048,6 +1011,33 @@ function ContratosTab({
                     </TableCell>
                     <TableCell className="text-xs">{temDoc ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
                     <TableCell className="text-xs">{temEndereco ? <span className="text-success">OK</span> : <span className="text-warning">Pendente</span>}</TableCell>
+                    <TableCell>
+                      <RowActions
+                        rowId={c.id}
+                        actions={rowActions}
+                        onAction={(kind, label) => {
+                          // Encontrar ação pelo label para distinguir overflow homônimos
+                          const act = rowActions.find((a) => a.kind === kind);
+                          const lbl = act?.label ?? "";
+                          if (lbl === "Completar dados do cliente") { setCompletarDados(c); return; }
+                          if (lbl === "Cadastrar · gerar contrato") {
+                            if (!dadosOk) { toast.error(motivoPendente); return; }
+                            if (!liberado) { toast.error("Contrato aguardando liberação do Admin Master/Diretoria."); return; }
+                            setAberto(c); return;
+                          }
+                          if (lbl === "Liberar para gerar contrato") {
+                            if (!dadosOk) { toast.error(motivoPendente); return; }
+                            if (!isAdmin) { toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
+                            liberarParaGerar(c); return;
+                          }
+                          if (lbl === "Revogar liberação") {
+                            if (!isAdmin) { toast.error(identidade.mensagemBloqueio ?? "Sem permissão administrativa."); return; }
+                            revogarLiberacao(c); return;
+                          }
+                          if (lbl === "Retornar para Orçamentos") { retornarParaOrcamento(c); return; }
+                        }}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}

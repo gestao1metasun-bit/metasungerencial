@@ -1210,45 +1210,36 @@ function KanbanView({
                     </div>
                     <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.bloqueado && <Lock className="h-3.5 w-3.5 text-success" />}
-                      <ActionsMenu label={l.clienteNome} align="end" triggerClassName="h-7 w-[60px]">
-                        <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                          <Eye className="mr-2 h-4 w-4" /> Abrir lead
-                        </DropdownMenuItem>
-                        {!l.bloqueado && onAprovar && (() => {
-                          const alvo = propostaAprovavelDoLead(l);
-                          return alvo ? (
-                            <DropdownMenuItem onSelect={() => onAprovar(alvo)}>
-                              <Check className="mr-2 h-4 w-4 text-success" />
-                              <span className="text-success">Aprovar e gerar contrato</span>
-                            </DropdownMenuItem>
-                          ) : null;
-                        })()}
-                        {l.bloqueado && (
-                          <DropdownMenuItem onSelect={irParaContratos}>
-                            <FileText className="mr-2 h-4 w-4 text-primary" />
-                            <span className="text-primary">Ver contrato no Comercial</span>
-                            <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-                          </DropdownMenuItem>
-                        )}
-                        {!l.bloqueado && l.status === "CANCELADA" && (
-                          <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                            <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                            <span className="text-success">Reativar última proposta</span>
-                          </DropdownMenuItem>
-                        )}
-                        {!l.bloqueado && (
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                              if (!p) { toast.info("Não há proposta cancelável."); return; }
-                              cancelarProposta(p);
+                      {(() => {
+                        const alvo = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : null;
+                        const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
+                        if (alvo && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato", overflow: true });
+                        if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
+                        if (!l.bloqueado && l.status === "CANCELADA") actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
+                        if (!l.bloqueado) actions.push({ kind: "cancelar", label: "Cancelar última proposta", overflow: true });
+                        return (
+                          <RowActions
+                            rowId={l.key}
+                            actions={actions}
+                            onAction={(_kind, _id) => {
+                              // Não dá pra distinguir overflow homônimos por kind apenas; usar label
+                              // mas RowActions só passa kind. Fallback: tratar pela ordem das ações.
+                              const last = actions[actions.length - 1];
+                              const a = actions.find((x) => x.kind === _kind) ?? last;
+                              const lbl = a.label;
+                              if (lbl === "Abrir lead") onAbrirLead(l);
+                              else if (lbl === "Aprovar e gerar contrato" && alvo && onAprovar) onAprovar(alvo);
+                              else if (lbl === "Ver contrato no Comercial") irParaContratos();
+                              else if (lbl === "Reativar última proposta") reativarProposta(l.ultima);
+                              else if (lbl === "Cancelar última proposta") {
+                                const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                                if (!p) { toast.info("Não há proposta cancelável."); return; }
+                                cancelarProposta(p);
+                              }
                             }}
-                          >
-                            <Ban className="mr-2 h-4 w-4 text-destructive" />
-                            <span className="text-destructive">Cancelar última proposta</span>
-                          </DropdownMenuItem>
-                        )}
-                      </ActionsMenu>
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="mt-1 flex items-center justify-between">

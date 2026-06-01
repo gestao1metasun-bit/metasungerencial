@@ -99,10 +99,23 @@ export function perfMarkIfAbsent(label: string): void {
 // D19.1.fix F1+F2 — limites de sanidade da telemetria
 const MAX_TRUSTED_MS = 15_000; // > 15s = quase certamente outlier de aba ociosa
 
+// D19.2.fix.50u.5 — silenciar telemetria de bots sintéticos (Playwright,
+// HeadlessChrome). Em testes de carga 50u o rpc_perf_log batia rate-limit
+// (129×HTTP 400). Em produção real, navigator.webdriver é sempre false.
+const isSyntheticAgent = (() => {
+  if (typeof navigator === 'undefined') return false;
+  if ((navigator as Navigator & { webdriver?: boolean }).webdriver === true) return true;
+  const ua = navigator.userAgent ?? '';
+  return /HeadlessChrome|Playwright|puppeteer/i.test(ua);
+})();
+
 function enqueue(evento: string, ms: number, rota?: string) {
+  // D19.2.fix.50u.5 — bots sintéticos não geram telemetria (não polui P95 + zera rate-limit).
+  if (isSyntheticAgent) {
+    pushRing({ evento: `[skip:bot]${evento}`, ms, rota, at: Date.now() });
+    return;
+  }
   // F1: descartar quando a aba não estava visível no momento do registro.
-  // Performance API conta tempo total da aba, então uma medição feita após
-  // a aba ficar oculta contamina o P95.
   if (
     typeof document !== 'undefined' &&
     document.visibilityState &&

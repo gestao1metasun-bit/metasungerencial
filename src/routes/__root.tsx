@@ -195,7 +195,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {shouldHoldPrivateRoute ? <AuthBootstrapScreen /> : shouldBlockPrivateRoute ? <LoginRedirect /> : isPublicRoute ? <Outlet /> : <AppLayout />}
+      {shouldHoldPrivateRoute ? (
+        <AuthBootstrapScreen />
+      ) : shouldBlockPrivateRoute ? (
+        <LoginRedirect />
+      ) : isPublicRoute ? (
+        <Outlet />
+      ) : (
+        <Suspense fallback={<AuthBootstrapScreen />}>
+          <AppLayout />
+        </Suspense>
+      )}
       <Toaster />
     </QueryClientProvider>
   );

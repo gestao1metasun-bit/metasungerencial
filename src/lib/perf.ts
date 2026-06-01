@@ -217,6 +217,10 @@ export function reportFirstListReady(scope: string, path?: string): void {
 if (isClient) {
   (window as unknown as { __perfRing?: () => RingEntry[] }).__perfRing = () =>
     [...ring];
+  // D19.2.fix.50u.6 — expor marks individuais para o script de carga
+  // (login-only) ler o timeline absoluto e calcular deltas entre fases.
+  (window as unknown as { __perfMarks?: () => MarkMap }).__perfMarks = () =>
+    ({ ...marks });
 
   // Flush oportunista quando a página fica oculta ou está saindo
   window.addEventListener('visibilitychange', () => {

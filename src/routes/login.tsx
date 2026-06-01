@@ -1,13 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { requestPasswordReset, signInEmail, useAuth } from "@/lib/auth-store";
+import { signInEmail, useAuth } from "@/lib/auth-store";
 import { perfMark, perfMeasure } from "@/lib/perf";
 import metaSunLogo from "@/assets/meta-sun-logo.png";
 
@@ -15,42 +12,66 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+// D19.2.fix.50u.9 — Dialog "Esqueci minha senha" sai do bundle inicial.
+// Só baixa o chunk se o usuário clicar no link.
+const ForgotPasswordDialog = lazy(() =>
+  import("@/components/auth/ForgotPasswordDialog").then((m) => ({
+    default: m.ForgotPasswordDialog,
+  })),
+);
+
+// D19.2.fix.50u.9 — sonner sai do caminho crítico do /login.
+// Carregado sob demanda apenas quando precisamos exibir um toast.
+async function toastError(message: string) {
+  try {
+    const m = await import("sonner");
+    m.toast.error(message);
+  } catch {
+    // silencioso — login não depende de toast para funcionar
+  }
+}
+async function toastSuccess(message: string) {
+  try {
+    const m = await import("sonner");
+    m.toast.success(message);
+  } catch {
+    /* noop */
+  }
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const { user, loading, errorMessage } = useAuth();
 
-  // D19.2.fix.50u.6 — instrumentação granular do /login:
-  //   login.page.mount       primeira execução do componente (script parseado + React montou)
-  //   login.react.ready      pós-paint (rAF aninhado) — DOM interativo, formulário visível
-  //   login.supabase.ready   auth-store terminou a hidratação inicial (loading=false)
-  //   login.auth.start       imediatamente antes de signInWithPassword
-  //   login.auth.ok          imediatamente após o token chegar
-  //   login.redirect.start   chamada navigate({to:"/dashboard"})
-  //   login.redirect.ok      useEffect detectou user populado (auth-state-change concluído)
-  perfMark("login.page.mount");
-
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [recovering, setRecovering] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [recoveryEmail, setRecoveryEmail] = useState("renanbarc16@gmail.com");
   const lastAuthError = useRef<string | null>(null);
   const supabaseReadyMarked = useRef(false);
   const redirectStartedRef = useRef(false);
+  const pageMountMarked = useRef(false);
 
-  // react.ready: pós primeiro paint
+  // D19.2.fix.50u.9 — login.page.mount fora do corpo do render.
+  // useEffect com deps [] roda uma única vez por sessão, não a cada re-render.
   useEffect(() => {
-    const id1 = requestAnimationFrame(() => {
+    if (pageMountMarked.current) return;
+    pageMountMarked.current = true;
+    perfMark("login.page.mount");
+  }, []);
+
+  // login.react.ready — pós primeiro paint
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         perfMark("login.react.ready");
         perfMeasure("login.page.mount", "login.react.ready", "login.react.ready");
       });
     });
-    return () => cancelAnimationFrame(id1);
+    return () => cancelAnimationFrame(id);
   }, []);
 
-  // supabase.ready: assim que o auth-store fecha o loading inicial
+  // login.supabase.ready — auth-store fechou loading inicial
   useEffect(() => {
     if (!loading && !supabaseReadyMarked.current) {
       supabaseReadyMarked.current = true;
@@ -61,7 +82,6 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      // redirect.ok = user populado E ainda estamos em /login → próxima navegação fecha o ciclo
       if (redirectStartedRef.current) {
         perfMark("login.redirect.ok");
         perfMeasure("login.redirect.start", "login.redirect.ok", "login.redirect.ok");
@@ -73,7 +93,7 @@ function LoginPage() {
   useEffect(() => {
     if (!loading && !user && errorMessage && lastAuthError.current !== errorMessage) {
       lastAuthError.current = errorMessage;
-      toast.error(errorMessage);
+      void toastError(errorMessage);
     }
     if (!errorMessage) {
       lastAuthError.current = null;
@@ -83,7 +103,7 @@ function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !senha) {
-      toast.error("Informe e-mail e senha.");
+      void toastError("Informe e-mail e senha.");
       return;
     }
     setSubmitting(true);
@@ -95,40 +115,19 @@ function LoginPage() {
       perfMark("login.auth.ok");
       perfMeasure("login.auth.start", "login.auth.ok", "login.auth.ok");
       perfMeasure("login.start", "auth.ok", "auth.ok");
-      toast.success("Login efetuado.");
+      void toastSuccess("Login efetuado.");
       perfMark("login.redirect.start");
       redirectStartedRef.current = true;
       void navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao entrar.";
-      toast.error(
+      void toastError(
         msg.toLowerCase().includes("invalid login")
           ? "E-mail ou senha incorretos."
-          : msg
+          : msg,
       );
     } finally {
       setSubmitting(false);
-    }
-  }
-
-
-  async function handleForgotPassword() {
-    if (!recoveryEmail) {
-      toast.error("Informe seu e-mail para recuperar a senha.");
-      return;
-    }
-
-    setRecovering(true);
-    try {
-      await requestPasswordReset(recoveryEmail.trim().toLowerCase());
-      toast.success("Enviamos o link de redefinição para o seu e-mail.");
-      setEmail((prev) => prev || recoveryEmail.trim().toLowerCase());
-      setForgotOpen(false);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao enviar recuperação.";
-      toast.error(msg);
-    } finally {
-      setRecovering(false);
     }
   }
 
@@ -137,21 +136,40 @@ function LoginPage() {
       <div className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-info/15 blur-3xl" />
 
-      <Card className="relative z-10 w-full max-w-md border-border bg-[image:var(--gradient-card)] p-8 shadow-[var(--shadow-elegant)]">
+      <div className="relative z-10 w-full max-w-md rounded-lg border border-border bg-[image:var(--gradient-card)] p-8 shadow-[var(--shadow-elegant)]">
         <div className="mb-8 flex flex-col items-center gap-2">
-          <img src={metaSunLogo} alt="Meta Sun Energia Solar" className="h-20 w-auto object-contain" />
-          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">ERP - Enterprise</div>
+          <img
+            src={metaSunLogo}
+            alt="Meta Sun Energia Solar"
+            className="h-20 w-auto object-contain"
+            width={160}
+            height={80}
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            ERP - Enterprise
+          </div>
         </div>
 
         <h1 className="text-2xl font-semibold">Bem-vindo de volta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Acesse sua conta para continuar.
+        </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9 h-11" />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-9 h-11"
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -159,11 +177,8 @@ function LoginPage() {
               <Label htmlFor="senha">Senha</Label>
               <button
                 type="button"
-                onClick={() => {
-                  setRecoveryEmail(email.trim().toLowerCase() || "renanbarc16@gmail.com");
-                  setForgotOpen(true);
-                }}
-                disabled={recovering || submitting}
+                onClick={() => setForgotOpen(true)}
+                disabled={submitting}
                 className="text-xs font-medium text-primary underline underline-offset-4 hover:opacity-80 disabled:pointer-events-none disabled:opacity-60"
               >
                 Esqueci minha senha
@@ -171,62 +186,51 @@ function LoginPage() {
             </div>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} className="pl-9 h-11" />
+              <Input
+                id="senha"
+                type="password"
+                autoComplete="current-password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className="pl-9 h-11"
+              />
             </div>
           </div>
-          <Button type="submit" disabled={submitting} className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Entrar <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="h-11 w-full bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90"
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                Entrar <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">Primeiro acesso? </span>
-          <Link to="/cadastrar" className="text-primary hover:underline">Criar conta</Link>
+          <Link to="/cadastrar" className="text-primary hover:underline">
+            Criar conta
+          </Link>
         </div>
         <div className="mt-4 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} Meta Sun Energia Solar
         </div>
-      </Card>
+      </div>
 
-      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Recuperar acesso</DialogTitle>
-            <DialogDescription>
-              Informe o e-mail para receber o link de redefinição e seguir para a tela <strong>/reset-password</strong>.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label htmlFor="recovery-email">E-mail</Label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="recovery-email"
-                type="email"
-                autoComplete="email"
-                value={recoveryEmail}
-                onChange={(e) => setRecoveryEmail(e.target.value)}
-                className="h-11 pl-9"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:justify-between">
-            <Button type="button" variant="outline" onClick={() => setForgotOpen(false)} disabled={recovering}>
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void handleForgotPassword()}
-              disabled={recovering}
-              className="bg-[image:var(--gradient-primary)] text-primary-foreground hover:opacity-90"
-            >
-              {recovering ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link de recuperação"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {forgotOpen && (
+        <Suspense fallback={null}>
+          <ForgotPasswordDialog
+            open={forgotOpen}
+            onOpenChange={setForgotOpen}
+            initialEmail={email}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

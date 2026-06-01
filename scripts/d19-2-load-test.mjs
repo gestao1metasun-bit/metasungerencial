@@ -48,7 +48,7 @@ const consoleErrors = [];
 
 async function runUser(idx) {
   const cred = CREDS[idx];
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_BIN || undefined });
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   const page = await ctx.newPage();
   page.on('console', (msg) => {

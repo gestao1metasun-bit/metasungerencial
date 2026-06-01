@@ -2,6 +2,7 @@
 // D17.UI Fase 6.A — Presets canônicos de "ribbon RM" (Linha 2 + Linha 3)
 // Reuso pelos módulos: Comercial / Financeiro / Aprovações / Pós-venda /
 // Financiamentos. Mantém o mesmo padrão visual de Contas a Receber/Pagar.
+// D17.4 — Adiciona ribbons "Processos" de Estoque e Compras.
 // As callbacks são opcionais — sem onClick, vira toast "em breve".
 // ============================================================================
 import {
@@ -15,6 +16,16 @@ import {
   Undo2,
   XCircle,
   CalendarClock,
+  PackagePlus,
+  PackageMinus,
+  ArrowLeftRight,
+  ListChecks,
+  ClipboardCheck,
+  Sliders,
+  History,
+  ShoppingCart,
+  FileText,
+  Truck,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { StatusActionItem, LayoutBarConfig } from "./EnterpriseRecordToolbar";
@@ -53,6 +64,54 @@ export function ribbonRmAprovacao(overrides: RmRibbonOverrides = {}): StatusActi
     { key: "imprimir",   label: "Imprimir",    icon: Printer,        tone: "muted",   onClick: overrides.imprimir   ?? stub("Imprimir") },
     { key: "email",      label: "Enviar e-mail", icon: Mail,         tone: "info",    onClick: overrides.email      ?? stub("E-mail") },
     { key: "remessa",    label: "Remessa",     icon: Send,           tone: "primary", onClick: overrides.remessa    ?? stub("Remessa") },
+  ];
+}
+
+/* ---------------------------------------------------------------------- */
+/* D17.4 — Ribbons "Processos" específicos de Suprimentos.                */
+/* Mantêm o mesmo formato visual (StatusActionItem[]) para reuso direto   */
+/* em statusActions={...}.                                                */
+/* ---------------------------------------------------------------------- */
+
+export type RmRibbonEstoqueOverrides = Partial<Record<
+  | "entrada" | "saida" | "transferencia" | "reserva"
+  | "baixaReserva" | "ajuste" | "inventario" | "historico",
+  () => void
+>>;
+
+/** Processos canônicos de Estoque (D17.4). */
+export function ribbonRmEstoque(overrides: RmRibbonEstoqueOverrides = {}): StatusActionItem[] {
+  const stub = (label: string) => () => toast.message(`${label} — em breve`);
+  return [
+    { key: "entrada",       label: "Entrada",         icon: PackagePlus,    tone: "success", onClick: overrides.entrada       ?? stub("Entrada de estoque") },
+    { key: "saida",         label: "Saída",           icon: PackageMinus,   tone: "warning", onClick: overrides.saida         ?? stub("Saída de estoque") },
+    { key: "transferencia", label: "Transferência",   icon: ArrowLeftRight, tone: "info",    onClick: overrides.transferencia ?? stub("Transferência") },
+    { key: "reserva",       label: "Reserva",         icon: ListChecks,     tone: "primary", onClick: overrides.reserva       ?? stub("Reserva") },
+    { key: "baixaReserva",  label: "Baixar reserva",  icon: ClipboardCheck, tone: "success", onClick: overrides.baixaReserva  ?? stub("Baixar reserva") },
+    { key: "ajuste",        label: "Ajuste",          icon: Sliders,        tone: "warning", onClick: overrides.ajuste        ?? stub("Ajuste de estoque") },
+    { key: "inventario",    label: "Inventário",      icon: ClipboardCheck, tone: "info",    onClick: overrides.inventario    ?? stub("Inventário") },
+    { key: "historico",     label: "Histórico",       icon: History,        tone: "info",    onClick: overrides.historico     ?? stub("Histórico") },
+  ];
+}
+
+export type RmRibbonComprasOverrides = Partial<Record<
+  | "aprovar" | "reprovar" | "cotacao" | "pedido"
+  | "receber" | "cancelar" | "imprimir" | "historico",
+  () => void
+>>;
+
+/** Processos canônicos de Compras / Suprimentos (D17.4). */
+export function ribbonRmCompras(overrides: RmRibbonComprasOverrides = {}): StatusActionItem[] {
+  const stub = (label: string) => () => toast.message(`${label} — em breve`);
+  return [
+    { key: "aprovar",   label: "Aprovar",        icon: CheckCircle2, tone: "success", onClick: overrides.aprovar   ?? stub("Aprovar solicitação") },
+    { key: "reprovar",  label: "Reprovar",       icon: XCircle,      tone: "danger",  onClick: overrides.reprovar  ?? stub("Reprovar") },
+    { key: "cotacao",   label: "Gerar cotação",  icon: FileText,     tone: "info",    onClick: overrides.cotacao   ?? stub("Gerar cotação") },
+    { key: "pedido",    label: "Gerar pedido",   icon: ShoppingCart, tone: "primary", onClick: overrides.pedido    ?? stub("Gerar pedido") },
+    { key: "receber",   label: "Receber",        icon: Truck,        tone: "success", onClick: overrides.receber   ?? stub("Receber material") },
+    { key: "cancelar",  label: "Cancelar",       icon: XCircle,      tone: "danger",  onClick: overrides.cancelar  ?? stub("Cancelar") },
+    { key: "imprimir",  label: "Imprimir",       icon: Printer,      tone: "muted",   onClick: overrides.imprimir  ?? stub("Imprimir") },
+    { key: "historico", label: "Histórico",      icon: History,      tone: "info",    onClick: overrides.historico ?? stub("Histórico") },
   ];
 }
 

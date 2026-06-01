@@ -35,7 +35,7 @@ import {
   Plus, Send, Ban, ShoppingCart, CheckCircle2, FileText,
 } from "lucide-react";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
-import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
+import { ribbonRmCompras, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/solicitacoes-material")({
@@ -103,7 +103,9 @@ function SolicitacoesMaterialPage() {
         searchPlaceholder="Buscar código, setor, motivo, solicitante…"
         search={busca}
         onSearchChange={setBusca}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmCompras({
+          historico: () => setHistOpen(true),
+        })}
         layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "novo") setCriar(true);

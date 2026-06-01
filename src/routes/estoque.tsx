@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useIsAdmin } from "@/lib/auth-store";
 import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer } from "@/components/app/enterprise";
-import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
+import { ribbonRmEstoque, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { exportToCSV } from "@/components/app/grid/EnterpriseDataGrid";
 import {
   useEstoqueState, setEstoqueAtual, upsertEstoqueItem, removeEstoqueItem,
@@ -131,8 +131,8 @@ function EstoquePage() {
           selectedIds={[]}
           availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
           searchPlaceholder="Buscar item, código, categoria…"
-          statusActions={ribbonRm({
-            visualizar: () => setTab("itens"),
+          statusActions={ribbonRmEstoque({
+            historico: () => setHistOpen(true),
           })}
           layoutBar={layoutBarRm()}
           onAction={(a) => {
@@ -932,7 +932,7 @@ function EntregasTab() {
         searchPlaceholder="Buscar por cliente ou item…"
         search={q}
         onSearchChange={setQ}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmEstoque()}
         layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "atualizar") window.location.reload();

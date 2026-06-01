@@ -54,14 +54,17 @@ async function runUser(idx) {
     await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     rec.t_navigate = Date.now() - t0;
 
-    // 2) Espera o formulário aparecer (React hidratou)
-    await page.waitForSelector('input[type="email"]', { timeout: 30_000 });
+    // 2) Espera o formulário aparecer + botão habilitado (hidratação real)
+    await page.waitForSelector('input[type="email"]',    { timeout: 45_000, state: 'visible' });
+    await page.waitForSelector('input[type="password"]', { timeout: 45_000, state: 'visible' });
+    await page.waitForSelector('button[type="submit"]:not([disabled])', { timeout: 45_000 });
 
-    // 2b) Espera React de fato hidratar (marca login.react.ready) — sem isso o
-    // submit dispara o form nativo (GET /login?) antes do handler React montar.
+    // 2b) Confirma React hidratado de fato (mark login.react.ready presente)
+    // — sem isso o submit pode disparar o form nativo (GET /login?) antes do
+    // handler React montar.
     await page.waitForFunction(
       () => typeof window.__perfMarks === 'function' && window.__perfMarks()['login.react.ready'] != null,
-      { timeout: 30_000 },
+      { timeout: 45_000 },
     );
 
     // 3) Submete
@@ -69,7 +72,7 @@ async function runUser(idx) {
     await page.fill('input[type="password"]', cred.password);
     const tSubmit = Date.now();
     await Promise.all([
-      page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 45_000 }),
+      page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 60_000 }),
       page.click('button[type="submit"]'),
     ]);
     rec.t_total = Date.now() - t0;

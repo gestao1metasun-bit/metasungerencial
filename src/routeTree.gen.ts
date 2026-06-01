@@ -46,6 +46,7 @@ import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoq
 import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
 import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
 import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
+import { Route as ConfiguracoesContabilRouteImport } from './routes/configuracoes.contabil'
 import { Route as AnalyticsSaudeSistemaRouteImport } from './routes/analytics.saude-sistema'
 import { Route as AnalyticsSaudeDadosRouteImport } from './routes/analytics.saude-dados'
 import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
@@ -245,6 +246,11 @@ const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
   path: '/aprovacoes',
   getParentRoute: () => DashboardsRoute,
 } as any)
+const ConfiguracoesContabilRoute = ConfiguracoesContabilRouteImport.update({
+  id: '/contabil',
+  path: '/contabil',
+  getParentRoute: () => ConfiguracoesRoute,
+} as any)
 const AnalyticsSaudeSistemaRoute = AnalyticsSaudeSistemaRouteImport.update({
   id: '/saude-sistema',
   path: '/saude-sistema',
@@ -315,7 +321,7 @@ export interface FileRoutesByFullPath {
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
-  '/configuracoes': typeof ConfiguracoesRoute
+  '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -366,7 +373,7 @@ export interface FileRoutesByTo {
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
-  '/configuracoes': typeof ConfiguracoesRoute
+  '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
@@ -399,6 +406,7 @@ export interface FileRoutesByTo {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -418,7 +426,7 @@ export interface FileRoutesById {
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
-  '/configuracoes': typeof ConfiguracoesRoute
+  '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
   '/engenharia': typeof EngenhariaRoute
@@ -451,6 +459,7 @@ export interface FileRoutesById {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
   '/dashboards/comercial': typeof DashboardsComercialRoute
   '/dashboards/engenharia': typeof DashboardsEngenhariaRoute
@@ -504,6 +513,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/configuracoes/contabil'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/configuracoes/contabil'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -606,6 +617,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/configuracoes/contabil'
     | '/dashboards/aprovacoes'
     | '/dashboards/comercial'
     | '/dashboards/engenharia'
@@ -625,7 +637,7 @@ export interface RootRouteChildren {
   CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
   ComercialRoute: typeof ComercialRoute
-  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DashboardsRoute: typeof DashboardsRouteWithChildren
   EngenhariaRoute: typeof EngenhariaRoute
@@ -909,6 +921,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsAprovacoesRouteImport
       parentRoute: typeof DashboardsRoute
     }
+    '/configuracoes/contabil': {
+      id: '/configuracoes/contabil'
+      path: '/contabil'
+      fullPath: '/configuracoes/contabil'
+      preLoaderRoute: typeof ConfiguracoesContabilRouteImport
+      parentRoute: typeof ConfiguracoesRoute
+    }
     '/analytics/saude-sistema': {
       id: '/analytics/saude-sistema'
       path: '/saude-sistema'
@@ -1030,6 +1049,18 @@ const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
   AnalyticsRouteChildren,
 )
 
+interface ConfiguracoesRouteChildren {
+  ConfiguracoesContabilRoute: typeof ConfiguracoesContabilRoute
+}
+
+const ConfiguracoesRouteChildren: ConfiguracoesRouteChildren = {
+  ConfiguracoesContabilRoute: ConfiguracoesContabilRoute,
+}
+
+const ConfiguracoesRouteWithChildren = ConfiguracoesRoute._addFileChildren(
+  ConfiguracoesRouteChildren,
+)
+
 interface DashboardsRouteChildren {
   DashboardsAprovacoesRoute: typeof DashboardsAprovacoesRoute
   DashboardsComercialRoute: typeof DashboardsComercialRoute
@@ -1074,7 +1105,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,
   ComercialRoute: ComercialRoute,
-  ConfiguracoesRoute: ConfiguracoesRoute,
+  ConfiguracoesRoute: ConfiguracoesRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DashboardsRoute: DashboardsRouteWithChildren,
   EngenhariaRoute: EngenhariaRoute,

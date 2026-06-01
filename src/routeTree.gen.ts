@@ -61,6 +61,7 @@ import { Route as AnalyticsEngenhariaRouteImport } from './routes/analytics.enge
 import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comercial'
 import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
 import { Route as EngenhariaGestaoServicosIndexRouteImport } from './routes/engenharia.gestao-servicos.index'
+import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
 
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
@@ -325,6 +326,12 @@ const EngenhariaGestaoServicosIndexRoute =
     path: '/gestao-servicos/',
     getParentRoute: () => EngenhariaRoute,
   } as any)
+const EngenhariaGestaoServicosOsIdRoute =
+  EngenhariaGestaoServicosOsIdRouteImport.update({
+    id: '/gestao-servicos/$osId',
+    path: '/gestao-servicos/$osId',
+    getParentRoute: () => EngenhariaRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -432,6 +440,7 @@ export interface FileRoutesByTo {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos': typeof EngenhariaGestaoServicosIndexRoute
 }
 export interface FileRoutesById {
@@ -487,6 +496,7 @@ export interface FileRoutesById {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
 export interface FileRouteTypes {
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos'
   id:
     | '__root__'
@@ -651,6 +663,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/'
   fileRoutesById: FileRoutesById
 }
@@ -1052,6 +1065,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngenhariaGestaoServicosIndexRouteImport
       parentRoute: typeof EngenhariaRoute
     }
+    '/engenharia/gestao-servicos/$osId': {
+      id: '/engenharia/gestao-servicos/$osId'
+      path: '/gestao-servicos/$osId'
+      fullPath: '/engenharia/gestao-servicos/$osId'
+      preLoaderRoute: typeof EngenhariaGestaoServicosOsIdRouteImport
+      parentRoute: typeof EngenhariaRoute
+    }
   }
 }
 
@@ -1128,10 +1148,12 @@ const DashboardsRouteWithChildren = DashboardsRoute._addFileChildren(
 )
 
 interface EngenhariaRouteChildren {
+  EngenhariaGestaoServicosOsIdRoute: typeof EngenhariaGestaoServicosOsIdRoute
   EngenhariaGestaoServicosIndexRoute: typeof EngenhariaGestaoServicosIndexRoute
 }
 
 const EngenhariaRouteChildren: EngenhariaRouteChildren = {
+  EngenhariaGestaoServicosOsIdRoute: EngenhariaGestaoServicosOsIdRoute,
   EngenhariaGestaoServicosIndexRoute: EngenhariaGestaoServicosIndexRoute,
 }
 

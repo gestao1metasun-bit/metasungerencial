@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
-import { MACRO_MODULES } from "@/lib/nav-structure";
+
 import { Bell, LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useState } from "react";

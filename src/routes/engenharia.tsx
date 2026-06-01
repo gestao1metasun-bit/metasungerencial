@@ -2210,7 +2210,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
           ) : (
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent">
-                <TableHead className="w-[80px]">Opções</TableHead>
+                <TableHead className="w-[110px]">Ações</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Endereço</TableHead>
@@ -2223,12 +2223,16 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                 {projetos.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
-                      <ActionsMenu label={p.id}>
-                        <DropdownMenuItem onSelect={() => setEditing({ c, p })}>
-                          <SquarePen className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        {!p.enviadoEngenharia && (
-                          <DropdownMenuItem onSelect={() => {
+                      <RowActions
+                        rowId={p.id}
+                        actions={[
+                          { kind: "editar" },
+                          ...(!p.enviadoEngenharia ? [{ kind: "aprovar" as const, label: "Enviar p/ Engenharia" }] : []),
+                          { kind: "excluir", label: "Remover projeto", overflow: true },
+                        ]}
+                        onAction={(k) => {
+                          if (k === "editar") setEditing({ c, p });
+                          else if (k === "aprovar") {
                             updateProjeto(c.id, p.id, {
                               enviadoEngenharia: true,
                               aprovado: true,
@@ -2236,19 +2240,13 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
                               usuarioAprovacao: "Engenharia",
                             });
                             toast.success(`Projeto ${p.id} enviado para Engenharia (Gestão de projetos).`);
-                          }}>
-                            <CheckCircle2 className="mr-2 h-4 w-4" /> Enviar p/ Engenharia
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onSelect={() => {
-                          if (!confirm(`Remover projeto ${p.id}?`)) return;
-                          removeProjeto(c.id, p.id);
-                          toast.success("Projeto removido");
-                        }}>
-                          <RotateCcw className="mr-2 h-4 w-4" /> Remover projeto
-                        </DropdownMenuItem>
-                      </ActionsMenu>
+                          } else if (k === "excluir") {
+                            if (!confirm(`Remover projeto ${p.id}?`)) return;
+                            removeProjeto(c.id, p.id);
+                            toast.success("Projeto removido");
+                          }
+                        }}
+                      />
                     </TableCell>
                     <TableCell className="font-mono text-xs">{p.id}</TableCell>
                     <TableCell className="text-xs">{p.tipo}</TableCell>

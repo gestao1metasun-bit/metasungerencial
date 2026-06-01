@@ -211,7 +211,9 @@ function RootComponent() {
           <AppLayout />
         </Suspense>
       )}
-      <Toaster />
+      <Suspense fallback={null}>
+        <Toaster />
+      </Suspense>
     </QueryClientProvider>
   );
 }

@@ -340,3 +340,203 @@ export function useRegistrarEventoOs() {
     onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["os", "eventos", v.os_id] }),
   });
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// E.OS.3.b+ — Controle Operacional de Obra
+// ═════════════════════════════════════════════════════════════════════
+
+export type OsCategoriaCusto =
+  | "MATERIAL" | "MAO_OBRA" | "HOSPEDAGEM" | "COMBUSTIVEL"
+  | "ALIMENTACAO" | "EQUIPAMENTO" | "TERCEIROS" | "OUTROS";
+
+export const OS_CATEGORIAS: { codigo: OsCategoriaCusto; label: string }[] = [
+  { codigo: "MATERIAL",    label: "Material" },
+  { codigo: "MAO_OBRA",    label: "Mão de obra" },
+  { codigo: "HOSPEDAGEM",  label: "Hospedagem" },
+  { codigo: "COMBUSTIVEL", label: "Combustível" },
+  { codigo: "ALIMENTACAO", label: "Alimentação" },
+  { codigo: "EQUIPAMENTO", label: "Equipamento" },
+  { codigo: "TERCEIROS",   label: "Terceiros" },
+  { codigo: "OUTROS",      label: "Outros" },
+];
+
+export interface OsOrcadoVsRealizadoRow {
+  os_id: string;
+  categoria: OsCategoriaCusto;
+  orcado: number;
+  realizado: number;
+  variacao_rs: number;
+  variacao_pct: number | null;
+  semaforo: "NEUTRO" | "OK" | "ATENCAO" | "ESTOURO";
+}
+
+export interface OsDashboardRow {
+  os_id: string;
+  codigo: string | null;
+  status_codigo: string;
+  cliente_id: string | null;
+  contrato_id: string | null;
+  projeto_id: string | null;
+  obra_id: string | null;
+  valor_orcado: number;
+  valor_em_pv: number;
+  custo_previsto: number;
+  custo_realizado: number;
+  tarefas_total: number;
+  tarefas_concluidas: number;
+  tarefas_pendentes: number;
+  aderencia_pct: number;
+  formularios_respondidos: number;
+  anexos_total: number;
+  servicos_faturaveis: number;
+}
+
+export interface OsProdutividadeRow {
+  os_id: string;
+  tarefas_total: number;
+  tarefas_concluidas: number;
+  tarefas_pendentes: number;
+  minutos_previstos: number;
+  minutos_realizados: number;
+  aderencia_pct: number | null;
+}
+
+export interface OsCustoRealizadoRow {
+  id: string;
+  os_id: string;
+  categoria: OsCategoriaCusto;
+  valor: number;
+  data_custo: string;
+  descricao: string | null;
+  origem_tipo: string | null;
+  origem_id: string | null;
+  fornecedor_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+// ── leituras ──
+export function useOsOrcadoVsRealizado(osId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "orc-vs-real", osId],
+    enabled: !!osId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_os_orcado_vs_realizado").select("*").eq("os_id", osId!);
+      if (error) throw error;
+      return (data ?? []) as OsOrcadoVsRealizadoRow[];
+    },
+  });
+}
+
+export function useOsDashboard(osId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "dashboard", osId],
+    enabled: !!osId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_os_dashboard").select("*").eq("os_id", osId!).maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as OsDashboardRow | null;
+    },
+  });
+}
+
+export function useOsProdutividade(osId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "produtividade", osId],
+    enabled: !!osId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_os_produtividade").select("*").eq("os_id", osId!).maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as OsProdutividadeRow | null;
+    },
+  });
+}
+
+export function useOsCustosRealizados(osId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "custos", osId],
+    enabled: !!osId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("os_custos_realizados").select("*")
+        .eq("os_id", osId!).is("deleted_at", null)
+        .order("data_custo", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as OsCustoRealizadoRow[];
+    },
+  });
+}
+
+// ── mutations ──
+export function useLancarOrcamento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { os_id: string; categoria: OsCategoriaCusto; valor: number; observacao?: string }) =>
+      rpc("rpc_os_orcamento_lancar", {
+        p_os_id: p.os_id, p_categoria: p.categoria,
+        p_valor: p.valor, p_observacao: p.observacao ?? null,
+      }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["os", "orc-vs-real", v.os_id] });
+      qc.invalidateQueries({ queryKey: ["os", "dashboard", v.os_id] });
+    },
+  });
+}
+
+export function useLancarCustoRealizado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: {
+      os_id: string; categoria: OsCategoriaCusto; valor: number;
+      data_custo?: string; descricao?: string;
+      origem_tipo?: string; origem_id?: string; fornecedor_id?: string;
+    }) => rpc("rpc_os_custo_lancar", {
+      p_os_id: p.os_id, p_categoria: p.categoria, p_valor: p.valor,
+      p_data_custo: p.data_custo ?? null, p_descricao: p.descricao ?? null,
+      p_origem_tipo: p.origem_tipo ?? "MANUAL",
+      p_origem_id: p.origem_id ?? null, p_fornecedor_id: p.fornecedor_id ?? null,
+    }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["os", "custos", v.os_id] });
+      qc.invalidateQueries({ queryKey: ["os", "orc-vs-real", v.os_id] });
+      qc.invalidateQueries({ queryKey: ["os", "dashboard", v.os_id] });
+    },
+  });
+}
+
+// ── form templates ──
+export interface OsFormularioTemplateRow {
+  id: string; nome: string; tipo: string; descricao: string | null;
+  campos: unknown; obrigatorio: boolean; ativo: boolean; versao: number;
+}
+export function useOsFormulariosTemplates() {
+  return useQuery({
+    queryKey: ["os", "form-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("os_formularios_definicao").select("*")
+        .is("deleted_at", null).order("nome");
+      if (error) throw error;
+      return (data ?? []) as OsFormularioTemplateRow[];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useSalvarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: {
+      id?: string | null; nome: string; tipo: string; descricao?: string;
+      campos: unknown[]; obrigatorio?: boolean; ativo?: boolean;
+    }) => rpc<string>("rpc_os_formulario_template_salvar", {
+      p_id: p.id ?? null, p_nome: p.nome, p_tipo: p.tipo,
+      p_descricao: p.descricao ?? null, p_campos: p.campos as never,
+      p_obrigatorio: !!p.obrigatorio, p_ativo: p.ativo ?? true,
+    }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}

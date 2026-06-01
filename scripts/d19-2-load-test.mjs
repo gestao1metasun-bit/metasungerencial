@@ -58,11 +58,15 @@ async function runUser(idx) {
   // 1) Login
   const tLoginStart = Date.now();
   try {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle', timeout: 45_000 });
+    await page.waitForSelector('input[type="email"]', { timeout: 15_000 });
+    await page.waitForTimeout(1200); // React hydration
     await page.fill('input[type="email"]', cred.email);
     await page.fill('input[type="password"]', cred.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 30_000 });
+    await Promise.all([
+      page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 30_000 }),
+      page.click('button[type="submit"]'),
+    ]);
   } catch (e) {
     results.push({ user: idx, route: '/login', ms: -1, error: String(e).slice(0, 200) });
     await browser.close();

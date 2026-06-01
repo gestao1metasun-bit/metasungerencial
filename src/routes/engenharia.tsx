@@ -2900,7 +2900,7 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
+              <TableHead className="w-[90px]">Ações</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Motivo</TableHead>
@@ -2910,15 +2910,17 @@ function CanceladosEngTab({ contratos }: { contratos: ContratoFull[] }) {
               {cancelados.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
-                    <ActionsMenu label={c.id}>
-                      <DropdownMenuItem onSelect={() => {
-                        const r = reativarContrato(c.id, "Engenharia");
-                        if (!r.ok) { toast.error(r.motivo); return; }
-                        toast.success(`Contrato ${c.id} reativado. Reaprovar para retornar à Engenharia.`);
-                      }}>
-                        Reativar
-                      </DropdownMenuItem>
-                    </ActionsMenu>
+                    <RowActions
+                      rowId={c.id}
+                      actions={[{ kind: "aprovar", label: "Reativar" }]}
+                      onAction={(k) => {
+                        if (k === "aprovar") {
+                          const r = reativarContrato(c.id, "Engenharia");
+                          if (!r.ok) { toast.error(r.motivo); return; }
+                          toast.success(`Contrato ${c.id} reativado. Reaprovar para retornar à Engenharia.`);
+                        }
+                      }}
+                    />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>

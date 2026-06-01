@@ -1059,38 +1059,36 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
-              <TableHead className="w-[90px]">Opções</TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[120px] text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {redigidosFiltrados.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell>
-                    <ActionsMenu label={c.id}>
-                      <DropdownMenuItem onSelect={() => { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }}>
-                        <PenLine className="mr-2 h-4 w-4" /> Assinar Contrato
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setImprimir(c)}>
-                        <Printer className="mr-2 h-4 w-4" /> Imprimir
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={() => reabrirRedigido(c)}
-                        title="Para editar os dados do contrato, retorne para Geração de contrato."
-                      >
-                        <Undo2 className="mr-2 h-4 w-4" /> Retornar para Geração de contrato
-                      </DropdownMenuItem>
-                    </ActionsMenu>
-                  </TableCell>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
                   <TableCell className="text-xs">{c.vendedor || "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtBRL(c.valor)}</TableCell>
+                  <TableCell>
+                    <RowActions
+                      rowId={c.id}
+                      actions={[
+                        { kind: "aprovar", label: "Assinar contrato", icon: PenLine },
+                        { kind: "visualizar", label: "Imprimir", icon: Printer },
+                        { kind: "cancelar", label: "Retornar para Geração", icon: Undo2, overflow: true },
+                      ]}
+                      onAction={(kind) => {
+                        if (kind === "aprovar") { setGerarAssinado(c); setDataAssinaturaInput(new Date().toISOString().slice(0,10)); }
+                        else if (kind === "visualizar") setImprimir(c);
+                        else if (kind === "cancelar") reabrirRedigido(c);
+                      }}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

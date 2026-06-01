@@ -2,19 +2,19 @@
   "base_url": "https://metasungerencial.lovable.app",
   "users": 10,
   "ramp_ms": 10000,
-  "timestamp": "2026-06-01T22:56:31.299Z",
+  "timestamp": "2026-06-01T22:57:55.902Z",
   "ok": 0,
   "error": 10,
-  "console_errors": 0,
+  "console_errors": 10,
   "phases": {
     "t_navigate": {
       "n": 10,
-      "p50": 653,
-      "p95": 965,
-      "p99": 965,
-      "min": 603,
-      "max": 965,
-      "avg": 710
+      "p50": 682,
+      "p95": 818,
+      "p99": 818,
+      "min": 619,
+      "max": 818,
+      "avg": 719
     },
     "t_react_ready": {
       "n": 0,
@@ -71,57 +71,98 @@
       "avg": null
     }
   },
-  "sample_console_errors": [],
-  "samples": [
+  "sample_console_errors": [
     {
       "user": 0,
-      "t_navigate": 958,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 1,
-      "t_navigate": 663,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 2,
-      "t_navigate": 965,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 3,
-      "t_navigate": 614,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 4,
-      "t_navigate": 689,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 5,
-      "t_navigate": 653,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 6,
-      "t_navigate": 603,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 7,
-      "t_navigate": 632,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 8,
-      "t_navigate": 679,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
     },
     {
       "user": 9,
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    }
+  ],
+  "samples": [
+    {
+      "user": 0,
+      "t_navigate": 818,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login\"\n  navigated to \"https://me"
+    },
+    {
+      "user": 1,
+      "t_navigate": 656,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 2,
+      "t_navigate": 815,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login\"\n=========================="
+    },
+    {
+      "user": 3,
+      "t_navigate": 709,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 4,
       "t_navigate": 643,
-      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login\"\n=========================="
+    },
+    {
+      "user": 5,
+      "t_navigate": 774,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 6,
+      "t_navigate": 619,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 7,
+      "t_navigate": 682,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 8,
+      "t_navigate": 666,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
+    },
+    {
+      "user": 9,
+      "t_navigate": 805,
+      "error": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n  navigated to \"https://metasungerencial.lovable.app/login?\"\n  navigated to \"https://m"
     }
   ]
 }

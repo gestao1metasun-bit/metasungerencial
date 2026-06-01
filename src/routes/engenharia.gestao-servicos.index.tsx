@@ -60,7 +60,6 @@ function GestaoServicosPage() {
       <PageHeader
         title="Gestão de Serviços"
         subtitle="Ordens de Serviço · operação, execução e rastreabilidade"
-        icon={FileText}
       />
 
       <EnterpriseRecordToolbar

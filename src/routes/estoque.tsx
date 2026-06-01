@@ -932,7 +932,7 @@ function EntregasTab() {
         searchPlaceholder="Buscar por cliente ou item…"
         search={q}
         onSearchChange={setQ}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmEstoque()}
         layoutBar={layoutBarRm()}
         onAction={(a) => {
           if (a === "atualizar") window.location.reload();

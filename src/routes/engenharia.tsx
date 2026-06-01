@@ -1603,7 +1603,7 @@ function PendTable({ rows, onEdit }: { rows: typeof pendenciasSeed; onEdit: (p: 
   return (
     <Table>
       <TableHeader><TableRow className="hover:bg-transparent">
-        <TableHead className="w-[80px]">Opções</TableHead>
+        <TableHead className="w-[80px]">Ações</TableHead>
         <TableHead>Pendência</TableHead><TableHead>Equipe</TableHead><TableHead>Cliente</TableHead>
         <TableHead>Problema</TableHead><TableHead>Solução</TableHead>
         <TableHead>Status</TableHead><TableHead>Abertura</TableHead><TableHead>Resolução</TableHead>

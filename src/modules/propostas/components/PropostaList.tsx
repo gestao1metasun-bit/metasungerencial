@@ -1395,42 +1395,32 @@ function TabelaView({
         const alvoAprovar = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : undefined;
         return (
           <div onClick={(e) => e.stopPropagation()} className="inline-flex">
-            <ActionsMenu label={l.clienteNome} align="start" triggerClassName="h-7 w-[60px]">
-              <DropdownMenuItem onSelect={() => onAbrirLead(l)}>
-                <Eye className="mr-2 h-4 w-4" /> Abrir lead
-              </DropdownMenuItem>
-              {alvoAprovar && onAprovar && (
-                <DropdownMenuItem onSelect={() => onAprovar(alvoAprovar)}>
-                  <Check className="mr-2 h-4 w-4 text-success" />
-                  <span className="text-success">Aprovar e gerar contrato</span>
-                </DropdownMenuItem>
-              )}
-              {l.bloqueado && (
-                <DropdownMenuItem onSelect={irParaContratos}>
-                  <FileText className="mr-2 h-4 w-4 text-primary" />
-                  <span className="text-primary">Ver contrato no Comercial</span>
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-                </DropdownMenuItem>
-              )}
-              {podeReativar && (
-                <DropdownMenuItem onSelect={() => reativarProposta(l.ultima)}>
-                  <RotateCcw className="mr-2 h-4 w-4 text-success" />
-                  <span className="text-success">Reativar última proposta</span>
-                </DropdownMenuItem>
-              )}
-              {podeCancelar && (
-                <DropdownMenuItem
-                  onSelect={() => {
-                    const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                    if (!p) { toast.info("Não há proposta cancelável."); return; }
-                    cancelarProposta(p);
+            {(() => {
+              const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
+              if (alvoAprovar && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato", overflow: true });
+              if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
+              if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
+              if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar última proposta", overflow: true });
+              return (
+                <RowActions
+                  rowId={l.key}
+                  actions={actions}
+                  onAction={(kind) => {
+                    const a = actions.find((x) => x.kind === kind);
+                    const lbl = a?.label ?? "";
+                    if (lbl === "Abrir lead") onAbrirLead(l);
+                    else if (lbl === "Aprovar e gerar contrato" && alvoAprovar && onAprovar) onAprovar(alvoAprovar);
+                    else if (lbl === "Ver contrato no Comercial") irParaContratos();
+                    else if (lbl === "Reativar última proposta") reativarProposta(l.ultima);
+                    else if (lbl === "Cancelar última proposta") {
+                      const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
+                      if (!p) { toast.info("Não há proposta cancelável."); return; }
+                      cancelarProposta(p);
+                    }
                   }}
-                >
-                  <Ban className="mr-2 h-4 w-4 text-destructive" />
-                  <span className="text-destructive">Cancelar última proposta</span>
-                </DropdownMenuItem>
-              )}
-            </ActionsMenu>
+                />
+              );
+            })()}
           </div>
         );
       }

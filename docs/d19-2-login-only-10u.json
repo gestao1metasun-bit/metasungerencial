@@ -1,0 +1,127 @@
+{
+  "base_url": "https://metasungerencial.lovable.app",
+  "users": 10,
+  "ramp_ms": 10000,
+  "timestamp": "2026-06-01T22:56:31.299Z",
+  "ok": 0,
+  "error": 10,
+  "console_errors": 0,
+  "phases": {
+    "t_navigate": {
+      "n": 10,
+      "p50": 653,
+      "p95": 965,
+      "p99": 965,
+      "min": 603,
+      "max": 965,
+      "avg": 710
+    },
+    "t_react_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_supabase_ready": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_auth": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_redirect": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_submit_to_dashboard": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    },
+    "t_total": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "min": null,
+      "max": null,
+      "avg": null
+    }
+  },
+  "sample_console_errors": [],
+  "samples": [
+    {
+      "user": 0,
+      "t_navigate": 958,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 1,
+      "t_navigate": 663,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 2,
+      "t_navigate": 965,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 3,
+      "t_navigate": 614,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 4,
+      "t_navigate": 689,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 5,
+      "t_navigate": 653,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 6,
+      "t_navigate": 603,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 7,
+      "t_navigate": 632,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 8,
+      "t_navigate": 679,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    },
+    {
+      "user": 9,
+      "t_navigate": 643,
+      "error": "TypeError: Cannot read properties of undefined (reading 'email')"
+    }
+  ]
+}

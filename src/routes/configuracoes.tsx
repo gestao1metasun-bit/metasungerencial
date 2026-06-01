@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Users, Plus, Trash2, SquarePen } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -43,6 +43,18 @@ function ConfigPage() {
     <>
       <PageHeader title="Configurações" subtitle="Parâmetros do sistema, perfis, usuários e integrações." />
       <div className="mb-4"><HardeningReportCard /></div>
+      <Card className="mb-4 p-4 flex items-center justify-between gap-3 border-indigo-200 bg-indigo-50/40">
+        <div className="flex items-center gap-3">
+          <ScrollText className="h-5 w-5 text-indigo-700" />
+          <div>
+            <div className="text-sm font-semibold text-indigo-900">Configurações Contábeis/Fiscais</div>
+            <div className="text-[12px] text-indigo-800/80">Plano de contas, mapeamentos, centros de custo, eventos canônicos, fiscal de produtos, exportações e logs.</div>
+          </div>
+        </div>
+        <Link to="/configuracoes/contabil" className="inline-flex h-8 items-center rounded-md bg-indigo-600 px-3 text-[12px] font-medium text-white hover:bg-indigo-700">
+          Abrir
+        </Link>
+      </Card>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="hidden">
           <TabsTrigger value="empresa"><Building2 className="mr-2 h-4 w-4" /> Empresa</TabsTrigger>

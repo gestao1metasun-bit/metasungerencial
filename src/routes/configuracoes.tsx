@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useState } from "react";
 import { Building2, ShieldCheck, Plug, ScrollText, Settings as SettingsIcon, Users, Plus, Trash2, SquarePen } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -38,6 +38,8 @@ export const Route = createFileRoute("/configuracoes")({
 });
 
 function ConfigPage() {
+  const childMatches = useChildMatches();
+  if (childMatches.length > 0) return <Outlet />;
   const [tab, setTab] = useTabFromHash("/configuracoes");
   return (
     <>

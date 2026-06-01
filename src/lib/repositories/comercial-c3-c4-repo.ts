@@ -9,6 +9,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 
 export type EscopoCarteira = "lead" | "proposta" | "contrato" | "cliente";
 export type DecisaoExcecao = "APROVADA" | "NEGADA" | "CANCELADA";
@@ -21,10 +22,10 @@ export function useSolicitarAprovacaoExcecao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { propostaId: string; motivo: string }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.proposta_solicitar_aprovacao_excecao", () => supabase.rpc(
         "rpc_proposta_solicitar_aprovacao_excecao",
         { p_proposta_id: input.propostaId, p_motivo: input.motivo },
-      );
+      ));
       if (error) throw error;
       return data as string;
     },
@@ -43,14 +44,14 @@ export function useDecidirAprovacaoExcecao() {
       decisao: DecisaoExcecao;
       motivo: string;
     }) => {
-      const { error } = await supabase.rpc(
+      const { error } = await withPerf("rpc.proposta_decidir_aprovacao_excecao", () => supabase.rpc(
         "rpc_proposta_decidir_aprovacao_excecao",
         {
           p_aprovacao_id: input.aprovacaoId,
           p_decisao: input.decisao,
           p_motivo: input.motivo,
         },
-      );
+      ));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -89,7 +90,7 @@ export function useTransferirCarteiraIndividual() {
       vendedorDestinoId: string;
       motivo: string;
     }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.carteira_transferir_individual", () => supabase.rpc(
         "rpc_carteira_transferir_individual",
         {
           p_escopo: input.escopo,
@@ -97,7 +98,7 @@ export function useTransferirCarteiraIndividual() {
           p_vendedor_destino_id: input.vendedorDestinoId,
           p_motivo: input.motivo,
         },
-      );
+      ));
       if (error) throw error;
       return data as string;
     },
@@ -117,7 +118,7 @@ export function useTransferirCarteiraLote() {
       vendedorDestinoId: string;
       motivo: string;
     }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.carteira_transferir_lote", () => supabase.rpc(
         "rpc_carteira_transferir_lote",
         {
           p_escopo: input.escopo,
@@ -125,7 +126,7 @@ export function useTransferirCarteiraLote() {
           p_vendedor_destino_id: input.vendedorDestinoId,
           p_motivo: input.motivo,
         },
-      );
+      ));
       if (error) throw error;
       return data as string;
     },

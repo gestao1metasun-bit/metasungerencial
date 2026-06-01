@@ -4,6 +4,7 @@
 // ============================================================================
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -151,10 +152,10 @@ export function useGerarTitulosDoPV() {
       pvId: string;
       parcelas?: Array<{ vencimento: string; valor: number }>;
     }) => {
-      const { data, error } = await supabase.rpc("gerar_titulos_do_pv", {
+      const { data, error } = await withPerf("rpc.gerar_titulos_do_pv", () => supabase.rpc("gerar_titulos_do_pv", {
         _pv_id: args.pvId,
         _parcelas: (args.parcelas as any) ?? null,
-      });
+      }));
       if (error) throw error;
       return data as string;
     },
@@ -180,14 +181,14 @@ export function useReceberParcela() {
       formaPagamento?: string;
       observacao?: string;
     }) => {
-      const { error } = await supabase.rpc("receber_parcela", {
+      const { error } = await withPerf("rpc.receber_parcela", () => supabase.rpc("receber_parcela", {
         _parcela_id: args.parcelaId,
         _valor: args.valor,
         _conta_id: args.contaId ?? undefined,
         _data: args.data ?? new Date().toISOString(),
         _forma_pagamento: args.formaPagamento ?? undefined,
         _obs: args.observacao ?? undefined,
-      });
+      }));
       if (error) throw error;
       return args.tituloId;
     },
@@ -204,10 +205,10 @@ export function useCancelarTitulo() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: { tituloId: string; motivo: string }) => {
-      const { error } = await supabase.rpc("cancelar_titulo", {
+      const { error } = await withPerf("rpc.cancelar_titulo", () => supabase.rpc("cancelar_titulo", {
         _titulo_id: args.tituloId,
         _motivo: args.motivo,
-      });
+      }));
       if (error) throw error;
       return args.tituloId;
     },

@@ -3,6 +3,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { logError } from "./error-log-repo";
 
 export interface FechamentoPeriodo {
@@ -50,11 +51,11 @@ export function useAbrirFechamento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { conta_id: string; competencia: string; observacoes?: string }) => {
-      const { data, error } = await supabase.rpc("rpc_fechamento_abrir", {
+      const { data, error } = await withPerf("rpc.fechamento_abrir", () => supabase.rpc("rpc_fechamento_abrir", {
         p_conta_id: i.conta_id,
         p_competencia: i.competencia,
         p_observacoes: i.observacoes ?? null,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "fechamentos.abrir", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
@@ -69,10 +70,10 @@ export function useFecharFechamento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { id: string; saldo_apurado: number }) => {
-      const { error } = await supabase.rpc("rpc_fechamento_fechar", {
+      const { error } = await withPerf("rpc.fechamento_fechar", () => supabase.rpc("rpc_fechamento_fechar", {
         p_id: i.id,
         p_saldo_apurado: i.saldo_apurado,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "fechamentos.fechar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
@@ -86,10 +87,10 @@ export function useReabrirFechamento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { id: string; motivo: string }) => {
-      const { error } = await supabase.rpc("rpc_fechamento_reabrir", {
+      const { error } = await withPerf("rpc.fechamento_reabrir", () => supabase.rpc("rpc_fechamento_reabrir", {
         p_id: i.id,
         p_motivo: i.motivo,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "fechamentos.reabrir", mensagem: error.message, payload: i, severidade: "error" });
         throw error;

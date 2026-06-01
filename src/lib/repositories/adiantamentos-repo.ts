@@ -11,6 +11,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { withPerf } from "@/lib/perf";
 import { novoRequestId } from "./idempotencia-repo";
 
 export type AdiantamentoDirecao = "RECEBIDO" | "PAGO";
@@ -96,7 +97,7 @@ export const adiantamentosRepo = {
   async registrar(input: NovoAdiantamentoInput, requestId?: string): Promise<string> {
     const reqId = requestId ?? novoRequestId();
     const direcao = input.tipo === "cliente" ? "RECEBER" : "PAGAR";
-    const { data, error } = await supabase.rpc("rpc_adiantamento_registrar", {
+    const { data, error } = await withPerf("rpc.adiantamento_registrar", () => supabase.rpc("rpc_adiantamento_registrar", {
       _direcao: direcao,
       _valor: input.valor,
       _data: input.data,
@@ -107,30 +108,30 @@ export const adiantamentosRepo = {
       _competencia: input.competencia ?? null,
       _observacao: input.observacao ?? null,
       _request_id: reqId,
-    } as never);
+    } as never));
     if (error) throw error;
     return (data as { adiantamento_id: string }).adiantamento_id;
   },
 
   async abater(input: AbaterAdiantamentoInput, requestId?: string): Promise<void> {
     const reqId = requestId ?? novoRequestId();
-    const { error } = await supabase.rpc("rpc_adiantamento_abater", {
+    const { error } = await withPerf("rpc.adiantamento_abater", () => supabase.rpc("rpc_adiantamento_abater", {
       _adiantamento_id: input.adiantamento_id,
       _parcela_id: input.parcela_id,
       _valor: input.valor,
       _observacao: input.observacao ?? null,
       _request_id: reqId,
-    } as never);
+    } as never));
     if (error) throw error;
   },
 
   async estornar(input: EstornarAdiantamentoInput, requestId?: string): Promise<void> {
     const reqId = requestId ?? novoRequestId();
-    const { error } = await supabase.rpc("rpc_adiantamento_estornar", {
+    const { error } = await withPerf("rpc.adiantamento_estornar", () => supabase.rpc("rpc_adiantamento_estornar", {
       _adiantamento_id: input.adiantamento_id,
       _motivo: input.motivo,
       _request_id: reqId,
-    } as never);
+    } as never));
     if (error) throw error;
   },
 

@@ -18,6 +18,7 @@
  * Logs estruturados: [projetos-repo], [projetos-rpc].
  */
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import type { ProjetoContratoStatus } from "@/lib/projetosContratoStatus";
 
 const TAG_REPO = "[projetos-repo]";
@@ -185,10 +186,10 @@ export async function aprovarProjeto(
   motivo?: string,
 ): Promise<RepoResult<string>> {
   if (!isUuid(projetoId)) return { error: "projeto_id inválido" };
-  const { data, error } = await supabase.rpc("aprovar_projeto", {
+  const { data, error } = await withPerf("rpc.aprovar_projeto", () => supabase.rpc("aprovar_projeto", {
     _projeto_id: projetoId,
     _motivo: motivo ?? undefined,
-  });
+  }));
   if (error) {
     console.error(TAG_RPC, "aprovar_projeto error", error, { projetoId });
     return { error: error.message };
@@ -205,10 +206,10 @@ export async function cancelarProjeto(
   if (!motivo || motivo.trim().length < 3) {
     return { error: "Motivo obrigatório (mínimo 3 caracteres)." };
   }
-  const { error } = await supabase.rpc("cancelar_projeto", {
+  const { error } = await withPerf("rpc.cancelar_projeto", () => supabase.rpc("cancelar_projeto", {
     _projeto_id: projetoId,
     _motivo: motivo.trim(),
-  });
+  }));
   if (error) {
     console.error(TAG_RPC, "cancelar_projeto error", error, { projetoId });
     return { error: error.message };
@@ -221,9 +222,9 @@ export async function enviarParaEngenharia(
   projetoId: string,
 ): Promise<RepoResult<string>> {
   if (!isUuid(projetoId)) return { error: "projeto_id inválido" };
-  const { data, error } = await supabase.rpc("enviar_projeto_para_engenharia", {
+  const { data, error } = await withPerf("rpc.enviar_projeto_para_engenharia", () => supabase.rpc("enviar_projeto_para_engenharia", {
     _projeto_id: projetoId,
-  });
+  }));
   if (error) {
     console.error(TAG_RPC, "enviar_projeto_para_engenharia error", error, { projetoId });
     return { error: error.message };
@@ -236,9 +237,9 @@ export async function recalcularSaldoContrato(
   contratoId: string,
 ): Promise<RepoResult<SaldoContrato>> {
   if (!isUuid(contratoId)) return { error: "contrato_id inválido" };
-  const { data, error } = await supabase.rpc("recalcular_saldo_contrato", {
+  const { data, error } = await withPerf("rpc.recalcular_saldo_contrato", () => supabase.rpc("recalcular_saldo_contrato", {
     _contrato_id: contratoId,
-  });
+  }));
   if (error) {
     console.error(TAG_RPC, "recalcular_saldo_contrato error", error, { contratoId });
     return { error: error.message };

@@ -11,6 +11,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { toast } from "sonner";
 
 export type ComissaoStatus =
@@ -104,10 +105,10 @@ function makeRpc(
     const qc = useQueryClient();
     return useMutation({
       mutationFn: async (input: { comissaoId: string; motivo?: string }) => {
-        const { data, error } = await supabase.rpc(
+        const { data, error } = await withPerf(`rpc.${rpcName}`, () => supabase.rpc(
           rpcName as never,
           { p_comissao_id: input.comissaoId, p_motivo: input.motivo ?? null } as never,
-        );
+        ));
         if (error) throw error;
         return data as unknown as string;
       },
@@ -131,14 +132,14 @@ export function useAlterarPercentualComissao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { comissaoId: string; novoPercentual: number; motivo: string }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.comissao_alterar_percentual", () => supabase.rpc(
         "rpc_comissao_alterar_percentual" as never,
         {
           p_comissao_id: input.comissaoId,
           p_novo_percentual: input.novoPercentual,
           p_motivo: input.motivo,
         } as never,
-      );
+      ));
       if (error) throw error;
       return data as unknown as string;
     },

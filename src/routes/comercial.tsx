@@ -10,7 +10,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";
-import { ActionsMenu } from "@/components/app/ActionsMenu";
+// D17.2 — ActionsMenu removido; toda ação de linha agora via RowActions.
 import { retornarPropostaParaOrcamento, sugerirInversoresAuto, STANDARD_INVERSOR_KW, atualizarCadastroCliente } from "@/modules/propostas/store";
 import { PropostasPage } from "@/modules/propostas";
 import { ColunasManager, ColunasButton, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";

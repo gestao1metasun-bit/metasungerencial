@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,23 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const { user, loading, errorMessage } = useAuth();
+
+  // D19.2.fix.50u P0-1 — pré-aquece o chunk do shell (/dashboard) enquanto o
+  // usuário digita credenciais. Reduz o tempo entre submit→primeira pintura
+  // pós-login sob carga concorrente (cold-start de chunk dominava P95 em 50u).
+  useEffect(() => {
+    const idle =
+      typeof window !== "undefined" &&
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => number })
+        .requestIdleCallback;
+    const run = () => {
+      void router.preloadRoute({ to: "/dashboard" }).catch(() => {});
+    };
+    if (idle) idle.call(window, run);
+    else setTimeout(run, 200);
+  }, [router]);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);

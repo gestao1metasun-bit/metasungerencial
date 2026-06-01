@@ -38,6 +38,9 @@ import {
   useOs, useOsTarefas, useOsEventos, useOsStatusCatalogo,
   useMudarStatusOs, useFinalizarOs, useCancelarOs, useExcluirOs,
   useCriarTarefa, useMudarStatusTarefa, useConcluirTarefa,
+  useOsDashboard, useOsOrcadoVsRealizado, useOsCustosRealizados,
+  useLancarOrcamento, useLancarCustoRealizado,
+  OS_CATEGORIAS, type OsCategoriaCusto,
   type OsTarefaStatus,
 } from "@/lib/repositories/os-repo";
 

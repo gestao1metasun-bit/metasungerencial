@@ -1,32 +1,26 @@
 import { chromium } from 'playwright';
-const creds = JSON.parse(process.env.CREDS_JSON);
-const c = creds[0];
+import { createClient } from '@supabase/supabase-js';
+const c = JSON.parse(process.env.CREDS_JSON)[0];
+
+// 1) Sanity check direto via Supabase
+const sb = createClient(process.env.VITE_SUPABASE_URL || 'https://wdjewfyjgeishqvohoau.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkamV3ZnlqZ2Vpc2hxdm9ob2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3OTE4OTgsImV4cCI6MjA5NDM2Nzg5OH0.bj0z3PInWmTgf6aidZ7_-SAygjRX9UDR69a0A-2Do-g');
+const { data, error } = await sb.auth.signInWithPassword({ email: c.email, password: c.password });
+console.log('Supabase auth:', error ? 'FAIL '+error.message : 'OK uid='+data.user.id);
+
+// 2) Tenta UI fill com aguardando React hidratar
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_BIN });
 const page = await browser.newPage();
 page.on('console', m => console.log('[console]', m.type(), m.text().slice(0,200)));
-page.on('pageerror', e => console.log('[pageerror]', String(e).slice(0,200)));
-try {
-  await page.goto('https://metasungerencial.lovable.app/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
-  console.log('URL após goto:', page.url());
-  console.log('Title:', await page.title());
-  const emailInputs = await page.$$('input[type="email"]');
-  const pwInputs = await page.$$('input[type="password"]');
-  console.log('email inputs:', emailInputs.length, 'pw inputs:', pwInputs.length);
-  if (emailInputs.length) {
-    await page.fill('input[type="email"]', c.email);
-    await page.fill('input[type="password"]', c.password);
-    await page.click('button[type="submit"]');
-    try {
-      await page.waitForURL(u => !u.pathname.startsWith('/login'), { timeout: 20000 });
-      console.log('Login OK, agora em:', page.url());
-    } catch (e) {
-      console.log('Login NÃO redirecionou. URL atual:', page.url());
-      console.log('HTML snippet:', (await page.content()).slice(0, 500));
-    }
-  } else {
-    console.log('HTML snippet:', (await page.content()).slice(0, 800));
-  }
-} catch (e) {
-  console.log('Erro:', String(e).slice(0,400));
-}
+await page.goto('https://metasungerencial.lovable.app/login', { waitUntil: 'networkidle', timeout: 30000 });
+await page.waitForTimeout(1500);
+await page.fill('input[type="email"]', c.email);
+await page.fill('input[type="password"]', c.password);
+const btn = await page.$('button[type="submit"]');
+console.log('button found:', !!btn);
+await Promise.all([
+  page.waitForURL(u => !u.pathname.startsWith('/login'), { timeout: 25000 }).catch(e=>console.log('waitURL fail:',e.message.slice(0,150))),
+  page.click('button[type="submit"]'),
+]);
+console.log('Final URL:', page.url());
 await browser.close();

@@ -6,6 +6,7 @@
 // ============================================================================
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { useAuth } from "@/lib/auth-store";
 import { toast } from "sonner";
 
@@ -130,10 +131,10 @@ export function useAprovarSolicitacao() {
   const inv = useInvalidateAll();
   return useMutation({
     mutationFn: async ({ id, motivo }: { id: string; motivo?: string }) => {
-      const { error } = await supabase.rpc("aprovar_solicitacao", {
+      const { error } = await withPerf("rpc.aprovar_solicitacao", () => supabase.rpc("aprovar_solicitacao", {
         _id: id,
         _motivo: motivo ?? undefined,
-      });
+      }));
 
       if (error) throw error;
     },

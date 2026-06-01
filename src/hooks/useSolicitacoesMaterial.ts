@@ -7,6 +7,7 @@
 // ============================================================================
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { toast } from "sonner";
 
 export type SolicitacaoStatus =
@@ -120,13 +121,13 @@ export function useCriarSolicitacaoMaterial() {
       prioridade?: string;
       itens: { produto_id: string; quantidade: number; observacao?: string }[];
     }) => {
-      const { data, error } = await supabase.rpc("criar_solicitacao_material" as never, {
+      const { data, error } = await withPerf("rpc.criar_solicitacao_material", () => supabase.rpc("criar_solicitacao_material" as never, {
         _setor: input.setor,
         _motivo: input.motivo,
         _obra_id: input.obra_id ?? null,
         _itens: input.itens,
         _prioridade: input.prioridade ?? "NORMAL",
-      } as never);
+      } as never));
       if (error) throw error;
       return data as unknown as string;
     },
@@ -142,7 +143,7 @@ export function useEnviarSolicitacaoMaterial() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("enviar_solicitacao_material" as never, { _id: id } as never);
+      const { error } = await withPerf("rpc.enviar_solicitacao_material", () => supabase.rpc("enviar_solicitacao_material" as never, { _id: id } as never));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -158,7 +159,7 @@ export function useCancelarSolicitacaoMaterial() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
-      const { error } = await supabase.rpc("cancelar_solicitacao_material" as never, { _id: id, _motivo: motivo } as never);
+      const { error } = await withPerf("rpc.cancelar_solicitacao_material", () => supabase.rpc("cancelar_solicitacao_material" as never, { _id: id, _motivo: motivo } as never));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -176,7 +177,7 @@ export function useRegistrarCotacao() {
       ordem_id: string; fornecedor: string; doc?: string;
       valor: number; prazo_dias?: number; validade_dias?: number; obs?: string; anexo?: string;
     }) => {
-      const { error } = await supabase.rpc("registrar_cotacao" as never, {
+      const { error } = await withPerf("rpc.registrar_cotacao", () => supabase.rpc("registrar_cotacao" as never, {
         _ordem_id: input.ordem_id,
         _fornecedor: input.fornecedor,
         _doc: input.doc ?? null,
@@ -185,7 +186,7 @@ export function useRegistrarCotacao() {
         _validade_dias: input.validade_dias ?? null,
         _obs: input.obs ?? null,
         _anexo: input.anexo ?? null,
-      } as never);
+      } as never));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -201,7 +202,7 @@ export function useEscolherCotacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (cotacao_id: string) => {
-      const { error } = await supabase.rpc("escolher_cotacao" as never, { _cotacao_id: cotacao_id } as never);
+      const { error } = await withPerf("rpc.escolher_cotacao", () => supabase.rpc("escolher_cotacao" as never, { _cotacao_id: cotacao_id } as never));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -217,7 +218,7 @@ export function useReceberOrdemCompra() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ordem_id: string) => {
-      const { error } = await supabase.rpc("receber_ordem_compra" as never, { _ordem_id: ordem_id, _recebimentos: null } as never);
+      const { error } = await withPerf("rpc.receber_ordem_compra", () => supabase.rpc("receber_ordem_compra" as never, { _ordem_id: ordem_id, _recebimentos: null } as never));
       if (error) throw error;
     },
     onSuccess: () => {

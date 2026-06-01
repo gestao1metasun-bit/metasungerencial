@@ -7,6 +7,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { toast } from "sonner";
 
 export type AssinaturaEvento = {
@@ -54,7 +55,7 @@ export function useAssinarContrato() {
       const ua =
         input.userAgent ??
         (typeof navigator !== "undefined" ? navigator.userAgent : null);
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.contrato_assinar", () => supabase.rpc(
         "rpc_contrato_assinar" as never,
         {
           p_contrato_id: input.contratoId,
@@ -63,7 +64,7 @@ export function useAssinarContrato() {
           p_user_agent: ua,
           p_row_version: input.rowVersion ?? null,
         } as never,
-      );
+      ));
       if (error) throw error;
       return data as unknown as string;
     },
@@ -80,10 +81,10 @@ export function useMarcarEngenhariaLiberada() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { contratoId: string; observacao?: string }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.contrato_marcar_engenharia_liberada", () => supabase.rpc(
         "rpc_contrato_marcar_engenharia_liberada" as never,
         { p_contrato_id: input.contratoId, p_observacao: input.observacao ?? null } as never,
-      );
+      ));
       if (error) throw error;
       return data as unknown as boolean;
     },
@@ -99,10 +100,10 @@ export function useMarcarFinanceiroLiberado() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { contratoId: string; observacao?: string }) => {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await withPerf("rpc.contrato_marcar_financeiro_liberado", () => supabase.rpc(
         "rpc_contrato_marcar_financeiro_liberado" as never,
         { p_contrato_id: input.contratoId, p_observacao: input.observacao ?? null } as never,
-      );
+      ));
       if (error) throw error;
       return data as unknown as boolean;
     },

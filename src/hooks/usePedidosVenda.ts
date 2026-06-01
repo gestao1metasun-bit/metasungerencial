@@ -4,6 +4,7 @@
 // ============================================================================
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -106,10 +107,10 @@ export function useGerarPVDoContrato() {
       contratoId: string;
       projetoContratoId?: string | null;
     }) => {
-      const { data, error } = await supabase.rpc("gerar_pv_do_contrato", {
+      const { data, error } = await withPerf("rpc.gerar_pv_do_contrato", () => supabase.rpc("gerar_pv_do_contrato", {
         _contrato_id: args.contratoId,
         _projeto_contrato_id: args.projetoContratoId ?? undefined,
-      });
+      }));
       if (error) throw error;
       return data as string;
     },
@@ -125,7 +126,7 @@ export function useEnviarPVParaAnalise() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (pvId: string) => {
-      const { error } = await supabase.rpc("enviar_pv_para_analise", { _pv_id: pvId });
+      const { error } = await withPerf("rpc.enviar_pv_para_analise", () => supabase.rpc("enviar_pv_para_analise", { _pv_id: pvId }));
       if (error) throw error;
       return pvId;
     },
@@ -141,10 +142,10 @@ export function useAprovarPV() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: { pvId: string; motivo?: string }) => {
-      const { error } = await supabase.rpc("aprovar_pv", {
+      const { error } = await withPerf("rpc.aprovar_pv", () => supabase.rpc("aprovar_pv", {
         _pv_id: args.pvId,
         _motivo: args.motivo ?? undefined,
-      });
+      }));
       if (error) throw error;
       return args.pvId;
     },
@@ -160,10 +161,10 @@ export function useCancelarPV() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: { pvId: string; motivo: string }) => {
-      const { error } = await supabase.rpc("cancelar_pv", {
+      const { error } = await withPerf("rpc.cancelar_pv", () => supabase.rpc("cancelar_pv", {
         _pv_id: args.pvId,
         _motivo: args.motivo,
-      });
+      }));
       if (error) throw error;
       return args.pvId;
     },
@@ -179,7 +180,7 @@ export function useEnviarPVParaEngenharia() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (pvId: string) => {
-      const { data, error } = await supabase.rpc("enviar_pv_para_engenharia", { _pv_id: pvId });
+      const { data, error } = await withPerf("rpc.enviar_pv_para_engenharia", () => supabase.rpc("enviar_pv_para_engenharia", { _pv_id: pvId }));
       if (error) throw error;
       return data as string; // obra_id
     },

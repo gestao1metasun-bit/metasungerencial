@@ -4,6 +4,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withPerf } from "@/lib/perf";
 import { logError } from "./error-log-repo";
 
 export interface ExtratoLinha {
@@ -49,12 +50,12 @@ export function useConciliarExtrato() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { extrato_id: string; titulo_id?: string; movimento_id?: string; observacao?: string }) => {
-      const { error } = await supabase.rpc("rpc_extrato_conciliar", {
+      const { error } = await withPerf("rpc.extrato_conciliar", () => supabase.rpc("rpc_extrato_conciliar", {
         p_extrato_id: i.extrato_id,
         p_titulo_id: i.titulo_id ?? null,
         p_movimento_id: i.movimento_id ?? null,
         p_observacao: i.observacao ?? null,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "conciliacao.conciliar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
@@ -68,10 +69,10 @@ export function useDesconciliarExtrato() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { extrato_id: string; motivo: string }) => {
-      const { error } = await supabase.rpc("rpc_extrato_desconciliar", {
+      const { error } = await withPerf("rpc.extrato_desconciliar", () => supabase.rpc("rpc_extrato_desconciliar", {
         p_extrato_id: i.extrato_id,
         p_motivo: i.motivo,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "conciliacao.desconciliar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;
@@ -85,10 +86,10 @@ export function useIgnorarExtrato() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (i: { extrato_id: string; motivo: string }) => {
-      const { error } = await supabase.rpc("rpc_extrato_ignorar", {
+      const { error } = await withPerf("rpc.extrato_ignorar", () => supabase.rpc("rpc_extrato_ignorar", {
         p_extrato_id: i.extrato_id,
         p_motivo: i.motivo,
-      } as never);
+      } as never));
       if (error) {
         await logError({ modulo: "financeiro", acao: "conciliacao.ignorar", mensagem: error.message, payload: i, severidade: "error" });
         throw error;

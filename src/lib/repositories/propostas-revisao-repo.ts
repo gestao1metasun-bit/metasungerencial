@@ -8,6 +8,7 @@
  * recusada pelo trigger `tg_propostas_bloqueia_edicao_aprovada`.
  */
 import { supabase } from '@/integrations/supabase/client';
+import { withPerf } from '@/lib/perf';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const propostasRevisaoRepo = {
@@ -16,10 +17,10 @@ export const propostasRevisaoRepo = {
     if (!motivo || motivo.trim().length < 5) {
       throw new Error('Motivo da revisão obrigatório (mínimo 5 caracteres).');
     }
-    const { data, error } = await supabase.rpc('rpc_proposta_solicitar_revisao', {
+    const { data, error } = await withPerf('rpc.proposta_solicitar_revisao', () => supabase.rpc('rpc_proposta_solicitar_revisao', {
       _id: id,
       _motivo: motivo.trim(),
-    });
+    }));
     if (error) throw error;
     return data as unknown as string;
   },
@@ -29,17 +30,17 @@ export const propostasRevisaoRepo = {
     if (!motivo || motivo.trim().length < 5) {
       throw new Error('Motivo da renovação obrigatório (mínimo 5 caracteres).');
     }
-    const { error } = await supabase.rpc('rpc_proposta_renovar_validade', {
+    const { error } = await withPerf('rpc.proposta_renovar_validade', () => supabase.rpc('rpc_proposta_renovar_validade', {
       _id: id,
       _motivo: motivo.trim(),
       _dias: dias,
-    });
+    }));
     if (error) throw error;
   },
 
   /** Varredura idempotente: marca como VENCIDA propostas com validade < hoje. */
   async marcarVencidas(): Promise<number> {
-    const { data, error } = await supabase.rpc('rpc_proposta_marcar_vencidas');
+    const { data, error } = await withPerf('rpc.proposta_marcar_vencidas', () => supabase.rpc('rpc_proposta_marcar_vencidas'));
     if (error) throw error;
     return Number(data ?? 0);
   },

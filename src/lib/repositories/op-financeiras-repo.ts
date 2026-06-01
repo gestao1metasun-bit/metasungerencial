@@ -328,11 +328,11 @@ export function useCancelarOperacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_cancelar", {
+      const { data, error } = await withPerf("rpc.op_fin_cancelar", () => supabase.rpc("rpc_op_fin_cancelar", {
         _request_id: crypto.randomUUID(),
         _operacao_id: id,
         _motivo: motivo,
-      });
+      }));
       if (error) {
         reportMutationError("op-fin:cancelar", error, { id, motivo });
         throw error;
@@ -347,11 +347,11 @@ export function useEstornarOperacao() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ tituloId, motivo }: { tituloId: string; motivo: string }) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_estornar_recebimento", {
+      const { data, error } = await withPerf("rpc.op_fin_estornar_recebimento", () => supabase.rpc("rpc_op_fin_estornar_recebimento", {
         _request_id: crypto.randomUUID(),
         _titulo_id: tituloId,
         _motivo: motivo,
-      });
+      }));
       if (error) {
         reportMutationError("op-fin:estornar", error, { tituloId, motivo });
         throw error;
@@ -382,13 +382,13 @@ export function useGerarParcelas() {
       id: string; vencimentoPrimeiro: string; intervaloDias?: number;
       parcelas?: ParcelaGradeInput[];
     }) => {
-      const { data, error } = await supabase.rpc("rpc_op_fin_gerar_parcelas", {
+      const { data, error } = await withPerf("rpc.op_fin_gerar_parcelas", () => supabase.rpc("rpc_op_fin_gerar_parcelas", {
         _request_id: crypto.randomUUID(),
         _operacao_id: id,
         _vencimento_primeiro: vencimentoPrimeiro,
         _intervalo_dias: intervaloDias ?? 30,
         _parcelas: parcelas && parcelas.length > 0 ? (parcelas as never) : undefined,
-      });
+      }));
       if (error) {
         reportMutationError("op-fin:gerar-parcelas", error, { id, vencimentoPrimeiro, intervaloDias });
         throw error;

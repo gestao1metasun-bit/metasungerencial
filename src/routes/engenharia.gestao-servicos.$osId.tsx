@@ -595,3 +595,302 @@ function MotivoDialog({
     </Dialog>
   );
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// E.OS.3.b+ — Dashboard, Orçado x Realizado, Custos
+// ═════════════════════════════════════════════════════════════════════
+
+function KpiCard({ label, value, hint, tone }: {
+  label: string; value: string; hint?: string;
+  tone?: "default" | "warn" | "ok" | "danger";
+}) {
+  const toneClass =
+    tone === "ok" ? "text-emerald-600"
+    : tone === "warn" ? "text-amber-600"
+    : tone === "danger" ? "text-red-600"
+    : "text-foreground";
+  return (
+    <Card className="p-3">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-lg font-semibold tabular-nums ${toneClass}`}>{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
+    </Card>
+  );
+}
+
+function DashboardTab({ osId }: { osId: string }) {
+  const { data, isLoading } = useOsDashboard(osId);
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground"><Loader2 className="inline h-3 w-3 animate-spin mr-1" />Carregando…</div>;
+  if (!data) return <Card className="p-4 text-sm text-muted-foreground">Sem dados.</Card>;
+  const desvio = data.custo_realizado - data.custo_previsto;
+  const desvioPct = data.custo_previsto > 0 ? (desvio / data.custo_previsto) * 100 : null;
+  const tone: "ok" | "warn" | "danger" =
+    desvio <= 0 ? "ok" : desvio > data.custo_previsto * 0.1 ? "danger" : "warn";
+  const lucroPrev = data.valor_orcado - data.custo_realizado;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Custo previsto" value={fmtMoney(data.custo_previsto)} />
+        <KpiCard label="Custo realizado" value={fmtMoney(data.custo_realizado)} />
+        <KpiCard
+          label="Desvio"
+          value={fmtMoney(desvio)}
+          hint={desvioPct !== null ? `${desvioPct.toFixed(1)}%` : "—"}
+          tone={tone}
+        />
+        <KpiCard
+          label="Lucro previsto"
+          value={fmtMoney(lucroPrev)}
+          tone={lucroPrev >= 0 ? "ok" : "danger"}
+        />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Tarefas abertas" value={String(data.tarefas_pendentes)} />
+        <KpiCard label="Tarefas concluídas" value={String(data.tarefas_concluidas)} hint={`de ${data.tarefas_total}`} />
+        <KpiCard label="Aderência horas" value={`${Number(data.aderencia_pct).toFixed(0)}%`} />
+        <KpiCard label="Anexos" value={String(data.anexos_total)} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Formulários respondidos" value={String(data.formularios_respondidos)} />
+        <KpiCard label="Serviços faturáveis" value={String(data.servicos_faturaveis)} />
+        <KpiCard label="Valor orçado" value={fmtMoney(data.valor_orcado)} />
+        <KpiCard label="Valor em PV" value={fmtMoney(data.valor_em_pv)} />
+      </div>
+    </div>
+  );
+}
+
+function semaforoBadge(s: string) {
+  const map: Record<string, string> = {
+    OK: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    ATENCAO: "bg-amber-100 text-amber-700 border-amber-200",
+    ESTOURO: "bg-red-100 text-red-700 border-red-200",
+    NEUTRO: "bg-muted text-muted-foreground",
+  };
+  const labelMap: Record<string, string> = {
+    OK: "OK", ATENCAO: "Atenção", ESTOURO: "Estouro", NEUTRO: "—",
+  };
+  return <Badge variant="outline" className={`text-[10px] ${map[s] ?? ""}`}>{labelMap[s] ?? s}</Badge>;
+}
+
+function OrcadoRealizadoTab({ osId }: { osId: string }) {
+  const { data, isLoading, refetch } = useOsOrcadoVsRealizado(osId);
+  const lancar = useLancarOrcamento();
+  const [edit, setEdit] = useState<{ cat: OsCategoriaCusto; valor: string } | null>(null);
+
+  const linhas = data ?? [];
+  const totais = linhas.reduce(
+    (acc, l) => ({
+      orc: acc.orc + Number(l.orcado),
+      real: acc.real + Number(l.realizado),
+    }),
+    { orc: 0, real: 0 },
+  );
+  const variacao = totais.real - totais.orc;
+
+  return (
+    <div className="space-y-3">
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow className="h-8">
+              <TableHead className="text-[11px]">Categoria</TableHead>
+              <TableHead className="text-[11px] text-right">Orçado</TableHead>
+              <TableHead className="text-[11px] text-right">Realizado</TableHead>
+              <TableHead className="text-[11px] text-right">Variação R$</TableHead>
+              <TableHead className="text-[11px] text-right">Variação %</TableHead>
+              <TableHead className="text-[11px] w-24">Status</TableHead>
+              <TableHead className="text-[11px] w-16"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-4 text-[12px]">Carregando…</TableCell></TableRow>
+            )}
+            {!isLoading && OS_CATEGORIAS.map((c) => {
+              const linha = linhas.find((l) => l.categoria === c.codigo);
+              return (
+                <TableRow key={c.codigo} className="h-8 text-[12px]">
+                  <TableCell>{c.label}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtMoney(linha?.orcado ?? 0)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtMoney(linha?.realizado ?? 0)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtMoney(linha?.variacao_rs ?? 0)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{linha?.variacao_pct != null ? `${linha.variacao_pct.toFixed(1)}%` : "—"}</TableCell>
+                  <TableCell>{semaforoBadge(linha?.semaforo ?? "NEUTRO")}</TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
+                      onClick={() => setEdit({ cat: c.codigo, valor: String(linha?.orcado ?? "") })}>
+                      Editar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            <TableRow className="h-8 text-[12px] font-semibold border-t-2">
+              <TableCell>Total</TableCell>
+              <TableCell className="text-right tabular-nums">{fmtMoney(totais.orc)}</TableCell>
+              <TableCell className="text-right tabular-nums">{fmtMoney(totais.real)}</TableCell>
+              <TableCell className="text-right tabular-nums">{fmtMoney(variacao)}</TableCell>
+              <TableCell className="text-right tabular-nums">
+                {totais.orc > 0 ? `${((variacao / totais.orc) * 100).toFixed(1)}%` : "—"}
+              </TableCell>
+              <TableCell colSpan={2}></TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Orçamento — {edit ? OS_CATEGORIAS.find((c) => c.codigo === edit.cat)?.label : ""}</DialogTitle>
+            <DialogDescription>Define o valor previsto para esta categoria nesta O.S.</DialogDescription>
+          </DialogHeader>
+          {edit && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-[11px]">Valor (R$)</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  value={edit.valor}
+                  onChange={(e) => setEdit({ ...edit, valor: e.target.value })}
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setEdit(null)}>Cancelar</Button>
+                <Button
+                  onClick={async () => {
+                    const v = parseFloat(edit.valor || "0");
+                    if (Number.isNaN(v) || v < 0) { toast.error("Valor inválido"); return; }
+                    try {
+                      await lancar.mutateAsync({ os_id: osId, categoria: edit.cat, valor: v });
+                      toast.success("Orçamento atualizado");
+                      setEdit(null); refetch();
+                    } catch (e) { toast.error(`Falha: ${(e as Error).message}`); }
+                  }}
+                  disabled={lancar.isPending}
+                >
+                  {lancar.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                  Salvar
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function CustosTab({ osId }: { osId: string }) {
+  const { data, isLoading, refetch } = useOsCustosRealizados(osId);
+  const lancar = useLancarCustoRealizado();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<{
+    categoria: OsCategoriaCusto; valor: string; data_custo: string; descricao: string;
+  }>({ categoria: "MATERIAL", valor: "", data_custo: new Date().toISOString().slice(0, 10), descricao: "" });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-[12px] text-muted-foreground">
+          {isLoading ? "Carregando…" : `${data?.length ?? 0} lançamento(s)`}
+        </div>
+        <Button size="sm" className="h-8 text-[12px]" onClick={() => setOpen(true)}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Novo custo
+        </Button>
+      </div>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow className="h-8">
+              <TableHead className="text-[11px]">Data</TableHead>
+              <TableHead className="text-[11px]">Categoria</TableHead>
+              <TableHead className="text-[11px]">Descrição</TableHead>
+              <TableHead className="text-[11px]">Origem</TableHead>
+              <TableHead className="text-[11px] text-right">Valor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(data ?? []).length === 0 && !isLoading && (
+              <TableRow><TableCell colSpan={5} className="text-center py-4 text-[12px] text-muted-foreground">
+                Nenhum custo realizado lançado.
+              </TableCell></TableRow>
+            )}
+            {(data ?? []).map((c) => (
+              <TableRow key={c.id} className="h-8 text-[12px]">
+                <TableCell className="tabular-nums">{fmtDate(c.data_custo)}</TableCell>
+                <TableCell>{OS_CATEGORIAS.find((x) => x.codigo === c.categoria)?.label ?? c.categoria}</TableCell>
+                <TableCell className="max-w-[280px] truncate" title={c.descricao ?? ""}>{c.descricao ?? "—"}</TableCell>
+                <TableCell><Badge variant="outline" className="text-[10px]">{c.origem_tipo ?? "MANUAL"}</Badge></TableCell>
+                <TableCell className="text-right tabular-nums">{fmtMoney(c.valor)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lançar custo realizado</DialogTitle>
+            <DialogDescription>Registra um custo efetivamente incorrido nesta O.S.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div>
+              <Label className="text-[11px]">Categoria</Label>
+              <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v as OsCategoriaCusto })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {OS_CATEGORIAS.map((c) => <SelectItem key={c.codigo} value={c.codigo}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[11px]">Valor (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={form.valor}
+                  onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-[11px]">Data</Label>
+                <Input type="date" value={form.data_custo}
+                  onChange={(e) => setForm({ ...form, data_custo: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[11px]">Descrição</Label>
+              <Textarea rows={2} value={form.descricao}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={async () => {
+                const v = parseFloat(form.valor || "0");
+                if (Number.isNaN(v) || v <= 0) { toast.error("Valor inválido"); return; }
+                try {
+                  await lancar.mutateAsync({
+                    os_id: osId, categoria: form.categoria, valor: v,
+                    data_custo: form.data_custo, descricao: form.descricao || undefined,
+                  });
+                  toast.success("Custo lançado");
+                  setOpen(false);
+                  setForm({ ...form, valor: "", descricao: "" });
+                  refetch();
+                } catch (e) { toast.error(`Falha: ${(e as Error).message}`); }
+              }}
+              disabled={lancar.isPending}
+            >
+              {lancar.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+              Lançar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+

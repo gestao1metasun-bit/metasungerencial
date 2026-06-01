@@ -1,76 +1,118 @@
-# Plano: UI Enterprise 98% + Performance 98%
+# Onda E.OS — Gestão de Serviços / Ordens de Serviço
 
-Escopo gigantesco (11 módulos UI + 6 SLAs + carga). Para entregar com qualidade RM/TOTVS sem virar refactor superficial, proponho execução em **3 sprints sequenciais**, cada um fechável e auditável. Entrego os relatórios finais no fim do Sprint 3.
+Replica o módulo "Painel da O.S" do sistema flow2 (visto no vídeo) dentro do
+ERP Meta Sun, sob `/engenharia/gestao-servicos`. Trata-se de uma onda
+estrutural completa (já reservada no roadmap D11 — Engenharia/Obras
+Enterprise). Não cabe em um único turno.
 
----
+## Escopo identificado no vídeo
 
-## Sprint 1 — Fundação (UI Kit + Telemetria completa)
+- **Lista de O.S.** densa estilo RM/TOTVS: colunas Status, OS, Proposta, PV,
+  Cliente, Valor Orçado, Título proposta, Cadastro, Prev. Início, Prev.
+  Término, CPF/CNPJ, Ocorrência, Custo Orçado, Custo total, Valor em PV.
+  Statuses: Vistoria Pré-Contrato, Stand-by, Novo Projeto, Elaboração de
+  Projeto, Projeto Aprovado, Projeto em Análise 3/3, Finalizada, Manutenção,
+  Parecer de Acesso em Aberto, etc.
+- **Painel da O.S** (drill-down): Tarefas, Serviços a Faturar, Requisições
+  de Equipamentos, Arquivos, Histórico, Imprimir, Dashboard da O.S, Importar
+  Produtos, Baixar/Finalizar, Gerar Pedido de Venda, Criar cópia, Cancelar,
+  Excluir.
+- **Tarefas da O.S**: lista ordenada (Vistoria Pré-Obra, Documentação
+  Completa, Elaboração de Projeto, Entrega/Retirada de Material, Aguardando
+  Vistoria, Monitoramento do Sistema, Compensação, Administrativo) com
+  status (Planejamento, Agendada, Finalizada), responsável (técnico) e data.
+- **Tarefa expandida**: abas Planejar / Execução / Arquivos / Assinatura /
+  Formulários / Mapa / Histórico. Upload de fotos/vídeos, formulários
+  respondidos, geolocalização.
+- **Modelos de tarefas** (templates) aplicáveis em lote a uma O.S.
+- **Formulários/Checklists dinâmicos** por tarefa: campos tipados (texto,
+  seleção, número, data, sim/não), obrigatoriedade, valor padrão, agrupador.
+- **Cadastros auxiliares**: Área de negócio, Categorias/Equipamentos,
+  Funções de técnico, Modelos de OS, Motoristas, Ocorrências, Serviços,
+  Pipelines de OS, Status OS, Técnicos, Tipos de serviço, Veículos,
+  Controle de ativos, Formulários.
+- **Relatórios**: Manutenção, Produtos reservados, DRE de O.S.
 
-**Frente A.1 — Helper universal de adoção**
-- Criar `src/components/app/enterprise/EnterprisePageShell.tsx` — wrapper padrão de 3 linhas (PageHeader + EnterpriseRecordToolbar + FilterPanel/ColumnManager strip).
-- Criar `useEnterpriseGrid()` hook que combina: `useServerPagination` + `useColumnPrefs` + `useRowSelection` + filtros + densidade + layout (LS `ui.{entity}.v1`).
-- Padronizar `RowActions` defaults (ver / editar / excluir / anexos / histórico / processos).
-- `ExportButton`, `RefreshButton`, `DensityToggle`, `LayoutToggle`, `NavCounter` no barrel.
+## Como conversa com o ERP atual
 
-**Frente B.1 — Telemetria completa**
-- Adicionar marks faltantes: `perms.ready`, `route.ready`, `module.switch`, `first.list.ready`, `filter.applied`, `record.saved`.
-- Instrumentar em `AppLayout`, `usePermissoes`, `WorkspaceTabBar`, `useServerPagination`, `FilterPanel`, RPCs de save mais usadas.
-- Atualizar `v_perf_p95_7d` para incluir novos marks + view `v_perf_sla_status` (verde/amarelo/vermelho por SLA).
-- Painel `/analytics/performance` ganha cards por SLA.
+- Já existem `projetos`, `obras`, `equipes_engenharia`, `instaladores_engenharia`,
+  `comercial_eventos_catalogo`, `engenharia_eventos_catalogo` (D18.5), e a
+  rota `/engenharia` atual. A **O.S é a unidade operacional intermediária**
+  entre o contrato/PV e a obra física — hoje o ERP pula essa camada.
+- Toda mutação de status segue regra D-pedra: via RPC + flag de sessão
+  (`app.via_os_rpc`), auditoria em `os_eventos` append-only, soft-delete,
+  `row_version`, anexos pelo AttachmentEngine universal (Onda 4).
+- UI obrigatoriamente no padrão D17.UI Enterprise RM (EnterpriseRecordToolbar
+  + EnterpriseDataGrid + RowActions + ColumnManager + FilterPanel +
+  ServerPaginationFooter + ModuloHistoricoDrawer + vocabulário canônico).
 
-## Sprint 2 — Conversão UI em onda (11 módulos)
+## Plano em 5 subondas
 
-Ordem por impacto operacional, cada um usando o helper do Sprint 1:
+### E.OS.1 — Foundation DB (1 turno)
+- Tabelas: `os_ordens` (núcleo, com cliente_id/contrato_id/pv_id/projeto_id/
+  obra_id/status/valor_orcado/datas/responsavel + integrabilidade D18),
+  `os_status_catalogo` (seed dos 12+ statuses), `os_pipelines`,
+  `os_tarefas` (FK os_id, ordem, status, responsavel_id, data_prevista,
+  data_fim, modelo_id), `os_tarefa_modelos`, `os_formularios_definicao`
+  (campos jsonb tipados), `os_formulario_respostas`, `os_servicos_faturar`,
+  `os_requisicoes_equipamento`, `os_eventos` (append-only), cadastros aux
+  (`os_tecnicos`, `os_veiculos`, `os_motoristas`, `os_ocorrencias`,
+  `os_servicos`, `os_area_negocio`, `os_funcoes_tecnico`,
+  `os_categorias_equipamento`, `os_equipamentos`).
+- RLS por permissão `os.*` (visualizar/criar/editar/finalizar/cancelar/
+  excluir + cadastros). Triggers row_version + audit + anti-edição de
+  status. Anexos universais.
+- ~14 permissões novas no enum `app_permission`.
+- Sem UI, sem dados, sem flag ativa.
 
-1. **Comercial** (leads, propostas, clientes) — referência junto com Financeiro
-2. **Contratos**
-3. **Pedido de Venda**
-4. **Compras**
-5. **Estoque** (já é referência, só normalizar via shell)
-6. **Engenharia**
-7. **Ordem de Serviço**
-8. **Financiamentos**
-9. **Aprovações**
-10. **Pós-venda**
-11. **Configurações**
+### E.OS.2 — RPCs oficiais (1 turno)
+- `rpc_os_criar`, `rpc_os_atualizar`, `rpc_os_mudar_status`,
+  `rpc_os_finalizar`, `rpc_os_cancelar`, `rpc_os_gerar_pedido_venda`,
+  `rpc_os_aplicar_modelo_tarefas`, `rpc_os_tarefa_concluir`,
+  `rpc_os_tarefa_atribuir`, `rpc_os_formulario_responder`.
+- Todas SECURITY DEFINER, search_path=public, EXECUTE só `authenticated`,
+  idempotência via `rpc_idempotente_*`, flag `app.via_os_rpc`.
+- Vínculo opcional com Comercial (gerar PV a partir de O.S finalizada).
 
-Cada módulo: troca `<table>`/toolbar custom → `EnterprisePageShell` + `EnterpriseDataGrid` + `RowActions` padrão. Persistência só em `ui.*`. Zero LS operacional novo, zero RPC nova, zero RLS.
+### E.OS.3 — UI lista + painel da O.S (1–2 turnos)
+- Rota `/engenharia/gestao-servicos` (lista densa, EnterprisePageShell).
+- Rota `/engenharia/gestao-servicos/$osId` (painel: sidebar contextual
+  esquerda — Tarefas / Serviços a Faturar / Requisições / Arquivos /
+  Histórico / Dashboard / Imprimir / Baixar / Gerar PV / Cópia / Cancelar /
+  Excluir).
+- Aba Tarefas: cards expansíveis com sub-abas (Planejar/Execução/Arquivos/
+  Assinatura/Formulários/Mapa/Histórico). Adicionar por modelo.
+- Server pagination + ColumnManager + filtros por status/pipeline/data.
 
-## Sprint 3 — Performance + Carga + Relatórios
+### E.OS.4 — Cadastros + Formulários dinâmicos (1 turno)
+- Telas dos 14 cadastros auxiliares.
+- Construtor de Formulário/Checklist (campos tipados, validações,
+  agrupadores, obrigatoriedade) + renderer no painel da tarefa.
+- Modelos de tarefas (CRUD + aplicar em lote).
 
-**Frente B.2 — Otimização**
-- Auditar queries lentas via `pg_stat_statements` (read_query).
-- Garantir `defaultPreloadStaleTime: 0`, `staleTime` por hook (perms 30min, cadastros 10min, listas 30s).
-- Code-split rotas pesadas (lazy + Suspense) — Financeiro, Comercial, Engenharia.
-- Revisar índices faltantes nas views novas (Op. Financeiras F1, comercial C5/C6).
-- Polling: substituir por React Query `refetchInterval` controlado, default desligado.
+### E.OS.5 — Relatórios + Governança (1 turno)
+- Views `v_os_resumo`, `v_os_dre`, `v_os_produtos_reservados`,
+  `v_os_manutencao`.
+- Painel `/paineis/gestao-servicos` (Kanban + KPIs).
+- Integração D18 (eventos canônicos OS_CRIADA/OS_FINALIZADA/
+  OS_TAREFA_CONCLUIDA gerando partidas virtuais).
+- Adoção plena padrão D17.UI.
 
-**Frente B.3 — Teste de carga sintético**
-- Script `scripts/d16-perf-load-test.ts` (Bun + Supabase service role) que insere via RPCs reais:
-  10 sessões × (1k contratos / 5k OS / 20k títulos / 50k audit / 10k anexos refs).
-- Mede P50/P95 por endpoint, registra em `perf_log` com tag `load_test`.
-- Idempotente, com flag de cleanup (`--purge`).
+## Restrições e regras de pedra
 
-**Entregáveis finais (docs/)**
-- `docs/d17-ui-relatorio-98.md` — 11 módulos, componentes aplicados, aderência, prints (capturados via browser tool).
-- `docs/d16-perf-relatorio-98.md` — P50/P95 por rota, SLA verde/vermelho, queries otimizadas, resultado carga.
-- `docs/veredito-operacao-assistida.md` — UI%, PERF%, gate go/no-go, pendências de uso real.
-- Atualizar `mem://features/d17-ui-98-completo` e `mem://features/d16-perf-98-completo`.
+- Nada de mock/LS persistente. Tudo Supabase + RPC + auditoria.
+- O.S **nunca cria compra/estoque/título direto** — gera Pedido de Venda
+  oficial (RPC existente) ou Solicitação de Material (fluxo já especificado).
+- Status só muda via RPC; flag de sessão obrigatória.
+- Sem alterar tabelas existentes de obras/projetos/contratos nesta onda
+  (apenas FK opcionais saindo da O.S).
+- Vocabulário canônico D17.UI.4d (Novo/Visualizar/Editar/Excluir/Finalizar/
+  Histórico/Buscar).
 
----
+## Próximo passo (este turno)
 
-## Restrições (charter D15/D17 mantido)
+Aprovar este plano e **começar pela E.OS.1 (Foundation DB)** — migração
+única com todas as tabelas, permissões, RLS, triggers e seeds dos catálogos
+(statuses, pipelines padrão), **sem UI**.
 
-- Proibido: nova RPC, nova tabela, mexer em RLS/auditoria, dado operacional em LS, regra de negócio.
-- Permitido: views read-only de telemetria, índices de performance, refactor de UI, marks de perf.
-- Tudo via barrel `@/components/app/enterprise`.
-
----
-
-## Tamanho realista
-
-- Sprint 1: ~6 arquivos novos + 4 edits + 1 migration (índices/views perf).
-- Sprint 2: ~30-40 arquivos editados (10 módulos × 3-4 telas cada).
-- Sprint 3: ~3 docs + 1 script + 1 migration (índices).
-
-Quer que eu execute **Sprint 1 já**, e depois siga Sprint 2 e 3 em mensagens seguintes? Ou prefere que eu reduza o escopo do Sprint 2 (ex.: só os 5 módulos mais usados: Comercial, Contratos, PV, Compras, Estoque)?
+Quer que eu siga com E.OS.1 já?

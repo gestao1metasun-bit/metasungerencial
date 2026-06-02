@@ -199,6 +199,121 @@ export const useReprovarRequisicao = makeMotivoMutation("rpc_sup_requisicao_repr
 export const useRetornarRequisicao = makeMotivoMutation("rpc_sup_requisicao_retornar");
 export const useCancelarRequisicao = makeMotivoMutation("rpc_sup_requisicao_cancelar");
 
+// ─────────────────────────────────────────────────────────────────────────────
+// D20.SUP.3 — workflow estoque (reservar / entregar / devolver)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type VerificacaoEstoqueItem = {
+  item_id: string;
+  descricao: string;
+  unidade: string | null;
+  item_estoque_id: string | null;
+  qtd_solicitada: number;
+  qtd_aprovada: number;
+  qtd_reservada: number;
+  qtd_entregue: number;
+  qtd_devolvida: number;
+  reserva_id: string | null;
+  movimento_baixa_id: string | null;
+  saldo_fisico: number;
+  saldo_reservado_total: number;
+  saldo_disponivel: number;
+  falta: number;
+  status_atendimento:
+    | "SEM_VINCULO" | "NAO_APROVADO" | "RESERVADO"
+    | "DISPONIVEL" | "PARCIAL" | "INDISPONIVEL";
+};
+
+export function useVerificarEstoqueRPC() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<VerificacaoEstoqueItem[]> => {
+      const { data, error } = await supabase.rpc("rpc_sup_requisicao_verificar_estoque", { p_id: id });
+      if (error) throw error;
+      return (data as unknown as VerificacaoEstoqueItem[]) ?? [];
+    },
+    onSuccess: () => invalidate(qc),
+  });
+}
+
+export function useReservarRequisicao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.rpc("rpc_sup_requisicao_reservar", { p_id: id });
+      if (error) throw error;
+      return data as unknown as { itens_reservados: number; detalhe: unknown };
+    },
+    onSuccess: () => invalidate(qc),
+  });
+}
+
+export function useEntregarRequisicao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string; observacao?: string | null }) => {
+      const { data, error } = await supabase.rpc("rpc_sup_requisicao_entregar", {
+        p_id: args.id,
+        p_observacao: args.observacao ?? undefined,
+      });
+      if (error) throw error;
+      return data as unknown as { itens_entregues: number; detalhe: unknown };
+    },
+    onSuccess: () => invalidate(qc),
+  });
+}
+
+export function useDevolverItemRequisicao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { item_id: string; quantidade: number; motivo: string }) => {
+      const { data, error } = await supabase.rpc("rpc_sup_requisicao_devolver_item", {
+        p_item_id: args.item_id,
+        p_quantidade: args.quantidade,
+        p_motivo: args.motivo,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc),
+  });
+}
+
+// View consolidada Requisições × O.S. (aba Materiais da O.S.)
+export type OsRequisicaoResumoRow = {
+  requisicao_id: string;
+  numero: number;
+  tipo: SupReqTipo;
+  status: SupReqStatus;
+  prioridade: SupReqPrioridade | null;
+  os_id: string;
+  criado_em: string;
+  qtd_itens: number;
+  total_solicitado: number;
+  total_aprovado: number;
+  total_reservado: number;
+  total_entregue: number;
+  total_devolvido: number;
+  custo_material_total: number;
+};
+
+export function useOsRequisicoes(osId: string | null) {
+  return useQuery({
+    enabled: !!osId,
+    queryKey: ["os-requisicoes", osId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_os_requisicoes_resumo" as never)
+        .select("*")
+        .eq("os_id", osId!)
+        .order("criado_em", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as OsRequisicaoResumoRow[];
+    },
+    staleTime: 15_000,
+  });
+}
+
 export function useEnviarCompra() {
   const qc = useQueryClient();
   return useMutation({

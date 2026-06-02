@@ -85,7 +85,7 @@ function NotificacoesPage() {
 
   const abrirOrigem = (id: string, link: string | null) => {
     marcarLida.mutate(id);
-    if (link) void navigate({ to: link });
+    if (link) void navigate({ to: link } as never);
   };
 
   return (

@@ -1,86 +1,97 @@
-# D20.SUP.7 — Alçadas + Aprovações + Preparação Financeira
+# Comercial Meta Sun — Padrão RM TOTVS (D27.COM)
 
-Escopo aprovado é amplo (6 frentes). Para entregar sem quebrar nada do que já está estabilizado (D20.SUP.1..6), proponho execução em **3 migrações + camada UI + dashboard**, todas idempotentes e sem alterar RPCs já em uso.
+Escopo: tornar o módulo Comercial o **mais completo** do ERP, no padrão RM TOTVS adaptado para operação fotovoltaica. Atua em **Leads, Propostas, Contratos, Aditivos, Projetos**.
 
-## Migração 1 — Alçadas + Preparação Financeira (schema)
+> Regra de pedra: tudo via RPC oficial + permissão + auditoria. ZERO atalho. Comercial nunca toca regra de Eng/Fin/Estoque diretamente — apenas dispara via RPCs já existentes (`rpc_contrato_assinar`, `rpc_engenharia_libera`, `rpc_financeiro_libera`, comissão D5.1, etc.).
 
-Nova tabela `suprimentos_alcadas` (regras corporativas):
-- `id`, `nome`, `ativo`, `prioridade` (int, menor = avalia primeiro)
-- Critérios opcionais (todos nullable, AND quando preenchidos):
-  - `tipo` (MATERIAL/SERVICO/NULL), `valor_min`, `valor_max`
-  - `setor`, `natureza_id`, `centro_custo_id`, `centro_resultado_id`
-  - `fornecedor_id`, `prioridade_req` (BAIXA/NORMAL/ALTA/URGENTE)
-  - `destino` (ALMOXARIFADO/OS/OBRA/PROJETO)
-  - `etapa` (REQUISICAO/COTACAO/PEDIDO) — uma regra por etapa
-- `aprovador_tipo` (PERMISSAO/ROLE), `aprovador_valor` (chave da permissão/role exigida)
-- `exige_workflow` (bool), `observacao_obrigatoria` (bool)
-- Soft-delete + row_version + audit padrão D14.x
+---
 
-Nova tabela `suprimentos_alcadas_aplicadas` (append-only):
-- `id`, `entidade_tipo` (REQUISICAO/COTACAO/PEDIDO), `entidade_id`
-- `alcada_id`, `aprovador_user_id`, `decisao` (APROVADO/REPROVADO/RETORNADO)
-- `motivo`, `observacao`, `valor_avaliado`, `data_hora`
-- Sem UPDATE/DELETE (triggers anti-mutação como nos eventos da SUP.2)
+## Subondas
 
-**Preparação financeira** (campos novos, sem gerar título):
-- `suprimentos_pedidos_compra`:
-  - `condicao_pagamento` text, `data_prevista_pagamento` date
-  - `documento_fiscal` text, `valor_aprovado_final` numeric
-  - `status_financeiro` text CHECK IN (`NAO_GERADO`,`PRONTO_PARA_FINANCEIRO`,`GERADO`,`BLOQUEADO`,`CANCELADO`) default `NAO_GERADO`
-  - `financeiro_observacao` text, `financeiro_bloqueio_motivo` text
-- Permissões novas no enum: `suprimentos.alcada.gerir`, `suprimentos.pedido.preparar_financeiro`, `suprimentos.pedido.bloquear_financeiro`
+### D27.COM.1 — Toolbar Enterprise Unificada (FRONT)
+Aplicar a mesma `EnterpriseRecordToolbar` em **Leads / Propostas / Contratos / Aditivos** com botões canônicos:
 
-GRANT + RLS por permissão. Sem mexer em `titulos_financeiros`.
+```
++ Novo ▾ | ✏ Editar | 📄 Duplicar | ❌ Excluir | 🔄 Atualizar
+🔍 Busca | 🎯 Filtros | 📎 Anexos | 📜 Histórico | ⚙ Processos
+📤 Excel | 📄 PDF | 🖨 Imprimir | ✉ Enviar
+```
 
-## Migração 2 — RPCs oficiais
+- **+ Novo**: dropdown contextual (Nova Proposta / Novo Contrato / Novo Cliente / Novo Lead / Novo Aditivo)
+- Botões mudos = banidos. Sem ação real → não aparece.
+- Vocabulário D17.UI.4d (Novo/Visualizar/Excluir/Atualizar/Histórico).
 
-- `rpc_sup_alcada_avaliar(entidade_tipo, entidade_id, etapa, valor)` → retorna `{alcada_id, exige_workflow, aprovador_tipo, aprovador_valor}` (matching por prioridade, primeira regra ativa que satisfaz todos critérios). SECURITY DEFINER, EXECUTE authenticated.
-- `rpc_sup_alcada_registrar_decisao(entidade_tipo, entidade_id, alcada_id, decisao, motivo, observacao, valor_avaliado)` — INSERT em `_aplicadas`, checa permissão do aprovador, valida motivo≥5 quando decisao≠APROVADO.
-- `rpc_sup_pedido_preparar_financeiro(pedido_id, payload jsonb)` — preenche condição/data/documento/valor/observação e seta `status_financeiro='PRONTO_PARA_FINANCEIRO'`; exige permissão; valida fornecedor+CC+CR+natureza presentes; sem criar título.
-- `rpc_sup_pedido_bloquear_financeiro(pedido_id, motivo)` / `rpc_sup_pedido_desbloquear_financeiro(pedido_id, motivo)`.
+### D27.COM.2 — Processos Engine Comercial
+Reorganizar `ProcessosMenu` em **4 grupos contextuais** conforme entidade ativa:
 
-Triggers existentes (`app.via_sup_compras_rpc`) preservadas; novas RPCs setam a flag onde mutam `pedidos_compra`.
+**LEAD**: Converter / Ganho / Perdido / Reativar / Agendar Visita / Agendar Ligação / Criar Proposta
+**PROPOSTA**: Aprovar (→ Contrato) / Reprovar / Duplicar / Gerar Contrato / Enviar Assinar / Cancelar / Reabrir
+**CONTRATO**: Editar / Gerar Aditivo / Cancelar / Reabrir / **Enviar Engenharia** / **Enviar Financiamento** / **Enviar Financeiro** / **Gerar Comissão**
+**ADITIVO**: Criar / Aprovar / Cancelar / Gerar Financeiro / Enviar Engenharia
+**PROJETO** (dentro do contrato): Adicionar / Duplicar / Excluir / Aprovar / Reprovar / Enviar Engenharia
 
-## Migração 3 — Views (Dashboard + Alertas)
+Cada item ⇒ RPC oficial já existente OU placeholder honesto com toast "chega em D27.COM.X" — NUNCA botão mudo.
 
-Todas `security_invoker=on`, leitura authenticated:
-- `v_suprimentos_dashboard_kpis` — uma linha com: requisicoes_abertas, _aprovadas, _rejeitadas, valor_solicitado, _aprovado, _em_compra, _recebido, estoque_reservado, itens_criticos, requisicoes_atrasadas (data_necessidade < hoje).
-- `v_suprimentos_dashboard_por_fornecedor` / `_por_natureza` / `_por_cc` / `_por_os`.
-- `v_suprimentos_alertas` — UNION ALL gerando linhas `{tipo_alerta, entidade_tipo, entidade_id, severidade, mensagem, criado_em}` cobrindo os 9 alertas do escopo.
+### D27.COM.3 — Seleção em Lote (Estilo RM)
+- Checkbox de seleção já existe em Propostas (D26.1.x). Estender para **Contratos** e **Leads**.
+- Barra de seleção com ações em lote: Enviar Engenharia / Enviar Financiamentos / Exportar / Imprimir / Alterar Consultor / Alterar Status / Cancelar / Reabrir.
 
-## Camada UI (sem migração)
+### D27.COM.4 — Painel Executivo Comercial
+Rota `/comercial#tab=painel` (nova aba). Cards canônicos com **olhinho clicável** (drill-down):
 
-- Novo `src/lib/repositories/suprimentos-alcadas-repo.ts` (CRUD alçadas + avaliar + registrar decisão + dashboard hooks + alertas).
-- Nova aba **Alçadas** em `/suprimentos` (admin) — grid + dialog CRUD com `EnterpriseRecordToolbar` + `RowActions`.
-- Aba **Dashboard** já existe: ligar aos KPIs reais (substitui placeholders) — cards numéricos + 4 mini-tabelas (por fornecedor/natureza/CC/OS) + lista de alertas com ícone+severidade.
-- `RequisicaoDetailDialog` / `CotacaoDetailDialog` / `PedidoDetailDialog`:
-  - Botões **Aprovar/Reprovar/Retornar** passam a chamar `rpc_sup_alcada_avaliar` antes; se não houver alçada que case, bloqueia com toast claro; se houver, mostra a alçada exigida no header (chip "Alçada: Gerente — até R$5.000") e exige permissão correspondente.
-  - Novo botão **Ver alçada** abre popover com histórico de `_aplicadas` da entidade.
-- `PedidoDetailDialog`: nova seção **Preparação Financeira** com form (condição, data prevista, documento, valor final, observação) + botões **Enviar p/ financeiro / Bloquear / Desbloquear**. Badge de `status_financeiro`.
-- Auditoria de botões: cada botão sem ação ganha tooltip "Em D20.SUP.8" ou é removido. Kanban fica como placeholder honesto (entra em D20.SUP.8).
+- Contratos Gerados | Assinados | Pendentes | Cancelados
+- Valor Total | Ticket Médio | kWp Vendido | kWh Contratado | Conversão %
 
-## Restrições respeitadas
+View `v_comercial_painel_executivo` (security_invoker) — só leitura, agrega o que já existe.
 
-- Zero geração automática de título financeiro.
-- Zero relaxamento de RLS (novas tabelas RLS por permissão).
-- Mutação de status continua exclusiva via RPC + flag de sessão.
-- Sem alteração em estoque / OS / contratos / comercial.
-- Aprovação sem alçada/permissão é bloqueada (UI + RPC).
+### D27.COM.5 — Tabela Principal Contratos (colunas RM)
+Colunas: Contrato | Cliente | Cidade | Consultor | Data | Status | Financiamento | Valor Contrato | Valor Recebido | Saldo | Qtd Projetos | kWp.
+Sem coluna "Ações" / "Opções" (padrão D26.1.x). Ações via RowActions inline (lápis/X/olho/clipe/relógio) + toolbar.
 
-## Entregas finais
+### D27.COM.6 — Fluxo Completo Visual (diferencial RM)
+Botão **"🔀 Fluxo Completo"** no header de cada contrato. Abre Drawer (Sheet right) com pipeline visual:
 
-1. `supabase/migrations/2026...d20-sup-7-1-alcadas-schema.sql`
-2. `supabase/migrations/2026...d20-sup-7-2-rpcs.sql`
-3. `supabase/migrations/2026...d20-sup-7-3-views.sql`
-4. `src/lib/repositories/suprimentos-alcadas-repo.ts`
-5. Nova `src/modules/suprimentos/AlcadasTab.tsx`
-6. Update em `RequisicaoDetailDialog.tsx`, `CotacaoDetailDialog.tsx`, `PedidoDetailDialog.tsx`, `suprimentos.tsx` (Dashboard ligado + aba Alçadas)
-7. `docs/d20-sup-7-relatorio.md`
+```
+Lead → Proposta → Contrato → Financiamento → Projeto → Engenharia → Estoque → Financeiro → Faturamento
+```
 
-## Critério de aceite
+Cada etapa colorida: 🟢 Concluído / 🟡 Em andamento / 🔴 Pendente. Lê das views já oficiais (`v_governance_matrix_full`, `v_eventos_canonicos_catalogo`, `v_os_*`, `v_lancamentos_derivados`).
 
-Criar requisição → motor de alçada avalia e exige permissão correta → aprovar (registro em `_aplicadas`) → cotação aprovada com alçada → pedido aprovado com alçada → preparar pedido para financeiro (`PRONTO_PARA_FINANCEIRO`) sem criar título → dashboard mostra valores e alertas em tempo real.
+### D27.COM.7 — Anexos & Histórico universais
+- **Anexos**: `AttachmentEngine` (D15 anexos-repo) cobrindo categorias: RG / CPF / CNH / Comprovante Residência / Conta Energia / Projeto / ART / Contrato Assinado / Fotos / PDF.
+- **Histórico**: `ModuloHistoricoDrawer` universal (D17.UI.4c) — quem criou/alterou/quando/antes/depois (já existe via `v_auditoria_unificada` D24).
 
-Estimativa: 3 turnos de migração + 1 turno UI grande + 1 turno relatório.
+### D27.COM.8 — Exclusão Lógica padronizada
+- Status canônico **ATIVO / CANCELADO / EXCLUÍDO** (soft-delete já existe via `deleted_at`).
+- Toda exclusão pede **motivo ≥5 chars** + grava usuário/data/motivo em `comercial_*_eventos` ou `audit_log`.
 
-**Confirma execução nesta sequência?** Se sim, começo já pela Migração 1 (schema alçadas + preparação financeira).
+---
+
+## Backend (mínimo, reusa o que existe)
+
+| Item | Origem |
+|---|---|
+| Lead→Proposta→Contrato | RPCs D15 + C2 |
+| Aprovar Proposta → Contrato | `rpc_proposta_aprovar` + `rpc_contrato_gerar` |
+| Enviar Engenharia | `rpc_engenharia_libera` (C5) |
+| Enviar Financeiro | `rpc_financeiro_libera` (C5) |
+| Gerar Comissão | C6 já oficial |
+| Aditivo | RPC nova `rpc_aditivo_*` (D27.COM.AD) — só schema, sem fiscal |
+| Painel Executivo | view nova `v_comercial_painel_executivo` |
+| Fluxo Completo | view nova `v_comercial_fluxo_completo` |
+
+---
+
+## Ordem proposta de execução
+
+1. **D27.COM.1** — Toolbar unificada nas 4 telas (1 turno, só front)
+2. **D27.COM.2** — ProcessosMenu reorganizado por entidade (1 turno, só front)
+3. **D27.COM.4 + .5** — Painel Executivo + tabela RM (1 turno, view + UI)
+4. **D27.COM.6** — Fluxo Completo visual (1 turno, view + drawer)
+5. **D27.COM.3** — Seleção em lote estendida (1 turno, só front)
+6. **D27.COM.7** — Anexos + Histórico universais (1 turno, só front, reusa engines)
+7. **D27.COM.AD** — Aditivos backend (1 turno, migração + RPC + UI mínima)
+
+**Aprovação necessária**: começo por D27.COM.1 + D27.COM.2 (toolbar + processos) no próximo turno?
+
+ZERO alteração em RLS / workflow / auditoria / regra fiscal existente. Linter atual 230 WARN preservado.

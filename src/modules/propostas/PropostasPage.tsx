@@ -275,12 +275,29 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         <EnterpriseRecordToolbar
           entityType="propostas"
           selectedIds={vendoId ? [vendoId] : []}
-          availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+          availableActions={[
+            "novo", "editar", "duplicar", "excluir", "atualizar",
+            "anexos", "historico", "auditoria",
+            "exportar", "imprimir", "enviar",
+            "filtroAvancado", "colunas",
+          ]}
           availableProcesses={[
+            // Processos gerais (sem seleção)
             { key: "nova_proposta", label: "Nova proposta (lead)", requerSelecao: 0 },
             { key: "marcar_vencidas", label: "Marcar propostas vencidas (>45 dias)", requerSelecao: 0 },
-            { key: "exportar_csv", label: "Exportar propostas (CSV)", requerSelecao: 0 },
             { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
+            // Processos de PROPOSTA (1 selecionada)
+            { key: "aprovar_proposta", label: "Aprovar proposta → Contrato" },
+            { key: "reprovar_proposta", label: "Reprovar proposta", destructive: true, requerMotivo: true },
+            { key: "duplicar_proposta", label: "Duplicar proposta" },
+            { key: "gerar_contrato", label: "Gerar contrato a partir da proposta" },
+            { key: "enviar_assinar", label: "Enviar cliente para assinar" },
+            { key: "cancelar_proposta", label: "Cancelar proposta", destructive: true, requerMotivo: true },
+            { key: "reabrir_proposta", label: "Reabrir proposta", requerMotivo: true },
+            // Lote
+            { key: "exportar_lote_csv", label: "Exportar selecionadas (CSV)", permiteLote: true },
+            { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
+            { key: "alterar_status_lote", label: "Alterar status (lote)", permiteLote: true },
           ]}
           onProcess={async (key) => {
             if (key === "nova_proposta") {
@@ -293,17 +310,32 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               } catch (e: any) {
                 toast.error(e?.message ?? "Falha ao marcar vencidas.");
               }
-            } else if (key === "exportar_csv") {
-              toast.info("Exportação CSV completa chega em D17.UI.2.");
             } else if (key === "atualizar_lista") {
               toast.info("Lista atualizada.");
+            } else if (key === "duplicar_proposta") {
+              toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.2b).");
+            } else if (key === "aprovar_proposta" || key === "gerar_contrato") {
+              toast.info("Aprovar/Gerar contrato: use o fluxo dentro da proposta. Workflow oficial em D27.COM.2b.");
+            } else if (key === "reprovar_proposta" || key === "cancelar_proposta" || key === "reabrir_proposta") {
+              toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
+            } else if (key === "enviar_assinar") {
+              toast.info("Envio para assinatura digital (Clicksign/Autentique/DocuSign) chega em D27.COM.6.");
+            } else if (key === "exportar_lote_csv") {
+              toast.info("Exportação CSV em lote chega em D27.COM.3.");
+            } else if (key === "alterar_consultor_lote" || key === "alterar_status_lote") {
+              toast.info("Alterações em lote (consultor/status) chegam em D27.COM.3.");
             }
           }}
           onAction={(a) => {
             if (a === "novo") novaProposta();
+            else if (a === "editar" && vendoId) toast.info("Abra a proposta para editar.");
+            else if (a === "duplicar") toast.info("Duplicar: selecione uma proposta na linha (chega em D27.COM.2b).");
             else if (a === "atualizar") toast.info("Lista de propostas atualizada.");
-            else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
+            else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
             else if (a === "imprimir" && vendoId) toast.info("Use o botão Imprimir dentro da proposta.");
+            else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+            else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+            else if (a === "historico" || a === "auditoria") toast.info("Histórico universal está em /auditoria (D24).");
             else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
             else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}

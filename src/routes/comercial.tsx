@@ -398,14 +398,52 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableProcesses={[
+          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
+          { key: "novo_contrato", label: "Novo contrato (a partir de proposta)", requerSelecao: 0 },
+          { key: "editar_contrato", label: "Editar contrato" },
+          { key: "gerar_aditivo", label: "Gerar aditivo" },
+          { key: "cancelar_contrato", label: "Cancelar contrato", destructive: true, requerMotivo: true },
+          { key: "reabrir_contrato", label: "Reabrir contrato", requerMotivo: true },
+          { key: "enviar_engenharia", label: "Enviar para Engenharia" },
+          { key: "enviar_financiamentos", label: "Enviar para Financiamentos" },
+          { key: "enviar_financeiro", label: "Enviar para Financeiro" },
+          { key: "gerar_comissao", label: "Gerar comissão" },
+          { key: "enviar_assinar", label: "Enviar cliente para assinar" },
+          // Lote
+          { key: "enviar_engenharia_lote", label: "Enviar para Engenharia (lote)", permiteLote: true },
+          { key: "enviar_financiamentos_lote", label: "Enviar para Financiamentos (lote)", permiteLote: true },
+          { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
+          { key: "alterar_status_lote", label: "Alterar status (lote)", permiteLote: true },
+          { key: "exportar_lote_csv", label: "Exportar selecionados (CSV)", permiteLote: true },
+        ]}
+        onProcess={(key) => {
+          if (key === "atualizar_lista") toast.info("Contratos atualizados.");
+          else if (key === "novo_contrato") toast.info("Novo contrato nasce de proposta aprovada (use /comercial#tab=orcamentos).");
+          else if (key === "editar_contrato") toast.info("Abra o contrato e clique em Editar (chega em D27.COM.2b).");
+          else if (key === "gerar_aditivo") toast.info("Gerar aditivo: aba Aditivos (chega em D27.COM.AD).");
+          else if (key === "cancelar_contrato" || key === "reabrir_contrato")
+            toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
+          else if (key === "enviar_engenharia") toast.info("Use rpc_engenharia_libera dentro do contrato assinado (C5).");
+          else if (key === "enviar_financiamentos") toast.info("Envio para Financiamentos chega em D27.COM.FIN.");
+          else if (key === "enviar_financeiro") toast.info("Use rpc_financeiro_libera dentro do contrato assinado (C5).");
+          else if (key === "gerar_comissao") toast.info("Comissão é gerada automaticamente na assinatura (C6).");
+          else if (key === "enviar_assinar") toast.info("Envio para assinatura digital chega em D27.COM.6.");
+          else if (key.endsWith("_lote")) toast.info("Operação em lote chega em D27.COM.3.");
+        }}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Contratos atualizados.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
+          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada.");
+          else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
@@ -5558,14 +5596,36 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
+        availableProcesses={[
+          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
+          { key: "novo_aditivo", label: "Novo aditivo (escolher contrato)", requerSelecao: 0 },
+          { key: "criar_aditivo", label: "Criar aditivo neste contrato" },
+          { key: "aprovar_aditivo", label: "Aprovar aditivo" },
+          { key: "cancelar_aditivo", label: "Cancelar aditivo", destructive: true, requerMotivo: true },
+          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)" },
+          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia (aditivo)" },
+        ]}
+        onProcess={(key) => {
+          if (key === "atualizar_lista") toast.info("Aditivos atualizados.");
+          else if (key === "novo_aditivo" || key === "criar_aditivo")
+            toast.info("Criação oficial de aditivo via RPC chega em D27.COM.AD.");
+          else if (key === "aprovar_aditivo" || key === "cancelar_aditivo")
+            toast.info("Workflow de aditivos chega em D27.COM.AD.");
+          else if (key === "gerar_financeiro_aditivo")
+            toast.info("Geração financeira do aditivo chega em D27.COM.AD.");
+          else if (key === "enviar_engenharia_aditivo")
+            toast.info("Envio do aditivo para Engenharia chega em D27.COM.AD.");
+        }}
         searchPlaceholder="Buscar contrato, cliente…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Aditivos atualizados.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
         statusActions={ribbonRm()}

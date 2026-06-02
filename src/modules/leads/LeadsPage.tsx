@@ -90,7 +90,35 @@ export function LeadsPage() {
       <EnterpriseRecordToolbar
         entityType="propostas"
         selectedIds={detalhe ? [detalhe.id] : []}
-        availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
+        availableActions={["novo", "editar", "duplicar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableProcesses={[
+          // LEAD
+          { key: "novo_lead", label: "Novo lead", requerSelecao: 0 },
+          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
+          { key: "converter_lead", label: "Converter lead em proposta" },
+          { key: "marcar_ganho", label: "Marcar como ganho" },
+          { key: "marcar_perdido", label: "Marcar como perdido", destructive: true, requerMotivo: true },
+          { key: "reativar_lead", label: "Reativar lead" },
+          { key: "agendar_visita", label: "Agendar visita" },
+          { key: "agendar_ligacao", label: "Agendar ligação" },
+          { key: "criar_proposta", label: "Criar proposta a partir do lead" },
+          // Lote
+          { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
+          { key: "alterar_origem_lote", label: "Alterar origem (lote)", permiteLote: true },
+          { key: "exportar_lote_csv", label: "Exportar selecionados (CSV)", permiteLote: true },
+        ]}
+        onProcess={(key) => {
+          if (key === "novo_lead" || key === "criar_proposta") setNovoOpen(true);
+          else if (key === "atualizar_lista") toast.info("Lista de leads atualizada.");
+          else if (key === "converter_lead") toast.info("Converter lead: use 'Criar proposta' na linha (chega em D27.COM.2b).");
+          else if (key === "marcar_ganho" || key === "marcar_perdido" || key === "reativar_lead")
+            toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
+          else if (key === "agendar_visita" || key === "agendar_ligacao")
+            toast.info("Agendamento de visita/ligação chega em D27.COM.CRM.");
+          else if (key === "alterar_consultor_lote") toast.info("Troca de consultor em lote: use o cabeçalho da aba (chega em D27.COM.3).");
+          else if (key === "alterar_origem_lote") toast.info("Troca de origem em lote: use o cabeçalho da aba (chega em D27.COM.3).");
+          else if (key === "exportar_lote_csv") toast.info("Exportação CSV em lote chega em D27.COM.3.");
+        }}
         statusActions={ribbonRm({ visualizar: () => detalhe && setDetalhe(detalhe) })}
         layoutBar={layoutBarRm()}
         searchPlaceholder="Buscar lead…"
@@ -99,7 +127,11 @@ export function LeadsPage() {
         onAction={(a) => {
           if (a === "novo") setNovoOpen(true);
           else if (a === "atualizar") toast.info("Lista de leads atualizada.");
-          else if (a === "exportar") toast.info("Exportação CSV disponível em D17.UI.2.");
+          else if (a === "duplicar") toast.info("Duplicar lead chega em D27.COM.2b.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "historico" || a === "auditoria") toast.info("Histórico universal está em /auditoria (D24).");
           else if (a === "colunas") toast.info("Gestor de colunas chega no próximo turno (LeadsPage).");
           else if (a === "filtroAvancado") toast.info("Use os filtros abaixo (status / origem / consultor).");
         }}

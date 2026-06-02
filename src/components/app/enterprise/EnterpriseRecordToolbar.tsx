@@ -22,7 +22,7 @@
  */
 import { useMemo, type ComponentType, type ReactNode } from "react";
 import {
-  Plus, Pencil, X, Save, RefreshCw, Eye, Trash2,
+  Plus, Pencil, X, Save, RefreshCw, Eye, Trash2, Copy,
   Paperclip, History, MessageSquare, Shield,
   Settings as Cog, ChevronDown, Filter, FilterX,
   Layout, Columns3, Download, Printer, Search,
@@ -54,10 +54,10 @@ export type EnterpriseEntityType =
 
 /** Ações básicas do CRUD/registro (chave canônica). */
 export type EnterpriseRecordAction =
-  | "novo" | "editar" | "excluir" | "cancelar" | "salvar"
+  | "novo" | "editar" | "duplicar" | "excluir" | "cancelar" | "salvar"
   | "atualizar" | "visualizar"
   | "anexos" | "historico" | "comentarios" | "auditoria"
-  | "exportar" | "imprimir"
+  | "exportar" | "imprimir" | "enviar"
   | "filtroRapido" | "filtroAvancado" | "visoes" | "layout" | "colunas";
 
 /** Processo contextual (entrada do dropdown "Processos"). */
@@ -158,26 +158,26 @@ export type LayoutBarConfig = {
 // ============================================================================
 
 const ALL_ACTIONS: EnterpriseRecordAction[] = [
-  "novo", "editar", "excluir", "cancelar", "salvar",
+  "novo", "editar", "duplicar", "excluir", "cancelar", "salvar",
   "atualizar", "visualizar",
   "anexos", "historico", "comentarios", "auditoria",
-  "exportar", "imprimir",
+  "exportar", "imprimir", "enviar",
   "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas",
 ];
 
 const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: string }>> = {
-  novo: Plus, editar: Pencil, excluir: Trash2, cancelar: X, salvar: Save,
+  novo: Plus, editar: Pencil, duplicar: Copy, excluir: Trash2, cancelar: X, salvar: Save,
   atualizar: RefreshCw, visualizar: Eye,
   anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield,
-  exportar: Download, imprimir: Printer,
+  exportar: Download, imprimir: Printer, enviar: Mail,
   filtroRapido: Filter, filtroAvancado: FilterX, visoes: Layout, layout: Layout, colunas: Columns3,
 };
 
 const ACTION_LABEL: Record<EnterpriseRecordAction, string> = {
-  novo: "Novo", editar: "Editar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
+  novo: "Novo", editar: "Editar", duplicar: "Duplicar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
   atualizar: "Atualizar", visualizar: "Visualizar",
   anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria",
-  exportar: "Exportar", imprimir: "Imprimir",
+  exportar: "Exportar", imprimir: "Imprimir", enviar: "Enviar",
   filtroRapido: "Filtro rápido", filtroAvancado: "Filtro avançado",
   visoes: "Visões", layout: "Layout", colunas: "Colunas",
 };
@@ -272,12 +272,12 @@ export function EnterpriseRecordToolbar({
         return ["novo", "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas", "exportar"].includes(a);
       case "single":
-        return ["editar", "visualizar", "anexos", "historico",
+        return ["editar", "duplicar", "visualizar", "anexos", "historico",
                 "comentarios", "auditoria", "cancelar", "excluir",
-                "salvar", "atualizar", "exportar", "imprimir",
+                "salvar", "atualizar", "exportar", "imprimir", "enviar",
                 "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas"].includes(a);
       case "multi":
-        return ["exportar", "imprimir", "cancelar", "excluir",
+        return ["exportar", "imprimir", "enviar", "cancelar", "excluir", "duplicar",
                 "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas"].includes(a);
     }
@@ -297,6 +297,7 @@ export function EnterpriseRecordToolbar({
     const tone: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info" =
       a === "novo" ? "primary"
       : a === "editar" ? "warning"
+      : a === "duplicar" ? "info"
       : (a === "excluir" || a === "cancelar") ? "danger"
       : a === "salvar" ? "success"
       : (a === "atualizar" || a === "visualizar") ? "muted"
@@ -305,6 +306,7 @@ export function EnterpriseRecordToolbar({
       : a === "auditoria" ? "warning"
       : a === "exportar" ? "success"
       : a === "imprimir" ? "info"
+      : a === "enviar" ? "success"
       : (a === "filtroAvancado" || a === "visoes" || a === "colunas" || a === "layout") ? "info"
       : "default";
     return (
@@ -347,6 +349,7 @@ export function EnterpriseRecordToolbar({
       {/* CRUD — ícones puros estilo RM */}
       {renderActionBtn("novo")}
       {renderActionBtn("editar")}
+      {renderActionBtn("duplicar")}
       {renderActionBtn("salvar")}
       {renderActionBtn("excluir")}
       {renderActionBtn("cancelar")}
@@ -471,6 +474,7 @@ export function EnterpriseRecordToolbar({
         <Sep />
         {renderActionBtn("exportar")}
         {renderActionBtn("imprimir")}
+        {renderActionBtn("enviar")}
         {extraRight}
         {count > 0 && (
           <span

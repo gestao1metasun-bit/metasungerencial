@@ -40,8 +40,9 @@ import {
   useCriarTarefa, useMudarStatusTarefa, useConcluirTarefa,
   useOsDashboard, useOsOrcadoVsRealizado, useOsCustosRealizados,
   useLancarOrcamento, useLancarCustoRealizado,
+  useOsFormulariosTemplates, useResponderFormulario, useRespostasFormulario,
   OS_CATEGORIAS, type OsCategoriaCusto,
-  type OsTarefaStatus,
+  type OsTarefaStatus, type OsFormularioTemplateRow,
 } from "@/lib/repositories/os-repo";
 
 export const Route = createFileRoute("/engenharia/gestao-servicos/$osId")({

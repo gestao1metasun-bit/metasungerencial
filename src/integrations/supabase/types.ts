@@ -8623,6 +8623,13 @@ export type Database = {
             foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
             columns: ["requisicao_id"]
             isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
             referencedRelation: "v_suprimentos_requisicoes_resumo"
             referencedColumns: ["id"]
           },
@@ -8636,6 +8643,7 @@ export type Database = {
           fornecedor_sugerido_id: string | null
           id: string
           item_estoque_id: string | null
+          movimento_baixa_id: string | null
           observacao: string | null
           ordem: number
           quantidade_aprovada: number
@@ -8644,6 +8652,7 @@ export type Database = {
           quantidade_reservada: number
           quantidade_solicitada: number
           requisicao_id: string
+          reserva_id: string | null
           tipo_item: Database["public"]["Enums"]["sup_req_tipo"]
           unidade: string
           valor_estimado_total: number | null
@@ -8656,6 +8665,7 @@ export type Database = {
           fornecedor_sugerido_id?: string | null
           id?: string
           item_estoque_id?: string | null
+          movimento_baixa_id?: string | null
           observacao?: string | null
           ordem?: number
           quantidade_aprovada?: number
@@ -8664,6 +8674,7 @@ export type Database = {
           quantidade_reservada?: number
           quantidade_solicitada: number
           requisicao_id: string
+          reserva_id?: string | null
           tipo_item: Database["public"]["Enums"]["sup_req_tipo"]
           unidade?: string
           valor_estimado_total?: number | null
@@ -8676,6 +8687,7 @@ export type Database = {
           fornecedor_sugerido_id?: string | null
           id?: string
           item_estoque_id?: string | null
+          movimento_baixa_id?: string | null
           observacao?: string | null
           ordem?: number
           quantidade_aprovada?: number
@@ -8684,6 +8696,7 @@ export type Database = {
           quantidade_reservada?: number
           quantidade_solicitada?: number
           requisicao_id?: string
+          reserva_id?: string | null
           tipo_item?: Database["public"]["Enums"]["sup_req_tipo"]
           unidade?: string
           valor_estimado_total?: number | null
@@ -8733,6 +8746,27 @@ export type Database = {
             referencedColumns: ["produto_id"]
           },
           {
+            foreignKeyName: "suprimentos_requisicao_itens_movimento_baixa_id_fkey"
+            columns: ["movimento_baixa_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_movimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_movimento_baixa_id_fkey"
+            columns: ["movimento_baixa_id"]
+            isOneToOne: false
+            referencedRelation: "v_cmv_preparado"
+            referencedColumns: ["movimento_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_movimento_baixa_id_fkey"
+            columns: ["movimento_baixa_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["movimento_id"]
+          },
+          {
             foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
             columns: ["requisicao_id"]
             isOneToOne: false
@@ -8743,8 +8777,29 @@ export type Database = {
             foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
             columns: ["requisicao_id"]
             isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
             referencedRelation: "v_suprimentos_requisicoes_resumo"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_reservas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_reservas_atrasadas"
+            referencedColumns: ["reserva_id"]
           },
         ]
       }
@@ -11243,6 +11298,61 @@ export type Database = {
           },
         ]
       }
+      v_os_requisicoes_resumo: {
+        Row: {
+          criado_em: string | null
+          custo_material_total: number | null
+          numero: number | null
+          os_id: string | null
+          prioridade: string | null
+          qtd_itens: number | null
+          requisicao_id: string | null
+          status: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo: Database["public"]["Enums"]["sup_req_tipo"] | null
+          total_aprovado: number | null
+          total_devolvido: number | null
+          total_entregue: number | null
+          total_reservado: number | null
+          total_solicitado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_orcado_realizado"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_produtividade"
+            referencedColumns: ["os_id"]
+          },
+        ]
+      }
       v_partidas_contabeis_pendentes: {
         Row: {
           centro_custo_id: string | null
@@ -13331,6 +13441,14 @@ export type Database = {
         Returns: undefined
       }
       rpc_sup_requisicao_criar: { Args: { p_payload: Json }; Returns: string }
+      rpc_sup_requisicao_devolver_item: {
+        Args: { p_item_id: string; p_motivo: string; p_quantidade: number }
+        Returns: Json
+      }
+      rpc_sup_requisicao_entregar: {
+        Args: { p_id: string; p_observacao?: string }
+        Returns: Json
+      }
       rpc_sup_requisicao_enviar: { Args: { p_id: string }; Returns: undefined }
       rpc_sup_requisicao_enviar_compra: {
         Args: { p_id: string; p_justificativa?: string }
@@ -13349,6 +13467,7 @@ export type Database = {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
+      rpc_sup_requisicao_reservar: { Args: { p_id: string }; Returns: Json }
       rpc_sup_requisicao_retornar: {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined

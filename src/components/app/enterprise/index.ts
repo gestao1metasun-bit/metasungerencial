@@ -77,7 +77,8 @@ export type { FilterPanelProps } from "./FilterPanel";
 
 // D17.UI Fase 6.A — Presets canônicos de ribbon RM (Linha 2 + Linha 3)
 // D17.4 — + ribbonRmEstoque / ribbonRmCompras (processos canônicos de Suprimentos)
-export { ribbonRm, ribbonRmAprovacao, ribbonRmEstoque, ribbonRmCompras, layoutBarRm } from "./rm-ribbon-presets";
+// D27.COM — + ribbonRmComercial (10 botões canônicos do Comercial)
+export { ribbonRm, ribbonRmAprovacao, ribbonRmEstoque, ribbonRmCompras, ribbonRmComercial, layoutBarRm } from "./rm-ribbon-presets";
 export type { RmRibbonOverrides, RmRibbonEstoqueOverrides, RmRibbonComprasOverrides } from "./rm-ribbon-presets";
 
 // D17.UI.3 — Seleção múltipla + ações em lote

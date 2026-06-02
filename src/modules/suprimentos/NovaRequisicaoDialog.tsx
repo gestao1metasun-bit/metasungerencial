@@ -26,8 +26,10 @@ import {
   useNaturezasFinanceiras, useCentrosCusto, useCentrosResultado, SETORES_OPTIONS,
   type SupReqTipo, type SupReqPrioridade,
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
+import { useCatalogoPorTipo } from "@/lib/repositories/suprimentos-itens-repo";
 
 type ItemDraft = {
+  item_estoque_id: string;          // "" = livre
   descricao: string;
   unidade: string;
   quantidade_solicitada: number;
@@ -36,7 +38,7 @@ type ItemDraft = {
 };
 
 const ITEM_VAZIO: ItemDraft = {
-  descricao: "", unidade: "UN", quantidade_solicitada: 1,
+  item_estoque_id: "", descricao: "", unidade: "UN", quantidade_solicitada: 1,
   valor_estimado_unitario: 0, observacao: "",
 };
 

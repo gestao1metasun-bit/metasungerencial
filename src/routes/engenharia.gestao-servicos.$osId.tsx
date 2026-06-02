@@ -15,10 +15,14 @@
  * privilegia a operação central de status/tarefas/histórico.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Loader2, Plus, CheckCircle2, X, Trash2, RefreshCw, FileText,
+  Camera, Paperclip, MapPin, PenLine,
 } from "lucide-react";
+import { SignaturePad } from "@/components/os/SignaturePad";
+import { AnexoSignedImage, AnexoSignedLink } from "@/components/os/AnexoSigned";
+import { anexosRepo } from "@/lib/repositories/anexos-repo";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { Badge } from "@/components/ui/badge";

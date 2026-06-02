@@ -606,6 +606,11 @@ export function useLancarCustoRealizado() {
 export interface OsFormularioTemplateRow {
   id: string; nome: string; tipo: string; descricao: string | null;
   campos: unknown; obrigatorio: boolean; ativo: boolean; versao: number;
+  status_modelo?: string; versao_pai_id?: string | null;
+  publicado_em?: string | null; publicado_por?: string | null;
+  requer_aprovacao?: boolean;
+  aprovado_em?: string | null; aprovado_por?: string | null;
+  row_version?: number;
 }
 export function useOsFormulariosTemplates() {
   return useQuery({
@@ -613,11 +618,11 @@ export function useOsFormulariosTemplates() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("os_formularios_definicao").select("*")
-        .is("deleted_at", null).order("nome");
+        .is("deleted_at", null).order("nome").order("versao", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as OsFormularioTemplateRow[];
+      return (data ?? []) as unknown as OsFormularioTemplateRow[];
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   });
 }
 

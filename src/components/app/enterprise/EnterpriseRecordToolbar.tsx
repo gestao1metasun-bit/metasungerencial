@@ -272,12 +272,12 @@ export function EnterpriseRecordToolbar({
         return ["novo", "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas", "exportar"].includes(a);
       case "single":
-        return ["editar", "visualizar", "anexos", "historico",
+        return ["editar", "duplicar", "visualizar", "anexos", "historico",
                 "comentarios", "auditoria", "cancelar", "excluir",
-                "salvar", "atualizar", "exportar", "imprimir",
+                "salvar", "atualizar", "exportar", "imprimir", "enviar",
                 "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas"].includes(a);
       case "multi":
-        return ["exportar", "imprimir", "cancelar", "excluir",
+        return ["exportar", "imprimir", "enviar", "cancelar", "excluir", "duplicar",
                 "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas"].includes(a);
     }

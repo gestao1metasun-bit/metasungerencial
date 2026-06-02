@@ -16,6 +16,7 @@ import {
   Boxes, ClipboardList, Package, ShoppingCart, FileSearch,
   FileText, PackageCheck, Truck, Users2, BarChart3,
   ArrowRight, Workflow, Layers, Construction, BookOpen,
+  ShieldCheck, AlertTriangle,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -25,8 +26,13 @@ import { CotacoesTab } from "@/modules/suprimentos/CotacoesTab";
 import { PedidosTab } from "@/modules/suprimentos/PedidosTab";
 import { RecebimentosTab } from "@/modules/suprimentos/RecebimentosTab";
 import { ItensServicosTab } from "@/modules/suprimentos/ItensServicosTab";
+import { AlcadasTab } from "@/modules/suprimentos/AlcadasTab";
 import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
+import {
+  useDashboardKpis, useDashboardPorFornecedor, useDashboardPorNatureza,
+  useDashboardPorCC, useAlertasSuprimentos, SEVERIDADE_TONE,
+} from "@/lib/repositories/suprimentos-alcadas-repo";
 
 export const Route = createFileRoute("/suprimentos")({
   head: () => ({
@@ -157,6 +163,108 @@ function Placeholder({ titulo, descricao, sub }: { titulo: string; descricao: st
   );
 }
 
+const fmtBRL = (n: number) => (n ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function KpiCard({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
+  return (
+    <Card className="p-2">
+      <div className="text-[10.5px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-[16px] font-semibold tabular-nums ${tone ?? ""}`}>{value}</div>
+    </Card>
+  );
+}
+
+function DashboardLive() {
+  const { data: kpis } = useDashboardKpis();
+  const { data: alertas = [] } = useAlertasSuprimentos();
+  const { data: porForn = [] } = useDashboardPorFornecedor();
+  const { data: porNat = [] } = useDashboardPorNatureza();
+  const { data: porCC = [] } = useDashboardPorCC();
+  const k = kpis ?? { abertas: 0, aprovadas: 0, rejeitadas: 0, atrasadas: 0, valor_solicitado: 0, valor_aprovado: 0, valor_em_compra: 0, valor_recebido: 0, estoque_reservado: 0, itens_criticos: 0 };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+        <KpiCard label="Requisições abertas" value={k.abertas} />
+        <KpiCard label="Aprovadas" value={k.aprovadas} tone="text-emerald-700" />
+        <KpiCard label="Rejeitadas" value={k.rejeitadas} tone="text-red-700" />
+        <KpiCard label="Atrasadas" value={k.atrasadas} tone="text-amber-700" />
+        <KpiCard label="Estoque reservado" value={k.estoque_reservado} />
+        <KpiCard label="Valor solicitado" value={fmtBRL(Number(k.valor_solicitado))} />
+        <KpiCard label="Valor aprovado" value={fmtBRL(Number(k.valor_aprovado))} tone="text-emerald-700" />
+        <KpiCard label="Em compra" value={fmtBRL(Number(k.valor_em_compra))} tone="text-amber-700" />
+        <KpiCard label="Recebido" value={fmtBRL(Number(k.valor_recebido))} tone="text-blue-700" />
+        <KpiCard label="Itens críticos" value={k.itens_criticos} />
+      </div>
+
+      <Card className="p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <h3 className="text-[13px] font-semibold">Alertas ({alertas.length})</h3>
+        </div>
+        {alertas.length === 0 ? (
+          <p className="text-[12px] text-muted-foreground">Sem alertas no momento.</p>
+        ) : (
+          <div className="max-h-72 overflow-y-auto space-y-1">
+            {alertas.slice(0, 50).map((a) => (
+              <div key={a.tipo_alerta + a.entidade_id} className={`flex items-center gap-2 rounded border px-2 py-1 text-[11.5px] ${SEVERIDADE_TONE[a.severidade]}`}>
+                <span className="font-mono text-[10px] opacity-70">{a.tipo_alerta}</span>
+                <span className="flex-1 truncate">{a.mensagem}</span>
+                <span className="text-[10px] opacity-70">{new Date(a.criado_em).toLocaleDateString("pt-BR")}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <Card className="p-2">
+          <h4 className="text-[12px] font-semibold mb-1">Top fornecedores</h4>
+          <table className="w-full text-[11.5px]">
+            <tbody>
+              {porForn.slice(0, 8).map((r) => (
+                <tr key={String(r.fornecedor_id) + r.fornecedor_nome} className="border-t">
+                  <td className="py-1 truncate">{r.fornecedor_nome ?? "—"}</td>
+                  <td className="py-1 text-right tabular-nums">{fmtBRL(Number(r.valor_total))}</td>
+                </tr>
+              ))}
+              {porForn.length === 0 && <tr><td className="py-2 text-muted-foreground text-center" colSpan={2}>Sem dados</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+        <Card className="p-2">
+          <h4 className="text-[12px] font-semibold mb-1">Por natureza</h4>
+          <table className="w-full text-[11.5px]">
+            <tbody>
+              {porNat.slice(0, 8).map((r) => (
+                <tr key={String(r.natureza_id) + (r.natureza_codigo ?? "")} className="border-t">
+                  <td className="py-1 truncate">{r.natureza_codigo ?? "—"} · {r.natureza_nome ?? "—"}</td>
+                  <td className="py-1 text-right tabular-nums">{fmtBRL(Number(r.valor_total))}</td>
+                </tr>
+              ))}
+              {porNat.length === 0 && <tr><td className="py-2 text-muted-foreground text-center" colSpan={2}>Sem dados</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+        <Card className="p-2">
+          <h4 className="text-[12px] font-semibold mb-1">Por centro de custo</h4>
+          <table className="w-full text-[11.5px]">
+            <tbody>
+              {porCC.slice(0, 8).map((r) => (
+                <tr key={String(r.centro_custo_id) + (r.cc_codigo ?? "")} className="border-t">
+                  <td className="py-1 truncate">{r.cc_codigo ?? "—"} · {r.cc_nome ?? "—"}</td>
+                  <td className="py-1 text-right tabular-nums">{fmtBRL(Number(r.valor_total))}</td>
+                </tr>
+              ))}
+              {porCC.length === 0 && <tr><td className="py-2 text-muted-foreground text-center" colSpan={2}>Sem dados</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function SuprimentosPage() {
   const [tab, setTab] = useTabFromHash("/suprimentos");
 
@@ -177,17 +285,19 @@ function SuprimentosPage() {
       />
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="h-8 mb-2">
+        <TabsList className="h-8 mb-2 flex-wrap">
           <TabsTrigger value="dashboard" className="text-[11.5px]"><Layers className="h-3.5 w-3.5 mr-1" />Dashboard</TabsTrigger>
           <TabsTrigger value="requisicoes" className="text-[11.5px]"><ClipboardList className="h-3.5 w-3.5 mr-1" />Requisições</TabsTrigger>
           <TabsTrigger value="cotacoes" className="text-[11.5px]"><FileSearch className="h-3.5 w-3.5 mr-1" />Cotações</TabsTrigger>
           <TabsTrigger value="pedidos" className="text-[11.5px]"><FileText className="h-3.5 w-3.5 mr-1" />Pedidos</TabsTrigger>
           <TabsTrigger value="recebimentos" className="text-[11.5px]"><PackageCheck className="h-3.5 w-3.5 mr-1" />Recebimentos</TabsTrigger>
           <TabsTrigger value="cadastros" className="text-[11.5px]"><BookOpen className="h-3.5 w-3.5 mr-1" />Cadastros</TabsTrigger>
+          <TabsTrigger value="alcadas" className="text-[11.5px]"><ShieldCheck className="h-3.5 w-3.5 mr-1" />Alçadas</TabsTrigger>
           <TabsTrigger value="relatorios" className="text-[11.5px]"><BarChart3 className="h-3.5 w-3.5 mr-1" />Relatórios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-3 mt-0">
+          <DashboardLive />
           <FluxoPedra />
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -215,6 +325,9 @@ function SuprimentosPage() {
         </TabsContent>
         <TabsContent value="cadastros" className="mt-0">
           <ItensServicosTab />
+        </TabsContent>
+        <TabsContent value="alcadas" className="mt-0">
+          <AlcadasTab />
         </TabsContent>
         <TabsContent value="relatorios" className="mt-0">
           <Placeholder

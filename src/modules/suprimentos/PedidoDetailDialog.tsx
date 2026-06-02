@@ -18,6 +18,9 @@ import {
   useCriarRecebimento, useConfirmarRecebimento,
   PED_LABEL, type SupPedStatus,
 } from "@/lib/repositories/suprimentos-compras-repo";
+import {
+  usePrepararPedidoFinanceiro, useBloquearPedidoFinanceiro, useDesbloquearPedidoFinanceiro,
+} from "@/lib/repositories/suprimentos-alcadas-repo";
 
 type Props = { id: string | null; onClose: () => void };
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,9 +37,19 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
   const cancelar = useCancelarPedido();
   const criarRec = useCriarRecebimento();
   const confirmarRec = useConfirmarRecebimento();
+  const prepararFin = usePrepararPedidoFinanceiro();
+  const bloquearFin = useBloquearPedidoFinanceiro();
+  const desbloquearFin = useDesbloquearPedidoFinanceiro();
 
   const [docNF, setDocNF] = useState("");
   const [qtdsRec, setQtdsRec] = useState<Record<string, number>>({});
+
+  const statusFinanceiro = (ped?.status_financeiro as string) ?? "NAO_GERADO";
+  const [finCond, setFinCond] = useState("");
+  const [finData, setFinData] = useState("");
+  const [finDoc, setFinDoc] = useState("");
+  const [finValor, setFinValor] = useState("");
+  const [finObs, setFinObs] = useState("");
 
   async function onAprovar() { if (!id) return; try { await aprovar.mutateAsync({ p_id: id }); toast.success("Pedido aprovado"); } catch (e) { toast.error((e as Error).message); } }
   async function onEnviar() { if (!id) return; try { await enviar.mutateAsync({ p_id: id }); toast.success("Pedido enviado ao fornecedor"); } catch (e) { toast.error((e as Error).message); } }
@@ -74,6 +87,16 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
           <DialogTitle className="flex items-center gap-2 text-[14px]">
             Pedido de Compra #{(ped?.numero as number) ?? "—"}
             {status && <Badge variant="outline" className="text-[10.5px]">{PED_LABEL[status]}</Badge>}
+            {statusFinanceiro !== "NAO_GERADO" && (
+              <Badge
+                variant="outline"
+                className={`text-[10.5px] ${
+                  statusFinanceiro === "PRONTO_PARA_FINANCEIRO" ? "border-emerald-300 text-emerald-700 bg-emerald-50" :
+                  statusFinanceiro === "BLOQUEADO" ? "border-red-300 text-red-700 bg-red-50" :
+                  statusFinanceiro === "GERADO" ? "border-blue-300 text-blue-700 bg-blue-50" : ""
+                }`}
+              >Fin: {statusFinanceiro.replace(/_/g, " ")}</Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -98,6 +121,7 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
               <TabsList className="h-8">
                 <TabsTrigger value="itens" className="text-[11.5px]">Itens ({itens.length})</TabsTrigger>
                 <TabsTrigger value="receber" className="text-[11.5px]">Receber</TabsTrigger>
+                <TabsTrigger value="financeiro" className="text-[11.5px]">Preparação financeira</TabsTrigger>
                 <TabsTrigger value="historico" className="text-[11.5px]">Histórico ({eventos.length})</TabsTrigger>
               </TabsList>
 
@@ -167,6 +191,66 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                     </div>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="financeiro">
+                <div className="space-y-2">
+                  <div className="text-[11.5px] text-muted-foreground">
+                    Preenche os dados para o financeiro. Nenhum título é gerado automaticamente — o
+                    pedido apenas fica <b>Pronto para financeiro</b> e pode ser baixado pela equipe.
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div><Label className="text-[11px]">Condição de pagamento *</Label>
+                      <Input className="h-8 text-[12px]" value={finCond} onChange={(e) => setFinCond(e.target.value)} placeholder="Ex.: 30/60/90" /></div>
+                    <div><Label className="text-[11px]">Data prevista *</Label>
+                      <Input type="date" className="h-8 text-[12px]" value={finData} onChange={(e) => setFinData(e.target.value)} /></div>
+                    <div><Label className="text-[11px]">Documento / NF</Label>
+                      <Input className="h-8 text-[12px]" value={finDoc} onChange={(e) => setFinDoc(e.target.value)} placeholder="Nº NF" /></div>
+                    <div><Label className="text-[11px]">Valor aprovado final *</Label>
+                      <Input type="number" step="0.01" className="h-8 text-[12px]" value={finValor}
+                        onChange={(e) => setFinValor(e.target.value)} placeholder={String(ped.valor_total ?? 0)} /></div>
+                    <div className="col-span-2 md:col-span-4"><Label className="text-[11px]">Observação</Label>
+                      <Input className="h-8 text-[12px]" value={finObs} onChange={(e) => setFinObs(e.target.value)} /></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"
+                      disabled={!finCond || !finData || !finValor}
+                      onClick={async () => {
+                        try {
+                          await prepararFin.mutateAsync({
+                            pedido_id: id!,
+                            condicao_pagamento: finCond,
+                            data_prevista_pagamento: finData,
+                            documento_fiscal: finDoc || null,
+                            valor_aprovado_final: Number(finValor),
+                            financeiro_observacao: finObs || null,
+                          });
+                          toast.success("Pedido pronto para o financeiro");
+                          refetch();
+                        } catch (e) { toast.error((e as Error).message); }
+                      }}>Enviar para o financeiro</Button>
+                    <Button size="sm" variant="outline" className="text-red-700 border-red-300"
+                      onClick={async () => {
+                        const m = prompt("Motivo do bloqueio (≥5):") ?? "";
+                        if (m.trim().length < 5) return;
+                        try { await bloquearFin.mutateAsync({ pedido_id: id!, motivo: m.trim() }); toast.success("Pedido bloqueado no financeiro"); refetch(); }
+                        catch (e) { toast.error((e as Error).message); }
+                      }}>Bloquear no financeiro</Button>
+                    {statusFinanceiro === "BLOQUEADO" && (
+                      <Button size="sm" variant="outline"
+                        onClick={async () => {
+                          const m = prompt("Motivo do desbloqueio (≥5):") ?? "";
+                          if (m.trim().length < 5) return;
+                          try { await desbloquearFin.mutateAsync({ pedido_id: id!, motivo: m.trim() }); toast.success("Pedido desbloqueado"); refetch(); }
+                          catch (e) { toast.error((e as Error).message); }
+                        }}>Desbloquear</Button>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground pt-1">
+                    Status financeiro atual: <b>{statusFinanceiro.replace(/_/g, " ")}</b>
+                    {ped.financeiro_bloqueio_motivo ? <span className="text-red-700"> — {String(ped.financeiro_bloqueio_motivo)}</span> : null}
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="historico">

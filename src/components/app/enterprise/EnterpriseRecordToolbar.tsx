@@ -371,22 +371,6 @@ export function EnterpriseRecordToolbar({
       )}
       <Sep />
 
-      {/* Busca rápida (quando o consumidor injetar) */}
-      {onSearchChange && (
-        <>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search ?? ""}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="h-6 w-44 rounded-sm pl-6 text-[11.5px]"
-            />
-          </div>
-          <Sep />
-        </>
-      )}
-
       {/* Anexos (label + chevron, azul) */}
       {enabled.has("anexos") && (
         <Button

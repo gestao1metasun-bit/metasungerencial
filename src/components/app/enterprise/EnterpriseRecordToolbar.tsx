@@ -29,7 +29,7 @@ import {
   CheckCircle2, Send, FileText, Calculator, Wrench,
   PackageCheck, FileSignature, Banknote, Undo2, Wallet,
   ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
-  Rows3, Rows, Square, SquareStack, BarChart3, Mail,
+  Rows3, Rows, Square, SquareStack, BarChart3, Mail, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,7 +56,7 @@ export type EnterpriseEntityType =
 export type EnterpriseRecordAction =
   | "novo" | "editar" | "duplicar" | "excluir" | "cancelar" | "salvar"
   | "atualizar" | "visualizar"
-  | "anexos" | "historico" | "comentarios" | "auditoria"
+  | "anexos" | "historico" | "comentarios" | "auditoria" | "favoritos"
   | "exportar" | "imprimir" | "enviar"
   | "filtroRapido" | "filtroAvancado" | "visoes" | "layout" | "colunas";
 
@@ -75,6 +75,8 @@ export type EnterpriseProcessItem = {
   destructive?: boolean;
   /** Reservado p/ D6.13.3 — motivo obrigatório, workflow, etc. */
   requerMotivo?: boolean;
+  /** Grupo lógico para sub-cabeçalho no dropdown (ex.: "Propostas", "Contratos"). */
+  group?: string;
 };
 
 export type EnterpriseRecordToolbarProps = {
@@ -160,7 +162,7 @@ export type LayoutBarConfig = {
 const ALL_ACTIONS: EnterpriseRecordAction[] = [
   "novo", "editar", "duplicar", "excluir", "cancelar", "salvar",
   "atualizar", "visualizar",
-  "anexos", "historico", "comentarios", "auditoria",
+  "anexos", "historico", "comentarios", "auditoria", "favoritos",
   "exportar", "imprimir", "enviar",
   "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas",
 ];
@@ -168,7 +170,7 @@ const ALL_ACTIONS: EnterpriseRecordAction[] = [
 const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: string }>> = {
   novo: Plus, editar: Pencil, duplicar: Copy, excluir: Trash2, cancelar: X, salvar: Save,
   atualizar: RefreshCw, visualizar: Eye,
-  anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield,
+  anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield, favoritos: Star,
   exportar: Download, imprimir: Printer, enviar: Mail,
   filtroRapido: Filter, filtroAvancado: FilterX, visoes: Layout, layout: Layout, colunas: Columns3,
 };
@@ -176,7 +178,7 @@ const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: st
 const ACTION_LABEL: Record<EnterpriseRecordAction, string> = {
   novo: "Novo", editar: "Editar", duplicar: "Duplicar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
   atualizar: "Atualizar", visualizar: "Visualizar",
-  anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria",
+  anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria", favoritos: "Favoritos",
   exportar: "Exportar", imprimir: "Imprimir", enviar: "Enviar",
   filtroRapido: "Filtro rápido", filtroAvancado: "Filtro avançado",
   visoes: "Visões", layout: "Layout", colunas: "Colunas",
@@ -269,16 +271,16 @@ export function EnterpriseRecordToolbar({
     if (!enabled.has(a)) return false;
     switch (mode) {
       case "none":
-        return ["novo", "atualizar", "filtroRapido", "filtroAvancado",
+        return ["novo", "atualizar", "favoritos", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas", "exportar"].includes(a);
       case "single":
         return ["editar", "duplicar", "visualizar", "anexos", "historico",
-                "comentarios", "auditoria", "cancelar", "excluir",
+                "comentarios", "auditoria", "favoritos", "cancelar", "excluir",
                 "salvar", "atualizar", "exportar", "imprimir", "enviar",
                 "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas"].includes(a);
       case "multi":
         return ["exportar", "imprimir", "enviar", "cancelar", "excluir", "duplicar",
-                "atualizar", "filtroRapido", "filtroAvancado",
+                "favoritos", "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas"].includes(a);
     }
   };
@@ -304,6 +306,7 @@ export function EnterpriseRecordToolbar({
       : a === "historico" ? "info"
       : a === "comentarios" ? "info"
       : a === "auditoria" ? "warning"
+      : a === "favoritos" ? "warning"
       : a === "exportar" ? "success"
       : a === "imprimir" ? "info"
       : a === "enviar" ? "success"
@@ -422,27 +425,47 @@ export function EnterpriseRecordToolbar({
               Processos {count > 1 ? `· lote (${count})` : ""}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {processosVisiveis.map((p) => {
-              const Icon = p.icon ?? Cog;
-              return (
-                <DropdownMenuItem
-                  key={p.key}
-                  onClick={() => onProcess?.(p.key, { selectedIds })}
-                  className={cn(
-                    "text-[12px] gap-2",
-                    p.destructive && "text-destructive focus:text-destructive",
+            {(() => {
+              // Agrupa processos por `group` preservando ordem de inserção.
+              const groups: { name: string; items: typeof processosVisiveis }[] = [];
+              for (const p of processosVisiveis) {
+                const g = p.group ?? "";
+                let bucket = groups.find((b) => b.name === g);
+                if (!bucket) { bucket = { name: g, items: [] }; groups.push(bucket); }
+                bucket.items.push(p);
+              }
+              return groups.map((g, gi) => (
+                <div key={g.name || `__g${gi}`}>
+                  {gi > 0 && <DropdownMenuSeparator />}
+                  {g.name && (
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80 pt-1.5">
+                      {g.name}
+                    </DropdownMenuLabel>
                   )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="flex-1">{p.label}</span>
-                  {p.requerMotivo && (
-                    <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
-                      motivo
-                    </span>
-                  )}
-                </DropdownMenuItem>
-              );
-            })}
+                  {g.items.map((p) => {
+                    const Icon = p.icon ?? Cog;
+                    return (
+                      <DropdownMenuItem
+                        key={p.key}
+                        onClick={() => onProcess?.(p.key, { selectedIds })}
+                        className={cn(
+                          "text-[12px] gap-2",
+                          p.destructive && "text-destructive focus:text-destructive",
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="flex-1">{p.label}</span>
+                        {p.requerMotivo && (
+                          <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
+                            motivo
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
           </DropdownMenuContent>
         </DropdownMenu>
       )}

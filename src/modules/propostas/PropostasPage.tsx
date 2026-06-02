@@ -55,7 +55,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm } from "@/components/app/enterprise";
 
 export { PropostasPage, CadastrosFV };
 
@@ -277,27 +277,32 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           selectedIds={vendoId ? [vendoId] : []}
           availableActions={[
             "novo", "editar", "duplicar", "excluir", "atualizar",
-            "anexos", "historico", "auditoria",
+            "anexos", "historico", "auditoria", "favoritos",
             "exportar", "imprimir", "enviar",
             "filtroAvancado", "colunas",
           ]}
           availableProcesses={[
-            // Processos gerais (sem seleção)
-            { key: "nova_proposta", label: "Nova proposta (lead)", requerSelecao: 0 },
-            { key: "marcar_vencidas", label: "Marcar propostas vencidas (>45 dias)", requerSelecao: 0 },
-            { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
-            // Processos de PROPOSTA (1 selecionada)
-            { key: "aprovar_proposta", label: "Aprovar proposta → Contrato" },
-            { key: "reprovar_proposta", label: "Reprovar proposta", destructive: true, requerMotivo: true },
-            { key: "duplicar_proposta", label: "Duplicar proposta" },
-            { key: "gerar_contrato", label: "Gerar contrato a partir da proposta" },
-            { key: "enviar_assinar", label: "Enviar cliente para assinar" },
-            { key: "cancelar_proposta", label: "Cancelar proposta", destructive: true, requerMotivo: true },
-            { key: "reabrir_proposta", label: "Reabrir proposta", requerMotivo: true },
-            // Lote
-            { key: "exportar_lote_csv", label: "Exportar selecionadas (CSV)", permiteLote: true },
-            { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
-            { key: "alterar_status_lote", label: "Alterar status (lote)", permiteLote: true },
+            // ▼ Propostas
+            { key: "aprovar_proposta",     label: "Aprovar",            group: "Propostas" },
+            { key: "reprovar_proposta",    label: "Reprovar",           group: "Propostas", destructive: true, requerMotivo: true },
+            { key: "duplicar_proposta",    label: "Duplicar",           group: "Propostas" },
+            { key: "gerar_contrato",       label: "Gerar Contrato",     group: "Propostas" },
+            { key: "enviar_assinar",       label: "Enviar Assinatura",  group: "Propostas" },
+            // ▼ Comercial
+            { key: "alterar_consultor",    label: "Alterar Consultor",  group: "Comercial", permiteLote: true, requerSelecao: 1 },
+            { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
+            { key: "alterar_canal",        label: "Alterar Canal",      group: "Comercial", permiteLote: true, requerSelecao: 1 },
+            { key: "alterar_origem",       label: "Alterar Origem",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
+            // ▼ Relatórios
+            { key: "rel_pipeline",         label: "Pipeline",           group: "Relatórios", requerSelecao: 0 },
+            { key: "rel_conversao",        label: "Conversão",          group: "Relatórios", requerSelecao: 0 },
+            { key: "rel_funil",            label: "Funil",              group: "Relatórios", requerSelecao: 0 },
+            { key: "rel_vendedores",       label: "Vendedores",         group: "Relatórios", requerSelecao: 0 },
+            { key: "rel_metas",            label: "Metas",              group: "Relatórios", requerSelecao: 0 },
+            // ▼ Manutenção
+            { key: "nova_proposta",        label: "Nova proposta (lead)", group: "Manutenção", requerSelecao: 0 },
+            { key: "marcar_vencidas",      label: "Marcar vencidas (>45 dias)", group: "Manutenção", requerSelecao: 0 },
+            { key: "atualizar_lista",      label: "Atualizar lista",    group: "Manutenção", requerSelecao: 0 },
           ]}
           onProcess={async (key) => {
             if (key === "nova_proposta") {
@@ -315,15 +320,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "duplicar_proposta") {
               toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.2b).");
             } else if (key === "aprovar_proposta" || key === "gerar_contrato") {
-              toast.info("Aprovar/Gerar contrato: use o fluxo dentro da proposta. Workflow oficial em D27.COM.2b.");
-            } else if (key === "reprovar_proposta" || key === "cancelar_proposta" || key === "reabrir_proposta") {
-              toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
+              toast.info("Aprovar/Gerar contrato: use o fluxo dentro da proposta (RPC oficial em D27.COM.2b).");
+            } else if (key === "reprovar_proposta") {
+              toast.info("Reprovar com motivo + workflow chega em D27.COM.2b.");
             } else if (key === "enviar_assinar") {
               toast.info("Envio para assinatura digital (Clicksign/Autentique/DocuSign) chega em D27.COM.6.");
-            } else if (key === "exportar_lote_csv") {
-              toast.info("Exportação CSV em lote chega em D27.COM.3.");
-            } else if (key === "alterar_consultor_lote" || key === "alterar_status_lote") {
-              toast.info("Alterações em lote (consultor/status) chegam em D27.COM.3.");
+            } else if (key.startsWith("alterar_")) {
+              toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.");
+            } else if (key.startsWith("rel_")) {
+              toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
             }
           }}
           onAction={(a) => {
@@ -336,10 +341,22 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
             else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
             else if (a === "historico" || a === "auditoria") toast.info("Histórico universal está em /auditoria (D24).");
+            else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
             else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
             else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}
-          statusActions={ribbonRm()}
+          statusActions={ribbonRmComercial({
+            aprovar:             () => toast.info("Aprovar proposta: abra-a e use o botão dentro (D27.COM.2b)."),
+            reprovar:            () => toast.info("Reprovar com motivo + workflow chega em D27.COM.2b."),
+            gerarContrato:       () => toast.info("Gerar contrato a partir da proposta (D27.COM.2b)."),
+            gerarAditivo:        () => toast.info("Aditivo só em contrato assinado (aba Aditivos)."),
+            enviarEngenharia:    () => toast.info("Disponível em contratos assinados (rpc_engenharia_libera)."),
+            enviarFinanciamento: () => toast.info("Envio para Financiamentos chega em D27.COM.FIN."),
+            gerarComissao:       () => toast.info("Comissão é gerada na assinatura do contrato (C6)."),
+            enviarAssinatura:    () => toast.info("Assinatura digital chega em D27.COM.6."),
+            cancelar:            () => toast.info("Cancelar proposta com motivo (D27.COM.2b)."),
+            reabrir:             () => toast.info("Reabrir proposta com motivo (D27.COM.2b)."),
+          })}
           layoutBar={layoutBarRm()}
         />
       </div>

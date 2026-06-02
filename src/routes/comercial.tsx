@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer, ribbonRm, layoutBarRm } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer, ribbonRmComercial, layoutBarRm, type EnterpriseProcessItem } from "@/components/app/enterprise";
 import { CarteiraTab } from "@/modules/comercial/CarteiraTab";
 import { ComissoesTab } from "@/modules/comercial/ComissoesTab";
 import { useTabFromHash } from "@/lib/route-tabs";
@@ -398,26 +398,37 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
-          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
-          { key: "novo_contrato", label: "Novo contrato (a partir de proposta)", requerSelecao: 0 },
-          { key: "editar_contrato", label: "Editar contrato" },
-          { key: "gerar_aditivo", label: "Gerar aditivo" },
-          { key: "cancelar_contrato", label: "Cancelar contrato", destructive: true, requerMotivo: true },
-          { key: "reabrir_contrato", label: "Reabrir contrato", requerMotivo: true },
-          { key: "enviar_engenharia", label: "Enviar para Engenharia" },
-          { key: "enviar_financiamentos", label: "Enviar para Financiamentos" },
-          { key: "enviar_financeiro", label: "Enviar para Financeiro" },
-          { key: "gerar_comissao", label: "Gerar comissão" },
-          { key: "enviar_assinar", label: "Enviar cliente para assinar" },
-          // Lote
-          { key: "enviar_engenharia_lote", label: "Enviar para Engenharia (lote)", permiteLote: true },
-          { key: "enviar_financiamentos_lote", label: "Enviar para Financiamentos (lote)", permiteLote: true },
-          { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
-          { key: "alterar_status_lote", label: "Alterar status (lote)", permiteLote: true },
-          { key: "exportar_lote_csv", label: "Exportar selecionados (CSV)", permiteLote: true },
-        ]}
+          // ▼ Contratos
+          { key: "novo_contrato",            label: "Novo contrato (de proposta)",    group: "Contratos", requerSelecao: 0 },
+          { key: "editar_contrato",          label: "Editar contrato",                group: "Contratos" },
+          { key: "gerar_aditivo",            label: "Gerar Aditivo",                  group: "Contratos" },
+          { key: "cancelar_contrato",        label: "Cancelar",                       group: "Contratos", destructive: true, requerMotivo: true },
+          { key: "reabrir_contrato",         label: "Reabrir",                        group: "Contratos", requerMotivo: true },
+          { key: "enviar_engenharia",        label: "Enviar Engenharia",              group: "Contratos" },
+          { key: "enviar_financeiro",        label: "Enviar Financeiro",              group: "Contratos" },
+          { key: "enviar_financiamentos",    label: "Enviar Financiamentos",          group: "Contratos" },
+          { key: "enviar_assinar",           label: "Enviar Assinatura",              group: "Contratos" },
+          // ▼ Comissões
+          { key: "gerar_comissao",           label: "Gerar",                          group: "Comissões" },
+          { key: "recalcular_comissao",      label: "Recalcular",                     group: "Comissões" },
+          { key: "cancelar_comissao",        label: "Cancelar",                       group: "Comissões", destructive: true, requerMotivo: true },
+          // ▼ Comercial
+          { key: "alterar_consultor",        label: "Alterar Consultor",              group: "Comercial", permiteLote: true },
+          { key: "alterar_cidade",           label: "Alterar Cidade",                 group: "Comercial", permiteLote: true },
+          { key: "alterar_canal",            label: "Alterar Canal",                  group: "Comercial", permiteLote: true },
+          { key: "alterar_origem",           label: "Alterar Origem",                 group: "Comercial", permiteLote: true },
+          // ▼ Relatórios
+          { key: "rel_pipeline",             label: "Pipeline",                       group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_conversao",            label: "Conversão",                      group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_funil",                label: "Funil",                          group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_vendedores",           label: "Vendedores",                     group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_metas",                label: "Metas",                          group: "Relatórios", requerSelecao: 0 },
+          // ▼ Manutenção
+          { key: "atualizar_lista",          label: "Atualizar lista",                group: "Manutenção", requerSelecao: 0 },
+          { key: "exportar_lote_csv",        label: "Exportar selecionados (CSV)",    group: "Manutenção", permiteLote: true },
+        ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Contratos atualizados.");
           else if (key === "novo_contrato") toast.info("Novo contrato nasce de proposta aprovada (use /comercial#tab=orcamentos).");
@@ -430,6 +441,10 @@ function ContratoAssinadoTab({
           else if (key === "enviar_financeiro") toast.info("Use rpc_financeiro_libera dentro do contrato assinado (C5).");
           else if (key === "gerar_comissao") toast.info("Comissão é gerada automaticamente na assinatura (C6).");
           else if (key === "enviar_assinar") toast.info("Envio para assinatura digital chega em D27.COM.6.");
+          else if (key === "recalcular_comissao" || key === "cancelar_comissao") toast.info("Recálculo/cancelamento de comissão chega em D27.COM.2b.");
+          else if (key.startsWith("alterar_")) toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.");
+          else if (key.startsWith("rel_")) toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
+          else if (key === "exportar_lote_csv") toast.info("Exportação CSV em lote chega em D27.COM.3.");
           else if (key.endsWith("_lote")) toast.info("Operação em lote chega em D27.COM.3.");
         }}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
@@ -443,11 +458,12 @@ function ContratoAssinadoTab({
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <ModuloHistoricoDrawer
@@ -708,7 +724,7 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato ou cliente…"
         search={busca}
         onSearchChange={setBusca}
@@ -719,10 +735,11 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <Card className="p-5">
@@ -940,7 +957,7 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
@@ -953,10 +970,11 @@ function ContratosTab({
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-end">
@@ -4856,7 +4874,7 @@ function VendedoresTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-between">
@@ -5606,16 +5624,16 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
         availableProcesses={[
-          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
-          { key: "novo_aditivo", label: "Novo aditivo (escolher contrato)", requerSelecao: 0 },
-          { key: "criar_aditivo", label: "Criar aditivo neste contrato" },
-          { key: "aprovar_aditivo", label: "Aprovar aditivo" },
-          { key: "cancelar_aditivo", label: "Cancelar aditivo", destructive: true, requerMotivo: true },
-          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)" },
-          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia (aditivo)" },
-        ]}
+          { key: "novo_aditivo",              label: "Novo aditivo (escolher contrato)", group: "Contratos", requerSelecao: 0 },
+          { key: "criar_aditivo",             label: "Criar aditivo neste contrato",     group: "Contratos" },
+          { key: "aprovar_aditivo",           label: "Aprovar aditivo",                  group: "Contratos" },
+          { key: "cancelar_aditivo",          label: "Cancelar aditivo",                 group: "Contratos", destructive: true, requerMotivo: true },
+          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)",       group: "Contratos" },
+          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia",           group: "Contratos" },
+          { key: "atualizar_lista",           label: "Atualizar lista",                  group: "Manutenção", requerSelecao: 0 },
+        ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Aditivos atualizados.");
           else if (key === "novo_aditivo" || key === "criar_aditivo")
@@ -5633,12 +5651,13 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         onAction={(a) => {
           if (a === "atualizar") toast.info("Aditivos atualizados.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
 

@@ -474,6 +474,7 @@ export function EnterpriseRecordToolbar({
         <Sep />
         {renderActionBtn("exportar")}
         {renderActionBtn("imprimir")}
+        {renderActionBtn("enviar")}
         {extraRight}
         {count > 0 && (
           <span

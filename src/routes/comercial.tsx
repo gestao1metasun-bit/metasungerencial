@@ -708,15 +708,19 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato ou cliente…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
+          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
         statusActions={ribbonRm()}
         layoutBar={layoutBarRm()}
@@ -936,15 +940,21 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D17.UI.3.");
+          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada (use a aba Propostas).");
+          else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
+          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
+          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
         statusActions={ribbonRm()}
         layoutBar={layoutBarRm()}

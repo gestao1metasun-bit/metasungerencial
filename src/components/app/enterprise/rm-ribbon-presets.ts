@@ -142,3 +142,32 @@ export function layoutBarRm(opts?: {
     onDensityChange: opts?.onDensityChange ?? (() => {}),
   };
 }
+
+/* ---------------------------------------------------------------------- */
+/* D27.COM — Ribbon "Processos" canônico do Comercial (10 botões).        */
+/* Ordem: Aprovar · Reprovar · Gerar Contrato · Gerar Aditivo · Enviar    */
+/* Engenharia · Enviar Financiamento · Gerar Comissão · Enviar Assinatura */
+/* · Cancelar · Reabrir.                                                  */
+/* ---------------------------------------------------------------------- */
+export type RmRibbonComercialOverrides = Partial<Record<
+  | "aprovar" | "reprovar" | "gerarContrato" | "gerarAditivo"
+  | "enviarEngenharia" | "enviarFinanciamento" | "gerarComissao"
+  | "enviarAssinatura" | "cancelar" | "reabrir",
+  () => void
+>>;
+
+export function ribbonRmComercial(overrides: RmRibbonComercialOverrides = {}): StatusActionItem[] {
+  const stub = (label: string) => () => toast.message(`${label} — em breve`);
+  return [
+    { key: "aprovar",              label: "Aprovar",               icon: CheckCircle2, tone: "success", onClick: overrides.aprovar              ?? stub("Aprovar") },
+    { key: "reprovar",             label: "Reprovar",              icon: XCircle,      tone: "danger",  onClick: overrides.reprovar             ?? stub("Reprovar") },
+    { key: "gerarContrato",        label: "Gerar Contrato",        icon: FileText,     tone: "primary", onClick: overrides.gerarContrato        ?? stub("Gerar Contrato") },
+    { key: "gerarAditivo",         label: "Gerar Aditivo",         icon: FileText,     tone: "info",    onClick: overrides.gerarAditivo         ?? stub("Gerar Aditivo") },
+    { key: "enviarEngenharia",     label: "Enviar Engenharia",     icon: Truck,        tone: "info",    onClick: overrides.enviarEngenharia     ?? stub("Enviar Engenharia") },
+    { key: "enviarFinanciamento",  label: "Enviar Financiamento",  icon: Banknote,     tone: "warning", onClick: overrides.enviarFinanciamento  ?? stub("Enviar Financiamento") },
+    { key: "gerarComissao",        label: "Gerar Comissão",        icon: Banknote,     tone: "success", onClick: overrides.gerarComissao        ?? stub("Gerar Comissão") },
+    { key: "enviarAssinatura",     label: "Enviar Assinatura",     icon: Send,         tone: "primary", onClick: overrides.enviarAssinatura     ?? stub("Enviar Assinatura") },
+    { key: "cancelar",             label: "Cancelar",              icon: XCircle,      tone: "danger",  onClick: overrides.cancelar             ?? stub("Cancelar") },
+    { key: "reabrir",              label: "Reabrir",               icon: Undo2,        tone: "warning", onClick: overrides.reabrir              ?? stub("Reabrir") },
+  ];
+}

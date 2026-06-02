@@ -204,7 +204,7 @@ export function useEnviarCompra() {
   return useMutation({
     mutationFn: async (args: { id: string; justificativa?: string | null }) => {
       const { data, error } = await supabase.rpc("rpc_sup_requisicao_enviar_compra", {
-        p_id: args.id, p_justificativa: args.justificativa ?? null,
+        p_id: args.id, p_justificativa: args.justificativa ?? undefined,
       });
       if (error) throw error;
       return data;

@@ -158,6 +158,12 @@ export function NovaRequisicaoDialog({
   async function submeter() {
     if (!naturezaId) { toast.error("Selecione a Natureza."); return; }
     if (!setor.trim()) { toast.error("Selecione o Setor."); return; }
+    if (!centroCustoId) { toast.error("Selecione o Centro de Custo."); return; }
+    if (!centroResultadoId) { toast.error("Selecione o Centro de Resultado."); return; }
+    if (destinoAlmox && tipo === "SERVICO") {
+      toast.error("Almoxarifado é destino apenas para MATERIAL.");
+      return;
+    }
     if (!destinoAlmox && !vinculoId) {
       toast.error("Vincule a uma Obra/Projeto/O.S. — ou marque destino Almoxarifado.");
       return;

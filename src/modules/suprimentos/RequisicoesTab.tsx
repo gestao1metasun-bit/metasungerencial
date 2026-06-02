@@ -164,10 +164,9 @@ export function RequisicoesTab() {
                   </td>
                   <td className="px-2 py-1 text-right" onClick={(e) => e.stopPropagation()}>
                     <RowActions
-                      actions={[
-                        { kind: "visualizar", onClick: () => r.id && setDetalheId(r.id) },
-                        { kind: "historico", onClick: () => r.id && setDetalheId(r.id) },
-                      ]}
+                      rowId={r.id ?? ""}
+                      actions={[{ kind: "visualizar" }, { kind: "historico" }]}
+                      onAction={(_kind, id) => id && setDetalheId(id)}
                     />
                   </td>
                 </tr>

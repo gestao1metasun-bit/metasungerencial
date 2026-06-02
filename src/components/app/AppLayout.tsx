@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 
-import { Bell, LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
+import { LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
+import { NotificacoesBell } from "@/components/app/NotificacoesBell";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";

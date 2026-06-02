@@ -441,6 +441,10 @@ function ContratoAssinadoTab({
           else if (key === "enviar_financeiro") toast.info("Use rpc_financeiro_libera dentro do contrato assinado (C5).");
           else if (key === "gerar_comissao") toast.info("Comissão é gerada automaticamente na assinatura (C6).");
           else if (key === "enviar_assinar") toast.info("Envio para assinatura digital chega em D27.COM.6.");
+          else if (key === "recalcular_comissao" || key === "cancelar_comissao") toast.info("Recálculo/cancelamento de comissão chega em D27.COM.2b.");
+          else if (key.startsWith("alterar_")) toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.");
+          else if (key.startsWith("rel_")) toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
+          else if (key === "exportar_lote_csv") toast.info("Exportação CSV em lote chega em D27.COM.3.");
           else if (key.endsWith("_lote")) toast.info("Operação em lote chega em D27.COM.3.");
         }}
         searchPlaceholder="Buscar contrato, cliente, proposta…"

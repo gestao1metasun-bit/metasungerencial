@@ -390,10 +390,11 @@ function AprovacoesPage() {
               </TableBody>
             </Table>
           </EnterpriseDataGrid>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
-        </TabsContent>
-      </Tabs>
+
 
 
       <DetalheDialog row={detalhe} onClose={() => setDetalhe(null)} />

@@ -19,6 +19,7 @@ import { Route as PosvendaRouteImport } from './routes/posvenda'
 import { Route as PedidosVendaRouteImport } from './routes/pedidos-venda'
 import { Route as PaineisRouteImport } from './routes/paineis'
 import { Route as OperacoesFinanceirasRouteImport } from './routes/operacoes-financeiras'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as FornecedoresRouteImport } from './routes/fornecedores'
@@ -113,6 +114,11 @@ const PaineisRoute = PaineisRouteImport.update({
 const OperacoesFinanceirasRoute = OperacoesFinanceirasRouteImport.update({
   id: '/operacoes-financeiras',
   path: '/operacoes-financeiras',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/fornecedores': typeof FornecedoresRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/operacoes-financeiras': typeof OperacoesFinanceirasRoute
   '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/fornecedores': typeof FornecedoresRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/operacoes-financeiras': typeof OperacoesFinanceirasRoute
   '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/fornecedores': typeof FornecedoresRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/operacoes-financeiras': typeof OperacoesFinanceirasRoute
   '/paineis': typeof PaineisRouteWithChildren
   '/pedidos-venda': typeof PedidosVendaRoute
@@ -541,6 +550,7 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/leads'
     | '/login'
+    | '/notificacoes'
     | '/operacoes-financeiras'
     | '/paineis'
     | '/pedidos-venda'
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/leads'
     | '/login'
+    | '/notificacoes'
     | '/operacoes-financeiras'
     | '/paineis'
     | '/pedidos-venda'
@@ -655,6 +666,7 @@ export interface FileRouteTypes {
     | '/fornecedores'
     | '/leads'
     | '/login'
+    | '/notificacoes'
     | '/operacoes-financeiras'
     | '/paineis'
     | '/pedidos-venda'
@@ -713,6 +725,7 @@ export interface RootRouteChildren {
   FornecedoresRoute: typeof FornecedoresRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  NotificacoesRoute: typeof NotificacoesRoute
   OperacoesFinanceirasRoute: typeof OperacoesFinanceirasRoute
   PaineisRoute: typeof PaineisRouteWithChildren
   PedidosVendaRoute: typeof PedidosVendaRoute
@@ -795,6 +808,13 @@ declare module '@tanstack/react-router' {
       path: '/operacoes-financeiras'
       fullPath: '/operacoes-financeiras'
       preLoaderRoute: typeof OperacoesFinanceirasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1235,6 +1255,7 @@ const rootRouteChildren: RootRouteChildren = {
   FornecedoresRoute: FornecedoresRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  NotificacoesRoute: NotificacoesRoute,
   OperacoesFinanceirasRoute: OperacoesFinanceirasRoute,
   PaineisRoute: PaineisRouteWithChildren,
   PedidosVendaRoute: PedidosVendaRoute,

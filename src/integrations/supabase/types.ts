@@ -14608,6 +14608,10 @@ export type Database = {
         | "suprimentos.recebimento.visualizar"
         | "suprimentos.recebimento.criar"
         | "suprimentos.recebimento.confirmar"
+        | "suprimentos.alcada.gerir"
+        | "suprimentos.alcada.aplicar"
+        | "suprimentos.pedido.preparar_financeiro"
+        | "suprimentos.pedido.bloquear_financeiro"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -14960,6 +14964,10 @@ export const Constants = {
         "suprimentos.recebimento.visualizar",
         "suprimentos.recebimento.criar",
         "suprimentos.recebimento.confirmar",
+        "suprimentos.alcada.gerir",
+        "suprimentos.alcada.aplicar",
+        "suprimentos.pedido.preparar_financeiro",
+        "suprimentos.pedido.bloquear_financeiro",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

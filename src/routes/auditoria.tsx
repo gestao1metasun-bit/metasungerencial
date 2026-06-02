@@ -124,11 +124,14 @@ function AuditoriaPage() {
         </Card>
       </div>
 
-      <EnterpriseRecordToolbar
-        onRefresh={() => refetch()}
-        onExport={exportar}
-        isRefreshing={isFetching}
-      />
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+          <RefreshCw className={`mr-1 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
+        </Button>
+        <Button variant="outline" size="sm" onClick={exportar}>
+          <Download className="mr-1 h-4 w-4" /> Exportar CSV
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
         <Input

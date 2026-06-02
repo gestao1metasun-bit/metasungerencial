@@ -20,6 +20,7 @@ import {
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RequisicoesTab } from "@/modules/suprimentos/RequisicoesTab";
 import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
 
@@ -174,6 +175,7 @@ function SuprimentosPage() {
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="h-8 mb-2">
           <TabsTrigger value="dashboard" className="text-[11.5px]"><Layers className="h-3.5 w-3.5 mr-1" />Dashboard</TabsTrigger>
+          <TabsTrigger value="requisicoes" className="text-[11.5px]"><ClipboardList className="h-3.5 w-3.5 mr-1" />Requisições</TabsTrigger>
           <TabsTrigger value="cotacoes" className="text-[11.5px]"><FileSearch className="h-3.5 w-3.5 mr-1" />Cotações</TabsTrigger>
           <TabsTrigger value="pedidos" className="text-[11.5px]"><FileText className="h-3.5 w-3.5 mr-1" />Pedidos</TabsTrigger>
           <TabsTrigger value="recebimentos" className="text-[11.5px]"><PackageCheck className="h-3.5 w-3.5 mr-1" />Recebimentos</TabsTrigger>
@@ -190,6 +192,12 @@ function SuprimentosPage() {
             <HubGrid />
           </div>
         </TabsContent>
+
+        <TabsContent value="requisicoes" className="mt-0">
+          <RequisicoesTab />
+        </TabsContent>
+
+
 
         <TabsContent value="cotacoes" className="mt-0">
           <Placeholder

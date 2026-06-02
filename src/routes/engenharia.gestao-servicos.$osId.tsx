@@ -23,6 +23,7 @@ import {
 import { SignaturePad } from "@/components/os/SignaturePad";
 import { AnexoSignedImage, AnexoSignedLink } from "@/components/os/AnexoSigned";
 import { anexosRepo } from "@/lib/repositories/anexos-repo";
+import { MateriaisTab } from "@/modules/os/MateriaisTab";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { Badge } from "@/components/ui/badge";

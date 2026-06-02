@@ -951,7 +951,7 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}

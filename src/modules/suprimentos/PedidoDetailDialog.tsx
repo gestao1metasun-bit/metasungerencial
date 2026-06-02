@@ -87,6 +87,16 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
           <DialogTitle className="flex items-center gap-2 text-[14px]">
             Pedido de Compra #{(ped?.numero as number) ?? "—"}
             {status && <Badge variant="outline" className="text-[10.5px]">{PED_LABEL[status]}</Badge>}
+            {statusFinanceiro !== "NAO_GERADO" && (
+              <Badge
+                variant="outline"
+                className={`text-[10.5px] ${
+                  statusFinanceiro === "PRONTO_PARA_FINANCEIRO" ? "border-emerald-300 text-emerald-700 bg-emerald-50" :
+                  statusFinanceiro === "BLOQUEADO" ? "border-red-300 text-red-700 bg-red-50" :
+                  statusFinanceiro === "GERADO" ? "border-blue-300 text-blue-700 bg-blue-50" : ""
+                }`}
+              >Fin: {statusFinanceiro.replace(/_/g, " ")}</Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -111,6 +121,7 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
               <TabsList className="h-8">
                 <TabsTrigger value="itens" className="text-[11.5px]">Itens ({itens.length})</TabsTrigger>
                 <TabsTrigger value="receber" className="text-[11.5px]">Receber</TabsTrigger>
+                <TabsTrigger value="financeiro" className="text-[11.5px]">Preparação financeira</TabsTrigger>
                 <TabsTrigger value="historico" className="text-[11.5px]">Histórico ({eventos.length})</TabsTrigger>
               </TabsList>
 

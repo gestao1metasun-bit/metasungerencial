@@ -20,6 +20,7 @@ import {
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RequisicoesTab } from "@/modules/suprimentos/RequisicoesTab";
 import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
 

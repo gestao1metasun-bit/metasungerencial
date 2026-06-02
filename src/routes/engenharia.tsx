@@ -2129,6 +2129,11 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
       )}
 
       {view === "tabela" && (
+        flat.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-muted-foreground">
+            Nenhum projeto enviado à Engenharia ainda. Use a visão <b>Por contrato</b> para enviar projetos.
+          </Card>
+        ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">

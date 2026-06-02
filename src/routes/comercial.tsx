@@ -398,26 +398,37 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
-          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
-          { key: "novo_contrato", label: "Novo contrato (a partir de proposta)", requerSelecao: 0 },
-          { key: "editar_contrato", label: "Editar contrato" },
-          { key: "gerar_aditivo", label: "Gerar aditivo" },
-          { key: "cancelar_contrato", label: "Cancelar contrato", destructive: true, requerMotivo: true },
-          { key: "reabrir_contrato", label: "Reabrir contrato", requerMotivo: true },
-          { key: "enviar_engenharia", label: "Enviar para Engenharia" },
-          { key: "enviar_financiamentos", label: "Enviar para Financiamentos" },
-          { key: "enviar_financeiro", label: "Enviar para Financeiro" },
-          { key: "gerar_comissao", label: "Gerar comissão" },
-          { key: "enviar_assinar", label: "Enviar cliente para assinar" },
-          // Lote
-          { key: "enviar_engenharia_lote", label: "Enviar para Engenharia (lote)", permiteLote: true },
-          { key: "enviar_financiamentos_lote", label: "Enviar para Financiamentos (lote)", permiteLote: true },
-          { key: "alterar_consultor_lote", label: "Alterar consultor (lote)", permiteLote: true },
-          { key: "alterar_status_lote", label: "Alterar status (lote)", permiteLote: true },
-          { key: "exportar_lote_csv", label: "Exportar selecionados (CSV)", permiteLote: true },
-        ]}
+          // ▼ Contratos
+          { key: "novo_contrato",            label: "Novo contrato (de proposta)",    group: "Contratos", requerSelecao: 0 },
+          { key: "editar_contrato",          label: "Editar contrato",                group: "Contratos" },
+          { key: "gerar_aditivo",            label: "Gerar Aditivo",                  group: "Contratos" },
+          { key: "cancelar_contrato",        label: "Cancelar",                       group: "Contratos", destructive: true, requerMotivo: true },
+          { key: "reabrir_contrato",         label: "Reabrir",                        group: "Contratos", requerMotivo: true },
+          { key: "enviar_engenharia",        label: "Enviar Engenharia",              group: "Contratos" },
+          { key: "enviar_financeiro",        label: "Enviar Financeiro",              group: "Contratos" },
+          { key: "enviar_financiamentos",    label: "Enviar Financiamentos",          group: "Contratos" },
+          { key: "enviar_assinar",           label: "Enviar Assinatura",              group: "Contratos" },
+          // ▼ Comissões
+          { key: "gerar_comissao",           label: "Gerar",                          group: "Comissões" },
+          { key: "recalcular_comissao",      label: "Recalcular",                     group: "Comissões" },
+          { key: "cancelar_comissao",        label: "Cancelar",                       group: "Comissões", destructive: true, requerMotivo: true },
+          // ▼ Comercial
+          { key: "alterar_consultor",        label: "Alterar Consultor",              group: "Comercial", permiteLote: true },
+          { key: "alterar_cidade",           label: "Alterar Cidade",                 group: "Comercial", permiteLote: true },
+          { key: "alterar_canal",            label: "Alterar Canal",                  group: "Comercial", permiteLote: true },
+          { key: "alterar_origem",           label: "Alterar Origem",                 group: "Comercial", permiteLote: true },
+          // ▼ Relatórios
+          { key: "rel_pipeline",             label: "Pipeline",                       group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_conversao",            label: "Conversão",                      group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_funil",                label: "Funil",                          group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_vendedores",           label: "Vendedores",                     group: "Relatórios", requerSelecao: 0 },
+          { key: "rel_metas",                label: "Metas",                          group: "Relatórios", requerSelecao: 0 },
+          // ▼ Manutenção
+          { key: "atualizar_lista",          label: "Atualizar lista",                group: "Manutenção", requerSelecao: 0 },
+          { key: "exportar_lote_csv",        label: "Exportar selecionados (CSV)",    group: "Manutenção", permiteLote: true },
+        ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Contratos atualizados.");
           else if (key === "novo_contrato") toast.info("Novo contrato nasce de proposta aprovada (use /comercial#tab=orcamentos).");

@@ -11440,6 +11440,26 @@ export type Database = {
         }
         Relationships: []
       }
+      v_auditoria_unificada: {
+        Row: {
+          acao: string | null
+          antes: Json | null
+          criticidade: string | null
+          data_hora: string | null
+          depois: Json | null
+          entidade_id: string | null
+          entidade_tipo: string | null
+          id: string | null
+          link_origem: string | null
+          modulo: string | null
+          observacao: string | null
+          origem: string | null
+          payload: Json | null
+          usuario_email: string | null
+          usuario_id: string | null
+        }
+        Relationships: []
+      }
       v_cmv_oficial: {
         Row: {
           centro_resultado_id: string | null

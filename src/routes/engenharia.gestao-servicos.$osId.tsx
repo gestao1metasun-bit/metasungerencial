@@ -160,6 +160,7 @@ function PainelOsPage() {
           <TabsTrigger value="os" className="text-[12px]">Ordem de Serviço</TabsTrigger>
           <TabsTrigger value="orcado" className="text-[12px]">Orçado x Realizado</TabsTrigger>
           <TabsTrigger value="custos" className="text-[12px]">Custos</TabsTrigger>
+          <TabsTrigger value="materiais" className="text-[12px]">Materiais</TabsTrigger>
           <TabsTrigger value="tarefas" className="text-[12px]">Tarefas</TabsTrigger>
           <TabsTrigger value="produtividade" className="text-[12px]">Produtividade</TabsTrigger>
           <TabsTrigger value="formularios" className="text-[12px]">Formulários</TabsTrigger>

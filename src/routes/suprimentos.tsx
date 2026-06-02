@@ -21,6 +21,9 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequisicoesTab } from "@/modules/suprimentos/RequisicoesTab";
+import { CotacoesTab } from "@/modules/suprimentos/CotacoesTab";
+import { PedidosTab } from "@/modules/suprimentos/PedidosTab";
+import { RecebimentosTab } from "@/modules/suprimentos/RecebimentosTab";
 import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
 
@@ -200,25 +203,13 @@ function SuprimentosPage() {
 
 
         <TabsContent value="cotacoes" className="mt-0">
-          <Placeholder
-            titulo="Cotações"
-            descricao="Comparativo de fornecedores, prazo, frete e condição de pagamento, ligado à solicitação de compra de origem."
-            sub="Disponível em D20.SUP.5"
-          />
+          <CotacoesTab />
         </TabsContent>
         <TabsContent value="pedidos" className="mt-0">
-          <Placeholder
-            titulo="Pedidos de Compra"
-            descricao="Geração a partir da cotação aprovada, com vínculo à requisição original, O.S./obra, fornecedor e centro de custo."
-            sub="Disponível em D20.SUP.5"
-          />
+          <PedidosTab />
         </TabsContent>
         <TabsContent value="recebimentos" className="mt-0">
-          <Placeholder
-            titulo="Recebimentos"
-            descricao="Conferência de quantidade/valor, entrada no estoque (material) ou registro de execução (serviço), com vínculo ao pedido."
-            sub="Disponível em D20.SUP.5"
-          />
+          <RecebimentosTab />
         </TabsContent>
         <TabsContent value="relatorios" className="mt-0">
           <Placeholder

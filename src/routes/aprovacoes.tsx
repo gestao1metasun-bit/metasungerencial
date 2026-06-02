@@ -392,6 +392,9 @@ function AprovacoesPage() {
           </EnterpriseDataGrid>
         </TabsContent>
       </Tabs>
+        </TabsContent>
+      </Tabs>
+
 
       <DetalheDialog row={detalhe} onClose={() => setDetalhe(null)} />
       <AcaoDialog

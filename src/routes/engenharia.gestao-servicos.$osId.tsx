@@ -15,10 +15,14 @@
  * privilegia a operação central de status/tarefas/histórico.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Loader2, Plus, CheckCircle2, X, Trash2, RefreshCw, FileText,
+  Camera, Paperclip, MapPin, PenLine,
 } from "lucide-react";
+import { SignaturePad } from "@/components/os/SignaturePad";
+import { AnexoSignedImage, AnexoSignedLink } from "@/components/os/AnexoSigned";
+import { anexosRepo } from "@/lib/repositories/anexos-repo";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { Badge } from "@/components/ui/badge";
@@ -891,6 +895,15 @@ interface CampoModelo {
   obrigatorio?: boolean; ajuda?: string; opcoes?: string[];
 }
 
+// Forma canônica armazenada no jsonb `respostas` p/ campos com arquivo.
+export interface AnexoRef {
+  anexo_id: string; storage_path: string; nome: string; mime: string; tamanho: number;
+}
+export interface AssinaturaRef extends AnexoRef {
+  signatario?: string; assinado_em: string;
+}
+
+
 function FormulariosTab({ osId }: { osId: string }) {
   const { data: tarefas = [] } = useOsTarefas(osId);
   const { data: modelos = [] } = useOsFormulariosTemplates();
@@ -1057,7 +1070,7 @@ function ResponderFormularioDialog({
                 {c.titulo}{c.obrigatorio && <span className="text-red-600">*</span>}
               </Label>
               {c.descricao && <p className="text-[11px] text-muted-foreground">{c.descricao}</p>}
-              <CampoInput campo={c} valor={valores[c.id]} onChange={(v) => setVal(c.id, v)} />
+              <CampoInput campo={c} valor={valores[c.id]} onChange={(v) => setVal(c.id, v)} tarefaId={tarefaId} modeloId={modelo.id} />
             </div>
           ))}
 
@@ -1080,7 +1093,12 @@ function ResponderFormularioDialog({
   );
 }
 
-function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unknown; onChange: (v: unknown) => void }) {
+function CampoInput({
+  campo, valor, onChange, tarefaId, modeloId,
+}: {
+  campo: CampoModelo; valor: unknown; onChange: (v: unknown) => void;
+  tarefaId: string; modeloId: string;
+}) {
   const v = valor as string | number | string[] | undefined;
   const placeholder = campo.ajuda ?? "";
   switch (campo.tipo) {
@@ -1124,19 +1142,11 @@ function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unk
       );
     }
     case "foto":
+      return <AnexoUploader accept="image/*" multiple campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} preview />;
     case "anexo":
-      return (
-        <div className="text-[11.5px] text-muted-foreground border rounded p-2 bg-muted/30">
-          Anexo "{campo.titulo}" deve ser anexado pelo botão "Anexos" da O.S. (auditado em <code>os_eventos</code>).
-        </div>
-      );
+      return <AnexoUploader campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} />;
     case "assinatura":
-      return (
-        <div className="flex items-center gap-2">
-          <Input value={(v as string) ?? ""} placeholder="Nome do signatário" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />
-          <Badge variant="outline" className="text-[10.5px]">{v ? "Assinado" : "Pendente"}</Badge>
-        </div>
-      );
+      return <AssinaturaCampo campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} />;
     case "geolocalizacao":
       return <Input value={(v as string) ?? ""} placeholder="lat, lon" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
     case "texto":
@@ -1145,32 +1155,164 @@ function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unk
   }
 }
 
+// ── Uploader genérico (foto / anexo) ─────────────────────────────────────
+function AnexoUploader({
+  campo, tarefaId, modeloId, valor, onChange, accept, multiple, preview,
+}: {
+  campo: CampoModelo; tarefaId: string; modeloId: string;
+  valor: unknown; onChange: (v: unknown) => void;
+  accept?: string; multiple?: boolean; preview?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const lista = (Array.isArray(valor) ? valor : []) as AnexoRef[];
+  const categoria = `formulario:${modeloId}:${campo.id}`;
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const novos: AnexoRef[] = [];
+      for (const f of Array.from(files)) {
+        const a = await anexosRepo.upload("tarefas", tarefaId, f, { categoria, observacao: campo.titulo });
+        novos.push({ anexo_id: a.id, storage_path: a.storage_path, nome: a.nome, mime: a.mime, tamanho: a.tamanho });
+      }
+      onChange([...lista, ...novos]);
+      toast.success(`${novos.length} arquivo(s) anexado(s).`);
+    } catch (e) {
+      toast.error("Falha upload: " + (e as Error).message);
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function remover(idx: number) {
+    const item = lista[idx]; if (!item) return;
+    try {
+      await anexosRepo.remover(item.anexo_id, "Removido antes de salvar resposta");
+      onChange(lista.filter((_, i) => i !== idx));
+      toast.success("Anexo removido.");
+    } catch (e) {
+      toast.error("Falha remover: " + (e as Error).message);
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <input ref={inputRef} type="file" accept={accept} multiple={multiple} className="hidden"
+        onChange={(e) => handleFiles(e.target.files)} />
+      <div className="flex items-center gap-1">
+        <Button type="button" size="sm" variant="outline" className="h-7"
+          onClick={() => inputRef.current?.click()} disabled={busy}>
+          {accept?.startsWith("image/")
+            ? <><Camera className="h-3.5 w-3.5 mr-1" />Anexar foto</>
+            : <><Paperclip className="h-3.5 w-3.5 mr-1" />Anexar arquivo</>}
+        </Button>
+        {busy && <span className="text-[11px] text-muted-foreground"><Loader2 className="h-3 w-3 inline animate-spin mr-1" />Enviando…</span>}
+      </div>
+      {lista.length > 0 && (
+        <div className={preview ? "grid grid-cols-2 sm:grid-cols-3 gap-1.5" : "space-y-1"}>
+          {lista.map((a, i) => (
+            <div key={a.anexo_id} className="border rounded p-1 bg-muted/30 relative">
+              {preview && a.mime.startsWith("image/")
+                ? <AnexoSignedImage storagePath={a.storage_path} nome={a.nome} />
+                : <AnexoSignedLink storagePath={a.storage_path} nome={a.nome} />}
+              <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0 absolute top-0 right-0"
+                title="Remover anexo" onClick={() => remover(i)}>
+                <X className="h-3.5 w-3.5 text-red-600" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Campo Assinatura (canvas) ────────────────────────────────────────────
+function AssinaturaCampo({
+  campo, tarefaId, modeloId, valor, onChange,
+}: {
+  campo: CampoModelo; tarefaId: string; modeloId: string;
+  valor: unknown; onChange: (v: unknown) => void;
+}) {
+  const atual = (valor && typeof valor === "object" ? valor : null) as AssinaturaRef | null;
+  const [signatario, setSignatario] = useState<string>(atual?.signatario ?? "");
+  const categoria = `formulario:${modeloId}:${campo.id}:assinatura`;
+
+  async function handleSave(blob: Blob) {
+    try {
+      const file = new File([blob], `assinatura-${Date.now()}.png`, { type: "image/png" });
+      const a = await anexosRepo.upload("tarefas", tarefaId, file, { categoria, observacao: signatario || campo.titulo });
+      const ref: AssinaturaRef = {
+        anexo_id: a.id, storage_path: a.storage_path, nome: a.nome, mime: a.mime, tamanho: a.tamanho,
+        signatario: signatario || undefined, assinado_em: new Date().toISOString(),
+      };
+      onChange(ref);
+      toast.success("Assinatura salva.");
+    } catch (e) {
+      toast.error("Falha assinatura: " + (e as Error).message);
+    }
+  }
+
+  async function limpar() {
+    if (!atual) return;
+    try {
+      await anexosRepo.remover(atual.anexo_id, "Assinatura redesenhada");
+      onChange(null);
+      toast.success("Assinatura removida.");
+    } catch (e) {
+      toast.error("Falha: " + (e as Error).message);
+    }
+  }
+
+  return (
+    <div className="space-y-1.5 border rounded p-2 bg-muted/20">
+      <div className="flex items-center gap-2">
+        <Input value={signatario} placeholder="Nome do signatário (opcional)"
+          onChange={(e) => setSignatario(e.target.value)} className="h-7 text-[12px]" />
+        {atual && <Badge variant="outline" className="text-[10.5px] bg-emerald-50 text-emerald-700 border-emerald-200">Assinado</Badge>}
+      </div>
+      {atual ? (
+        <div className="space-y-1">
+          <AnexoSignedImage storagePath={atual.storage_path} nome={atual.nome} alt="assinatura" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10.5px] text-muted-foreground">
+              {new Date(atual.assinado_em).toLocaleString("pt-BR")}{atual.signatario ? ` · ${atual.signatario}` : ""}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="h-7" onClick={limpar}>
+              <PenLine className="h-3.5 w-3.5 mr-1" />Reassinar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <SignaturePad onSave={handleSave} />
+      )}
+    </div>
+  );
+}
+
+
+
 function VerRespostasDialog({ tarefaId, onClose }: { tarefaId: string; onClose: () => void }) {
   const { data: respostas = [], isLoading } = useRespostasFormulario(tarefaId);
+  const { data: modelos = [] } = useOsFormulariosTemplates();
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Respostas registradas</DialogTitle>
-          <DialogDescription>Histórico append-only desta tarefa.</DialogDescription>
+          <DialogTitle>Histórico de respostas</DialogTitle>
+          <DialogDescription>Append-only — fotos, anexos, assinatura e geolocalização auditados em <code>os_eventos</code>.</DialogDescription>
         </DialogHeader>
         {isLoading ? <p className="text-[12px]">Carregando…</p> : respostas.length === 0 ? (
           <p className="text-[12px] text-muted-foreground">Nenhuma resposta.</p>
         ) : (
           <div className="space-y-2">
-            {respostas.map((r) => (
-              <Card key={r.id} className="p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11.5px] text-muted-foreground">
-                    {new Date(r.respondido_em).toLocaleString("pt-BR")} · por {r.respondido_por ?? "—"}
-                  </span>
-                  <Badge variant="outline" className="text-[10.5px] font-mono">{r.formulario_id.slice(0, 8)}</Badge>
-                </div>
-                <pre className="text-[11.5px] bg-muted/40 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">
-                  {JSON.stringify(r.respostas, null, 2)}
-                </pre>
-              </Card>
-            ))}
+            {respostas.map((r) => {
+              const modelo = modelos.find((m) => m.id === r.formulario_id);
+              return <RespostaCard key={r.id} resposta={r} modelo={modelo ?? null} />;
+            })}
           </div>
         )}
         <DialogFooter><Button onClick={onClose} className="h-8">Fechar</Button></DialogFooter>
@@ -1178,5 +1320,92 @@ function VerRespostasDialog({ tarefaId, onClose }: { tarefaId: string; onClose: 
     </Dialog>
   );
 }
+
+function RespostaCard({
+  resposta, modelo,
+}: { resposta: { id: string; respondido_em: string; respondido_por: string | null; formulario_id: string; respostas: unknown }; modelo: OsFormularioTemplateRow | null }) {
+  const campos = (modelo && Array.isArray(modelo.campos) ? modelo.campos : []) as CampoModelo[];
+  const respObj = (resposta.respostas && typeof resposta.respostas === "object" ? resposta.respostas : {}) as Record<string, unknown>;
+  const meta = (respObj.__meta && typeof respObj.__meta === "object" ? respObj.__meta : null) as null | { geo?: { lat: number; lon: number } | null; modelo_versao?: number };
+  const geo = meta?.geo ?? null;
+
+  return (
+    <Card className="p-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[11.5px] text-muted-foreground">
+          {new Date(resposta.respondido_em).toLocaleString("pt-BR")} · por {resposta.respondido_por ?? "—"}
+          {modelo && <> · <strong>{modelo.nome}</strong> v{meta?.modelo_versao ?? modelo.versao}</>}
+        </span>
+        <Badge variant="outline" className="text-[10.5px] font-mono">{resposta.formulario_id.slice(0, 8)}</Badge>
+      </div>
+
+      {campos.length === 0 ? (
+        <pre className="text-[11.5px] bg-muted/40 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">
+          {JSON.stringify(respObj, null, 2)}
+        </pre>
+      ) : (
+        <div className="space-y-1.5 divide-y">
+          {campos.map((c) => (
+            <div key={c.id} className="pt-1.5 first:pt-0">
+              <div className="text-[11px] font-semibold text-muted-foreground">{c.titulo}</div>
+              <RespostaValor campo={c} valor={respObj[c.id]} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground border-t pt-1.5">
+        {geo
+          ? <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{geo.lat.toFixed(5)}, {geo.lon.toFixed(5)} · <a className="text-blue-700 hover:underline" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${geo.lat},${geo.lon}`}>abrir no mapa</a></span>
+          : <span className="inline-flex items-center gap-1 opacity-70"><MapPin className="h-3 w-3" />sem geo</span>}
+      </div>
+    </Card>
+  );
+}
+
+function RespostaValor({ campo, valor }: { campo: CampoModelo; valor: unknown }) {
+  if (valor == null || valor === "") return <span className="text-[12px] text-muted-foreground italic">— vazio</span>;
+  switch (campo.tipo) {
+    case "checklist":
+    case "multipla":
+      return <div className="text-[12px]">{(Array.isArray(valor) ? valor : []).join(", ") || "—"}</div>;
+    case "foto": {
+      const arr = (Array.isArray(valor) ? valor : []) as AnexoRef[];
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-1">
+          {arr.map((a) => <AnexoSignedImage key={a.anexo_id} storagePath={a.storage_path} nome={a.nome} />)}
+        </div>
+      );
+    }
+    case "anexo": {
+      const arr = (Array.isArray(valor) ? valor : []) as AnexoRef[];
+      return (
+        <div className="space-y-1 mt-1">
+          {arr.map((a) => <AnexoSignedLink key={a.anexo_id} storagePath={a.storage_path} nome={a.nome} />)}
+        </div>
+      );
+    }
+    case "assinatura": {
+      const a = valor as AssinaturaRef;
+      if (!a?.storage_path) return <span className="text-[12px] text-muted-foreground italic">— sem assinatura</span>;
+      return (
+        <div className="space-y-1 mt-1">
+          <AnexoSignedImage storagePath={a.storage_path} nome={a.nome} alt="assinatura" />
+          <div className="text-[11px] text-muted-foreground">
+            {a.signatario ? <>Signatário: <strong>{a.signatario}</strong> · </> : null}
+            {new Date(a.assinado_em).toLocaleString("pt-BR")}
+          </div>
+        </div>
+      );
+    }
+    case "moeda":
+      return <div className="text-[12px]">{fmtMoney(Number(valor))}</div>;
+    case "data":
+      return <div className="text-[12px]">{fmtDate(String(valor))}</div>;
+    default:
+      return <div className="text-[12px] whitespace-pre-wrap break-words">{String(valor)}</div>;
+  }
+}
+
 
 

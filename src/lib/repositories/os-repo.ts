@@ -667,3 +667,47 @@ export function useAprovarFormularioTemplate() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
   });
 }
+
+// ── execução de formulário (E.OS.4) ──
+export interface OsFormularioRespostaRow {
+  id: string;
+  tarefa_id: string;
+  formulario_id: string;
+  respondido_por: string | null;
+  respondido_em: string;
+  respostas: Record<string, unknown>;
+}
+
+export function useRespostasFormulario(tarefaId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "form-respostas", tarefaId],
+    enabled: !!tarefaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("os_formulario_respostas").select("*")
+        .eq("tarefa_id", tarefaId!).order("respondido_em", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as OsFormularioRespostaRow[];
+    },
+  });
+}
+
+export function useResponderFormulario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: {
+      tarefa_id: string; formulario_id: string;
+      respostas: Record<string, unknown>; idempotency_key?: string | null;
+    }) => rpc<string>("rpc_os_formulario_responder", {
+      p_tarefa_id: p.tarefa_id,
+      p_formulario_id: p.formulario_id,
+      p_respostas: p.respostas as never,
+      p_idempotency_key: p.idempotency_key ?? null,
+    }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["os", "form-respostas", v.tarefa_id] });
+      qc.invalidateQueries({ queryKey: ["os", "tarefas"] });
+      qc.invalidateQueries({ queryKey: ["os", "eventos"] });
+    },
+  });
+}

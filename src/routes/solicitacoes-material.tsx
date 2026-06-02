@@ -88,6 +88,13 @@ function SolicitacoesMaterialPage() {
         subtitle="Solicite, aprove e acompanhe materiais — o sistema desvia para compra apenas o que falta no estoque."
       />
 
+      {/* D20.SUP.5 — Compatibilidade: tela legada absorvida por Suprimentos */}
+      <div className="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11.5px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900">
+        <span>O fluxo oficial agora é <b>Suprimentos → Requisições</b> (vincula O.S., reserva estoque, dispara cotação e baixa custo real automaticamente).</span>
+        <a href="/suprimentos#tab=requisicoes" className="font-medium underline underline-offset-2 hover:text-amber-700">Abrir em Suprimentos →</a>
+      </div>
+
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total" value={String(stats.total)} icon={FileText} />
         <StatCard label="Aguardando setor" value={String(stats.pend)} icon={Send} tone="warning" />

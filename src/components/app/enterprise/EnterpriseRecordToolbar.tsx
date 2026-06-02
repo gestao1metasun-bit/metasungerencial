@@ -425,27 +425,47 @@ export function EnterpriseRecordToolbar({
               Processos {count > 1 ? `· lote (${count})` : ""}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {processosVisiveis.map((p) => {
-              const Icon = p.icon ?? Cog;
-              return (
-                <DropdownMenuItem
-                  key={p.key}
-                  onClick={() => onProcess?.(p.key, { selectedIds })}
-                  className={cn(
-                    "text-[12px] gap-2",
-                    p.destructive && "text-destructive focus:text-destructive",
+            {(() => {
+              // Agrupa processos por `group` preservando ordem de inserção.
+              const groups: { name: string; items: typeof processosVisiveis }[] = [];
+              for (const p of processosVisiveis) {
+                const g = p.group ?? "";
+                let bucket = groups.find((b) => b.name === g);
+                if (!bucket) { bucket = { name: g, items: [] }; groups.push(bucket); }
+                bucket.items.push(p);
+              }
+              return groups.map((g, gi) => (
+                <div key={g.name || `__g${gi}`}>
+                  {gi > 0 && <DropdownMenuSeparator />}
+                  {g.name && (
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80 pt-1.5">
+                      {g.name}
+                    </DropdownMenuLabel>
                   )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="flex-1">{p.label}</span>
-                  {p.requerMotivo && (
-                    <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
-                      motivo
-                    </span>
-                  )}
-                </DropdownMenuItem>
-              );
-            })}
+                  {g.items.map((p) => {
+                    const Icon = p.icon ?? Cog;
+                    return (
+                      <DropdownMenuItem
+                        key={p.key}
+                        onClick={() => onProcess?.(p.key, { selectedIds })}
+                        className={cn(
+                          "text-[12px] gap-2",
+                          p.destructive && "text-destructive focus:text-destructive",
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="flex-1">{p.label}</span>
+                        {p.requerMotivo && (
+                          <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
+                            motivo
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
           </DropdownMenuContent>
         </DropdownMenu>
       )}

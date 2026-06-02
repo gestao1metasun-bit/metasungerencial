@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Pencil, RefreshCw } from "lucide-react";
 import {
   useAlcadas, useUpsertAlcada, useToggleAlcada,
   type Alcada, type AlcadaEtapa, ETAPA_LABEL,
@@ -23,7 +24,6 @@ import {
 import {
   useNaturezasFinanceiras, useCentrosCusto, useCentrosResultado, SETORES_OPTIONS,
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
-import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 
 const fmtBRL = (n: number | null) =>
   n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

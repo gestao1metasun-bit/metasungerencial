@@ -17,6 +17,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid, Rows3 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -25,6 +27,11 @@ import {
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
 import { NovaRequisicaoDialog } from "./NovaRequisicaoDialog";
 import { RequisicaoDetailDialog } from "./RequisicaoDetailDialog";
+import { KanbanRequisicoes } from "./KanbanRequisicoes";
+import { AlcadaChip } from "./AlcadaChip";
+
+const VIEW_LS_KEY = "ui.suprimentos.requisicoes.view.v1";
+type ViewMode = "tabela" | "kanban";
 
 const TONE_CLASS: Record<string, string> = {
   muted: "bg-muted text-muted-foreground border-border",

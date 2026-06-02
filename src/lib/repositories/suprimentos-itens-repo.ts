@@ -116,17 +116,20 @@ export function useUpsertItem() {
     mutationFn: async (p: ItemUpsertPayload) => {
       if (p.id) {
         const { id, ...rest } = p;
-        const { error } = await supabase.from("produtos").update(rest).eq("id", id);
+        const { error } = await supabase
+          .from("produtos")
+          .update(rest as never)
+          .eq("id", id);
         if (error) throw error;
         return id;
       }
       const { data, error } = await supabase
         .from("produtos")
-        .insert({ ...p, ativo: p.ativo ?? true })
+        .insert({ ...p, ativo: p.ativo ?? true } as never)
         .select("id")
         .single();
       if (error) throw error;
-      return data.id as string;
+      return (data as { id: string }).id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });

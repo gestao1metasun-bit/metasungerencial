@@ -115,8 +115,8 @@ export function LeadsPage() {
             toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
           else if (key === "agendar_visita" || key === "agendar_ligacao")
             toast.info("Agendamento de visita/ligação chega em D27.COM.CRM.");
-          else if (key === "alterar_consultor_lote") setTrocaConsultorOpen(true);
-          else if (key === "alterar_origem_lote") setTrocaOrigemOpen(true);
+          else if (key === "alterar_consultor_lote") toast.info("Troca de consultor em lote: use o cabeçalho da aba (chega em D27.COM.3).");
+          else if (key === "alterar_origem_lote") toast.info("Troca de origem em lote: use o cabeçalho da aba (chega em D27.COM.3).");
           else if (key === "exportar_lote_csv") toast.info("Exportação CSV em lote chega em D27.COM.3.");
         }}
         statusActions={ribbonRm({ visualizar: () => detalhe && setDetalhe(detalhe) })}

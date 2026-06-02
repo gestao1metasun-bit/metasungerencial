@@ -153,6 +153,7 @@ function PainelOsPage() {
           <TabsTrigger value="orcado" className="text-[12px]">Orçado x Realizado</TabsTrigger>
           <TabsTrigger value="custos" className="text-[12px]">Custos</TabsTrigger>
           <TabsTrigger value="tarefas" className="text-[12px]">Tarefas</TabsTrigger>
+          <TabsTrigger value="formularios" className="text-[12px]">Formulários</TabsTrigger>
           <TabsTrigger value="historico" className="text-[12px]">Histórico</TabsTrigger>
         </TabsList>
 
@@ -185,26 +186,13 @@ function PainelOsPage() {
           </Card>
         </TabsContent>
 
-        {/* ─── Orçado x Realizado ─── */}
-        <TabsContent value="orcado" className="mt-2">
-          <OrcadoRealizadoTab osId={os.id} />
-        </TabsContent>
-
-        {/* ─── Custos ─── */}
-        <TabsContent value="custos" className="mt-2">
-          <CustosTab osId={os.id} />
-        </TabsContent>
-
-        {/* ─── Tarefas ─── */}
-        <TabsContent value="tarefas" className="mt-2">
-          <TarefasTab osId={os.id} />
-        </TabsContent>
-
-        {/* ─── Histórico ─── */}
-        <TabsContent value="historico" className="mt-2" id="historico">
-          <HistoricoTab osId={os.id} />
-        </TabsContent>
+        <TabsContent value="orcado" className="mt-2"><OrcadoRealizadoTab osId={os.id} /></TabsContent>
+        <TabsContent value="custos" className="mt-2"><CustosTab osId={os.id} /></TabsContent>
+        <TabsContent value="tarefas" className="mt-2"><TarefasTab osId={os.id} /></TabsContent>
+        <TabsContent value="formularios" className="mt-2"><FormulariosTab osId={os.id} /></TabsContent>
+        <TabsContent value="historico" className="mt-2" id="historico"><HistoricoTab osId={os.id} /></TabsContent>
       </Tabs>
+
 
 
       {/* ─── Dialogs ─── */}

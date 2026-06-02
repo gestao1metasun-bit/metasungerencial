@@ -1093,7 +1093,12 @@ function ResponderFormularioDialog({
   );
 }
 
-function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unknown; onChange: (v: unknown) => void }) {
+function CampoInput({
+  campo, valor, onChange, tarefaId, modeloId,
+}: {
+  campo: CampoModelo; valor: unknown; onChange: (v: unknown) => void;
+  tarefaId: string; modeloId: string;
+}) {
   const v = valor as string | number | string[] | undefined;
   const placeholder = campo.ajuda ?? "";
   switch (campo.tipo) {
@@ -1137,19 +1142,11 @@ function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unk
       );
     }
     case "foto":
+      return <AnexoUploader accept="image/*" multiple campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} preview />;
     case "anexo":
-      return (
-        <div className="text-[11.5px] text-muted-foreground border rounded p-2 bg-muted/30">
-          Anexo "{campo.titulo}" deve ser anexado pelo botão "Anexos" da O.S. (auditado em <code>os_eventos</code>).
-        </div>
-      );
+      return <AnexoUploader campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} />;
     case "assinatura":
-      return (
-        <div className="flex items-center gap-2">
-          <Input value={(v as string) ?? ""} placeholder="Nome do signatário" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />
-          <Badge variant="outline" className="text-[10.5px]">{v ? "Assinado" : "Pendente"}</Badge>
-        </div>
-      );
+      return <AssinaturaCampo campo={campo} tarefaId={tarefaId} modeloId={modeloId} valor={valor} onChange={onChange} />;
     case "geolocalizacao":
       return <Input value={(v as string) ?? ""} placeholder="lat, lon" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
     case "texto":
@@ -1157,6 +1154,146 @@ function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unk
       return <Input value={(v as string) ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
   }
 }
+
+// ── Uploader genérico (foto / anexo) ─────────────────────────────────────
+function AnexoUploader({
+  campo, tarefaId, modeloId, valor, onChange, accept, multiple, preview,
+}: {
+  campo: CampoModelo; tarefaId: string; modeloId: string;
+  valor: unknown; onChange: (v: unknown) => void;
+  accept?: string; multiple?: boolean; preview?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const lista = (Array.isArray(valor) ? valor : []) as AnexoRef[];
+  const categoria = `formulario:${modeloId}:${campo.id}`;
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const novos: AnexoRef[] = [];
+      for (const f of Array.from(files)) {
+        const a = await anexosRepo.upload("tarefas", tarefaId, f, { categoria, observacao: campo.titulo });
+        novos.push({ anexo_id: a.id, storage_path: a.storage_path, nome: a.nome, mime: a.mime, tamanho: a.tamanho });
+      }
+      onChange([...lista, ...novos]);
+      toast.success(`${novos.length} arquivo(s) anexado(s).`);
+    } catch (e) {
+      toast.error("Falha upload: " + (e as Error).message);
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function remover(idx: number) {
+    const item = lista[idx]; if (!item) return;
+    try {
+      await anexosRepo.remover(item.anexo_id, "Removido antes de salvar resposta");
+      onChange(lista.filter((_, i) => i !== idx));
+      toast.success("Anexo removido.");
+    } catch (e) {
+      toast.error("Falha remover: " + (e as Error).message);
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <input ref={inputRef} type="file" accept={accept} multiple={multiple} className="hidden"
+        onChange={(e) => handleFiles(e.target.files)} />
+      <div className="flex items-center gap-1">
+        <Button type="button" size="sm" variant="outline" className="h-7"
+          onClick={() => inputRef.current?.click()} disabled={busy}>
+          {accept?.startsWith("image/")
+            ? <><Camera className="h-3.5 w-3.5 mr-1" />Anexar foto</>
+            : <><Paperclip className="h-3.5 w-3.5 mr-1" />Anexar arquivo</>}
+        </Button>
+        {busy && <span className="text-[11px] text-muted-foreground"><Loader2 className="h-3 w-3 inline animate-spin mr-1" />Enviando…</span>}
+      </div>
+      {lista.length > 0 && (
+        <div className={preview ? "grid grid-cols-2 sm:grid-cols-3 gap-1.5" : "space-y-1"}>
+          {lista.map((a, i) => (
+            <div key={a.anexo_id} className="border rounded p-1 bg-muted/30 relative">
+              {preview && a.mime.startsWith("image/")
+                ? <AnexoSignedImage storagePath={a.storage_path} nome={a.nome} />
+                : <AnexoSignedLink storagePath={a.storage_path} nome={a.nome} />}
+              <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0 absolute top-0 right-0"
+                title="Remover anexo" onClick={() => remover(i)}>
+                <X className="h-3.5 w-3.5 text-red-600" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Campo Assinatura (canvas) ────────────────────────────────────────────
+function AssinaturaCampo({
+  campo, tarefaId, modeloId, valor, onChange,
+}: {
+  campo: CampoModelo; tarefaId: string; modeloId: string;
+  valor: unknown; onChange: (v: unknown) => void;
+}) {
+  const atual = (valor && typeof valor === "object" ? valor : null) as AssinaturaRef | null;
+  const [signatario, setSignatario] = useState<string>(atual?.signatario ?? "");
+  const categoria = `formulario:${modeloId}:${campo.id}:assinatura`;
+
+  async function handleSave(blob: Blob) {
+    try {
+      const file = new File([blob], `assinatura-${Date.now()}.png`, { type: "image/png" });
+      const a = await anexosRepo.upload("tarefas", tarefaId, file, { categoria, observacao: signatario || campo.titulo });
+      const ref: AssinaturaRef = {
+        anexo_id: a.id, storage_path: a.storage_path, nome: a.nome, mime: a.mime, tamanho: a.tamanho,
+        signatario: signatario || undefined, assinado_em: new Date().toISOString(),
+      };
+      onChange(ref);
+      toast.success("Assinatura salva.");
+    } catch (e) {
+      toast.error("Falha assinatura: " + (e as Error).message);
+    }
+  }
+
+  async function limpar() {
+    if (!atual) return;
+    try {
+      await anexosRepo.remover(atual.anexo_id, "Assinatura redesenhada");
+      onChange(null);
+      toast.success("Assinatura removida.");
+    } catch (e) {
+      toast.error("Falha: " + (e as Error).message);
+    }
+  }
+
+  return (
+    <div className="space-y-1.5 border rounded p-2 bg-muted/20">
+      <div className="flex items-center gap-2">
+        <Input value={signatario} placeholder="Nome do signatário (opcional)"
+          onChange={(e) => setSignatario(e.target.value)} className="h-7 text-[12px]" />
+        {atual && <Badge variant="outline" className="text-[10.5px] bg-emerald-50 text-emerald-700 border-emerald-200">Assinado</Badge>}
+      </div>
+      {atual ? (
+        <div className="space-y-1">
+          <AnexoSignedImage storagePath={atual.storage_path} nome={atual.nome} alt="assinatura" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10.5px] text-muted-foreground">
+              {new Date(atual.assinado_em).toLocaleString("pt-BR")}{atual.signatario ? ` · ${atual.signatario}` : ""}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="h-7" onClick={limpar}>
+              <PenLine className="h-3.5 w-3.5 mr-1" />Reassinar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <SignaturePad onSave={handleSave} />
+      )}
+    </div>
+  );
+}
+
+
 
 function VerRespostasDialog({ tarefaId, onClose }: { tarefaId: string; onClose: () => void }) {
   const { data: respostas = [], isLoading } = useRespostasFormulario(tarefaId);

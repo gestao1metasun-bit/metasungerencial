@@ -42,6 +42,9 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
   const prepararFin = usePrepararPedidoFinanceiro();
   const bloquearFin = useBloquearPedidoFinanceiro();
   const desbloquearFin = useDesbloquearPedidoFinanceiro();
+  const gerarTituloAp = useGerarTituloAP();
+  const navigate = useNavigate();
+  const tituloApId = (ped?.titulo_ap_id as string | null) ?? null;
 
   const [docNF, setDocNF] = useState("");
   const [qtdsRec, setQtdsRec] = useState<Record<string, number>>({});

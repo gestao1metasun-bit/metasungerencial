@@ -23,6 +23,7 @@ import {
 import { SignaturePad } from "@/components/os/SignaturePad";
 import { AnexoSignedImage, AnexoSignedLink } from "@/components/os/AnexoSigned";
 import { anexosRepo } from "@/lib/repositories/anexos-repo";
+import { MateriaisTab } from "@/modules/os/MateriaisTab";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EnterpriseRecordToolbar, RowActions } from "@/components/app/enterprise";
 import { Badge } from "@/components/ui/badge";
@@ -160,6 +161,7 @@ function PainelOsPage() {
           <TabsTrigger value="os" className="text-[12px]">Ordem de Serviço</TabsTrigger>
           <TabsTrigger value="orcado" className="text-[12px]">Orçado x Realizado</TabsTrigger>
           <TabsTrigger value="custos" className="text-[12px]">Custos</TabsTrigger>
+          <TabsTrigger value="materiais" className="text-[12px]">Materiais</TabsTrigger>
           <TabsTrigger value="tarefas" className="text-[12px]">Tarefas</TabsTrigger>
           <TabsTrigger value="produtividade" className="text-[12px]">Produtividade</TabsTrigger>
           <TabsTrigger value="formularios" className="text-[12px]">Formulários</TabsTrigger>
@@ -197,6 +199,7 @@ function PainelOsPage() {
 
         <TabsContent value="orcado" className="mt-2"><OrcadoRealizadoTab osId={os.id} /></TabsContent>
         <TabsContent value="custos" className="mt-2"><CustosTab osId={os.id} /></TabsContent>
+        <TabsContent value="materiais" className="mt-2"><MateriaisTab osId={os.id} /></TabsContent>
         <TabsContent value="tarefas" className="mt-2"><TarefasTab osId={os.id} /></TabsContent>
         <TabsContent value="produtividade" className="mt-2"><ProdutividadeTab osId={os.id} /></TabsContent>
         <TabsContent value="formularios" className="mt-2"><FormulariosTab osId={os.id} /></TabsContent>

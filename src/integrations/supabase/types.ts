@@ -9047,6 +9047,13 @@ export type Database = {
             foreignKeyName: "suprimentos_pedido_eventos_pedido_id_fkey"
             columns: ["pedido_id"]
             isOneToOne: false
+            referencedRelation: "v_sup_pedidos_prontos_financeiro"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_eventos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
             referencedRelation: "v_suprimentos_pedidos_lista"
             referencedColumns: ["id"]
           },
@@ -9109,6 +9116,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suprimentos_pedidos_compra"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_sup_pedidos_prontos_financeiro"
+            referencedColumns: ["pedido_id"]
           },
           {
             foreignKeyName: "suprimentos_pedido_itens_pedido_id_fkey"
@@ -9437,6 +9451,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suprimentos_pedidos_compra"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_sup_pedidos_prontos_financeiro"
+            referencedColumns: ["pedido_id"]
           },
           {
             foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
@@ -13028,6 +13049,84 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sup_pedidos_prontos_financeiro: {
+        Row: {
+          atualizado_em: string | null
+          cc_codigo: string | null
+          cc_nome: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          condicao_pagamento: string | null
+          cotacao_id: string | null
+          cr_codigo: string | null
+          cr_nome: string | null
+          documento_fiscal: string | null
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          natureza_codigo: string | null
+          natureza_id: string | null
+          natureza_nome: string | null
+          obra_id: string | null
+          os_id: string | null
+          pedido_id: string | null
+          pedido_numero: number | null
+          projeto_id: string | null
+          requisicao_id: string | null
+          valor: number | null
+          vencimento_previsto: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_cotacoes_lista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_suprimentos_alertas: {
         Row: {
           criado_em: string | null
@@ -13254,6 +13353,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suprimentos_pedidos_compra"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_sup_pedidos_prontos_financeiro"
+            referencedColumns: ["pedido_id"]
           },
           {
             foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
@@ -14636,6 +14742,10 @@ export type Database = {
       }
       rpc_sup_pedido_enviar: { Args: { p_id: string }; Returns: undefined }
       rpc_sup_pedido_gerar: { Args: { p_cotacao_id: string }; Returns: string }
+      rpc_sup_pedido_gerar_titulo_ap: {
+        Args: { p_pedido_id: string }
+        Returns: Json
+      }
       rpc_sup_pedido_preparar_financeiro: {
         Args: { p_payload: Json; p_pedido_id: string }
         Returns: string

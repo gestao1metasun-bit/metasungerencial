@@ -137,12 +137,7 @@ function ModelosPage() {
       <PageHeader
         title="Modelos de Formulário"
         subtitle="Construtor visual com versionamento, publicação e aprovação"
-        breadcrumbs={[
-          { label: "Engenharia", to: "/engenharia" },
-          { label: "Gestão de Serviços", to: "/engenharia/gestao-servicos" },
-          { label: "Modelos" },
-        ]}
-        leftSlot={
+        actions={
           <Link to="/engenharia/gestao-servicos">
             <Button variant="ghost" size="sm" className="h-8"><ArrowLeft className="h-3.5 w-3.5 mr-1" />Voltar</Button>
           </Link>
@@ -151,12 +146,14 @@ function ModelosPage() {
 
       <EnterpriseRecordToolbar
         entityType="engenharia"
+        selectedIds={[]}
         availableActions={["novo", "atualizar"]}
         onAction={(a) => {
           if (a === "novo") setEditor({ open: true, modelo: null });
           if (a === "atualizar") refetch();
         }}
       />
+
 
       <Card className="p-2">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">

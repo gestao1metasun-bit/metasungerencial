@@ -598,11 +598,8 @@ export function EnterpriseRecordToolbar({
         tone={layoutBar.density === "spacious" ? "info" : "muted"}
         onClick={() => layoutBar.onDensityChange?.("spacious")}
       />
-      <Sep />
-      <IconBtn icon={Square} label="Visão tabela" tone="muted" />
-      <IconBtn icon={BarChart3} label="Visão gráfico" tone="muted" />
-      <Sep />
-      <IconBtn icon={Mail} label="Enviar" tone="muted" />
+      {/* D26.1 — removidos 3 ícones decorativos (Square/BarChart3/Mail) sem ação.
+          Nenhum botão mudo na Linha 3. Slot `extra` continua disponível p/ visões reais. */}
       <div className="ml-auto">{layoutBar.extra}</div>
     </div>
   ) : null;

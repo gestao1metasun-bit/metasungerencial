@@ -184,6 +184,7 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="pagar" className="mt-5">
+          <PedidosProntosFinanceiroCard />
           <TitulosTabSwitch tipo="AP" />
         </TabsContent>
 

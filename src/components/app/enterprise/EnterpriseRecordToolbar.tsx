@@ -22,7 +22,7 @@
  */
 import { useMemo, type ComponentType, type ReactNode } from "react";
 import {
-  Plus, Pencil, X, Save, RefreshCw, Eye, Trash2,
+  Plus, Pencil, X, Save, RefreshCw, Eye, Trash2, Copy,
   Paperclip, History, MessageSquare, Shield,
   Settings as Cog, ChevronDown, Filter, FilterX,
   Layout, Columns3, Download, Printer, Search,

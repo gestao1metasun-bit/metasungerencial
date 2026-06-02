@@ -447,7 +447,7 @@ function ContratoAssinadoTab({
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <ModuloHistoricoDrawer
@@ -722,7 +722,7 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <Card className="p-5">
@@ -956,7 +956,7 @@ function ContratosTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-end">
@@ -4856,7 +4856,7 @@ function VendedoresTab({
           else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
       <div className="flex items-center justify-between">
@@ -5638,7 +5638,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
-        statusActions={ribbonRm()}
+        statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
       />
 

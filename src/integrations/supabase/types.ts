@@ -12792,6 +12792,14 @@ export type Database = {
         | "os.material.reservar"
         | "os.material.baixar"
         | "os.material.devolver"
+        | "suprimentos.requisicao.visualizar"
+        | "suprimentos.requisicao.criar"
+        | "suprimentos.requisicao.editar"
+        | "suprimentos.requisicao.aprovar"
+        | "suprimentos.requisicao.cancelar"
+        | "suprimentos.requisicao.atender"
+        | "suprimentos.requisicao.comprar"
+        | "suprimentos.dashboard.ver"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -13093,6 +13101,14 @@ export const Constants = {
         "os.material.reservar",
         "os.material.baixar",
         "os.material.devolver",
+        "suprimentos.requisicao.visualizar",
+        "suprimentos.requisicao.criar",
+        "suprimentos.requisicao.editar",
+        "suprimentos.requisicao.aprovar",
+        "suprimentos.requisicao.cancelar",
+        "suprimentos.requisicao.atender",
+        "suprimentos.requisicao.comprar",
+        "suprimentos.dashboard.ver",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

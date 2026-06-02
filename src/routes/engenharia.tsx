@@ -2035,14 +2035,16 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
     );
   }
 
-  // Apenas projetos pendentes na Engenharia (não aprovados ainda).
-  // Ao aprovar, o projeto sai daqui e aparece em Gestão de projetos.
+  // D26.1.3 — Tabela/Kanban devem mostrar TODOS os projetos enviados (pendentes + aprovados).
+  // Antes, `flat` filtrava só pendentes e `enviadosGlob` era hardcoded `[]` — Kanban
+  // "Enviados" sempre vazio e Tabela parecia quebrada quando não havia pendentes.
+  // A visão "Por contrato" continua filtrando só pendentes no laço próprio (linha ~2186).
   const flat: { p: ProjetoVinculado; c: ContratoFull }[] = [];
   liberados.forEach((c) => (c.projetos ?? []).forEach((p) => {
-    if (p.enviadoEngenharia && !p.aprovado) flat.push({ p, c });
+    if (p.enviadoEngenharia) flat.push({ p, c });
   }));
-  const pendentesGlob = flat;
-  const enviadosGlob: typeof flat = [];
+  const pendentesGlob = flat.filter(({ p }) => !p.aprovado);
+  const enviadosGlob = flat.filter(({ p }) => !!p.aprovado);
 
   const aprovarProjetoEng = (c: ContratoFull, p: ProjetoVinculado) => {
     updateProjeto(c.id, p.id, {

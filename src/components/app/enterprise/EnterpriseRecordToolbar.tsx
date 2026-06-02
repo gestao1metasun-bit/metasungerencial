@@ -29,7 +29,7 @@ import {
   CheckCircle2, Send, FileText, Calculator, Wrench,
   PackageCheck, FileSignature, Banknote, Undo2, Wallet,
   ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
-  Rows3, Rows, Square, SquareStack, BarChart3, Mail,
+  Rows3, Rows, Square, SquareStack, BarChart3, Mail, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useContratos, retornarProjetoComercial, updateProjeto, addProjeto, removeProjeto, reativarContrato, type ProjetoVinculado, type ContratoFull } from "@/lib/contratos-store";
 import {

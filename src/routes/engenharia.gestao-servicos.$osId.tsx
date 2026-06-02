@@ -881,5 +881,301 @@ function CustosTab({ osId }: { osId: string }) {
       </Dialog>
     </div>
   );
+
+// ═════════════════════════════════════════════════════════════════════
+// E.OS.4 — Formulários da O.S.
+// ═════════════════════════════════════════════════════════════════════
+interface CampoModelo {
+  id: string; tipo: string; titulo: string; descricao?: string;
+  obrigatorio?: boolean; ajuda?: string; opcoes?: string[];
 }
+
+function FormulariosTab({ osId }: { osId: string }) {
+  const { data: tarefas = [] } = useOsTarefas(osId);
+  const { data: modelos = [] } = useOsFormulariosTemplates();
+  const [responder, setResponder] = useState<{ tarefaId: string; modelo: OsFormularioTemplateRow } | null>(null);
+  const [verRespostas, setVerRespostas] = useState<string | null>(null);
+
+  const disponiveis = modelos.filter((m) => (m.status_modelo === "PUBLICADO" || m.status_modelo === "APROVADO") && m.ativo);
+
+  return (
+    <div className="space-y-2">
+      <Card className="p-2">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className="text-[13px] font-semibold">Formulários por tarefa</h3>
+            <p className="text-[11.5px] text-muted-foreground">
+              Selecione um modelo publicado/aprovado para responder dentro de uma tarefa.
+            </p>
+          </div>
+          <Link to="/engenharia/gestao-servicos/modelos">
+            <Button size="sm" variant="outline" className="h-7"><FileText className="h-3.5 w-3.5 mr-1" />Gerenciar modelos</Button>
+          </Link>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow className="h-8">
+              <TableHead className="text-[11.5px]">Tarefa</TableHead>
+              <TableHead className="text-[11.5px]">Status</TableHead>
+              <TableHead className="text-[11.5px]">Modelo</TableHead>
+              <TableHead className="text-[11.5px] text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tarefas.length === 0 && (
+              <TableRow><TableCell colSpan={4} className="text-center text-[12px] text-muted-foreground py-4">Nenhuma tarefa cadastrada.</TableCell></TableRow>
+            )}
+            {tarefas.map((t) => (
+              <FormulariosTarefaRow
+                key={t.id}
+                tarefaId={t.id}
+                nome={t.nome}
+                status={t.status}
+                modelos={disponiveis}
+                onResponder={(modelo) => setResponder({ tarefaId: t.id, modelo })}
+                onVer={() => setVerRespostas(t.id)}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      {responder && (
+        <ResponderFormularioDialog
+          tarefaId={responder.tarefaId}
+          modelo={responder.modelo}
+          onClose={() => setResponder(null)}
+        />
+      )}
+
+      {verRespostas && (
+        <VerRespostasDialog tarefaId={verRespostas} onClose={() => setVerRespostas(null)} />
+      )}
+    </div>
+  );
+}
+
+function FormulariosTarefaRow({
+  tarefaId, nome, status, modelos, onResponder, onVer,
+}: {
+  tarefaId: string; nome: string; status: string;
+  modelos: OsFormularioTemplateRow[];
+  onResponder: (m: OsFormularioTemplateRow) => void;
+  onVer: () => void;
+}) {
+  const { data: respostas = [] } = useRespostasFormulario(tarefaId);
+  const [sel, setSel] = useState<string>("");
+  const modeloSel = modelos.find((m) => m.id === sel);
+  return (
+    <TableRow className="h-9">
+      <TableCell className="text-[12.5px]">{nome}</TableCell>
+      <TableCell><Badge variant="outline" className="text-[10.5px]">{status}</Badge></TableCell>
+      <TableCell>
+        <Select value={sel} onValueChange={setSel}>
+          <SelectTrigger className="h-7 text-[12px] w-[260px]"><SelectValue placeholder="Selecionar modelo…" /></SelectTrigger>
+          <SelectContent>
+            {modelos.length === 0 && <div className="px-2 py-1 text-[11.5px] text-muted-foreground">Nenhum modelo publicado.</div>}
+            {modelos.map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.nome} v{m.versao}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="inline-flex items-center gap-1">
+          <Badge variant="secondary" className="text-[10.5px]">{respostas.length} resp.</Badge>
+          <Button size="sm" variant="ghost" className="h-7" onClick={onVer} disabled={respostas.length === 0}>Ver</Button>
+          <Button size="sm" variant="default" className="h-7 bg-emerald-600 hover:bg-emerald-700" disabled={!modeloSel} onClick={() => modeloSel && onResponder(modeloSel)}>
+            Responder
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function ResponderFormularioDialog({
+  tarefaId, modelo, onClose,
+}: { tarefaId: string; modelo: OsFormularioTemplateRow; onClose: () => void }) {
+  const campos = (Array.isArray(modelo.campos) ? modelo.campos : []) as CampoModelo[];
+  const [valores, setValores] = useState<Record<string, unknown>>({});
+  const [geo, setGeo] = useState<{ lat: number; lon: number } | null>(null);
+  const responder = useResponderFormulario();
+
+  function setVal(id: string, v: unknown) { setValores((p) => ({ ...p, [id]: v })); }
+  function coletarGeo() {
+    if (!navigator.geolocation) { toast.error("Geolocalização não suportada."); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeo({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (e) => toast.error("Falha geo: " + e.message),
+    );
+  }
+
+  async function handleSalvar() {
+    for (const c of campos) {
+      if (c.obrigatorio && (valores[c.id] == null || valores[c.id] === "")) {
+        toast.error(`Campo obrigatório: ${c.titulo}`); return;
+      }
+    }
+    try {
+      const payload: Record<string, unknown> = {
+        ...valores,
+        __meta: {
+          respondido_em_local: new Date().toISOString(),
+          geo: geo ?? null,
+          modelo_versao: modelo.versao,
+          modelo_tipo: modelo.tipo,
+        },
+      };
+      await responder.mutateAsync({
+        tarefa_id: tarefaId,
+        formulario_id: modelo.id,
+        respostas: payload,
+        idempotency_key: `${tarefaId}:${modelo.id}:${Date.now()}`,
+      });
+      toast.success("Formulário registrado e auditado.");
+      onClose();
+    } catch (e) {
+      toast.error("Falha: " + (e as Error).message);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{modelo.nome} <span className="text-xs text-muted-foreground">v{modelo.versao}</span></DialogTitle>
+          <DialogDescription>{modelo.descricao ?? "Responder o formulário para esta tarefa."}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          {campos.map((c) => (
+            <div key={c.id} className="space-y-1">
+              <Label className="text-[12px]">
+                {c.titulo}{c.obrigatorio && <span className="text-red-600">*</span>}
+              </Label>
+              {c.descricao && <p className="text-[11px] text-muted-foreground">{c.descricao}</p>}
+              <CampoInput campo={c} valor={valores[c.id]} onChange={(v) => setVal(c.id, v)} />
+            </div>
+          ))}
+
+          <div className="border-t pt-2 mt-2 flex items-center justify-between">
+            <div className="text-[11.5px] text-muted-foreground">
+              Geolocalização: {geo ? `${geo.lat.toFixed(5)}, ${geo.lon.toFixed(5)}` : "—"}
+            </div>
+            <Button size="sm" variant="outline" className="h-7" onClick={coletarGeo}>Coletar GPS</Button>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} className="h-8">Cancelar</Button>
+          <Button onClick={handleSalvar} disabled={responder.isPending} className="h-8 bg-emerald-600 hover:bg-emerald-700">
+            {responder.isPending ? "Salvando…" : "Salvar resposta"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CampoInput({ campo, valor, onChange }: { campo: CampoModelo; valor: unknown; onChange: (v: unknown) => void }) {
+  const v = valor as string | number | string[] | undefined;
+  const placeholder = campo.ajuda ?? "";
+  switch (campo.tipo) {
+    case "textarea":
+    case "observacao":
+      return <Textarea value={(v as string) ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="text-[12.5px]" />;
+    case "numero":
+    case "moeda":
+      return <Input type="number" step="0.01" value={(v as number) ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))} className="h-8 text-[12.5px]" />;
+    case "data":
+      return <Input type="date" value={(v as string) ?? ""} onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
+    case "hora":
+      return <Input type="time" value={(v as string) ?? ""} onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
+    case "selecao":
+      return (
+        <Select value={(v as string) ?? ""} onValueChange={onChange}>
+          <SelectTrigger className="h-8 text-[12.5px]"><SelectValue placeholder={placeholder} /></SelectTrigger>
+          <SelectContent>
+            {(campo.opcoes ?? []).map((o, i) => <SelectItem key={i} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      );
+    case "multipla":
+    case "checklist": {
+      const arr = (Array.isArray(v) ? v : []) as string[];
+      return (
+        <div className="space-y-1">
+          {(campo.opcoes ?? []).map((o, i) => {
+            const checked = arr.includes(o);
+            return (
+              <label key={i} className="flex items-center gap-2 text-[12.5px]">
+                <input type="checkbox" checked={checked} onChange={(e) => {
+                  const next = e.target.checked ? [...arr, o] : arr.filter((x) => x !== o);
+                  onChange(next);
+                }} />
+                {o}
+              </label>
+            );
+          })}
+        </div>
+      );
+    }
+    case "foto":
+    case "anexo":
+      return (
+        <div className="text-[11.5px] text-muted-foreground border rounded p-2 bg-muted/30">
+          Anexo "{campo.titulo}" deve ser anexado pelo botão "Anexos" da O.S. (auditado em <code>os_eventos</code>).
+        </div>
+      );
+    case "assinatura":
+      return (
+        <div className="flex items-center gap-2">
+          <Input value={(v as string) ?? ""} placeholder="Nome do signatário" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />
+          <Badge variant="outline" className="text-[10.5px]">{v ? "Assinado" : "Pendente"}</Badge>
+        </div>
+      );
+    case "geolocalizacao":
+      return <Input value={(v as string) ?? ""} placeholder="lat, lon" onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
+    case "texto":
+    default:
+      return <Input value={(v as string) ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="h-8 text-[12.5px]" />;
+  }
+}
+
+function VerRespostasDialog({ tarefaId, onClose }: { tarefaId: string; onClose: () => void }) {
+  const { data: respostas = [], isLoading } = useRespostasFormulario(tarefaId);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Respostas registradas</DialogTitle>
+          <DialogDescription>Histórico append-only desta tarefa.</DialogDescription>
+        </DialogHeader>
+        {isLoading ? <p className="text-[12px]">Carregando…</p> : respostas.length === 0 ? (
+          <p className="text-[12px] text-muted-foreground">Nenhuma resposta.</p>
+        ) : (
+          <div className="space-y-2">
+            {respostas.map((r) => (
+              <Card key={r.id} className="p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {new Date(r.respondido_em).toLocaleString("pt-BR")} · por {r.respondido_por ?? "—"}
+                  </span>
+                  <Badge variant="outline" className="text-[10.5px] font-mono">{r.formulario_id.slice(0, 8)}</Badge>
+                </div>
+                <pre className="text-[11.5px] bg-muted/40 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                  {JSON.stringify(r.respostas, null, 2)}
+                </pre>
+              </Card>
+            ))}
+          </div>
+        )}
+        <DialogFooter><Button onClick={onClose} className="h-8">Fechar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 

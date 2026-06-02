@@ -93,7 +93,7 @@ function AuditoriaPage() {
     <div className="space-y-3 p-2">
       <PageHeader
         title="Auditoria Corporativa"
-        description="Visão consolidada e somente leitura de todas as alterações do ERP."
+        subtitle="Visão consolidada e somente leitura de todas as alterações do ERP."
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

@@ -60,7 +60,7 @@ export function useMarcarNotifLida() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-    onError: (e: Error) => toast({ title: "Falha ao marcar como lida", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(`Falha ao marcar como lida: ${e.message}`),
   });
 }
 
@@ -74,9 +74,9 @@ export function useMarcarTodasLidas() {
     },
     onSuccess: (count) => {
       qc.invalidateQueries({ queryKey: QK });
-      toast({ title: "Notificações marcadas como lidas", description: `${count ?? 0} atualizadas` });
+      toast.success(`${count ?? 0} notificações marcadas como lidas`);
     },
-    onError: (e: Error) => toast({ title: "Falha", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(`Falha: ${e.message}`),
   });
 }
 
@@ -88,7 +88,7 @@ export function useArquivarNotif() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-    onError: (e: Error) => toast({ title: "Falha ao arquivar", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(`Falha ao arquivar: ${e.message}`),
   });
 }
 

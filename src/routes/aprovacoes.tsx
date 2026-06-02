@@ -188,6 +188,16 @@ function AprovacoesPage() {
         <StatCard label="Aprovadas hoje" value={counts.aprovadas_hoje} icon={ShieldCheck} />
       </div>
 
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "unificada" | "workflow")}>
+        <TabsList>
+          <TabsTrigger value="unificada">Visão Unificada</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow corporativo</TabsTrigger>
+        </TabsList>
+        <TabsContent value="unificada">
+          <UnificadaTab />
+        </TabsContent>
+        <TabsContent value="workflow">
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as Filtro)}>
         <TabsList>
           <TabsTrigger value="pendentes_para_mim">

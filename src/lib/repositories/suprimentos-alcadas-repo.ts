@@ -261,6 +261,73 @@ export function useDesbloquearPedidoFinanceiro() {
   });
 }
 
+// ── D21 — Gerar Conta a Pagar a partir do pedido ──────────────────────────
+export type GerarTituloApResult = {
+  titulo_id: string;
+  codigo: string | null;
+  criado_agora: boolean;
+};
+
+export function useGerarTituloAP() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { pedido_id: string }): Promise<GerarTituloApResult> => {
+      const { data, error } = await supabase.rpc("rpc_sup_pedido_gerar_titulo_ap" as never, {
+        p_pedido_id: args.pedido_id,
+      } as never);
+      if (error) throw error;
+      return data as unknown as GerarTituloApResult;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["suprimentos-compras"] });
+      qc.invalidateQueries({ queryKey: [DASH_KEY] });
+      qc.invalidateQueries({ queryKey: ["sup-prontos-financeiro"] });
+      qc.invalidateQueries({ queryKey: ["titulos"] });
+    },
+  });
+}
+
+export type PedidoProntoFinanceiro = {
+  pedido_id: string;
+  pedido_numero: number;
+  fornecedor_id: string | null;
+  fornecedor_nome: string | null;
+  valor: number;
+  vencimento_previsto: string | null;
+  condicao_pagamento: string | null;
+  documento_fiscal: string | null;
+  natureza_id: string | null;
+  natureza_codigo: string | null;
+  natureza_nome: string | null;
+  centro_custo_id: string | null;
+  cc_codigo: string | null;
+  cc_nome: string | null;
+  centro_resultado_id: string | null;
+  cr_codigo: string | null;
+  cr_nome: string | null;
+  os_id: string | null;
+  obra_id: string | null;
+  projeto_id: string | null;
+  requisicao_id: string;
+  cotacao_id: string | null;
+  atualizado_em: string;
+};
+
+export function usePedidosProntosFinanceiro() {
+  return useQuery({
+    queryKey: ["sup-prontos-financeiro"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_sup_pedidos_prontos_financeiro" as never)
+        .select("*")
+        .order("vencimento_previsto", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as PedidoProntoFinanceiro[];
+    },
+    staleTime: 30_000,
+  });
+}
+
 // ── Dashboard + Alertas ───────────────────────────────────────────────────
 export type DashboardKpis = {
   abertas: number;

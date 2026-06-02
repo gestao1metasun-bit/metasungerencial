@@ -54,6 +54,7 @@ import { FluxoCaixaRealTab } from "@/components/app/financeiro/FluxoCaixaRealTab
 import { FluxoCaixaRealTabSupabase } from "@/components/app/financeiro/FluxoCaixaRealTabSupabase";
 import { LancamentosTabSupabase } from "@/modules/financeiro/LancamentosTabSupabase";
 import { RecorrentesTabSupabase } from "@/modules/financeiro/RecorrentesTabSupabase";
+import { PedidosProntosFinanceiroCard } from "@/components/app/financeiro/PedidosProntosFinanceiroCard";
 import { CentrosNaturezasTabSupabase } from "@/modules/financeiro/CentrosNaturezasTabSupabase";
 import { toast } from "sonner";
 
@@ -183,6 +184,7 @@ function FinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="pagar" className="mt-5">
+          <PedidosProntosFinanceiroCard />
           <TitulosTabSwitch tipo="AP" />
         </TabsContent>
 

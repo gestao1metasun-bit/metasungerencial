@@ -20,7 +20,9 @@ import {
 } from "@/lib/repositories/suprimentos-compras-repo";
 import {
   usePrepararPedidoFinanceiro, useBloquearPedidoFinanceiro, useDesbloquearPedidoFinanceiro,
+  useGerarTituloAP,
 } from "@/lib/repositories/suprimentos-alcadas-repo";
+import { useNavigate } from "@tanstack/react-router";
 
 type Props = { id: string | null; onClose: () => void };
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -40,6 +42,9 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
   const prepararFin = usePrepararPedidoFinanceiro();
   const bloquearFin = useBloquearPedidoFinanceiro();
   const desbloquearFin = useDesbloquearPedidoFinanceiro();
+  const gerarTituloAp = useGerarTituloAP();
+  const navigate = useNavigate();
+  const tituloApId = (ped?.titulo_ap_id as string | null) ?? null;
 
   const [docNF, setDocNF] = useState("");
   const [qtdsRec, setQtdsRec] = useState<Record<string, number>>({});
@@ -214,7 +219,7 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2 pt-2 border-t">
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"
-                      disabled={!finCond || !finData || !finValor}
+                      disabled={!finCond || !finData || !finValor || statusFinanceiro === "GERADO"}
                       onClick={async () => {
                         try {
                           await prepararFin.mutateAsync({
@@ -229,7 +234,32 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                           refetch();
                         } catch (e) { toast.error((e as Error).message); }
                       }}>Enviar para o financeiro</Button>
+
+                    {statusFinanceiro === "PRONTO_PARA_FINANCEIRO" && !tituloApId && (
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700"
+                        disabled={gerarTituloAp.isPending}
+                        onClick={async () => {
+                          if (!id) return;
+                          try {
+                            const r = await gerarTituloAp.mutateAsync({ pedido_id: id });
+                            toast.success(r.criado_agora
+                              ? `Conta a pagar gerada: ${r.codigo ?? r.titulo_id}`
+                              : `Conta a pagar já existia: ${r.codigo ?? r.titulo_id}`);
+                            refetch();
+                          } catch (e) { toast.error((e as Error).message); }
+                        }}>Gerar Conta a Pagar</Button>
+                    )}
+
+                    {tituloApId && (
+                      <Button size="sm" variant="outline"
+                        className="border-blue-300 text-blue-700"
+                        onClick={() => { onClose(); navigate({ to: "/financeiro", hash: "tab=pagar" }); }}>
+                        Ver título gerado
+                      </Button>
+                    )}
+
                     <Button size="sm" variant="outline" className="text-red-700 border-red-300"
+                      disabled={statusFinanceiro === "GERADO"}
                       onClick={async () => {
                         const m = prompt("Motivo do bloqueio (≥5):") ?? "";
                         if (m.trim().length < 5) return;
@@ -248,6 +278,7 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                   </div>
                   <div className="text-[11px] text-muted-foreground pt-1">
                     Status financeiro atual: <b>{statusFinanceiro.replace(/_/g, " ")}</b>
+                    {tituloApId ? <span className="text-blue-700"> · Título: {tituloApId.slice(0, 8)}…</span> : null}
                     {ped.financeiro_bloqueio_motivo ? <span className="text-red-700"> — {String(ped.financeiro_bloqueio_motivo)}</span> : null}
                   </div>
                 </div>

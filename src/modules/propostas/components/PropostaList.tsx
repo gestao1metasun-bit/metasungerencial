@@ -1272,7 +1272,7 @@ type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 90 },
+  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 160 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },

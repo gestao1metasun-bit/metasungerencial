@@ -193,7 +193,66 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                 )}
               </TabsContent>
 
-              <TabsContent value="historico">
+              <TabsContent value="financeiro">
+                <div className="space-y-2">
+                  <div className="text-[11.5px] text-muted-foreground">
+                    Preenche os dados para o financeiro. Nenhum título é gerado automaticamente — o
+                    pedido apenas fica <b>Pronto para financeiro</b> e pode ser baixado pela equipe.
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div><Label className="text-[11px]">Condição de pagamento *</Label>
+                      <Input className="h-8 text-[12px]" value={finCond} onChange={(e) => setFinCond(e.target.value)} placeholder="Ex.: 30/60/90" /></div>
+                    <div><Label className="text-[11px]">Data prevista *</Label>
+                      <Input type="date" className="h-8 text-[12px]" value={finData} onChange={(e) => setFinData(e.target.value)} /></div>
+                    <div><Label className="text-[11px]">Documento / NF</Label>
+                      <Input className="h-8 text-[12px]" value={finDoc} onChange={(e) => setFinDoc(e.target.value)} placeholder="Nº NF" /></div>
+                    <div><Label className="text-[11px]">Valor aprovado final *</Label>
+                      <Input type="number" step="0.01" className="h-8 text-[12px]" value={finValor}
+                        onChange={(e) => setFinValor(e.target.value)} placeholder={String(ped.valor_total ?? 0)} /></div>
+                    <div className="col-span-2 md:col-span-4"><Label className="text-[11px]">Observação</Label>
+                      <Input className="h-8 text-[12px]" value={finObs} onChange={(e) => setFinObs(e.target.value)} /></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"
+                      disabled={!finCond || !finData || !finValor}
+                      onClick={async () => {
+                        try {
+                          await prepararFin.mutateAsync({
+                            pedido_id: id!,
+                            condicao_pagamento: finCond,
+                            data_prevista_pagamento: finData,
+                            documento_fiscal: finDoc || null,
+                            valor_aprovado_final: Number(finValor),
+                            financeiro_observacao: finObs || null,
+                          });
+                          toast.success("Pedido pronto para o financeiro");
+                          refetch();
+                        } catch (e) { toast.error((e as Error).message); }
+                      }}>Enviar para o financeiro</Button>
+                    <Button size="sm" variant="outline" className="text-red-700 border-red-300"
+                      onClick={async () => {
+                        const m = prompt("Motivo do bloqueio (≥5):") ?? "";
+                        if (m.trim().length < 5) return;
+                        try { await bloquearFin.mutateAsync({ pedido_id: id!, motivo: m.trim() }); toast.success("Pedido bloqueado no financeiro"); refetch(); }
+                        catch (e) { toast.error((e as Error).message); }
+                      }}>Bloquear no financeiro</Button>
+                    {statusFinanceiro === "BLOQUEADO" && (
+                      <Button size="sm" variant="outline"
+                        onClick={async () => {
+                          const m = prompt("Motivo do desbloqueio (≥5):") ?? "";
+                          if (m.trim().length < 5) return;
+                          try { await desbloquearFin.mutateAsync({ pedido_id: id!, motivo: m.trim() }); toast.success("Pedido desbloqueado"); refetch(); }
+                          catch (e) { toast.error((e as Error).message); }
+                        }}>Desbloquear</Button>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground pt-1">
+                    Status financeiro atual: <b>{statusFinanceiro.replace(/_/g, " ")}</b>
+                    {ped.financeiro_bloqueio_motivo ? <span className="text-red-700"> — {String(ped.financeiro_bloqueio_motivo)}</span> : null}
+                  </div>
+                </div>
+              </TabsContent>
+
                 <div className="space-y-1 max-h-[40vh] overflow-y-auto">
                   {eventos.map((e) => (
                     <div key={String(e.id)} className="text-[11.5px] border-l-2 border-indigo-300 pl-2 py-0.5">

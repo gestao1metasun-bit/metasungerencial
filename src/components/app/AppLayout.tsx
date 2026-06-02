@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 
-import { Bell, LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
+import { LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
+import { NotificacoesBell } from "@/components/app/NotificacoesBell";
 import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -88,10 +89,8 @@ export function AppLayout() {
               <LogIn className="h-3 w-3" /> Sem sessão
             </button>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
-          </Button>
+          <NotificacoesBell />
+
           <Button
             variant="ghost"
             size="icon"

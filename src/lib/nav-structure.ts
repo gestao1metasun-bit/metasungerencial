@@ -94,6 +94,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/analytics/governanca",     label: "Governança",               icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 77, critica: true },
   { to: "/analytics/performance",    label: "Performance",              icon: LineChart,       accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 78 },
   { to: "/analytics/erros",          label: "Erros",                    icon: FileBarChart,    accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 79 },
+  { to: "/auditoria",                label: "Auditoria Corporativa",    icon: ShieldCheck,     accessKey: "dashboard",     tier: "controle",  macro: "analytics",      ordem: 80, critica: true },
   { to: "/relatorios",               label: "Relatórios",               icon: FileBarChart,    accessKey: "relatorios",    tier: "controle",  macro: "analytics",      ordem: 90 },
   { to: "/tarefas",                  label: "Tarefas",                  icon: ListChecks,      accessKey: "dashboard",     tier: "operacao",  macro: "analytics",      ordem: 100 },
 

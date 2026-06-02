@@ -109,6 +109,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/posvenda",           label: "Pós-venda",          icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "posvenda",      ordem: 10, critica: true },
   { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 10, critica: true },
   { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 20 },
+  { to: "/suprimentos",        label: "Suprimentos (Hub)",  icon: Boxes,           accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 5,  critica: true },
   { to: "/solicitacoes-material", label: "Solicitações de Material", icon: ShoppingCart,  accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 10, critica: true },
   { to: "/fornecedores",       label: "Fornecedores",       icon: Truck,           accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 20 },
   { to: "/aprovacoes",         label: "Central de Aprovações", icon: ClipboardCheck, accessKey: "dashboard",   tier: "operacao",  macro: "aprovacoes",    ordem: 10, critica: true },

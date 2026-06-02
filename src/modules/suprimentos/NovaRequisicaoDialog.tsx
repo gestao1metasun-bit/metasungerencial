@@ -129,6 +129,11 @@ export function NovaRequisicaoDialog({
     });
   }, [naturezas.data]);
 
+  // Regra: Almoxarifado só faz sentido para MATERIAL → ao mudar tipo p/ SERVIÇO desliga o toggle.
+  useEffect(() => {
+    if (tipo === "SERVICO" && destinoAlmox) setDestinoAlmox(false);
+  }, [tipo, destinoAlmox]);
+
   // Quando ativa Almoxarifado, força CC/CR ALMOXARIFADO e limpa vínculo
   useEffect(() => {
     if (!destinoAlmox) return;
@@ -153,6 +158,12 @@ export function NovaRequisicaoDialog({
   async function submeter() {
     if (!naturezaId) { toast.error("Selecione a Natureza."); return; }
     if (!setor.trim()) { toast.error("Selecione o Setor."); return; }
+    if (!centroCustoId) { toast.error("Selecione o Centro de Custo."); return; }
+    if (!centroResultadoId) { toast.error("Selecione o Centro de Resultado."); return; }
+    if (destinoAlmox && tipo === "SERVICO") {
+      toast.error("Almoxarifado é destino apenas para MATERIAL.");
+      return;
+    }
     if (!destinoAlmox && !vinculoId) {
       toast.error("Vincule a uma Obra/Projeto/O.S. — ou marque destino Almoxarifado.");
       return;
@@ -266,7 +277,7 @@ export function NovaRequisicaoDialog({
             </Select>
           </div>
           <div>
-            <Label className="text-[11px]">Centro de Custo</Label>
+            <Label className="text-[11px]">Centro de Custo *</Label>
             <Select value={centroCustoId} onValueChange={setCentroCustoId} disabled={destinoAlmox}>
               <SelectTrigger className="h-8 text-[12px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
@@ -277,7 +288,7 @@ export function NovaRequisicaoDialog({
             </Select>
           </div>
           <div>
-            <Label className="text-[11px]">Centro de Resultado</Label>
+            <Label className="text-[11px]">Centro de Resultado *</Label>
             <Select value={centroResultadoId} onValueChange={setCentroResultadoId} disabled={destinoAlmox}>
               <SelectTrigger className="h-8 text-[12px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
@@ -293,16 +304,25 @@ export function NovaRequisicaoDialog({
         <div className="border rounded p-2 bg-muted/30 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Switch checked={destinoAlmox} onCheckedChange={setDestinoAlmox} id="almox-switch" />
-              <Label htmlFor="almox-switch" className="text-[11.5px] cursor-pointer">
+              <Switch
+                checked={destinoAlmox}
+                onCheckedChange={setDestinoAlmox}
+                id="almox-switch"
+                disabled={tipo === "SERVICO"}
+              />
+              <Label htmlFor="almox-switch" className={`text-[11.5px] ${tipo === "SERVICO" ? "opacity-60" : "cursor-pointer"}`}>
                 Destino: <b>Almoxarifado</b> (reposição de estoque interno)
               </Label>
             </div>
-            {destinoAlmox && (
-              <span className="text-[10.5px] text-muted-foreground">
-                Vínculo com Projeto/Obra/O.S. dispensado; CC/CR fixados em ALMOXARIFADO.
+            {tipo === "SERVICO" ? (
+              <span className="text-[10.5px] text-amber-700">
+                Indisponível para Serviço — vincule a Projeto/Obra/O.S.
               </span>
-            )}
+            ) : destinoAlmox ? (
+              <span className="text-[10.5px] text-muted-foreground">
+                Vínculo dispensado; CC/CR fixados em ALMOXARIFADO.
+              </span>
+            ) : null}
           </div>
 
           {!destinoAlmox && (

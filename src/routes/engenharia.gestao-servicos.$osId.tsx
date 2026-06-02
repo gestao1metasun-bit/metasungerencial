@@ -1070,7 +1070,7 @@ function ResponderFormularioDialog({
                 {c.titulo}{c.obrigatorio && <span className="text-red-600">*</span>}
               </Label>
               {c.descricao && <p className="text-[11px] text-muted-foreground">{c.descricao}</p>}
-              <CampoInput campo={c} valor={valores[c.id]} onChange={(v) => setVal(c.id, v)} />
+              <CampoInput campo={c} valor={valores[c.id]} onChange={(v) => setVal(c.id, v)} tarefaId={tarefaId} modeloId={modelo.id} />
             </div>
           ))}
 

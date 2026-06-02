@@ -395,7 +395,40 @@ export function NovaRequisicaoDialog({
           <div className="space-y-1.5 max-h-72 overflow-y-auto">
             {itens.map((it, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-1.5 items-end border rounded p-1.5">
-                <div className="col-span-5">
+                <div className="col-span-4">
+                  <Label className="text-[10.5px]">Catálogo ({tipo === "MATERIAL" ? "Material" : "Serviço"})</Label>
+                  <Select
+                    value={it.item_estoque_id || "__livre__"}
+                    onValueChange={(v) => {
+                      if (v === "__livre__") {
+                        patchItem(idx, { item_estoque_id: "" });
+                        return;
+                      }
+                      const found = (catalogo.data ?? []).find((p) => p.id === v);
+                      if (found) {
+                        patchItem(idx, {
+                          item_estoque_id: found.id,
+                          descricao: `${found.codigo} — ${found.nome}`,
+                          unidade: found.unidade ?? it.unidade,
+                          valor_estimado_unitario: Number(found.valor_referencia ?? it.valor_estimado_unitario) || 0,
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-[12px]">
+                      <SelectValue placeholder={catalogo.isLoading ? "Carregando…" : "Selecione…"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__livre__">— Item livre (sem catálogo) —</SelectItem>
+                      {(catalogo.data ?? []).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.codigo} — {p.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-3">
                   <Label className="text-[10.5px]">Descrição</Label>
                   <Input className="h-7 text-[12px]" value={it.descricao}
                     onChange={(e) => patchItem(idx, { descricao: e.target.value })}
@@ -406,14 +439,14 @@ export function NovaRequisicaoDialog({
                   <Input className="h-7 text-[12px]" value={it.unidade}
                     onChange={(e) => patchItem(idx, { unidade: e.target.value })} />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1">
                   <Label className="text-[10.5px]">Qtd</Label>
                   <Input type="number" min={0} step="0.001" className="h-7 text-[12px] tabular-nums"
                     value={it.quantidade_solicitada}
                     onChange={(e) => patchItem(idx, { quantidade_solicitada: Number(e.target.value) })} />
                 </div>
-                <div className="col-span-3">
-                  <Label className="text-[10.5px]">Valor unit. estimado</Label>
+                <div className="col-span-2">
+                  <Label className="text-[10.5px]">Vlr unit. est.</Label>
                   <Input type="number" min={0} step="0.01" className="h-7 text-[12px] tabular-nums"
                     value={it.valor_estimado_unitario}
                     onChange={(e) => patchItem(idx, { valor_estimado_unitario: Number(e.target.value) })} />

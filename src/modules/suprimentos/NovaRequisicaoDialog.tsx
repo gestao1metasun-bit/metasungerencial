@@ -288,7 +288,7 @@ export function NovaRequisicaoDialog({
             </Select>
           </div>
           <div>
-            <Label className="text-[11px]">Centro de Resultado</Label>
+            <Label className="text-[11px]">Centro de Resultado *</Label>
             <Select value={centroResultadoId} onValueChange={setCentroResultadoId} disabled={destinoAlmox}>
               <SelectTrigger className="h-8 text-[12px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>

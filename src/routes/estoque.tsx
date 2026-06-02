@@ -123,6 +123,12 @@ function EstoquePage() {
         subtitle="Almoxarifado · necessidade · compras · reservas · entregas · rastreabilidade."
       />
 
+      {/* D20.SUP.5 — Compatibilidade: rota legada absorvida por Suprimentos */}
+      <div className="mb-2 flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11.5px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900">
+        <span>Esta tela agora vive dentro de <b>Suprimentos</b>. Use o módulo unificado para Requisições, Cotações, Pedidos, Recebimentos e Estoque.</span>
+        <a href="/suprimentos#tab=estoque" className="font-medium underline underline-offset-2 hover:text-amber-700">Abrir em Suprimentos →</a>
+      </div>
+
       <div className="mb-2"><EstoqueStrip /></div>
 
       <div className="mb-2">

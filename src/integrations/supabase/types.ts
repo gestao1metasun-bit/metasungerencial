@@ -13004,6 +13004,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_suprimentos_alertas: {
+        Row: {
+          criado_em: string | null
+          entidade_id: string | null
+          entidade_ref: string | null
+          entidade_tipo: string | null
+          mensagem: string | null
+          severidade: string | null
+          tipo_alerta: string | null
+        }
+        Relationships: []
+      }
       v_suprimentos_compras_resumo: {
         Row: {
           qtd_cotacoes: number | null
@@ -13088,6 +13100,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_suprimentos_dashboard_kpis: {
+        Row: {
+          abertas: number | null
+          aprovadas: number | null
+          atrasadas: number | null
+          estoque_reservado: number | null
+          itens_criticos: number | null
+          rejeitadas: number | null
+          valor_aprovado: number | null
+          valor_em_compra: number | null
+          valor_recebido: number | null
+          valor_solicitado: number | null
+        }
+        Relationships: []
+      }
+      v_suprimentos_dashboard_por_cc: {
+        Row: {
+          cc_codigo: string | null
+          cc_nome: string | null
+          centro_custo_id: string | null
+          pedidos: number | null
+          valor_total: number | null
+        }
+        Relationships: []
+      }
+      v_suprimentos_dashboard_por_fornecedor: {
+        Row: {
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          pedidos: number | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_suprimentos_dashboard_por_natureza: {
+        Row: {
+          natureza_codigo: string | null
+          natureza_id: string | null
+          natureza_nome: string | null
+          pedidos: number | null
+          valor_total: number | null
+        }
+        Relationships: []
+      }
+      v_suprimentos_dashboard_por_os: {
+        Row: {
+          os_id: string | null
+          pedidos: number | null
+          valor_total: number | null
+        }
+        Relationships: []
       }
       v_suprimentos_pedidos_lista: {
         Row: {

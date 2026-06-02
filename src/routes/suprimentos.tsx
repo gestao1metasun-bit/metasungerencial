@@ -192,6 +192,12 @@ function SuprimentosPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="requisicoes" className="mt-0">
+          <RequisicoesTab />
+        </TabsContent>
+
+
+
         <TabsContent value="cotacoes" className="mt-0">
           <Placeholder
             titulo="Cotações"

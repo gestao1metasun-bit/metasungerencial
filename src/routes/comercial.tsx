@@ -918,22 +918,17 @@ function ContratosTab({
 
       {showGeracao && (
       <Card className="p-5">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <FileText className="h-4 w-4 text-primary" /> Contratos aprovados aguardando redação
-            {(() => {
-              const aguard = aRedigir.filter((c) => !c.liberadoParaContrato).length;
-              return aguard > 0 ? (
-                <span className="ml-2 inline-flex items-center rounded-full bg-warning/15 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-medium">
-                  {aguard} aguardando liberação
-                </span>
-              ) : null;
-            })()}
-          </div>
-          <div className="relative w-64">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato, cliente, proposta…" className="h-9 pl-9" />
-          </div>
+        {/* D26.1 — busca duplicada removida; a busca oficial vive na EnterpriseRecordToolbar acima. */}
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <FileText className="h-4 w-4 text-primary" /> Contratos aprovados aguardando redação
+          {(() => {
+            const aguard = aRedigir.filter((c) => !c.liberadoParaContrato).length;
+            return aguard > 0 ? (
+              <span className="ml-2 inline-flex items-center rounded-full bg-warning/15 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-medium">
+                {aguard} aguardando liberação
+              </span>
+            ) : null;
+          })()}
         </div>
         {aRedigir.length === 0 ? (
           <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">

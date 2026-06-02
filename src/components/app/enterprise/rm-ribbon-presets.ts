@@ -37,34 +37,43 @@ export type RmRibbonOverrides = Partial<Record<
   () => void
 >>;
 
-/** 8 botões circulares no padrão da tela de Contas a Receber/Pagar. */
+/**
+ * 8 botões circulares no padrão da tela de Contas a Receber/Pagar.
+ *
+ * D26.1 — Nenhum botão mudo. Só renderiza ações cuja callback foi
+ * explicitamente passada via `overrides`. Se nenhum override for fornecido,
+ * retorna lista vazia (e a Linha 2 da toolbar não é renderizada).
+ */
 export function ribbonRm(overrides: RmRibbonOverrides = {}): StatusActionItem[] {
-  const stub = (label: string) => () => toast.message(`${label} — em breve`);
-  return [
-    { key: "whatsapp",   label: "WhatsApp",    icon: MessageCircle,  tone: "success", onClick: overrides.whatsapp   ?? stub("WhatsApp") },
-    { key: "cancelar",   label: "Cancelar",    icon: XCircle,        tone: "danger",  onClick: overrides.cancelar   ?? stub("Cancelar") },
-    { key: "agendar",    label: "Agendar",     icon: CalendarClock,  tone: "info",    onClick: overrides.agendar    ?? stub("Agendar") },
-    { key: "estornar",   label: "Estornar",    icon: Undo2,          tone: "warning", onClick: overrides.estornar   ?? stub("Estornar") },
-    { key: "visualizar", label: "Visualizar",  icon: Eye,            tone: "info",    onClick: overrides.visualizar ?? stub("Visualizar") },
-    { key: "imprimir",   label: "Imprimir",    icon: Printer,        tone: "muted",   onClick: overrides.imprimir   ?? stub("Imprimir") },
-    { key: "email",      label: "Enviar e-mail", icon: Mail,         tone: "info",    onClick: overrides.email      ?? stub("E-mail") },
-    { key: "remessa",    label: "Remessa",     icon: Send,           tone: "primary", onClick: overrides.remessa    ?? stub("Remessa") },
+  const all: (StatusActionItem & { _ovKey: keyof RmRibbonOverrides })[] = [
+    { _ovKey: "whatsapp",   key: "whatsapp",   label: "WhatsApp",      icon: MessageCircle, tone: "success", onClick: overrides.whatsapp   },
+    { _ovKey: "cancelar",   key: "cancelar",   label: "Cancelar",      icon: XCircle,       tone: "danger",  onClick: overrides.cancelar   },
+    { _ovKey: "agendar",    key: "agendar",    label: "Agendar",       icon: CalendarClock, tone: "info",    onClick: overrides.agendar    },
+    { _ovKey: "estornar",   key: "estornar",   label: "Estornar",      icon: Undo2,         tone: "warning", onClick: overrides.estornar   },
+    { _ovKey: "visualizar", key: "visualizar", label: "Visualizar",    icon: Eye,           tone: "info",    onClick: overrides.visualizar },
+    { _ovKey: "imprimir",   key: "imprimir",   label: "Imprimir",      icon: Printer,       tone: "muted",   onClick: overrides.imprimir   },
+    { _ovKey: "email",      key: "email",      label: "Enviar e-mail", icon: Mail,          tone: "info",    onClick: overrides.email      },
+    { _ovKey: "remessa",    key: "remessa",    label: "Remessa",       icon: Send,          tone: "primary", onClick: overrides.remessa    },
   ];
+  // Mantém referência a `toast` para compat sem warning de import órfão.
+  void toast;
+  return all.filter((a) => typeof a.onClick === "function").map(({ _ovKey, ...rest }) => rest);
 }
 
 /** Variante para módulos com fluxo Aprovar/Reprovar/Baixar (financeiro/aprovações). */
 export function ribbonRmAprovacao(overrides: RmRibbonOverrides = {}): StatusActionItem[] {
-  const stub = (label: string) => () => toast.message(`${label} — em breve`);
-  return [
-    { key: "aprovar",    label: "Aprovar",     icon: CheckCircle2,   tone: "success", onClick: overrides.aprovar    ?? stub("Aprovar") },
-    { key: "reprovar",   label: "Reprovar",    icon: XCircle,        tone: "danger",  onClick: overrides.reprovar   ?? stub("Reprovar") },
-    { key: "baixar",     label: "Baixar",      icon: Banknote,       tone: "success", onClick: overrides.baixar     ?? stub("Baixar") },
-    { key: "estornar",   label: "Estornar",    icon: Undo2,          tone: "warning", onClick: overrides.estornar   ?? stub("Estornar") },
-    { key: "visualizar", label: "Visualizar",  icon: Eye,            tone: "info",    onClick: overrides.visualizar ?? stub("Visualizar") },
-    { key: "imprimir",   label: "Imprimir",    icon: Printer,        tone: "muted",   onClick: overrides.imprimir   ?? stub("Imprimir") },
-    { key: "email",      label: "Enviar e-mail", icon: Mail,         tone: "info",    onClick: overrides.email      ?? stub("E-mail") },
-    { key: "remessa",    label: "Remessa",     icon: Send,           tone: "primary", onClick: overrides.remessa    ?? stub("Remessa") },
+  // D26.1 — Nenhum botão mudo. Só renderiza ações com callback real.
+  const all: (StatusActionItem & { _ovKey: keyof RmRibbonOverrides })[] = [
+    { _ovKey: "aprovar",    key: "aprovar",    label: "Aprovar",       icon: CheckCircle2, tone: "success", onClick: overrides.aprovar    },
+    { _ovKey: "reprovar",   key: "reprovar",   label: "Reprovar",      icon: XCircle,      tone: "danger",  onClick: overrides.reprovar   },
+    { _ovKey: "baixar",     key: "baixar",     label: "Baixar",        icon: Banknote,     tone: "success", onClick: overrides.baixar     },
+    { _ovKey: "estornar",   key: "estornar",   label: "Estornar",      icon: Undo2,        tone: "warning", onClick: overrides.estornar   },
+    { _ovKey: "visualizar", key: "visualizar", label: "Visualizar",    icon: Eye,          tone: "info",    onClick: overrides.visualizar },
+    { _ovKey: "imprimir",   key: "imprimir",   label: "Imprimir",      icon: Printer,      tone: "muted",   onClick: overrides.imprimir   },
+    { _ovKey: "email",      key: "email",      label: "Enviar e-mail", icon: Mail,         tone: "info",    onClick: overrides.email      },
+    { _ovKey: "remessa",    key: "remessa",    label: "Remessa",       icon: Send,         tone: "primary", onClick: overrides.remessa    },
   ];
+  return all.filter((a) => typeof a.onClick === "function").map(({ _ovKey, ...rest }) => rest);
 }
 
 /* ---------------------------------------------------------------------- */

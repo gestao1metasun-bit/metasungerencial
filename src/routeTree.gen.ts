@@ -35,6 +35,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as ComercialRouteImport } from './routes/comercial'
 import { Route as CadastrosRouteImport } from './routes/cadastros'
 import { Route as CadastrarRouteImport } from './routes/cadastrar'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -194,6 +195,11 @@ const CadastrosRoute = CadastrosRouteImport.update({
 const CadastrarRoute = CadastrarRouteImport.update({
   id: '/cadastrar',
   path: '/cadastrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasRoute = AssinaturasRouteImport.update({
@@ -358,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/assinaturas': typeof AssinaturasRoute
+  '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -416,6 +423,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/assinaturas': typeof AssinaturasRoute
+  '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -475,6 +483,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRouteWithChildren
   '/aprovacoes': typeof AprovacoesRoute
   '/assinaturas': typeof AssinaturasRoute
+  '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
   '/comercial': typeof ComercialRoute
@@ -535,6 +544,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/aprovacoes'
     | '/assinaturas'
+    | '/auditoria'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -593,6 +603,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/aprovacoes'
     | '/assinaturas'
+    | '/auditoria'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/aprovacoes'
     | '/assinaturas'
+    | '/auditoria'
     | '/cadastrar'
     | '/cadastros'
     | '/comercial'
@@ -710,6 +722,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRouteWithChildren
   AprovacoesRoute: typeof AprovacoesRoute
   AssinaturasRoute: typeof AssinaturasRoute
+  AuditoriaRoute: typeof AuditoriaRoute
   CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
   ComercialRoute: typeof ComercialRoute
@@ -920,6 +933,13 @@ declare module '@tanstack/react-router' {
       path: '/cadastrar'
       fullPath: '/cadastrar'
       preLoaderRoute: typeof CadastrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assinaturas': {
@@ -1240,6 +1260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRouteWithChildren,
   AprovacoesRoute: AprovacoesRoute,
   AssinaturasRoute: AssinaturasRoute,
+  AuditoriaRoute: AuditoriaRoute,
   CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,
   ComercialRoute: ComercialRoute,

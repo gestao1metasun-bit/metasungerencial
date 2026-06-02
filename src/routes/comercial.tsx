@@ -5596,14 +5596,36 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
+        availableProcesses={[
+          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
+          { key: "novo_aditivo", label: "Novo aditivo (escolher contrato)", requerSelecao: 0 },
+          { key: "criar_aditivo", label: "Criar aditivo neste contrato" },
+          { key: "aprovar_aditivo", label: "Aprovar aditivo" },
+          { key: "cancelar_aditivo", label: "Cancelar aditivo", destructive: true, requerMotivo: true },
+          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)" },
+          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia (aditivo)" },
+        ]}
+        onProcess={(key) => {
+          if (key === "atualizar_lista") toast.info("Aditivos atualizados.");
+          else if (key === "novo_aditivo" || key === "criar_aditivo")
+            toast.info("Criação oficial de aditivo via RPC chega em D27.COM.AD.");
+          else if (key === "aprovar_aditivo" || key === "cancelar_aditivo")
+            toast.info("Workflow de aditivos chega em D27.COM.AD.");
+          else if (key === "gerar_financeiro_aditivo")
+            toast.info("Geração financeira do aditivo chega em D27.COM.AD.");
+          else if (key === "enviar_engenharia_aditivo")
+            toast.info("Envio do aditivo para Engenharia chega em D27.COM.AD.");
+        }}
         searchPlaceholder="Buscar contrato, cliente…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Aditivos atualizados.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
+          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
+          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
           else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
         }}
         statusActions={ribbonRm()}

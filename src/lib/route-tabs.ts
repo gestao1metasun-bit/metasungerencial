@@ -243,7 +243,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     default: "dashboard",
     tabs: [
       { value: "dashboard",    label: "Dashboard",         group: "Visão" },
-      { value: "requisicoes",  label: "Requisições",       group: "Operação", to: "/solicitacoes-material", icon: "ClipboardList" },
+      { value: "requisicoes",  label: "Requisições",       group: "Operação", icon: "ClipboardList" },
       { value: "estoque",      label: "Estoque",           group: "Operação", to: "/estoque", icon: "Package" },
       { value: "compras",      label: "Compras",           group: "Operação", to: "/solicitacoes-material", icon: "ShoppingCart" },
       { value: "cotacoes",     label: "Cotações",          group: "Operação" },

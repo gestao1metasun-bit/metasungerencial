@@ -17,7 +17,7 @@ import {
   useCancelarCotacao, useGerarPedido, useUpsertCotacaoItem,
   COT_LABEL, type SupCotStatus,
 } from "@/lib/repositories/suprimentos-compras-repo";
-import { useFornecedoresSupabase } from "@/lib/repositories/cadastros-repo";
+import { useFornecedoresOficiais } from "@/lib/repositories/cadastros-repo";
 
 type Props = { id: string | null; onClose: () => void };
 
@@ -30,8 +30,8 @@ export function CotacaoDetailDialog({ id, onClose }: Props) {
   const itens = (data?.itens ?? []) as Array<Record<string, unknown>>;
   const eventos = (data?.eventos ?? []) as Array<Record<string, unknown>>;
   const status = cot?.status as SupCotStatus | undefined;
-  const fornecedoresQ = useFornecedoresSupabase?.() ?? { data: [] as Array<{ id: string; nome: string }> };
-  const fornecedores = (fornecedoresQ.data ?? []) as Array<{ id: string; nome: string }>;
+  const fornecedoresQ = useFornecedoresOficiais();
+  const fornecedores = ((fornecedoresQ.data ?? []) as Array<{ id: string; nome: string }>);
 
   const enviar = useEnviarCotacao();
   const aprovar = useAprovarCotacao();

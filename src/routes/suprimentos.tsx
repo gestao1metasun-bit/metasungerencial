@@ -183,6 +183,7 @@ function SuprimentosPage() {
           <TabsTrigger value="cotacoes" className="text-[11.5px]"><FileSearch className="h-3.5 w-3.5 mr-1" />Cotações</TabsTrigger>
           <TabsTrigger value="pedidos" className="text-[11.5px]"><FileText className="h-3.5 w-3.5 mr-1" />Pedidos</TabsTrigger>
           <TabsTrigger value="recebimentos" className="text-[11.5px]"><PackageCheck className="h-3.5 w-3.5 mr-1" />Recebimentos</TabsTrigger>
+          <TabsTrigger value="cadastros" className="text-[11.5px]"><BookOpen className="h-3.5 w-3.5 mr-1" />Cadastros</TabsTrigger>
           <TabsTrigger value="relatorios" className="text-[11.5px]"><BarChart3 className="h-3.5 w-3.5 mr-1" />Relatórios</TabsTrigger>
         </TabsList>
 

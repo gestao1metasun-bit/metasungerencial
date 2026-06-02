@@ -131,9 +131,21 @@ export function NovaRequisicaoDialog({
     });
   }, [naturezas.data]);
 
+  // Catálogo filtrado pelo tipo da requisição
+  const catalogo = useCatalogoPorTipo(tipo);
+
   // Regra: Almoxarifado só faz sentido para MATERIAL → ao mudar tipo p/ SERVIÇO desliga o toggle.
+  // E ao trocar de tipo, limpa itens vinculados ao catálogo (eram incompatíveis).
   useEffect(() => {
     if (tipo === "SERVICO" && destinoAlmox) setDestinoAlmox(false);
+    setItens((prev) => {
+      const hasVinculado = prev.some((i) => i.item_estoque_id);
+      if (!hasVinculado) return prev;
+      toast.warning("Itens do catálogo foram limpos por incompatibilidade de tipo.");
+      return prev.map((i) =>
+        i.item_estoque_id ? { ...ITEM_VAZIO, quantidade_solicitada: i.quantidade_solicitada } : i,
+      );
+    });
   }, [tipo, destinoAlmox]);
 
   // Quando ativa Almoxarifado, força CC/CR ALMOXARIFADO e limpa vínculo

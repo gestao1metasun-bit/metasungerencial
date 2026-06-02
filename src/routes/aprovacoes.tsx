@@ -60,7 +60,9 @@ function AprovacoesPage() {
   const auth = useAuth();
   const uid = auth.user?.id ?? null;
 
+  const [viewMode, setViewMode] = useState<"unificada" | "workflow">("unificada");
   const [tab, setTab] = useState<Filtro>("pendentes_para_mim");
+
   const [tipoFiltro, setTipoFiltro] = useState<string>("TODOS");
   const [statusHist, setStatusHist] = useState<"TODOS" | "APROVADA" | "NEGADA" | "EXPIRADA" | "CANCELADA">("TODOS");
   const [busca, setBusca] = useState("");

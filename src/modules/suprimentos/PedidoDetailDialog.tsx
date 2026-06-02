@@ -253,6 +253,7 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
                 </div>
               </TabsContent>
 
+              <TabsContent value="historico">
                 <div className="space-y-1 max-h-[40vh] overflow-y-auto">
                   {eventos.map((e) => (
                     <div key={String(e.id)} className="text-[11.5px] border-l-2 border-indigo-300 pl-2 py-0.5">

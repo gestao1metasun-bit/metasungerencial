@@ -13687,6 +13687,19 @@ export type Database = {
         | "suprimentos.requisicao.atender"
         | "suprimentos.requisicao.comprar"
         | "suprimentos.dashboard.ver"
+        | "suprimentos.cotacao.visualizar"
+        | "suprimentos.cotacao.criar"
+        | "suprimentos.cotacao.editar"
+        | "suprimentos.cotacao.aprovar"
+        | "suprimentos.cotacao.cancelar"
+        | "suprimentos.pedido.visualizar"
+        | "suprimentos.pedido.criar"
+        | "suprimentos.pedido.aprovar"
+        | "suprimentos.pedido.enviar"
+        | "suprimentos.pedido.cancelar"
+        | "suprimentos.recebimento.visualizar"
+        | "suprimentos.recebimento.criar"
+        | "suprimentos.recebimento.confirmar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -13748,6 +13761,21 @@ export type Database = {
         | "ATENDIDA_ESTOQUE"
         | "AGUARDANDO_COMPRA"
         | "CONCLUIDA"
+      sup_cot_status:
+        | "RASCUNHO"
+        | "ENVIADA"
+        | "EM_ANALISE"
+        | "APROVADA"
+        | "REPROVADA"
+        | "CANCELADA"
+      sup_ped_status:
+        | "EMITIDO"
+        | "APROVADO"
+        | "ENVIADO_FORNECEDOR"
+        | "PARCIALMENTE_RECEBIDO"
+        | "RECEBIDO"
+        | "CANCELADO"
+      sup_rec_status: "RASCUNHO" | "CONFIRMADO" | "CANCELADO"
       sup_req_status:
         | "RASCUNHO"
         | "ENVIADA"
@@ -14011,6 +14039,19 @@ export const Constants = {
         "suprimentos.requisicao.atender",
         "suprimentos.requisicao.comprar",
         "suprimentos.dashboard.ver",
+        "suprimentos.cotacao.visualizar",
+        "suprimentos.cotacao.criar",
+        "suprimentos.cotacao.editar",
+        "suprimentos.cotacao.aprovar",
+        "suprimentos.cotacao.cancelar",
+        "suprimentos.pedido.visualizar",
+        "suprimentos.pedido.criar",
+        "suprimentos.pedido.aprovar",
+        "suprimentos.pedido.enviar",
+        "suprimentos.pedido.cancelar",
+        "suprimentos.recebimento.visualizar",
+        "suprimentos.recebimento.criar",
+        "suprimentos.recebimento.confirmar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [
@@ -14080,6 +14121,23 @@ export const Constants = {
         "AGUARDANDO_COMPRA",
         "CONCLUIDA",
       ],
+      sup_cot_status: [
+        "RASCUNHO",
+        "ENVIADA",
+        "EM_ANALISE",
+        "APROVADA",
+        "REPROVADA",
+        "CANCELADA",
+      ],
+      sup_ped_status: [
+        "EMITIDO",
+        "APROVADO",
+        "ENVIADO_FORNECEDOR",
+        "PARCIALMENTE_RECEBIDO",
+        "RECEBIDO",
+        "CANCELADO",
+      ],
+      sup_rec_status: ["RASCUNHO", "CONFIRMADO", "CANCELADO"],
       sup_req_status: [
         "RASCUNHO",
         "ENVIADA",

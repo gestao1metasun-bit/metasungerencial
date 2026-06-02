@@ -458,6 +458,7 @@ function ContratoAssinadoTab({
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
@@ -734,6 +735,7 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
@@ -968,6 +970,7 @@ function ContratosTab({
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
         }}
@@ -5648,6 +5651,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         onAction={(a) => {
           if (a === "atualizar") toast.info("Aditivos atualizados.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");

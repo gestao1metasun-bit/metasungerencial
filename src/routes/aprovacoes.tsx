@@ -35,6 +35,9 @@ import { useAuth } from "@/lib/auth-store";
 import {
   Inbox, ClipboardCheck, Clock, ShieldCheck, Check, X, Eye, AlertTriangle, Ban,
 } from "lucide-react";
+import UnificadaTab from "@/modules/aprovacoes/UnificadaTab";
+
+
 
 
 export const Route = createFileRoute("/aprovacoes")({

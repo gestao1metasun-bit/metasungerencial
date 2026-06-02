@@ -37,9 +37,19 @@ export function PedidoDetailDialog({ id, onClose }: Props) {
   const cancelar = useCancelarPedido();
   const criarRec = useCriarRecebimento();
   const confirmarRec = useConfirmarRecebimento();
+  const prepararFin = usePrepararPedidoFinanceiro();
+  const bloquearFin = useBloquearPedidoFinanceiro();
+  const desbloquearFin = useDesbloquearPedidoFinanceiro();
 
   const [docNF, setDocNF] = useState("");
   const [qtdsRec, setQtdsRec] = useState<Record<string, number>>({});
+
+  const statusFinanceiro = (ped?.status_financeiro as string) ?? "NAO_GERADO";
+  const [finCond, setFinCond] = useState("");
+  const [finData, setFinData] = useState("");
+  const [finDoc, setFinDoc] = useState("");
+  const [finValor, setFinValor] = useState("");
+  const [finObs, setFinObs] = useState("");
 
   async function onAprovar() { if (!id) return; try { await aprovar.mutateAsync({ p_id: id }); toast.success("Pedido aprovado"); } catch (e) { toast.error((e as Error).message); } }
   async function onEnviar() { if (!id) return; try { await enviar.mutateAsync({ p_id: id }); toast.success("Pedido enviado ao fornecedor"); } catch (e) { toast.error((e as Error).message); } }

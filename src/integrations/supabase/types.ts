@@ -9445,6 +9445,7 @@ export type Database = {
           criado_por: string
           data_necessidade: string | null
           deleted_at: string | null
+          destino_almoxarifado: boolean
           hash_integracao: string | null
           id: string
           justificativa: string | null
@@ -9482,6 +9483,7 @@ export type Database = {
           criado_por: string
           data_necessidade?: string | null
           deleted_at?: string | null
+          destino_almoxarifado?: boolean
           hash_integracao?: string | null
           id?: string
           justificativa?: string | null
@@ -9519,6 +9521,7 @@ export type Database = {
           criado_por?: string
           data_necessidade?: string | null
           deleted_at?: string | null
+          destino_almoxarifado?: boolean
           hash_integracao?: string | null
           id?: string
           justificativa?: string | null

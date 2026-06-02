@@ -97,7 +97,9 @@ function invalidate(qc: ReturnType<typeof useQueryClient>) {
 type CriarPayload = {
   tipo: SupReqTipo;
   prioridade?: SupReqPrioridade;
-  setor?: string | null;
+  setor: string;                       // obrigatório
+  natureza_id: string;                 // obrigatório
+  destino_almoxarifado?: boolean;      // true → ignora projeto/obra/os e força CC/CR ALMOXARIFADO
   data_necessidade?: string | null;
   justificativa?: string | null;
   os_id?: string | null;
@@ -116,6 +118,64 @@ type CriarPayload = {
     observacao?: string | null;
   }>;
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CATÁLOGOS auxiliares para a tela de Nova Requisição
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SETORES_OPTIONS = [
+  "Engenharia", "Instalação", "Comercial", "Financeiro",
+  "Suprimentos", "Almoxarifado", "Administrativo", "Pós-venda",
+] as const;
+
+export function useNaturezasFinanceiras() {
+  return useQuery({
+    queryKey: ["naturezas-financeiras", "ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("naturezas_financeiras")
+        .select("id, codigo, nome, tipo, grupo")
+        .eq("ativo", true)
+        .order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCentrosCusto() {
+  return useQuery({
+    queryKey: ["centros-custo", "ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("centros_custo")
+        .select("id, codigo, nome")
+        .eq("ativo", true)
+        .is("deleted_at", null)
+        .order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCentrosResultado() {
+  return useQuery({
+    queryKey: ["centros-resultado", "ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("centros_resultado")
+        .select("id, codigo, nome")
+        .eq("ativo", true)
+        .order("codigo");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60_000,
+  });
+}
 
 export function useCriarRequisicao() {
   const qc = useQueryClient();

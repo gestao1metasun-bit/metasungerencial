@@ -75,6 +75,8 @@ export type EnterpriseProcessItem = {
   destructive?: boolean;
   /** Reservado p/ D6.13.3 — motivo obrigatório, workflow, etc. */
   requerMotivo?: boolean;
+  /** Grupo lógico para sub-cabeçalho no dropdown (ex.: "Propostas", "Contratos"). */
+  group?: string;
 };
 
 export type EnterpriseRecordToolbarProps = {

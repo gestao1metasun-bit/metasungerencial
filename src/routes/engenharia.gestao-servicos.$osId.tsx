@@ -618,30 +618,56 @@ function KpiCard({ label, value, hint, tone }: {
 }
 
 function DashboardTab({ osId }: { osId: string }) {
-  const { data, isLoading } = useOsDashboard(osId);
+  const { data, isLoading, refetch } = useOsDashboard(osId);
+  const { data: orc = [] } = useOsOrcadoVsRealizado(osId);
+  const { data: tarefas = [] } = useOsTarefas(osId);
   if (isLoading) return <div className="p-4 text-sm text-muted-foreground"><Loader2 className="inline h-3 w-3 animate-spin mr-1" />Carregando…</div>;
   if (!data) return <Card className="p-4 text-sm text-muted-foreground">Sem dados.</Card>;
+
   const desvio = data.custo_realizado - data.custo_previsto;
   const desvioPct = data.custo_previsto > 0 ? (desvio / data.custo_previsto) * 100 : null;
   const tone: "ok" | "warn" | "danger" =
     desvio <= 0 ? "ok" : desvio > data.custo_previsto * 0.1 ? "danger" : "warn";
-  const lucroPrev = data.valor_orcado - data.custo_realizado;
+  const lucroPrev = data.valor_orcado - data.custo_previsto;
+  const lucroReal = data.valor_orcado - data.custo_realizado;
+  const margPrev = data.valor_orcado > 0 ? (lucroPrev / data.valor_orcado) * 100 : null;
+  const margReal = data.valor_orcado > 0 ? (lucroReal / data.valor_orcado) * 100 : null;
+
+  // Alertas operacionais (derivados de dados oficiais)
+  const alertas: { tipo: "danger" | "warn"; msg: string }[] = [];
+  if (desvio > 0) alertas.push({ tipo: desvioPct && desvioPct > 10 ? "danger" : "warn", msg: `Custo realizado acima do orçado (${fmtMoney(desvio)})` });
+  if (desvioPct !== null && desvioPct > 10) alertas.push({ tipo: "danger", msg: `Desvio acima de 10% (${desvioPct.toFixed(1)}%)` });
+  if (lucroReal < 0) alertas.push({ tipo: "danger", msg: `Lucro realizado negativo (${fmtMoney(lucroReal)})` });
+  const estouroCats = orc.filter((l) => l.semaforo === "ESTOURO").map((l) => l.categoria);
+  if (estouroCats.length > 0) alertas.push({ tipo: "danger", msg: `Estouro em categorias: ${estouroCats.join(", ")}` });
+  const impedidas = tarefas.filter((t) => t.status === "IMPEDIDA").length;
+  if (impedidas > 0) alertas.push({ tipo: "warn", msg: `${impedidas} tarefa(s) impedida(s)` });
+  const pausadas = tarefas.filter((t) => t.status === "PAUSA").length;
+  if (pausadas > 0) alertas.push({ tipo: "warn", msg: `${pausadas} tarefa(s) em pausa` });
+  const semTecnico = tarefas.filter((t) => !t.tecnico_id && t.status !== "FINALIZADA" && t.status !== "CANCELADA").length;
+  if (semTecnico > 0) alertas.push({ tipo: "warn", msg: `${semTecnico} tarefa(s) sem técnico responsável` });
+  const semPrevisao = tarefas.filter((t) => !t.data_prevista && t.status !== "FINALIZADA" && t.status !== "CANCELADA").length;
+  if (semPrevisao > 0) alertas.push({ tipo: "warn", msg: `${semPrevisao} tarefa(s) sem data prevista` });
+
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[13px] font-semibold">Indicadores executivos</h3>
+        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => refetch()}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1" />Atualizar
+        </Button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <KpiCard label="Custo previsto" value={fmtMoney(data.custo_previsto)} />
         <KpiCard label="Custo realizado" value={fmtMoney(data.custo_realizado)} />
-        <KpiCard
-          label="Desvio"
-          value={fmtMoney(desvio)}
-          hint={desvioPct !== null ? `${desvioPct.toFixed(1)}%` : "—"}
-          tone={tone}
-        />
-        <KpiCard
-          label="Lucro previsto"
-          value={fmtMoney(lucroPrev)}
-          tone={lucroPrev >= 0 ? "ok" : "danger"}
-        />
+        <KpiCard label="Desvio" value={fmtMoney(desvio)} hint={desvioPct !== null ? `${desvioPct.toFixed(1)}%` : "—"} tone={tone} />
+        <KpiCard label="Valor orçado" value={fmtMoney(data.valor_orcado)} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Lucro previsto" value={fmtMoney(lucroPrev)} tone={lucroPrev >= 0 ? "ok" : "danger"} />
+        <KpiCard label="Lucro realizado" value={fmtMoney(lucroReal)} tone={lucroReal >= 0 ? "ok" : "danger"} />
+        <KpiCard label="Margem prevista" value={margPrev !== null ? `${margPrev.toFixed(1)}%` : "—"} tone={margPrev !== null && margPrev >= 0 ? "ok" : "danger"} />
+        <KpiCard label="Margem realizada" value={margReal !== null ? `${margReal.toFixed(1)}%` : "—"} tone={margReal !== null && margReal >= 0 ? "ok" : "danger"} />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <KpiCard label="Tarefas abertas" value={String(data.tarefas_pendentes)} />
@@ -652,12 +678,175 @@ function DashboardTab({ osId }: { osId: string }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <KpiCard label="Formulários respondidos" value={String(data.formularios_respondidos)} />
         <KpiCard label="Serviços faturáveis" value={String(data.servicos_faturaveis)} />
-        <KpiCard label="Valor orçado" value={fmtMoney(data.valor_orcado)} />
-        <KpiCard label="Valor em PV" value={fmtMoney(data.valor_em_pv)} />
+        <KpiCard label="Valor em PV" value={fmtMoney(data.valor_em_pv)} hint="Valor faturável" />
+        <KpiCard label="Saldo a faturar" value={fmtMoney(data.valor_em_pv)} hint="Faturamento real em RPC oficial" />
       </div>
+
+      <Card className="p-3">
+        <div className="text-[12px] font-semibold mb-2">Alertas operacionais</div>
+        {alertas.length === 0 ? (
+          <div className="text-[12px] text-emerald-600">✓ Sem alertas — O.S. dentro do esperado.</div>
+        ) : (
+          <ul className="space-y-1">
+            {alertas.map((a, i) => (
+              <li key={i} className={`text-[12px] flex items-start gap-2 ${a.tipo === "danger" ? "text-red-700" : "text-amber-700"}`}>
+                <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: a.tipo === "danger" ? "rgb(185 28 28)" : "rgb(180 83 9)" }} />
+                <span>{a.msg}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
 }
+
+function ProdutividadeTab({ osId }: { osId: string }) {
+  const { data: prod, isLoading, refetch } = useOsProdutividade(osId);
+  const { data: tarefas = [] } = useOsTarefas(osId);
+  const { data: tecnicos = [] } = useOsProdutividadeTecnico();
+
+  // Contagem por status
+  const statusCount = TAREFA_STATUSES.map((s) => ({
+    status: s.replace("_", " "),
+    qtd: tarefas.filter((t) => t.status === s).length,
+  })).filter((x) => x.qtd > 0);
+
+  // Tempo médio por tarefa concluída (min)
+  const concluidas = tarefas.filter((t) => t.status === "FINALIZADA" && t.data_inicio && t.data_fim);
+  const tempoMedio = concluidas.length > 0
+    ? concluidas.reduce((acc, t) => {
+        const ini = new Date(t.data_inicio!).getTime();
+        const fim = new Date(t.data_fim!).getTime();
+        return acc + Math.max(0, (fim - ini) / 60000);
+      }, 0) / concluidas.length
+    : null;
+
+  // Atraso médio (tarefas previstas com data_prevista passada e ainda abertas)
+  const hoje = Date.now();
+  const atrasadas = tarefas.filter((t) =>
+    t.data_prevista && new Date(t.data_prevista).getTime() < hoje &&
+    t.status !== "FINALIZADA" && t.status !== "CANCELADA");
+  const atrasoMedioDias = atrasadas.length > 0
+    ? atrasadas.reduce((acc, t) => acc + (hoje - new Date(t.data_prevista!).getTime()) / 86400000, 0) / atrasadas.length
+    : null;
+
+  const taxaConclusao = prod && prod.tarefas_total > 0
+    ? (prod.tarefas_concluidas / prod.tarefas_total) * 100 : null;
+
+  const horasData = prod ? [{
+    nome: "Horas",
+    previstas: +(prod.minutos_previstos / 60).toFixed(1),
+    realizadas: +(prod.minutos_realizados / 60).toFixed(1),
+  }] : [];
+
+  // Ranking técnicos desta O.S. (tecnicos vem global; filtramos por tecnicos da OS atual)
+  const tecnicosOs = new Set(tarefas.map((t) => t.tecnico_id).filter(Boolean) as string[]);
+  const rankTecnicos = tecnicos
+    .filter((t) => tecnicosOs.has(t.tecnico_id))
+    .map((t) => ({
+      tecnico: t.tecnico_id.slice(0, 8),
+      previstas: +Number(t.horas_previstas ?? 0).toFixed(1),
+      realizadas: +Number(t.horas_realizadas ?? 0).toFixed(1),
+      eficiencia: t.eficiencia_pct ?? 0,
+    }));
+
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground"><Loader2 className="inline h-3 w-3 animate-spin mr-1" />Carregando…</div>;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[13px] font-semibold">Produtividade da O.S.</h3>
+        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => refetch()}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1" />Atualizar
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Horas previstas" value={prod ? `${(prod.minutos_previstos / 60).toFixed(1)}h` : "—"} />
+        <KpiCard label="Horas realizadas" value={prod ? `${(prod.minutos_realizados / 60).toFixed(1)}h` : "—"} />
+        <KpiCard label="Aderência horas" value={prod?.aderencia_pct != null ? `${prod.aderencia_pct.toFixed(0)}%` : "—"}
+          tone={prod?.aderencia_pct != null && prod.aderencia_pct >= 90 ? "ok" : prod?.aderencia_pct != null && prod.aderencia_pct < 70 ? "danger" : "warn"} />
+        <KpiCard label="Taxa conclusão" value={taxaConclusao !== null ? `${taxaConclusao.toFixed(0)}%` : "—"} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Tarefas abertas" value={String(prod?.tarefas_pendentes ?? 0)} />
+        <KpiCard label="Tarefas concluídas" value={String(prod?.tarefas_concluidas ?? 0)} hint={`de ${prod?.tarefas_total ?? 0}`} />
+        <KpiCard label="Tempo médio/tarefa" value={tempoMedio !== null ? `${tempoMedio.toFixed(0)} min` : "—"} />
+        <KpiCard label="Atraso médio" value={atrasoMedioDias !== null ? `${atrasoMedioDias.toFixed(1)} d` : "—"}
+          tone={atrasoMedioDias !== null && atrasoMedioDias > 3 ? "danger" : atrasoMedioDias !== null ? "warn" : "default"} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard label="Tarefas impedidas" value={String(tarefas.filter((t) => t.status === "IMPEDIDA").length)}
+          tone={tarefas.some((t) => t.status === "IMPEDIDA") ? "danger" : "default"} />
+        <KpiCard label="Tarefas em pausa" value={String(tarefas.filter((t) => t.status === "PAUSA").length)}
+          tone={tarefas.some((t) => t.status === "PAUSA") ? "warn" : "default"} />
+        <KpiCard label="Tarefas atrasadas" value={String(atrasadas.length)}
+          tone={atrasadas.length > 0 ? "danger" : "default"} />
+        <KpiCard label="Técnicos envolvidos" value={String(tecnicosOs.size)} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Card className="p-3">
+          <div className="text-[12px] font-semibold mb-2">Tarefas por status</div>
+          {statusCount.length === 0 ? (
+            <div className="text-[12px] text-muted-foreground">Sem tarefas.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={statusCount} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="status" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="qtd" fill="hsl(var(--primary))" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </Card>
+
+        <Card className="p-3">
+          <div className="text-[12px] font-semibold mb-2">Horas previstas × realizadas</div>
+          {!prod ? (
+            <div className="text-[12px] text-muted-foreground">Sem dados.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={horasData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="nome" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="previstas" fill="#94a3b8" name="Previstas" />
+                <Bar dataKey="realizadas" fill="#0ea5e9" name="Realizadas" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </Card>
+      </div>
+
+      <Card className="p-3">
+        <div className="text-[12px] font-semibold mb-2">Ranking por técnico (envolvidos nesta O.S.)</div>
+        {rankTecnicos.length === 0 ? (
+          <div className="text-[12px] text-muted-foreground">Sem dados de técnicos para esta O.S.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={rankTecnicos} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="tecnico" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="previstas" fill="#94a3b8" name="Hrs previstas" />
+              <Bar dataKey="realizadas" fill="#0ea5e9" name="Hrs realizadas" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+
 
 function semaforoBadge(s: string) {
   const map: Record<string, string> = {

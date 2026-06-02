@@ -5617,16 +5617,16 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
         availableProcesses={[
-          { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
-          { key: "novo_aditivo", label: "Novo aditivo (escolher contrato)", requerSelecao: 0 },
-          { key: "criar_aditivo", label: "Criar aditivo neste contrato" },
-          { key: "aprovar_aditivo", label: "Aprovar aditivo" },
-          { key: "cancelar_aditivo", label: "Cancelar aditivo", destructive: true, requerMotivo: true },
-          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)" },
-          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia (aditivo)" },
-        ]}
+          { key: "novo_aditivo",              label: "Novo aditivo (escolher contrato)", group: "Contratos", requerSelecao: 0 },
+          { key: "criar_aditivo",             label: "Criar aditivo neste contrato",     group: "Contratos" },
+          { key: "aprovar_aditivo",           label: "Aprovar aditivo",                  group: "Contratos" },
+          { key: "cancelar_aditivo",          label: "Cancelar aditivo",                 group: "Contratos", destructive: true, requerMotivo: true },
+          { key: "gerar_financeiro_aditivo", label: "Gerar financeiro (aditivo)",       group: "Contratos" },
+          { key: "enviar_engenharia_aditivo", label: "Enviar para Engenharia",           group: "Contratos" },
+          { key: "atualizar_lista",           label: "Atualizar lista",                  group: "Manutenção", requerSelecao: 0 },
+        ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Aditivos atualizados.");
           else if (key === "novo_aditivo" || key === "criar_aditivo")

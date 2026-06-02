@@ -421,10 +421,18 @@ export function useOsOrcadoVsRealizado(osId?: string | null) {
     queryKey: ["os", "orc-vs-real", osId],
     enabled: !!osId,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("v_os_orcado_realizado").select("*").eq("os_id", osId!);
       if (error) throw error;
-      return (data ?? []) as OsOrcadoVsRealizadoRow[];
+      return (data ?? []).map((r): OsOrcadoVsRealizadoRow => ({
+        os_id: r.os_id ?? osId!,
+        categoria: (r.categoria ?? "OUTROS") as OsCategoriaCusto,
+        orcado: Number(r.orcado ?? 0),
+        realizado: Number(r.realizado ?? 0),
+        variacao_rs: Number(r.variacao_valor ?? 0),
+        variacao_pct: r.variacao_pct == null ? null : Number(r.variacao_pct),
+        semaforo: (r.semaforo ?? "NEUTRO") as OsOrcadoVsRealizadoRow["semaforo"],
+      }));
     },
   });
 }
@@ -434,10 +442,36 @@ export function useOsDashboard(osId?: string | null) {
     queryKey: ["os", "dashboard", osId],
     enabled: !!osId,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("v_os_dashboard_kpis").select("*").eq("os_id", osId!).maybeSingle();
       if (error) throw error;
-      return (data ?? null) as OsDashboardRow | null;
+      if (!data) return null;
+      const custo_previsto = Number(data.custo_orcado ?? 0);
+      const custo_realizado = Number(data.custo_realizado ?? 0);
+      const tarefas_total = Number(data.tarefas_total ?? 0);
+      const tarefas_concluidas = Number(data.tarefas_concluidas ?? 0);
+      const tarefas_pendentes = Number(data.tarefas_abertas ?? Math.max(0, tarefas_total - tarefas_concluidas));
+      const row: OsDashboardRow = {
+        os_id: data.os_id ?? osId!,
+        codigo: data.numero != null ? String(data.numero) : null,
+        status_codigo: data.status_codigo ?? "",
+        cliente_id: data.cliente_id ?? null,
+        contrato_id: null,
+        projeto_id: null,
+        obra_id: null,
+        valor_orcado: custo_previsto + Number(data.margem_valor ?? 0),
+        valor_em_pv: Number(data.servicos_faturaveis ?? 0),
+        custo_previsto,
+        custo_realizado,
+        tarefas_total,
+        tarefas_concluidas,
+        tarefas_pendentes,
+        aderencia_pct: Number(data.eficiencia_pct ?? 0),
+        formularios_respondidos: 0,
+        anexos_total: 0,
+        servicos_faturaveis: Number(data.servicos_faturaveis ?? 0),
+      };
+      return row;
     },
   });
 }
@@ -450,10 +484,71 @@ export function useOsProdutividade(osId?: string | null) {
       const { data, error } = await supabase
         .from("v_os_produtividade").select("*").eq("os_id", osId!).maybeSingle();
       if (error) throw error;
-      return (data ?? null) as OsProdutividadeRow | null;
+      if (!data) return null;
+      const tarefas_total = Number(data.tarefas_total ?? 0);
+      const tarefas_concluidas = Number(data.tarefas_concluidas ?? 0);
+      const row: OsProdutividadeRow = {
+        os_id: data.os_id ?? osId!,
+        tarefas_total,
+        tarefas_concluidas,
+        tarefas_pendentes: Number(data.tarefas_abertas ?? Math.max(0, tarefas_total - tarefas_concluidas)),
+        minutos_previstos: Math.round(Number(data.horas_previstas ?? 0) * 60),
+        minutos_realizados: Math.round(Number(data.horas_realizadas ?? 0) * 60),
+        aderencia_pct: data.eficiencia_pct == null ? null : Number(data.eficiencia_pct),
+      };
+      return row;
     },
   });
 }
+
+export interface OsProdutividadeTecnicoRow {
+  tecnico_id: string;
+  os_atendidas: number;
+  tarefas_total: number;
+  tarefas_concluidas: number;
+  horas_previstas: number;
+  horas_realizadas: number;
+  eficiencia_pct: number | null;
+}
+export function useOsProdutividadeTecnico() {
+  return useQuery({
+    queryKey: ["os", "produtividade-tecnico"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_os_produtividade_tecnico").select("*");
+      if (error) throw error;
+      return (data ?? []).map((r): OsProdutividadeTecnicoRow => ({
+        tecnico_id: r.tecnico_id ?? "",
+        os_atendidas: Number(r.os_atendidas ?? 0),
+        tarefas_total: Number(r.tarefas_total ?? 0),
+        tarefas_concluidas: Number(r.tarefas_concluidas ?? 0),
+        horas_previstas: Number(r.horas_previstas ?? 0),
+        horas_realizadas: Number(r.horas_realizadas ?? 0),
+        eficiencia_pct: r.eficiencia_pct == null ? null : Number(r.eficiencia_pct),
+      }));
+    },
+    staleTime: 60_000,
+  });
+}
+
+export interface OsOrcamentoRow {
+  id: string; os_id: string; categoria: OsCategoriaCusto;
+  valor: number; observacao: string | null; created_at: string;
+}
+export function useOsOrcamento(osId?: string | null) {
+  return useQuery({
+    queryKey: ["os", "orcamento", osId],
+    enabled: !!osId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("os_orcamento").select("*")
+        .eq("os_id", osId!).order("categoria");
+      if (error) throw error;
+      return (data ?? []) as OsOrcamentoRow[];
+    },
+  });
+}
+
 
 export function useOsCustosRealizados(osId?: string | null) {
   return useQuery({
@@ -537,6 +632,38 @@ export function useSalvarFormularioTemplate() {
       p_descricao: p.descricao ?? null, p_campos: p.campos as never,
       p_obrigatorio: !!p.obrigatorio, p_ativo: p.ativo ?? true,
     }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}
+
+// ── modelos de formulário: clonar / publicar / aprovar ──
+export function useClonarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string }) =>
+      rpc<string>("rpc_os_modelo_clonar", { p_modelo_id: p.modelo_id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}
+
+export function usePublicarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string; row_version: number }) =>
+      rpc<void>("rpc_os_modelo_publicar", {
+        p_modelo_id: p.modelo_id, p_row_version: p.row_version,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}
+
+export function useAprovarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string; row_version: number }) =>
+      rpc<void>("rpc_os_modelo_aprovar", {
+        p_modelo_id: p.modelo_id, p_row_version: p.row_version,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
   });
 }

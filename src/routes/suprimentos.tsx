@@ -213,6 +213,9 @@ function SuprimentosPage() {
         <TabsContent value="recebimentos" className="mt-0">
           <RecebimentosTab />
         </TabsContent>
+        <TabsContent value="cadastros" className="mt-0">
+          <ItensServicosTab />
+        </TabsContent>
         <TabsContent value="relatorios" className="mt-0">
           <Placeholder
             titulo="Relatórios & Rastreabilidade"

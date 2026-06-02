@@ -285,17 +285,19 @@ function SuprimentosPage() {
       />
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="h-8 mb-2">
+        <TabsList className="h-8 mb-2 flex-wrap">
           <TabsTrigger value="dashboard" className="text-[11.5px]"><Layers className="h-3.5 w-3.5 mr-1" />Dashboard</TabsTrigger>
           <TabsTrigger value="requisicoes" className="text-[11.5px]"><ClipboardList className="h-3.5 w-3.5 mr-1" />Requisições</TabsTrigger>
           <TabsTrigger value="cotacoes" className="text-[11.5px]"><FileSearch className="h-3.5 w-3.5 mr-1" />Cotações</TabsTrigger>
           <TabsTrigger value="pedidos" className="text-[11.5px]"><FileText className="h-3.5 w-3.5 mr-1" />Pedidos</TabsTrigger>
           <TabsTrigger value="recebimentos" className="text-[11.5px]"><PackageCheck className="h-3.5 w-3.5 mr-1" />Recebimentos</TabsTrigger>
           <TabsTrigger value="cadastros" className="text-[11.5px]"><BookOpen className="h-3.5 w-3.5 mr-1" />Cadastros</TabsTrigger>
+          <TabsTrigger value="alcadas" className="text-[11.5px]"><ShieldCheck className="h-3.5 w-3.5 mr-1" />Alçadas</TabsTrigger>
           <TabsTrigger value="relatorios" className="text-[11.5px]"><BarChart3 className="h-3.5 w-3.5 mr-1" />Relatórios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-3 mt-0">
+          <DashboardLive />
           <FluxoPedra />
           <div>
             <div className="flex items-center gap-2 mb-2">

@@ -18,6 +18,9 @@ import {
   useCriarRecebimento, useConfirmarRecebimento,
   PED_LABEL, type SupPedStatus,
 } from "@/lib/repositories/suprimentos-compras-repo";
+import {
+  usePrepararPedidoFinanceiro, useBloquearPedidoFinanceiro, useDesbloquearPedidoFinanceiro,
+} from "@/lib/repositories/suprimentos-alcadas-repo";
 
 type Props = { id: string | null; onClose: () => void };
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

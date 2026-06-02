@@ -129,6 +129,11 @@ export function NovaRequisicaoDialog({
     });
   }, [naturezas.data]);
 
+  // Regra: Almoxarifado só faz sentido para MATERIAL → ao mudar tipo p/ SERVIÇO desliga o toggle.
+  useEffect(() => {
+    if (tipo === "SERVICO" && destinoAlmox) setDestinoAlmox(false);
+  }, [tipo, destinoAlmox]);
+
   // Quando ativa Almoxarifado, força CC/CR ALMOXARIFADO e limpa vínculo
   useEffect(() => {
     if (!destinoAlmox) return;

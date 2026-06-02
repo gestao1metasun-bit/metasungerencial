@@ -160,7 +160,7 @@ export type LayoutBarConfig = {
 const ALL_ACTIONS: EnterpriseRecordAction[] = [
   "novo", "editar", "duplicar", "excluir", "cancelar", "salvar",
   "atualizar", "visualizar",
-  "anexos", "historico", "comentarios", "auditoria",
+  "anexos", "historico", "comentarios", "auditoria", "favoritos",
   "exportar", "imprimir", "enviar",
   "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas",
 ];
@@ -168,7 +168,7 @@ const ALL_ACTIONS: EnterpriseRecordAction[] = [
 const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: string }>> = {
   novo: Plus, editar: Pencil, duplicar: Copy, excluir: Trash2, cancelar: X, salvar: Save,
   atualizar: RefreshCw, visualizar: Eye,
-  anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield,
+  anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield, favoritos: Star,
   exportar: Download, imprimir: Printer, enviar: Mail,
   filtroRapido: Filter, filtroAvancado: FilterX, visoes: Layout, layout: Layout, colunas: Columns3,
 };
@@ -176,7 +176,7 @@ const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: st
 const ACTION_LABEL: Record<EnterpriseRecordAction, string> = {
   novo: "Novo", editar: "Editar", duplicar: "Duplicar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
   atualizar: "Atualizar", visualizar: "Visualizar",
-  anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria",
+  anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria", favoritos: "Favoritos",
   exportar: "Exportar", imprimir: "Imprimir", enviar: "Enviar",
   filtroRapido: "Filtro rápido", filtroAvancado: "Filtro avançado",
   visoes: "Visões", layout: "Layout", colunas: "Colunas",

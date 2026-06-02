@@ -4516,6 +4516,75 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          arquivada_em: string | null
+          criada_em: string
+          criada_por: string | null
+          dedupe_key: string | null
+          expira_em: string | null
+          grupo_destino: string | null
+          id: string
+          lida_em: string | null
+          link_origem: string | null
+          mensagem: string | null
+          metadata: Json
+          modulo: string
+          origem_id: string | null
+          origem_tipo: string | null
+          payload: Json
+          prioridade: Database["public"]["Enums"]["notif_prioridade"]
+          status: Database["public"]["Enums"]["notif_status"]
+          tipo: string
+          titulo: string
+          usuario_destino_id: string | null
+        }
+        Insert: {
+          arquivada_em?: string | null
+          criada_em?: string
+          criada_por?: string | null
+          dedupe_key?: string | null
+          expira_em?: string | null
+          grupo_destino?: string | null
+          id?: string
+          lida_em?: string | null
+          link_origem?: string | null
+          mensagem?: string | null
+          metadata?: Json
+          modulo: string
+          origem_id?: string | null
+          origem_tipo?: string | null
+          payload?: Json
+          prioridade?: Database["public"]["Enums"]["notif_prioridade"]
+          status?: Database["public"]["Enums"]["notif_status"]
+          tipo: string
+          titulo: string
+          usuario_destino_id?: string | null
+        }
+        Update: {
+          arquivada_em?: string | null
+          criada_em?: string
+          criada_por?: string | null
+          dedupe_key?: string | null
+          expira_em?: string | null
+          grupo_destino?: string | null
+          id?: string
+          lida_em?: string | null
+          link_origem?: string | null
+          mensagem?: string | null
+          metadata?: Json
+          modulo?: string
+          origem_id?: string | null
+          origem_tipo?: string | null
+          payload?: Json
+          prioridade?: Database["public"]["Enums"]["notif_prioridade"]
+          status?: Database["public"]["Enums"]["notif_status"]
+          tipo?: string
+          titulo?: string
+          usuario_destino_id?: string | null
+        }
+        Relationships: []
+      }
       obras: {
         Row: {
           centro_custo_id: string | null
@@ -11978,6 +12047,69 @@ export type Database = {
         }
         Relationships: []
       }
+      v_notificacoes_minhas: {
+        Row: {
+          arquivada_em: string | null
+          criada_em: string | null
+          dedupe_key: string | null
+          expira_em: string | null
+          id: string | null
+          lida_em: string | null
+          link_origem: string | null
+          mensagem: string | null
+          modulo: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          payload: Json | null
+          prioridade: Database["public"]["Enums"]["notif_prioridade"] | null
+          status: Database["public"]["Enums"]["notif_status"] | null
+          tipo: string | null
+          titulo: string | null
+          usuario_destino_id: string | null
+          vencida: boolean | null
+        }
+        Insert: {
+          arquivada_em?: string | null
+          criada_em?: string | null
+          dedupe_key?: string | null
+          expira_em?: string | null
+          id?: string | null
+          lida_em?: string | null
+          link_origem?: string | null
+          mensagem?: string | null
+          modulo?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          payload?: Json | null
+          prioridade?: Database["public"]["Enums"]["notif_prioridade"] | null
+          status?: Database["public"]["Enums"]["notif_status"] | null
+          tipo?: string | null
+          titulo?: string | null
+          usuario_destino_id?: string | null
+          vencida?: never
+        }
+        Update: {
+          arquivada_em?: string | null
+          criada_em?: string | null
+          dedupe_key?: string | null
+          expira_em?: string | null
+          id?: string | null
+          lida_em?: string | null
+          link_origem?: string | null
+          mensagem?: string | null
+          modulo?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          payload?: Json | null
+          prioridade?: Database["public"]["Enums"]["notif_prioridade"] | null
+          status?: Database["public"]["Enums"]["notif_status"] | null
+          tipo?: string | null
+          titulo?: string | null
+          usuario_destino_id?: string | null
+          vencida?: never
+        }
+        Relationships: []
+      }
       v_obra_custo_realizado: {
         Row: {
           codigo: string | null
@@ -14404,6 +14536,30 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_notificacao_arquivar: { Args: { p_id: string }; Returns: undefined }
+      rpc_notificacao_emitir: {
+        Args: {
+          p_dedupe_key?: string
+          p_expira_em?: string
+          p_grupo_destino?: string
+          p_link_origem?: string
+          p_mensagem?: string
+          p_modulo: string
+          p_origem_id?: string
+          p_origem_tipo?: string
+          p_payload?: Json
+          p_prioridade?: Database["public"]["Enums"]["notif_prioridade"]
+          p_tipo: string
+          p_titulo: string
+          p_usuario_destino: string
+        }
+        Returns: string
+      }
+      rpc_notificacao_marcar_lida: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      rpc_notificacao_marcar_todas_lidas: { Args: never; Returns: number }
       rpc_op_fin_aprovar: {
         Args: {
           _observacao?: string
@@ -15084,6 +15240,8 @@ export type Database = {
       cotacao_status: "ATIVA" | "ESCOLHIDA" | "DESCARTADA"
       flag_cor: "VERMELHO" | "AMARELO" | "VERDE" | "AZUL" | "ROXO" | "CINZA"
       flag_escopo: "PESSOAL" | "EQUIPE" | "GLOBAL"
+      notif_prioridade: "BAIXA" | "NORMAL" | "ALTA" | "CRITICA"
+      notif_status: "NAO_LIDA" | "LIDA" | "ARQUIVADA" | "EXPIRADA"
       op_fin_forma_baixa:
         | "FOLHA"
         | "COMISSAO"
@@ -15443,6 +15601,8 @@ export const Constants = {
       cotacao_status: ["ATIVA", "ESCOLHIDA", "DESCARTADA"],
       flag_cor: ["VERMELHO", "AMARELO", "VERDE", "AZUL", "ROXO", "CINZA"],
       flag_escopo: ["PESSOAL", "EQUIPE", "GLOBAL"],
+      notif_prioridade: ["BAIXA", "NORMAL", "ALTA", "CRITICA"],
+      notif_status: ["NAO_LIDA", "LIDA", "ARQUIVADA", "EXPIRADA"],
       op_fin_forma_baixa: [
         "FOLHA",
         "COMISSAO",

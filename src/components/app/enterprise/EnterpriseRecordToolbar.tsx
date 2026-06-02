@@ -56,7 +56,7 @@ export type EnterpriseEntityType =
 export type EnterpriseRecordAction =
   | "novo" | "editar" | "duplicar" | "excluir" | "cancelar" | "salvar"
   | "atualizar" | "visualizar"
-  | "anexos" | "historico" | "comentarios" | "auditoria"
+  | "anexos" | "historico" | "comentarios" | "auditoria" | "favoritos"
   | "exportar" | "imprimir" | "enviar"
   | "filtroRapido" | "filtroAvancado" | "visoes" | "layout" | "colunas";
 

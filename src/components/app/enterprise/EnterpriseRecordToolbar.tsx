@@ -465,12 +465,12 @@ export function EnterpriseRecordToolbar({
       {extraLeft}
 
       <div className="ml-auto flex items-center gap-0">
-        {renderActionBtn("exportar")}
-        {renderActionBtn("imprimir")}
-        <Sep />
         {renderActionBtn("filtroAvancado")}
         {renderActionBtn("visoes")}
         {renderActionBtn("colunas")}
+        <Sep />
+        {renderActionBtn("exportar")}
+        {renderActionBtn("imprimir")}
         {extraRight}
         {count > 0 && (
           <span
@@ -479,6 +479,21 @@ export function EnterpriseRecordToolbar({
           >
             {count} sel.
           </span>
+        )}
+        {/* D27 — Busca sempre à direita (padrão RM/TOTVS) */}
+        {onSearchChange && (
+          <>
+            <Sep />
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search ?? ""}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="h-6 w-56 rounded-sm pl-6 text-[11.5px]"
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -158,26 +158,26 @@ export type LayoutBarConfig = {
 // ============================================================================
 
 const ALL_ACTIONS: EnterpriseRecordAction[] = [
-  "novo", "editar", "excluir", "cancelar", "salvar",
+  "novo", "editar", "duplicar", "excluir", "cancelar", "salvar",
   "atualizar", "visualizar",
   "anexos", "historico", "comentarios", "auditoria",
-  "exportar", "imprimir",
+  "exportar", "imprimir", "enviar",
   "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas",
 ];
 
 const ACTION_ICON: Record<EnterpriseRecordAction, ComponentType<{ className?: string }>> = {
-  novo: Plus, editar: Pencil, excluir: Trash2, cancelar: X, salvar: Save,
+  novo: Plus, editar: Pencil, duplicar: Copy, excluir: Trash2, cancelar: X, salvar: Save,
   atualizar: RefreshCw, visualizar: Eye,
   anexos: Paperclip, historico: History, comentarios: MessageSquare, auditoria: Shield,
-  exportar: Download, imprimir: Printer,
+  exportar: Download, imprimir: Printer, enviar: Mail,
   filtroRapido: Filter, filtroAvancado: FilterX, visoes: Layout, layout: Layout, colunas: Columns3,
 };
 
 const ACTION_LABEL: Record<EnterpriseRecordAction, string> = {
-  novo: "Novo", editar: "Editar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
+  novo: "Novo", editar: "Editar", duplicar: "Duplicar", excluir: "Excluir", cancelar: "Cancelar", salvar: "Salvar",
   atualizar: "Atualizar", visualizar: "Visualizar",
   anexos: "Anexos", historico: "Histórico", comentarios: "Comentários", auditoria: "Auditoria",
-  exportar: "Exportar", imprimir: "Imprimir",
+  exportar: "Exportar", imprimir: "Imprimir", enviar: "Enviar",
   filtroRapido: "Filtro rápido", filtroAvancado: "Filtro avançado",
   visoes: "Visões", layout: "Layout", colunas: "Colunas",
 };

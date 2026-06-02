@@ -2257,6 +2257,7 @@ export type Database = {
           obra_id: string | null
           origem_id: string | null
           origem_tipo: string | null
+          os_id: string | null
           produto_id: string
           projeto_id: string | null
           pv_id: string | null
@@ -2264,6 +2265,7 @@ export type Database = {
           reserva_id: string | null
           sistema_destino: string | null
           status_integracao: string
+          tarefa_id: string | null
           tipo: string
           user_email: string | null
           user_id: string | null
@@ -2283,6 +2285,7 @@ export type Database = {
           obra_id?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
+          os_id?: string | null
           produto_id: string
           projeto_id?: string | null
           pv_id?: string | null
@@ -2290,6 +2293,7 @@ export type Database = {
           reserva_id?: string | null
           sistema_destino?: string | null
           status_integracao?: string
+          tarefa_id?: string | null
           tipo: string
           user_email?: string | null
           user_id?: string | null
@@ -2309,6 +2313,7 @@ export type Database = {
           obra_id?: string | null
           origem_id?: string | null
           origem_tipo?: string | null
+          os_id?: string | null
           produto_id?: string
           projeto_id?: string | null
           pv_id?: string | null
@@ -2316,6 +2321,7 @@ export type Database = {
           reserva_id?: string | null
           sistema_destino?: string | null
           status_integracao?: string
+          tarefa_id?: string | null
           tipo?: string
           user_email?: string | null
           user_id?: string | null
@@ -2336,6 +2342,41 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "estoque_movimentos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_orcado_realizado"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_produtividade"
+            referencedColumns: ["os_id"]
+          },
+          {
             foreignKeyName: "estoque_movimentos_produto_id_fkey"
             columns: ["produto_id"]
             isOneToOne: false
@@ -2369,6 +2410,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefas"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2382,12 +2430,14 @@ export type Database = {
           motivo_cancelamento: string | null
           obra_id: string | null
           observacoes: string | null
+          os_id: string | null
           produto_id: string
           projeto_id: string | null
           pv_id: string | null
           quantidade_entregue: number
           quantidade_reservada: number
           status: string
+          tarefa_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2399,12 +2449,14 @@ export type Database = {
           motivo_cancelamento?: string | null
           obra_id?: string | null
           observacoes?: string | null
+          os_id?: string | null
           produto_id: string
           projeto_id?: string | null
           pv_id?: string | null
           quantidade_entregue?: number
           quantidade_reservada: number
           status?: string
+          tarefa_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -2416,15 +2468,52 @@ export type Database = {
           motivo_cancelamento?: string | null
           obra_id?: string | null
           observacoes?: string | null
+          os_id?: string | null
           produto_id?: string
           projeto_id?: string | null
           pv_id?: string | null
           quantidade_entregue?: number
           quantidade_reservada?: number
           status?: string
+          tarefa_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_reservas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_orcado_realizado"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_produtividade"
+            referencedColumns: ["os_id"]
+          },
           {
             foreignKeyName: "estoque_reservas_produto_id_fkey"
             columns: ["produto_id"]
@@ -2459,6 +2548,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pend_material_parado"
             referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_reservas_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefas"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5171,7 +5267,7 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           origem_id: string | null
-          origem_tipo: string | null
+          origem_tipo: string
           os_id: string
           row_version: number
           updated_at: string
@@ -5189,7 +5285,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           origem_id?: string | null
-          origem_tipo?: string | null
+          origem_tipo?: string
           os_id: string
           row_version?: number
           updated_at?: string
@@ -5207,7 +5303,7 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           origem_id?: string | null
-          origem_tipo?: string | null
+          origem_tipo?: string
           os_id?: string
           row_version?: number
           updated_at?: string
@@ -5226,6 +5322,13 @@ export type Database = {
             columns: ["os_id"]
             isOneToOne: false
             referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_custos_realizados_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
             referencedColumns: ["os_id"]
           },
           {
@@ -5321,6 +5424,13 @@ export type Database = {
             columns: ["os_id"]
             isOneToOne: false
             referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_eventos_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
             referencedColumns: ["os_id"]
           },
           {
@@ -5614,6 +5724,13 @@ export type Database = {
             columns: ["os_id"]
             isOneToOne: false
             referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_orcamento_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
             referencedColumns: ["os_id"]
           },
           {
@@ -6140,6 +6257,13 @@ export type Database = {
             foreignKeyName: "os_requisicoes_equipamento_os_id_fkey"
             columns: ["os_id"]
             isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_requisicoes_equipamento_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
             referencedRelation: "v_os_orcado_realizado"
             referencedColumns: ["os_id"]
           },
@@ -6238,6 +6362,13 @@ export type Database = {
             columns: ["os_id"]
             isOneToOne: false
             referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_servicos_faturar_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
             referencedColumns: ["os_id"]
           },
           {
@@ -6448,6 +6579,13 @@ export type Database = {
             columns: ["os_id"]
             isOneToOne: false
             referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "os_tarefas_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
             referencedColumns: ["os_id"]
           },
           {
@@ -10585,6 +10723,19 @@ export type Database = {
           },
         ]
       }
+      v_os_material_resumo: {
+        Row: {
+          custo_baixado: number | null
+          custo_devolvido: number | null
+          custo_realizado_estoque_liquido: number | null
+          os_codigo: string | null
+          os_id: string | null
+          qtd_entregue_total: number | null
+          qtd_reservada_total: number | null
+          reservas_ativas: number | null
+        }
+        Relationships: []
+      }
       v_os_orcado_realizado: {
         Row: {
           categoria: Database["public"]["Enums"]["os_categoria_custo"] | null
@@ -12200,8 +12351,21 @@ export type Database = {
         Args: { p_os_id: string; p_patch: Json; p_row_version: number }
         Returns: string
       }
+      rpc_os_baixar_material: {
+        Args: {
+          p_custo_unitario?: number
+          p_observacao?: string
+          p_quantidade: number
+          p_reserva_id: string
+        }
+        Returns: string
+      }
       rpc_os_cancelar: {
         Args: { p_motivo: string; p_os_id: string; p_row_version: number }
+        Returns: undefined
+      }
+      rpc_os_cancelar_reserva: {
+        Args: { p_motivo: string; p_reserva_id: string }
         Returns: undefined
       }
       rpc_os_criar: {
@@ -12244,6 +12408,10 @@ export type Database = {
           p_os_id: string
           p_valor: number
         }
+        Returns: string
+      }
+      rpc_os_devolver_material: {
+        Args: { p_motivo: string; p_movimento_id: string; p_quantidade: number }
         Returns: string
       }
       rpc_os_evento_registrar: {
@@ -12313,6 +12481,16 @@ export type Database = {
           p_observacao?: string
           p_os_id: string
           p_valor: number
+        }
+        Returns: string
+      }
+      rpc_os_reservar_material: {
+        Args: {
+          p_motivo?: string
+          p_os_id: string
+          p_produto_id: string
+          p_quantidade: number
+          p_tarefa_id?: string
         }
         Returns: string
       }
@@ -12611,6 +12789,9 @@ export type Database = {
         | "os.custo.lancar"
         | "os.formulario.editar"
         | "os.modelo.aprovar"
+        | "os.material.reservar"
+        | "os.material.baixar"
+        | "os.material.devolver"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -12909,6 +13090,9 @@ export const Constants = {
         "os.custo.lancar",
         "os.formulario.editar",
         "os.modelo.aprovar",
+        "os.material.reservar",
+        "os.material.baixar",
+        "os.material.devolver",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

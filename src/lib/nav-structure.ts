@@ -14,6 +14,7 @@ import {
   LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
   ClipboardCheck, LineChart, Settings, FileBarChart, Database,
   ListChecks, Users, Receipt, Banknote, ShoppingCart, ShieldCheck, Truck,
+  Boxes,
 } from "lucide-react";
 import type { ROUTE_TABS } from "@/lib/route-tabs";
 

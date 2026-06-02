@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export type NotifStatus = "NAO_LIDA" | "LIDA" | "ARQUIVADA" | "EXPIRADA";
 export type NotifPrioridade = "BAIXA" | "NORMAL" | "ALTA" | "CRITICA";

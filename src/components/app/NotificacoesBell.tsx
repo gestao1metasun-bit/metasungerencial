@@ -33,7 +33,7 @@ export function NotificacoesBell() {
 
   const abrirOrigem = (n: NotificacaoRow) => {
     if (n.status === "NAO_LIDA") marcarLida.mutate(n.id);
-    if (n.link_origem) void navigate({ to: n.link_origem });
+    if (n.link_origem) void navigate({ to: n.link_origem } as never);
   };
 
   return (

@@ -2184,6 +2184,7 @@ function GestaoProjetosTab({ contratos }: { contratos: ContratoFull[] }) {
             </TableBody>
           </Table>
         </Card>
+        )
       )}
 
       {view === "contrato" && <>

@@ -198,6 +198,7 @@ function PainelOsPage() {
         <TabsContent value="orcado" className="mt-2"><OrcadoRealizadoTab osId={os.id} /></TabsContent>
         <TabsContent value="custos" className="mt-2"><CustosTab osId={os.id} /></TabsContent>
         <TabsContent value="tarefas" className="mt-2"><TarefasTab osId={os.id} /></TabsContent>
+        <TabsContent value="produtividade" className="mt-2"><ProdutividadeTab osId={os.id} /></TabsContent>
         <TabsContent value="formularios" className="mt-2"><FormulariosTab osId={os.id} /></TabsContent>
         <TabsContent value="historico" className="mt-2" id="historico"><HistoricoTab osId={os.id} /></TabsContent>
       </Tabs>

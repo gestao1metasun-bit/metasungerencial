@@ -39,21 +39,22 @@ export function RecebimentosTab() {
   return (
     <div className="space-y-2">
       <EnterpriseRecordToolbar
-        searchPlaceholder="Buscar recebimento ou documento…"
-        searchValue={search}
+        entityType="compras"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroRapido"]}
+        search={search}
         onSearchChange={setSearch}
-        onReload={() => refetch()}
-        actions={[
-          { kind: "filter", label: "Filtros", element: (
-            <Select value={status || undefined} onValueChange={(v) => setStatus((v as SupRecStatus) || "")}>
-              <SelectTrigger className="h-7 w-[150px] text-[11.5px]"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                {REC_STATUS_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          )},
-        ]}
+        searchPlaceholder="Buscar recebimento ou documento…"
+        onAction={(a) => { if (a === "atualizar") { refetch(); toast.success("Lista atualizada"); } }}
+        extraRight={
+          <Select value={status} onValueChange={(v) => setStatus(v as SupRecStatus | "")}>
+            <SelectTrigger className="h-7 w-[160px] text-[11.5px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos</SelectItem>
+              {REC_STATUS_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        }
       />
       <Card className="overflow-x-auto">
         <table className="w-full text-[12px]">
@@ -64,25 +65,31 @@ export function RecebimentosTab() {
               <th className="px-2 py-1.5 text-left">Documento</th>
               <th className="px-2 py-1.5 text-left">Data</th>
               <th className="px-2 py-1.5 text-left">Status</th>
-              <th className="px-2 py-1.5 text-right">Ações</th>
+              <th className="px-2 py-1.5 text-right w-28">Ações</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (<tr><td colSpan={6} className="p-3 text-center text-muted-foreground">Carregando…</td></tr>)}
             {!isLoading && data.length === 0 && (<tr><td colSpan={6} className="p-3 text-center text-muted-foreground">Nenhum recebimento. Abra um Pedido enviado para registrar.</td></tr>)}
             {data.map((r) => (
-              <tr key={r.id} className="border-t border-border/60 hover:bg-muted/30">
+              <tr key={r.id} className="border-t border-border/60 hover:bg-muted/30 cursor-pointer" onClick={() => setOpenId(r.id)}>
                 <td className="px-2 py-1 font-medium tabular-nums">#{r.numero}</td>
                 <td className="px-2 py-1 tabular-nums">PED-{r.pedido_numero}</td>
                 <td className="px-2 py-1 truncate max-w-[200px]">{r.documento ?? "—"}</td>
                 <td className="px-2 py-1 tabular-nums">{fmtDate(r.data_recebimento)}</td>
                 <td className="px-2 py-1"><StatusBadge s={r.status} /></td>
-                <td className="px-2 py-1">
+                <td className="px-2 py-1 text-right" onClick={(e) => e.stopPropagation()}>
                   <RowActions
-                    onView={() => setOpenId(r.id)}
-                    extra={[
-                      ...(r.status === "RASCUNHO" ? [{ key: "confirmar", label: "Confirmar", icon: "send" as const, onClick: () => onConfirmar(r), tone: "green" as const }] : []),
+                    rowId={r.id}
+                    actions={[
+                      { kind: "visualizar" },
+                      ...(r.status === "RASCUNHO" ? [{ kind: "aprovar" as const, label: "Confirmar" }] : []),
+                      { kind: "historico" },
                     ]}
+                    onAction={(kind) => {
+                      if (kind === "visualizar" || kind === "historico") setOpenId(r.id);
+                      else if (kind === "aprovar") onConfirmar(r);
+                    }}
                   />
                 </td>
               </tr>

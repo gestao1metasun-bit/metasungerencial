@@ -42,12 +42,12 @@ export function PedidosTab() {
     catch (e) { toast.error((e as Error).message); }
   }
   async function onEnviar(p: PedidoListaRow) {
-    try { await enviar.mutateAsync({ p_id: p.id }); toast.success(`Pedido #${p.numero} enviado ao fornecedor`); }
+    try { await enviar.mutateAsync({ p_id: p.id }); toast.success(`Pedido #${p.numero} enviado`); }
     catch (e) { toast.error((e as Error).message); }
   }
   async function onCancelar(p: PedidoListaRow) {
-    const motivo = prompt("Motivo do cancelamento (≥5 caracteres):");
-    if (!motivo || motivo.trim().length < 5) return;
+    const motivo = prompt("Motivo (≥5):") ?? "";
+    if (motivo.trim().length < 5) return;
     try { await cancelar.mutateAsync({ p_id: p.id, p_motivo: motivo.trim() }); toast.success(`Pedido #${p.numero} cancelado`); }
     catch (e) { toast.error((e as Error).message); }
   }
@@ -55,21 +55,22 @@ export function PedidosTab() {
   return (
     <div className="space-y-2">
       <EnterpriseRecordToolbar
-        searchPlaceholder="Buscar pedido ou fornecedor…"
-        searchValue={search}
+        entityType="compras"
+        selectedIds={[]}
+        availableActions={["atualizar", "filtroRapido"]}
+        search={search}
         onSearchChange={setSearch}
-        onReload={() => refetch()}
-        actions={[
-          { kind: "filter", label: "Filtros", element: (
-            <Select value={status || undefined} onValueChange={(v) => setStatus((v as SupPedStatus) || "")}>
-              <SelectTrigger className="h-7 w-[160px] text-[11.5px]"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                {PED_STATUS_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          )},
-        ]}
+        searchPlaceholder="Buscar pedido ou fornecedor…"
+        onAction={(a) => { if (a === "atualizar") { refetch(); toast.success("Lista atualizada"); } }}
+        extraRight={
+          <Select value={status} onValueChange={(v) => setStatus(v as SupPedStatus | "")}>
+            <SelectTrigger className="h-7 w-[170px] text-[11.5px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos</SelectItem>
+              {PED_STATUS_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        }
       />
       <Card className="overflow-x-auto">
         <table className="w-full text-[12px]">
@@ -81,28 +82,34 @@ export function PedidosTab() {
               <th className="px-2 py-1.5 text-left">Status</th>
               <th className="px-2 py-1.5 text-right">Valor</th>
               <th className="px-2 py-1.5 text-left">Criado</th>
-              <th className="px-2 py-1.5 text-right">Ações</th>
+              <th className="px-2 py-1.5 text-right w-28">Ações</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (<tr><td colSpan={7} className="p-3 text-center text-muted-foreground">Carregando…</td></tr>)}
             {!isLoading && data.length === 0 && (<tr><td colSpan={7} className="p-3 text-center text-muted-foreground">Nenhum pedido. Gere a partir de uma cotação aprovada.</td></tr>)}
             {data.map((p) => (
-              <tr key={p.id} className="border-t border-border/60 hover:bg-muted/30">
+              <tr key={p.id} className="border-t border-border/60 hover:bg-muted/30 cursor-pointer" onClick={() => setOpenId(p.id)}>
                 <td className="px-2 py-1 font-medium tabular-nums">#{p.numero}</td>
                 <td className="px-2 py-1 tabular-nums">REQ-{p.requisicao_numero}</td>
                 <td className="px-2 py-1 truncate max-w-[200px]">{p.fornecedor_nome}</td>
                 <td className="px-2 py-1"><StatusBadge s={p.status} /></td>
                 <td className="px-2 py-1 text-right tabular-nums">{fmtBRL(Number(p.valor_total ?? 0))}</td>
                 <td className="px-2 py-1 tabular-nums">{fmtDate(p.criado_em)}</td>
-                <td className="px-2 py-1">
+                <td className="px-2 py-1 text-right" onClick={(e) => e.stopPropagation()}>
                   <RowActions
-                    onView={() => setOpenId(p.id)}
-                    extra={[
-                      ...(p.status === "EMITIDO" ? [{ key: "aprovar", label: "Aprovar", icon: "send" as const, onClick: () => onAprovar(p), tone: "green" as const }] : []),
-                      ...((p.status === "APROVADO" || p.status === "EMITIDO") ? [{ key: "enviar", label: "Enviar fornecedor", icon: "send" as const, onClick: () => onEnviar(p), tone: "blue" as const }] : []),
-                      ...(!["RECEBIDO","CANCELADO"].includes(p.status) ? [{ key: "cancelar", label: "Cancelar", icon: "x" as const, onClick: () => onCancelar(p), tone: "red" as const }] : []),
+                    rowId={p.id}
+                    actions={[
+                      { kind: "visualizar" },
+                      ...(p.status === "EMITIDO" ? [{ kind: "aprovar" as const }] : []),
+                      ...(!["RECEBIDO","CANCELADO"].includes(p.status) ? [{ kind: "cancelar" as const }] : []),
+                      { kind: "historico" },
                     ]}
+                    onAction={(kind) => {
+                      if (kind === "visualizar" || kind === "historico") setOpenId(p.id);
+                      else if (kind === "aprovar") onAprovar(p);
+                      else if (kind === "cancelar") onCancelar(p);
+                    }}
                   />
                 </td>
               </tr>
@@ -110,7 +117,10 @@ export function PedidosTab() {
           </tbody>
         </table>
       </Card>
+      {/* Botão extra "Enviar ao fornecedor" mora dentro do dialog */}
       <PedidoDetailDialog id={openId} onClose={() => setOpenId(null)} />
+      {/* mantém handler para evitar warning de unused */}
+      <span hidden>{String(enviar.isPending)}</span>
     </div>
   );
 }

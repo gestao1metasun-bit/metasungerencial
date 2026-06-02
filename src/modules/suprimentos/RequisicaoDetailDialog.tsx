@@ -29,6 +29,7 @@ import {
   STATUS_LABEL, STATUS_TONE, type SupReqStatus,
   type VerificacaoEstoqueItem,
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
+import { useCriarCotacao } from "@/lib/repositories/suprimentos-compras-repo";
 
 const TONE_CLASS: Record<string, string> = {
   muted: "bg-muted text-muted-foreground border-border",

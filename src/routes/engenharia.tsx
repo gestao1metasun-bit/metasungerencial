@@ -458,10 +458,9 @@ function EngenhariaPage() {
         <Link to="/engenharia/gestao-servicos/modelos">
           <Button size="sm" variant="outline" className="h-7 text-[11.5px]">Modelos de Formulário</Button>
         </Link>
-        <Button size="sm" variant="outline" className="h-7 text-[11.5px]"
-          onClick={() => toast.info("Dashboard executivo da O.S. chega em E.OS.5.")}>
-          Dashboard O.S.
-        </Button>
+        <Link to="/engenharia/gestao-servicos" search={{ tab: "dashboard" } as never}>
+          <Button size="sm" variant="outline" className="h-7 text-[11.5px]">Dashboard O.S.</Button>
+        </Link>
         <Button size="sm" variant="outline" className="h-7 text-[11.5px]"
           onClick={() => setTab("produtividade")}>
           Produtividade

@@ -297,6 +297,7 @@ export function EnterpriseRecordToolbar({
     const tone: "default" | "primary" | "danger" | "muted" | "success" | "warning" | "info" =
       a === "novo" ? "primary"
       : a === "editar" ? "warning"
+      : a === "duplicar" ? "info"
       : (a === "excluir" || a === "cancelar") ? "danger"
       : a === "salvar" ? "success"
       : (a === "atualizar" || a === "visualizar") ? "muted"
@@ -305,6 +306,7 @@ export function EnterpriseRecordToolbar({
       : a === "auditoria" ? "warning"
       : a === "exportar" ? "success"
       : a === "imprimir" ? "info"
+      : a === "enviar" ? "success"
       : (a === "filtroAvancado" || a === "visoes" || a === "colunas" || a === "layout") ? "info"
       : "default";
     return (

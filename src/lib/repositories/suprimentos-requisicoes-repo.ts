@@ -169,8 +169,8 @@ export function useAprovarRequisicao() {
     mutationFn: async (args: { id: string; valor_aprovado?: number | null; observacao?: string | null }) => {
       const { data, error } = await supabase.rpc("rpc_sup_requisicao_aprovar", {
         p_id: args.id,
-        p_valor_aprovado: args.valor_aprovado ?? null,
-        p_observacao: args.observacao ?? null,
+        p_valor_aprovado: args.valor_aprovado ?? undefined,
+        p_observacao: args.observacao ?? undefined,
       });
       if (error) throw error;
       return data;

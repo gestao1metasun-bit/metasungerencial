@@ -8626,6 +8626,178 @@ export type Database = {
           },
         ]
       }
+      suprimentos_alcadas: {
+        Row: {
+          aprovador_tipo: string
+          aprovador_valor: string
+          ativo: boolean
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          descricao: string | null
+          destino: string | null
+          etapa: string
+          exige_workflow: boolean
+          fornecedor_id: string | null
+          id: string
+          natureza_id: string | null
+          nome: string
+          observacao_obrigatoria: boolean
+          prioridade: number
+          prioridade_req: string | null
+          row_version: number
+          setor: string | null
+          tipo: string | null
+          updated_at: string
+          updated_by: string | null
+          valor_max: number | null
+          valor_min: number | null
+        }
+        Insert: {
+          aprovador_tipo: string
+          aprovador_valor: string
+          ativo?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          destino?: string | null
+          etapa: string
+          exige_workflow?: boolean
+          fornecedor_id?: string | null
+          id?: string
+          natureza_id?: string | null
+          nome: string
+          observacao_obrigatoria?: boolean
+          prioridade?: number
+          prioridade_req?: string | null
+          row_version?: number
+          setor?: string | null
+          tipo?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor_max?: number | null
+          valor_min?: number | null
+        }
+        Update: {
+          aprovador_tipo?: string
+          aprovador_valor?: string
+          ativo?: boolean
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          destino?: string | null
+          etapa?: string
+          exige_workflow?: boolean
+          fornecedor_id?: string | null
+          id?: string
+          natureza_id?: string | null
+          nome?: string
+          observacao_obrigatoria?: boolean
+          prioridade?: number
+          prioridade_req?: string | null
+          row_version?: number
+          setor?: string | null
+          tipo?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor_max?: number | null
+          valor_min?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_alcadas_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_alcadas_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_alcadas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_alcadas_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_alcadas_aplicadas: {
+        Row: {
+          alcada_id: string | null
+          alcada_nome: string | null
+          aprovador_permissao: string | null
+          aprovador_user_id: string
+          data_hora: string
+          decisao: string
+          entidade_id: string
+          entidade_tipo: string
+          etapa: string
+          id: string
+          motivo: string | null
+          observacao: string | null
+          valor_avaliado: number | null
+        }
+        Insert: {
+          alcada_id?: string | null
+          alcada_nome?: string | null
+          aprovador_permissao?: string | null
+          aprovador_user_id: string
+          data_hora?: string
+          decisao: string
+          entidade_id: string
+          entidade_tipo: string
+          etapa: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          valor_avaliado?: number | null
+        }
+        Update: {
+          alcada_id?: string | null
+          alcada_nome?: string | null
+          aprovador_permissao?: string | null
+          aprovador_user_id?: string
+          data_hora?: string
+          decisao?: string
+          entidade_id?: string
+          entidade_tipo?: string
+          etapa?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          valor_avaliado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_alcadas_aplicadas_alcada_id_fkey"
+            columns: ["alcada_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_alcadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suprimentos_cotacao_eventos: {
         Row: {
           cotacao_id: string
@@ -8959,10 +9131,15 @@ export type Database = {
           atualizado_em: string
           centro_custo_id: string | null
           centro_resultado_id: string | null
+          condicao_pagamento: string | null
           cotacao_id: string | null
           criado_em: string
           criado_por: string
+          data_prevista_pagamento: string | null
           deleted_at: string | null
+          documento_fiscal: string | null
+          financeiro_bloqueio_motivo: string | null
+          financeiro_observacao: string | null
           fornecedor_id: string
           id: string
           motivo_cancelamento: string | null
@@ -8975,16 +9152,23 @@ export type Database = {
           requisicao_id: string
           row_version: number
           status: Database["public"]["Enums"]["sup_ped_status"]
+          status_financeiro: string
+          valor_aprovado_final: number | null
           valor_total: number
         }
         Insert: {
           atualizado_em?: string
           centro_custo_id?: string | null
           centro_resultado_id?: string | null
+          condicao_pagamento?: string | null
           cotacao_id?: string | null
           criado_em?: string
           criado_por?: string
+          data_prevista_pagamento?: string | null
           deleted_at?: string | null
+          documento_fiscal?: string | null
+          financeiro_bloqueio_motivo?: string | null
+          financeiro_observacao?: string | null
           fornecedor_id: string
           id?: string
           motivo_cancelamento?: string | null
@@ -8997,16 +9181,23 @@ export type Database = {
           requisicao_id: string
           row_version?: number
           status?: Database["public"]["Enums"]["sup_ped_status"]
+          status_financeiro?: string
+          valor_aprovado_final?: number | null
           valor_total?: number
         }
         Update: {
           atualizado_em?: string
           centro_custo_id?: string | null
           centro_resultado_id?: string | null
+          condicao_pagamento?: string | null
           cotacao_id?: string | null
           criado_em?: string
           criado_por?: string
+          data_prevista_pagamento?: string | null
           deleted_at?: string | null
+          documento_fiscal?: string | null
+          financeiro_bloqueio_motivo?: string | null
+          financeiro_observacao?: string | null
           fornecedor_id?: string
           id?: string
           motivo_cancelamento?: string | null
@@ -9019,6 +9210,8 @@ export type Database = {
           requisicao_id?: string
           row_version?: number
           status?: Database["public"]["Enums"]["sup_ped_status"]
+          status_financeiro?: string
+          valor_aprovado_final?: number | null
           valor_total?: number
         }
         Relationships: [

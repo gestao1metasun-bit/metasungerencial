@@ -8577,6 +8577,467 @@ export type Database = {
           },
         ]
       }
+      suprimentos_requisicao_eventos: {
+        Row: {
+          data_hora: string
+          id: string
+          observacao: string | null
+          payload: Json
+          requisicao_id: string
+          status_anterior: Database["public"]["Enums"]["sup_req_status"] | null
+          status_novo: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo_evento: string
+          usuario_id: string
+        }
+        Insert: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json
+          requisicao_id: string
+          status_anterior?: Database["public"]["Enums"]["sup_req_status"] | null
+          status_novo?: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo_evento: string
+          usuario_id: string
+        }
+        Update: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json
+          requisicao_id?: string
+          status_anterior?: Database["public"]["Enums"]["sup_req_status"] | null
+          status_novo?: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo_evento?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_requisicao_itens: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          descricao: string
+          fornecedor_sugerido_id: string | null
+          id: string
+          item_estoque_id: string | null
+          observacao: string | null
+          ordem: number
+          quantidade_aprovada: number
+          quantidade_devolvida: number
+          quantidade_entregue: number
+          quantidade_reservada: number
+          quantidade_solicitada: number
+          requisicao_id: string
+          tipo_item: Database["public"]["Enums"]["sup_req_tipo"]
+          unidade: string
+          valor_estimado_total: number | null
+          valor_estimado_unitario: number
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          descricao: string
+          fornecedor_sugerido_id?: string | null
+          id?: string
+          item_estoque_id?: string | null
+          observacao?: string | null
+          ordem?: number
+          quantidade_aprovada?: number
+          quantidade_devolvida?: number
+          quantidade_entregue?: number
+          quantidade_reservada?: number
+          quantidade_solicitada: number
+          requisicao_id: string
+          tipo_item: Database["public"]["Enums"]["sup_req_tipo"]
+          unidade?: string
+          valor_estimado_total?: number | null
+          valor_estimado_unitario?: number
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string
+          fornecedor_sugerido_id?: string | null
+          id?: string
+          item_estoque_id?: string | null
+          observacao?: string | null
+          ordem?: number
+          quantidade_aprovada?: number
+          quantidade_devolvida?: number
+          quantidade_entregue?: number
+          quantidade_reservada?: number
+          quantidade_solicitada?: number
+          requisicao_id?: string
+          tipo_item?: Database["public"]["Enums"]["sup_req_tipo"]
+          unidade?: string
+          valor_estimado_total?: number | null
+          valor_estimado_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_fornecedor_sugerido_id_fkey"
+            columns: ["fornecedor_sugerido_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_item_estoque_id_fkey"
+            columns: ["item_estoque_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_item_estoque_id_fkey"
+            columns: ["item_estoque_id"]
+            isOneToOne: false
+            referencedRelation: "v_estoque_saldos"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_item_estoque_id_fkey"
+            columns: ["item_estoque_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_estoque_completa"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_item_estoque_id_fkey"
+            columns: ["item_estoque_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_estoque_baixo"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_item_estoque_id_fkey"
+            columns: ["item_estoque_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_material_parado"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_requisicoes: {
+        Row: {
+          aprovado_em: string | null
+          aprovador_id: string | null
+          atualizado_em: string
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          criado_em: string
+          criado_por: string
+          data_necessidade: string | null
+          deleted_at: string | null
+          hash_integracao: string | null
+          id: string
+          justificativa: string | null
+          lote_integracao_id: string | null
+          motivo_cancelamento: string | null
+          motivo_reprovacao: string | null
+          motivo_retorno: string | null
+          natureza_id: string | null
+          numero: number
+          obra_id: string | null
+          os_id: string | null
+          prioridade: string
+          projeto_id: string | null
+          row_version: number
+          setor: string | null
+          sistema_destino: string | null
+          solicitante_id: string
+          status: Database["public"]["Enums"]["sup_req_status"]
+          status_integracao: string
+          tarefa_id: string | null
+          tipo: Database["public"]["Enums"]["sup_req_tipo"]
+          valor_aprovado: number | null
+          valor_estimado: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovador_id?: string | null
+          atualizado_em?: string
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          criado_em?: string
+          criado_por: string
+          data_necessidade?: string | null
+          deleted_at?: string | null
+          hash_integracao?: string | null
+          id?: string
+          justificativa?: string | null
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          motivo_reprovacao?: string | null
+          motivo_retorno?: string | null
+          natureza_id?: string | null
+          numero?: number
+          obra_id?: string | null
+          os_id?: string | null
+          prioridade?: string
+          projeto_id?: string | null
+          row_version?: number
+          setor?: string | null
+          sistema_destino?: string | null
+          solicitante_id: string
+          status?: Database["public"]["Enums"]["sup_req_status"]
+          status_integracao?: string
+          tarefa_id?: string | null
+          tipo: Database["public"]["Enums"]["sup_req_tipo"]
+          valor_aprovado?: number | null
+          valor_estimado?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovador_id?: string | null
+          atualizado_em?: string
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          criado_em?: string
+          criado_por?: string
+          data_necessidade?: string | null
+          deleted_at?: string | null
+          hash_integracao?: string | null
+          id?: string
+          justificativa?: string | null
+          lote_integracao_id?: string | null
+          motivo_cancelamento?: string | null
+          motivo_reprovacao?: string | null
+          motivo_retorno?: string | null
+          natureza_id?: string | null
+          numero?: number
+          obra_id?: string | null
+          os_id?: string | null
+          prioridade?: string
+          projeto_id?: string | null
+          row_version?: number
+          setor?: string | null
+          sistema_destino?: string | null
+          solicitante_id?: string
+          status?: Database["public"]["Enums"]["sup_req_status"]
+          status_integracao?: string
+          tarefa_id?: string | null
+          tipo?: Database["public"]["Enums"]["sup_req_tipo"]
+          valor_aprovado?: number | null
+          valor_estimado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_requisicoes_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_previsto"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_desvio_custo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_obras_atrasadas"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_custo_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_tempo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_obra_sem_reserva"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rastreabilidade_operacional"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rentabilidade_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldo_operacional_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_status_material_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_orcado_realizado"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_produtividade"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "os_tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_flags: {
         Row: {
           description: string | null
@@ -11560,6 +12021,247 @@ export type Database = {
         }
         Relationships: []
       }
+      v_suprimentos_requisicoes_resumo: {
+        Row: {
+          aprovador_id: string | null
+          atualizado_em: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cliente_id: string | null
+          criado_em: string | null
+          data_necessidade: string | null
+          id: string | null
+          numero: number | null
+          obra_id: string | null
+          os_id: string | null
+          prioridade: string | null
+          projeto_id: string | null
+          qtd_entregue_total: number | null
+          qtd_itens: number | null
+          qtd_solicitada_total: number | null
+          solicitante_id: string | null
+          status: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo: Database["public"]["Enums"]["sup_req_tipo"] | null
+          valor_aprovado: number | null
+          valor_estimado: number | null
+        }
+        Insert: {
+          aprovador_id?: string | null
+          atualizado_em?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          criado_em?: string | null
+          data_necessidade?: string | null
+          id?: string | null
+          numero?: number | null
+          obra_id?: string | null
+          os_id?: string | null
+          prioridade?: string | null
+          projeto_id?: string | null
+          qtd_entregue_total?: never
+          qtd_itens?: never
+          qtd_solicitada_total?: never
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo?: Database["public"]["Enums"]["sup_req_tipo"] | null
+          valor_aprovado?: number | null
+          valor_estimado?: number | null
+        }
+        Update: {
+          aprovador_id?: string | null
+          atualizado_em?: string | null
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string | null
+          criado_em?: string | null
+          data_necessidade?: string | null
+          id?: string | null
+          numero?: number | null
+          obra_id?: string | null
+          os_id?: string | null
+          prioridade?: string | null
+          projeto_id?: string | null
+          qtd_entregue_total?: never
+          qtd_itens?: never
+          qtd_solicitada_total?: never
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["sup_req_status"] | null
+          tipo?: Database["public"]["Enums"]["sup_req_tipo"] | null
+          valor_aprovado?: number | null
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_requisicoes_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_previsto"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_custo_obra_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_desvio_custo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_eng_obras_atrasadas"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_custo_realizado"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_obra_tempo"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_obra_completa"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_pend_obra_sem_reserva"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rastreabilidade_operacional"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_rentabilidade_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldo_operacional_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_status_material_obra"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["obra_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "os_ordens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_dashboard_kpis"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_material_resumo"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_orcado_realizado"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_produtividade"
+            referencedColumns: ["os_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_taxas_titulo: {
         Row: {
           categoria: string | null
@@ -11934,6 +12636,25 @@ export type Database = {
           p_tipo: string
         }
         Returns: string
+      }
+      fn_sup_req_log_evento: {
+        Args: {
+          p_observacao?: string
+          p_payload?: Json
+          p_requisicao_id: string
+          p_status_anterior: Database["public"]["Enums"]["sup_req_status"]
+          p_status_novo: Database["public"]["Enums"]["sup_req_status"]
+          p_tipo_evento: string
+        }
+        Returns: string
+      }
+      fn_sup_req_set_status: {
+        Args: {
+          p_id: string
+          p_novo: Database["public"]["Enums"]["sup_req_status"]
+          p_permissoes: string[]
+        }
+        Returns: Database["public"]["Enums"]["sup_req_status"]
       }
       gerar_pv_do_contrato: {
         Args: { _contrato_id: string; _projeto_contrato_id?: string }
@@ -12589,6 +13310,53 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_sup_requisicao_aprovar: {
+        Args: { p_id: string; p_observacao?: string; p_valor_aprovado?: number }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_atender_parcial: {
+        Args: { p_id: string; p_payload?: Json }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_atender_total: {
+        Args: { p_id: string; p_payload?: Json }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_atualizar: {
+        Args: { p_id: string; p_payload: Json }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_criar: { Args: { p_payload: Json }; Returns: string }
+      rpc_sup_requisicao_enviar: { Args: { p_id: string }; Returns: undefined }
+      rpc_sup_requisicao_enviar_compra: {
+        Args: { p_id: string; p_justificativa?: string }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_evento_registrar: {
+        Args: {
+          p_id: string
+          p_observacao: string
+          p_payload?: Json
+          p_tipo_evento: string
+        }
+        Returns: string
+      }
+      rpc_sup_requisicao_reprovar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_retornar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_requisicao_verificar_estoque: {
+        Args: { p_id: string }
+        Returns: Json
+      }
       rpc_taxa_aplicar: {
         Args: {
           _categoria?: string
@@ -12792,6 +13560,14 @@ export type Database = {
         | "os.material.reservar"
         | "os.material.baixar"
         | "os.material.devolver"
+        | "suprimentos.requisicao.visualizar"
+        | "suprimentos.requisicao.criar"
+        | "suprimentos.requisicao.editar"
+        | "suprimentos.requisicao.aprovar"
+        | "suprimentos.requisicao.cancelar"
+        | "suprimentos.requisicao.atender"
+        | "suprimentos.requisicao.comprar"
+        | "suprimentos.dashboard.ver"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -12853,6 +13629,21 @@ export type Database = {
         | "ATENDIDA_ESTOQUE"
         | "AGUARDANDO_COMPRA"
         | "CONCLUIDA"
+      sup_req_status:
+        | "RASCUNHO"
+        | "ENVIADA"
+        | "EM_APROVACAO"
+        | "APROVADA"
+        | "REPROVADA"
+        | "RETORNADA"
+        | "AGUARDANDO_ESTOQUE"
+        | "EM_SEPARACAO"
+        | "AGUARDANDO_COMPRA"
+        | "EM_COMPRA"
+        | "PARCIALMENTE_ATENDIDA"
+        | "ATENDIDA"
+        | "CANCELADA"
+      sup_req_tipo: "MATERIAL" | "SERVICO"
       workflow_status:
         | "PENDENTE"
         | "APROVADA"
@@ -13093,6 +13884,14 @@ export const Constants = {
         "os.material.reservar",
         "os.material.baixar",
         "os.material.devolver",
+        "suprimentos.requisicao.visualizar",
+        "suprimentos.requisicao.criar",
+        "suprimentos.requisicao.editar",
+        "suprimentos.requisicao.aprovar",
+        "suprimentos.requisicao.cancelar",
+        "suprimentos.requisicao.atender",
+        "suprimentos.requisicao.comprar",
+        "suprimentos.dashboard.ver",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [
@@ -13162,6 +13961,22 @@ export const Constants = {
         "AGUARDANDO_COMPRA",
         "CONCLUIDA",
       ],
+      sup_req_status: [
+        "RASCUNHO",
+        "ENVIADA",
+        "EM_APROVACAO",
+        "APROVADA",
+        "REPROVADA",
+        "RETORNADA",
+        "AGUARDANDO_ESTOQUE",
+        "EM_SEPARACAO",
+        "AGUARDANDO_COMPRA",
+        "EM_COMPRA",
+        "PARCIALMENTE_ATENDIDA",
+        "ATENDIDA",
+        "CANCELADA",
+      ],
+      sup_req_tipo: ["MATERIAL", "SERVICO"],
       workflow_status: [
         "PENDENTE",
         "APROVADA",

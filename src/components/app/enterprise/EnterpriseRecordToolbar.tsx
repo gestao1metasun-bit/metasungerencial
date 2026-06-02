@@ -54,10 +54,10 @@ export type EnterpriseEntityType =
 
 /** Ações básicas do CRUD/registro (chave canônica). */
 export type EnterpriseRecordAction =
-  | "novo" | "editar" | "excluir" | "cancelar" | "salvar"
+  | "novo" | "editar" | "duplicar" | "excluir" | "cancelar" | "salvar"
   | "atualizar" | "visualizar"
   | "anexos" | "historico" | "comentarios" | "auditoria"
-  | "exportar" | "imprimir"
+  | "exportar" | "imprimir" | "enviar"
   | "filtroRapido" | "filtroAvancado" | "visoes" | "layout" | "colunas";
 
 /** Processo contextual (entrada do dropdown "Processos"). */

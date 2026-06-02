@@ -45,9 +45,13 @@ import {
   useOsDashboard, useOsOrcadoVsRealizado, useOsCustosRealizados,
   useLancarOrcamento, useLancarCustoRealizado,
   useOsFormulariosTemplates, useResponderFormulario, useRespostasFormulario,
+  useOsProdutividade, useOsProdutividadeTecnico,
   OS_CATEGORIAS, type OsCategoriaCusto,
   type OsTarefaStatus, type OsFormularioTemplateRow,
 } from "@/lib/repositories/os-repo";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
+} from "recharts";
 
 export const Route = createFileRoute("/engenharia/gestao-servicos/$osId")({
   component: PainelOsPage,

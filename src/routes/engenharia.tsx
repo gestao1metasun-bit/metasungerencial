@@ -449,6 +449,25 @@ function EngenhariaPage() {
         <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/80">Engenharia · operação</span>
       </div>
 
+      {/* E.OS.shell — acessos rápidos à camada Gestão de Serviços (O.S.) */}
+      <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded border border-border/60 bg-background px-2 py-1.5 text-[11.5px]">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mr-1">Gestão de Serviços</span>
+        <Link to="/engenharia/gestao-servicos">
+          <Button size="sm" variant="outline" className="h-7 text-[11.5px]">O.S. — Lista</Button>
+        </Link>
+        <Link to="/engenharia/gestao-servicos/modelos">
+          <Button size="sm" variant="outline" className="h-7 text-[11.5px]">Modelos de Formulário</Button>
+        </Link>
+        <Button size="sm" variant="outline" className="h-7 text-[11.5px]"
+          onClick={() => toast.info("Dashboard executivo da O.S. chega em E.OS.5.")}>
+          Dashboard O.S.
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 text-[11.5px]"
+          onClick={() => setTab("produtividade")}>
+          Produtividade
+        </Button>
+      </div>
+
       {/* D17.UI Fase 4 — Engenharia: barra Enterprise RM/TOTVS oficial */}
       <div className="mb-2">
         <EnterpriseRecordToolbar

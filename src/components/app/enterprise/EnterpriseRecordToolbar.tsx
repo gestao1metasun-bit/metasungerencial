@@ -271,16 +271,16 @@ export function EnterpriseRecordToolbar({
     if (!enabled.has(a)) return false;
     switch (mode) {
       case "none":
-        return ["novo", "atualizar", "filtroRapido", "filtroAvancado",
+        return ["novo", "atualizar", "favoritos", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas", "exportar"].includes(a);
       case "single":
         return ["editar", "duplicar", "visualizar", "anexos", "historico",
-                "comentarios", "auditoria", "cancelar", "excluir",
+                "comentarios", "auditoria", "favoritos", "cancelar", "excluir",
                 "salvar", "atualizar", "exportar", "imprimir", "enviar",
                 "filtroRapido", "filtroAvancado", "visoes", "layout", "colunas"].includes(a);
       case "multi":
         return ["exportar", "imprimir", "enviar", "cancelar", "excluir", "duplicar",
-                "atualizar", "filtroRapido", "filtroAvancado",
+                "favoritos", "atualizar", "filtroRapido", "filtroAvancado",
                 "visoes", "layout", "colunas"].includes(a);
     }
   };
@@ -306,6 +306,7 @@ export function EnterpriseRecordToolbar({
       : a === "historico" ? "info"
       : a === "comentarios" ? "info"
       : a === "auditoria" ? "warning"
+      : a === "favoritos" ? "warning"
       : a === "exportar" ? "success"
       : a === "imprimir" ? "info"
       : a === "enviar" ? "success"

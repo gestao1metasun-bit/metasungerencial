@@ -14469,6 +14469,28 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_sup_alcada_avaliar: {
+        Args: {
+          p_entidade_id: string
+          p_entidade_tipo: string
+          p_etapa: string
+          p_valor?: number
+        }
+        Returns: Json
+      }
+      rpc_sup_alcada_registrar_decisao: {
+        Args: {
+          p_alcada_id?: string
+          p_decisao: string
+          p_entidade_id: string
+          p_entidade_tipo: string
+          p_etapa: string
+          p_motivo?: string
+          p_observacao?: string
+          p_valor_avaliado?: number
+        }
+        Returns: string
+      }
       rpc_sup_cotacao_aprovar: {
         Args: { p_fornecedor_id: string; p_id: string }
         Returns: undefined
@@ -14504,12 +14526,24 @@ export type Database = {
         Returns: undefined
       }
       rpc_sup_pedido_aprovar: { Args: { p_id: string }; Returns: undefined }
+      rpc_sup_pedido_bloquear_financeiro: {
+        Args: { p_motivo: string; p_pedido_id: string }
+        Returns: string
+      }
       rpc_sup_pedido_cancelar: {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
+      rpc_sup_pedido_desbloquear_financeiro: {
+        Args: { p_motivo: string; p_pedido_id: string }
+        Returns: string
+      }
       rpc_sup_pedido_enviar: { Args: { p_id: string }; Returns: undefined }
       rpc_sup_pedido_gerar: { Args: { p_cotacao_id: string }; Returns: string }
+      rpc_sup_pedido_preparar_financeiro: {
+        Args: { p_payload: Json; p_pedido_id: string }
+        Returns: string
+      }
       rpc_sup_recebimento_confirmar: { Args: { p_id: string }; Returns: Json }
       rpc_sup_recebimento_criar: {
         Args: {

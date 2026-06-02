@@ -1432,13 +1432,53 @@ function TabelaView({
     }
   };
 
+  // D26.1.5 — seleção em lote (checkbox por linha + header)
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const allKeys = useMemo(() => leads.map((l) => l.key), [leads]);
+  const allSelected = allKeys.length > 0 && allKeys.every((k) => selected.has(k));
+  const someSelected = !allSelected && allKeys.some((k) => selected.has(k));
+  const toggleAll = () => {
+    setSelected((prev) => {
+      if (allSelected) return new Set();
+      const next = new Set(prev);
+      allKeys.forEach((k) => next.add(k));
+      return next;
+    });
+  };
+  const toggleOne = (k: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  };
+  // Limpa seleção quando a lista filtrada muda de tamanho
+  useEffect(() => {
+    setSelected((prev) => new Set(Array.from(prev).filter((k) => allKeys.includes(k))));
+  }, [allKeys]);
+
   return (
     <>
       <Card>
+        {selected.size > 0 && (
+          <div className="flex items-center justify-between gap-2 border-b bg-primary/5 px-3 py-1.5 text-xs">
+            <span className="font-medium">{selected.size} lead(s) selecionado(s)</span>
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setSelected(new Set())}>
+              Limpar seleção
+            </Button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <Table style={{ tableLayout: "fixed", width: "100%" }}>
             <TableHeader>
               <TableRow>
+                <TableHead style={{ width: 36, minWidth: 36 }} className="px-2">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={toggleAll}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
                 {visibleOrder.map((key) => {
                   const col = colsByKey[key]; if (!col) return null;
                   const w = widths[key] ?? col.defaultWidth;
@@ -1476,7 +1516,19 @@ function TabelaView({
                   key={l.key}
                   className="cursor-pointer hover:bg-accent/40"
                   onClick={() => onAbrirLead(l)}
+                  data-state={selected.has(l.key) ? "selected" : undefined}
                 >
+                  <TableCell
+                    style={{ width: 36, maxWidth: 36 }}
+                    className="px-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={selected.has(l.key)}
+                      onCheckedChange={() => toggleOne(l.key)}
+                      aria-label={`Selecionar ${l.clienteNome}`}
+                    />
+                  </TableCell>
                   {visibleOrder.map((key) => {
                     const col = colsByKey[key]; if (!col) return null;
                     const w = widths[key] ?? col.defaultWidth;

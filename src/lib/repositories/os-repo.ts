@@ -434,8 +434,8 @@ export function useOsDashboard(osId?: string | null) {
     queryKey: ["os", "dashboard", osId],
     enabled: !!osId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("v_os_dashboard").select("*").eq("os_id", osId!).maybeSingle();
+      const { data, error } = await (supabase as any)
+        .from("v_os_dashboard_kpis").select("*").eq("os_id", osId!).maybeSingle();
       if (error) throw error;
       return (data ?? null) as OsDashboardRow | null;
     },

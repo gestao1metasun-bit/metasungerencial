@@ -635,3 +635,35 @@ export function useSalvarFormularioTemplate() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
   });
 }
+
+// ── modelos de formulário: clonar / publicar / aprovar ──
+export function useClonarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string }) =>
+      rpc<string>("rpc_os_modelo_clonar", { p_modelo_id: p.modelo_id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}
+
+export function usePublicarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string; row_version: number }) =>
+      rpc<void>("rpc_os_modelo_publicar", {
+        p_modelo_id: p.modelo_id, p_row_version: p.row_version,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}
+
+export function useAprovarFormularioTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { modelo_id: string; row_version: number }) =>
+      rpc<void>("rpc_os_modelo_aprovar", {
+        p_modelo_id: p.modelo_id, p_row_version: p.row_version,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["os", "form-templates"] }),
+  });
+}

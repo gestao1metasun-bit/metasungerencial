@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarefasRouteImport } from './routes/tarefas'
+import { Route as SuprimentosRouteImport } from './routes/suprimentos'
 import { Route as SolicitacoesMaterialRouteImport } from './routes/solicitacoes-material'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
@@ -67,6 +68,11 @@ import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engen
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
   path: '/tarefas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuprimentosRoute = SuprimentosRouteImport.update({
+  id: '/suprimentos',
+  path: '/suprimentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SolicitacoesMaterialRoute = SolicitacoesMaterialRouteImport.update({
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
+  '/suprimentos': typeof SuprimentosRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
@@ -425,6 +432,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
+  '/suprimentos': typeof SuprimentosRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/solicitacoes-material': typeof SolicitacoesMaterialRoute
+  '/suprimentos': typeof SuprimentosRoute
   '/tarefas': typeof TarefasRoute
   '/analytics/aprovacoes': typeof AnalyticsAprovacoesRoute
   '/analytics/comercial': typeof AnalyticsComercialRoute
@@ -540,6 +549,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/solicitacoes-material'
+    | '/suprimentos'
     | '/tarefas'
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/solicitacoes-material'
+    | '/suprimentos'
     | '/tarefas'
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/solicitacoes-material'
+    | '/suprimentos'
     | '/tarefas'
     | '/analytics/aprovacoes'
     | '/analytics/comercial'
@@ -709,6 +721,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SolicitacoesMaterialRoute: typeof SolicitacoesMaterialRoute
+  SuprimentosRoute: typeof SuprimentosRoute
   TarefasRoute: typeof TarefasRoute
 }
 
@@ -719,6 +732,13 @@ declare module '@tanstack/react-router' {
       path: '/tarefas'
       fullPath: '/tarefas'
       preLoaderRoute: typeof TarefasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suprimentos': {
+      id: '/suprimentos'
+      path: '/suprimentos'
+      fullPath: '/suprimentos'
+      preLoaderRoute: typeof SuprimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/solicitacoes-material': {
@@ -1223,6 +1243,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SolicitacoesMaterialRoute: SolicitacoesMaterialRoute,
+  SuprimentosRoute: SuprimentosRoute,
   TarefasRoute: TarefasRoute,
 }
 export const routeTree = rootRouteImport

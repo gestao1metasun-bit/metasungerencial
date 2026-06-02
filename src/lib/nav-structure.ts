@@ -14,6 +14,7 @@ import {
   LayoutDashboard, Briefcase, Wallet, HardHat, Package, Headset,
   ClipboardCheck, LineChart, Settings, FileBarChart, Database,
   ListChecks, Users, Receipt, Banknote, ShoppingCart, ShieldCheck, Truck,
+  Boxes,
 } from "lucide-react";
 import type { ROUTE_TABS } from "@/lib/route-tabs";
 
@@ -39,6 +40,7 @@ export type MacroKey =
   | "comercial"
   | "financeiro"
   | "financiamentos"
+  | "suprimentos"
   | "compras"
   | "engenharia"
   | "estoque"
@@ -65,6 +67,7 @@ export const MACRO_MODULES: MacroModule[] = [
   { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
   { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda", "/operacoes-financeiras"], accessKey: "financeiro" },
   { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
+  { key: "suprimentos",    label: "Suprimentos",    to: "/suprimentos",            icon: Boxes,           matches: ["/suprimentos"], accessKey: "estoque" },
   { key: "compras",        label: "Compras",        to: "/solicitacoes-material",  icon: ShoppingCart,    matches: ["/solicitacoes-material", "/compras"], accessKey: "estoque" },
   { key: "engenharia",     label: "Engenharia",     to: "/engenharia",             icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
   { key: "estoque",        label: "Estoque",        to: "/estoque",                icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
@@ -106,6 +109,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/posvenda",           label: "Pós-venda",          icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "posvenda",      ordem: 10, critica: true },
   { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 10, critica: true },
   { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 20 },
+  { to: "/suprimentos",        label: "Suprimentos (Hub)",  icon: Boxes,           accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 5,  critica: true },
   { to: "/solicitacoes-material", label: "Solicitações de Material", icon: ShoppingCart,  accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 10, critica: true },
   { to: "/fornecedores",       label: "Fornecedores",       icon: Truck,           accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 20 },
   { to: "/aprovacoes",         label: "Central de Aprovações", icon: ClipboardCheck, accessKey: "dashboard",   tier: "operacao",  macro: "aprovacoes",    ordem: 10, critica: true },

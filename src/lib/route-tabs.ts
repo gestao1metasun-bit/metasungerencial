@@ -238,6 +238,22 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "equipes", label: "Equipes", group: "Estrutura" },
     ],
   },
+  // ── Macro módulo SUPRIMENTOS (D20.SUP.1 — unifica Requisições/Estoque/Compras) ──
+  "/suprimentos": {
+    default: "dashboard",
+    tabs: [
+      { value: "dashboard",    label: "Dashboard",         group: "Visão" },
+      { value: "requisicoes",  label: "Requisições",       group: "Operação", to: "/solicitacoes-material", icon: "ClipboardList" },
+      { value: "estoque",      label: "Estoque",           group: "Operação", to: "/estoque", icon: "Package" },
+      { value: "compras",      label: "Compras",           group: "Operação", to: "/solicitacoes-material", icon: "ShoppingCart" },
+      { value: "cotacoes",     label: "Cotações",          group: "Operação" },
+      { value: "pedidos",      label: "Pedidos de Compra", group: "Operação" },
+      { value: "recebimentos", label: "Recebimentos",      group: "Operação" },
+      { value: "entregas",     label: "Entregas",          group: "Operação", to: "/estoque#tab=entregas", icon: "Truck" },
+      { value: "fornecedores", label: "Fornecedores",      group: "Estrutura", to: "/fornecedores", icon: "Truck" },
+      { value: "relatorios",   label: "Relatórios",        group: "Controle" },
+    ],
+  },
   "/estoque": {
     default: "obras",
     tabs: [

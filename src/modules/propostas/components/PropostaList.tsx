@@ -1268,11 +1268,12 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+// D26.1.4 — coluna "Ações/Opções" removida. Toda ação opera pela
+// Barra Operacional Enterprise (acima do grid); clicar na linha abre o lead.
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 160 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },

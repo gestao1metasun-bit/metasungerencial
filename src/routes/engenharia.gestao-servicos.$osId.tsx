@@ -895,6 +895,15 @@ interface CampoModelo {
   obrigatorio?: boolean; ajuda?: string; opcoes?: string[];
 }
 
+// Forma canônica armazenada no jsonb `respostas` p/ campos com arquivo.
+export interface AnexoRef {
+  anexo_id: string; storage_path: string; nome: string; mime: string; tamanho: number;
+}
+export interface AssinaturaRef extends AnexoRef {
+  signatario?: string; assinado_em: string;
+}
+
+
 function FormulariosTab({ osId }: { osId: string }) {
   const { data: tarefas = [] } = useOsTarefas(osId);
   const { data: modelos = [] } = useOsFormulariosTemplates();

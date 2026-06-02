@@ -16,6 +16,7 @@ import {
   Boxes, ClipboardList, Package, ShoppingCart, FileSearch,
   FileText, PackageCheck, Truck, Users2, BarChart3,
   ArrowRight, Workflow, Layers, Construction, BookOpen,
+  ShieldCheck, AlertTriangle,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -25,8 +26,13 @@ import { CotacoesTab } from "@/modules/suprimentos/CotacoesTab";
 import { PedidosTab } from "@/modules/suprimentos/PedidosTab";
 import { RecebimentosTab } from "@/modules/suprimentos/RecebimentosTab";
 import { ItensServicosTab } from "@/modules/suprimentos/ItensServicosTab";
+import { AlcadasTab } from "@/modules/suprimentos/AlcadasTab";
 import { Button } from "@/components/ui/button";
 import { useTabFromHash } from "@/lib/route-tabs";
+import {
+  useDashboardKpis, useDashboardPorFornecedor, useDashboardPorNatureza,
+  useDashboardPorCC, useAlertasSuprimentos, SEVERIDADE_TONE,
+} from "@/lib/repositories/suprimentos-alcadas-repo";
 
 export const Route = createFileRoute("/suprimentos")({
   head: () => ({

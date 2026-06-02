@@ -9153,6 +9153,7 @@ export type Database = {
           row_version: number
           status: Database["public"]["Enums"]["sup_ped_status"]
           status_financeiro: string
+          titulo_ap_id: string | null
           valor_aprovado_final: number | null
           valor_total: number
         }
@@ -9182,6 +9183,7 @@ export type Database = {
           row_version?: number
           status?: Database["public"]["Enums"]["sup_ped_status"]
           status_financeiro?: string
+          titulo_ap_id?: string | null
           valor_aprovado_final?: number | null
           valor_total?: number
         }
@@ -9211,6 +9213,7 @@ export type Database = {
           row_version?: number
           status?: Database["public"]["Enums"]["sup_ped_status"]
           status_financeiro?: string
+          titulo_ap_id?: string | null
           valor_aprovado_final?: number | null
           valor_total?: number
         }
@@ -9262,6 +9265,27 @@ export type Database = {
             columns: ["requisicao_id"]
             isOneToOne: false
             referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_titulo_ap_id_fkey"
+            columns: ["titulo_ap_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_titulo_ap_id_fkey"
+            columns: ["titulo_ap_id"]
+            isOneToOne: false
+            referencedRelation: "v_origem_financeira_completa"
+            referencedColumns: ["titulo_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_titulo_ap_id_fkey"
+            columns: ["titulo_ap_id"]
+            isOneToOne: false
+            referencedRelation: "v_titulos_enriquecido"
             referencedColumns: ["id"]
           },
         ]
@@ -14911,6 +14935,7 @@ export type Database = {
         | "suprimentos.alcada.aplicar"
         | "suprimentos.pedido.preparar_financeiro"
         | "suprimentos.pedido.bloquear_financeiro"
+        | "suprimentos.pedido.gerar_titulo_ap"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15267,6 +15292,7 @@ export const Constants = {
         "suprimentos.alcada.aplicar",
         "suprimentos.pedido.preparar_financeiro",
         "suprimentos.pedido.bloquear_financeiro",
+        "suprimentos.pedido.gerar_titulo_ap",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

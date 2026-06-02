@@ -40,6 +40,7 @@ export type MacroKey =
   | "comercial"
   | "financeiro"
   | "financiamentos"
+  | "suprimentos"
   | "compras"
   | "engenharia"
   | "estoque"

@@ -349,6 +349,7 @@ export function EnterpriseRecordToolbar({
       {/* CRUD — ícones puros estilo RM */}
       {renderActionBtn("novo")}
       {renderActionBtn("editar")}
+      {renderActionBtn("duplicar")}
       {renderActionBtn("salvar")}
       {renderActionBtn("excluir")}
       {renderActionBtn("cancelar")}

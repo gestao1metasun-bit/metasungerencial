@@ -881,6 +881,7 @@ function CustosTab({ osId }: { osId: string }) {
       </Dialog>
     </div>
   );
+}
 
 // ═════════════════════════════════════════════════════════════════════
 // E.OS.4 — Formulários da O.S.

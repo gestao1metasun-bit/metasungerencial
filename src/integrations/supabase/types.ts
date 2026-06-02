@@ -11315,6 +11315,34 @@ export type Database = {
         }
         Relationships: []
       }
+      v_aprovacoes_unificadas: {
+        Row: {
+          acao_via_rpc: boolean | null
+          alcada_id: string | null
+          aprovador_atual_email: string | null
+          aprovador_atual_id: string | null
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          chave: string | null
+          data_solicitacao: string | null
+          descricao: string | null
+          dias_pendente: number | null
+          link_origem: string | null
+          natureza_id: string | null
+          origem_id: string | null
+          origem_modulo: string | null
+          origem_tipo: string | null
+          payload_resumo: Json | null
+          prazo_sla: string | null
+          prioridade: string | null
+          solicitante_email: string | null
+          solicitante_id: string | null
+          status: string | null
+          titulo: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       v_auditoria_cobertura: {
         Row: {
           categoria: string | null

@@ -20,7 +20,9 @@ import {
 } from "@/lib/repositories/suprimentos-compras-repo";
 import {
   usePrepararPedidoFinanceiro, useBloquearPedidoFinanceiro, useDesbloquearPedidoFinanceiro,
+  useGerarTituloAP,
 } from "@/lib/repositories/suprimentos-alcadas-repo";
+import { useNavigate } from "@tanstack/react-router";
 
 type Props = { id: string | null; onClose: () => void };
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

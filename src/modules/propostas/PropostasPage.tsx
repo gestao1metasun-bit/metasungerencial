@@ -277,13 +277,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           selectedIds={vendoId ? [vendoId] : []}
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
           availableProcesses={[
-            { key: "nova_lead", label: "Nova proposta a partir de lead", requerSelecao: 0 },
-            { key: "marcar_vencidas", label: "Marcar propostas vencidas", requerSelecao: 0 },
-            { key: "exportar_csv", label: "Exportar CSV", requerSelecao: 0 },
+            { key: "nova_proposta", label: "Nova proposta (lead)", requerSelecao: 0 },
+            { key: "marcar_vencidas", label: "Marcar propostas vencidas (>45 dias)", requerSelecao: 0 },
+            { key: "exportar_csv", label: "Exportar propostas (CSV)", requerSelecao: 0 },
+            { key: "atualizar_lista", label: "Atualizar lista", requerSelecao: 0 },
           ]}
           onProcess={async (key) => {
-            if (key === "nova_lead") novaProposta();
-            else if (key === "marcar_vencidas") {
+            if (key === "nova_proposta") {
+              novaProposta();
+            } else if (key === "marcar_vencidas") {
               try {
                 const { propostasRevisaoRepo } = await import("@/lib/repositories/propostas-revisao-repo");
                 const n = await propostasRevisaoRepo.marcarVencidas();
@@ -293,6 +295,8 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               }
             } else if (key === "exportar_csv") {
               toast.info("Exportação CSV completa chega em D17.UI.2.");
+            } else if (key === "atualizar_lista") {
+              toast.info("Lista atualizada.");
             }
           }}
           onAction={(a) => {
@@ -300,8 +304,8 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "atualizar") toast.info("Lista de propostas atualizada.");
             else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.2.");
             else if (a === "imprimir" && vendoId) toast.info("Use o botão Imprimir dentro da proposta.");
-            else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.2.");
-            else if (a === "filtroAvancado") toast.info("Use filtros da PropostaList abaixo.");
+            else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
+            else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}
           statusActions={ribbonRm()}
           layoutBar={layoutBarRm()}

@@ -1268,11 +1268,12 @@ function KanbanView({
 // Cabeçalho arrastável (reordenar) + alça de redimensionar à direita.
 // Persistência de ordem e larguras em localStorage.
 
-type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+// D26.1.4 — coluna "Ações/Opções" removida. Toda ação opera pela
+// Barra Operacional Enterprise (acima do grid); clicar na linha abre o lead.
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 160 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
@@ -1389,41 +1390,6 @@ function TabelaView({
 
   const renderCell = (l: Lead, key: TabelaColKey) => {
     switch (key) {
-      case "opcoes": {
-        const podeReativar = l.status === "CANCELADA";
-        const podeCancelar = !l.bloqueado && l.status !== "CANCELADA" && l.status !== "APROVADA";
-        const alvoAprovar = !l.bloqueado && onAprovar ? propostaAprovavelDoLead(l) : undefined;
-        return (
-          <div onClick={(e) => e.stopPropagation()} className="inline-flex">
-            {(() => {
-              const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
-              if (alvoAprovar && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato" });
-              if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
-              if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
-              if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar última proposta" });
-              return (
-                <RowActions
-                  rowId={l.key}
-                  actions={actions}
-                  onAction={(kind) => {
-                    const a = actions.find((x) => x.kind === kind);
-                    const lbl = a?.label ?? "";
-                    if (lbl === "Abrir lead") onAbrirLead(l);
-                    else if (lbl === "Aprovar e gerar contrato" && alvoAprovar && onAprovar) onAprovar(alvoAprovar);
-                    else if (lbl === "Ver contrato no Comercial") irParaContratos();
-                    else if (lbl === "Reativar última proposta") reativarProposta(l.ultima);
-                    else if (lbl === "Cancelar última proposta") {
-                      const p = [...l.propostas].reverse().find((x) => x.status !== "CANCELADA" && x.status !== "APROVADA");
-                      if (!p) { toast.info("Não há proposta cancelável."); return; }
-                      cancelarProposta(p);
-                    }
-                  }}
-                />
-              );
-            })()}
-          </div>
-        );
-      }
       case "cliente":
         return (
           <div className="flex items-center gap-2 min-w-0">

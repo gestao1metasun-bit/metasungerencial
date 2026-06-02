@@ -114,7 +114,7 @@ export function AlcadasTab() {
                   </td>
                   <td className="px-2 py-1 text-right tabular-nums">{a.prioridade}</td>
                   <td className="px-2 py-1">
-                    <RowActions onEdit={() => setEditing(a)} />
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-amber-600" onClick={() => setEditing(a)} title="Editar"><Pencil className="h-3.5 w-3.5" /></Button>
                   </td>
                 </tr>
               ))}

@@ -1272,7 +1272,7 @@ type TabelaColKey = "opcoes" | "cliente" | "consultor" | "cidade" | "criado" | "
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 90 },
+  { key: "opcoes",     label: "Ações",           align: "center", defaultWidth: 160 },
   { key: "criado",     label: "Criado em",       defaultWidth: 120 },
   { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
   { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
@@ -1397,10 +1397,10 @@ function TabelaView({
           <div onClick={(e) => e.stopPropagation()} className="inline-flex">
             {(() => {
               const actions: RowAction[] = [{ kind: "visualizar", label: "Abrir lead" }];
-              if (alvoAprovar && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato", overflow: true });
+              if (alvoAprovar && onAprovar) actions.push({ kind: "aprovar", label: "Aprovar e gerar contrato" });
               if (l.bloqueado) actions.push({ kind: "visualizar", label: "Ver contrato no Comercial", icon: FileText, overflow: true });
               if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar última proposta", icon: RotateCcw, overflow: true });
-              if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar última proposta", overflow: true });
+              if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar última proposta" });
               return (
                 <RowActions
                   rowId={l.key}

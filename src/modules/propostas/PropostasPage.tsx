@@ -276,6 +276,25 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           entityType="propostas"
           selectedIds={vendoId ? [vendoId] : []}
           availableActions={["novo", "atualizar", "filtroAvancado", "colunas", "exportar", "imprimir"]}
+          availableProcesses={[
+            { key: "nova_lead", label: "Nova proposta a partir de lead", requerSelecao: 0 },
+            { key: "marcar_vencidas", label: "Marcar propostas vencidas", requerSelecao: 0 },
+            { key: "exportar_csv", label: "Exportar CSV", requerSelecao: 0 },
+          ]}
+          onProcess={async (key) => {
+            if (key === "nova_lead") novaProposta();
+            else if (key === "marcar_vencidas") {
+              try {
+                const { propostasRevisaoRepo } = await import("@/lib/repositories/propostas-revisao-repo");
+                const n = await propostasRevisaoRepo.marcarVencidas();
+                toast.success(`${n} proposta(s) marcada(s) como vencida(s).`);
+              } catch (e: any) {
+                toast.error(e?.message ?? "Falha ao marcar vencidas.");
+              }
+            } else if (key === "exportar_csv") {
+              toast.info("Exportação CSV completa chega em D17.UI.2.");
+            }
+          }}
           onAction={(a) => {
             if (a === "novo") novaProposta();
             else if (a === "atualizar") toast.info("Lista de propostas atualizada.");

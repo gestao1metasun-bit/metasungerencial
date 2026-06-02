@@ -202,6 +202,7 @@ export function NovaRequisicaoDialog({
       data_necessidade: dataNecessidade || undefined,
       justificativa: justificativa.trim() || undefined,
       itens: itensValidos.map((it) => ({
+        item_estoque_id: it.item_estoque_id || undefined,
         descricao: it.descricao.trim(),
         unidade: it.unidade.trim() || "UN",
         quantidade_solicitada: Number(it.quantidade_solicitada),

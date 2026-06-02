@@ -35,6 +35,9 @@ import { useAuth } from "@/lib/auth-store";
 import {
   Inbox, ClipboardCheck, Clock, ShieldCheck, Check, X, Eye, AlertTriangle, Ban,
 } from "lucide-react";
+import UnificadaTab from "@/modules/aprovacoes/UnificadaTab";
+
+
 
 
 export const Route = createFileRoute("/aprovacoes")({
@@ -57,7 +60,9 @@ function AprovacoesPage() {
   const auth = useAuth();
   const uid = auth.user?.id ?? null;
 
+  const [viewMode, setViewMode] = useState<"unificada" | "workflow">("unificada");
   const [tab, setTab] = useState<Filtro>("pendentes_para_mim");
+
   const [tipoFiltro, setTipoFiltro] = useState<string>("TODOS");
   const [statusHist, setStatusHist] = useState<"TODOS" | "APROVADA" | "NEGADA" | "EXPIRADA" | "CANCELADA">("TODOS");
   const [busca, setBusca] = useState("");
@@ -182,6 +187,16 @@ function AprovacoesPage() {
         <StatCard label="SLA em risco" value={counts.sla_risco} icon={Clock} />
         <StatCard label="Aprovadas hoje" value={counts.aprovadas_hoje} icon={ShieldCheck} />
       </div>
+
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "unificada" | "workflow")}>
+        <TabsList>
+          <TabsTrigger value="unificada">Visão Unificada</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow corporativo</TabsTrigger>
+        </TabsList>
+        <TabsContent value="unificada">
+          <UnificadaTab />
+        </TabsContent>
+        <TabsContent value="workflow">
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Filtro)}>
         <TabsList>
@@ -377,6 +392,9 @@ function AprovacoesPage() {
           </EnterpriseDataGrid>
         </TabsContent>
       </Tabs>
+        </TabsContent>
+      </Tabs>
+
 
       <DetalheDialog row={detalhe} onClose={() => setDetalhe(null)} />
       <AcaoDialog

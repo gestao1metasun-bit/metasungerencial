@@ -29,6 +29,7 @@ import {
   STATUS_LABEL, STATUS_TONE, type SupReqStatus,
   type VerificacaoEstoqueItem,
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
+import { useCriarCotacao } from "@/lib/repositories/suprimentos-compras-repo";
 
 const TONE_CLASS: Record<string, string> = {
   muted: "bg-muted text-muted-foreground border-border",
@@ -109,6 +110,7 @@ export function RequisicaoDetailDialog({
   const devolver = useDevolverItemRequisicao();
   const enviarCompra = useEnviarCompra();
   const atender = useAtenderTotal();
+  const criarCotacao = useCriarCotacao();
 
   if (!id) return null;
   const cab = data?.cabecalho ?? null;
@@ -237,8 +239,13 @@ export function RequisicaoDetailDialog({
             )}
             {prompt === "compra" && (
               <MotivoPrompt titulo="Justificativa (envio para compra)" placeholder="Motivo do envio para compra"
-                onCancel={() => setPrompt(null)} busy={enviarCompra.isPending}
-                onConfirm={(m) => run(async () => { await enviarCompra.mutateAsync({ id: cab.id, justificativa: m }); setPrompt(null); }, "Encaminhada para compra.")} />
+                onCancel={() => setPrompt(null)} busy={enviarCompra.isPending || criarCotacao.isPending}
+                onConfirm={(m) => run(async () => {
+                  await enviarCompra.mutateAsync({ id: cab.id, justificativa: m });
+                  await criarCotacao.mutateAsync(cab.id);
+                  setPrompt(null);
+                  toast.success("Cotação criada — abra a aba Cotações em /suprimentos.");
+                })} />
             )}
 
             {devolverItem && (

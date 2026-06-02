@@ -8577,6 +8577,610 @@ export type Database = {
           },
         ]
       }
+      suprimentos_cotacao_eventos: {
+        Row: {
+          cotacao_id: string
+          data_hora: string
+          id: string
+          observacao: string | null
+          payload: Json | null
+          tipo_evento: string
+          usuario_id: string
+        }
+        Insert: {
+          cotacao_id: string
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          tipo_evento: string
+          usuario_id?: string
+        }
+        Update: {
+          cotacao_id?: string
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          tipo_evento?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_cotacao_eventos_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacao_eventos_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_cotacoes_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_cotacao_itens: {
+        Row: {
+          condicao_pagamento: string | null
+          cotacao_id: string
+          criado_em: string
+          descricao: string
+          fornecedor_id: string | null
+          frete: number | null
+          id: string
+          observacao: string | null
+          prazo_entrega_dias: number | null
+          quantidade: number
+          requisicao_item_id: string
+          unidade: string | null
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          condicao_pagamento?: string | null
+          cotacao_id: string
+          criado_em?: string
+          descricao: string
+          fornecedor_id?: string | null
+          frete?: number | null
+          id?: string
+          observacao?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade: number
+          requisicao_item_id: string
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          condicao_pagamento?: string | null
+          cotacao_id?: string
+          criado_em?: string
+          descricao?: string
+          fornecedor_id?: string | null
+          frete?: number | null
+          id?: string
+          observacao?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade?: number
+          requisicao_item_id?: string
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_cotacao_itens_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacao_itens_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_cotacoes_lista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacao_itens_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacao_itens_requisicao_item_id_fkey"
+            columns: ["requisicao_item_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicao_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_cotacoes: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          deleted_at: string | null
+          fornecedor_aprovado_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          motivo_reprovacao: string | null
+          numero: number
+          observacao: string | null
+          requisicao_id: string
+          row_version: number
+          status: Database["public"]["Enums"]["sup_cot_status"]
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          deleted_at?: string | null
+          fornecedor_aprovado_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_reprovacao?: string | null
+          numero?: number
+          observacao?: string | null
+          requisicao_id: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_cot_status"]
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          deleted_at?: string | null
+          fornecedor_aprovado_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_reprovacao?: string | null
+          numero?: number
+          observacao?: string | null
+          requisicao_id?: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_cot_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_cotacoes_fornecedor_aprovado_id_fkey"
+            columns: ["fornecedor_aprovado_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_pedido_eventos: {
+        Row: {
+          data_hora: string
+          id: string
+          observacao: string | null
+          payload: Json | null
+          pedido_id: string
+          tipo_evento: string
+          usuario_id: string
+        }
+        Insert: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          pedido_id: string
+          tipo_evento: string
+          usuario_id?: string
+        }
+        Update: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          pedido_id?: string
+          tipo_evento?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedido_eventos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedidos_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_eventos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_pedidos_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_pedido_itens: {
+        Row: {
+          cotacao_item_id: string | null
+          criado_em: string
+          descricao: string
+          id: string
+          item_estoque_id: string | null
+          pedido_id: string
+          quantidade: number
+          quantidade_recebida: number
+          requisicao_item_id: string
+          unidade: string | null
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          cotacao_item_id?: string | null
+          criado_em?: string
+          descricao: string
+          id?: string
+          item_estoque_id?: string | null
+          pedido_id: string
+          quantidade: number
+          quantidade_recebida?: number
+          requisicao_item_id: string
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          cotacao_item_id?: string | null
+          criado_em?: string
+          descricao?: string
+          id?: string
+          item_estoque_id?: string | null
+          pedido_id?: string
+          quantidade?: number
+          quantidade_recebida?: number
+          requisicao_item_id?: string
+          unidade?: string | null
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedido_itens_cotacao_item_id_fkey"
+            columns: ["cotacao_item_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_cotacao_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedidos_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_pedidos_lista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedido_itens_requisicao_item_id_fkey"
+            columns: ["requisicao_item_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicao_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_pedidos_compra: {
+        Row: {
+          atualizado_em: string
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cotacao_id: string | null
+          criado_em: string
+          criado_por: string
+          deleted_at: string | null
+          fornecedor_id: string
+          id: string
+          motivo_cancelamento: string | null
+          numero: number
+          obra_id: string | null
+          observacao: string | null
+          os_id: string | null
+          prazo_entrega_dias: number | null
+          projeto_id: string | null
+          requisicao_id: string
+          row_version: number
+          status: Database["public"]["Enums"]["sup_ped_status"]
+          valor_total: number
+        }
+        Insert: {
+          atualizado_em?: string
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cotacao_id?: string | null
+          criado_em?: string
+          criado_por?: string
+          deleted_at?: string | null
+          fornecedor_id: string
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: number
+          obra_id?: string | null
+          observacao?: string | null
+          os_id?: string | null
+          prazo_entrega_dias?: number | null
+          projeto_id?: string | null
+          requisicao_id: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_ped_status"]
+          valor_total?: number
+        }
+        Update: {
+          atualizado_em?: string
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cotacao_id?: string | null
+          criado_em?: string
+          criado_por?: string
+          deleted_at?: string | null
+          fornecedor_id?: string
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: number
+          obra_id?: string | null
+          observacao?: string | null
+          os_id?: string | null
+          prazo_entrega_dias?: number | null
+          projeto_id?: string | null
+          requisicao_id?: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_ped_status"]
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_cotacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_cotacoes_lista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_recebimento_eventos: {
+        Row: {
+          data_hora: string
+          id: string
+          observacao: string | null
+          payload: Json | null
+          recebimento_id: string
+          tipo_evento: string
+          usuario_id: string
+        }
+        Insert: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          recebimento_id: string
+          tipo_evento: string
+          usuario_id?: string
+        }
+        Update: {
+          data_hora?: string
+          id?: string
+          observacao?: string | null
+          payload?: Json | null
+          recebimento_id?: string
+          tipo_evento?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_recebimento_eventos_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_recebimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimento_eventos_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_recebimentos_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_recebimento_itens: {
+        Row: {
+          id: string
+          observacao: string | null
+          pedido_item_id: string
+          quantidade_recebida: number
+          recebimento_id: string
+        }
+        Insert: {
+          id?: string
+          observacao?: string | null
+          pedido_item_id: string
+          quantidade_recebida: number
+          recebimento_id: string
+        }
+        Update: {
+          id?: string
+          observacao?: string | null
+          pedido_item_id?: string
+          quantidade_recebida?: number
+          recebimento_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_recebimento_itens_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedido_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimento_itens_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_recebimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimento_itens_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_recebimentos_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suprimentos_recebimentos: {
+        Row: {
+          anexo_url: string | null
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          data_recebimento: string
+          documento: string | null
+          id: string
+          motivo_cancelamento: string | null
+          numero: number
+          observacao: string | null
+          pedido_id: string
+          responsavel_id: string
+          row_version: number
+          status: Database["public"]["Enums"]["sup_rec_status"]
+        }
+        Insert: {
+          anexo_url?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          data_recebimento?: string
+          documento?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: number
+          observacao?: string | null
+          pedido_id: string
+          responsavel_id?: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_rec_status"]
+        }
+        Update: {
+          anexo_url?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          data_recebimento?: string
+          documento?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: number
+          observacao?: string | null
+          pedido_id?: string
+          responsavel_id?: string
+          row_version?: number
+          status?: Database["public"]["Enums"]["sup_rec_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedidos_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_pedidos_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suprimentos_requisicao_eventos: {
         Row: {
           data_hora: string
@@ -8630,6 +9234,13 @@ export type Database = {
             foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
             columns: ["requisicao_id"]
             isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_eventos_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
             referencedRelation: "v_suprimentos_requisicoes_resumo"
             referencedColumns: ["id"]
           },
@@ -8646,6 +9257,7 @@ export type Database = {
           movimento_baixa_id: string | null
           observacao: string | null
           ordem: number
+          pedido_item_id: string | null
           quantidade_aprovada: number
           quantidade_devolvida: number
           quantidade_entregue: number
@@ -8668,6 +9280,7 @@ export type Database = {
           movimento_baixa_id?: string | null
           observacao?: string | null
           ordem?: number
+          pedido_item_id?: string | null
           quantidade_aprovada?: number
           quantidade_devolvida?: number
           quantidade_entregue?: number
@@ -8690,6 +9303,7 @@ export type Database = {
           movimento_baixa_id?: string | null
           observacao?: string | null
           ordem?: number
+          pedido_item_id?: string | null
           quantidade_aprovada?: number
           quantidade_devolvida?: number
           quantidade_entregue?: number
@@ -8767,6 +9381,13 @@ export type Database = {
             referencedColumns: ["movimento_id"]
           },
           {
+            foreignKeyName: "suprimentos_requisicao_itens_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedido_itens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
             columns: ["requisicao_id"]
             isOneToOne: false
@@ -8778,6 +9399,13 @@ export type Database = {
             columns: ["requisicao_id"]
             isOneToOne: false
             referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_requisicao_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
             referencedColumns: ["requisicao_id"]
           },
           {
@@ -12131,6 +12759,170 @@ export type Database = {
         }
         Relationships: []
       }
+      v_suprimentos_compras_resumo: {
+        Row: {
+          qtd_cotacoes: number | null
+          qtd_pedidos: number | null
+          requisicao_id: string | null
+          requisicao_numero: number | null
+          requisicao_status:
+            | Database["public"]["Enums"]["sup_req_status"]
+            | null
+          valor_pedidos: number | null
+        }
+        Insert: {
+          qtd_cotacoes?: never
+          qtd_pedidos?: never
+          requisicao_id?: string | null
+          requisicao_numero?: number | null
+          requisicao_status?:
+            | Database["public"]["Enums"]["sup_req_status"]
+            | null
+          valor_pedidos?: never
+        }
+        Update: {
+          qtd_cotacoes?: never
+          qtd_pedidos?: never
+          requisicao_id?: string | null
+          requisicao_numero?: number | null
+          requisicao_status?:
+            | Database["public"]["Enums"]["sup_req_status"]
+            | null
+          valor_pedidos?: never
+        }
+        Relationships: []
+      }
+      v_suprimentos_cotacoes_lista: {
+        Row: {
+          atualizado_em: string | null
+          criado_em: string | null
+          fornecedor_aprovado_id: string | null
+          fornecedor_aprovado_nome: string | null
+          id: string | null
+          numero: number | null
+          qtd_fornecedores: number | null
+          requisicao_id: string | null
+          requisicao_numero: number | null
+          status: Database["public"]["Enums"]["sup_cot_status"] | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_cotacoes_fornecedor_aprovado_id_fkey"
+            columns: ["fornecedor_aprovado_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_cotacoes_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_suprimentos_pedidos_lista: {
+        Row: {
+          atualizado_em: string | null
+          criado_em: string | null
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string | null
+          numero: number | null
+          requisicao_id: string | null
+          requisicao_numero: number | null
+          status: Database["public"]["Enums"]["sup_ped_status"] | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_requisicoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_os_requisicoes_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_compras_resumo"
+            referencedColumns: ["requisicao_id"]
+          },
+          {
+            foreignKeyName: "suprimentos_pedidos_compra_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_requisicoes_resumo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_suprimentos_recebimentos_lista: {
+        Row: {
+          criado_em: string | null
+          data_recebimento: string | null
+          documento: string | null
+          id: string | null
+          numero: number | null
+          pedido_id: string | null
+          pedido_numero: number | null
+          status: Database["public"]["Enums"]["sup_rec_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "suprimentos_pedidos_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suprimentos_recebimentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "v_suprimentos_pedidos_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_suprimentos_requisicoes_resumo: {
         Row: {
           aprovador_id: string | null
@@ -12746,6 +13538,18 @@ export type Database = {
           p_tipo: string
         }
         Returns: string
+      }
+      fn_sup_cot_evento: {
+        Args: { _id: string; _obs: string; _payload?: Json; _tipo: string }
+        Returns: undefined
+      }
+      fn_sup_ped_evento: {
+        Args: { _id: string; _obs: string; _payload?: Json; _tipo: string }
+        Returns: undefined
+      }
+      fn_sup_rec_evento: {
+        Args: { _id: string; _obs: string; _payload?: Json; _tipo: string }
+        Returns: undefined
       }
       fn_sup_req_log_evento: {
         Args: {
@@ -13420,6 +14224,58 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_sup_cotacao_aprovar: {
+        Args: { p_fornecedor_id: string; p_id: string }
+        Returns: undefined
+      }
+      rpc_sup_cotacao_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_cotacao_criar: {
+        Args: { p_requisicao_id: string }
+        Returns: string
+      }
+      rpc_sup_cotacao_enviar: { Args: { p_id: string }; Returns: undefined }
+      rpc_sup_cotacao_item_upsert: {
+        Args: {
+          p_condicao_pagamento?: string
+          p_cotacao_id: string
+          p_descricao: string
+          p_fornecedor_id: string
+          p_frete?: number
+          p_id: string
+          p_observacao?: string
+          p_prazo_entrega_dias?: number
+          p_quantidade: number
+          p_requisicao_item_id: string
+          p_unidade: string
+          p_valor_unitario: number
+        }
+        Returns: string
+      }
+      rpc_sup_cotacao_reprovar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_pedido_aprovar: { Args: { p_id: string }; Returns: undefined }
+      rpc_sup_pedido_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      rpc_sup_pedido_enviar: { Args: { p_id: string }; Returns: undefined }
+      rpc_sup_pedido_gerar: { Args: { p_cotacao_id: string }; Returns: string }
+      rpc_sup_recebimento_confirmar: { Args: { p_id: string }; Returns: Json }
+      rpc_sup_recebimento_criar: {
+        Args: {
+          p_anexo_url?: string
+          p_data?: string
+          p_documento?: string
+          p_observacao?: string
+          p_pedido_id: string
+        }
+        Returns: string
+      }
       rpc_sup_requisicao_aprovar: {
         Args: { p_id: string; p_observacao?: string; p_valor_aprovado?: number }
         Returns: undefined
@@ -13687,6 +14543,19 @@ export type Database = {
         | "suprimentos.requisicao.atender"
         | "suprimentos.requisicao.comprar"
         | "suprimentos.dashboard.ver"
+        | "suprimentos.cotacao.visualizar"
+        | "suprimentos.cotacao.criar"
+        | "suprimentos.cotacao.editar"
+        | "suprimentos.cotacao.aprovar"
+        | "suprimentos.cotacao.cancelar"
+        | "suprimentos.pedido.visualizar"
+        | "suprimentos.pedido.criar"
+        | "suprimentos.pedido.aprovar"
+        | "suprimentos.pedido.enviar"
+        | "suprimentos.pedido.cancelar"
+        | "suprimentos.recebimento.visualizar"
+        | "suprimentos.recebimento.criar"
+        | "suprimentos.recebimento.confirmar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -13748,6 +14617,21 @@ export type Database = {
         | "ATENDIDA_ESTOQUE"
         | "AGUARDANDO_COMPRA"
         | "CONCLUIDA"
+      sup_cot_status:
+        | "RASCUNHO"
+        | "ENVIADA"
+        | "EM_ANALISE"
+        | "APROVADA"
+        | "REPROVADA"
+        | "CANCELADA"
+      sup_ped_status:
+        | "EMITIDO"
+        | "APROVADO"
+        | "ENVIADO_FORNECEDOR"
+        | "PARCIALMENTE_RECEBIDO"
+        | "RECEBIDO"
+        | "CANCELADO"
+      sup_rec_status: "RASCUNHO" | "CONFIRMADO" | "CANCELADO"
       sup_req_status:
         | "RASCUNHO"
         | "ENVIADA"
@@ -14011,6 +14895,19 @@ export const Constants = {
         "suprimentos.requisicao.atender",
         "suprimentos.requisicao.comprar",
         "suprimentos.dashboard.ver",
+        "suprimentos.cotacao.visualizar",
+        "suprimentos.cotacao.criar",
+        "suprimentos.cotacao.editar",
+        "suprimentos.cotacao.aprovar",
+        "suprimentos.cotacao.cancelar",
+        "suprimentos.pedido.visualizar",
+        "suprimentos.pedido.criar",
+        "suprimentos.pedido.aprovar",
+        "suprimentos.pedido.enviar",
+        "suprimentos.pedido.cancelar",
+        "suprimentos.recebimento.visualizar",
+        "suprimentos.recebimento.criar",
+        "suprimentos.recebimento.confirmar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [
@@ -14080,6 +14977,23 @@ export const Constants = {
         "AGUARDANDO_COMPRA",
         "CONCLUIDA",
       ],
+      sup_cot_status: [
+        "RASCUNHO",
+        "ENVIADA",
+        "EM_ANALISE",
+        "APROVADA",
+        "REPROVADA",
+        "CANCELADA",
+      ],
+      sup_ped_status: [
+        "EMITIDO",
+        "APROVADO",
+        "ENVIADO_FORNECEDOR",
+        "PARCIALMENTE_RECEBIDO",
+        "RECEBIDO",
+        "CANCELADO",
+      ],
+      sup_rec_status: ["RASCUNHO", "CONFIRMADO", "CANCELADO"],
       sup_req_status: [
         "RASCUNHO",
         "ENVIADA",

@@ -61,16 +61,16 @@ export type MacroModule = {
   accessKey: string;
 };
 
-// ── Macro módulos (D6.11 — ERP clássico: departamentos separados no topo) ──
+// ── Macro módulos (D20.SUP.4 — Suprimentos absorve Compras+Estoque no menu) ──
 export const MACRO_MODULES: MacroModule[] = [
   { key: "analytics",      label: "Analytics",      to: "/analytics",              icon: LayoutDashboard, matches: ["/analytics", "/paineis", "/dashboards", "/dashboard", "/analises", "/relatorios", "/tarefas"], accessKey: "dashboard" },
   { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
   { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda", "/operacoes-financeiras"], accessKey: "financeiro" },
   { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
-  { key: "suprimentos",    label: "Suprimentos",    to: "/suprimentos",            icon: Boxes,           matches: ["/suprimentos"], accessKey: "estoque" },
-  { key: "compras",        label: "Compras",        to: "/solicitacoes-material",  icon: ShoppingCart,    matches: ["/solicitacoes-material", "/compras"], accessKey: "estoque" },
+  { key: "suprimentos",    label: "Suprimentos",    to: "/suprimentos",            icon: Boxes,           matches: ["/suprimentos", "/solicitacoes-material", "/compras", "/estoque", "/estoque-fundacao", "/fornecedores"], accessKey: "estoque" },
+  // D20.SUP.4 — "Compras" e "Estoque" REMOVIDOS do macro nav (vivem dentro de Suprimentos).
+  // Rotas continuam ativas para reaproveitamento interno; cards do hub apontam para elas.
   { key: "engenharia",     label: "Engenharia",     to: "/engenharia",             icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
-  { key: "estoque",        label: "Estoque",        to: "/estoque",                icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },
   { key: "aprovacoes",     label: "Aprovações",     to: "/aprovacoes",             icon: ClipboardCheck,  matches: ["/aprovacoes"], accessKey: "dashboard" },
   { key: "posvenda",       label: "Pós-venda",      to: "/posvenda",               icon: Headset,         matches: ["/posvenda"], accessKey: "posvenda" },
   { key: "cadastros",      label: "Cadastros",      to: "/cadastros",              icon: Database,        matches: ["/cadastros", "/fornecedores"], accessKey: "cadastros" },
@@ -107,11 +107,11 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/financiamentos",     label: "Financiamentos",     icon: Banknote,        accessKey: "financiamentos",tier: "operacao",  macro: "financiamentos",ordem: 10 },
   { to: "/engenharia",         label: "Engenharia",         icon: HardHat,         accessKey: "engenharia",    tier: "operacao",  macro: "engenharia",    ordem: 10, critica: true },
   { to: "/posvenda",           label: "Pós-venda",          icon: Headset,         accessKey: "posvenda",      tier: "operacao",  macro: "posvenda",      ordem: 10, critica: true },
-  { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 10, critica: true },
-  { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "estoque",       ordem: 20 },
+  { to: "/estoque",            label: "Estoque",            icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 30, critica: true },
+  { to: "/estoque-fundacao",   label: "Estoque Fundação",   icon: Package,         accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 40 },
   { to: "/suprimentos",        label: "Suprimentos (Hub)",  icon: Boxes,           accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 5,  critica: true },
-  { to: "/solicitacoes-material", label: "Solicitações de Material", icon: ShoppingCart,  accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 10, critica: true },
-  { to: "/fornecedores",       label: "Fornecedores",       icon: Truck,           accessKey: "estoque",       tier: "operacao",  macro: "compras",       ordem: 20 },
+  { to: "/solicitacoes-material", label: "Solicitações de Material", icon: ShoppingCart,  accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 20, critica: true },
+  { to: "/fornecedores",       label: "Fornecedores",       icon: Truck,           accessKey: "estoque",       tier: "operacao",  macro: "suprimentos",   ordem: 50 },
   { to: "/aprovacoes",         label: "Central de Aprovações", icon: ClipboardCheck, accessKey: "dashboard",   tier: "operacao",  macro: "aprovacoes",    ordem: 10, critica: true },
   { to: "/fornecedores",       label: "Fornecedores",       icon: Truck,           accessKey: "cadastros",     tier: "estrutura", macro: "cadastros",     ordem: 5,  critica: true },
   { to: "/cadastros",          label: "Cadastros Operacionais", icon: Database,    accessKey: "cadastros",     tier: "estrutura", macro: "cadastros",     ordem: 10 },

@@ -7359,75 +7359,124 @@ export type Database = {
           ativo: boolean
           categoria: string | null
           categoria_contabil: string | null
+          centro_custo_padrao_id: string | null
+          centro_resultado_padrao_id: string | null
           cfop_padrao: string | null
           codigo: string
           codigo_externo: string | null
           codigo_servico_lc116: string | null
+          controla_estoque: boolean
           created_at: string
           cst_padrao: string | null
           custo_unitario: number
           dados: Json
           deleted_at: string | null
+          descricao: string | null
           estoque_minimo: number
+          exige_fornecedor: boolean
           id: string
+          natureza_padrao_id: string | null
           ncm: string | null
           nome: string
+          observacao: string | null
           origem_fiscal: string | null
           sistema_destino: string | null
           status_integracao: string
+          subcategoria: string | null
           tipo_item: string
           unidade: string
           updated_at: string
+          valor_referencia: number | null
         }
         Insert: {
           ativo?: boolean
           categoria?: string | null
           categoria_contabil?: string | null
+          centro_custo_padrao_id?: string | null
+          centro_resultado_padrao_id?: string | null
           cfop_padrao?: string | null
           codigo: string
           codigo_externo?: string | null
           codigo_servico_lc116?: string | null
+          controla_estoque?: boolean
           created_at?: string
           cst_padrao?: string | null
           custo_unitario?: number
           dados?: Json
           deleted_at?: string | null
+          descricao?: string | null
           estoque_minimo?: number
+          exige_fornecedor?: boolean
           id?: string
+          natureza_padrao_id?: string | null
           ncm?: string | null
           nome: string
+          observacao?: string | null
           origem_fiscal?: string | null
           sistema_destino?: string | null
           status_integracao?: string
+          subcategoria?: string | null
           tipo_item?: string
           unidade?: string
           updated_at?: string
+          valor_referencia?: number | null
         }
         Update: {
           ativo?: boolean
           categoria?: string | null
           categoria_contabil?: string | null
+          centro_custo_padrao_id?: string | null
+          centro_resultado_padrao_id?: string | null
           cfop_padrao?: string | null
           codigo?: string
           codigo_externo?: string | null
           codigo_servico_lc116?: string | null
+          controla_estoque?: boolean
           created_at?: string
           cst_padrao?: string | null
           custo_unitario?: number
           dados?: Json
           deleted_at?: string | null
+          descricao?: string | null
           estoque_minimo?: number
+          exige_fornecedor?: boolean
           id?: string
+          natureza_padrao_id?: string | null
           ncm?: string | null
           nome?: string
+          observacao?: string | null
           origem_fiscal?: string | null
           sistema_destino?: string | null
           status_integracao?: string
+          subcategoria?: string | null
           tipo_item?: string
           unidade?: string
           updated_at?: string
+          valor_referencia?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtos_centro_custo_padrao_id_fkey"
+            columns: ["centro_custo_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_centro_resultado_padrao_id_fkey"
+            columns: ["centro_resultado_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_natureza_padrao_id_fkey"
+            columns: ["natureza_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

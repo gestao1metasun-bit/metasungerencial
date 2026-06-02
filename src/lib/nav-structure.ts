@@ -67,6 +67,7 @@ export const MACRO_MODULES: MacroModule[] = [
   { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
   { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda", "/operacoes-financeiras"], accessKey: "financeiro" },
   { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
+  { key: "suprimentos",    label: "Suprimentos",    to: "/suprimentos",            icon: Boxes,           matches: ["/suprimentos"], accessKey: "estoque" },
   { key: "compras",        label: "Compras",        to: "/solicitacoes-material",  icon: ShoppingCart,    matches: ["/solicitacoes-material", "/compras"], accessKey: "estoque" },
   { key: "engenharia",     label: "Engenharia",     to: "/engenharia",             icon: HardHat,         matches: ["/engenharia"], accessKey: "engenharia" },
   { key: "estoque",        label: "Estoque",        to: "/estoque",                icon: Package,         matches: ["/estoque", "/estoque-fundacao"], accessKey: "estoque" },

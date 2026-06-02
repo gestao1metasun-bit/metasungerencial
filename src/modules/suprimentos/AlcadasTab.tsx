@@ -46,12 +46,16 @@ export function AlcadasTab() {
 
   return (
     <Card className="p-2">
-      <EnterpriseRecordToolbar
-        title="Alçadas de Suprimentos"
-        subtitle="Regras corporativas por etapa, valor, natureza, CC, fornecedor e destino."
-        onNew={() => setOpenNew(true)}
-        onRefresh={() => refetch()}
-      />
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div>
+          <h2 className="text-[13px] font-semibold flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" />Alçadas de Suprimentos</h2>
+          <p className="text-[11px] text-muted-foreground">Regras corporativas por etapa, valor, natureza, CC, fornecedor e destino.</p>
+        </div>
+        <div className="flex gap-1.5">
+          <Button size="sm" variant="outline" className="h-7 text-[11.5px]" onClick={() => refetch()}><RefreshCw className="h-3.5 w-3.5 mr-1" />Atualizar</Button>
+          <Button size="sm" className="h-7 text-[11.5px] bg-emerald-600 hover:bg-emerald-700" onClick={() => setOpenNew(true)}><Plus className="h-3.5 w-3.5 mr-1" />Nova alçada</Button>
+        </div>
+      </div>
 
       {isLoading ? (
         <p className="text-[12px] text-muted-foreground p-3">Carregando…</p>

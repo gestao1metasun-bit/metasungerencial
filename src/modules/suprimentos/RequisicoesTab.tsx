@@ -17,6 +17,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid, Rows3 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -25,6 +27,11 @@ import {
 } from "@/lib/repositories/suprimentos-requisicoes-repo";
 import { NovaRequisicaoDialog } from "./NovaRequisicaoDialog";
 import { RequisicaoDetailDialog } from "./RequisicaoDetailDialog";
+import { KanbanRequisicoes } from "./KanbanRequisicoes";
+import { AlcadaChip } from "./AlcadaChip";
+
+const VIEW_LS_KEY = "ui.suprimentos.requisicoes.view.v1";
+type ViewMode = "tabela" | "kanban";
 
 const TONE_CLASS: Record<string, string> = {
   muted: "bg-muted text-muted-foreground border-border",
@@ -70,6 +77,15 @@ export function RequisicoesTab() {
   const [status, setStatus] = useState<"TODOS" | SupReqStatus>("TODOS");
   const [novoOpen, setNovoOpen] = useState(false);
   const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "tabela";
+    return (localStorage.getItem(VIEW_LS_KEY) as ViewMode) ?? "tabela";
+  });
+
+  const setViewPersist = (v: ViewMode) => {
+    setView(v);
+    try { localStorage.setItem(VIEW_LS_KEY, v); } catch { /* ignore */ }
+  };
 
   const { data: rows = [], isLoading, isFetching, refetch } = useRequisicoes({
     search,
@@ -95,10 +111,33 @@ export function RequisicoesTab() {
           if (a === "novo") setNovoOpen(true);
           else if (a === "atualizar") { refetch(); toast.success("Lista atualizada."); }
           else if (a === "exportar") exportarCsv(rows);
-          else toast.info("Ação disponível em breve.");
+          else if (a === "filtroRapido") toast.info("Use os filtros Tipo e Status ao lado.");
+          else if (a === "colunas") toast.info("Personalização de colunas disponível na visão Tabela (em breve).");
         }}
         extraRight={
           <div className="flex items-center gap-1.5">
+            <div className="inline-flex rounded border border-border overflow-hidden">
+              <Button
+                type="button"
+                size="sm"
+                variant={view === "tabela" ? "default" : "ghost"}
+                className="h-7 px-2 rounded-none"
+                onClick={() => setViewPersist("tabela")}
+                title="Visualização em tabela"
+              >
+                <Rows3 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={view === "kanban" ? "default" : "ghost"}
+                className="h-7 px-2 rounded-none"
+                onClick={() => setViewPersist("kanban")}
+                title="Visualização em Kanban"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
               <SelectTrigger className="h-7 w-32 text-[11.5px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>
@@ -118,76 +157,97 @@ export function RequisicoesTab() {
         }
       />
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[11.5px]">
-            <thead className="bg-muted/40 text-muted-foreground">
-              <tr className="border-b">
-                <th className="text-left px-2 py-1.5 font-semibold">Nº</th>
-                <th className="text-left px-2 py-1.5 font-semibold">Tipo</th>
-                <th className="text-left px-2 py-1.5 font-semibold">Status</th>
-                <th className="text-left px-2 py-1.5 font-semibold">Prioridade</th>
-                <th className="text-left px-2 py-1.5 font-semibold">Data necessária</th>
-                <th className="text-right px-2 py-1.5 font-semibold">Itens</th>
-                <th className="text-right px-2 py-1.5 font-semibold">Valor estimado</th>
-                <th className="text-right px-2 py-1.5 font-semibold">Valor aprovado</th>
-                <th className="text-left px-2 py-1.5 font-semibold">Criado em</th>
-                <th className="text-right px-2 py-1.5 font-semibold w-20">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={10} className="px-2 py-6 text-center text-muted-foreground">Carregando…</td></tr>
-              ) : rows.length === 0 ? (
-                <tr><td colSpan={10} className="px-2 py-6 text-center text-muted-foreground">
-                  Nenhuma requisição encontrada.
-                </td></tr>
-              ) : rows.map((r) => (
-                <tr key={r.id} className="border-b hover:bg-muted/30 cursor-pointer"
-                  onClick={() => r.id && setDetalheId(r.id)}>
-                  <td className="px-2 py-1 tabular-nums font-semibold">#{r.numero}</td>
-                  <td className="px-2 py-1">{r.tipo}</td>
-                  <td className="px-2 py-1">{r.status && <StatusBadge status={r.status as SupReqStatus} />}</td>
-                  <td className="px-2 py-1">{r.prioridade}</td>
-                  <td className="px-2 py-1 tabular-nums">{r.data_necessidade ?? "—"}</td>
-                  <td className="px-2 py-1 text-right tabular-nums">{r.qtd_itens ?? 0}</td>
-                  <td className="px-2 py-1 text-right tabular-nums">
-                    {Number(r.valor_estimado ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-2 py-1 text-right tabular-nums">
-                    {r.valor_aprovado != null
-                      ? Number(r.valor_aprovado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })
-                      : "—"}
-                  </td>
-                  <td className="px-2 py-1 tabular-nums">
-                    {r.criado_em ? format(new Date(r.criado_em), "dd/MM/yyyy HH:mm") : "—"}
-                  </td>
-                  <td className="px-2 py-1 text-right" onClick={(e) => e.stopPropagation()}>
-                    <RowActions
-                      rowId={r.id ?? ""}
-                      actions={[{ kind: "visualizar" }, { kind: "historico" }]}
-                      onAction={(_kind, id) => id && setDetalheId(id)}
-                    />
-                  </td>
+      {view === "kanban" ? (
+        <Card className="p-2">
+          <KanbanRequisicoes
+            rows={rows}
+            onOpen={(id) => setDetalheId(id)}
+          />
+          {isFetching && (
+            <div className="mt-1 text-[10.5px] text-muted-foreground text-right">atualizando…</div>
+          )}
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11.5px]">
+              <thead className="bg-muted/40 text-muted-foreground">
+                <tr className="border-b">
+                  <th className="text-left px-2 py-1.5 font-semibold">Nº</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Tipo</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Status</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Prioridade</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Data necessária</th>
+                  <th className="text-right px-2 py-1.5 font-semibold">Itens</th>
+                  <th className="text-right px-2 py-1.5 font-semibold">Valor estimado</th>
+                  <th className="text-right px-2 py-1.5 font-semibold">Valor aprovado</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Alçada</th>
+                  <th className="text-left px-2 py-1.5 font-semibold">Criado em</th>
+                  <th className="text-right px-2 py-1.5 font-semibold w-20">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-            {rows.length > 0 && (
-              <tfoot className="bg-muted/30 text-[11px]">
-                <tr>
-                  <td colSpan={6} className="px-2 py-1 text-muted-foreground">
-                    {rows.length} requisiç{rows.length === 1 ? "ão" : "ões"} {isFetching && " · atualizando…"}
-                  </td>
-                  <td className="px-2 py-1 text-right tabular-nums font-semibold">
-                    R$ {totalEstimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </td>
-                  <td colSpan={3} />
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={11} className="px-2 py-6 text-center text-muted-foreground">Carregando…</td></tr>
+                ) : rows.length === 0 ? (
+                  <tr><td colSpan={11} className="px-2 py-6 text-center text-muted-foreground">
+                    Nenhuma requisição encontrada.
+                  </td></tr>
+                ) : rows.map((r) => (
+                  <tr key={r.id} className="border-b hover:bg-muted/30 cursor-pointer"
+                    onClick={() => r.id && setDetalheId(r.id)}>
+                    <td className="px-2 py-1 tabular-nums font-semibold">#{r.numero}</td>
+                    <td className="px-2 py-1">{r.tipo}</td>
+                    <td className="px-2 py-1">{r.status && <StatusBadge status={r.status as SupReqStatus} />}</td>
+                    <td className="px-2 py-1">{r.prioridade}</td>
+                    <td className="px-2 py-1 tabular-nums">{r.data_necessidade ?? "—"}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">{r.qtd_itens ?? 0}</td>
+                    <td className="px-2 py-1 text-right tabular-nums">
+                      {Number(r.valor_estimado ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-2 py-1 text-right tabular-nums">
+                      {r.valor_aprovado != null
+                        ? Number(r.valor_aprovado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+                        : "—"}
+                    </td>
+                    <td className="px-2 py-1">
+                      {r.id && (
+                        <AlcadaChip
+                          requisicaoId={r.id}
+                          valor={Number(r.valor_estimado ?? 0)}
+                        />
+                      )}
+                    </td>
+                    <td className="px-2 py-1 tabular-nums">
+                      {r.criado_em ? format(new Date(r.criado_em), "dd/MM/yyyy HH:mm") : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-right" onClick={(e) => e.stopPropagation()}>
+                      <RowActions
+                        rowId={r.id ?? ""}
+                        actions={[{ kind: "visualizar" }, { kind: "historico" }]}
+                        onAction={(_kind, id) => id && setDetalheId(id)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              {rows.length > 0 && (
+                <tfoot className="bg-muted/30 text-[11px]">
+                  <tr>
+                    <td colSpan={6} className="px-2 py-1 text-muted-foreground">
+                      {rows.length} requisiç{rows.length === 1 ? "ão" : "ões"} {isFetching && " · atualizando…"}
+                    </td>
+                    <td className="px-2 py-1 text-right tabular-nums font-semibold">
+                      R$ {totalEstimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td colSpan={4} />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </Card>
+      )}
 
       <NovaRequisicaoDialog open={novoOpen} onOpenChange={setNovoOpen}
         onCreated={(id) => setDetalheId(id)} />

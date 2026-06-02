@@ -54,12 +54,12 @@ type HubCard = {
 };
 
 const CARDS: HubCard[] = [
-  { to: "/solicitacoes-material", icon: ClipboardList, label: "Requisições", desc: "Material e serviço — solicitação, rastreio e atendimento.", status: "ativo" },
+  { to: "/suprimentos", hash: "#tab=requisicoes", icon: ClipboardList, label: "Requisições", desc: "Material e serviço — solicitação, rastreio e atendimento.", status: "ativo" },
   { to: "/estoque", icon: Package, label: "Estoque", desc: "Saldo, reservas, entregas e necessidade de compra.", status: "ativo" },
-  { to: "/solicitacoes-material", icon: ShoppingCart, label: "Compras", desc: "Solicitações de compra, aprovações e ordens.", status: "ativo" },
-  { to: "/suprimentos", hash: "#tab=cotacoes", icon: FileSearch, label: "Cotações", desc: "Comparativo de fornecedores e condições.", status: "em-construcao" },
-  { to: "/suprimentos", hash: "#tab=pedidos", icon: FileText, label: "Pedidos de Compra", desc: "Ordens emitidas, status e recebimento.", status: "em-construcao" },
-  { to: "/suprimentos", hash: "#tab=recebimentos", icon: PackageCheck, label: "Recebimentos", desc: "Conferência, entrada e vínculo com pedido.", status: "em-construcao" },
+  { to: "/solicitacoes-material", icon: ShoppingCart, label: "Compras (legado)", desc: "Tela legada de solicitações de compra — fluxo oficial migrou para Requisições + Cotações + Pedidos.", status: "ativo" },
+  { to: "/suprimentos", hash: "#tab=cotacoes", icon: FileSearch, label: "Cotações", desc: "Comparativo de fornecedores e condições.", status: "ativo" },
+  { to: "/suprimentos", hash: "#tab=pedidos", icon: FileText, label: "Pedidos de Compra", desc: "Ordens emitidas, status e recebimento.", status: "ativo" },
+  { to: "/suprimentos", hash: "#tab=recebimentos", icon: PackageCheck, label: "Recebimentos", desc: "Conferência, entrada e vínculo com pedido.", status: "ativo" },
   { to: "/estoque", hash: "#tab=entregas", icon: Truck, label: "Entregas", desc: "Separação, entrega para O.S./obra e baixa.", status: "ativo" },
   { to: "/fornecedores", icon: Users2, label: "Fornecedores", desc: "Cadastro, vínculos e histórico de compras.", status: "ativo" },
   { to: "/suprimentos", hash: "#tab=relatorios", icon: BarChart3, label: "Relatórios", desc: "Rastreabilidade ponta-a-ponta e indicadores.", status: "em-construcao" },
@@ -131,7 +131,7 @@ function HubGrid() {
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-[13px] font-semibold truncate">{c.label}</h3>
                     {c.status === "em-construcao" ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">D20.SUP.5+</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">Em construção</span>
                     ) : (
                       <span className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">Ativo</span>
                     )}
@@ -271,12 +271,12 @@ function SuprimentosPage() {
   return (
     <div className="p-2">
       <PageHeader
-        eyebrow="D20.SUP.1 · Fundação"
+        eyebrow="D20.SUP.9 · Fechamento 97%"
         title="Suprimentos"
         subtitle="Camada única para Requisições, Estoque, Compras, Cotações, Recebimentos e Entregas — com rastreabilidade até a O.S."
         actions={
           <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[11.5px]">
-            <Link to="/solicitacoes-material">
+            <Link to="/suprimentos" hash="tab=requisicoes">
               <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
               Nova requisição
             </Link>
@@ -332,8 +332,8 @@ function SuprimentosPage() {
         <TabsContent value="relatorios" className="mt-0">
           <Placeholder
             titulo="Relatórios & Rastreabilidade"
-            descricao="Requisição → Reserva/Compra → Pedido → Recebimento → Entrega → Custo realizado na O.S. — ponta a ponta."
-            sub="Disponível em D20.SUP.7"
+            descricao="Requisição → Reserva/Compra → Pedido → Recebimento → Entrega → Custo realizado na O.S. — ponta a ponta. Use o Dashboard para KPIs ao vivo enquanto esta tela é finalizada."
+            sub="Em construção — sucessor das views v_suprimentos_dashboard_*"
           />
         </TabsContent>
       </Tabs>

@@ -174,6 +174,7 @@ function SuprimentosPage() {
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="h-8 mb-2">
           <TabsTrigger value="dashboard" className="text-[11.5px]"><Layers className="h-3.5 w-3.5 mr-1" />Dashboard</TabsTrigger>
+          <TabsTrigger value="requisicoes" className="text-[11.5px]"><ClipboardList className="h-3.5 w-3.5 mr-1" />Requisições</TabsTrigger>
           <TabsTrigger value="cotacoes" className="text-[11.5px]"><FileSearch className="h-3.5 w-3.5 mr-1" />Cotações</TabsTrigger>
           <TabsTrigger value="pedidos" className="text-[11.5px]"><FileText className="h-3.5 w-3.5 mr-1" />Pedidos</TabsTrigger>
           <TabsTrigger value="recebimentos" className="text-[11.5px]"><PackageCheck className="h-3.5 w-3.5 mr-1" />Recebimentos</TabsTrigger>

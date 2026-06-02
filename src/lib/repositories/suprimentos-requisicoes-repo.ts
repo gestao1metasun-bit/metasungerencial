@@ -125,7 +125,7 @@ export function useCriarRequisicao() {
         p_payload: payload as never,
       });
       if (error) throw error;
-      return data as { id: string; numero: number };
+      return data as unknown as { id: string; numero: number };
     },
     onSuccess: () => invalidate(qc),
   });

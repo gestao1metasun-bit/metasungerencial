@@ -304,16 +304,25 @@ export function NovaRequisicaoDialog({
         <div className="border rounded p-2 bg-muted/30 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Switch checked={destinoAlmox} onCheckedChange={setDestinoAlmox} id="almox-switch" />
-              <Label htmlFor="almox-switch" className="text-[11.5px] cursor-pointer">
+              <Switch
+                checked={destinoAlmox}
+                onCheckedChange={setDestinoAlmox}
+                id="almox-switch"
+                disabled={tipo === "SERVICO"}
+              />
+              <Label htmlFor="almox-switch" className={`text-[11.5px] ${tipo === "SERVICO" ? "opacity-60" : "cursor-pointer"}`}>
                 Destino: <b>Almoxarifado</b> (reposição de estoque interno)
               </Label>
             </div>
-            {destinoAlmox && (
-              <span className="text-[10.5px] text-muted-foreground">
-                Vínculo com Projeto/Obra/O.S. dispensado; CC/CR fixados em ALMOXARIFADO.
+            {tipo === "SERVICO" ? (
+              <span className="text-[10.5px] text-amber-700">
+                Indisponível para Serviço — vincule a Projeto/Obra/O.S.
               </span>
-            )}
+            ) : destinoAlmox ? (
+              <span className="text-[10.5px] text-muted-foreground">
+                Vínculo dispensado; CC/CR fixados em ALMOXARIFADO.
+              </span>
+            ) : null}
           </div>
 
           {!destinoAlmox && (

@@ -470,11 +470,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         disabled: isBusy || ["RECUSADA", "CANCELADA"].includes(proposta.status),
         disabledReason: proposta.status === "RECUSADA" ? "A proposta já está reprovada." : proposta.status === "CANCELADA" ? "Reabra a proposta antes de reprovar." : undefined,
       },
-      gerarContrato: {
-        onClick: () => executarGerarContrato(),
-        disabled: isBusy || possuiContrato,
-        disabledReason: possuiContrato ? "Esta proposta já possui contrato gerado." : undefined,
-      },
       gerarAditivo: {
         onClick: () => void executarGerarAditivo(),
         disabled: isBusy || !podeGerarAditivo,

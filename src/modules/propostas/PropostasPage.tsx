@@ -763,12 +763,29 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               ...ribbonRmComercial(ribbonState),
             ];
           })()}
-          layoutBar={layoutBarRm()}
+          layoutBar={layoutBarRm({
+            density,
+            onDensityChange: (d) => setDensity(d),
+            currentPreset: layoutPreset,
+            presets: [
+              { key: "padrao",      label: "Padrão" },
+              { key: "compacto",    label: "Compacto" },
+              { key: "confortavel", label: "Confortável" },
+              { key: "espacoso",    label: "Espaçoso" },
+            ],
+            onPresetChange: (k) => {
+              setLayoutPreset(k);
+              if (k === "compacto") setDensity("compact");
+              else if (k === "confortavel") setDensity("comfortable");
+              else if (k === "espacoso") setDensity("spacious");
+              else setDensity("compact");
+            },
+          })}
         />
 
       </div>
 
-      <div className="mt-5">
+      <div className={`mt-5 ${densityClass}`}>
         <PropostaList
           propostas={propostas}
           onEditar={setEditando}
@@ -777,6 +794,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onSelecionarUltima={(id) => setSelecionadaId(id)}
         />
       </div>
+
 
       {leadDraft && (
         <LeadModal

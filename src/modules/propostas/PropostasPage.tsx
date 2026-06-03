@@ -631,7 +631,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onEditar={setEditando}
           onVisualizar={(id) => setVendoId(id)}
           onNova={novaProposta}
-          onSelecionarUltima={(id) => setVendoId(id)}
+          onSelecionarUltima={(id) => setSelecionadaId(id)}
         />
       </div>
 

@@ -705,7 +705,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                 key: "novaPropostaLeadFlegado",
                 label: "Nova proposta (lead flegado)",
                 icon: Copy,
-                tone: "success" as const,
+                tone: "warning" as const,
                 wide: true,
                 disabled: !hasSelectedLead,
                 disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",

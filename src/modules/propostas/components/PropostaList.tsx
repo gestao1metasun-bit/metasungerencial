@@ -1305,22 +1305,25 @@ function KanbanView({
 
 // D26.1.4 — coluna "Ações/Opções" removida. Toda ação opera pela
 // Barra Operacional Enterprise (acima do grid); clicar na linha abre o lead.
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aprovadoEm" | "diasCriacao" | "diasStatus" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "criado",     label: "Criado em",       defaultWidth: 120 },
-  { key: "cliente",    label: "Cliente",         defaultWidth: 240 },
-  { key: "consultor",  label: "Consultor",       defaultWidth: 160 },
-  { key: "cidade",     label: "Cidade",          defaultWidth: 160 },
-  { key: "aberto",     label: "Em aberto",       align: "right", defaultWidth: 110 },
-  { key: "assinados",  label: "Assinados",       align: "right", defaultWidth: 110 },
-  { key: "modulos",    label: "Módulos",         align: "right", defaultWidth: 100 },
-  { key: "potencia",   label: "Potência (Wp)",   align: "right", defaultWidth: 120 },
-  { key: "inversores", label: "Inversores",      defaultWidth: 200 },
-  { key: "valor",      label: "Valor (última)",  align: "right", defaultWidth: 150 },
-  { key: "status",     label: "Status",          defaultWidth: 130 },
-  { key: "dias",       label: "Dias",            defaultWidth: 80 },
+  { key: "criado",       label: "Criado em",       defaultWidth: 120 },
+  { key: "aprovadoEm",   label: "Aprovado em",     defaultWidth: 120 },
+  { key: "diasCriacao",  label: "Dias da criação", align: "right", defaultWidth: 110 },
+  { key: "diasStatus",   label: "Dias no status",  align: "right", defaultWidth: 110 },
+  { key: "cliente",      label: "Cliente",         defaultWidth: 240 },
+  { key: "consultor",    label: "Consultor",       defaultWidth: 160 },
+  { key: "cidade",       label: "Cidade",          defaultWidth: 160 },
+  { key: "aberto",       label: "Em aberto",       align: "right", defaultWidth: 110 },
+  { key: "assinados",    label: "Assinados",       align: "right", defaultWidth: 110 },
+  { key: "modulos",      label: "Módulos",         align: "right", defaultWidth: 100 },
+  { key: "potencia",     label: "Potência (Wp)",   align: "right", defaultWidth: 120 },
+  { key: "inversores",   label: "Inversores",      defaultWidth: 200 },
+  { key: "valor",        label: "Valor (última)",  align: "right", defaultWidth: 150 },
+  { key: "status",       label: "Status",          defaultWidth: 130 },
+  { key: "dias",         label: "Dias",            defaultWidth: 80 },
 ];
 const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v2";
 const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v2";

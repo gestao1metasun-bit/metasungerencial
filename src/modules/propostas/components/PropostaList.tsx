@@ -1872,6 +1872,68 @@ export function PropostaList({
         onOpenChange={(o) => { if (!o) setAprovandoLista(null); }}
         onAprovado={() => setAprovandoLista(null)}
       />
+
+      <Dialog open={filtrosDialogOpen} onOpenChange={setFiltrosDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filtros de propostas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
+              <Input
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                placeholder="Ex.: Renan, Patrícia, P-2026…"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Situação do lead</Label>
+              <div className="flex gap-1">
+                {(["ABERTO", "FECHADO", "CANCELADO"] as const).map((e) => (
+                  <Button
+                    key={e}
+                    type="button"
+                    size="sm"
+                    variant={estadoLead === e ? "default" : "outline"}
+                    className="h-8 flex-1 text-xs"
+                    onClick={() => setEstadoLead(e)}
+                  >
+                    {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status da proposta</Label>
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
+                className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+              >
+                {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
+                  <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
+              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is)
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button" variant="ghost" size="sm"
+              onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO"); }}
+            >
+              Limpar
+            </Button>
+            <Button type="button" size="sm" onClick={() => setFiltrosDialogOpen(false)}>
+              Aplicar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

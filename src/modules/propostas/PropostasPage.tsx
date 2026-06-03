@@ -27,10 +27,15 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { toast } from "sonner";
 import {
   useAprovarProposta,
+  useCancelarProposta,
   useGerarContratoDaProposta,
+  useGerarAditivoContrato,
   useEnviarContratoEngenharia,
   useEnviarContratoFinanciamento,
+  useEnviarContratoAssinatura,
   useGerarComissaoDeContrato,
+  useReabrirProposta,
+  useReprovarProposta,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useClientesFull, addClienteFull } from "@/lib/clientes-store";
@@ -41,6 +46,7 @@ import {
   type ParametroFV, type CustoFV, type TarifaEnergia,
   useCidadesFV, useConcessionarias, useModulosFV, useInversoresFV,
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
+  refreshPropostas,
   useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,

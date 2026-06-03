@@ -14579,12 +14579,25 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_contrato_enviar_assinatura: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: string
+      }
       rpc_contrato_enviar_engenharia: {
         Args: { p_contrato_id: string }
         Returns: string
       }
       rpc_contrato_enviar_financiamento: {
         Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: string
+      }
+      rpc_contrato_gerar_aditivo: {
+        Args: {
+          p_contrato_id: string
+          p_descricao: string
+          p_tipo?: string
+          p_valor_delta?: number
+        }
         Returns: string
       }
       rpc_contrato_marcar_engenharia_liberada: {
@@ -14957,6 +14970,10 @@ export type Database = {
         Args: { p_observacao?: string; p_proposta_id: string }
         Returns: string
       }
+      rpc_proposta_cancelar: {
+        Args: { p_motivo: string; p_proposta_id: string }
+        Returns: string
+      }
       rpc_proposta_decidir_aprovacao_excecao: {
         Args: { p_aprovacao_id: string; p_decisao: string; p_motivo: string }
         Returns: undefined
@@ -14966,9 +14983,17 @@ export type Database = {
         Returns: string
       }
       rpc_proposta_marcar_vencidas: { Args: never; Returns: number }
+      rpc_proposta_reabrir: {
+        Args: { p_motivo: string; p_proposta_id: string }
+        Returns: string
+      }
       rpc_proposta_renovar_validade: {
         Args: { _dias?: number; _id: string; _motivo: string }
         Returns: undefined
+      }
+      rpc_proposta_reprovar: {
+        Args: { p_motivo: string; p_proposta_id: string }
+        Returns: string
       }
       rpc_proposta_solicitar_aprovacao_excecao: {
         Args: { p_motivo: string; p_proposta_id: string }
@@ -15380,6 +15405,10 @@ export type Database = {
         | "comercial.comissao.gerar"
         | "engenharia.criar_obra"
         | "financiamento.criar_pendencia"
+        | "comercial.proposta.reprovar"
+        | "comercial.proposta.cancelar"
+        | "comercial.proposta.reabrir"
+        | "comercial.contrato.enviar_assinatura"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15743,6 +15772,10 @@ export const Constants = {
         "comercial.comissao.gerar",
         "engenharia.criar_obra",
         "financiamento.criar_pendencia",
+        "comercial.proposta.reprovar",
+        "comercial.proposta.cancelar",
+        "comercial.proposta.reabrir",
+        "comercial.contrato.enviar_assinatura",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

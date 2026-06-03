@@ -153,21 +153,21 @@ export type RmRibbonComercialOverrides = Partial<Record<
   | "aprovar" | "reprovar" | "gerarContrato" | "gerarAditivo"
   | "enviarEngenharia" | "enviarFinanciamento" | "gerarComissao"
   | "enviarAssinatura" | "cancelar" | "reabrir",
-  () => void
+  Partial<Pick<StatusActionItem, "onClick" | "disabled" | "disabledReason" | "badge">>
 >>;
 
 export function ribbonRmComercial(overrides: RmRibbonComercialOverrides = {}): StatusActionItem[] {
-  const stub = (label: string) => () => toast.message(`${label} — em breve`);
-  return [
-    { key: "aprovar",              label: "Aprovar",               icon: CheckCircle2, tone: "success", onClick: overrides.aprovar              ?? stub("Aprovar") },
-    { key: "reprovar",             label: "Reprovar",              icon: XCircle,      tone: "danger",  onClick: overrides.reprovar             ?? stub("Reprovar") },
-    { key: "gerarContrato",        label: "Gerar Contrato",        icon: FileText,     tone: "primary", onClick: overrides.gerarContrato        ?? stub("Gerar Contrato") },
-    { key: "gerarAditivo",         label: "Gerar Aditivo",         icon: FileText,     tone: "info",    onClick: overrides.gerarAditivo         ?? stub("Gerar Aditivo") },
-    { key: "enviarEngenharia",     label: "Enviar Engenharia",     icon: Truck,        tone: "info",    onClick: overrides.enviarEngenharia     ?? stub("Enviar Engenharia") },
-    { key: "enviarFinanciamento",  label: "Enviar Financiamento",  icon: Banknote,     tone: "warning", onClick: overrides.enviarFinanciamento  ?? stub("Enviar Financiamento") },
-    { key: "gerarComissao",        label: "Gerar Comissão",        icon: Banknote,     tone: "success", onClick: overrides.gerarComissao        ?? stub("Gerar Comissão") },
-    { key: "enviarAssinatura",     label: "Enviar Assinatura",     icon: Send,         tone: "primary", onClick: overrides.enviarAssinatura     ?? stub("Enviar Assinatura") },
-    { key: "cancelar",             label: "Cancelar",              icon: XCircle,      tone: "danger",  onClick: overrides.cancelar             ?? stub("Cancelar") },
-    { key: "reabrir",              label: "Reabrir",               icon: Undo2,        tone: "warning", onClick: overrides.reabrir              ?? stub("Reabrir") },
+  const items: StatusActionItem[] = [
+    { key: "aprovar",              label: "Aprovar",               icon: CheckCircle2, tone: "success", ...overrides.aprovar },
+    { key: "reprovar",             label: "Reprovar",              icon: XCircle,      tone: "danger",  ...overrides.reprovar },
+    { key: "gerarContrato",        label: "Gerar Contrato",        icon: FileText,     tone: "primary", ...overrides.gerarContrato },
+    { key: "gerarAditivo",         label: "Gerar Aditivo",         icon: FileText,     tone: "info",    ...overrides.gerarAditivo },
+    { key: "enviarEngenharia",     label: "Enviar Engenharia",     icon: Truck,        tone: "info",    ...overrides.enviarEngenharia },
+    { key: "enviarFinanciamento",  label: "Enviar Financiamento",  icon: Banknote,     tone: "warning", ...overrides.enviarFinanciamento },
+    { key: "gerarComissao",        label: "Gerar Comissão",        icon: Banknote,     tone: "success", ...overrides.gerarComissao },
+    { key: "enviarAssinatura",     label: "Enviar Assinatura",     icon: Send,         tone: "primary", ...overrides.enviarAssinatura },
+    { key: "cancelar",             label: "Cancelar",              icon: XCircle,      tone: "danger",  ...overrides.cancelar },
+    { key: "reabrir",              label: "Reabrir",               icon: Undo2,        tone: "warning", ...overrides.reabrir },
   ];
+  return items.filter((item) => item.onClick || item.disabled);
 }

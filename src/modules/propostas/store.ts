@@ -480,6 +480,7 @@ function makeSupabasePropostasStore() {
 export const hydratePropostas = () => propsS.hydrate();
 export const resetPropostasCache = () => propsS.reset();
 export const isPropostasHydrated = () => propsS.isHydrated();
+export const refreshPropostas = () => propsS.hydrate();
 
 export const useCidadesFV       = cidadesS.useList;
 export const useConcessionarias = concsS.useList;

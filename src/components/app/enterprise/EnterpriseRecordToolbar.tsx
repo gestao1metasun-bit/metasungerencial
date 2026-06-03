@@ -139,6 +139,7 @@ export type StatusActionItem = {
     | "muted";  // cinza — neutro
   onClick?: () => void;
   disabled?: boolean;
+  disabledReason?: string;
   /** Mostra um pequeno selo (ex.: contagem ou "•"). */
   badge?: string;
 };
@@ -550,7 +551,7 @@ export function EnterpriseRecordToolbar({
             type="button"
             disabled={s.disabled}
             onClick={s.onClick}
-            title={s.label}
+            title={s.disabled ? (s.disabledReason ?? s.label) : s.label}
             aria-label={s.label}
             className={cn(
               "relative inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 transition",

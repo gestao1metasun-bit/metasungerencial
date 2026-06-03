@@ -398,10 +398,9 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
-          // ▼ Contratos
-          { key: "novo_contrato",            label: "Novo contrato (de proposta)",    group: "Contratos", requerSelecao: 0 },
+          // ▼ Contratos (sem "novo_contrato": contrato nasce da proposta aprovada)
           { key: "editar_contrato",          label: "Editar contrato",                group: "Contratos" },
           { key: "gerar_aditivo",            label: "Gerar Aditivo",                  group: "Contratos" },
           { key: "cancelar_contrato",        label: "Cancelar",                       group: "Contratos", destructive: true, requerMotivo: true },
@@ -431,7 +430,6 @@ function ContratoAssinadoTab({
         ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Contratos atualizados.");
-          else if (key === "novo_contrato") toast.info("Novo contrato nasce de proposta aprovada (use /comercial#tab=orcamentos).");
           else if (key === "editar_contrato") toast.info("Abra o contrato e clique em Editar (chega em D27.COM.2b).");
           else if (key === "gerar_aditivo") toast.info("Gerar aditivo: aba Aditivos (chega em D27.COM.AD).");
           else if (key === "cancelar_contrato" || key === "reabrir_contrato")
@@ -452,8 +450,8 @@ function ContratoAssinadoTab({
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Contratos atualizados.");
-          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada.");
           else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b).");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
@@ -957,14 +955,14 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada (use a aba Propostas).");
           else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b). Use 'Retornar para Orçamentos' na linha.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
           else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");

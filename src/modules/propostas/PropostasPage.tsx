@@ -448,7 +448,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       return {
         aprovar: { disabled: true, disabledReason: motivo },
         reprovar: { disabled: true, disabledReason: motivo },
-        gerarContrato: { disabled: true, disabledReason: motivo },
         gerarAditivo: { disabled: true, disabledReason: motivo },
         enviarFinanciamento: { disabled: true, disabledReason: motivo },
         cancelar: { disabled: true, disabledReason: motivo },

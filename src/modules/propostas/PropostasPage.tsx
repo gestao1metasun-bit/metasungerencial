@@ -264,7 +264,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
-  const [gerarContratoOpen, setGerarContratoOpen] = useState(false);
+  const [aprovarOpen, setAprovarOpen] = useState(false);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =

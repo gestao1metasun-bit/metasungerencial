@@ -33,8 +33,11 @@ import {
   RowActions,
   useColumnPrefs,
   EntityTimeline,
+  BulkActionBar,
+  useRowSelection,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import {
   useLiberarComissao,

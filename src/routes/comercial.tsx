@@ -376,6 +376,7 @@ function ContratoAssinadoTab({
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
+  const sel = useRowSelection(assinados, (c) => c.id);
 
   const retornar = (c: Contrato) => {
     if (!isAdmin) {

@@ -592,12 +592,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
             { key: "alterar_canal",        label: "Alterar Canal",      group: "Comercial", permiteLote: true, requerSelecao: 1 },
             { key: "alterar_origem",       label: "Alterar Origem",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
-            // ▼ Relatórios
-            { key: "rel_pipeline",         label: "Pipeline",           group: "Relatórios", requerSelecao: 0 },
-            { key: "rel_conversao",        label: "Conversão",          group: "Relatórios", requerSelecao: 0 },
-            { key: "rel_funil",            label: "Funil",              group: "Relatórios", requerSelecao: 0 },
-            { key: "rel_vendedores",       label: "Vendedores",         group: "Relatórios", requerSelecao: 0 },
-            { key: "rel_metas",            label: "Metas",              group: "Relatórios", requerSelecao: 0 },
+            // ▼ Relatórios — removidos (chegam em D27.COM.5 Painel Executivo)
             // ▼ Manutenção
             { key: "nova_proposta",        label: "Nova proposta (lead)", group: "Manutenção", requerSelecao: 0 },
             { key: "marcar_vencidas",      label: "Marcar vencidas (>45 dias)", group: "Manutenção", requerSelecao: 0 },

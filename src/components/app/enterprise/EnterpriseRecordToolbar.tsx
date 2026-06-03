@@ -539,6 +539,35 @@ export function EnterpriseRecordToolbar({
     </div>
   );
 
+  // ------- Linha 1.5: bloco secundário em linha própria (opt-in) -------
+  const row1b = splitSecondaryActions ? (
+    <div
+      role="toolbar"
+      aria-label="Ações secundárias"
+      className="flex items-center gap-0 border-x border-b border-slate-200 bg-white px-1.5 py-1 overflow-x-auto"
+    >
+      {extraLeft}
+      {renderActionBtn("filtroAvancado")}
+      {renderActionBtn("visoes")}
+      {renderActionBtn("colunas")}
+      <Sep />
+      {renderActionBtn("exportar")}
+      {renderActionBtn("imprimir")}
+      {renderActionBtn("enviar")}
+      {extraRight}
+      {count > 0 && (
+        <span
+          className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+          aria-label={`${count} selecionado(s)`}
+        >
+          {count} sel.
+        </span>
+      )}
+    </div>
+  ) : null;
+
+
+
   // ------- Linha 2: ações de status (RM circulares coloridas) -------
   const STATUS_TONE: Record<StatusActionItem["tone"], string> = {
     success: "bg-emerald-500 text-white hover:bg-emerald-600",

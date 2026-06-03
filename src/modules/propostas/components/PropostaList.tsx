@@ -403,6 +403,14 @@ function dotColorFor(dias: number): string {
   if (dias <= 15) return "bg-warning";
   return "bg-destructive";
 }
+/** Cor de pílula para "Dias da criação" / "Dias no status":
+ *  verde 0-7, amarelo 8-15, laranja 16-30, vermelho >30. */
+function diasBadgeClass(dias: number): string {
+  if (dias <= 7) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300";
+  if (dias <= 15) return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+  if (dias <= 30) return "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300";
+  return "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300";
+}
 /** Formata YYYY-MM-DD → DD-MM-YYYY. Aceita ISO completos também. */
 function fmtData(iso?: string): string {
   if (!iso) return "—";
@@ -445,7 +453,17 @@ type Lead = {
   assinados: number;
   modulos: number;
   potenciaW: number;
+  /** Potência do sistema em kWp (módulos × Wp / 1000). */
+  potenciaKwp: number;
   inversores: string;
+  /** Consumo médio (kWh/mês) da última proposta. */
+  consumoKwh: number;
+  /** Valor por kWp (R$/kWp) da última proposta. */
+  valorKwp: number;
+  /** Bairro do cliente (última proposta). */
+  bairro?: string;
+  /** PF / PJ da última proposta. */
+  tipoPessoa?: "PF" | "PJ";
   /** Fase pós-aprovação. null = ainda em negociação. */
   fase: FaseContrato;
 };
@@ -526,7 +544,19 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       assinados,
       modulos: Number(ultima.modulosQtd) || 0,
       potenciaW: Number(ultima.moduloPotenciaWp) || 0,
+      potenciaKwp: (() => {
+        try { return Number(calcDimensionamento(ultima).potenciaFinalKwp) || 0; }
+        catch { return (Number(ultima.modulosQtd) || 0) * (Number(ultima.moduloPotenciaWp) || 0) / 1000; }
+      })(),
       inversores: inversoresStr,
+      consumoKwh: Number((ultima as any).consumoMedio) || 0,
+      valorKwp: (() => {
+        const v = calcPrecificacao(ultima).valorFinal || 0;
+        const kwp = (Number(ultima.modulosQtd) || 0) * (Number(ultima.moduloPotenciaWp) || 0) / 1000;
+        return kwp > 0 ? v / kwp : 0;
+      })(),
+      bairro: (ultima as any).clienteBairro || undefined,
+      tipoPessoa: (ultima as any).tipoPessoa,
       fase,
     });
   }
@@ -1305,30 +1335,47 @@ function KanbanView({
 
 // D26.1.4 — coluna "Ações/Opções" removida. Toda ação opera pela
 // Barra Operacional Enterprise (acima do grid); clicar na linha abre o lead.
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aprovadoEm" | "diasCriacao" | "diasStatus" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+type TabelaColKey =
+  | "cliente" | "tipoPessoa" | "consultor" | "cidade" | "bairro"
+  | "criado" | "aprovadoEm" | "diasCriacao" | "diasStatus"
+  | "aberto" | "assinados"
+  | "consumoKwh" | "modulos" | "potencia" | "potenciaKwp" | "inversores"
+  | "valor" | "valorKwp"
+  | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "criado",       label: "Criado em",       defaultWidth: 120 },
-  { key: "aprovadoEm",   label: "Aprovado em",     defaultWidth: 120 },
-  { key: "diasCriacao",  label: "Dias da criação", align: "right", defaultWidth: 110 },
-  { key: "diasStatus",   label: "Dias no status",  align: "right", defaultWidth: 110 },
-  { key: "cliente",      label: "Cliente",         defaultWidth: 240 },
-  { key: "consultor",    label: "Consultor",       defaultWidth: 160 },
-  { key: "cidade",       label: "Cidade",          defaultWidth: 160 },
-  { key: "aberto",       label: "Em aberto",       align: "right", defaultWidth: 110 },
-  { key: "assinados",    label: "Assinados",       align: "right", defaultWidth: 110 },
-  { key: "modulos",      label: "Módulos",         align: "right", defaultWidth: 100 },
-  { key: "potencia",     label: "Potência (Wp)",   align: "right", defaultWidth: 120 },
-  { key: "inversores",   label: "Inversores",      defaultWidth: 200 },
-  { key: "valor",        label: "Valor (última)",  align: "right", defaultWidth: 150 },
-  { key: "status",       label: "Status",          defaultWidth: 130 },
-  { key: "dias",         label: "Dias",            defaultWidth: 80 },
+  { key: "criado",       label: "Criado em",         defaultWidth: 110 },
+  { key: "diasCriacao",  label: "Dias da criação",   align: "right", defaultWidth: 120 },
+  { key: "diasStatus",   label: "Dias no status",    align: "right", defaultWidth: 120 },
+  { key: "cliente",      label: "Cliente",           defaultWidth: 220 },
+  { key: "tipoPessoa",   label: "Tipo",              defaultWidth: 70 },
+  { key: "consultor",    label: "Consultor",         defaultWidth: 150 },
+  { key: "cidade",       label: "Cidade",            defaultWidth: 150 },
+  { key: "bairro",       label: "Bairro",            defaultWidth: 140 },
+  { key: "consumoKwh",   label: "Consumo (kWh)",     align: "right", defaultWidth: 120 },
+  { key: "modulos",      label: "Módulos",           align: "right", defaultWidth: 90 },
+  { key: "potencia",     label: "Pot. módulo (Wp)",  align: "right", defaultWidth: 130 },
+  { key: "potenciaKwp",  label: "Potência (kWp)",    align: "right", defaultWidth: 120 },
+  { key: "inversores",   label: "Inversores",        defaultWidth: 190 },
+  { key: "valor",        label: "Valor proposta",    align: "right", defaultWidth: 140 },
+  { key: "valorKwp",     label: "R$/kWp",            align: "right", defaultWidth: 110 },
+  { key: "status",       label: "Status",            defaultWidth: 130 },
+  { key: "aprovadoEm",   label: "Aprovado em",       defaultWidth: 120 },
+  { key: "aberto",       label: "Em aberto",         align: "right", defaultWidth: 100 },
+  { key: "assinados",    label: "Assinados",         align: "right", defaultWidth: 100 },
+  { key: "dias",         label: "Dias (legado)",     defaultWidth: 90 },
 ];
-const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v2";
-const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v2";
-const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
+// v3 — reorganização das colunas e novos defaults visíveis (escopo Comercial → Propostas).
+const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v3";
+const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v3";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v3";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
+/** Defaults visíveis = spec da operação. Demais colunas ficam disponíveis no gerenciador. */
+const TABELA_DEFAULT_HIDDEN: TabelaColKey[] = [
+  "tipoPessoa", "bairro", "potencia", "valorKwp",
+  "aprovadoEm", "aberto", "assinados", "dias",
+];
 
 function TabelaView({
   leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
@@ -1352,7 +1399,8 @@ function TabelaView({
   const [widths, setWidths] = useState<Record<TabelaColKey, number>>(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>,
   );
-  const [hidden, setHidden] = useState<Set<TabelaColKey>>(new Set());
+  const [hidden, setHidden] = useState<Set<TabelaColKey>>(() => new Set(TABELA_DEFAULT_HIDDEN));
+
   
 
   useEffect(() => {
@@ -1438,16 +1486,29 @@ function TabelaView({
         );
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
+      case "bairro":    return <span className="block truncate">{l.bairro || "—"}</span>;
+      case "tipoPessoa": return <span className="text-[11px] text-muted-foreground">{l.tipoPessoa || "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
       case "aprovadoEm": return <span className="tabular-nums">{l.aprovadoEm ? fmtData(l.aprovadoEm) : "—"}</span>;
-      case "diasCriacao": return <span className="tabular-nums text-[11px] text-muted-foreground">{l.diasCriacao}d</span>;
-      case "diasStatus":  return <span className="tabular-nums text-[11px] text-muted-foreground">{l.dias}d</span>;
+      case "diasCriacao": return (
+        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.diasCriacao)}`}>
+          {l.diasCriacao} {l.diasCriacao === 1 ? "dia" : "dias"}
+        </span>
+      );
+      case "diasStatus": return (
+        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.dias)}`}>
+          {l.dias} {l.dias === 1 ? "dia" : "dias"}
+        </span>
+      );
       case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
       case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "consumoKwh": return <span className="tabular-nums">{l.consumoKwh ? `${l.consumoKwh.toLocaleString("pt-BR")} kWh` : "—"}</span>;
       case "modulos":    return <span className="tabular-nums">{l.modulos || "—"}</span>;
       case "potencia":   return <span className="tabular-nums">{l.potenciaW ? `${l.potenciaW} Wp` : "—"}</span>;
+      case "potenciaKwp": return <span className="tabular-nums">{l.potenciaKwp ? `${l.potenciaKwp.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} kWp` : "—"}</span>;
       case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
+      case "valorKwp":  return <span className="tabular-nums">{l.valorKwp ? fmtBRL(l.valorKwp) : "—"}</span>;
       case "status": {
         // Espelha o status mostrado no Kanban: se o lead tem fase pós-aprovação,
         // usa a coluna-âncora correspondente; senão, fallback para o assign.
@@ -1648,7 +1709,7 @@ function TabelaView({
             })}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setOrder(TABELA_DEFAULT_ORDER); setHidden(new Set()); setWidths(Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>); }}>
+            <Button variant="outline" onClick={() => { setOrder(TABELA_DEFAULT_ORDER); setHidden(new Set(TABELA_DEFAULT_HIDDEN)); setWidths(Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>); }}>
               Restaurar padrão
             </Button>
             <Button onClick={() => setMgrOpen(false)}>Fechar</Button>

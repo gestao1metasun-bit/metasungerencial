@@ -550,24 +550,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               else toast.info("Use a busca/filtro da lista abaixo.");
             }
           }}
-          extraLeft={(
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 gap-1 bg-violet-600 hover:bg-violet-700 text-white"
-              onClick={() => {
-                const sel = (window as any).__propostasSelectedLead;
-                if (sel && typeof sel === "function") {
-                  const lead = sel();
-                  if (lead) { novaProposta(lead); return; }
-                }
-                novaProposta();
-              }}
-              title="Gerar nova proposta (usa o lead flegado se houver exatamente 1)"
-            >
-              <Plus className="h-4 w-4" /> Gerar nova proposta
-            </Button>
-          )}
           availableActions={[
             "editar", "duplicar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",

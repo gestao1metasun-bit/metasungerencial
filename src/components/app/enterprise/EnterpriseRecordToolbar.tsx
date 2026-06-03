@@ -121,8 +121,13 @@ export type EnterpriseRecordToolbarProps = {
   /** Linha 3 — barra de Layout estilo RM (presets + densidade + chart). */
   layoutBar?: LayoutBarConfig;
 
+  /** Quando true, move o bloco secundário (filtroAvancado/visoes/colunas/exportar/imprimir/enviar)
+   *  para UMA NOVA linha logo abaixo da row1. Pedido D17.UI Propostas. */
+  splitSecondaryActions?: boolean;
+
   className?: string;
 };
+
 
 /** Ação de status redonda da Linha 2 (TOTVS RM). */
 export type StatusActionItem = {

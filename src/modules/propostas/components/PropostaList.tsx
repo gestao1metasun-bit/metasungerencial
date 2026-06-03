@@ -1746,6 +1746,7 @@ export function PropostaList({
         <div className="relative min-w-[220px] max-w-md flex-1">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
+            data-propostas-search
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
             placeholder="FILTRAR POR CLIENTE, CONSULTOR OU Nº…"

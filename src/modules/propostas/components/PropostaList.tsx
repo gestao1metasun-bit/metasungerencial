@@ -1753,8 +1753,22 @@ export function PropostaList({
     <div className="space-y-4">
 
       <Card className="flex flex-wrap items-center gap-2 p-2">
-        <Button size="sm" onClick={() => onNova()} className="h-8 gap-1">
-          <Plus className="h-4 w-4" /> Nova proposta
+        <Button
+          size="sm"
+          onClick={() => onNova()}
+          className="h-8 gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1 text-primary border-primary/30 hover:bg-primary/5"
+          onClick={() => setFiltrosDialogOpen(true)}
+        >
+          <FilterX className="h-4 w-4" /> Filtros: Todos
         </Button>
 
         <div className="flex items-center gap-1 rounded-md border bg-muted/40 p-0.5">
@@ -1820,7 +1834,7 @@ export function PropostaList({
           </Button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <Button
               size="sm"

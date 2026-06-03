@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ROUTE_TABS, parseHash } from "@/lib/route-tabs";
+import { ROUTE_TABS, useTabFromHash } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
 import { MACRO_MODULES, macroAtivoPorRota } from "@/lib/nav-structure";
 import { Ribbon } from "@/components/app/Ribbon";
@@ -53,14 +53,13 @@ export function MacroNav() {
  */
 export function TopNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const hash = useRouterState({ select: (s) => s.location.hash });
-  const activeTab = parseHash(hash);
   const active = macroAtivoPorRota(path);
 
   const ribbonCfg = ROUTE_TABS[path] ?? (active ? ROUTE_TABS[active.to] : undefined);
   const ribbonTabs = ribbonCfg?.tabs.filter((t) => !t.hidden) ?? [];
   const defaultTab = ribbonCfg?.default ?? "";
   const ribbonRoute = ROUTE_TABS[path] ? path : (active?.to ?? path);
+  const [activeTab] = useTabFromHash(ribbonRoute);
 
   if (ribbonTabs.length === 0) return null;
 

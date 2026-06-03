@@ -1703,18 +1703,97 @@ export function PropostaList({
   const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
   const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
 
+  // Opções derivadas (consultores/cidades únicos para os selects).
+  const consultoresOpts = useMemo(() => {
+    const s = new Set<string>();
+    propostas.forEach((p) => { if (p.consultor) s.add(p.consultor); });
+    return Array.from(s).sort();
+  }, [propostas]);
+  const cidadesOpts = useMemo(() => {
+    const s = new Set<string>();
+    propostas.forEach((p) => { if (p.cidade) s.add(p.cidade); });
+    return Array.from(s).sort();
+  }, [propostas]);
+
+  function periodoMatches(dateIso: string | undefined): boolean {
+    if (filtroPeriodo === "TODOS") return true;
+    if (!dateIso) return false;
+    const d = new Date(dateIso);
+    if (isNaN(d.getTime())) return false;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const diff = (hoje.getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000;
+    switch (filtroPeriodo) {
+      case "HOJE": return diff === 0;
+      case "ONTEM": return diff === 1;
+      case "7D": return diff >= 0 && diff <= 7;
+      case "15D": return diff >= 0 && diff <= 15;
+      case "30D": return diff >= 0 && diff <= 30;
+      case "MES_ATUAL": return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+      case "MES_PASSADO": {
+        const pm = (hoje.getMonth() + 11) % 12;
+        const py = pm === 11 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+        return d.getMonth() === pm && d.getFullYear() === py;
+      }
+      case "ANO": return d.getFullYear() === hoje.getFullYear();
+      default: return true;
+    }
+  }
+
   const leadsFiltrados = useMemo(() => {
     const q = filtro.trim().toLowerCase();
+    const vMin = filtroValorMin ? Number(filtroValorMin.replace(/[^\d.,-]/g, "").replace(",", ".")) : null;
+    const vMax = filtroValorMax ? Number(filtroValorMax.replace(/[^\d.,-]/g, "").replace(",", ".")) : null;
+    const kMin = filtroKwpMin ? Number(filtroKwpMin.replace(",", ".")) : null;
+    const kMax = filtroKwpMax ? Number(filtroKwpMax.replace(",", ".")) : null;
+    const semMovDias = Number(filtroSemMovimento);
+
     return leadsAll.filter((l) => {
-      // ABERTO = ainda em negociação (não cancelado e contrato não assinado).
-      // FECHADO = contrato assinado.
-      // CANCELADO = última proposta cancelada (e ainda não assinou).
       const isAssinado = l.fase === "ASSINADO";
       const isCancelado = l.status === "CANCELADA" && !isAssinado;
       if (estadoLead === "ABERTO" && (isAssinado || isCancelado)) return false;
       if (estadoLead === "FECHADO" && !isAssinado) return false;
       if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
+
+      if (filtroConsultor !== "TODOS" && !l.propostas.some((p) => (p.consultor || "") === filtroConsultor)) return false;
+      if (filtroCidade !== "TODOS" && !l.propostas.some((p) => (p.cidade || "") === filtroCidade)) return false;
+
+      if (filtroPeriodo !== "TODOS") {
+        const ok = l.propostas.some((p) => periodoMatches(p.criadoEm));
+        if (!ok) return false;
+      }
+
+      if (vMin != null || vMax != null) {
+        const ok = l.propostas.some((p) => {
+          const v = calcPrecificacao(p).valorFinal || 0;
+          if (vMin != null && v < vMin) return false;
+          if (vMax != null && v > vMax) return false;
+          return true;
+        });
+        if (!ok) return false;
+      }
+
+      if (kMin != null || kMax != null) {
+        const ok = l.propostas.some((p) => {
+          const k = (p as any).potenciaKwp ?? (p as any).potencia ?? 0;
+          if (kMin != null && k < kMin) return false;
+          if (kMax != null && k > kMax) return false;
+          return true;
+        });
+        if (!ok) return false;
+      }
+
+      if (semMovDias > 0) {
+        const ultima = l.propostas
+          .map((p) => p.atualizadoEm || p.criadoEm)
+          .filter(Boolean)
+          .sort()
+          .pop();
+        if (!ultima) return false;
+        const dias = (Date.now() - new Date(ultima).getTime()) / 86400000;
+        if (dias < semMovDias) return false;
+      }
+
       if (!q) return true;
       return (
         l.clienteNome.toLowerCase().includes(q) ||
@@ -1722,7 +1801,16 @@ export function PropostaList({
         l.propostas.some((p) => (p.numero || "").toLowerCase().includes(q))
       );
     });
-  }, [leadsAll, filtro, filtroStatus, estadoLead]);
+  }, [leadsAll, filtro, filtroStatus, estadoLead, filtroPeriodo, filtroConsultor, filtroCidade, filtroValorMin, filtroValorMax, filtroKwpMin, filtroKwpMax, filtroSemMovimento]);
+
+  // Expõe propostas filtradas para a barra Enterprise (Exportar CSV usa isso).
+  useEffect(() => {
+    const visiveis: PropostaFV[] = [];
+    leadsFiltrados.forEach((l) => l.propostas.forEach((p) => visiveis.push(p)));
+    (window as any).__propostasVisiveis = visiveis;
+    return () => { try { delete (window as any).__propostasVisiveis; } catch { /* noop */ } };
+  }, [leadsFiltrados]);
+
 
   const totais = useMemo(() => {
     const total = propostas.length;

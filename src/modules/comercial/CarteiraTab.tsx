@@ -205,6 +205,9 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
   const prefs = useColumnPrefs("carteira_comercial", COLS);
   const showCol = (k: string) => prefs.isVisible(k);
 
+  // Seleção múltipla
+  const sel = useRowSelection(linhas, (r) => r.id);
+
   const ativosCount =
     Number(fVendedor !== "__todos__") + Number(fStatus !== "__todos__") +
     Number(fOrigem !== "__todos__") + Number(!!fCliente) +

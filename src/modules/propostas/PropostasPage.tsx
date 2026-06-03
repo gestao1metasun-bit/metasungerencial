@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   useAprovarProposta,
@@ -548,8 +549,27 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               else toast.info("Use a busca/filtro da lista abaixo.");
             }
           }}
+          extraLeft={(
+            <Button type="button" size="sm" className="h-7 gap-1" onClick={() => novaProposta()}>
+              <Plus className="h-4 w-4" /> Gerar nova proposta
+            </Button>
+          )}
+          extraRight={(
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => novaProposta()}>
+                  Gerar nova proposta
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           availableActions={[
-            "novo", "editar", "duplicar", "excluir", "atualizar",
+            "editar", "duplicar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",
             "exportar", "imprimir", "enviar",
             "filtroRapido", "filtroAvancado", "colunas",

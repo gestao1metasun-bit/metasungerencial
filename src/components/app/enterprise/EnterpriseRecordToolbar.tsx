@@ -147,6 +147,8 @@ export type StatusActionItem = {
   disabledReason?: string;
   /** Mostra um pequeno selo (ex.: contagem ou "•"). */
   badge?: string;
+  /** Renderiza como pílula maior (destaque visual), não círculo. */
+  wide?: boolean;
 };
 
 /** Configuração da Linha 3 (Layout / densidade). */

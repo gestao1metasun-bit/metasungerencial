@@ -1678,12 +1678,25 @@ export function PropostaList({
   const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
   const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
 
+  // ===== Filtros avançados (Comercial > Propostas) =====
+  const [filtroPeriodo, setFiltroPeriodo] = useState<
+    "TODOS" | "HOJE" | "ONTEM" | "7D" | "15D" | "30D" | "MES_ATUAL" | "MES_PASSADO" | "ANO"
+  >("TODOS");
+  const [filtroConsultor, setFiltroConsultor] = useState<string>("TODOS");
+  const [filtroCidade, setFiltroCidade] = useState<string>("TODOS");
+  const [filtroValorMin, setFiltroValorMin] = useState<string>("");
+  const [filtroValorMax, setFiltroValorMax] = useState<string>("");
+  const [filtroKwpMin, setFiltroKwpMin] = useState<string>("");
+  const [filtroKwpMax, setFiltroKwpMax] = useState<string>("");
+  const [filtroSemMovimento, setFiltroSemMovimento] = useState<"0" | "7" | "15" | "30" | "60" | "90">("0");
+
   // Permite que a pílula "Filtros: Todos" da EnterpriseRecordToolbar (em PropostasPage)
   // abra este diálogo, já que o estado de filtro vive aqui.
   useEffect(() => {
     (window as any).__propostasOpenFilters = () => setFiltrosDialogOpen(true);
     return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
   }, []);
+
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();

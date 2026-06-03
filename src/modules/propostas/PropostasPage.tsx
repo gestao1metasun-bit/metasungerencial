@@ -265,6 +265,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
   const [aprovarOpen, setAprovarOpen] = useState(false);
+  const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
+  const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);
+  const [candidatasAprovacao, setCandidatasAprovacao] = useState<PropostaFV[]>([]);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =
@@ -350,6 +353,23 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       toast.error("Reabra a proposta antes de aprovar.");
       return;
     }
+    // Identidade do lead = leadId → CPF/CNPJ → nome (mesmo critério da lista).
+    const leadKey = (
+      proposta.leadId?.trim() ||
+      proposta.clienteDoc?.trim() ||
+      (proposta.clienteNome || "").trim().toLowerCase() ||
+      proposta.id
+    );
+    const aprovaveis = propostas.filter((p) => {
+      const k = p.leadId?.trim() || p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id;
+      return k === leadKey && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+    });
+    if (aprovaveis.length > 1) {
+      setCandidatasAprovacao(aprovaveis);
+      setSelecionarAprovarOpen(true);
+      return;
+    }
+    setPropostaParaAprovarId(proposta.id);
     setAprovarOpen(true);
   }
 
@@ -658,11 +678,53 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       )}
 
       <AprovarPropostaDialog
-        proposta={propostaSelecionada}
+        proposta={propostaParaAprovarId ? propostas.find((p) => p.id === propostaParaAprovarId) ?? null : propostaSelecionada}
         open={aprovarOpen}
-        onOpenChange={setAprovarOpen}
-        onAprovado={() => void syncComercialState(propostaSelecionada?.id ?? null)}
+        onOpenChange={(o) => { setAprovarOpen(o); if (!o) setPropostaParaAprovarId(null); }}
+        onAprovado={() => {
+          const id = propostaParaAprovarId ?? propostaSelecionada?.id ?? null;
+          void syncComercialState(id);
+          toast.success("Contrato criado em Pendentes. Abra Comercial → Contratos para gerar.", { duration: 5000 });
+        }}
       />
+
+      <Dialog open={selecionarAprovarOpen} onOpenChange={setSelecionarAprovarOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Qual proposta aprovar?</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Este cliente tem mais de uma proposta em aberto. Selecione a versão que será aprovada.
+            As demais permanecerão inalteradas.
+          </p>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {candidatasAprovacao.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="w-full text-left rounded-md border border-border bg-card hover:bg-accent px-3 py-2 transition"
+                onClick={() => {
+                  setSelecionarAprovarOpen(false);
+                  setPropostaParaAprovarId(p.id);
+                  setAprovarOpen(true);
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-semibold text-sm">{p.numero}</div>
+                  <Badge variant={statusVariant(p.status)} className="text-[10px]">{p.status}</Badge>
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {p.modulosQtd} mód · {(p.modulosQtd * (p.moduloPotenciaWp / 1000)).toFixed(2)} kWp · {fmtBRL(p.valorFinalManual ?? calcPrecificacao(p).valorFinal ?? 0)}
+                </div>
+                <div className="text-[11px] text-muted-foreground">Atualizada em {p.atualizadoEm}</div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelecionarAprovarOpen(false)}>Cancelar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

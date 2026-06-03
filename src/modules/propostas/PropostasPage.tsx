@@ -260,9 +260,12 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
+  const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
+  const propostaSelecionada =
+    propostaVisualizada ?? (selecionadaId ? propostas.find((p) => p.id === selecionadaId) ?? null : null);
 
   const aprovar = useAprovarProposta();
   const reprovar = useReprovarProposta();

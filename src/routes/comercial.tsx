@@ -584,7 +584,10 @@ function ContratoAssinadoRow({
       descricao={c.cliente ? `Cliente: ${c.cliente}` : undefined}
       categoriaPadrao="contrato"
     />
-    <TableRow>
+    <TableRow data-state={selected ? "selected" : undefined}>
+      <TableCell className="w-8">
+        <Checkbox checked={!!selected} onCheckedChange={onToggleSelect} aria-label={`Selecionar contrato ${c.id}`} />
+      </TableCell>
       <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>

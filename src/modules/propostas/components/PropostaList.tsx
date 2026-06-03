@@ -1718,6 +1718,10 @@ export function PropostaList({
     <div className="space-y-4">
 
       <Card className="flex flex-wrap items-center gap-2 p-2">
+        <Button size="sm" onClick={() => onNova()} className="h-8 gap-1">
+          <Plus className="h-4 w-4" /> Nova proposta
+        </Button>
+
         <div className="flex items-center gap-1 rounded-md border bg-muted/40 p-0.5">
           <Button
             size="sm"

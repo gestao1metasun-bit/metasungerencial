@@ -510,6 +510,13 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={sel.allChecked ? true : sel.someChecked ? "indeterminate" : false}
+                  onCheckedChange={sel.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -524,12 +531,24 @@ function ContratoAssinadoTab({
             </TableRow></TableHeader>
             <TableBody>
               {assinados.map((c) => (
-                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} />
+                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} selected={sel.isSelected(c.id)} onToggleSelect={() => sel.toggle(c.id)} />
               ))}
             </TableBody>
           </Table>
         )}
       </Card>
+      <BulkActionBar
+        count={sel.count}
+        label="contrato(s) selecionado(s)"
+        onClear={sel.clear}
+        actions={[
+          { key: "enviar_eng", label: "Enviar Engenharia", tone: "azul", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
+          { key: "enviar_fin", label: "Enviar Financeiro", tone: "verde", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
+          { key: "imprimir", label: "Imprimir", tone: "indigo", onClick: () => { window.print(); } },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       {imprimir && <ContratoImpressao contrato={imprimir} onClose={() => setImprimir(null)} />}
     </div>

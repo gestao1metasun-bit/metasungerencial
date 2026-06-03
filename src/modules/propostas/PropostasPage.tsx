@@ -688,7 +688,23 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               }
             }
           }}
-          statusActions={ribbonRmComercial(ribbonState)}
+          statusActions={[
+            {
+              key: "novaProposta",
+              label: "Nova proposta (1 lead flegado)",
+              icon: Plus,
+              tone: "success" as const,
+              onClick: () => {
+                const sel = (window as any).__propostasSelectedLead;
+                if (sel && typeof sel === "function") {
+                  const lead = sel();
+                  if (lead) { novaProposta(lead); return; }
+                }
+                novaProposta();
+              },
+            },
+            ...ribbonRmComercial(ribbonState),
+          ]}
           layoutBar={layoutBarRm()}
         />
 

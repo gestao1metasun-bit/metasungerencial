@@ -809,6 +809,16 @@ function LeadDetail({
             {lead.bloqueado && (
               <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Assinado</Badge>
             )}
+            {!lead.bloqueado && (
+              <Button
+                size="sm"
+                onClick={() => onNova(presetFromLead(lead))}
+                className="ml-auto h-8 gap-1"
+                title="Gerar nova proposta para este cliente"
+              >
+                <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 

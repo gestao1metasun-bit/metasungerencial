@@ -691,14 +691,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           statusActions={[
             {
               key: "novoLead",
-              label: "Adicionar proposta (novo lead)",
+              label: "Novo lead",
               icon: Plus,
               tone: "info" as const,
+              wide: true,
               onClick: () => novaProposta(),
             },
             {
               key: "novaPropostaLeadFlegado",
-              label: "Nova proposta para o lead flegado",
+              label: "Nova proposta (lead flegado)",
               icon: Copy,
               tone: "success" as const,
               wide: true,

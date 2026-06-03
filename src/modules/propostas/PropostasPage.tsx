@@ -553,7 +553,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           availableActions={[
             "editar", "duplicar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",
-            "exportar", "imprimir", "enviar",
+            "exportar", "enviar",
             "filtroRapido", "filtroAvancado", "colunas",
           ]}
           availableProcesses={[

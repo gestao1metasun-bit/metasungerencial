@@ -1789,11 +1789,11 @@ export function PropostaList({
           </div>
 
           {view === "tabela" ? (
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => setColsTabelaOpen(true)}>
+            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsTabelaOpen(true)}>
               <Columns3 className="h-4 w-4" /> Colunas da Tabela
             </Button>
           ) : (
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
+            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
               <Columns3 className="h-4 w-4" /> Colunas do Kanban
             </Button>
           )}

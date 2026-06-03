@@ -624,10 +624,29 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "reprovar_proposta") {
               await executarReprovar();
             } else if (key.startsWith("alterar_")) {
-              toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
+              const campo = key.replace("alterar_", "");
+              const p = getPropostaAtiva();
+              if (!p) return;
+              const novo = window.prompt(`Novo valor para ${campo}:`, "");
+              if (novo === null) return;
+              const valor = novo.trim();
+              if (valor.length < 2) { toast.error("Valor inválido."); return; }
+              try {
+                const patch: any = { ...p, atualizadoEm: new Date().toISOString() };
+                if (campo === "consultor") patch.consultor = valor;
+                else if (campo === "cidade") patch.cidade = valor;
+                else if (campo === "canal") patch.canal = valor;
+                else if (campo === "origem") patch.origem = valor;
+                await upsertProposta(patch);
+                await refreshPropostas();
+                toast.success(`${campo} atualizado.`);
+              } catch (e: any) {
+                toast.error(e?.message ?? `Falha ao alterar ${campo}.`);
+              }
             } else if (key.startsWith("rel_")) {
-              toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
+              navigate({ to: "/analytics/comercial", hash: key.replace("rel_", "") });
             }
+
           }}
           onAction={(a) => {
             if (a === "novo") {

@@ -15250,6 +15250,10 @@ export type Database = {
         | "suprimentos.pedido.preparar_financeiro"
         | "suprimentos.pedido.bloquear_financeiro"
         | "suprimentos.pedido.gerar_titulo_ap"
+        | "comercial.proposta.aprovar"
+        | "comercial.comissao.gerar"
+        | "engenharia.criar_obra"
+        | "financiamento.criar_pendencia"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15609,6 +15613,10 @@ export const Constants = {
         "suprimentos.pedido.preparar_financeiro",
         "suprimentos.pedido.bloquear_financeiro",
         "suprimentos.pedido.gerar_titulo_ap",
+        "comercial.proposta.aprovar",
+        "comercial.comissao.gerar",
+        "engenharia.criar_obra",
+        "financiamento.criar_pendencia",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

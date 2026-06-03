@@ -1458,6 +1458,19 @@ function TabelaView({
     setSelected((prev) => new Set(Array.from(prev).filter((k) => allKeys.includes(k))));
   }, [allKeys]);
 
+  // Emite o id da ÚLTIMA proposta do lead selecionado (quando exatamente 1 está marcado),
+  // para que a ribbon RM no topo opere sobre essa proposta.
+  useEffect(() => {
+    if (!onSelecionarUltima) return;
+    if (selected.size === 1) {
+      const k = Array.from(selected)[0];
+      const lead = leads.find((l) => l.key === k);
+      onSelecionarUltima(lead?.ultima.id ?? null);
+    } else {
+      onSelecionarUltima(null);
+    }
+  }, [selected, leads, onSelecionarUltima]);
+
   return (
     <>
       <Card>

@@ -42,6 +42,8 @@ export const ENTIDADES_ANEXAVEIS = [
   "obras", "workflow_aprovacoes", "estoque_movimentos", "financiamentos",
   // D17.UI.6 — Operações Financeiras (contrato, comprovante, termo, autorização, recibo)
   "operacoes_financeiras", "operacoes_financeiras_parcelas",
+  // D27.COM.3.c — Comercial
+  "propostas", "leads", "aditivos",
 ] as const;
 
 export const CATEGORIAS_ANEXO = [

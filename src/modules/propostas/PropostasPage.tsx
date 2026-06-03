@@ -689,7 +689,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           }}
           statusActions={(() => {
-            const hasSelectedLead = !!((window as any).__propostasSelectedLead?.());
+            const hasSelectedLead = !!propostaSelecionada;
             return [
               {
                 key: "novoLead",
@@ -711,7 +711,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                 disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",
                 onClick: () => {
                   const sel = (window as any).__propostasSelectedLead;
-                  const lead = typeof sel === "function" ? sel() : null;
+                  const lead = typeof sel === "function" ? sel() : propostaSelecionada;
                   if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
                   novaProposta(lead);
                 },

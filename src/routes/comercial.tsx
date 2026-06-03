@@ -420,12 +420,7 @@ function ContratoAssinadoTab({
           { key: "alterar_cidade",           label: "Alterar Cidade",                 group: "Comercial", permiteLote: true },
           { key: "alterar_canal",            label: "Alterar Canal",                  group: "Comercial", permiteLote: true },
           { key: "alterar_origem",           label: "Alterar Origem",                 group: "Comercial", permiteLote: true },
-          // ▼ Relatórios
-          { key: "rel_pipeline",             label: "Pipeline",                       group: "Relatórios", requerSelecao: 0 },
-          { key: "rel_conversao",            label: "Conversão",                      group: "Relatórios", requerSelecao: 0 },
-          { key: "rel_funil",                label: "Funil",                          group: "Relatórios", requerSelecao: 0 },
-          { key: "rel_vendedores",           label: "Vendedores",                     group: "Relatórios", requerSelecao: 0 },
-          { key: "rel_metas",                label: "Metas",                          group: "Relatórios", requerSelecao: 0 },
+          // ▼ Relatórios — removidos (chegam em D27.COM.5 Painel Executivo)
           // ▼ Manutenção
           { key: "atualizar_lista",          label: "Atualizar lista",                group: "Manutenção", requerSelecao: 0 },
           { key: "exportar_lote_csv",        label: "Exportar selecionados (CSV)",    group: "Manutenção", permiteLote: true },

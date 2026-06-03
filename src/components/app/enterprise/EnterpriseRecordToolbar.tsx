@@ -681,10 +681,12 @@ export function EnterpriseRecordToolbar({
   return (
     <div className={cn("flex flex-col", className)}>
       {row1}
+      {row1b}
       {row2}
       {row3}
     </div>
   );
 }
+
 
 

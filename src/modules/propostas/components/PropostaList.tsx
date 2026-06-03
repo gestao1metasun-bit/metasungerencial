@@ -1316,7 +1316,7 @@ const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
+  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;

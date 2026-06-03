@@ -400,7 +400,7 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={sel.selectedIds}
-        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
           // ▼ Contratos (sem "novo_contrato": contrato nasce da proposta aprovada)
           { key: "editar_contrato",          label: "Editar contrato",                group: "Contratos" },
@@ -984,7 +984,7 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[...selARedigir.selectedIds, ...selRedigidos.selectedIds]}
-        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
@@ -5681,7 +5681,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={selAditivos.selectedIds}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
         availableProcesses={[
           { key: "novo_aditivo",              label: "Novo aditivo (escolher contrato)", group: "Contratos", requerSelecao: 0 },
           { key: "criar_aditivo",             label: "Criar aditivo neste contrato",     group: "Contratos" },

@@ -90,7 +90,7 @@ export function LeadsPage() {
       <EnterpriseRecordToolbar
         entityType="propostas"
         selectedIds={detalhe ? [detalhe.id] : []}
-        availableActions={["novo", "editar", "duplicar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["novo", "editar", "cancelar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
           // LEAD
           { key: "novo_lead", label: "Novo lead", requerSelecao: 0 },

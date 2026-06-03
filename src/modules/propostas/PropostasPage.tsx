@@ -577,7 +577,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           }}
           availableActions={[
-            "editar", "duplicar", "excluir", "atualizar",
+            "editar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",
             "exportar", "enviar",
             "filtroRapido", "filtroAvancado", "colunas",

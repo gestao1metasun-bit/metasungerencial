@@ -605,8 +605,8 @@ export function EnterpriseRecordToolbar({
               STATUS_TONE[s.tone],
             )}
           >
-            <Icon className={s.wide ? "h-3.5 w-3.5" : "h-3.5 w-3.5"} />
-            {s.wide && <span className="whitespace-nowrap">{s.label}</span>}
+            <Icon className="h-3.5 w-3.5" />
+            {s.wide && <span className="sr-only">{s.label}</span>}
             {s.badge && (
               <span className="absolute -top-1 -right-1 rounded-full bg-white text-[9px] font-mono text-slate-700 border border-slate-300 px-1 leading-none">
                 {s.badge}

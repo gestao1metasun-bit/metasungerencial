@@ -292,7 +292,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   ].some(Boolean);
 
   function getPropostaAtiva(): PropostaFV | null {
-    if (propostaVisualizada) return propostaVisualizada;
+    if (propostaSelecionada) return propostaSelecionada;
     toast.error("Selecione uma proposta primeiro.");
     return null;
   }

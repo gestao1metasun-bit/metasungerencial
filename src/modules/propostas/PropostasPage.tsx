@@ -449,7 +449,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   }
 
   const ribbonState = (() => {
-    const proposta = propostaVisualizada;
+    const proposta = propostaSelecionada;
     if (!proposta) {
       const motivo = "Selecione uma proposta primeiro.";
       return {

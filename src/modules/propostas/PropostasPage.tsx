@@ -339,31 +339,18 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
     return contratoId;
   }
 
-  function executarGerarContrato() {
+  function executarAprovar() {
     const proposta = getPropostaAtiva();
     if (!proposta) return;
-    if (proposta.contratoGeradoId) {
-      toast.info("Esta proposta já possui contrato gerado.");
+    if (proposta.status === "APROVADA") {
+      toast.info("Esta proposta já está aprovada.");
       return;
     }
-    setGerarContratoOpen(true);
-  }
-
-  async function executarAprovar() {
-    const proposta = getPropostaAtiva();
-    if (!proposta) return;
-    if (!proposta.contratoGeradoId) {
-      const gerarAgora = window.confirm(
-        "Esta proposta ainda não tem contrato. Deseja gerar contrato agora?\n\nOK = Gerar contrato agora\nCancelar = Aprovar sem gerar contrato",
-      );
-      if (gerarAgora) {
-        await gerarContrato.mutateAsync({ propostaId: proposta.id });
-        await syncComercialState(proposta.id);
-        return;
-      }
+    if (proposta.status === "CANCELADA") {
+      toast.error("Reabra a proposta antes de aprovar.");
+      return;
     }
-    await aprovar.mutateAsync({ propostaId: proposta.id });
-    await syncComercialState(proposta.id);
+    setAprovarOpen(true);
   }
 
   async function executarReprovar() {

@@ -690,17 +690,24 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           }}
           statusActions={[
             {
-              key: "novaProposta",
-              label: "Nova proposta (1 lead flegado)",
+              key: "novoLead",
+              label: "Adicionar proposta (novo lead)",
               icon: Plus,
+              tone: "info" as const,
+              onClick: () => novaProposta(),
+            },
+            {
+              key: "novaPropostaLeadFlegado",
+              label: "Nova proposta para o lead flegado",
+              icon: Copy,
               tone: "success" as const,
+              disabled: !((window as any).__propostasSelectedLead?.()),
+              disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",
               onClick: () => {
                 const sel = (window as any).__propostasSelectedLead;
-                if (sel && typeof sel === "function") {
-                  const lead = sel();
-                  if (lead) { novaProposta(lead); return; }
-                }
-                novaProposta();
+                const lead = typeof sel === "function" ? sel() : null;
+                if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
+                novaProposta(lead);
               },
             },
             ...ribbonRmComercial(ribbonState),

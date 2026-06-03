@@ -1030,6 +1030,13 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selARedigir.allChecked ? true : selARedigir.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selARedigir.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>

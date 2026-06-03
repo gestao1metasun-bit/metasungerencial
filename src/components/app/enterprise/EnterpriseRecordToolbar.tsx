@@ -489,9 +489,8 @@ export function EnterpriseRecordToolbar({
         </Button>
       )}
 
-      {extraLeft}
-
-      <div className="ml-auto flex items-center gap-0">
+      <div className="flex items-center gap-0">
+        {extraLeft}
         {renderActionBtn("filtroAvancado")}
         {renderActionBtn("visoes")}
         {renderActionBtn("colunas")}
@@ -508,6 +507,9 @@ export function EnterpriseRecordToolbar({
             {count} sel.
           </span>
         )}
+      </div>
+
+      <div className="ml-auto flex items-center gap-0">
         {/* D27 — Busca sempre à direita (padrão RM/TOTVS) */}
         {onSearchChange && (
           <>

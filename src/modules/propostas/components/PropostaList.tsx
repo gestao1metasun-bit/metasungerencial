@@ -496,6 +496,11 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
     const inversoresStr = invCount.size > 0
       ? [...invCount.entries()].map(([id, n]) => (n > 1 ? `${n}x ${fmtInversorNumero(id)}` : fmtInversorNumero(id))).join(" + ")
       : (ultima.inversorMarca ? fmtInversorNumero(ultima.inversorMarca) : "—");
+    // Data de aprovação: pega a APROVADA mais recente (atualizadoEm como melhor proxy).
+    const aprovadasOrdenadas = arr
+      .filter((p) => p.status === "APROVADA")
+      .sort((a, b) => (b.atualizadoEm || b.criadoEm || "").localeCompare(a.atualizadoEm || a.criadoEm || ""));
+    const aprovadoEm = aprovadasOrdenadas[0]?.atualizadoEm || aprovadasOrdenadas[0]?.criadoEm || undefined;
     leads.push({
       key,
       clienteNome: ultima.clienteNome || "—",
@@ -510,8 +515,10 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       ultima,
       primeira,
       dataPrimeira: primeira.criadoEm || primeira.atualizadoEm || "",
+      aprovadoEm,
       valor: calcPrecificacao(ultima).valorFinal || 0,
       dias: diasDesde(ultima.atualizadoEm || ultima.criadoEm),
+      diasCriacao: diasDesde(primeira.criadoEm || primeira.atualizadoEm),
       bloqueado: fase !== null,
       status: ultima.status,
       emAberto,

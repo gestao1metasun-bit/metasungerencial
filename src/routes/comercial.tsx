@@ -399,7 +399,7 @@ function ContratoAssinadoTab({
       {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={sel.selectedIds}
         availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
           // ▼ Contratos (sem "novo_contrato": contrato nasce da proposta aprovada)

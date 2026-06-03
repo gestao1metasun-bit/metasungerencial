@@ -1880,11 +1880,11 @@ export function PropostaList({
             variant={estadoLead === "ABERTO" ? "default" : "ghost"}
             className="h-7 px-3 text-xs"
             onClick={() => setEstadoLead("ABERTO")}
-            title="Leads em negociação (sem contrato assinado e não cancelados)"
+            title="Leads em negociação (sem aprovação, sem contrato assinado e não cancelados)"
           >
             Aberto
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => l.fase !== "ASSINADO" && l.status !== "CANCELADA").length}
+              {leadsAll.filter((l) => l.fase !== "ASSINADO" && l.status !== "APROVADA" && l.status !== "CANCELADA").length}
             </span>
           </Button>
           <Button
@@ -1892,11 +1892,11 @@ export function PropostaList({
             variant={estadoLead === "FECHADO" ? "default" : "ghost"}
             className="h-7 px-3 text-xs"
             onClick={() => setEstadoLead("FECHADO")}
-            title="Leads já fechados (contrato assinado)"
+            title="Leads fechados (proposta aprovada ou contrato assinado)"
           >
             Fechado
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => l.fase === "ASSINADO").length}
+              {leadsAll.filter((l) => l.fase === "ASSINADO" || l.status === "APROVADA").length}
             </span>
           </Button>
           <Button

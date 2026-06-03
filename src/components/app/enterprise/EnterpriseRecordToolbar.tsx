@@ -342,7 +342,7 @@ export function EnterpriseRecordToolbar({
     });
   }, [availableProcesses, count, permissions]);
 
-  const hasRmRows = !!(statusActions?.length || layoutBar);
+  const hasRmRows = !!(statusActions?.length || layoutBar || splitSecondaryActions);
 
   const row1 = (
     <div
@@ -357,6 +357,7 @@ export function EnterpriseRecordToolbar({
         hasRmRows ? "rounded-t-sm border-b-0" : "rounded-sm",
       )}
     >
+
       {/* CRUD — ícones puros estilo RM */}
       {renderActionBtn("novo")}
       {renderActionBtn("editar")}

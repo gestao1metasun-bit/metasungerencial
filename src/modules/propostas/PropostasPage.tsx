@@ -590,13 +590,13 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "duplicar_proposta") {
               toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.3.c).");
             } else if (key === "aprovar_proposta") {
-              const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id });
+              await executarAprovar();
             } else if (key === "gerar_contrato") {
-              const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id });
+              await executarGerarContrato();
             } else if (key === "reprovar_proposta") {
-              toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c.");
+              await executarReprovar();
             } else if (key === "enviar_assinar") {
-              toast.info("Envio para assinatura digital (Clicksign/Autentique/DocuSign) chega em D27.COM.6.");
+              await executarEnviarAssinatura();
             } else if (key.startsWith("alterar_")) {
               toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
             } else if (key.startsWith("rel_")) {
@@ -617,19 +617,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
             else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}
-          statusActions={ribbonRmComercial({
-            // D27.COM.3.b — wires reais (RPCs oficiais SECURITY DEFINER)
-            aprovar:             () => { const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id }); },
-            reprovar:            () => toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c."),
-            gerarContrato:       () => { const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id }); },
-            gerarAditivo:        () => toast.info("Aditivo só em contrato assinado (aba Aditivos)."),
-            enviarEngenharia:    () => { const cid = getContratoIdAtivo(); if (cid) enviarEng.mutate({ contratoId: cid }); },
-            enviarFinanciamento: () => { const cid = getContratoIdAtivo(); if (cid) enviarFin.mutate({ contratoId: cid }); },
-            gerarComissao:       () => { const cid = getContratoIdAtivo(); if (cid) gerarComissao.mutate({ contratoId: cid }); },
-            enviarAssinatura:    () => toast.info("Assinatura digital chega em D27.COM.6."),
-            cancelar:            () => toast.info("Cancelar proposta com motivo chega em D27.COM.3.c."),
-            reabrir:             () => toast.info("Reabrir proposta com motivo chega em D27.COM.3.c."),
-          })}
+          statusActions={ribbonRmComercial(ribbonState)}
           layoutBar={layoutBarRm()}
         />
       </div>

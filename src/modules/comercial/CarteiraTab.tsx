@@ -342,6 +342,13 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
         <Table>
           <TableHeader>
             <TableRow className="[&_th]:py-1.5 [&_th]:text-[11.5px]">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={sel.allChecked ? true : sel.someChecked ? "indeterminate" : false}
+                  onCheckedChange={sel.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               {prefs.visibleKeys.map((k) => {
                 if (k === "valor") return <TableHead key={k} className="text-right">Valor</TableHead>;
                 if (k === "acoes") return <TableHead key={k} className="text-right w-[120px]">Ações</TableHead>;
@@ -351,9 +358,10 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
           </TableHeader>
           <TableBody>
             {linhas.length === 0 ? (
-              <TableRow><TableCell colSpan={prefs.visibleKeys.length} className="text-center py-8 text-sm text-muted-foreground">Nenhum item na carteira para os filtros aplicados.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={prefs.visibleKeys.length + 1} className="text-center py-8 text-sm text-muted-foreground">Nenhum item na carteira para os filtros aplicados.</TableCell></TableRow>
             ) : linhas.map((r) => (
-              <TableRow key={r.id} className="[&_td]:py-1 [&_td]:text-[12.5px]">
+              <TableRow key={r.id} className="[&_td]:py-1 [&_td]:text-[12.5px]" data-state={sel.isSelected(r.id) ? "selected" : undefined}>
+                <TableCell className="w-8"><Checkbox checked={sel.isSelected(r.id)} onCheckedChange={() => sel.toggle(r.id)} aria-label={`Selecionar ${r.numero}`} /></TableCell>
                 {showCol("tipo") && (
                   <TableCell>
                     <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold ${TIPO_TONE[r.tipo]}`}>{r.tipo}</span>
@@ -385,6 +393,16 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
           </TableBody>
         </Table>
       </Card>
+
+      <BulkActionBar
+        count={sel.count}
+        label="item(ns) selecionado(s)"
+        onClear={sel.clear}
+        actions={[
+          { key: "transferir", label: "Transferir carteira", tone: "indigo", onClick: () => toast.info("Transferência em lote usa RPC oficial (Comercial C4) — UI dedicada em D17.UI Fase 3.") },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV chega em D17.UI.3.") },
+        ]}
+      />
     </div>
   );
 }

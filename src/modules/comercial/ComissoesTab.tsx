@@ -217,11 +217,13 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
     else if (kind === "visualizar") irPara("contratos");
   };
 
+  const sel = useRowSelection(linhas, (r) => r.id);
+
   return (
     <div className="space-y-3">
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={sel.selectedIds}
         availableActions={["editar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         statusActions={ribbonRmAprovacao()}
         layoutBar={layoutBarRm()}

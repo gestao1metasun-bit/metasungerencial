@@ -5713,13 +5713,68 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
             if (lista.length === 1) { setOpenId(lista[0].id); return; }
             toast.info("Selecione um contrato na tabela para adicionar aditivo.");
           }
-          else if (a === "atualizar") toast.info("Aditivos atualizados.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
-          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
-          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
-          else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
-          else if (a === "filtroAvancado") toast.info("Use os filtros Pendentes/Aprovados/Todos abaixo.");
+          else if (a === "atualizar") {
+            setBusca("");
+            setFiltro("todos");
+            selAditivos.clear();
+            toast.success("Lista de aditivos atualizada.");
+          }
+          else if (a === "exportar") {
+            const SEP = ";";
+            const esc = (v: unknown) => {
+              const s = String(v ?? "");
+              return /["\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+            };
+            const header = ["Contrato","Cliente","Valor consolidado","Aditivos total","Aditivos aprovados","Situação"];
+            const rows = lista.map((c) => {
+              const aDoContrato = aditivos.filter((a) => a.contratoId === c.id);
+              const aprov = aDoContrato.filter((a) => a.status === "APROVADO" && !a.oculto).length;
+              const pend = aDoContrato.find(isAditivoPendente);
+              return [c.id, c.cliente, c.valor, aDoContrato.length, aprov, pend ? "Pendente" : "—"];
+            });
+            const csv = [header, ...rows].map((r) => r.map(esc).join(SEP)).join("\r\n");
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `aditivos-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            toast.success(`Exportado: ${lista.length} contrato(s).`);
+          }
+          else if (a === "favoritos") {
+            const key = "ui.comercial.aditivos.favoritos.v1";
+            const ids = selAditivos.selectedIds;
+            if (ids.length === 0) { toast.info("Selecione contrato(s) para favoritar."); return; }
+            try {
+              const cur = JSON.parse(localStorage.getItem(key) || "[]") as string[];
+              const next = Array.from(new Set([...cur, ...ids]));
+              localStorage.setItem(key, JSON.stringify(next));
+              toast.success(`${ids.length} contrato(s) marcados como favoritos.`);
+            } catch { toast.error("Falha ao salvar favoritos."); }
+          }
+          else if (a === "colunas") {
+            toast.info("Colunas: Contrato · Cliente · Valor · Aditivos · Situação · Ações (gestor universal em D27.COM.5).");
+          }
+          else if (a === "anexos") {
+            const ids = selAditivos.selectedIds;
+            if (ids.length !== 1) { toast.info("Selecione 1 contrato para ver anexos."); return; }
+            setOpenId(ids[0]);
+          }
+          else if (a === "historico") {
+            const ids = selAditivos.selectedIds;
+            if (ids.length === 1) { setOpenId(ids[0]); return; }
+            window.location.href = "/auditoria?modulo=COMERCIAL&entidade=contratos";
+          }
+          else if (a === "auditoria") {
+            window.location.href = "/auditoria?modulo=COMERCIAL&entidade=contratos";
+          }
+          else if (a === "filtroAvancado") {
+            const ordem: Array<"todos"|"pendentes"|"aprovados"> = ["todos","pendentes","aprovados"];
+            const next = ordem[(ordem.indexOf(filtro) + 1) % ordem.length];
+            setFiltro(next);
+            toast.success(`Filtro: ${next === "todos" ? "Todos assinados" : next === "pendentes" ? "Pendentes" : "Aprovados"}.`);
+          }
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}

@@ -556,8 +556,8 @@ function ContratoAssinadoTab({
 }
 
 function ContratoAssinadoRow({
-  contrato: c, vendedoresList, onImprimir, onRetornar,
-}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void }) {
+  contrato: c, vendedoresList, onImprimir, onRetornar, selected, onToggleSelect,
+}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void; selected?: boolean; onToggleSelect?: () => void }) {
   const aprovado = c.assinadoAprovado === true;
   const projetos = c.projetos ?? [];
   const total = projetos.length;

@@ -65,11 +65,10 @@ import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
 
-import { PropostaList, statusVariant, duplicarProposta, excluirProposta } from "./components/PropostaList";
+import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
 import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
-import { GerarContratoDialog } from "./components/GerarContratoDialog";
 
 
 export { PropostasPage, CadastrosFV };

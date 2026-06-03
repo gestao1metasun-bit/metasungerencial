@@ -1439,6 +1439,9 @@ function TabelaView({
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
+      case "aprovadoEm": return <span className="tabular-nums">{l.aprovadoEm ? fmtData(l.aprovadoEm) : "—"}</span>;
+      case "diasCriacao": return <span className="tabular-nums text-[11px] text-muted-foreground">{l.diasCriacao}d</span>;
+      case "diasStatus":  return <span className="tabular-nums text-[11px] text-muted-foreground">{l.dias}d</span>;
       case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
       case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "modulos":    return <span className="tabular-nums">{l.modulos || "—"}</span>;

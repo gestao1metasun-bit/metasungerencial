@@ -688,32 +688,37 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               }
             }
           }}
-          statusActions={[
-            {
-              key: "novoLead",
-              label: "Novo lead",
-              icon: Plus,
-              tone: "info" as const,
-              wide: true,
-              onClick: () => novaProposta(),
-            },
-            {
-              key: "novaPropostaLeadFlegado",
-              label: "Nova proposta (lead flegado)",
-              icon: Copy,
-              tone: "success" as const,
-              wide: true,
-              disabled: !((window as any).__propostasSelectedLead?.()),
-              disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",
-              onClick: () => {
-                const sel = (window as any).__propostasSelectedLead;
-                const lead = typeof sel === "function" ? sel() : null;
-                if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
-                novaProposta(lead);
+          statusActions={(() => {
+            const hasSelectedLead = !!((window as any).__propostasSelectedLead?.());
+            return [
+              {
+                key: "novoLead",
+                label: "Novo lead",
+                icon: Plus,
+                tone: "info" as const,
+                wide: true,
+                disabled: hasSelectedLead,
+                disabledReason: "Desmarque o lead para criar um novo.",
+                onClick: () => novaProposta(),
               },
-            },
-            ...ribbonRmComercial(ribbonState),
-          ]}
+              {
+                key: "novaPropostaLeadFlegado",
+                label: "Nova proposta (lead flegado)",
+                icon: Copy,
+                tone: "success" as const,
+                wide: true,
+                disabled: !hasSelectedLead,
+                disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",
+                onClick: () => {
+                  const sel = (window as any).__propostasSelectedLead;
+                  const lead = typeof sel === "function" ? sel() : null;
+                  if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
+                  novaProposta(lead);
+                },
+              },
+              ...ribbonRmComercial(ribbonState),
+            ];
+          })()}
           layoutBar={layoutBarRm()}
         />
 

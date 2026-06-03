@@ -260,9 +260,12 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
+  const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
+  const propostaSelecionada =
+    propostaVisualizada ?? (selecionadaId ? propostas.find((p) => p.id === selecionadaId) ?? null : null);
 
   const aprovar = useAprovarProposta();
   const reprovar = useReprovarProposta();
@@ -289,7 +292,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   ].some(Boolean);
 
   function getPropostaAtiva(): PropostaFV | null {
-    if (propostaVisualizada) return propostaVisualizada;
+    if (propostaSelecionada) return propostaSelecionada;
     toast.error("Selecione uma proposta primeiro.");
     return null;
   }
@@ -446,7 +449,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   }
 
   const ribbonState = (() => {
-    const proposta = propostaVisualizada;
+    const proposta = propostaSelecionada;
     if (!proposta) {
       const motivo = "Selecione uma proposta primeiro.";
       return {
@@ -544,7 +547,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       <div className={embedded ? "mt-4" : "mt-3"}>
         <EnterpriseRecordToolbar
           entityType="propostas"
-          selectedIds={vendoId ? [vendoId] : []}
+          selectedIds={propostaSelecionada ? [propostaSelecionada.id] : []}
           availableActions={[
             "novo", "editar", "duplicar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",
@@ -628,6 +631,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onEditar={setEditando}
           onVisualizar={(id) => setVendoId(id)}
           onNova={novaProposta}
+          onSelecionarUltima={(id) => setSelecionadaId(id)}
         />
       </div>
 

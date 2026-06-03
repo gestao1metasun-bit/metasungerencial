@@ -1294,7 +1294,7 @@ const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign, onAprovar,
+  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1304,6 +1304,7 @@ function TabelaView({
   cols: KCol[];
   assign: Record<string, string>;
   onAprovar?: (p: PropostaFV) => void;
+  onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
   const colsByKey = useMemo(
     () => Object.fromEntries(TABELA_COLS.map((c) => [c.key, c])) as Record<TabelaColKey, TabelaColDef>,
@@ -1457,6 +1458,19 @@ function TabelaView({
     setSelected((prev) => new Set(Array.from(prev).filter((k) => allKeys.includes(k))));
   }, [allKeys]);
 
+  // Emite o id da ÚLTIMA proposta do lead selecionado (quando exatamente 1 está marcado),
+  // para que a ribbon RM no topo opere sobre essa proposta.
+  useEffect(() => {
+    if (!onSelecionarUltima) return;
+    if (selected.size === 1) {
+      const k = Array.from(selected)[0];
+      const lead = leads.find((l) => l.key === k);
+      onSelecionarUltima(lead?.ultima.id ?? null);
+    } else {
+      onSelecionarUltima(null);
+    }
+  }, [selected, leads, onSelecionarUltima]);
+
   return (
     <>
       <Card>
@@ -1593,12 +1607,13 @@ const VIEW_KEY = "ms.fv.propostas.view";
 type ViewMode = "tabela" | "kanban";
 
 export function PropostaList({
-  propostas, onEditar, onVisualizar, onNova,
+  propostas, onEditar, onVisualizar, onNova, onSelecionarUltima,
 }: {
   propostas: PropostaFV[];
   onEditar: (p: PropostaFV) => void;
   onVisualizar: (id: string) => void;
   onNova: (preset?: Partial<PropostaFV>) => void;
+  onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
   // Auto-vence propostas passadas da validade
   useEffect(() => {
@@ -1785,7 +1800,7 @@ export function PropostaList({
       </Card>
 
       {view === "tabela"
-        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} />
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />
         : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} onAprovar={setAprovandoLista} />}
 
       <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />

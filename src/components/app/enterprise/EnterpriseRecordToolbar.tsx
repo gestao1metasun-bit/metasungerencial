@@ -121,8 +121,13 @@ export type EnterpriseRecordToolbarProps = {
   /** Linha 3 — barra de Layout estilo RM (presets + densidade + chart). */
   layoutBar?: LayoutBarConfig;
 
+  /** Quando true, move o bloco secundário (filtroAvancado/visoes/colunas/exportar/imprimir/enviar)
+   *  para UMA NOVA linha logo abaixo da row1. Pedido D17.UI Propostas. */
+  splitSecondaryActions?: boolean;
+
   className?: string;
 };
+
 
 /** Ação de status redonda da Linha 2 (TOTVS RM). */
 export type StatusActionItem = {
@@ -259,11 +264,13 @@ export function EnterpriseRecordToolbar({
   position, onNavigate,
   statusActions,
   layoutBar,
+  splitSecondaryActions,
   className,
 }: EnterpriseRecordToolbarProps) {
   const count = selectedIds.length;
   const mode: "none" | "single" | "multi" =
     count === 0 ? "none" : count === 1 ? "single" : "multi";
+
 
   const enabled = useMemo(() => new Set(availableActions), [availableActions]);
 
@@ -335,7 +342,7 @@ export function EnterpriseRecordToolbar({
     });
   }, [availableProcesses, count, permissions]);
 
-  const hasRmRows = !!(statusActions?.length || layoutBar);
+  const hasRmRows = !!(statusActions?.length || layoutBar || splitSecondaryActions);
 
   const row1 = (
     <div
@@ -350,6 +357,7 @@ export function EnterpriseRecordToolbar({
         hasRmRows ? "rounded-t-sm border-b-0" : "rounded-sm",
       )}
     >
+
       {/* CRUD — ícones puros estilo RM */}
       {renderActionBtn("novo")}
       {renderActionBtn("editar")}
@@ -489,25 +497,28 @@ export function EnterpriseRecordToolbar({
         </Button>
       )}
 
-      <div className="flex items-center gap-0">
-        {extraLeft}
-        {renderActionBtn("filtroAvancado")}
-        {renderActionBtn("visoes")}
-        {renderActionBtn("colunas")}
-        <Sep />
-        {renderActionBtn("exportar")}
-        {renderActionBtn("imprimir")}
-        {renderActionBtn("enviar")}
-        {extraRight}
-        {count > 0 && (
-          <span
-            className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-            aria-label={`${count} selecionado(s)`}
-          >
-            {count} sel.
-          </span>
-        )}
-      </div>
+      {!splitSecondaryActions && (
+        <div className="flex items-center gap-0">
+          {extraLeft}
+          {renderActionBtn("filtroAvancado")}
+          {renderActionBtn("visoes")}
+          {renderActionBtn("colunas")}
+          <Sep />
+          {renderActionBtn("exportar")}
+          {renderActionBtn("imprimir")}
+          {renderActionBtn("enviar")}
+          {extraRight}
+          {count > 0 && (
+            <span
+              className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+              aria-label={`${count} selecionado(s)`}
+            >
+              {count} sel.
+            </span>
+          )}
+        </div>
+      )}
+
 
       <div className="ml-auto flex items-center gap-0">
         {/* D27 — Busca sempre à direita (padrão RM/TOTVS) */}
@@ -528,6 +539,35 @@ export function EnterpriseRecordToolbar({
       </div>
     </div>
   );
+
+  // ------- Linha 1.5: bloco secundário em linha própria (opt-in) -------
+  const row1b = splitSecondaryActions ? (
+    <div
+      role="toolbar"
+      aria-label="Ações secundárias"
+      className="flex items-center gap-0 border-x border-b border-slate-200 bg-white px-1.5 py-1 overflow-x-auto"
+    >
+      {extraLeft}
+      {renderActionBtn("filtroAvancado")}
+      {renderActionBtn("visoes")}
+      {renderActionBtn("colunas")}
+      <Sep />
+      {renderActionBtn("exportar")}
+      {renderActionBtn("imprimir")}
+      {renderActionBtn("enviar")}
+      {extraRight}
+      {count > 0 && (
+        <span
+          className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+          aria-label={`${count} selecionado(s)`}
+        >
+          {count} sel.
+        </span>
+      )}
+    </div>
+  ) : null;
+
+
 
   // ------- Linha 2: ações de status (RM circulares coloridas) -------
   const STATUS_TONE: Record<StatusActionItem["tone"], string> = {
@@ -641,10 +681,12 @@ export function EnterpriseRecordToolbar({
   return (
     <div className={cn("flex flex-col", className)}>
       {row1}
+      {row1b}
       {row2}
       {row3}
     </div>
   );
 }
+
 
 

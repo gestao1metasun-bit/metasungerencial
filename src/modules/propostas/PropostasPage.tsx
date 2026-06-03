@@ -538,6 +538,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         <EnterpriseRecordToolbar
           entityType="propostas"
           selectedIds={propostaSelecionada ? [propostaSelecionada.id] : []}
+          splitSecondaryActions
           onFilter={() => {
             const open = (window as any).__propostasOpenFilters;
             if (typeof open === "function") {
@@ -550,23 +551,22 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           }}
           extraLeft={(
-            <Button type="button" size="sm" className="h-7 gap-1" onClick={() => novaProposta()}>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 gap-1 bg-violet-600 hover:bg-violet-700 text-white"
+              onClick={() => {
+                const sel = (window as any).__propostasSelectedLead;
+                if (sel && typeof sel === "function") {
+                  const lead = sel();
+                  if (lead) { novaProposta(lead); return; }
+                }
+                novaProposta();
+              }}
+              title="Gerar nova proposta (usa o lead flegado se houver exatamente 1)"
+            >
               <Plus className="h-4 w-4" /> Gerar nova proposta
             </Button>
-          )}
-          extraRight={(
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 gap-1 rounded-sm text-[12px] font-medium text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => novaProposta()}>
-                  Gerar nova proposta
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           )}
           availableActions={[
             "editar", "duplicar", "excluir", "atualizar",
@@ -638,10 +638,51 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               void refreshPropostas();
               toast.info("Lista de propostas atualizada.");
             } else if (a === "exportar") {
-              toast.info("Exportação CSV chega em D27.COM.3.c.");
+              // CSV das propostas atualmente visíveis (snapshot completo)
+              try {
+                const visiveis = (window as any).__propostasVisiveis as PropostaFV[] | undefined;
+                const linhas = (Array.isArray(visiveis) && visiveis.length ? visiveis : propostas);
+                const header = [
+                  "numero","status","cliente","consultor","cidade","uf",
+                  "potencia_kwp","modulos_qtd","valor_final","criado_em","atualizado_em","validade",
+                ];
+                const esc = (v: any) => {
+                  if (v == null) return "";
+                  const s = String(v).replace(/"/g, '""');
+                  return /[",\n;]/.test(s) ? `"${s}"` : s;
+                };
+                const linhasCsv = linhas.map((p) => {
+                  const pr = calcPrecificacao(p);
+                  return [
+                    p.numero, p.status, p.clienteNome ?? "", p.consultor ?? "",
+                    p.cidade ?? "", (p as any).uf ?? "",
+                    (p as any).potenciaKwp ?? (p as any).potencia ?? "",
+                    (p as any).modulos?.length ?? (p as any).qtdModulos ?? "",
+                    pr.valorFinal ?? "",
+                    p.criadoEm, p.atualizadoEm, (p as any).validade ?? "",
+                  ].map(esc).join(",");
+                });
+                const csv = [header.join(","), ...linhasCsv].join("\n");
+                const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a2 = document.createElement("a");
+                a2.href = url;
+                a2.download = `propostas-${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a2); a2.click(); a2.remove();
+                URL.revokeObjectURL(url);
+                toast.success(`Exportado ${linhas.length} proposta(s) em CSV.`);
+              } catch (e: any) {
+                toast.error(e?.message ?? "Falha ao exportar.");
+              }
             } else if (a === "imprimir") {
               const p = getPropostaAtiva();
-              if (p) setVendoId(p.id);
+              if (p) {
+                setVendoId(p.id);
+                // dispara print após o sheet montar
+                setTimeout(() => { try { window.print(); } catch { /* noop */ } }, 700);
+              } else {
+                toast.info("Selecione uma proposta para imprimir.");
+              }
             } else if (a === "enviar") {
               toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
             } else if (a === "anexos") {
@@ -668,6 +709,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           statusActions={ribbonRmComercial(ribbonState)}
           layoutBar={layoutBarRm()}
         />
+
       </div>
 
       <div className="mt-5">

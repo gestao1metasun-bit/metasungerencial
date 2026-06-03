@@ -1678,6 +1678,18 @@ export function PropostaList({
   const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
   const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
 
+  // ===== Filtros avançados (Comercial > Propostas) =====
+  const [filtroPeriodo, setFiltroPeriodo] = useState<
+    "TODOS" | "HOJE" | "ONTEM" | "7D" | "15D" | "30D" | "MES_ATUAL" | "MES_PASSADO" | "ANO"
+  >("TODOS");
+  const [filtroConsultor, setFiltroConsultor] = useState<string>("TODOS");
+  const [filtroCidade, setFiltroCidade] = useState<string>("TODOS");
+  const [filtroValorMin, setFiltroValorMin] = useState<string>("");
+  const [filtroValorMax, setFiltroValorMax] = useState<string>("");
+  const [filtroKwpMin, setFiltroKwpMin] = useState<string>("");
+  const [filtroKwpMax, setFiltroKwpMax] = useState<string>("");
+  const [filtroSemMovimento, setFiltroSemMovimento] = useState<"0" | "7" | "15" | "30" | "60" | "90">("0");
+
   // Permite que a pílula "Filtros: Todos" da EnterpriseRecordToolbar (em PropostasPage)
   // abra este diálogo, já que o estado de filtro vive aqui.
   useEffect(() => {
@@ -1685,23 +1697,103 @@ export function PropostaList({
     return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
   }, []);
 
+
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();
   const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
   const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
 
+  // Opções derivadas (consultores/cidades únicos para os selects).
+  const consultoresOpts = useMemo(() => {
+    const s = new Set<string>();
+    propostas.forEach((p) => { if (p.consultor) s.add(p.consultor); });
+    return Array.from(s).sort();
+  }, [propostas]);
+  const cidadesOpts = useMemo(() => {
+    const s = new Set<string>();
+    propostas.forEach((p) => { if (p.cidade) s.add(p.cidade); });
+    return Array.from(s).sort();
+  }, [propostas]);
+
+  function periodoMatches(dateIso: string | undefined): boolean {
+    if (filtroPeriodo === "TODOS") return true;
+    if (!dateIso) return false;
+    const d = new Date(dateIso);
+    if (isNaN(d.getTime())) return false;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const diff = (hoje.getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000;
+    switch (filtroPeriodo) {
+      case "HOJE": return diff === 0;
+      case "ONTEM": return diff === 1;
+      case "7D": return diff >= 0 && diff <= 7;
+      case "15D": return diff >= 0 && diff <= 15;
+      case "30D": return diff >= 0 && diff <= 30;
+      case "MES_ATUAL": return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+      case "MES_PASSADO": {
+        const pm = (hoje.getMonth() + 11) % 12;
+        const py = pm === 11 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+        return d.getMonth() === pm && d.getFullYear() === py;
+      }
+      case "ANO": return d.getFullYear() === hoje.getFullYear();
+      default: return true;
+    }
+  }
+
   const leadsFiltrados = useMemo(() => {
     const q = filtro.trim().toLowerCase();
+    const vMin = filtroValorMin ? Number(filtroValorMin.replace(/[^\d.,-]/g, "").replace(",", ".")) : null;
+    const vMax = filtroValorMax ? Number(filtroValorMax.replace(/[^\d.,-]/g, "").replace(",", ".")) : null;
+    const kMin = filtroKwpMin ? Number(filtroKwpMin.replace(",", ".")) : null;
+    const kMax = filtroKwpMax ? Number(filtroKwpMax.replace(",", ".")) : null;
+    const semMovDias = Number(filtroSemMovimento);
+
     return leadsAll.filter((l) => {
-      // ABERTO = ainda em negociação (não cancelado e contrato não assinado).
-      // FECHADO = contrato assinado.
-      // CANCELADO = última proposta cancelada (e ainda não assinou).
       const isAssinado = l.fase === "ASSINADO";
       const isCancelado = l.status === "CANCELADA" && !isAssinado;
       if (estadoLead === "ABERTO" && (isAssinado || isCancelado)) return false;
       if (estadoLead === "FECHADO" && !isAssinado) return false;
       if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
+
+      if (filtroConsultor !== "TODOS" && !l.propostas.some((p) => (p.consultor || "") === filtroConsultor)) return false;
+      if (filtroCidade !== "TODOS" && !l.propostas.some((p) => (p.cidade || "") === filtroCidade)) return false;
+
+      if (filtroPeriodo !== "TODOS") {
+        const ok = l.propostas.some((p) => periodoMatches(p.criadoEm));
+        if (!ok) return false;
+      }
+
+      if (vMin != null || vMax != null) {
+        const ok = l.propostas.some((p) => {
+          const v = calcPrecificacao(p).valorFinal || 0;
+          if (vMin != null && v < vMin) return false;
+          if (vMax != null && v > vMax) return false;
+          return true;
+        });
+        if (!ok) return false;
+      }
+
+      if (kMin != null || kMax != null) {
+        const ok = l.propostas.some((p) => {
+          const k = (p as any).potenciaKwp ?? (p as any).potencia ?? 0;
+          if (kMin != null && k < kMin) return false;
+          if (kMax != null && k > kMax) return false;
+          return true;
+        });
+        if (!ok) return false;
+      }
+
+      if (semMovDias > 0) {
+        const ultima = l.propostas
+          .map((p) => p.atualizadoEm || p.criadoEm)
+          .filter(Boolean)
+          .sort()
+          .pop();
+        if (!ultima) return false;
+        const dias = (Date.now() - new Date(ultima).getTime()) / 86400000;
+        if (dias < semMovDias) return false;
+      }
+
       if (!q) return true;
       return (
         l.clienteNome.toLowerCase().includes(q) ||
@@ -1709,7 +1801,16 @@ export function PropostaList({
         l.propostas.some((p) => (p.numero || "").toLowerCase().includes(q))
       );
     });
-  }, [leadsAll, filtro, filtroStatus, estadoLead]);
+  }, [leadsAll, filtro, filtroStatus, estadoLead, filtroPeriodo, filtroConsultor, filtroCidade, filtroValorMin, filtroValorMax, filtroKwpMin, filtroKwpMax, filtroSemMovimento]);
+
+  // Expõe propostas filtradas para a barra Enterprise (Exportar CSV usa isso).
+  useEffect(() => {
+    const visiveis: PropostaFV[] = [];
+    leadsFiltrados.forEach((l) => l.propostas.forEach((p) => visiveis.push(p)));
+    (window as any).__propostasVisiveis = visiveis;
+    return () => { try { delete (window as any).__propostasVisiveis; } catch { /* noop */ } };
+  }, [leadsFiltrados]);
+
 
   const totais = useMemo(() => {
     const total = propostas.length;
@@ -1870,63 +1971,246 @@ export function PropostaList({
       />
 
       <Dialog open={filtrosDialogOpen} onOpenChange={setFiltrosDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Filtros de propostas</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
-              <Input
-                value={filtro}
-                onChange={(e) => setFiltro(e.target.value)}
-                placeholder="Ex.: Renan, Patrícia, P-2026…"
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Situação do lead</Label>
-              <div className="flex gap-1">
-                {(["ABERTO", "FECHADO", "CANCELADO"] as const).map((e) => (
+
+          <div className="space-y-4 py-2">
+            {/* 1. Filtros rápidos */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Filtros rápidos</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["TODOS","Todos"],
+                  ["RASCUNHO","Em aberto"],
+                  ["ENVIADA","Enviadas"],
+                  ["APROVADA","Aprovadas"],
+                  ["RECUSADA","Reprovadas"],
+                  ["CANCELADA","Canceladas"],
+                  ["VENCIDA","Expiradas"],
+                ] as const).map(([k,lab]) => (
                   <Button
-                    key={e}
+                    key={k}
                     type="button"
                     size="sm"
-                    variant={estadoLead === e ? "default" : "outline"}
-                    className="h-8 flex-1 text-xs"
-                    onClick={() => setEstadoLead(e)}
+                    variant={filtroStatus === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroStatus(k as any)}
                   >
-                    {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                    {lab}
                   </Button>
                 ))}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Status da proposta</Label>
-              <select
-                value={filtroStatus}
-                onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
-                className="h-9 w-full rounded-md border bg-background px-2 text-xs"
-              >
-                {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
-                  <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+
+            {/* 2. Período */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Período (data de criação)</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["TODOS","Todos"],["HOJE","Hoje"],["ONTEM","Ontem"],
+                  ["7D","7 dias"],["15D","15 dias"],["30D","30 dias"],
+                  ["MES_ATUAL","Este mês"],["MES_PASSADO","Mês passado"],["ANO","Este ano"],
+                ] as const).map(([k,lab]) => (
+                  <Button
+                    key={k}
+                    type="button"
+                    size="sm"
+                    variant={filtroPeriodo === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroPeriodo(k as any)}
+                  >
+                    {lab}
+                  </Button>
                 ))}
-              </select>
+              </div>
             </div>
+
+            {/* 3. Situação do lead + Busca */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Situação do lead</Label>
+                <div className="flex gap-1">
+                  {(["ABERTO","FECHADO","CANCELADO"] as const).map((e) => (
+                    <Button
+                      key={e}
+                      type="button"
+                      size="sm"
+                      variant={estadoLead === e ? "default" : "outline"}
+                      className="h-8 flex-1 text-xs"
+                      onClick={() => setEstadoLead(e)}
+                    >
+                      {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
+                <Input
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  placeholder="Ex.: Renan, Patrícia, P-2026…"
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 4. Consultor + Cidade */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Consultor / Vendedor</Label>
+                <select
+                  value={filtroConsultor}
+                  onChange={(e) => setFiltroConsultor(e.target.value)}
+                  className="h-8 w-full rounded-md border bg-background px-2 text-xs"
+                >
+                  <option value="TODOS">Todos os consultores</option>
+                  {consultoresOpts.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cidade</Label>
+                <select
+                  value={filtroCidade}
+                  onChange={(e) => setFiltroCidade(e.target.value)}
+                  className="h-8 w-full rounded-md border bg-background px-2 text-xs"
+                >
+                  <option value="TODOS">Todas as cidades</option>
+                  {cidadesOpts.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* 5. Faixa de valor */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Faixa de valor (R$)</Label>
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {([
+                  ["","",""],
+                  ["0","10000","Até 10k"],
+                  ["10000","20000","10–20k"],
+                  ["20000","50000","20–50k"],
+                  ["50000","100000","50–100k"],
+                  ["100000","200000","100–200k"],
+                  ["200000","500000","200–500k"],
+                  ["500000","","Acima 500k"],
+                ] as const).map(([mn,mx,lab],i) => (
+                  <Button
+                    key={i}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => { setFiltroValorMin(mn); setFiltroValorMax(mx); }}
+                  >
+                    {lab || "Limpar"}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  value={filtroValorMin}
+                  onChange={(e) => setFiltroValorMin(e.target.value)}
+                  placeholder="Mín."
+                  className="h-8"
+                />
+                <Input
+                  value={filtroValorMax}
+                  onChange={(e) => setFiltroValorMax(e.target.value)}
+                  placeholder="Máx."
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 6. Faixa de potência */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Faixa de potência (kWp)</Label>
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {([
+                  ["","",""],
+                  ["0","3","Até 3"],
+                  ["3","5","3–5"],
+                  ["5","10","5–10"],
+                  ["10","20","10–20"],
+                  ["20","50","20–50"],
+                  ["50","100","50–100"],
+                  ["100","","Acima 100"],
+                ] as const).map(([mn,mx,lab],i) => (
+                  <Button
+                    key={i}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => { setFiltroKwpMin(mn); setFiltroKwpMax(mx); }}
+                  >
+                    {lab || "Limpar"}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  value={filtroKwpMin}
+                  onChange={(e) => setFiltroKwpMin(e.target.value)}
+                  placeholder="Mín."
+                  className="h-8"
+                />
+                <Input
+                  value={filtroKwpMax}
+                  onChange={(e) => setFiltroKwpMax(e.target.value)}
+                  placeholder="Máx."
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 7. Sem movimento */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Propostas sem movimento há</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["0","Indiferente"],["7","7 dias"],["15","15 dias"],
+                  ["30","30 dias"],["60","60 dias"],["90","90 dias"],
+                ] as const).map(([k,lab]) => (
+                  <Button
+                    key={k}
+                    type="button"
+                    size="sm"
+                    variant={filtroSemMovimento === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroSemMovimento(k as any)}
+                  >
+                    {lab}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
-              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is)
+              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is) · cards/KPIs e tabela reagem ao filtro.
             </div>
           </div>
+
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               type="button" variant="ghost" size="sm"
-              onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO"); }}
+              onClick={() => {
+                setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO");
+                setFiltroPeriodo("TODOS"); setFiltroConsultor("TODOS"); setFiltroCidade("TODOS");
+                setFiltroValorMin(""); setFiltroValorMax("");
+                setFiltroKwpMin(""); setFiltroKwpMax("");
+                setFiltroSemMovimento("0");
+              }}
             >
-              Limpar
+              Limpar filtros
             </Button>
             <Button type="button" size="sm" onClick={() => setFiltrosDialogOpen(false)}>
               Aplicar
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>

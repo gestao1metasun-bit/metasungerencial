@@ -398,10 +398,9 @@ function ContratoAssinadoTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
-          // ▼ Contratos
-          { key: "novo_contrato",            label: "Novo contrato (de proposta)",    group: "Contratos", requerSelecao: 0 },
+          // ▼ Contratos (sem "novo_contrato": contrato nasce da proposta aprovada)
           { key: "editar_contrato",          label: "Editar contrato",                group: "Contratos" },
           { key: "gerar_aditivo",            label: "Gerar Aditivo",                  group: "Contratos" },
           { key: "cancelar_contrato",        label: "Cancelar",                       group: "Contratos", destructive: true, requerMotivo: true },

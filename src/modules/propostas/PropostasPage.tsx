@@ -262,6 +262,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
+  const [editandoCliente, setEditandoCliente] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
@@ -653,7 +654,10 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               novaProposta();
             } else if (a === "editar") {
               const p = getPropostaAtiva();
-              if (p) setEditando(p);
+              if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
+              // Edição inline pela barra = SOMENTE dados do cliente (nome/CPF/endereço/contato).
+              // Para editar a proposta inteira, abrir pelo botão "Visualizar/Editar proposta" da linha.
+              setEditandoCliente(p);
             } else if (a === "duplicar") {
               const p = getPropostaAtiva();
               if (p) duplicarProposta(p);
@@ -811,6 +815,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onClose={() => setEditando(null)}
           onVisualizar={(id) => { setVendoId(id); setEditando(null); }}
           onGerada={() => setEditando(null)}
+        />
+      )}
+
+      {editandoCliente && (
+        <EditarDadosClienteDialog
+          proposta={editandoCliente}
+          onClose={() => setEditandoCliente(null)}
+          onSaved={() => { setEditandoCliente(null); void refreshPropostas(); }}
         />
       )}
       {propostaVisualizada && (
@@ -2271,3 +2283,119 @@ function CrudTable<T extends { id: string }>({
 /* =========================== AJUDA =========================== */
 
 // AjudaTab foi extraído para ./components/AjudaTab.tsx
+
+/* =========================== EDITAR DADOS DO CLIENTE (propostas) =========================== */
+/**
+ * Diálogo enxuto para editar APENAS dados cadastrais do cliente vinculado à proposta
+ * (nome, CPF/CNPJ, contato, endereço). NÃO altera kit, valores ou status da proposta.
+ */
+function EditarDadosClienteDialog({
+  proposta,
+  onClose,
+  onSaved,
+}: {
+  proposta: PropostaFV;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [doc, setDoc] = useState(proposta.clienteDoc ?? "");
+  const [telefone, setTelefone] = useState(proposta.clienteTelefone ?? "");
+  const [email, setEmail] = useState(proposta.clienteEmail ?? "");
+  const [cep, setCep] = useState(proposta.clienteCep ?? "");
+  const [rua, setRua] = useState(proposta.clienteRua ?? "");
+  const [numero, setNumero] = useState(proposta.clienteNumero ?? "");
+  const [complemento, setComplemento] = useState(proposta.clienteComplemento ?? "");
+  const [bairro, setBairro] = useState(proposta.clienteBairro ?? "");
+  const [cidade, setCidade] = useState(proposta.clienteCidade ?? "");
+  const [uf, setUf] = useState(proposta.clienteUf ?? "");
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar() {
+    if (!nome.trim()) { toast.error("Nome do cliente é obrigatório."); return; }
+    setSalvando(true);
+    try {
+      await upsertProposta({
+        ...proposta,
+        clienteNome: nome.trim(),
+        clienteDoc: doc.trim() || undefined,
+        clienteTelefone: telefone.trim() || undefined,
+        clienteEmail: email.trim() || undefined,
+        clienteCep: cep.trim() || undefined,
+        clienteRua: rua.trim() || undefined,
+        clienteNumero: numero.trim() || undefined,
+        clienteComplemento: complemento.trim() || undefined,
+        clienteBairro: bairro.trim() || undefined,
+        clienteCidade: cidade.trim() || undefined,
+        clienteUf: uf.trim().toUpperCase() || undefined,
+        atualizadoEm: new Date().toISOString(),
+      });
+      toast.success("Dados do cliente atualizados.");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao salvar dados do cliente.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Editar dados do cliente · Proposta {proposta.numero}</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <Label className="text-xs">Nome / Razão social *</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={200} />
+          </div>
+          <div>
+            <Label className="text-xs">CPF / CNPJ</Label>
+            <Input value={doc} onChange={(e) => setDoc(e.target.value)} maxLength={20} />
+          </div>
+          <div>
+            <Label className="text-xs">Telefone</Label>
+            <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={30} />
+          </div>
+          <div className="col-span-2">
+            <Label className="text-xs">E-mail</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} />
+          </div>
+          <div>
+            <Label className="text-xs">CEP</Label>
+            <Input value={cep} onChange={(e) => setCep(e.target.value)} maxLength={12} />
+          </div>
+          <div className="col-span-1">
+            <Label className="text-xs">Rua / Logradouro</Label>
+            <Input value={rua} onChange={(e) => setRua(e.target.value)} maxLength={200} />
+          </div>
+          <div>
+            <Label className="text-xs">Número</Label>
+            <Input value={numero} onChange={(e) => setNumero(e.target.value)} maxLength={15} />
+          </div>
+          <div>
+            <Label className="text-xs">Complemento</Label>
+            <Input value={complemento} onChange={(e) => setComplemento(e.target.value)} maxLength={80} />
+          </div>
+          <div>
+            <Label className="text-xs">Bairro</Label>
+            <Input value={bairro} onChange={(e) => setBairro(e.target.value)} maxLength={80} />
+          </div>
+          <div>
+            <Label className="text-xs">Cidade</Label>
+            <Input value={cidade} onChange={(e) => setCidade(e.target.value)} maxLength={80} />
+          </div>
+          <div>
+            <Label className="text-xs">UF</Label>
+            <Input value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} maxLength={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar dados do cliente"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

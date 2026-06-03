@@ -5741,6 +5741,13 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selAditivos.allChecked ? true : selAditivos.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selAditivos.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead className="text-right">Valor consolidado</TableHead>
@@ -5751,14 +5758,15 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Nenhum contrato.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">Nenhum contrato.</TableCell></TableRow>
             )}
             {lista.map((c) => {
               const aDoContrato = aditivos.filter((a) => a.contratoId === c.id);
               const pend = aDoContrato.find(isAditivoPendente);
               const aprov = aDoContrato.filter((a) => a.status === "APROVADO" && !a.oculto).length;
               return (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} data-state={selAditivos.isSelected(c.id) ? "selected" : undefined}>
+                  <TableCell className="w-8"><Checkbox checked={selAditivos.isSelected(c.id)} onCheckedChange={() => selAditivos.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell>{c.cliente}</TableCell>
                   <TableCell className="text-right font-mono">{fmtBRL(c.valor)}</TableCell>
@@ -5787,6 +5795,18 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           </TableBody>
         </Table>
       </Card>
+
+      <BulkActionBar
+        count={selAditivos.count}
+        label="contrato(s) selecionado(s)"
+        onClear={selAditivos.clear}
+        actions={[
+          { key: "aprovar", label: "Aprovar aditivos", tone: "verde", onClick: () => toast.info("Aprovação em lote chega em D27.COM.AD.") },
+          { key: "gerar_fin", label: "Gerar financeiro", tone: "verde", onClick: () => toast.info("Geração financeira em lote chega em D27.COM.AD.") },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       <Dialog open={!!contratoAberto} onOpenChange={(v) => { if (!v) setOpenId(null); }}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">

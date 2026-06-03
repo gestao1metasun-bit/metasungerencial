@@ -262,6 +262,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
+  const [editandoCliente, setEditandoCliente] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);

@@ -562,9 +562,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const p = getPropostaAtiva();
               if (p) duplicarProposta(p);
             } else if (key === "aprovar_proposta") {
-              await executarAprovar();
-            } else if (key === "gerar_contrato") {
-              executarGerarContrato();
+              executarAprovar();
             } else if (key === "reprovar_proposta") {
               await executarReprovar();
             } else if (key.startsWith("alterar_")) {

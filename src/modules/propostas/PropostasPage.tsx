@@ -340,11 +340,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
     return contratoId;
   }
 
-  async function executarGerarContrato() {
+  function executarGerarContrato() {
     const proposta = getPropostaAtiva();
     if (!proposta) return;
-    await gerarContrato.mutateAsync({ propostaId: proposta.id });
-    await syncComercialState(proposta.id);
+    if (proposta.contratoGeradoId) {
+      toast.info("Esta proposta já possui contrato gerado.");
+      return;
+    }
+    setGerarContratoOpen(true);
   }
 
   async function executarAprovar() {

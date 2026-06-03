@@ -539,7 +539,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           selectedIds={propostaSelecionada ? [propostaSelecionada.id] : []}
           onFilter={() => {
             const open = (window as any).__propostasOpenFilters;
-            if (typeof open === "function") open();
+            if (typeof open === "function") {
+              open();
+            }
             else {
               const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
               if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); }
@@ -633,10 +635,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const btn = document.querySelector<HTMLButtonElement>("[data-propostas-colunas]");
               if (btn) { btn.scrollIntoView({ behavior: "smooth", block: "center" }); btn.click(); }
               else toast.info("Use o botão Colunas na lista abaixo.");
-            } else if (a === "filtroAvancado") {
-              const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
-              if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); }
-              else toast.info("Use a busca/filtro da lista abaixo.");
+            } else if (a === "filtroAvancado" || a === "filtroRapido") {
+              const open = (window as any).__propostasOpenFilters;
+              if (typeof open === "function") open();
+              else {
+                const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
+                if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); }
+                else toast.info("Use a busca/filtro da lista abaixo.");
+              }
             }
           }}
           statusActions={ribbonRmComercial(ribbonState)}

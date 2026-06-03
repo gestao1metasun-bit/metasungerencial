@@ -1767,9 +1767,11 @@ export function PropostaList({
 
     return leadsAll.filter((l) => {
       const isAssinado = l.fase === "ASSINADO";
+      const isAprovado = l.status === "APROVADA";
+      const isFechado = isAssinado || isAprovado;
       const isCancelado = l.status === "CANCELADA" && !isAssinado;
-      if (estadoLead === "ABERTO" && (isAssinado || isCancelado)) return false;
-      if (estadoLead === "FECHADO" && !isAssinado) return false;
+      if (estadoLead === "ABERTO" && (isFechado || isCancelado)) return false;
+      if (estadoLead === "FECHADO" && !isFechado) return false;
       if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
 

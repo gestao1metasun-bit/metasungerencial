@@ -528,7 +528,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             { key: "aprovar_proposta",     label: "Aprovar",            group: "Propostas" },
             { key: "reprovar_proposta",    label: "Reprovar",           group: "Propostas", destructive: true, requerMotivo: true },
             { key: "duplicar_proposta",    label: "Duplicar",           group: "Propostas" },
-            { key: "gerar_contrato",       label: "Gerar Contrato",     group: "Propostas" },
             // ▼ Comercial
             { key: "alterar_consultor",    label: "Alterar Consultor",  group: "Comercial", permiteLote: true, requerSelecao: 1 },
             { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },

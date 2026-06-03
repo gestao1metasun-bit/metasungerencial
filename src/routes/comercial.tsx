@@ -5647,7 +5647,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
   const aditivos = useAditivos();
   const podeGerenciar = usePodeGerenciarAditivos();
   const { user } = useAuthCurrent();
-  const [filtro, setFiltro] = useState<"todos" | "pendentes" | "aprovados">("pendentes");
+  const [filtro, setFiltro] = useState<"todos" | "pendentes" | "aprovados">("todos");
   const [busca, setBusca] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 

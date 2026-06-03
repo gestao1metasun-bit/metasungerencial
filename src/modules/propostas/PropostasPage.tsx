@@ -27,10 +27,15 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { toast } from "sonner";
 import {
   useAprovarProposta,
+  useCancelarProposta,
   useGerarContratoDaProposta,
+  useGerarAditivoContrato,
   useEnviarContratoEngenharia,
   useEnviarContratoFinanciamento,
+  useEnviarContratoAssinatura,
   useGerarComissaoDeContrato,
+  useReabrirProposta,
+  useReprovarProposta,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useClientesFull, addClienteFull } from "@/lib/clientes-store";
@@ -41,6 +46,7 @@ import {
   type ParametroFV, type CustoFV, type TarifaEnergia,
   useCidadesFV, useConcessionarias, useModulosFV, useInversoresFV,
   useDistribuidoresFV, useParametrosFV, useCustosFV, usePropostas,
+  refreshPropostas,
   useTarifasEnergia,
   upsertCidadeFV, removeCidadeFV, upsertConcessionariaFV, removeConcessionariaFV,
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
@@ -258,27 +264,262 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
-  // D27.COM.3.b — RPCs oficiais (Aprovar / Gerar Contrato / Enviar Eng / Enviar Fin / Comissão)
   const aprovar = useAprovarProposta();
+  const reprovar = useReprovarProposta();
+  const cancelar = useCancelarProposta();
+  const reabrir = useReabrirProposta();
   const gerarContrato = useGerarContratoDaProposta();
+  const gerarAditivo = useGerarAditivoContrato();
   const enviarEng = useEnviarContratoEngenharia();
   const enviarFin = useEnviarContratoFinanciamento();
+  const enviarAssinatura = useEnviarContratoAssinatura();
   const gerarComissao = useGerarComissaoDeContrato();
 
-  function getPropostaIdAtivo(): string | null {
-    if (vendoId) return vendoId;
-    toast.error("Selecione uma proposta primeiro (clique no olho 👁 na lista).");
+  const isBusy = [
+    aprovar.isPending,
+    reprovar.isPending,
+    cancelar.isPending,
+    reabrir.isPending,
+    gerarContrato.isPending,
+    gerarAditivo.isPending,
+    enviarEng.isPending,
+    enviarFin.isPending,
+    enviarAssinatura.isPending,
+    gerarComissao.isPending,
+  ].some(Boolean);
+
+  function getPropostaAtiva(): PropostaFV | null {
+    if (propostaVisualizada) return propostaVisualizada;
+    toast.error("Selecione uma proposta primeiro.");
     return null;
   }
-  function getContratoIdAtivo(): string | null {
-    const p = propostaVisualizada;
-    const cid = p?.contratoGeradoId;
-    if (!cid) {
-      toast.error("Esta proposta ainda não tem contrato gerado. Use 'Gerar Contrato' primeiro.");
+
+  async function syncComercialState(selectedId?: string | null) {
+    await refreshPropostas();
+    if (selectedId) setVendoId(selectedId);
+  }
+
+  function pedirMotivo(label: string): string | null {
+    const motivo = window.prompt(`Informe o motivo para ${label.toLowerCase()}:`, "");
+    if (motivo === null) return null;
+    const normalizado = motivo.trim();
+    if (normalizado.length < 5) {
+      toast.error("Informe um motivo com pelo menos 5 caracteres.");
       return null;
     }
-    return cid;
+    return normalizado;
   }
+
+  function pedirDescricaoAditivo(): string | null {
+    const descricao = window.prompt("Descreva o aditivo que será criado:", "");
+    if (descricao === null) return null;
+    const normalizado = descricao.trim();
+    if (normalizado.length < 5) {
+      toast.error("Descreva o aditivo com pelo menos 5 caracteres.");
+      return null;
+    }
+    return normalizado;
+  }
+
+  async function garantirContrato(
+    proposta: PropostaFV,
+    mensagem: string,
+  ): Promise<string | null> {
+    if (proposta.contratoGeradoId) return proposta.contratoGeradoId;
+    const confirmar = window.confirm(mensagem);
+    if (!confirmar) return null;
+    const contratoId = await gerarContrato.mutateAsync({ propostaId: proposta.id });
+    await syncComercialState(proposta.id);
+    return contratoId;
+  }
+
+  async function executarGerarContrato() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    await gerarContrato.mutateAsync({ propostaId: proposta.id });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarAprovar() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    if (!proposta.contratoGeradoId) {
+      const gerarAgora = window.confirm(
+        "Esta proposta ainda não tem contrato. Deseja gerar contrato agora?\n\nOK = Gerar contrato agora\nCancelar = Aprovar sem gerar contrato",
+      );
+      if (gerarAgora) {
+        await gerarContrato.mutateAsync({ propostaId: proposta.id });
+        await syncComercialState(proposta.id);
+        return;
+      }
+    }
+    await aprovar.mutateAsync({ propostaId: proposta.id });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarReprovar() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const motivo = pedirMotivo("reprovar a proposta");
+    if (!motivo) return;
+    await reprovar.mutateAsync({ propostaId: proposta.id, motivo });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarCancelar() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const motivo = pedirMotivo("cancelar a proposta");
+    if (!motivo) return;
+    await cancelar.mutateAsync({ propostaId: proposta.id, motivo });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarReabrir() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const motivo = pedirMotivo("reabrir a proposta");
+    if (!motivo) return;
+    await reabrir.mutateAsync({ propostaId: proposta.id, motivo });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarEnviarEngenharia() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const contratoId = await garantirContrato(
+      proposta,
+      "Esta proposta ainda não tem contrato. Deseja gerar contrato agora para enviar à Engenharia?",
+    );
+    if (!contratoId) return;
+    await enviarEng.mutateAsync({ contratoId });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarEnviarFinanciamento() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    if (proposta.possuiFinanciamento !== true) {
+      toast.warning("Esta proposta não possui financiamento marcado. Nenhuma pendência foi criada.");
+      return;
+    }
+    const contratoId = await garantirContrato(
+      proposta,
+      "Esta proposta ainda não tem contrato. Deseja gerar contrato agora para enviar ao Financiamento?",
+    );
+    if (!contratoId) return;
+    await enviarFin.mutateAsync({ contratoId });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarGerarComissao() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const contratoId = proposta.contratoGeradoId;
+    if (!contratoId) {
+      toast.error("Gere o contrato antes de criar a comissão.");
+      return;
+    }
+    await gerarComissao.mutateAsync({ contratoId });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarGerarAditivo() {
+    const proposta = getPropostaAtiva();
+    if (!proposta?.contratoGeradoId) return;
+    const descricao = pedirDescricaoAditivo();
+    if (!descricao) return;
+    await gerarAditivo.mutateAsync({ contratoId: proposta.contratoGeradoId, descricao });
+    await syncComercialState(proposta.id);
+  }
+
+  async function executarEnviarAssinatura() {
+    const proposta = getPropostaAtiva();
+    if (!proposta) return;
+    const contratoId = await garantirContrato(
+      proposta,
+      "Esta proposta ainda não tem contrato. Deseja gerar contrato agora para enviar à assinatura?",
+    );
+    if (!contratoId) return;
+    await enviarAssinatura.mutateAsync({ contratoId });
+    await syncComercialState(proposta.id);
+  }
+
+  const ribbonState = (() => {
+    const proposta = propostaVisualizada;
+    if (!proposta) {
+      const motivo = "Selecione uma proposta primeiro.";
+      return {
+        aprovar: { disabled: true, disabledReason: motivo },
+        reprovar: { disabled: true, disabledReason: motivo },
+        gerarContrato: { disabled: true, disabledReason: motivo },
+        gerarAditivo: { disabled: true, disabledReason: motivo },
+        enviarEngenharia: { disabled: true, disabledReason: motivo },
+        enviarFinanciamento: { disabled: true, disabledReason: motivo },
+        gerarComissao: { disabled: true, disabledReason: motivo },
+        enviarAssinatura: { disabled: true, disabledReason: motivo },
+        cancelar: { disabled: true, disabledReason: motivo },
+        reabrir: { disabled: true, disabledReason: motivo },
+      };
+    }
+
+    const possuiContrato = !!proposta.contratoGeradoId;
+    const podeReabrir = ["CANCELADA", "RECUSADA", "VENCIDA"].includes(proposta.status);
+    const podeGerarAditivo = possuiContrato && proposta.status === "APROVADA";
+
+    return {
+      aprovar: {
+        onClick: () => void executarAprovar(),
+        disabled: isBusy || ["APROVADA", "CANCELADA"].includes(proposta.status),
+        disabledReason: proposta.status === "APROVADA" ? "A proposta já está aprovada." : proposta.status === "CANCELADA" ? "Reabra a proposta antes de aprovar." : undefined,
+      },
+      reprovar: {
+        onClick: () => void executarReprovar(),
+        disabled: isBusy || ["RECUSADA", "CANCELADA"].includes(proposta.status),
+        disabledReason: proposta.status === "RECUSADA" ? "A proposta já está reprovada." : proposta.status === "CANCELADA" ? "Reabra a proposta antes de reprovar." : undefined,
+      },
+      gerarContrato: {
+        onClick: () => void executarGerarContrato(),
+        disabled: isBusy || possuiContrato,
+        disabledReason: possuiContrato ? "Esta proposta já possui contrato gerado." : undefined,
+      },
+      gerarAditivo: {
+        onClick: () => void executarGerarAditivo(),
+        disabled: isBusy || !podeGerarAditivo,
+        disabledReason: !possuiContrato ? "Gere o contrato antes de criar aditivo." : proposta.status !== "APROVADA" ? "Aprove o contrato antes de criar aditivo." : undefined,
+      },
+      enviarEngenharia: {
+        onClick: () => void executarEnviarEngenharia(),
+        disabled: isBusy || ["CANCELADA", "RECUSADA"].includes(proposta.status),
+        disabledReason: proposta.status === "CANCELADA" ? "Reabra a proposta antes de enviar à Engenharia." : proposta.status === "RECUSADA" ? "Reabra a proposta antes de enviar à Engenharia." : undefined,
+      },
+      enviarFinanciamento: {
+        onClick: () => void executarEnviarFinanciamento(),
+        disabled: isBusy || proposta.possuiFinanciamento !== true,
+        disabledReason: proposta.possuiFinanciamento !== true ? "Esta proposta não possui financiamento marcado." : undefined,
+      },
+      gerarComissao: {
+        onClick: () => void executarGerarComissao(),
+        disabled: isBusy || !possuiContrato,
+        disabledReason: !possuiContrato ? "Gere o contrato antes de criar a comissão." : undefined,
+      },
+      enviarAssinatura: {
+        onClick: () => void executarEnviarAssinatura(),
+        disabled: isBusy || proposta.status === "CANCELADA",
+        disabledReason: proposta.status === "CANCELADA" ? "Reabra a proposta antes de enviar para assinatura." : undefined,
+      },
+      cancelar: {
+        onClick: () => void executarCancelar(),
+        disabled: isBusy || proposta.status === "CANCELADA",
+        disabledReason: proposta.status === "CANCELADA" ? "A proposta já está cancelada." : undefined,
+      },
+      reabrir: {
+        onClick: () => void executarReabrir(),
+        disabled: isBusy || !podeReabrir,
+        disabledReason: !podeReabrir ? "Somente propostas canceladas, recusadas ou vencidas podem ser reabertas." : undefined,
+      },
+    };
+  })();
 
   const cidadesAll = useCidadesFV();
   function novaProposta(preset?: Partial<PropostaFV>) {
@@ -349,13 +590,13 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "duplicar_proposta") {
               toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.3.c).");
             } else if (key === "aprovar_proposta") {
-              const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id });
+              await executarAprovar();
             } else if (key === "gerar_contrato") {
-              const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id });
+              await executarGerarContrato();
             } else if (key === "reprovar_proposta") {
-              toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c.");
+              await executarReprovar();
             } else if (key === "enviar_assinar") {
-              toast.info("Envio para assinatura digital (Clicksign/Autentique/DocuSign) chega em D27.COM.6.");
+              await executarEnviarAssinatura();
             } else if (key.startsWith("alterar_")) {
               toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
             } else if (key.startsWith("rel_")) {
@@ -376,19 +617,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
             else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}
-          statusActions={ribbonRmComercial({
-            // D27.COM.3.b — wires reais (RPCs oficiais SECURITY DEFINER)
-            aprovar:             () => { const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id }); },
-            reprovar:            () => toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c."),
-            gerarContrato:       () => { const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id }); },
-            gerarAditivo:        () => toast.info("Aditivo só em contrato assinado (aba Aditivos)."),
-            enviarEngenharia:    () => { const cid = getContratoIdAtivo(); if (cid) enviarEng.mutate({ contratoId: cid }); },
-            enviarFinanciamento: () => { const cid = getContratoIdAtivo(); if (cid) enviarFin.mutate({ contratoId: cid }); },
-            gerarComissao:       () => { const cid = getContratoIdAtivo(); if (cid) gerarComissao.mutate({ contratoId: cid }); },
-            enviarAssinatura:    () => toast.info("Assinatura digital chega em D27.COM.6."),
-            cancelar:            () => toast.info("Cancelar proposta com motivo chega em D27.COM.3.c."),
-            reabrir:             () => toast.info("Reabrir proposta com motivo chega em D27.COM.3.c."),
-          })}
+          statusActions={ribbonRmComercial(ribbonState)}
           layoutBar={layoutBarRm()}
         />
       </div>

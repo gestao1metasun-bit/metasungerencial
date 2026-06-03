@@ -701,6 +701,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               label: "Nova proposta para o lead flegado",
               icon: Copy,
               tone: "success" as const,
+              wide: true,
               disabled: !((window as any).__propostasSelectedLead?.()),
               disabledReason: "Flegue exatamente 1 lead para gerar nova proposta.",
               onClick: () => {

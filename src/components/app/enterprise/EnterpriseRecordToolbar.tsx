@@ -147,6 +147,8 @@ export type StatusActionItem = {
   disabledReason?: string;
   /** Mostra um pequeno selo (ex.: contagem ou "•"). */
   badge?: string;
+  /** Renderiza como pílula maior (destaque visual), não círculo. */
+  wide?: boolean;
 };
 
 /** Configuração da Linha 3 (Layout / densidade). */
@@ -596,12 +598,15 @@ export function EnterpriseRecordToolbar({
             title={s.disabled ? (s.disabledReason ?? s.label) : s.label}
             aria-label={s.label}
             className={cn(
-              "relative inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 transition",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
+              "relative inline-flex items-center justify-center shrink-0 transition disabled:opacity-40 disabled:cursor-not-allowed",
+              s.wide
+                ? "h-6 px-4 rounded-full gap-1.5 text-[11px] font-semibold"
+                : "h-6 w-6 rounded-full",
               STATUS_TONE[s.tone],
             )}
           >
             <Icon className="h-3.5 w-3.5" />
+            {s.wide && <span className="sr-only">{s.label}</span>}
             {s.badge && (
               <span className="absolute -top-1 -right-1 rounded-full bg-white text-[9px] font-mono text-slate-700 border border-slate-300 px-1 leading-none">
                 {s.badge}

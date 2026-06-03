@@ -547,7 +547,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       <div className={embedded ? "mt-4" : "mt-3"}>
         <EnterpriseRecordToolbar
           entityType="propostas"
-          selectedIds={vendoId ? [vendoId] : []}
+          selectedIds={propostaSelecionada ? [propostaSelecionada.id] : []}
           availableActions={[
             "novo", "editar", "duplicar", "excluir", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",

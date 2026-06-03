@@ -259,6 +259,7 @@ function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boole
 /* =========================== PÁGINA =========================== */
 
 function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
+  const navigate = useNavigate();
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
@@ -269,6 +270,30 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
   const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);
   const [candidatasAprovacao, setCandidatasAprovacao] = useState<PropostaFV[]>([]);
+
+  // D17.UI — densidade + preset da tabela (persistidos em LS `ui.*`)
+  const [density, setDensity] = useState<"compact" | "comfortable" | "spacious">(() => {
+    if (typeof window === "undefined") return "compact";
+    const v = window.localStorage.getItem("ui.propostas.density.v1");
+    return v === "comfortable" || v === "spacious" ? v : "compact";
+  });
+  const [layoutPreset, setLayoutPreset] = useState<string>(() => {
+    if (typeof window === "undefined") return "padrao";
+    return window.localStorage.getItem("ui.propostas.preset.v1") || "padrao";
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("ui.propostas.density.v1", density); } catch {}
+  }, [density]);
+  useEffect(() => {
+    try { window.localStorage.setItem("ui.propostas.preset.v1", layoutPreset); } catch {}
+  }, [layoutPreset]);
+  const densityClass =
+    density === "spacious"
+      ? "[&_td]:!py-3 [&_th]:!py-3 text-[13px]"
+      : density === "comfortable"
+        ? "[&_td]:!py-2 [&_th]:!py-2 text-[13px]"
+        : "[&_td]:!py-1 [&_th]:!py-1 text-[12px]";
+
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =

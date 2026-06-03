@@ -657,21 +657,12 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         />
       )}
 
-      {propostaSelecionada && (
-        <GerarContratoDialog
-          open={gerarContratoOpen}
-          onOpenChange={setGerarContratoOpen}
-          propostaId={propostaSelecionada.id}
-          numeroProposta={propostaSelecionada.numero}
-          clienteNome={propostaSelecionada.clienteNome}
-          valorTotal={
-            (propostaSelecionada.valorFinalManual ?? 0) > 0
-              ? (propostaSelecionada.valorFinalManual as number)
-              : (calcPrecificacao(propostaSelecionada).valorFinal || 0)
-          }
-          onGerado={() => void syncComercialState(propostaSelecionada.id)}
-        />
-      )}
+      <AprovarPropostaDialog
+        proposta={propostaSelecionada}
+        open={aprovarOpen}
+        onOpenChange={setAprovarOpen}
+        onAprovado={() => void syncComercialState(propostaSelecionada?.id ?? null)}
+      />
     </>
   );
 }

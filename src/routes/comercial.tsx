@@ -955,14 +955,14 @@ function ContratosTab({
       <EnterpriseRecordToolbar
         entityType="contratos"
         selectedIds={[]}
-        availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
+        availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada (use a aba Propostas).");
           else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b). Use 'Retornar para Orçamentos' na linha.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
           else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");

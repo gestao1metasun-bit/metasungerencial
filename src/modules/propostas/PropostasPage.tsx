@@ -549,7 +549,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             { key: "reprovar_proposta",    label: "Reprovar",           group: "Propostas", destructive: true, requerMotivo: true },
             { key: "duplicar_proposta",    label: "Duplicar",           group: "Propostas" },
             { key: "gerar_contrato",       label: "Gerar Contrato",     group: "Propostas" },
-            { key: "enviar_assinar",       label: "Enviar Assinatura",  group: "Propostas" },
             // ▼ Comercial
             { key: "alterar_consultor",    label: "Alterar Consultor",  group: "Comercial", permiteLote: true, requerSelecao: 1 },
             { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
@@ -578,17 +577,17 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                 toast.error(e?.message ?? "Falha ao marcar vencidas.");
               }
             } else if (key === "atualizar_lista") {
+              await refreshPropostas();
               toast.info("Lista atualizada.");
             } else if (key === "duplicar_proposta") {
-              toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.3.c).");
+              const p = getPropostaAtiva();
+              if (p) duplicarProposta(p);
             } else if (key === "aprovar_proposta") {
               await executarAprovar();
             } else if (key === "gerar_contrato") {
-              await executarGerarContrato();
+              executarGerarContrato();
             } else if (key === "reprovar_proposta") {
               await executarReprovar();
-            } else if (key === "enviar_assinar") {
-              await executarEnviarAssinatura();
             } else if (key.startsWith("alterar_")) {
               toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
             } else if (key.startsWith("rel_")) {
@@ -596,18 +595,43 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           }}
           onAction={(a) => {
-            if (a === "novo") novaProposta();
-            else if (a === "editar" && vendoId) toast.info("Abra a proposta para editar.");
-            else if (a === "duplicar") toast.info("Duplicar: selecione uma proposta na linha (chega em D27.COM.3.c).");
-            else if (a === "atualizar") toast.info("Lista de propostas atualizada.");
-            else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.c.");
-            else if (a === "imprimir" && vendoId) toast.info("Use o botão Imprimir dentro da proposta.");
-            else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
-            else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
-            else if (a === "historico" || a === "auditoria") toast.info("Histórico universal está em /auditoria (D24).");
-            else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
-            else if (a === "colunas") toast.info("Use o botão Colunas na lista abaixo.");
-            else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
+            if (a === "novo") {
+              novaProposta();
+            } else if (a === "editar") {
+              const p = getPropostaAtiva();
+              if (p) setEditando(p);
+            } else if (a === "duplicar") {
+              const p = getPropostaAtiva();
+              if (p) duplicarProposta(p);
+            } else if (a === "excluir") {
+              const p = getPropostaAtiva();
+              if (p) excluirProposta(p);
+            } else if (a === "atualizar") {
+              void refreshPropostas();
+              toast.info("Lista de propostas atualizada.");
+            } else if (a === "exportar") {
+              toast.info("Exportação CSV chega em D27.COM.3.c.");
+            } else if (a === "imprimir") {
+              const p = getPropostaAtiva();
+              if (p) setVendoId(p.id);
+            } else if (a === "enviar") {
+              toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
+            } else if (a === "anexos") {
+              const p = getPropostaAtiva();
+              if (p) setAnexosOpen(true);
+            } else if (a === "historico" || a === "auditoria") {
+              toast.info("Histórico universal está em /auditoria (D24).");
+            } else if (a === "favoritos") {
+              toast.info("Favoritos por usuário chegam em D27.COM.5.");
+            } else if (a === "colunas") {
+              const btn = document.querySelector<HTMLButtonElement>("[data-propostas-colunas]");
+              if (btn) { btn.scrollIntoView({ behavior: "smooth", block: "center" }); btn.click(); }
+              else toast.info("Use o botão Colunas na lista abaixo.");
+            } else if (a === "filtroAvancado") {
+              const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
+              if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); }
+              else toast.info("Use a busca/filtro da lista abaixo.");
+            }
           }}
           statusActions={ribbonRmComercial(ribbonState)}
           layoutBar={layoutBarRm()}
@@ -642,6 +666,34 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       )}
       {propostaVisualizada && (
         <PropostaImpressao proposta={propostaVisualizada} onClose={() => setVendoId(null)} />
+      )}
+
+      {propostaSelecionada && (
+        <AttachmentDialog
+          open={anexosOpen}
+          onOpenChange={setAnexosOpen}
+          entidade="propostas"
+          entidadeId={propostaSelecionada.id}
+          titulo={`Anexos · Proposta ${propostaSelecionada.numero}`}
+          descricao={propostaSelecionada.clienteNome}
+          categoriaPadrao="orcamento"
+        />
+      )}
+
+      {propostaSelecionada && (
+        <GerarContratoDialog
+          open={gerarContratoOpen}
+          onOpenChange={setGerarContratoOpen}
+          propostaId={propostaSelecionada.id}
+          numeroProposta={propostaSelecionada.numero}
+          clienteNome={propostaSelecionada.clienteNome}
+          valorTotal={
+            (propostaSelecionada.valorFinalManual ?? 0) > 0
+              ? (propostaSelecionada.valorFinalManual as number)
+              : (_calcPreco(propostaSelecionada).valorFinal || 0)
+          }
+          onGerado={() => void syncComercialState(propostaSelecionada.id)}
+        />
       )}
     </>
   );

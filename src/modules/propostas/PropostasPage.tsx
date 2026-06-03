@@ -464,10 +464,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         reprovar: { disabled: true, disabledReason: motivo },
         gerarContrato: { disabled: true, disabledReason: motivo },
         gerarAditivo: { disabled: true, disabledReason: motivo },
-        enviarEngenharia: { disabled: true, disabledReason: motivo },
         enviarFinanciamento: { disabled: true, disabledReason: motivo },
-        gerarComissao: { disabled: true, disabledReason: motivo },
-        enviarAssinatura: { disabled: true, disabledReason: motivo },
         cancelar: { disabled: true, disabledReason: motivo },
         reabrir: { disabled: true, disabledReason: motivo },
       };
@@ -489,7 +486,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         disabledReason: proposta.status === "RECUSADA" ? "A proposta já está reprovada." : proposta.status === "CANCELADA" ? "Reabra a proposta antes de reprovar." : undefined,
       },
       gerarContrato: {
-        onClick: () => void executarGerarContrato(),
+        onClick: () => executarGerarContrato(),
         disabled: isBusy || possuiContrato,
         disabledReason: possuiContrato ? "Esta proposta já possui contrato gerado." : undefined,
       },
@@ -498,25 +495,10 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         disabled: isBusy || !podeGerarAditivo,
         disabledReason: !possuiContrato ? "Gere o contrato antes de criar aditivo." : proposta.status !== "APROVADA" ? "Aprove o contrato antes de criar aditivo." : undefined,
       },
-      enviarEngenharia: {
-        onClick: () => void executarEnviarEngenharia(),
-        disabled: isBusy || ["CANCELADA", "RECUSADA"].includes(proposta.status),
-        disabledReason: proposta.status === "CANCELADA" ? "Reabra a proposta antes de enviar à Engenharia." : proposta.status === "RECUSADA" ? "Reabra a proposta antes de enviar à Engenharia." : undefined,
-      },
       enviarFinanciamento: {
         onClick: () => void executarEnviarFinanciamento(),
         disabled: isBusy || proposta.possuiFinanciamento !== true,
         disabledReason: proposta.possuiFinanciamento !== true ? "Esta proposta não possui financiamento marcado." : undefined,
-      },
-      gerarComissao: {
-        onClick: () => void executarGerarComissao(),
-        disabled: isBusy || !possuiContrato,
-        disabledReason: !possuiContrato ? "Gere o contrato antes de criar a comissão." : undefined,
-      },
-      enviarAssinatura: {
-        onClick: () => void executarEnviarAssinatura(),
-        disabled: isBusy || proposta.status === "CANCELADA",
-        disabledReason: proposta.status === "CANCELADA" ? "Reabra a proposta antes de enviar para assinatura." : undefined,
       },
       cancelar: {
         onClick: () => void executarCancelar(),

@@ -70,7 +70,7 @@ import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
 import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
 import { GerarContratoDialog } from "./components/GerarContratoDialog";
-import { calcPrecificacao as _calcPreco } from "@/modules/propostas/store";
+
 
 export { PropostasPage, CadastrosFV };
 

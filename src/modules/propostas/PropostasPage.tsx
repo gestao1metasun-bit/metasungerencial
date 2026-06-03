@@ -258,6 +258,28 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
+  // D27.COM.3.b — RPCs oficiais (Aprovar / Gerar Contrato / Enviar Eng / Enviar Fin / Comissão)
+  const aprovar = useAprovarProposta();
+  const gerarContrato = useGerarContratoDaProposta();
+  const enviarEng = useEnviarContratoEngenharia();
+  const enviarFin = useEnviarContratoFinanciamento();
+  const gerarComissao = useGerarComissaoDeContrato();
+
+  function getPropostaIdAtivo(): string | null {
+    if (vendoId) return vendoId;
+    toast.error("Selecione uma proposta primeiro (clique no olho 👁 na lista).");
+    return null;
+  }
+  function getContratoIdAtivo(): string | null {
+    const p = propostaVisualizada;
+    const cid = p?.contratoGeradoId;
+    if (!cid) {
+      toast.error("Esta proposta ainda não tem contrato gerado. Use 'Gerar Contrato' primeiro.");
+      return null;
+    }
+    return cid;
+  }
+
   const cidadesAll = useCidadesFV();
   function novaProposta(preset?: Partial<PropostaFV>) {
     const numero = proximoNumeroProposta(propostas);

@@ -654,7 +654,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                 const linhasCsv = linhas.map((p) => {
                   const pr = calcPrecificacao(p);
                   return [
-                    p.numero, p.status, p.cliente?.nome ?? "", p.consultor ?? "",
+                    p.numero, p.status, p.clienteNome ?? "", p.consultor ?? "",
                     p.cidade ?? "", (p as any).uf ?? "",
                     (p as any).potenciaKwp ?? (p as any).potencia ?? "",
                     (p as any).modulos?.length ?? (p as any).qtdModulos ?? "",

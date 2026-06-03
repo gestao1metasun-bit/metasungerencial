@@ -1709,7 +1709,7 @@ function TabelaView({
             })}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setOrder(TABELA_DEFAULT_ORDER); setHidden(new Set()); setWidths(Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>); }}>
+            <Button variant="outline" onClick={() => { setOrder(TABELA_DEFAULT_ORDER); setHidden(new Set(TABELA_DEFAULT_HIDDEN)); setWidths(Object.fromEntries(TABELA_COLS.map((c) => [c.key, c.defaultWidth])) as Record<TabelaColKey, number>); }}>
               Restaurar padrão
             </Button>
             <Button onClick={() => setMgrOpen(false)}>Fechar</Button>

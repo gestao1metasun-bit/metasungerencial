@@ -678,11 +678,18 @@ export function EnterpriseRecordToolbar({
     return <div className={className}>{row1}</div>;
   }
 
+  // Quando há row2 (status) E row1b (secundário), juntar numa única faixa.
+  const row2plus1b = row2 && row1b ? (
+    <div className="flex items-stretch border-x border-slate-200 bg-slate-50">
+      <div className="flex-shrink-0">{row2}</div>
+      <div className="flex-1 min-w-0 border-l border-slate-200">{row1b}</div>
+    </div>
+  ) : null;
+
   return (
     <div className={cn("flex flex-col", className)}>
       {row1}
-      {row1b}
-      {row2}
+      {row2plus1b ?? (<>{row1b}{row2}</>)}
       {row3}
     </div>
   );

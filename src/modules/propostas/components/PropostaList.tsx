@@ -1335,30 +1335,47 @@ function KanbanView({
 
 // D26.1.4 — coluna "Ações/Opções" removida. Toda ação opera pela
 // Barra Operacional Enterprise (acima do grid); clicar na linha abre o lead.
-type TabelaColKey = "cliente" | "consultor" | "cidade" | "criado" | "aprovadoEm" | "diasCriacao" | "diasStatus" | "aberto" | "assinados" | "modulos" | "potencia" | "inversores" | "valor" | "status" | "dias";
+type TabelaColKey =
+  | "cliente" | "tipoPessoa" | "consultor" | "cidade" | "bairro"
+  | "criado" | "aprovadoEm" | "diasCriacao" | "diasStatus"
+  | "aberto" | "assinados"
+  | "consumoKwh" | "modulos" | "potencia" | "potenciaKwp" | "inversores"
+  | "valor" | "valorKwp"
+  | "status" | "dias";
 type TabelaColDef = { key: TabelaColKey; label: string; align?: "right" | "center"; defaultWidth: number };
 
 const TABELA_COLS: TabelaColDef[] = [
-  { key: "criado",       label: "Criado em",       defaultWidth: 120 },
-  { key: "aprovadoEm",   label: "Aprovado em",     defaultWidth: 120 },
-  { key: "diasCriacao",  label: "Dias da criação", align: "right", defaultWidth: 110 },
-  { key: "diasStatus",   label: "Dias no status",  align: "right", defaultWidth: 110 },
-  { key: "cliente",      label: "Cliente",         defaultWidth: 240 },
-  { key: "consultor",    label: "Consultor",       defaultWidth: 160 },
-  { key: "cidade",       label: "Cidade",          defaultWidth: 160 },
-  { key: "aberto",       label: "Em aberto",       align: "right", defaultWidth: 110 },
-  { key: "assinados",    label: "Assinados",       align: "right", defaultWidth: 110 },
-  { key: "modulos",      label: "Módulos",         align: "right", defaultWidth: 100 },
-  { key: "potencia",     label: "Potência (Wp)",   align: "right", defaultWidth: 120 },
-  { key: "inversores",   label: "Inversores",      defaultWidth: 200 },
-  { key: "valor",        label: "Valor (última)",  align: "right", defaultWidth: 150 },
-  { key: "status",       label: "Status",          defaultWidth: 130 },
-  { key: "dias",         label: "Dias",            defaultWidth: 80 },
+  { key: "criado",       label: "Criado em",         defaultWidth: 110 },
+  { key: "diasCriacao",  label: "Dias da criação",   align: "right", defaultWidth: 120 },
+  { key: "diasStatus",   label: "Dias no status",    align: "right", defaultWidth: 120 },
+  { key: "cliente",      label: "Cliente",           defaultWidth: 220 },
+  { key: "tipoPessoa",   label: "Tipo",              defaultWidth: 70 },
+  { key: "consultor",    label: "Consultor",         defaultWidth: 150 },
+  { key: "cidade",       label: "Cidade",            defaultWidth: 150 },
+  { key: "bairro",       label: "Bairro",            defaultWidth: 140 },
+  { key: "consumoKwh",   label: "Consumo (kWh)",     align: "right", defaultWidth: 120 },
+  { key: "modulos",      label: "Módulos",           align: "right", defaultWidth: 90 },
+  { key: "potencia",     label: "Pot. módulo (Wp)",  align: "right", defaultWidth: 130 },
+  { key: "potenciaKwp",  label: "Potência (kWp)",    align: "right", defaultWidth: 120 },
+  { key: "inversores",   label: "Inversores",        defaultWidth: 190 },
+  { key: "valor",        label: "Valor proposta",    align: "right", defaultWidth: 140 },
+  { key: "valorKwp",     label: "R$/kWp",            align: "right", defaultWidth: 110 },
+  { key: "status",       label: "Status",            defaultWidth: 130 },
+  { key: "aprovadoEm",   label: "Aprovado em",       defaultWidth: 120 },
+  { key: "aberto",       label: "Em aberto",         align: "right", defaultWidth: 100 },
+  { key: "assinados",    label: "Assinados",         align: "right", defaultWidth: 100 },
+  { key: "dias",         label: "Dias (legado)",     defaultWidth: 90 },
 ];
-const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v2";
-const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v2";
-const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
+// v3 — reorganização das colunas e novos defaults visíveis (escopo Comercial → Propostas).
+const TABELA_ORDER_KEY = "ms.fv.propostas.tabela.order.v3";
+const TABELA_WIDTH_KEY = "ms.fv.propostas.tabela.widths.v3";
+const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v3";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
+/** Defaults visíveis = spec da operação. Demais colunas ficam disponíveis no gerenciador. */
+const TABELA_DEFAULT_HIDDEN: TabelaColKey[] = [
+  "tipoPessoa", "bairro", "potencia", "valorKwp",
+  "aprovadoEm", "aberto", "assinados", "dias",
+];
 
 function TabelaView({
   leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,

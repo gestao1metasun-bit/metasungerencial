@@ -431,8 +431,13 @@ type Lead = {
   ultima: PropostaFV;
   primeira: PropostaFV;
   dataPrimeira: string;
+  /** Data em que a última proposta foi aprovada (atualizadoEm da proposta APROVADA). */
+  aprovadoEm?: string;
   valor: number;
+  /** Dias desde a última atividade (status atual). */
   dias: number;
+  /** Dias desde a criação do lead (1ª proposta). */
+  diasCriacao: number;
   bloqueado: boolean;
   status: StatusProposta;
   emAberto: number;

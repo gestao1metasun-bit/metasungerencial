@@ -690,7 +690,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           valorTotal={
             (propostaSelecionada.valorFinalManual ?? 0) > 0
               ? (propostaSelecionada.valorFinalManual as number)
-              : (_calcPreco(propostaSelecionada).valorFinal || 0)
+              : (calcPrecificacao(propostaSelecionada).valorFinal || 0)
           }
           onGerado={() => void syncComercialState(propostaSelecionada.id)}
         />

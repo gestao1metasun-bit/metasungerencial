@@ -25,6 +25,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import {
+  useAprovarProposta,
+  useGerarContratoDaProposta,
+  useEnviarContratoEngenharia,
+  useEnviarContratoFinanciamento,
+  useGerarComissaoDeContrato,
+} from "@/lib/repositories/comercial-processos-repo";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useClientesFull, addClienteFull } from "@/lib/clientes-store";
 import { upsertContrato } from "@/lib/contratos-store";
@@ -251,6 +258,28 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
 
+  // D27.COM.3.b — RPCs oficiais (Aprovar / Gerar Contrato / Enviar Eng / Enviar Fin / Comissão)
+  const aprovar = useAprovarProposta();
+  const gerarContrato = useGerarContratoDaProposta();
+  const enviarEng = useEnviarContratoEngenharia();
+  const enviarFin = useEnviarContratoFinanciamento();
+  const gerarComissao = useGerarComissaoDeContrato();
+
+  function getPropostaIdAtivo(): string | null {
+    if (vendoId) return vendoId;
+    toast.error("Selecione uma proposta primeiro (clique no olho 👁 na lista).");
+    return null;
+  }
+  function getContratoIdAtivo(): string | null {
+    const p = propostaVisualizada;
+    const cid = p?.contratoGeradoId;
+    if (!cid) {
+      toast.error("Esta proposta ainda não tem contrato gerado. Use 'Gerar Contrato' primeiro.");
+      return null;
+    }
+    return cid;
+  }
+
   const cidadesAll = useCidadesFV();
   function novaProposta(preset?: Partial<PropostaFV>) {
     const numero = proximoNumeroProposta(propostas);
@@ -318,15 +347,17 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "atualizar_lista") {
               toast.info("Lista atualizada.");
             } else if (key === "duplicar_proposta") {
-              toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.2b).");
-            } else if (key === "aprovar_proposta" || key === "gerar_contrato") {
-              toast.info("Aprovar/Gerar contrato: use o fluxo dentro da proposta (RPC oficial em D27.COM.2b).");
+              toast.info("Duplicar proposta: use o botão Duplicar na linha (chega em D27.COM.3.c).");
+            } else if (key === "aprovar_proposta") {
+              const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id });
+            } else if (key === "gerar_contrato") {
+              const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id });
             } else if (key === "reprovar_proposta") {
-              toast.info("Reprovar com motivo + workflow chega em D27.COM.2b.");
+              toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c.");
             } else if (key === "enviar_assinar") {
               toast.info("Envio para assinatura digital (Clicksign/Autentique/DocuSign) chega em D27.COM.6.");
             } else if (key.startsWith("alterar_")) {
-              toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.");
+              toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
             } else if (key.startsWith("rel_")) {
               toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
             }
@@ -334,9 +365,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onAction={(a) => {
             if (a === "novo") novaProposta();
             else if (a === "editar" && vendoId) toast.info("Abra a proposta para editar.");
-            else if (a === "duplicar") toast.info("Duplicar: selecione uma proposta na linha (chega em D27.COM.2b).");
+            else if (a === "duplicar") toast.info("Duplicar: selecione uma proposta na linha (chega em D27.COM.3.c).");
             else if (a === "atualizar") toast.info("Lista de propostas atualizada.");
-            else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+            else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.c.");
             else if (a === "imprimir" && vendoId) toast.info("Use o botão Imprimir dentro da proposta.");
             else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
             else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
@@ -346,16 +377,17 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             else if (a === "filtroAvancado") toast.info("Use os filtros da lista abaixo.");
           }}
           statusActions={ribbonRmComercial({
-            aprovar:             () => toast.info("Aprovar proposta: abra-a e use o botão dentro (D27.COM.2b)."),
-            reprovar:            () => toast.info("Reprovar com motivo + workflow chega em D27.COM.2b."),
-            gerarContrato:       () => toast.info("Gerar contrato a partir da proposta (D27.COM.2b)."),
+            // D27.COM.3.b — wires reais (RPCs oficiais SECURITY DEFINER)
+            aprovar:             () => { const id = getPropostaIdAtivo(); if (id) aprovar.mutate({ propostaId: id }); },
+            reprovar:            () => toast.info("Reprovar com motivo + workflow chega em D27.COM.3.c."),
+            gerarContrato:       () => { const id = getPropostaIdAtivo(); if (id) gerarContrato.mutate({ propostaId: id }); },
             gerarAditivo:        () => toast.info("Aditivo só em contrato assinado (aba Aditivos)."),
-            enviarEngenharia:    () => toast.info("Disponível em contratos assinados (rpc_engenharia_libera)."),
-            enviarFinanciamento: () => toast.info("Envio para Financiamentos chega em D27.COM.FIN."),
-            gerarComissao:       () => toast.info("Comissão é gerada na assinatura do contrato (C6)."),
+            enviarEngenharia:    () => { const cid = getContratoIdAtivo(); if (cid) enviarEng.mutate({ contratoId: cid }); },
+            enviarFinanciamento: () => { const cid = getContratoIdAtivo(); if (cid) enviarFin.mutate({ contratoId: cid }); },
+            gerarComissao:       () => { const cid = getContratoIdAtivo(); if (cid) gerarComissao.mutate({ contratoId: cid }); },
             enviarAssinatura:    () => toast.info("Assinatura digital chega em D27.COM.6."),
-            cancelar:            () => toast.info("Cancelar proposta com motivo (D27.COM.2b)."),
-            reabrir:             () => toast.info("Reabrir proposta com motivo (D27.COM.2b)."),
+            cancelar:            () => toast.info("Cancelar proposta com motivo chega em D27.COM.3.c."),
+            reabrir:             () => toast.info("Reabrir proposta com motivo chega em D27.COM.3.c."),
           })}
           layoutBar={layoutBarRm()}
         />

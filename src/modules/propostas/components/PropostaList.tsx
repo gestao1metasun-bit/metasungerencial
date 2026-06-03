@@ -453,7 +453,17 @@ type Lead = {
   assinados: number;
   modulos: number;
   potenciaW: number;
+  /** Potência do sistema em kWp (módulos × Wp / 1000). */
+  potenciaKwp: number;
   inversores: string;
+  /** Consumo médio (kWh/mês) da última proposta. */
+  consumoKwh: number;
+  /** Valor por kWp (R$/kWp) da última proposta. */
+  valorKwp: number;
+  /** Bairro do cliente (última proposta). */
+  bairro?: string;
+  /** PF / PJ da última proposta. */
+  tipoPessoa?: "PF" | "PJ";
   /** Fase pós-aprovação. null = ainda em negociação. */
   fase: FaseContrato;
 };

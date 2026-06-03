@@ -237,7 +237,7 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
     <div className="space-y-3">
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={sel.selectedIds}
         availableActions={["atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         statusActions={ribbonRm()}
         layoutBar={layoutBarRm()}

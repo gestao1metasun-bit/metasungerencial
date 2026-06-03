@@ -896,6 +896,11 @@ function ContratosTab({
     return redigidos.filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [redigidos, busca]);
 
+  const selARedigir = useRowSelection(aRedigir, (c) => c.id);
+  const selRedigidos = useRowSelection(redigidosFiltrados, (c) => c.id);
+
+
+
   const [aberto, setAberto] = useState<Contrato | null>(null);
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
   // Contrato "montado" exibido em pré-visualização ANTES da geração efetiva.

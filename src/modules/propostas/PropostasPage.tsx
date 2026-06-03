@@ -1,6 +1,6 @@
 // Página principal do módulo Propostas Fotovoltaicas.
 // Movida de src/routes/propostas.tsx durante reorganização modular.
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
@@ -259,6 +259,7 @@ function aplicarCidadeNaProposta(p: PropostaFV, c: CidadeFV, _markDefault: boole
 /* =========================== PÁGINA =========================== */
 
 function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
+  const navigate = useNavigate();
   const propostas = usePropostas();
   const [editando, setEditando] = useState<PropostaFV | null>(null);
   const [vendoId, setVendoId] = useState<string | null>(null);
@@ -269,6 +270,30 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
   const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);
   const [candidatasAprovacao, setCandidatasAprovacao] = useState<PropostaFV[]>([]);
+
+  // D17.UI — densidade + preset da tabela (persistidos em LS `ui.*`)
+  const [density, setDensity] = useState<"compact" | "comfortable" | "spacious">(() => {
+    if (typeof window === "undefined") return "compact";
+    const v = window.localStorage.getItem("ui.propostas.density.v1");
+    return v === "comfortable" || v === "spacious" ? v : "compact";
+  });
+  const [layoutPreset, setLayoutPreset] = useState<string>(() => {
+    if (typeof window === "undefined") return "padrao";
+    return window.localStorage.getItem("ui.propostas.preset.v1") || "padrao";
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("ui.propostas.density.v1", density); } catch {}
+  }, [density]);
+  useEffect(() => {
+    try { window.localStorage.setItem("ui.propostas.preset.v1", layoutPreset); } catch {}
+  }, [layoutPreset]);
+  const densityClass =
+    density === "spacious"
+      ? "[&_td]:!py-3 [&_th]:!py-3 text-[13px]"
+      : density === "comfortable"
+        ? "[&_td]:!py-2 [&_th]:!py-2 text-[13px]"
+        : "[&_td]:!py-1 [&_th]:!py-1 text-[12px]";
+
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =
@@ -599,10 +624,29 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "reprovar_proposta") {
               await executarReprovar();
             } else if (key.startsWith("alterar_")) {
-              toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.c.");
+              const campo = key.replace("alterar_", "");
+              const p = getPropostaAtiva();
+              if (!p) return;
+              const novo = window.prompt(`Novo valor para ${campo}:`, "");
+              if (novo === null) return;
+              const valor = novo.trim();
+              if (valor.length < 2) { toast.error("Valor inválido."); return; }
+              try {
+                const patch: any = { ...p, atualizadoEm: new Date().toISOString() };
+                if (campo === "consultor") patch.consultor = valor;
+                else if (campo === "cidade") patch.cidade = valor;
+                else if (campo === "canal") patch.canal = valor;
+                else if (campo === "origem") patch.origem = valor;
+                await upsertProposta(patch);
+                await refreshPropostas();
+                toast.success(`${campo} atualizado.`);
+              } catch (e: any) {
+                toast.error(e?.message ?? `Falha ao alterar ${campo}.`);
+              }
             } else if (key.startsWith("rel_")) {
-              toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
+              navigate({ to: "/analytics/comercial", hash: key.replace("rel_", "") });
             }
+
           }}
           onAction={(a) => {
             if (a === "novo") {
@@ -719,12 +763,29 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               ...ribbonRmComercial(ribbonState),
             ];
           })()}
-          layoutBar={layoutBarRm()}
+          layoutBar={layoutBarRm({
+            density,
+            onDensityChange: (d) => setDensity(d),
+            currentPreset: layoutPreset,
+            presets: [
+              { key: "padrao",      label: "Padrão" },
+              { key: "compacto",    label: "Compacto" },
+              { key: "confortavel", label: "Confortável" },
+              { key: "espacoso",    label: "Espaçoso" },
+            ],
+            onPresetChange: (k) => {
+              setLayoutPreset(k);
+              if (k === "compacto") setDensity("compact");
+              else if (k === "confortavel") setDensity("comfortable");
+              else if (k === "espacoso") setDensity("spacious");
+              else setDensity("compact");
+            },
+          })}
         />
 
       </div>
 
-      <div className="mt-5">
+      <div className={`mt-5 ${densityClass}`}>
         <PropostaList
           propostas={propostas}
           onEditar={setEditando}
@@ -733,6 +794,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onSelecionarUltima={(id) => setSelecionadaId(id)}
         />
       </div>
+
 
       {leadDraft && (
         <LeadModal

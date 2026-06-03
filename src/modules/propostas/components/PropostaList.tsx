@@ -1676,6 +1676,14 @@ export function PropostaList({
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
   const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
+  const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
+
+  // Permite que a pílula "Filtros: Todos" da EnterpriseRecordToolbar (em PropostasPage)
+  // abra este diálogo, já que o estado de filtro vive aqui.
+  useEffect(() => {
+    (window as any).__propostasOpenFilters = () => setFiltrosDialogOpen(true);
+    return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
+  }, []);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();

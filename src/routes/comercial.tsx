@@ -5680,7 +5680,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
       {/* D17.UI Fase 2b — Aditivos: barra Enterprise RM/TOTVS */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={selAditivos.selectedIds}
         availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
         availableProcesses={[
           { key: "novo_aditivo",              label: "Novo aditivo (escolher contrato)", group: "Contratos", requerSelecao: 0 },

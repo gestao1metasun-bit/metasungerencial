@@ -654,7 +654,10 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               novaProposta();
             } else if (a === "editar") {
               const p = getPropostaAtiva();
-              if (p) setEditando(p);
+              if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
+              // Edição inline pela barra = SOMENTE dados do cliente (nome/CPF/endereço/contato).
+              // Para editar a proposta inteira, abrir pelo botão "Visualizar/Editar proposta" da linha.
+              setEditandoCliente(p);
             } else if (a === "duplicar") {
               const p = getPropostaAtiva();
               if (p) duplicarProposta(p);

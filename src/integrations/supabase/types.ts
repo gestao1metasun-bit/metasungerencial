@@ -3229,6 +3229,112 @@ export type Database = {
         }
         Relationships: []
       }
+      financiamentos_pendencias: {
+        Row: {
+          banco_definitivo: string | null
+          banco_sugerido: string | null
+          cliente_id: string | null
+          codigo_externo: string | null
+          contrato_id: string
+          created_at: string
+          criado_por: string | null
+          decidido_em: string | null
+          decidido_por: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          hash_integracao: string | null
+          id: string
+          motivo_decisao: string | null
+          observacao: string | null
+          row_version: number
+          sistema_destino: string | null
+          status: string
+          status_integracao: string
+          updated_at: string
+          valor_contrato: number
+          valor_financiado: number | null
+          vendedor: string | null
+          vendedor_id: string | null
+        }
+        Insert: {
+          banco_definitivo?: string | null
+          banco_sugerido?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          contrato_id: string
+          created_at?: string
+          criado_por?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
+          id?: string
+          motivo_decisao?: string | null
+          observacao?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_financiado?: number | null
+          vendedor?: string | null
+          vendedor_id?: string | null
+        }
+        Update: {
+          banco_definitivo?: string | null
+          banco_sugerido?: string | null
+          cliente_id?: string | null
+          codigo_externo?: string | null
+          contrato_id?: string
+          created_at?: string
+          criado_por?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          hash_integracao?: string | null
+          id?: string
+          motivo_decisao?: string | null
+          observacao?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_financiado?: number | null
+          vendedor?: string | null
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financiamentos_pendencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_pendencias_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_pendencias_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           ativo: boolean
@@ -14447,6 +14553,10 @@ export type Database = {
         Args: { p_comissao_id: string; p_motivo: string }
         Returns: string
       }
+      rpc_comissao_gerar_de_contrato: {
+        Args: { p_contrato_id: string }
+        Returns: string
+      }
       rpc_comissao_liberar: {
         Args: { p_comissao_id: string; p_motivo?: string }
         Returns: string
@@ -14467,6 +14577,14 @@ export type Database = {
           p_row_version?: number
           p_user_agent?: string
         }
+        Returns: string
+      }
+      rpc_contrato_enviar_engenharia: {
+        Args: { p_contrato_id: string }
+        Returns: string
+      }
+      rpc_contrato_enviar_financiamento: {
+        Args: { p_contrato_id: string; p_observacao?: string }
         Returns: string
       }
       rpc_contrato_marcar_engenharia_liberada: {
@@ -14835,9 +14953,17 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_proposta_aprovar: {
+        Args: { p_observacao?: string; p_proposta_id: string }
+        Returns: string
+      }
       rpc_proposta_decidir_aprovacao_excecao: {
         Args: { p_aprovacao_id: string; p_decisao: string; p_motivo: string }
         Returns: undefined
+      }
+      rpc_proposta_gerar_contrato: {
+        Args: { p_proposta_id: string }
+        Returns: string
       }
       rpc_proposta_marcar_vencidas: { Args: never; Returns: number }
       rpc_proposta_renovar_validade: {

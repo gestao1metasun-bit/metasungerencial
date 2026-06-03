@@ -5647,7 +5647,7 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
   const aditivos = useAditivos();
   const podeGerenciar = usePodeGerenciarAditivos();
   const { user } = useAuthCurrent();
-  const [filtro, setFiltro] = useState<"todos" | "pendentes" | "aprovados">("pendentes");
+  const [filtro, setFiltro] = useState<"todos" | "pendentes" | "aprovados">("todos");
   const [busca, setBusca] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -5706,7 +5706,14 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Aditivos atualizados.");
+          if (a === "novo") {
+            const ids = selAditivos.selectedIds;
+            if (ids.length === 1) { setOpenId(ids[0]); return; }
+            if (ids.length > 1) { toast.info("Selecione apenas 1 contrato para adicionar aditivo."); return; }
+            if (lista.length === 1) { setOpenId(lista[0].id); return; }
+            toast.info("Selecione um contrato na tabela para adicionar aditivo.");
+          }
+          else if (a === "atualizar") toast.info("Aditivos atualizados.");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
           else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
           else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");

@@ -544,7 +544,19 @@ function buildLeads(props: PropostaFV[], contratos: ContratoFull[]): Lead[] {
       assinados,
       modulos: Number(ultima.modulosQtd) || 0,
       potenciaW: Number(ultima.moduloPotenciaWp) || 0,
+      potenciaKwp: (() => {
+        try { return Number(calcDimensionamento(ultima).potenciaFinalKwp) || 0; }
+        catch { return (Number(ultima.modulosQtd) || 0) * (Number(ultima.moduloPotenciaWp) || 0) / 1000; }
+      })(),
       inversores: inversoresStr,
+      consumoKwh: Number((ultima as any).consumoMedio) || 0,
+      valorKwp: (() => {
+        const v = calcPrecificacao(ultima).valorFinal || 0;
+        const kwp = (Number(ultima.modulosQtd) || 0) * (Number(ultima.moduloPotenciaWp) || 0) / 1000;
+        return kwp > 0 ? v / kwp : 0;
+      })(),
+      bairro: (ultima as any).clienteBairro || undefined,
+      tipoPessoa: (ultima as any).tipoPessoa,
       fase,
     });
   }

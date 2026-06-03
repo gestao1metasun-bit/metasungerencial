@@ -851,12 +851,12 @@ function LeadDetail({
                   {lead.propostas.map((p) => {
                     const v = calcPrecificacao(p).valorFinal || 0;
                     const ehRascunho = p.status === "RASCUNHO";
-                    const podeEditar = ehRascunho && !lead.bloqueado;
+                    // Regra: proposta NÃO pode ser editada depois de criada.
+                    // Para alterar valores/condições, o operador gera uma nova proposta no mesmo card.
                     const podeExcluir = ehRascunho && !lead.bloqueado;
                     const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
                     const podeReativar = p.status === "CANCELADA";
                     const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
-                    if (podeEditar) actions.push({ kind: "editar", label: "Editar rascunho" });
                     if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
                     if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
                     if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });

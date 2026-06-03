@@ -403,6 +403,14 @@ function dotColorFor(dias: number): string {
   if (dias <= 15) return "bg-warning";
   return "bg-destructive";
 }
+/** Cor de pílula para "Dias da criação" / "Dias no status":
+ *  verde 0-7, amarelo 8-15, laranja 16-30, vermelho >30. */
+function diasBadgeClass(dias: number): string {
+  if (dias <= 7) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300";
+  if (dias <= 15) return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+  if (dias <= 30) return "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300";
+  return "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300";
+}
 /** Formata YYYY-MM-DD → DD-MM-YYYY. Aceita ISO completos também. */
 function fmtData(iso?: string): string {
   if (!iso) return "—";

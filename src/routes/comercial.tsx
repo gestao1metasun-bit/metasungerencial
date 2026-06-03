@@ -1084,7 +1084,8 @@ function ContratosTab({
                 }
                 rowActions.push({ kind: "cancelar", label: "Retornar para Orçamentos", icon: Undo2, overflow: true });
                 return (
-                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined}>
+                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined} data-state={selARedigir.isSelected(c.id) ? "selected" : undefined}>
+                    <TableCell className="w-8"><Checkbox checked={selARedigir.isSelected(c.id)} onCheckedChange={() => selARedigir.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                     <TableCell className="font-medium">{c.cliente}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>

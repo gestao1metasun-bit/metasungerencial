@@ -349,17 +349,54 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
   },
 };
 
+/** Pub/sub interno para sincronizar todas as instâncias de useTabFromHash
+ *  na mesma rota imediatamente. `history.replaceState` não dispara
+ *  `hashchange` nem invalida `useRouterState`, então sem isto o ribbon
+ *  e a página ficavam 1 clique atrasados um do outro (bug D26.UX). */
+const tabListeners = new Set<(routePath: string, value: string) => void>();
+function emitTabChange(routePath: string, value: string) {
+  tabListeners.forEach((fn) => {
+    try { fn(routePath, value); } catch { /* noop */ }
+  });
+}
+
 /** Reads tab from location hash like #tab=foo and keeps it reactive */
 export function useTabFromHash(routePath: string): [string, (v: string) => void] {
   const cfg = ROUTE_TABS[routePath];
   const fallback = cfg?.default ?? "";
   const hash = useRouterState({ select: (s) => s.location.hash });
-  const [val, setVal] = useState<string>(fallback);
+  const [val, setVal] = useState<string>(() => {
+    if (typeof window === "undefined") return fallback;
+    return parseHash(window.location.hash) || fallback;
+  });
 
   useEffect(() => {
     const browserHash = typeof window !== "undefined" ? window.location.hash : "";
     setVal(parseHash(browserHash || hash) || fallback);
   }, [hash, fallback]);
+
+  // D26.UX — sincroniza instâncias irmãs (ribbon + página) sem aguardar
+  // o próximo tick do router; também reage a hashchange real (back/forward).
+  useEffect(() => {
+    const listener = (rp: string, v: string) => {
+      if (rp === routePath) setVal(v || fallback);
+    };
+    tabListeners.add(listener);
+    const onHash = () => {
+      if (typeof window !== "undefined") {
+        setVal(parseHash(window.location.hash) || fallback);
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("hashchange", onHash);
+    }
+    return () => {
+      tabListeners.delete(listener);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("hashchange", onHash);
+      }
+    };
+  }, [routePath, fallback]);
 
   const update = (v: string) => {
     setVal(v);
@@ -367,6 +404,7 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
     const url = new URL(window.location.href);
     url.hash = `tab=${v}`;
     window.history.replaceState(null, "", url.toString());
+    emitTabChange(routePath, v);
   };
 
   return [val, update];

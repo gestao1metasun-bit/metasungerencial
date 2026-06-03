@@ -1688,12 +1688,6 @@ export function PropostaList({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Leads</div><div className="text-2xl font-semibold">{totais.leads}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Enviadas</div><div className="text-2xl font-semibold">{totais.enviadas}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Aprovadas</div><div className="text-2xl font-semibold text-success">{totais.aprovadas}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">Valor aprovado</div><div className="text-2xl font-semibold">{fmtBRL(totais.valorTotalAprovado)}</div></Card>
-      </div>
 
       <Card className="flex flex-wrap items-center gap-2 p-2">
         <div className="flex items-center gap-1 rounded-md border bg-muted/40 p-0.5">

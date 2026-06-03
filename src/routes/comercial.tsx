@@ -5661,11 +5661,6 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         layoutBar={layoutBarRm()}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <StatCard label="Pendentes" value={pendentesCount} icon={AlertTriangle} tone="warning" />
-        <StatCard label="Aprovados" value={aprovadosCount} icon={CheckCircle2} tone="success" />
-        <StatCard label="Reprovados" value={reprovadosCount} icon={XCircle} tone="destructive" />
-      </div>
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">

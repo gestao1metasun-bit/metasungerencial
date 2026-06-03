@@ -33,8 +33,11 @@ import {
   RowActions,
   useColumnPrefs,
   EntityTimeline,
+  BulkActionBar,
+  useRowSelection,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ribbonRmAprovacao, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import {
   useLiberarComissao,
@@ -214,11 +217,13 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
     else if (kind === "visualizar") irPara("contratos");
   };
 
+  const sel = useRowSelection(linhas, (r) => r.id);
+
   return (
     <div className="space-y-3">
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={sel.selectedIds}
         availableActions={["editar", "atualizar", "anexos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico"]}
         statusActions={ribbonRmAprovacao()}
         layoutBar={layoutBarRm()}
@@ -290,6 +295,13 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
         <Table>
           <TableHeader>
             <TableRow className="[&_th]:py-1.5 [&_th]:text-[11.5px]">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={sel.allChecked ? true : sel.someChecked ? "indeterminate" : false}
+                  onCheckedChange={sel.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               {prefs.visibleKeys.map((k) => {
                 if (k === "valor" || k === "base" || k === "percentual") return <TableHead key={k} className="text-right">{COLS.find((c) => c.key === k)?.label}</TableHead>;
                 if (k === "acoes") return <TableHead key={k} className="text-right w-[150px]">Ações</TableHead>;
@@ -300,9 +312,9 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={prefs.visibleKeys.length} className="text-center py-6 text-sm text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={prefs.visibleKeys.length + 1} className="text-center py-6 text-sm text-muted-foreground">Carregando…</TableCell></TableRow>
             ) : linhas.length === 0 ? (
-              <TableRow><TableCell colSpan={prefs.visibleKeys.length} className="text-center py-8 text-sm text-muted-foreground">Nenhuma comissão para os filtros aplicados.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={prefs.visibleKeys.length + 1} className="text-center py-8 text-sm text-muted-foreground">Nenhuma comissão para os filtros aplicados.</TableCell></TableRow>
             ) : linhas.map((r) => {
               const canLiberar = r.status === "PREVISTA";
               const canPagar = r.status === "LIBERADA";
@@ -310,7 +322,8 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
               const canEstornar = r.status === "PAGA";
               const canEditarPct = r.status === "PREVISTA";
               return (
-                <TableRow key={r.id} className="[&_td]:py-1 [&_td]:text-[12.5px]">
+                <TableRow key={r.id} className="[&_td]:py-1 [&_td]:text-[12.5px]" data-state={sel.isSelected(r.id) ? "selected" : undefined}>
+                  <TableCell className="w-8"><Checkbox checked={sel.isSelected(r.id)} onCheckedChange={() => sel.toggle(r.id)} aria-label={`Selecionar comissão ${r.id}`} /></TableCell>
                   {showCol("status") && (
                     <TableCell>
                       <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_TONE[r.status]}`}>{r.status}</span>
@@ -348,6 +361,18 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
           </TableBody>
         </Table>
       </Card>
+
+      <BulkActionBar
+        count={sel.count}
+        label="comissão(ões) selecionada(s)"
+        onClear={sel.clear}
+        actions={[
+          { key: "liberar", label: "Liberar", tone: "verde", onClick: () => toast.info("Liberação em lote chega em Comercial C6.2.") },
+          { key: "pagar", label: "Marcar pagas", tone: "verde", onClick: () => toast.info("Baixa em lote chega em Comercial C6.2.") },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV chega em D17.UI.3.") },
+        ]}
+      />
+
 
       {/* Diálogo motivo (liberar/pagar/cancelar/estornar) */}
       <Dialog open={dlg.kind === "motivo"} onOpenChange={(v) => { if (!v) setDlg({ kind: null }); }}>

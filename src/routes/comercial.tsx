@@ -33,7 +33,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProjetosContratoSupabaseTab } from "@/components/app/contratos/ProjetosContratoSupabaseTab";
 import { AttachmentDialog } from "@/components/app/enterprise/AttachmentDialog";
-import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer, ribbonRmComercial, layoutBarRm, type EnterpriseProcessItem } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, RowActions, ModuloHistoricoDrawer, ribbonRmComercial, layoutBarRm, BulkActionBar, useRowSelection, type EnterpriseProcessItem } from "@/components/app/enterprise";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CarteiraTab } from "@/modules/comercial/CarteiraTab";
 import { ComissoesTab } from "@/modules/comercial/ComissoesTab";
 import { useTabFromHash } from "@/lib/route-tabs";
@@ -375,6 +376,7 @@ function ContratoAssinadoTab({
       .filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [contratos, busca]);
   const valorTotal = assinados.reduce((s, c) => s + valorContrato(c), 0);
+  const sel = useRowSelection(assinados, (c) => c.id);
 
   const retornar = (c: Contrato) => {
     if (!isAdmin) {
@@ -397,7 +399,7 @@ function ContratoAssinadoTab({
       {/* D17.UI Fase 1 — Comercial: barra Enterprise RM/TOTVS oficial */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={sel.selectedIds}
         availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         availableProcesses={[
           // ▼ Contratos (sem "novo_contrato": contrato nasce da proposta aprovada)
@@ -508,6 +510,13 @@ function ContratoAssinadoTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={sel.allChecked ? true : sel.someChecked ? "indeterminate" : false}
+                  onCheckedChange={sel.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -522,12 +531,24 @@ function ContratoAssinadoTab({
             </TableRow></TableHeader>
             <TableBody>
               {assinados.map((c) => (
-                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} />
+                <ContratoAssinadoRow key={c.id} contrato={c} vendedoresList={vendedoresList} onImprimir={setImprimir} onRetornar={retornar} selected={sel.isSelected(c.id)} onToggleSelect={() => sel.toggle(c.id)} />
               ))}
             </TableBody>
           </Table>
         )}
       </Card>
+      <BulkActionBar
+        count={sel.count}
+        label="contrato(s) selecionado(s)"
+        onClear={sel.clear}
+        actions={[
+          { key: "enviar_eng", label: "Enviar Engenharia", tone: "azul", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
+          { key: "enviar_fin", label: "Enviar Financeiro", tone: "verde", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
+          { key: "imprimir", label: "Imprimir", tone: "indigo", onClick: () => { window.print(); } },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       {imprimir && <ContratoImpressao contrato={imprimir} onClose={() => setImprimir(null)} />}
     </div>
@@ -535,8 +556,8 @@ function ContratoAssinadoTab({
 }
 
 function ContratoAssinadoRow({
-  contrato: c, vendedoresList, onImprimir, onRetornar,
-}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void }) {
+  contrato: c, vendedoresList, onImprimir, onRetornar, selected, onToggleSelect,
+}: { contrato: Contrato; vendedoresList: Vendedor[]; onImprimir: (c: Contrato) => void; onRetornar: (c: Contrato) => void; selected?: boolean; onToggleSelect?: () => void }) {
   const aprovado = c.assinadoAprovado === true;
   const projetos = c.projetos ?? [];
   const total = projetos.length;
@@ -563,7 +584,10 @@ function ContratoAssinadoRow({
       descricao={c.cliente ? `Cliente: ${c.cliente}` : undefined}
       categoriaPadrao="contrato"
     />
-    <TableRow>
+    <TableRow data-state={selected ? "selected" : undefined}>
+      <TableCell className="w-8">
+        <Checkbox checked={!!selected} onCheckedChange={onToggleSelect} aria-label={`Selecionar contrato ${c.id}`} />
+      </TableCell>
       <TableCell className="font-mono text-xs font-semibold">{fmtContratoId(c.id)}</TableCell>
       <TableCell className="font-medium">{c.cliente}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -872,6 +896,11 @@ function ContratosTab({
     return redigidos.filter((c) => !q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || (c.propostaNumero ?? "").toLowerCase().includes(q));
   }, [redigidos, busca]);
 
+  const selARedigir = useRowSelection(aRedigir, (c) => c.id);
+  const selRedigidos = useRowSelection(redigidosFiltrados, (c) => c.id);
+
+
+
   const [aberto, setAberto] = useState<Contrato | null>(null);
   const [imprimir, setImprimir] = useState<Contrato | null>(null);
   // Contrato "montado" exibido em pré-visualização ANTES da geração efetiva.
@@ -954,7 +983,7 @@ function ContratosTab({
       {/* D17.UI Fase 2 — Contratos (geração/assinatura): toolbar Enterprise RM */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={[...selARedigir.selectedIds, ...selRedigidos.selectedIds]}
         availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
@@ -1001,6 +1030,13 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selARedigir.allChecked ? true : selARedigir.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selARedigir.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -1048,7 +1084,8 @@ function ContratosTab({
                 }
                 rowActions.push({ kind: "cancelar", label: "Retornar para Orçamentos", icon: Undo2, overflow: true });
                 return (
-                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined}>
+                  <TableRow key={c.id} className={!liberado || !dadosOk ? "bg-warning/5" : undefined} data-state={selARedigir.isSelected(c.id) ? "selected" : undefined}>
+                    <TableCell className="w-8"><Checkbox checked={selARedigir.isSelected(c.id)} onCheckedChange={() => selARedigir.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                     <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                     <TableCell className="font-medium">{c.cliente}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -1118,6 +1155,13 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selRedigidos.allChecked ? true : selRedigidos.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selRedigidos.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -1127,7 +1171,8 @@ function ContratosTab({
             </TableRow></TableHeader>
             <TableBody>
               {redigidosFiltrados.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} data-state={selRedigidos.isSelected(c.id) ? "selected" : undefined}>
+                  <TableCell className="w-8"><Checkbox checked={selRedigidos.isSelected(c.id)} onCheckedChange={() => selRedigidos.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -1155,6 +1200,18 @@ function ContratosTab({
         )}
       </Card>
       )}
+
+      <BulkActionBar
+        count={selARedigir.count + selRedigidos.count}
+        label="contrato(s) selecionado(s)"
+        onClear={() => { selARedigir.clear(); selRedigidos.clear(); }}
+        actions={[
+          { key: "liberar", label: "Liberar para gerar", tone: "verde", onClick: () => { toast.info(`${selARedigir.count + selRedigidos.count} contrato(s) — liberação em lote chega em D27.COM.`); selARedigir.clear(); selRedigidos.clear(); } },
+          { key: "retornar", label: "Retornar para Orçamentos", tone: "ambar", onClick: () => { toast.info("Retorno em lote exige motivo + workflow (chega em D27.COM)."); } },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       {completarDados && (
         <CompletarDadosClienteDialog
@@ -5615,13 +5672,15 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
   const reprovadosCount = aditivos.filter((a) => a.status === "REPROVADO").length;
 
   const contratoAberto = openId ? contratos.find((c) => c.id === openId) ?? null : null;
+  const selAditivos = useRowSelection(lista, (c) => c.id);
+
 
   return (
     <div className="space-y-4">
       {/* D17.UI Fase 2b — Aditivos: barra Enterprise RM/TOTVS */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={selAditivos.selectedIds}
         availableActions={["novo", "editar", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "historico", "auditoria"]}
         availableProcesses={[
           { key: "novo_aditivo",              label: "Novo aditivo (escolher contrato)", group: "Contratos", requerSelecao: 0 },
@@ -5682,6 +5741,13 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selAditivos.allChecked ? true : selAditivos.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selAditivos.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead className="text-right">Valor consolidado</TableHead>
@@ -5692,14 +5758,15 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           </TableHeader>
           <TableBody>
             {lista.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Nenhum contrato.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">Nenhum contrato.</TableCell></TableRow>
             )}
             {lista.map((c) => {
               const aDoContrato = aditivos.filter((a) => a.contratoId === c.id);
               const pend = aDoContrato.find(isAditivoPendente);
               const aprov = aDoContrato.filter((a) => a.status === "APROVADO" && !a.oculto).length;
               return (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} data-state={selAditivos.isSelected(c.id) ? "selected" : undefined}>
+                  <TableCell className="w-8"><Checkbox checked={selAditivos.isSelected(c.id)} onCheckedChange={() => selAditivos.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell>{c.cliente}</TableCell>
                   <TableCell className="text-right font-mono">{fmtBRL(c.valor)}</TableCell>
@@ -5728,6 +5795,18 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
           </TableBody>
         </Table>
       </Card>
+
+      <BulkActionBar
+        count={selAditivos.count}
+        label="contrato(s) selecionado(s)"
+        onClear={selAditivos.clear}
+        actions={[
+          { key: "aprovar", label: "Aprovar aditivos", tone: "verde", onClick: () => toast.info("Aprovação em lote chega em D27.COM.AD.") },
+          { key: "gerar_fin", label: "Gerar financeiro", tone: "verde", onClick: () => toast.info("Geração financeira em lote chega em D27.COM.AD.") },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       <Dialog open={!!contratoAberto} onOpenChange={(v) => { if (!v) setOpenId(null); }}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">

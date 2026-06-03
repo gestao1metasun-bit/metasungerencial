@@ -430,7 +430,6 @@ function ContratoAssinadoTab({
         ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
           if (key === "atualizar_lista") toast.info("Contratos atualizados.");
-          else if (key === "novo_contrato") toast.info("Novo contrato nasce de proposta aprovada (use /comercial#tab=orcamentos).");
           else if (key === "editar_contrato") toast.info("Abra o contrato e clique em Editar (chega em D27.COM.2b).");
           else if (key === "gerar_aditivo") toast.info("Gerar aditivo: aba Aditivos (chega em D27.COM.AD).");
           else if (key === "cancelar_contrato" || key === "reabrir_contrato")

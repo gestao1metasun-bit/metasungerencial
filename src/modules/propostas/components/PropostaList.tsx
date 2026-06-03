@@ -872,7 +872,6 @@ function LeadDetail({
                             actions={actions}
                             onAction={(kind) => {
                               if (kind === "visualizar") onVisualizar(p.id);
-                              else if (kind === "editar") { onEditar(p); onClose(); }
                               else if (kind === "aprovar") reativarProposta(p);
                               else if (kind === "cancelar") cancelarProposta(p);
                               else if (kind === "excluir") excluirProposta(p);

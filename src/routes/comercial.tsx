@@ -450,8 +450,8 @@ function ContratoAssinadoTab({
         onSearchChange={setBusca}
         onAction={(a) => {
           if (a === "atualizar") toast.info("Contratos atualizados.");
-          else if (a === "novo") toast.info("Novo contrato nasce de proposta aprovada.");
           else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
+          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b).");
           else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
           else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
           else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");

@@ -1746,6 +1746,7 @@ export function PropostaList({
         <div className="relative min-w-[220px] max-w-md flex-1">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
+            data-propostas-search
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
             placeholder="FILTRAR POR CLIENTE, CONSULTOR OU Nº…"
@@ -1788,11 +1789,11 @@ export function PropostaList({
           </div>
 
           {view === "tabela" ? (
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => setColsTabelaOpen(true)}>
+            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsTabelaOpen(true)}>
               <Columns3 className="h-4 w-4" /> Colunas da Tabela
             </Button>
           ) : (
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
+            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
               <Columns3 className="h-4 w-4" /> Colunas do Kanban
             </Button>
           )}

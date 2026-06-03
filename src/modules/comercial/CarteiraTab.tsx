@@ -30,8 +30,11 @@ import {
   ColumnManager,
   RowActions,
   useColumnPrefs,
+  BulkActionBar,
+  useRowSelection,
   type ColumnDef,
 } from "@/components/app/enterprise";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ribbonRm, layoutBarRm } from "@/components/app/enterprise/rm-ribbon-presets";
 import { useLeads } from "@/modules/leads/store";
 import { usePropostas } from "@/modules/propostas/store";

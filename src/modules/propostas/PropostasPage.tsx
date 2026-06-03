@@ -353,6 +353,23 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       toast.error("Reabra a proposta antes de aprovar.");
       return;
     }
+    // Identidade do lead = leadId → CPF/CNPJ → nome (mesmo critério da lista).
+    const leadKey = (
+      proposta.leadId?.trim() ||
+      proposta.clienteDoc?.trim() ||
+      (proposta.clienteNome || "").trim().toLowerCase() ||
+      proposta.id
+    );
+    const aprovaveis = propostas.filter((p) => {
+      const k = p.leadId?.trim() || p.clienteDoc?.trim() || (p.clienteNome || "").trim().toLowerCase() || p.id;
+      return k === leadKey && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+    });
+    if (aprovaveis.length > 1) {
+      setCandidatasAprovacao(aprovaveis);
+      setSelecionarAprovarOpen(true);
+      return;
+    }
+    setPropostaParaAprovarId(proposta.id);
     setAprovarOpen(true);
   }
 

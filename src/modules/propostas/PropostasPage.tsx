@@ -672,10 +672,11 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                   "numero","status","cliente","consultor","cidade","uf",
                   "potencia_kwp","modulos_qtd","valor_final","criado_em","atualizado_em","validade",
                 ];
+                const SEP = ";";
                 const esc = (v: any) => {
                   if (v == null) return "";
                   const s = String(v).replace(/"/g, '""');
-                  return /[",\n;]/.test(s) ? `"${s}"` : s;
+                  return /["\n;]/.test(s) ? `"${s}"` : s;
                 };
                 const linhasCsv = linhas.map((p) => {
                   const pr = calcPrecificacao(p);
@@ -686,9 +687,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                     (p as any).modulos?.length ?? (p as any).qtdModulos ?? "",
                     pr.valorFinal ?? "",
                     p.criadoEm, p.atualizadoEm, (p as any).validade ?? "",
-                  ].map(esc).join(",");
+                  ].map(esc).join(SEP);
                 });
-                const csv = [header.join(","), ...linhasCsv].join("\n");
+                const csv = [header.join(SEP), ...linhasCsv].join("\r\n");
                 const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
                 const url = URL.createObjectURL(blob);
                 const a2 = document.createElement("a");

@@ -1971,63 +1971,246 @@ export function PropostaList({
       />
 
       <Dialog open={filtrosDialogOpen} onOpenChange={setFiltrosDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Filtros de propostas</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
-              <Input
-                value={filtro}
-                onChange={(e) => setFiltro(e.target.value)}
-                placeholder="Ex.: Renan, Patrícia, P-2026…"
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Situação do lead</Label>
-              <div className="flex gap-1">
-                {(["ABERTO", "FECHADO", "CANCELADO"] as const).map((e) => (
+
+          <div className="space-y-4 py-2">
+            {/* 1. Filtros rápidos */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Filtros rápidos</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["TODOS","Todos"],
+                  ["RASCUNHO","Em aberto"],
+                  ["ENVIADA","Enviadas"],
+                  ["APROVADA","Aprovadas"],
+                  ["RECUSADA","Reprovadas"],
+                  ["CANCELADA","Canceladas"],
+                  ["VENCIDA","Expiradas"],
+                ] as const).map(([k,lab]) => (
                   <Button
-                    key={e}
+                    key={k}
                     type="button"
                     size="sm"
-                    variant={estadoLead === e ? "default" : "outline"}
-                    className="h-8 flex-1 text-xs"
-                    onClick={() => setEstadoLead(e)}
+                    variant={filtroStatus === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroStatus(k as any)}
                   >
-                    {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                    {lab}
                   </Button>
                 ))}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Status da proposta</Label>
-              <select
-                value={filtroStatus}
-                onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
-                className="h-9 w-full rounded-md border bg-background px-2 text-xs"
-              >
-                {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
-                  <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+
+            {/* 2. Período */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Período (data de criação)</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["TODOS","Todos"],["HOJE","Hoje"],["ONTEM","Ontem"],
+                  ["7D","7 dias"],["15D","15 dias"],["30D","30 dias"],
+                  ["MES_ATUAL","Este mês"],["MES_PASSADO","Mês passado"],["ANO","Este ano"],
+                ] as const).map(([k,lab]) => (
+                  <Button
+                    key={k}
+                    type="button"
+                    size="sm"
+                    variant={filtroPeriodo === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroPeriodo(k as any)}
+                  >
+                    {lab}
+                  </Button>
                 ))}
-              </select>
+              </div>
             </div>
+
+            {/* 3. Situação do lead + Busca */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Situação do lead</Label>
+                <div className="flex gap-1">
+                  {(["ABERTO","FECHADO","CANCELADO"] as const).map((e) => (
+                    <Button
+                      key={e}
+                      type="button"
+                      size="sm"
+                      variant={estadoLead === e ? "default" : "outline"}
+                      className="h-8 flex-1 text-xs"
+                      onClick={() => setEstadoLead(e)}
+                    >
+                      {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
+                <Input
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  placeholder="Ex.: Renan, Patrícia, P-2026…"
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 4. Consultor + Cidade */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Consultor / Vendedor</Label>
+                <select
+                  value={filtroConsultor}
+                  onChange={(e) => setFiltroConsultor(e.target.value)}
+                  className="h-8 w-full rounded-md border bg-background px-2 text-xs"
+                >
+                  <option value="TODOS">Todos os consultores</option>
+                  {consultoresOpts.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cidade</Label>
+                <select
+                  value={filtroCidade}
+                  onChange={(e) => setFiltroCidade(e.target.value)}
+                  className="h-8 w-full rounded-md border bg-background px-2 text-xs"
+                >
+                  <option value="TODOS">Todas as cidades</option>
+                  {cidadesOpts.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* 5. Faixa de valor */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Faixa de valor (R$)</Label>
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {([
+                  ["","",""],
+                  ["0","10000","Até 10k"],
+                  ["10000","20000","10–20k"],
+                  ["20000","50000","20–50k"],
+                  ["50000","100000","50–100k"],
+                  ["100000","200000","100–200k"],
+                  ["200000","500000","200–500k"],
+                  ["500000","","Acima 500k"],
+                ] as const).map(([mn,mx,lab],i) => (
+                  <Button
+                    key={i}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => { setFiltroValorMin(mn); setFiltroValorMax(mx); }}
+                  >
+                    {lab || "Limpar"}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  value={filtroValorMin}
+                  onChange={(e) => setFiltroValorMin(e.target.value)}
+                  placeholder="Mín."
+                  className="h-8"
+                />
+                <Input
+                  value={filtroValorMax}
+                  onChange={(e) => setFiltroValorMax(e.target.value)}
+                  placeholder="Máx."
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 6. Faixa de potência */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Faixa de potência (kWp)</Label>
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {([
+                  ["","",""],
+                  ["0","3","Até 3"],
+                  ["3","5","3–5"],
+                  ["5","10","5–10"],
+                  ["10","20","10–20"],
+                  ["20","50","20–50"],
+                  ["50","100","50–100"],
+                  ["100","","Acima 100"],
+                ] as const).map(([mn,mx,lab],i) => (
+                  <Button
+                    key={i}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => { setFiltroKwpMin(mn); setFiltroKwpMax(mx); }}
+                  >
+                    {lab || "Limpar"}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  value={filtroKwpMin}
+                  onChange={(e) => setFiltroKwpMin(e.target.value)}
+                  placeholder="Mín."
+                  className="h-8"
+                />
+                <Input
+                  value={filtroKwpMax}
+                  onChange={(e) => setFiltroKwpMax(e.target.value)}
+                  placeholder="Máx."
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 7. Sem movimento */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Propostas sem movimento há</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ["0","Indiferente"],["7","7 dias"],["15","15 dias"],
+                  ["30","30 dias"],["60","60 dias"],["90","90 dias"],
+                ] as const).map(([k,lab]) => (
+                  <Button
+                    key={k}
+                    type="button"
+                    size="sm"
+                    variant={filtroSemMovimento === k ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => setFiltroSemMovimento(k as any)}
+                  >
+                    {lab}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
-              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is)
+              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is) · cards/KPIs e tabela reagem ao filtro.
             </div>
           </div>
+
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               type="button" variant="ghost" size="sm"
-              onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO"); }}
+              onClick={() => {
+                setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO");
+                setFiltroPeriodo("TODOS"); setFiltroConsultor("TODOS"); setFiltroCidade("TODOS");
+                setFiltroValorMin(""); setFiltroValorMax("");
+                setFiltroKwpMin(""); setFiltroKwpMax("");
+                setFiltroSemMovimento("0");
+              }}
             >
-              Limpar
+              Limpar filtros
             </Button>
             <Button type="button" size="sm" onClick={() => setFiltrosDialogOpen(false)}>
               Aplicar
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -354,10 +354,48 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
  *  `hashchange` nem invalida `useRouterState`, então sem isto o ribbon
  *  e a página ficavam 1 clique atrasados um do outro (bug D26.UX). */
 const tabListeners = new Set<(routePath: string, value: string) => void>();
+const HASH_SYNC_EVENT = "lovable:hash-sync";
+let historyHashSyncInstalled = false;
+
 function emitTabChange(routePath: string, value: string) {
   tabListeners.forEach((fn) => {
     try { fn(routePath, value); } catch { /* noop */ }
   });
+}
+
+function emitBrowserHashSync() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(HASH_SYNC_EVENT, { detail: { hash: window.location.hash } }));
+}
+
+function ensureHistoryHashSync() {
+  if (typeof window === "undefined" || historyHashSyncInstalled) return;
+
+  const originalPushState = window.history.pushState.bind(window.history);
+  const originalReplaceState = window.history.replaceState.bind(window.history);
+
+  window.history.pushState = ((...args: Parameters<History["pushState"]>) => {
+    const prevHash = window.location.hash;
+    const result = originalPushState(...args);
+    if (window.location.hash !== prevHash) emitBrowserHashSync();
+    return result;
+  }) as History["pushState"];
+
+  window.history.replaceState = ((...args: Parameters<History["replaceState"]>) => {
+    const prevHash = window.location.hash;
+    const result = originalReplaceState(...args);
+    if (window.location.hash !== prevHash) emitBrowserHashSync();
+    return result;
+  }) as History["replaceState"];
+
+  historyHashSyncInstalled = true;
+}
+
+function readCurrentTab(routerHash: string, fallback: string) {
+  if (typeof window !== "undefined") {
+    return parseHash(window.location.hash) || parseHash(routerHash) || fallback;
+  }
+  return parseHash(routerHash) || fallback;
 }
 
 /** Reads tab from location hash like #tab=foo and keeps it reactive */
@@ -367,36 +405,38 @@ export function useTabFromHash(routePath: string): [string, (v: string) => void]
   const hash = useRouterState({ select: (s) => s.location.hash });
   const [val, setVal] = useState<string>(() => {
     if (typeof window === "undefined") return fallback;
-    return parseHash(window.location.hash) || fallback;
+    return readCurrentTab(hash, fallback);
   });
 
   useEffect(() => {
-    const browserHash = typeof window !== "undefined" ? window.location.hash : "";
-    setVal(parseHash(browserHash || hash) || fallback);
+    setVal(readCurrentTab(hash, fallback));
   }, [hash, fallback]);
 
   // D26.UX — sincroniza instâncias irmãs (ribbon + página) sem aguardar
   // o próximo tick do router; também reage a hashchange real (back/forward).
   useEffect(() => {
+    ensureHistoryHashSync();
     const listener = (rp: string, v: string) => {
       if (rp === routePath) setVal(v || fallback);
     };
     tabListeners.add(listener);
     const onHash = () => {
-      if (typeof window !== "undefined") {
-        setVal(parseHash(window.location.hash) || fallback);
-      }
+      setVal(readCurrentTab(hash, fallback));
     };
     if (typeof window !== "undefined") {
       window.addEventListener("hashchange", onHash);
+      window.addEventListener(HASH_SYNC_EVENT, onHash);
+      window.addEventListener("popstate", onHash);
     }
     return () => {
       tabListeners.delete(listener);
       if (typeof window !== "undefined") {
         window.removeEventListener("hashchange", onHash);
+        window.removeEventListener(HASH_SYNC_EVENT, onHash);
+        window.removeEventListener("popstate", onHash);
       }
     };
-  }, [routePath, fallback]);
+  }, [routePath, fallback, hash]);
 
   const update = (v: string) => {
     setVal(v);

@@ -186,9 +186,11 @@ export function aprovarProposta(p: PropostaFV) {
   });
   toast.success(
     res.jaExistia
-      ? `Proposta ${p.numero} aprovada — contrato ${res.contratoId} já existia (Pendente).`
-      : `Proposta ${p.numero} aprovada — contrato ${res.contratoId} criado como Pendente no Comercial.`,
+      ? `Proposta ${p.numero} aprovada — contrato ${res.contratoId} já existia em Contratos → Pendentes.`
+      : `Proposta ${p.numero} aprovada — contrato ${res.contratoId} criado em Contratos → Pendentes.`,
   );
+  // Leva o operador direto para Contratos → Pendentes
+  setTimeout(() => irParaContratos(), 300);
 }
 
 /* ============= Diálogo de Aprovação (CPF e endereço opcionais) ============= */

@@ -246,7 +246,7 @@ function ContratosUnificadosTab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {btn("aberto", "Em aberto", emAberto, "border-warning/40 bg-warning/10 text-warning")}
+          {btn("aberto", "Pendentes", emAberto, "border-warning/40 bg-warning/10 text-warning")}
           {btn("contrato", "Em contrato", assinados, "border-success/40 bg-success/10 text-success")}
           {btn("fechado", "Fechado", fechado, "border-destructive/40 bg-destructive/10 text-destructive")}
         </div>

@@ -496,25 +496,28 @@ export function EnterpriseRecordToolbar({
         </Button>
       )}
 
-      <div className="flex items-center gap-0">
-        {extraLeft}
-        {renderActionBtn("filtroAvancado")}
-        {renderActionBtn("visoes")}
-        {renderActionBtn("colunas")}
-        <Sep />
-        {renderActionBtn("exportar")}
-        {renderActionBtn("imprimir")}
-        {renderActionBtn("enviar")}
-        {extraRight}
-        {count > 0 && (
-          <span
-            className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-            aria-label={`${count} selecionado(s)`}
-          >
-            {count} sel.
-          </span>
-        )}
-      </div>
+      {!splitSecondaryActions && (
+        <div className="flex items-center gap-0">
+          {extraLeft}
+          {renderActionBtn("filtroAvancado")}
+          {renderActionBtn("visoes")}
+          {renderActionBtn("colunas")}
+          <Sep />
+          {renderActionBtn("exportar")}
+          {renderActionBtn("imprimir")}
+          {renderActionBtn("enviar")}
+          {extraRight}
+          {count > 0 && (
+            <span
+              className="ml-1 rounded-sm border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+              aria-label={`${count} selecionado(s)`}
+            >
+              {count} sel.
+            </span>
+          )}
+        </div>
+      )}
+
 
       <div className="ml-auto flex items-center gap-0">
         {/* D27 — Busca sempre à direita (padrão RM/TOTVS) */}

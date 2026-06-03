@@ -538,9 +538,13 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           entityType="propostas"
           selectedIds={propostaSelecionada ? [propostaSelecionada.id] : []}
           onFilter={() => {
-            const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
-            if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); toast.info("Use a busca abaixo para filtrar."); }
-            else toast.info("Use a busca/filtro da lista abaixo.");
+            const open = (window as any).__propostasOpenFilters;
+            if (typeof open === "function") open();
+            else {
+              const inp = document.querySelector<HTMLInputElement>("[data-propostas-search]");
+              if (inp) { inp.scrollIntoView({ behavior: "smooth", block: "center" }); inp.focus(); }
+              else toast.info("Use a busca/filtro da lista abaixo.");
+            }
           }}
           availableActions={[
             "novo", "editar", "duplicar", "excluir", "atualizar",

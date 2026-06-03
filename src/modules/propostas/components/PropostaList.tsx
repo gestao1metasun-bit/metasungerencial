@@ -1316,7 +1316,7 @@ const TABELA_HIDDEN_KEY = "ms.fv.propostas.tabela.hidden.v2";
 const TABELA_DEFAULT_ORDER: TabelaColKey[] = TABELA_COLS.map((c) => c.key);
 
 function TabelaView({
-  leads, onAbrirLead, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
+  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1499,9 +1499,27 @@ function TabelaView({
         {selected.size > 0 && (
           <div className="flex items-center justify-between gap-2 border-b bg-primary/5 px-3 py-1.5 text-xs">
             <span className="font-medium">{selected.size} lead(s) selecionado(s)</span>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setSelected(new Set())}>
-              Limpar seleção
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                disabled={selected.size !== 1}
+                title={selected.size === 1 ? "Gerar nova proposta para o lead selecionado" : "Selecione apenas 1 lead para gerar uma nova proposta"}
+                onClick={() => {
+                  if (selected.size !== 1) return;
+                  const k = Array.from(selected)[0];
+                  const lead = leads.find((l) => l.key === k);
+                  if (!lead) return;
+                  if (lead.bloqueado) return;
+                  onNovaPreset(presetFromLead(lead));
+                }}
+              >
+                <FilePlus2 className="h-3.5 w-3.5" /> Gerar nova proposta
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setSelected(new Set())}>
+                Limpar seleção
+              </Button>
+            </div>
           </div>
         )}
         <div className="overflow-x-auto">
@@ -1658,6 +1676,14 @@ export function PropostaList({
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
   const [aprovandoLista, setAprovandoLista] = useState<PropostaFV | null>(null);
+  const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
+
+  // Permite que a pílula "Filtros: Todos" da EnterpriseRecordToolbar (em PropostasPage)
+  // abra este diálogo, já que o estado de filtro vive aqui.
+  useEffect(() => {
+    (window as any).__propostasOpenFilters = () => setFiltrosDialogOpen(true);
+    return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
+  }, []);
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();
@@ -1846,6 +1872,68 @@ export function PropostaList({
         onOpenChange={(o) => { if (!o) setAprovandoLista(null); }}
         onAprovado={() => setAprovandoLista(null)}
       />
+
+      <Dialog open={filtrosDialogOpen} onOpenChange={setFiltrosDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filtros de propostas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Buscar (cliente / consultor / nº)</Label>
+              <Input
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                placeholder="Ex.: Renan, Patrícia, P-2026…"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Situação do lead</Label>
+              <div className="flex gap-1">
+                {(["ABERTO", "FECHADO", "CANCELADO"] as const).map((e) => (
+                  <Button
+                    key={e}
+                    type="button"
+                    size="sm"
+                    variant={estadoLead === e ? "default" : "outline"}
+                    className="h-8 flex-1 text-xs"
+                    onClick={() => setEstadoLead(e)}
+                  >
+                    {e === "ABERTO" ? "Aberto" : e === "FECHADO" ? "Fechado" : "Cancelado"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status da proposta</Label>
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
+                className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+              >
+                {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
+                  <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
+              {leadsFiltrados.length} de {leadsAll.length} lead(s) visível(is)
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button" variant="ghost" size="sm"
+              onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); setEstadoLead("ABERTO"); }}
+            >
+              Limpar
+            </Button>
+            <Button type="button" size="sm" onClick={() => setFiltrosDialogOpen(false)}>
+              Aplicar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -5672,6 +5672,8 @@ function AditivosTab({ contratos }: { contratos: Contrato[] }) {
   const reprovadosCount = aditivos.filter((a) => a.status === "REPROVADO").length;
 
   const contratoAberto = openId ? contratos.find((c) => c.id === openId) ?? null : null;
+  const selAditivos = useRowSelection(lista, (c) => c.id);
+
 
   return (
     <div className="space-y-4">

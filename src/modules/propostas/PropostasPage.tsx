@@ -25,6 +25,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import {
+  useAprovarProposta,
+  useGerarContratoDaProposta,
+  useEnviarContratoEngenharia,
+  useEnviarContratoFinanciamento,
+  useGerarComissaoDeContrato,
+} from "@/lib/repositories/comercial-processos-repo";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { useClientesFull, addClienteFull } from "@/lib/clientes-store";
 import { upsertContrato } from "@/lib/contratos-store";

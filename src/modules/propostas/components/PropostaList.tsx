@@ -82,6 +82,14 @@ export function duplicarProposta(p: PropostaFV) {
 }
 
 export function excluirProposta(p: PropostaFV) {
+  if (p.status === "APROVADA") {
+    toast.error(
+      "Proposta aprovada não pode ser excluída pela tela de Propostas. " +
+      "Abra Comercial → Contratos, localize o contrato vinculado e cancele-o primeiro.",
+      { duration: 6000 },
+    );
+    return;
+  }
   if (p.status !== "RASCUNHO") {
     toast.error("Propostas geradas não podem ser excluídas — use Cancelar.");
     return;
@@ -92,7 +100,10 @@ export function excluirProposta(p: PropostaFV) {
     const { propostaTemContratoVinculado } = require("@/lib/contratos-store");
     const c = propostaTemContratoVinculado(p.id);
     if (c) {
-      toast.error(`Proposta possui contrato vinculado (${c.id}). Cancele o contrato antes.`);
+      toast.error(
+        `Proposta possui contrato vinculado (${c.id}). Cancele o contrato em Comercial → Contratos antes de excluir.`,
+        { duration: 6000 },
+      );
       return;
     }
   } catch {}

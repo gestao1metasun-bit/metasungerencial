@@ -65,11 +65,10 @@ import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
 
-import { PropostaList, statusVariant, duplicarProposta, excluirProposta } from "./components/PropostaList";
+import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
 import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
-import { GerarContratoDialog } from "./components/GerarContratoDialog";
 
 
 export { PropostasPage, CadastrosFV };
@@ -265,7 +264,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
-  const [gerarContratoOpen, setGerarContratoOpen] = useState(false);
+  const [aprovarOpen, setAprovarOpen] = useState(false);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =
@@ -340,31 +339,18 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
     return contratoId;
   }
 
-  function executarGerarContrato() {
+  function executarAprovar() {
     const proposta = getPropostaAtiva();
     if (!proposta) return;
-    if (proposta.contratoGeradoId) {
-      toast.info("Esta proposta já possui contrato gerado.");
+    if (proposta.status === "APROVADA") {
+      toast.info("Esta proposta já está aprovada.");
       return;
     }
-    setGerarContratoOpen(true);
-  }
-
-  async function executarAprovar() {
-    const proposta = getPropostaAtiva();
-    if (!proposta) return;
-    if (!proposta.contratoGeradoId) {
-      const gerarAgora = window.confirm(
-        "Esta proposta ainda não tem contrato. Deseja gerar contrato agora?\n\nOK = Gerar contrato agora\nCancelar = Aprovar sem gerar contrato",
-      );
-      if (gerarAgora) {
-        await gerarContrato.mutateAsync({ propostaId: proposta.id });
-        await syncComercialState(proposta.id);
-        return;
-      }
+    if (proposta.status === "CANCELADA") {
+      toast.error("Reabra a proposta antes de aprovar.");
+      return;
     }
-    await aprovar.mutateAsync({ propostaId: proposta.id });
-    await syncComercialState(proposta.id);
+    setAprovarOpen(true);
   }
 
   async function executarReprovar() {
@@ -462,7 +448,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
       return {
         aprovar: { disabled: true, disabledReason: motivo },
         reprovar: { disabled: true, disabledReason: motivo },
-        gerarContrato: { disabled: true, disabledReason: motivo },
         gerarAditivo: { disabled: true, disabledReason: motivo },
         enviarFinanciamento: { disabled: true, disabledReason: motivo },
         cancelar: { disabled: true, disabledReason: motivo },
@@ -484,11 +469,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         onClick: () => void executarReprovar(),
         disabled: isBusy || ["RECUSADA", "CANCELADA"].includes(proposta.status),
         disabledReason: proposta.status === "RECUSADA" ? "A proposta já está reprovada." : proposta.status === "CANCELADA" ? "Reabra a proposta antes de reprovar." : undefined,
-      },
-      gerarContrato: {
-        onClick: () => executarGerarContrato(),
-        disabled: isBusy || possuiContrato,
-        disabledReason: possuiContrato ? "Esta proposta já possui contrato gerado." : undefined,
       },
       gerarAditivo: {
         onClick: () => void executarGerarAditivo(),
@@ -548,7 +528,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             { key: "aprovar_proposta",     label: "Aprovar",            group: "Propostas" },
             { key: "reprovar_proposta",    label: "Reprovar",           group: "Propostas", destructive: true, requerMotivo: true },
             { key: "duplicar_proposta",    label: "Duplicar",           group: "Propostas" },
-            { key: "gerar_contrato",       label: "Gerar Contrato",     group: "Propostas" },
             // ▼ Comercial
             { key: "alterar_consultor",    label: "Alterar Consultor",  group: "Comercial", permiteLote: true, requerSelecao: 1 },
             { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
@@ -583,9 +562,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const p = getPropostaAtiva();
               if (p) duplicarProposta(p);
             } else if (key === "aprovar_proposta") {
-              await executarAprovar();
-            } else if (key === "gerar_contrato") {
-              executarGerarContrato();
+              executarAprovar();
             } else if (key === "reprovar_proposta") {
               await executarReprovar();
             } else if (key.startsWith("alterar_")) {
@@ -680,21 +657,12 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         />
       )}
 
-      {propostaSelecionada && (
-        <GerarContratoDialog
-          open={gerarContratoOpen}
-          onOpenChange={setGerarContratoOpen}
-          propostaId={propostaSelecionada.id}
-          numeroProposta={propostaSelecionada.numero}
-          clienteNome={propostaSelecionada.clienteNome}
-          valorTotal={
-            (propostaSelecionada.valorFinalManual ?? 0) > 0
-              ? (propostaSelecionada.valorFinalManual as number)
-              : (calcPrecificacao(propostaSelecionada).valorFinal || 0)
-          }
-          onGerado={() => void syncComercialState(propostaSelecionada.id)}
-        />
-      )}
+      <AprovarPropostaDialog
+        proposta={propostaSelecionada}
+        open={aprovarOpen}
+        onOpenChange={setAprovarOpen}
+        onAprovado={() => void syncComercialState(propostaSelecionada?.id ?? null)}
+      />
     </>
   );
 }

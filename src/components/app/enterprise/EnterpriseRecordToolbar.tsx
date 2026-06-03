@@ -264,11 +264,13 @@ export function EnterpriseRecordToolbar({
   position, onNavigate,
   statusActions,
   layoutBar,
+  splitSecondaryActions,
   className,
 }: EnterpriseRecordToolbarProps) {
   const count = selectedIds.length;
   const mode: "none" | "single" | "multi" =
     count === 0 ? "none" : count === 1 ? "single" : "multi";
+
 
   const enabled = useMemo(() => new Set(availableActions), [availableActions]);
 

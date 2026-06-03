@@ -265,6 +265,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
   const [aprovarOpen, setAprovarOpen] = useState(false);
+  const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
+  const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);
+  const [candidatasAprovacao, setCandidatasAprovacao] = useState<PropostaFV[]>([]);
 
   const propostaVisualizada = vendoId ? propostas.find((p) => p.id === vendoId) ?? null : null;
   const propostaSelecionada =

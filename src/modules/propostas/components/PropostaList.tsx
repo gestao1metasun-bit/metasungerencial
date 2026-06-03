@@ -1607,12 +1607,13 @@ const VIEW_KEY = "ms.fv.propostas.view";
 type ViewMode = "tabela" | "kanban";
 
 export function PropostaList({
-  propostas, onEditar, onVisualizar, onNova,
+  propostas, onEditar, onVisualizar, onNova, onSelecionarUltima,
 }: {
   propostas: PropostaFV[];
   onEditar: (p: PropostaFV) => void;
   onVisualizar: (id: string) => void;
   onNova: (preset?: Partial<PropostaFV>) => void;
+  onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
   // Auto-vence propostas passadas da validade
   useEffect(() => {

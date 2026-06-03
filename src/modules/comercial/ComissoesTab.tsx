@@ -285,15 +285,6 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-        {(["PREVISTA","LIBERADA","PAGA","CANCELADA","ESTORNADA"] as ComissaoStatus[]).map((s) => (
-          <Card key={s} className="p-3">
-            <div className="text-[11px] uppercase text-muted-foreground">{s}</div>
-            <div className="text-lg font-semibold">{totais[s].qtd}</div>
-            <div className="text-[11px] text-muted-foreground">{fmtBRL(totais[s].valor)}</div>
-          </Card>
-        ))}
-      </div>
 
       <Card>
         <Table>

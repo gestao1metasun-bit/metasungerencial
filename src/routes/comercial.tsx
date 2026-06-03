@@ -983,7 +983,7 @@ function ContratosTab({
       {/* D17.UI Fase 2 — Contratos (geração/assinatura): toolbar Enterprise RM */}
       <EnterpriseRecordToolbar
         entityType="contratos"
-        selectedIds={[]}
+        selectedIds={[...selARedigir.selectedIds, ...selRedigidos.selectedIds]}
         availableActions={["editar", "excluir", "duplicar", "atualizar", "anexos", "favoritos", "filtroAvancado", "colunas", "exportar", "imprimir", "enviar", "historico", "auditoria"]}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}

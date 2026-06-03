@@ -1155,6 +1155,13 @@ function ContratosTab({
         ) : (
           <Table>
             <TableHeader><TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={selRedigidos.allChecked ? true : selRedigidos.someChecked ? "indeterminate" : false}
+                  onCheckedChange={selRedigidos.toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Contrato</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Proposta</TableHead>
@@ -1164,7 +1171,8 @@ function ContratosTab({
             </TableRow></TableHeader>
             <TableBody>
               {redigidosFiltrados.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} data-state={selRedigidos.isSelected(c.id) ? "selected" : undefined}>
+                  <TableCell className="w-8"><Checkbox checked={selRedigidos.isSelected(c.id)} onCheckedChange={() => selRedigidos.toggle(c.id)} aria-label={`Selecionar ${c.id}`} /></TableCell>
                   <TableCell className="font-mono text-xs font-semibold">{c.id}</TableCell>
                   <TableCell className="font-medium">{c.cliente}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.propostaNumero ?? "—"}</TableCell>
@@ -1192,6 +1200,18 @@ function ContratosTab({
         )}
       </Card>
       )}
+
+      <BulkActionBar
+        count={selARedigir.count + selRedigidos.count}
+        label="contrato(s) selecionado(s)"
+        onClear={() => { selARedigir.clear(); selRedigidos.clear(); }}
+        actions={[
+          { key: "liberar", label: "Liberar para gerar", tone: "verde", onClick: () => { toast.info(`${selARedigir.count + selRedigidos.count} contrato(s) — liberação em lote chega em D27.COM.`); selARedigir.clear(); selRedigidos.clear(); } },
+          { key: "retornar", label: "Retornar para Orçamentos", tone: "ambar", onClick: () => { toast.info("Retorno em lote exige motivo + workflow (chega em D27.COM)."); } },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+        ]}
+      />
+
 
       {completarDados && (
         <CompletarDadosClienteDialog

@@ -1486,16 +1486,29 @@ function TabelaView({
         );
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
       case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
+      case "bairro":    return <span className="block truncate">{l.bairro || "—"}</span>;
+      case "tipoPessoa": return <span className="text-[11px] text-muted-foreground">{l.tipoPessoa || "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
       case "aprovadoEm": return <span className="tabular-nums">{l.aprovadoEm ? fmtData(l.aprovadoEm) : "—"}</span>;
-      case "diasCriacao": return <span className="tabular-nums text-[11px] text-muted-foreground">{l.diasCriacao}d</span>;
-      case "diasStatus":  return <span className="tabular-nums text-[11px] text-muted-foreground">{l.dias}d</span>;
+      case "diasCriacao": return (
+        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.diasCriacao)}`}>
+          {l.diasCriacao} {l.diasCriacao === 1 ? "dia" : "dias"}
+        </span>
+      );
+      case "diasStatus": return (
+        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.dias)}`}>
+          {l.dias} {l.dias === 1 ? "dia" : "dias"}
+        </span>
+      );
       case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
       case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
+      case "consumoKwh": return <span className="tabular-nums">{l.consumoKwh ? `${l.consumoKwh.toLocaleString("pt-BR")} kWh` : "—"}</span>;
       case "modulos":    return <span className="tabular-nums">{l.modulos || "—"}</span>;
       case "potencia":   return <span className="tabular-nums">{l.potenciaW ? `${l.potenciaW} Wp` : "—"}</span>;
+      case "potenciaKwp": return <span className="tabular-nums">{l.potenciaKwp ? `${l.potenciaKwp.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} kWp` : "—"}</span>;
       case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
       case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
+      case "valorKwp":  return <span className="tabular-nums">{l.valorKwp ? fmtBRL(l.valorKwp) : "—"}</span>;
       case "status": {
         // Espelha o status mostrado no Kanban: se o lead tem fase pós-aprovação,
         // usa a coluna-âncora correspondente; senão, fallback para o assign.

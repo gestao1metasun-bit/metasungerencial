@@ -817,6 +817,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           onGerada={() => setEditando(null)}
         />
       )}
+
+      {editandoCliente && (
+        <EditarDadosClienteDialog
+          proposta={editandoCliente}
+          onClose={() => setEditandoCliente(null)}
+          onSaved={() => { setEditandoCliente(null); void refreshPropostas(); }}
+        />
+      )}
       {propostaVisualizada && (
         <PropostaImpressao proposta={propostaVisualizada} onClose={() => setVendoId(null)} />
       )}

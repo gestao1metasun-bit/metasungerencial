@@ -1516,11 +1516,17 @@ function TabelaView({
           {l.diasCriacao} {l.diasCriacao === 1 ? "dia" : "dias"}
         </span>
       );
-      case "diasStatus": return (
-        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.dias)}`}>
-          {l.dias} {l.dias === 1 ? "dia" : "dias"}
-        </span>
-      );
+      case "diasStatus": {
+        // Conta dias desde a última mudança de coluna (status visual do kanban).
+        // Fallback: atualizadoEm da última proposta (l.dias) quando o lead
+        // ainda não foi movido manualmente.
+        const d = assignAt[l.key] ? diasDesde(assignAt[l.key]) : l.dias;
+        return (
+          <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(d)}`}>
+            {d} {d === 1 ? "dia" : "dias"}
+          </span>
+        );
+      }
       case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
       case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "consumoKwh": return <span className="tabular-nums">{l.consumoKwh ? `${l.consumoKwh.toLocaleString("pt-BR")} kWh` : "—"}</span>;

@@ -2273,7 +2273,9 @@ function EditarDadosClienteDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const consultoresAtivos = useConsultoresAtivos();
   const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [doc, setDoc] = useState(proposta.clienteDoc ?? "");
   const [telefone, setTelefone] = useState(proposta.clienteTelefone ?? "");
   const [email, setEmail] = useState(proposta.clienteEmail ?? "");

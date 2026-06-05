@@ -2295,6 +2295,7 @@ function EditarDadosClienteDialog({
       await upsertProposta({
         ...proposta,
         clienteNome: nome.trim(),
+        consultor: consultor.trim() || undefined,
         clienteDoc: doc.trim() || undefined,
         clienteTelefone: telefone.trim() || undefined,
         clienteEmail: email.trim() || undefined,

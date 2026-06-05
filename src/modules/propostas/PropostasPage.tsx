@@ -606,10 +606,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "reprovar_proposta") {
               if (!confirmarProcesso("Reprovar Proposta", "Comercial > Propostas Reprovadas", "REPROVADA")) return;
               await executarReprovar();
-            } else if (key === "editar_proposta") {
+            } else if (key === "editar_cliente") {
               const p = getPropostaAtiva();
               if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
-              setEditando(p);
+              const bloqueados = ["APROVADA", "ASSINADA", "CANCELADA", "REPROVADA"];
+              if (bloqueados.includes(String(p.status).toUpperCase())) {
+                toast.error(`Proposta ${p.status} não pode ter dados do cliente alterados.`);
+                return;
+              }
+              setEditandoCliente(p);
             } else if (key === "gerar_nova_proposta") {
               const p = getPropostaAtiva();
               if (!p) { toast.info("Selecione um lead/cliente na tabela."); return; }

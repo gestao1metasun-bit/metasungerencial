@@ -70,7 +70,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
 
 export { PropostasPage, CadastrosFV };
@@ -268,6 +268,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
   const [aprovarOpen, setAprovarOpen] = useState(false);
   const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
   const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);
@@ -578,7 +579,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           }}
           availableActions={[
-            "editar", "excluir", "atualizar",
+            "editar", "atualizar",
             "anexos", "historico", "auditoria", "favoritos",
             "exportar", "enviar",
             "filtroRapido", "filtroAvancado", "colunas",
@@ -702,13 +703,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const p = getPropostaAtiva();
               if (p) setAnexosOpen(true);
             } else if (a === "historico" || a === "auditoria") {
-              toast.info("Histórico universal está em /auditoria (D24).");
+              const p = getPropostaAtiva();
+              if (!p) return;
+              setHistoricoOpen(true);
             } else if (a === "favoritos") {
               toast.info("Favoritos por usuário chegam em D27.COM.5.");
             } else if (a === "colunas") {
-              const btn = document.querySelector<HTMLButtonElement>("[data-propostas-colunas]");
-              if (btn) { btn.scrollIntoView({ behavior: "smooth", block: "center" }); btn.click(); }
-              else toast.info("Use o botão Colunas na lista abaixo.");
+              const open = (window as any).__propostasOpenColunas;
+              if (typeof open === "function") open();
+              else toast.info("Use o menu de filtros da lista abaixo.");
             } else if (a === "filtroAvancado" || a === "filtroRapido") {
               const open = (window as any).__propostasOpenFilters;
               if (typeof open === "function") open();
@@ -848,6 +851,17 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           titulo={`Anexos · Proposta ${propostaSelecionada.numero}`}
           descricao={propostaSelecionada.clienteNome}
           categoriaPadrao="orcamento"
+        />
+      )}
+
+      {propostaSelecionada && (
+        <ModuloHistoricoDrawer
+          open={historicoOpen}
+          onOpenChange={setHistoricoOpen}
+          titulo={`Histórico · Proposta ${propostaSelecionada.numero}`}
+          descricao={propostaSelecionada.clienteNome}
+          entidade="proposta"
+          entidadeId={propostaSelecionada.id}
         />
       )}
 

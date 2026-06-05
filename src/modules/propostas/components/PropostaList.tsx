@@ -1778,7 +1778,7 @@ export function PropostaList({
 
   const [filtro, setFiltro] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
-  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO" | "CANCELADO">("ABERTO");
+  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO" | "REPROVADO" | "CANCELADO">("ABERTO");
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);
@@ -1801,8 +1801,16 @@ export function PropostaList({
   // abra este diálogo, já que o estado de filtro vive aqui.
   useEffect(() => {
     (window as any).__propostasOpenFilters = () => setFiltrosDialogOpen(true);
-    return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
-  }, []);
+    (window as any).__propostasOpenColunas = () => {
+      // Abre o gerenciador de colunas correspondente à visualização ativa.
+      if (view === "tabela") setColsTabelaOpen(true);
+      else setColsOpen(true);
+    };
+    return () => {
+      try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ }
+      try { delete (window as any).__propostasOpenColunas; } catch { /* noop */ }
+    };
+  }, [view]);
 
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
@@ -1859,8 +1867,10 @@ export function PropostaList({
       const isAprovado = l.status === "APROVADA";
       const isFechado = isAssinado || isAprovado;
       const isCancelado = l.status === "CANCELADA" && !isAssinado;
-      if (estadoLead === "ABERTO" && (isFechado || isCancelado)) return false;
+      const isReprovado = (l.status === "RECUSADA" || l.status === "VENCIDA") && !isAssinado && !isAprovado;
+      if (estadoLead === "ABERTO" && (isFechado || isCancelado || isReprovado)) return false;
       if (estadoLead === "FECHADO" && !isFechado) return false;
+      if (estadoLead === "REPROVADO" && !isReprovado) return false;
       if (estadoLead === "CANCELADO" && !isCancelado) return false;
       if (filtroStatus !== "TODOS" && !l.propostas.some((p) => p.status === filtroStatus)) return false;
 
@@ -1990,6 +2000,18 @@ export function PropostaList({
           </Button>
           <Button
             size="sm"
+            variant={estadoLead === "REPROVADO" ? "default" : "ghost"}
+            className="h-7 px-3 text-xs"
+            onClick={() => setEstadoLead("REPROVADO")}
+            title="Leads com a última proposta reprovada (recusada/vencida)"
+          >
+            Reprovado
+            <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
+              {leadsAll.filter((l) => (l.status === "RECUSADA" || l.status === "VENCIDA") && l.fase !== "ASSINADO").length}
+            </span>
+          </Button>
+          <Button
+            size="sm"
             variant={estadoLead === "CANCELADO" ? "default" : "ghost"}
             className="h-7 px-3 text-xs"
             onClick={() => setEstadoLead("CANCELADO")}
@@ -2011,16 +2033,7 @@ export function PropostaList({
             className="h-8 pl-7"
           />
         </div>
-        <select
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus(e.target.value as StatusProposta | "TODOS")}
-          className="h-8 rounded-md border bg-background px-2 text-xs"
-        >
-          {(["TODOS","RASCUNHO","GERADA","ENVIADA","APROVADA","RECUSADA","VENCIDA","CANCELADA"] as const).map((s) => (
-            <option key={s} value={s}>{s === "TODOS" ? "Todos os status" : s}</option>
-          ))}
-        </select>
-        {(filtro || filtroStatus !== "TODOS") && (
+        {(filtro) && (
           <Button size="sm" variant="ghost" className="h-8 gap-1" onClick={() => { setFiltro(""); setFiltroStatus("TODOS"); }}>
             <FilterX className="h-3.5 w-3.5" /> Limpar
           </Button>
@@ -2045,18 +2058,9 @@ export function PropostaList({
               <LayoutGrid className="h-4 w-4" /> Kanban
             </Button>
           </div>
-
-          {view === "tabela" ? (
-            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsTabelaOpen(true)}>
-              <Columns3 className="h-4 w-4" /> Colunas da Tabela
-            </Button>
-          ) : (
-            <Button data-propostas-colunas size="sm" variant="outline" className="gap-1" onClick={() => setColsOpen(true)}>
-              <Columns3 className="h-4 w-4" /> Colunas do Kanban
-            </Button>
-          )}
         </div>
       </Card>
+
 
       {view === "tabela"
         ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} assignAt={assignAt} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />

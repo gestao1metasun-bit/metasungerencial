@@ -595,6 +595,8 @@ type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
 // v5 — colunas fixas pré-definidas (todas travadas).
 const COLS_KEY = "ms.fv.kanban.cols.v5";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
+// Timestamp ISO de quando o lead entrou na coluna atual — base do "Dias no status".
+const ASSIGN_AT_KEY = "ms.fv.kanban.assign-leads-at.v1";
 
 // Colunas-âncora travadas (progressão: GERANDO → GERADO → ASSINADO; não voltam).
 const COL_GERANDO_ID = "col-gerando-contrato";
@@ -658,10 +660,29 @@ function useKanbanState(leads: Lead[]) {
       return normalizeCols(next);
     });
   };
-  const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
+  const [assign, setAssignRaw] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
+  const [assignAt, setAssignAt] = useState<Record<string, string>>(() => readLS(ASSIGN_AT_KEY, {} as Record<string, string>));
 
   useEffect(() => writeLS(COLS_KEY, cols), [cols]);
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
+  useEffect(() => writeLS(ASSIGN_AT_KEY, assignAt), [assignAt]);
+
+  // Wrapper: toda vez que `assign` muda, registra timestamp para as chaves
+  // cujo valor foi alterado. Assim "Dias no status" reflete o tempo na coluna.
+  const setAssign: typeof setAssignRaw = (updater) => {
+    setAssignRaw((prev) => {
+      const next = typeof updater === "function" ? (updater as (a: Record<string, string>) => Record<string, string>)(prev) : updater;
+      const now = new Date().toISOString();
+      const stamps: Record<string, string> = {};
+      for (const k of Object.keys(next)) {
+        if (prev[k] !== next[k]) stamps[k] = now;
+      }
+      if (Object.keys(stamps).length) {
+        setAssignAt((at) => ({ ...at, ...stamps }));
+      }
+      return next;
+    });
+  };
 
   // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
   // Leads com fase pós-aprovação são FORÇADOS para a respectiva coluna-âncora (não voltam).
@@ -694,7 +715,7 @@ function useKanbanState(leads: Lead[]) {
     });
   }, [leads, cols]);
 
-  return { cols, setCols, assign, setAssign };
+  return { cols, setCols, assign, setAssign, assignAt };
 }
 
 /* ===================== Gerenciador de Colunas ===================== */
@@ -1378,7 +1399,7 @@ const TABELA_DEFAULT_HIDDEN: TabelaColKey[] = [
 ];
 
 function TabelaView({
-  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
+  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, assignAt, onAprovar, onSelecionarUltima,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1387,6 +1408,7 @@ function TabelaView({
   setMgrOpen: (v: boolean) => void;
   cols: KCol[];
   assign: Record<string, string>;
+  assignAt: Record<string, string>;
   onAprovar?: (p: PropostaFV) => void;
   onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
@@ -1495,11 +1517,17 @@ function TabelaView({
           {l.diasCriacao} {l.diasCriacao === 1 ? "dia" : "dias"}
         </span>
       );
-      case "diasStatus": return (
-        <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(l.dias)}`}>
-          {l.dias} {l.dias === 1 ? "dia" : "dias"}
-        </span>
-      );
+      case "diasStatus": {
+        // Conta dias desde a última mudança de coluna (status visual do kanban).
+        // Fallback: atualizadoEm da última proposta (l.dias) quando o lead
+        // ainda não foi movido manualmente.
+        const d = assignAt[l.key] ? diasDesde(assignAt[l.key]) : l.dias;
+        return (
+          <span className={`inline-flex items-center justify-end rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${diasBadgeClass(d)}`}>
+            {d} {d === 1 ? "dia" : "dias"}
+          </span>
+        );
+      }
       case "aberto":     return <span className={`tabular-nums ${l.emAberto > 0 ? "font-semibold text-warning" : ""}`}>{l.emAberto}</span>;
       case "assinados":  return <span className={`tabular-nums ${l.assinados > 0 ? "font-semibold text-primary" : ""}`}>{l.assinados}</span>;
       case "consumoKwh": return <span className="tabular-nums">{l.consumoKwh ? `${l.consumoKwh.toLocaleString("pt-BR")} kWh` : "—"}</span>;
@@ -1780,7 +1808,7 @@ export function PropostaList({
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();
   const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
-  const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
+  const { cols, setCols, assign, setAssign, assignAt } = useKanbanState(leadsAll);
 
   // Opções derivadas (consultores/cidades únicos para os selects).
   const consultoresOpts = useMemo(() => {
@@ -2031,7 +2059,7 @@ export function PropostaList({
       </Card>
 
       {view === "tabela"
-        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} assignAt={assignAt} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />
         : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} onAprovar={setAprovandoLista} />}
 
       <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />

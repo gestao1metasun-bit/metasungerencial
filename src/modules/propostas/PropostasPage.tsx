@@ -6,6 +6,7 @@ import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
   XCircle, Sparkles, Calculator, Users, MapPin, Zap, Sun, Wrench, DollarSign,
   Receipt, AlertTriangle, Save, FileSearch, Settings as SettingsIcon, Pencil,
+  Undo2,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -69,7 +70,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
 
 
 export { PropostasPage, CadastrosFV };
@@ -584,14 +585,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           ]}
           availableProcesses={[
             // ▼ Proposta
-            { key: "aprovar_proposta",     label: "Aprovar Proposta",  group: "Proposta" },
-            { key: "reprovar_proposta",    label: "Reprovar Proposta", group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "editar_cliente",       label: "Editar Cliente",    group: "Proposta" },
+            { key: "aprovar_proposta",     label: "Aprovar Proposta",        group: "Proposta" },
+            { key: "reprovar_proposta",    label: "Reprovar Proposta",       group: "Proposta", destructive: true, requerMotivo: true },
+            { key: "editar_cliente",       label: "Editar Dados do Cliente", group: "Proposta" },
             // ▼ Nova Proposta
-            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta", group: "Nova Proposta" },
+            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta",     group: "Nova Proposta" },
             // ▼ Encerramento
-            { key: "cancelar_proposta",    label: "Cancelar Proposta", group: "Encerramento", destructive: true, requerMotivo: true },
-            { key: "reabrir_proposta",     label: "Reabrir Proposta",  group: "Encerramento", requerMotivo: true },
+            { key: "cancelar_proposta",    label: "Cancelar Proposta",       group: "Encerramento", destructive: true, requerMotivo: true },
+            { key: "reabrir_proposta",     label: "Reabrir Proposta",        group: "Encerramento", requerMotivo: true },
           ]}
           onProcess={async (key) => {
             // Confirmação padronizada: ação + destino + novo status.
@@ -720,20 +721,35 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           }}
           statusActions={(() => {
             const hasSelectedLead = !!propostaSelecionada;
+            const r = ribbonState;
             return [
               {
                 key: "novoLead",
-                label: "Novo lead",
+                label: "Nova Proposta",
                 icon: Plus,
                 tone: "info" as const,
                 wide: true,
                 disabled: hasSelectedLead,
-                disabledReason: "Desmarque o lead para criar um novo.",
+                disabledReason: "Desmarque o lead para criar uma nova proposta.",
                 onClick: () => novaProposta(),
               },
               {
-                key: "novaPropostaLeadFlegado",
-                label: "Nova proposta (lead flegado)",
+                key: "aprovar",
+                label: "Aprovar Proposta",
+                icon: CheckCircle2,
+                tone: "success" as const,
+                ...r.aprovar,
+              },
+              {
+                key: "reprovar",
+                label: "Reprovar Proposta",
+                icon: XCircle,
+                tone: "danger" as const,
+                ...r.reprovar,
+              },
+              {
+                key: "gerarNovaProposta",
+                label: "Gerar Nova Proposta",
                 icon: Copy,
                 tone: "warning" as const,
                 wide: true,
@@ -746,7 +762,20 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                   novaProposta(lead);
                 },
               },
-              ...ribbonRmComercial(ribbonState),
+              {
+                key: "cancelar",
+                label: "Cancelar Proposta",
+                icon: XCircle,
+                tone: "danger" as const,
+                ...r.cancelar,
+              },
+              {
+                key: "reabrir",
+                label: "Reabrir Proposta",
+                icon: Undo2,
+                tone: "warning" as const,
+                ...r.reabrir,
+              },
             ];
           })()}
           layoutBar={layoutBarRm({

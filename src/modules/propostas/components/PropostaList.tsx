@@ -1778,7 +1778,7 @@ export function PropostaList({
 
   const [filtro, setFiltro] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusProposta | "TODOS">("TODOS");
-  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO" | "CANCELADO">("ABERTO");
+  const [estadoLead, setEstadoLead] = useState<"ABERTO" | "FECHADO" | "REPROVADO" | "CANCELADO">("ABERTO");
   const [colsOpen, setColsOpen] = useState(false);
   const [colsTabelaOpen, setColsTabelaOpen] = useState(false);
   const [leadAberto, setLeadAberto] = useState<Lead | null>(null);

@@ -854,6 +854,17 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
         />
       )}
 
+      {propostaSelecionada && (
+        <ModuloHistoricoDrawer
+          open={historicoOpen}
+          onOpenChange={setHistoricoOpen}
+          titulo={`Histórico · Proposta ${propostaSelecionada.numero}`}
+          descricao={propostaSelecionada.clienteNome}
+          entidade="proposta"
+          entidadeId={propostaSelecionada.id}
+        />
+      )}
+
       <AprovarPropostaDialog
         proposta={propostaParaAprovarId ? propostas.find((p) => p.id === propostaParaAprovarId) ?? null : propostaSelecionada}
         open={aprovarOpen}

@@ -70,7 +70,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog } from "@/components/app/enterprise";
+import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
 
 export { PropostasPage, CadastrosFV };

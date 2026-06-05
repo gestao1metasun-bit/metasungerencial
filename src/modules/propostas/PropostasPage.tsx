@@ -583,66 +583,56 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             "filtroRapido", "filtroAvancado", "colunas",
           ]}
           availableProcesses={[
-            // ▼ Propostas
-            { key: "aprovar_proposta",     label: "Aprovar",            group: "Propostas" },
-            { key: "reprovar_proposta",    label: "Reprovar",           group: "Propostas", destructive: true, requerMotivo: true },
-            { key: "duplicar_proposta",    label: "Duplicar",           group: "Propostas" },
-            // ▼ Comercial
-            { key: "alterar_consultor",    label: "Alterar Consultor",  group: "Comercial", permiteLote: true, requerSelecao: 1 },
-            { key: "alterar_cidade",       label: "Alterar Cidade",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
-            { key: "alterar_canal",        label: "Alterar Canal",      group: "Comercial", permiteLote: true, requerSelecao: 1 },
-            { key: "alterar_origem",       label: "Alterar Origem",     group: "Comercial", permiteLote: true, requerSelecao: 1 },
-            // ▼ Relatórios — removidos (chegam em D27.COM.5 Painel Executivo)
-            // ▼ Manutenção
-            { key: "nova_proposta",        label: "Nova proposta (lead)", group: "Manutenção", requerSelecao: 0 },
-            { key: "marcar_vencidas",      label: "Marcar vencidas (>45 dias)", group: "Manutenção", requerSelecao: 0 },
-            { key: "atualizar_lista",      label: "Atualizar lista",    group: "Manutenção", requerSelecao: 0 },
+            // ▼ Processos da Proposta (estágio comercial)
+            { key: "aprovar_proposta",     label: "Aprovar Proposta",             group: "Proposta" },
+            { key: "reprovar_proposta",    label: "Reprovar Proposta",            group: "Proposta", destructive: true, requerMotivo: true },
+            { key: "duplicar_proposta",    label: "Duplicar Proposta",            group: "Proposta" },
+            { key: "enviar_assinatura",    label: "Enviar para Assinatura",       group: "Encaminhamento" },
+            { key: "gerar_contrato",       label: "Gerar Contrato",               group: "Encaminhamento" },
+            { key: "enviar_financiamento", label: "Enviar para Financiamento",    group: "Encaminhamento" },
+            { key: "enviar_engenharia",    label: "Enviar para Engenharia",       group: "Encaminhamento" },
+            { key: "cancelar_proposta",    label: "Cancelar Proposta",            group: "Encerramento", destructive: true, requerMotivo: true },
+            { key: "reabrir_proposta",     label: "Reabrir Proposta",             group: "Encerramento", requerMotivo: true },
           ]}
           onProcess={async (key) => {
-            if (key === "nova_proposta") {
-              novaProposta();
-            } else if (key === "marcar_vencidas") {
-              try {
-                const { propostasRevisaoRepo } = await import("@/lib/repositories/propostas-revisao-repo");
-                const n = await propostasRevisaoRepo.marcarVencidas();
-                toast.success(`${n} proposta(s) marcada(s) como vencida(s).`);
-              } catch (e: any) {
-                toast.error(e?.message ?? "Falha ao marcar vencidas.");
-              }
-            } else if (key === "atualizar_lista") {
-              await refreshPropostas();
-              toast.info("Lista atualizada.");
-            } else if (key === "duplicar_proposta") {
-              const p = getPropostaAtiva();
-              if (p) duplicarProposta(p);
-            } else if (key === "aprovar_proposta") {
-              executarAprovar();
-            } else if (key === "reprovar_proposta") {
-              await executarReprovar();
-            } else if (key.startsWith("alterar_")) {
-              const campo = key.replace("alterar_", "");
+            // Confirmação padronizada: ação + destino + novo status.
+            const confirmarProcesso = (titulo: string, destino: string, novoStatus: string) =>
+              window.confirm(
+                `${titulo}\n\nDestino: ${destino}\nNovo status: ${novoStatus}\n\nDeseja continuar?`,
+              );
+
+            if (key === "duplicar_proposta") {
               const p = getPropostaAtiva();
               if (!p) return;
-              const novo = window.prompt(`Novo valor para ${campo}:`, "");
-              if (novo === null) return;
-              const valor = novo.trim();
-              if (valor.length < 2) { toast.error("Valor inválido."); return; }
-              try {
-                const patch: any = { ...p, atualizadoEm: new Date().toISOString() };
-                if (campo === "consultor") patch.consultor = valor;
-                else if (campo === "cidade") patch.cidade = valor;
-                else if (campo === "canal") patch.canal = valor;
-                else if (campo === "origem") patch.origem = valor;
-                await upsertProposta(patch);
-                await refreshPropostas();
-                toast.success(`${campo} atualizado.`);
-              } catch (e: any) {
-                toast.error(e?.message ?? `Falha ao alterar ${campo}.`);
-              }
-            } else if (key.startsWith("rel_")) {
-              navigate({ to: "/analytics/comercial", hash: key.replace("rel_", "") });
+              if (!confirmarProcesso("Duplicar Proposta", "Comercial > Propostas (nova)", "RASCUNHO")) return;
+              duplicarProposta(p);
+            } else if (key === "aprovar_proposta") {
+              if (!confirmarProcesso("Aprovar Proposta", "Comercial > Propostas Aprovadas", "APROVADA")) return;
+              executarAprovar();
+            } else if (key === "reprovar_proposta") {
+              if (!confirmarProcesso("Reprovar Proposta", "Comercial > Propostas Reprovadas", "REPROVADA")) return;
+              await executarReprovar();
+            } else if (key === "enviar_assinatura") {
+              if (!confirmarProcesso("Enviar para Assinatura", "Comercial > Assinaturas Pendentes", "PENDENTE DE ASSINATURA")) return;
+              await executarEnviarAssinatura();
+            } else if (key === "gerar_contrato") {
+              if (!confirmarProcesso("Gerar Contrato", "Comercial > Contratos Pendentes", "PENDENTE DE CONTRATO")) return;
+              const p = getPropostaAtiva();
+              if (!p) return;
+              await garantirContrato(p, "Confirma a geração do contrato vinculado a esta proposta?");
+            } else if (key === "enviar_financiamento") {
+              if (!confirmarProcesso("Enviar para Financiamento", "Financiamentos > Pendentes de Análise", "PENDENTE DE FINANCIAMENTO")) return;
+              await executarEnviarFinanciamento();
+            } else if (key === "enviar_engenharia") {
+              if (!confirmarProcesso("Enviar para Engenharia", "Engenharia > Obras Pendentes", "PENDENTE DE ENGENHARIA")) return;
+              await executarEnviarEngenharia();
+            } else if (key === "cancelar_proposta") {
+              if (!confirmarProcesso("Cancelar Proposta", "Comercial > Propostas Canceladas", "CANCELADA")) return;
+              await executarCancelar();
+            } else if (key === "reabrir_proposta") {
+              if (!confirmarProcesso("Reabrir Proposta", "Comercial > Propostas em Negociação", "EM NEGOCIAÇÃO")) return;
+              await executarReabrir();
             }
-
           }}
           onAction={(a) => {
             if (a === "novo") {

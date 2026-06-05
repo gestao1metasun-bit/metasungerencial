@@ -586,7 +586,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             // ▼ Proposta
             { key: "aprovar_proposta",     label: "Aprovar Proposta",  group: "Proposta" },
             { key: "reprovar_proposta",    label: "Reprovar Proposta", group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "editar_proposta",      label: "Editar Proposta",   group: "Proposta" },
+            { key: "editar_cliente",       label: "Editar Cliente",    group: "Proposta" },
             // ▼ Nova Proposta
             { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta", group: "Nova Proposta" },
             // ▼ Encerramento

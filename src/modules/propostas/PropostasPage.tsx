@@ -585,14 +585,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           ]}
           availableProcesses={[
             // ▼ Proposta
-            { key: "aprovar_proposta",     label: "Aprovar Proposta",  group: "Proposta" },
-            { key: "reprovar_proposta",    label: "Reprovar Proposta", group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "editar_cliente",       label: "Editar Cliente",    group: "Proposta" },
+            { key: "aprovar_proposta",     label: "Aprovar Proposta",        group: "Proposta" },
+            { key: "reprovar_proposta",    label: "Reprovar Proposta",       group: "Proposta", destructive: true, requerMotivo: true },
+            { key: "editar_cliente",       label: "Editar Dados do Cliente", group: "Proposta" },
             // ▼ Nova Proposta
-            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta", group: "Nova Proposta" },
+            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta",     group: "Nova Proposta" },
             // ▼ Encerramento
-            { key: "cancelar_proposta",    label: "Cancelar Proposta", group: "Encerramento", destructive: true, requerMotivo: true },
-            { key: "reabrir_proposta",     label: "Reabrir Proposta",  group: "Encerramento", requerMotivo: true },
+            { key: "cancelar_proposta",    label: "Cancelar Proposta",       group: "Encerramento", destructive: true, requerMotivo: true },
+            { key: "reabrir_proposta",     label: "Reabrir Proposta",        group: "Encerramento", requerMotivo: true },
           ]}
           onProcess={async (key) => {
             // Confirmação padronizada: ação + destino + novo status.

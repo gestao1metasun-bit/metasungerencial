@@ -1801,8 +1801,16 @@ export function PropostaList({
   // abra este diálogo, já que o estado de filtro vive aqui.
   useEffect(() => {
     (window as any).__propostasOpenFilters = () => setFiltrosDialogOpen(true);
-    return () => { try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ } };
-  }, []);
+    (window as any).__propostasOpenColunas = () => {
+      // Abre o gerenciador de colunas correspondente à visualização ativa.
+      if (view === "tabela") setColsTabelaOpen(true);
+      else setColsOpen(true);
+    };
+    return () => {
+      try { delete (window as any).__propostasOpenFilters; } catch { /* noop */ }
+      try { delete (window as any).__propostasOpenColunas; } catch { /* noop */ }
+    };
+  }, [view]);
 
 
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"

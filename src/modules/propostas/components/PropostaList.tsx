@@ -660,10 +660,29 @@ function useKanbanState(leads: Lead[]) {
       return normalizeCols(next);
     });
   };
-  const [assign, setAssign] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
+  const [assign, setAssignRaw] = useState<Record<string, string>>(() => readLS(ASSIGN_KEY, {} as Record<string, string>));
+  const [assignAt, setAssignAt] = useState<Record<string, string>>(() => readLS(ASSIGN_AT_KEY, {} as Record<string, string>));
 
   useEffect(() => writeLS(COLS_KEY, cols), [cols]);
   useEffect(() => writeLS(ASSIGN_KEY, assign), [assign]);
+  useEffect(() => writeLS(ASSIGN_AT_KEY, assignAt), [assignAt]);
+
+  // Wrapper: toda vez que `assign` muda, registra timestamp para as chaves
+  // cujo valor foi alterado. Assim "Dias no status" reflete o tempo na coluna.
+  const setAssign: typeof setAssignRaw = (updater) => {
+    setAssignRaw((prev) => {
+      const next = typeof updater === "function" ? (updater as (a: Record<string, string>) => Record<string, string>)(prev) : updater;
+      const now = new Date().toISOString();
+      const stamps: Record<string, string> = {};
+      for (const k of Object.keys(next)) {
+        if (prev[k] !== next[k]) stamps[k] = now;
+      }
+      if (Object.keys(stamps).length) {
+        setAssignAt((at) => ({ ...at, ...stamps }));
+      }
+      return next;
+    });
+  };
 
   // Atribui coluna padrão para leads novos OU para leads cuja coluna foi removida/desativada.
   // Leads com fase pós-aprovação são FORÇADOS para a respectiva coluna-âncora (não voltam).
@@ -696,7 +715,7 @@ function useKanbanState(leads: Lead[]) {
     });
   }, [leads, cols]);
 
-  return { cols, setCols, assign, setAssign };
+  return { cols, setCols, assign, setAssign, assignAt };
 }
 
 /* ===================== Gerenciador de Colunas ===================== */

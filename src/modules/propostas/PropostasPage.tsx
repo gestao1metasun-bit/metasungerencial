@@ -721,20 +721,35 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           }}
           statusActions={(() => {
             const hasSelectedLead = !!propostaSelecionada;
+            const r = ribbonState;
             return [
               {
                 key: "novoLead",
-                label: "Novo lead",
+                label: "Nova Proposta",
                 icon: Plus,
                 tone: "info" as const,
                 wide: true,
                 disabled: hasSelectedLead,
-                disabledReason: "Desmarque o lead para criar um novo.",
+                disabledReason: "Desmarque o lead para criar uma nova proposta.",
                 onClick: () => novaProposta(),
               },
               {
-                key: "novaPropostaLeadFlegado",
-                label: "Nova proposta (lead flegado)",
+                key: "aprovar",
+                label: "Aprovar Proposta",
+                icon: CheckCircle2,
+                tone: "success" as const,
+                ...r.aprovar,
+              },
+              {
+                key: "reprovar",
+                label: "Reprovar Proposta",
+                icon: XCircle,
+                tone: "danger" as const,
+                ...r.reprovar,
+              },
+              {
+                key: "gerarNovaProposta",
+                label: "Gerar Nova Proposta",
                 icon: Copy,
                 tone: "warning" as const,
                 wide: true,
@@ -747,7 +762,20 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                   novaProposta(lead);
                 },
               },
-              ...ribbonRmComercial(ribbonState),
+              {
+                key: "cancelar",
+                label: "Cancelar Proposta",
+                icon: XCircle,
+                tone: "danger" as const,
+                ...r.cancelar,
+              },
+              {
+                key: "reabrir",
+                label: "Reabrir Proposta",
+                icon: Undo2,
+                tone: "warning" as const,
+                ...r.reabrir,
+              },
             ];
           })()}
           layoutBar={layoutBarRm({

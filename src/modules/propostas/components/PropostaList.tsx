@@ -2007,7 +2007,7 @@ export function PropostaList({
           >
             Reprovado
             <span className="ml-1.5 rounded bg-background/70 px-1 text-[10px] tabular-nums">
-              {leadsAll.filter((l) => (l.status === "RECUSADA" || l.status === "VENCIDA") && l.fase !== "ASSINADO" && l.status !== "APROVADA").length}
+              {leadsAll.filter((l) => (l.status === "RECUSADA" || l.status === "VENCIDA") && l.fase !== "ASSINADO").length}
             </span>
           </Button>
           <Button

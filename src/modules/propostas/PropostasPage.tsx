@@ -703,13 +703,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const p = getPropostaAtiva();
               if (p) setAnexosOpen(true);
             } else if (a === "historico" || a === "auditoria") {
-              toast.info("Histórico universal está em /auditoria (D24).");
+              const p = getPropostaAtiva();
+              if (!p) return;
+              setHistoricoOpen(true);
             } else if (a === "favoritos") {
               toast.info("Favoritos por usuário chegam em D27.COM.5.");
             } else if (a === "colunas") {
-              const btn = document.querySelector<HTMLButtonElement>("[data-propostas-colunas]");
-              if (btn) { btn.scrollIntoView({ behavior: "smooth", block: "center" }); btn.click(); }
-              else toast.info("Use o botão Colunas na lista abaixo.");
+              const open = (window as any).__propostasOpenColunas;
+              if (typeof open === "function") open();
+              else toast.info("Use o menu de filtros da lista abaixo.");
             } else if (a === "filtroAvancado" || a === "filtroRapido") {
               const open = (window as any).__propostasOpenFilters;
               if (typeof open === "function") open();

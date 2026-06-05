@@ -6,6 +6,7 @@ import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
   XCircle, Sparkles, Calculator, Users, MapPin, Zap, Sun, Wrench, DollarSign,
   Receipt, AlertTriangle, Save, FileSearch, Settings as SettingsIcon, Pencil,
+  Undo2,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

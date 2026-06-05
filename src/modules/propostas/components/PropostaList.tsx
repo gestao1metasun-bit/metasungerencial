@@ -2059,7 +2059,7 @@ export function PropostaList({
       </Card>
 
       {view === "tabela"
-        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />
+        ? <TabelaView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} mgrOpen={colsTabelaOpen} setMgrOpen={setColsTabelaOpen} cols={cols} assign={assign} assignAt={assignAt} onAprovar={setAprovandoLista} onSelecionarUltima={onSelecionarUltima} />
         : <KanbanView leads={leadsFiltrados} onAbrirLead={setLeadAberto} onNovaPreset={onNova} cols={cols} setCols={setCols} assign={assign} setAssign={setAssign} onAprovar={setAprovandoLista} />}
 
       <ColunasManager open={colsOpen} onOpenChange={setColsOpen} cols={cols} setCols={setCols} />

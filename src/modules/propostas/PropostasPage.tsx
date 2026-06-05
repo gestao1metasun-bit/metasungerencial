@@ -616,10 +616,11 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               }
               setEditandoCliente(p);
             } else if (key === "gerar_nova_proposta") {
-              const p = getPropostaAtiva();
-              if (!p) { toast.info("Selecione um lead/cliente na tabela."); return; }
-              if (!confirmarProcesso("Gerar Nova Proposta", "Comercial > Propostas (nova versão para o mesmo lead)", "RASCUNHO")) return;
-              duplicarProposta(p);
+              const sel = (window as any).__propostasSelectedLead;
+              const lead = typeof sel === "function" ? sel() : propostaSelecionada;
+              if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
+              if (!confirmarProcesso("Gerar Nova Proposta", "Comercial > Propostas (nova proposta para o lead flegado)", "RASCUNHO")) return;
+              novaProposta(lead);
             } else if (key === "cancelar_proposta") {
               if (!confirmarProcesso("Cancelar Proposta", "Comercial > Propostas Canceladas", "CANCELADA")) return;
               await executarCancelar();

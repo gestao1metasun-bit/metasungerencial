@@ -2273,7 +2273,9 @@ function EditarDadosClienteDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const consultoresAtivos = useConsultoresAtivos();
   const [nome, setNome] = useState(proposta.clienteNome ?? "");
+  const [consultor, setConsultor] = useState(proposta.consultor ?? "");
   const [doc, setDoc] = useState(proposta.clienteDoc ?? "");
   const [telefone, setTelefone] = useState(proposta.clienteTelefone ?? "");
   const [email, setEmail] = useState(proposta.clienteEmail ?? "");
@@ -2293,6 +2295,7 @@ function EditarDadosClienteDialog({
       await upsertProposta({
         ...proposta,
         clienteNome: nome.trim(),
+        consultor: consultor.trim() || undefined,
         clienteDoc: doc.trim() || undefined,
         clienteTelefone: telefone.trim() || undefined,
         clienteEmail: email.trim() || undefined,
@@ -2325,6 +2328,22 @@ function EditarDadosClienteDialog({
             <Label className="text-xs">Nome / Razão social *</Label>
             <Input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={200} />
           </div>
+          <div className="col-span-2">
+            <Label className="text-xs">Consultor responsável</Label>
+            <Select value={consultor || "__none__"} onValueChange={(v) => setConsultor(v === "__none__" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o consultor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Sem consultor —</SelectItem>
+                {consultoresAtivos.map((c) => (
+                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                ))}
+                {consultor && !consultoresAtivos.some((c) => c.nome === consultor) && (
+                  <SelectItem value={consultor}>{consultor} (atual)</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label className="text-xs">CPF / CNPJ</Label>
             <Input value={doc} onChange={(e) => setDoc(e.target.value)} maxLength={20} />

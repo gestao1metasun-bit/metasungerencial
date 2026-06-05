@@ -595,6 +595,8 @@ type KCol = { id: string; titulo: string; ativo?: boolean; locked?: boolean };
 // v5 — colunas fixas pré-definidas (todas travadas).
 const COLS_KEY = "ms.fv.kanban.cols.v5";
 const ASSIGN_KEY = "ms.fv.kanban.assign-leads.v1";
+// Timestamp ISO de quando o lead entrou na coluna atual — base do "Dias no status".
+const ASSIGN_AT_KEY = "ms.fv.kanban.assign-leads-at.v1";
 
 // Colunas-âncora travadas (progressão: GERANDO → GERADO → ASSINADO; não voltam).
 const COL_GERANDO_ID = "col-gerando-contrato";

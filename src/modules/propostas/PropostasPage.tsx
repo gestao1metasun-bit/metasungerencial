@@ -268,6 +268,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [leadDraft, setLeadDraft] = useState<PropostaFV | null>(null);
   const [anexosOpen, setAnexosOpen] = useState(false);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
   const [aprovarOpen, setAprovarOpen] = useState(false);
   const [propostaParaAprovarId, setPropostaParaAprovarId] = useState<string | null>(null);
   const [selecionarAprovarOpen, setSelecionarAprovarOpen] = useState(false);

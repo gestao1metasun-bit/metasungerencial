@@ -1801,7 +1801,7 @@ export function PropostaList({
   // Estado de colunas precisa estar acessível tanto pro Kanban quanto pro botão "Colunas"
   const contratosAll = useContratos();
   const leadsAll = useMemo(() => buildLeads(propostas, contratosAll), [propostas, contratosAll]);
-  const { cols, setCols, assign, setAssign } = useKanbanState(leadsAll);
+  const { cols, setCols, assign, setAssign, assignAt } = useKanbanState(leadsAll);
 
   // Opções derivadas (consultores/cidades únicos para os selects).
   const consultoresOpts = useMemo(() => {

@@ -1399,7 +1399,7 @@ const TABELA_DEFAULT_HIDDEN: TabelaColKey[] = [
 ];
 
 function TabelaView({
-  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, onAprovar, onSelecionarUltima,
+  leads, onAbrirLead, onNovaPreset, mgrOpen, setMgrOpen, cols, assign, assignAt, onAprovar, onSelecionarUltima,
 }: {
   leads: Lead[];
   onAbrirLead: (l: Lead) => void;
@@ -1408,6 +1408,7 @@ function TabelaView({
   setMgrOpen: (v: boolean) => void;
   cols: KCol[];
   assign: Record<string, string>;
+  assignAt: Record<string, string>;
   onAprovar?: (p: PropostaFV) => void;
   onSelecionarUltima?: (propostaId: string | null) => void;
 }) {

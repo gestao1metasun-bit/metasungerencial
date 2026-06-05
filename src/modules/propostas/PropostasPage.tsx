@@ -583,16 +583,15 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             "filtroRapido", "filtroAvancado", "colunas",
           ]}
           availableProcesses={[
-            // ▼ Processos da Proposta (estágio comercial)
-            { key: "aprovar_proposta",     label: "Aprovar Proposta",             group: "Proposta" },
-            { key: "reprovar_proposta",    label: "Reprovar Proposta",            group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "duplicar_proposta",    label: "Duplicar Proposta",            group: "Proposta" },
-            { key: "enviar_assinatura",    label: "Enviar para Assinatura",       group: "Encaminhamento" },
-            { key: "gerar_contrato",       label: "Gerar Contrato",               group: "Encaminhamento" },
-            { key: "enviar_financiamento", label: "Enviar para Financiamento",    group: "Encaminhamento" },
-            { key: "enviar_engenharia",    label: "Enviar para Engenharia",       group: "Encaminhamento" },
-            { key: "cancelar_proposta",    label: "Cancelar Proposta",            group: "Encerramento", destructive: true, requerMotivo: true },
-            { key: "reabrir_proposta",     label: "Reabrir Proposta",             group: "Encerramento", requerMotivo: true },
+            // ▼ Proposta
+            { key: "aprovar_proposta",     label: "Aprovar Proposta",  group: "Proposta" },
+            { key: "reprovar_proposta",    label: "Reprovar Proposta", group: "Proposta", destructive: true, requerMotivo: true },
+            { key: "editar_proposta",      label: "Editar Proposta",   group: "Proposta" },
+            // ▼ Nova Proposta
+            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta", group: "Nova Proposta" },
+            // ▼ Encerramento
+            { key: "cancelar_proposta",    label: "Cancelar Proposta", group: "Encerramento", destructive: true, requerMotivo: true },
+            { key: "reabrir_proposta",     label: "Reabrir Proposta",  group: "Encerramento", requerMotivo: true },
           ]}
           onProcess={async (key) => {
             // Confirmação padronizada: ação + destino + novo status.
@@ -601,31 +600,21 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
                 `${titulo}\n\nDestino: ${destino}\nNovo status: ${novoStatus}\n\nDeseja continuar?`,
               );
 
-            if (key === "duplicar_proposta") {
-              const p = getPropostaAtiva();
-              if (!p) return;
-              if (!confirmarProcesso("Duplicar Proposta", "Comercial > Propostas (nova)", "RASCUNHO")) return;
-              duplicarProposta(p);
-            } else if (key === "aprovar_proposta") {
-              if (!confirmarProcesso("Aprovar Proposta", "Comercial > Propostas Aprovadas", "APROVADA")) return;
+            if (key === "aprovar_proposta") {
+              if (!confirmarProcesso("Aprovar Proposta", "Comercial > Contratos Pendentes (geração automática)", "APROVADA")) return;
               executarAprovar();
             } else if (key === "reprovar_proposta") {
               if (!confirmarProcesso("Reprovar Proposta", "Comercial > Propostas Reprovadas", "REPROVADA")) return;
               await executarReprovar();
-            } else if (key === "enviar_assinatura") {
-              if (!confirmarProcesso("Enviar para Assinatura", "Comercial > Assinaturas Pendentes", "PENDENTE DE ASSINATURA")) return;
-              await executarEnviarAssinatura();
-            } else if (key === "gerar_contrato") {
-              if (!confirmarProcesso("Gerar Contrato", "Comercial > Contratos Pendentes", "PENDENTE DE CONTRATO")) return;
+            } else if (key === "editar_proposta") {
               const p = getPropostaAtiva();
-              if (!p) return;
-              await garantirContrato(p, "Confirma a geração do contrato vinculado a esta proposta?");
-            } else if (key === "enviar_financiamento") {
-              if (!confirmarProcesso("Enviar para Financiamento", "Financiamentos > Pendentes de Análise", "PENDENTE DE FINANCIAMENTO")) return;
-              await executarEnviarFinanciamento();
-            } else if (key === "enviar_engenharia") {
-              if (!confirmarProcesso("Enviar para Engenharia", "Engenharia > Obras Pendentes", "PENDENTE DE ENGENHARIA")) return;
-              await executarEnviarEngenharia();
+              if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
+              setEditando(p);
+            } else if (key === "gerar_nova_proposta") {
+              const p = getPropostaAtiva();
+              if (!p) { toast.info("Selecione um lead/cliente na tabela."); return; }
+              if (!confirmarProcesso("Gerar Nova Proposta", "Comercial > Propostas (nova versão para o mesmo lead)", "RASCUNHO")) return;
+              duplicarProposta(p);
             } else if (key === "cancelar_proposta") {
               if (!confirmarProcesso("Cancelar Proposta", "Comercial > Propostas Canceladas", "CANCELADA")) return;
               await executarCancelar();
@@ -634,6 +623,7 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               await executarReabrir();
             }
           }}
+
           onAction={(a) => {
             if (a === "novo") {
               novaProposta();

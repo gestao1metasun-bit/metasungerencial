@@ -69,6 +69,9 @@ import {
 } from "@/lib/contratos-store";
 import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesSimilares } from "@/lib/repositories/oportunidades-repo";
+import { ClienteDuplicidadeAlert } from "@/components/app/comercial/ClienteDuplicidadeAlert";
+import { Open360Button } from "@/components/app/comercial/Open360Button";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";

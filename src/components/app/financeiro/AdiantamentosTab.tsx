@@ -19,6 +19,7 @@ import {
 import type { Adiantamento, AdiantamentoTipo } from "@/lib/repositories/financeiro-repository";
 import { fmtBRLPrecise } from "@/lib/financeiro-store";
 import { ContraparteCombo, type ContraparteOption } from "@/components/app/financeiro/ContraparteCombo";
+// LEGADO LS — pendente F-ENT.CLIENTES (Financeiro Supabase). Não estender.
 import { useClientesAll } from "@/lib/clientes-store";
 import { useFornecedores } from "@/lib/fin-fornecedores-store";
 import { promptDialog } from "@/components/app/confirm-dialog";

@@ -68,12 +68,16 @@ export function LeadsPage() {
   const consultores = useConsultoresAtivos();
   const { data: podeVer } = useHasPermission("comercial.lead.visualizar");
   const { data: podeCriar } = useHasPermission("comercial.lead.criar");
+  const { data: podeCancelar } = useHasPermission("comercial.lead.cancelar");
+  const { data: podeConverter } = useHasPermission("comercial.lead.converter");
+  const { user } = useAuth();
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("TODOS");
   const [filtroOrigem, setFiltroOrigem] = useState<string>("TODOS");
   const [filtroConsultor, setFiltroConsultor] = useState<string>("TODOS");
   const [novoOpen, setNovoOpen] = useState(false);
   const [detalhe, setDetalhe] = useState<Lead | null>(null);
+  const [cancelarAlvo, setCancelarAlvo] = useState<Lead | null>(null);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();

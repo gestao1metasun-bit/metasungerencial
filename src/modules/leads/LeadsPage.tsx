@@ -306,20 +306,33 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     // Lead já cadastrado?
     const leadExist = findLeadByDoc(masked);
     if (leadExist) setLeadExistenteNumero(leadExist.numero);
-    // Cliente já cadastrado?
-    const cli = findClienteByDoc(masked);
-    if (cli) {
-      setClienteExistenteId(cli.id);
-      // Pré-preenche dados do cliente; endereço pode ser editado
-      setNome(cli.nome);
-      if (!telefone) setTelefone(formatTelefoneBR(cli.telefone || ""));
-      setCep(formatCEP(cli.cep || ""));
-      setRua(cli.rua || "");
-      setNumero(cli.numero || "");
-      setBairro(cli.bairro || "");
-      setCidade(cli.cidade || "");
-      setUf(cli.uf || "");
-    }
+    // Cliente já cadastrado? — Supabase via RPC oficial de similaridade.
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
+          p_doc: masked, p_email: null, p_telefone: null, p_nome: null,
+        });
+        if (error) return;
+        const top = Array.isArray(data) ? (data as Array<{ id: string; score: number; nome: string; telefone: string | null }>).find((r) => (r.score ?? 0) >= 80) : null;
+        if (!top) return;
+        // Carrega dados completos para pré-preencher endereço
+        const { data: cli } = await supabase
+          .from("clientes")
+          .select("id,nome,telefone,cep,rua,numero,bairro,cidade,uf")
+          .eq("id", top.id)
+          .maybeSingle();
+        if (!cli) return;
+        setClienteExistenteId(cli.id);
+        setNome(cli.nome);
+        if (!telefone) setTelefone(formatTelefoneBR(cli.telefone ?? ""));
+        setCep(formatCEP(cli.cep ?? ""));
+        setRua(cli.rua ?? "");
+        setNumero(cli.numero ?? "");
+        setBairro(cli.bairro ?? "");
+        setCidade(cli.cidade ?? "");
+        setUf(cli.uf ?? "");
+      } catch { /* silencioso: usuário pode seguir manualmente */ }
+    })();
   }
 
   async function buscarCep() {

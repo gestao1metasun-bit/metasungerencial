@@ -310,7 +310,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     void (async () => {
       try {
         const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
-          p_doc: masked, p_email: null, p_telefone: null, p_nome: null,
+          p_doc: masked, p_email: undefined, p_telefone: undefined, p_nome: undefined,
         });
         if (error) return;
         const top = Array.isArray(data) ? (data as Array<{ id: string; score: number; nome: string; telefone: string | null }>).find((r) => (r.score ?? 0) >= 80) : null;

@@ -15591,6 +15591,7 @@ export type Database = {
         | "comercial.oportunidade.criar"
         | "comercial.oportunidade.editar"
         | "comercial.oportunidade.cancelar"
+        | "comercial.cliente.visualizar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15962,6 +15963,7 @@ export const Constants = {
         "comercial.oportunidade.criar",
         "comercial.oportunidade.editar",
         "comercial.oportunidade.cancelar",
+        "comercial.cliente.visualizar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

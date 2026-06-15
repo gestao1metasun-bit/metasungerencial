@@ -41,8 +41,8 @@ export function ClienteDuplicidadeAlert({
   const ordenados = [...similares].sort((a, b) => b.score - a.score);
   const top = ordenados[0];
 
-  const handleContinuar = async () => {
-    await logError({
+  const handleContinuar = () => {
+    logError({
       severidade: "warn",
       modulo: "comercial",
       tela: "novo-cliente",
@@ -53,7 +53,7 @@ export function ClienteDuplicidadeAlert({
         similares_ids: ordenados.map((s) => s.id),
         top_score: top?.score ?? null,
       },
-    }).catch(() => {});
+    });
     onContinuar();
   };
 

@@ -46,10 +46,14 @@ import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,
   enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
-// LEGADO LS — pendente C-ENT.2 (Leads Supabase). Não estender; ver clientes-supabase-repo.ts.
+// C-ENT.2 — Clientes oficiais (Supabase). LS removido do fluxo de Leads.
 import {
-  findClienteByDoc, addClienteFull, updateClienteFull, useClientesFull,
-} from "@/lib/clientes-store";
+  criarClienteSupabase,
+  atualizarClienteSupabase,
+} from "@/lib/repositories/clientes-supabase-repo";
+import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
+import { useHasPermission } from "@/hooks/use-has-permission";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 function fmtDate(iso: string) {
   try {

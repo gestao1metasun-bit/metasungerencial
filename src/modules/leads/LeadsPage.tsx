@@ -603,19 +603,28 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
 /* =================== Detalhe + ações =================== */
 
-function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }) {
+function LeadDetailDialog({
+  lead, onClose, onCancelarLead,
+}: { lead: Lead; onClose: () => void; onCancelarLead?: () => void }) {
   const consultores = useConsultoresAtivos();
   const { user, role } = useAuth();
   const isAdminMaster = role === "admin_master";
   const isGerente = role === "admin_master" || role === "admin_geral";
+  const { data: podeConverter } = useHasPermission("comercial.lead.converter");
+  const { data: podeCancelar } = useHasPermission("comercial.lead.cancelar");
 
   const [trocaOrigemOpen, setTrocaOrigemOpen] = useState(false);
   const [trocaConsultorOpen, setTrocaConsultorOpen] = useState(false);
   const [solicitarOpen, setSolicitarOpen] = useState(false);
 
+  const isCancelado = lead.status === LEAD_STATUS.CANCELADO;
+  const isConvertido = lead.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO;
   const podeSolicitarProposta =
-    lead.status === LEAD_STATUS.LEAD_CADASTRADO ||
-    lead.status === LEAD_STATUS.EM_ATENDIMENTO;
+    podeConverter !== false &&
+    !isCancelado &&
+    !isConvertido &&
+    (lead.status === LEAD_STATUS.LEAD_CADASTRADO ||
+      lead.status === LEAD_STATUS.EM_ATENDIMENTO);
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>

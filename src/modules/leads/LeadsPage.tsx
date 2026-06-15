@@ -24,10 +24,12 @@ import { toast } from "sonner";
 
 import {
   useLeads, criarLead, setLeadStatus, trocarOrigemLead, trocarConsultorLead,
+  cancelarLead,
   findLeadByDoc, findLeadByTelefoneRecent, type Lead,
 } from "./store";
 import {
   LEAD_STATUS, LEAD_STATUS_LABEL, LEAD_STATUS_OPTIONS,
+  LEAD_CANCEL_MOTIVOS,
   ORIGEM_LEAD_LABEL, ORIGEM_LEAD_OPTIONS,
   PROPOSTA_STATUS_LABEL,
   statusClass, type LeadStatus, type OrigemLead,

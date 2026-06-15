@@ -1,7 +1,29 @@
+// ============================================================
+// ⚠️ LEGADO — NÃO USAR EM NOVOS FLUXOS.
+// Fonte oficial de clientes: `src/lib/repositories/clientes-supabase-repo.ts`
+// (public.clientes via Supabase, RLS aplicada).
+//
+// Este store é mantido APENAS por compatibilidade temporária com fluxos
+// ainda não migrados (Leads, Financeiro/TitulosTab/Adiantamentos, Engenharia,
+// PropostasPage/PropostaList e write-back de contrato em Comercial).
+//
+// Roadmap de remoção:
+//   C-ENT.2          — Leads → Supabase
+//   F-ENT.CLIENTES   — Financeiro (TitulosTab/Adiantamentos) → Supabase
+//   E-ENT.CLIENTES   — Engenharia → Supabase
+//   C-ENT.2+         — Eliminar write-through e excluir este arquivo
+//
+// Não importar daqui em código novo. Para auditar uso, busque por
+// `CLIENTE_STORE_LEGADO` — toda nova adesão acende alarme nas revisões.
+// ============================================================
 // Store de clientes — cadastro completo (CRM básico) usado pelo Comercial.
 // Persiste em localStorage e une seed do mock-data com cadastros novos.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { clientes as clientesSeed } from "./mock-data";
+
+/** Marca técnica para grep — adesão nova ao LS legado deve ser revisada. */
+export const CLIENTE_STORE_LEGADO =
+  "LEGADO: use clientes-supabase-repo.ts em fluxos novos";
 
 export type ClienteSimples = { id: string; nome: string };
 

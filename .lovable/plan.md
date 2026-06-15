@@ -1,57 +1,61 @@
-## D27.COM.3 — Operacionalização dos botões do Comercial
+## Governança Enterprise — Camada Propostas
 
-O escopo descrito é grande (10 processos × Propostas/Contratos/Aditivos × individual + lote). Auditoria das RPCs já disponíveis no banco:
+Reestruturação da camada Propostas seguindo o comando. Escopo grande e sensível (toca regras comerciais, status, auditoria e geração de contrato), portanto entrego em 4 ondas curtas e auditáveis, cada uma fechada antes da próxima.
 
-**✅ Já existem:**
-- `rpc_contrato_assinar`, `rpc_contrato_marcar_engenharia_liberada`, `rpc_contrato_marcar_financeiro_liberado`
-- `rpc_proposta_solicitar_revisao`, `rpc_proposta_marcar_vencidas`, `rpc_proposta_renovar_validade`
-- `rpc_proposta_solicitar_aprovacao_excecao`, `rpc_proposta_decidir_aprovacao_excecao`
-- `rpc_comissao_liberar/marcar_paga/cancelar/estornar/reabrir/alterar_percentual`
+Arquivos principais hoje:
+- `src/modules/propostas/PropostasPage.tsx` (2.444 linhas)
+- `src/modules/propostas/components/PropostaList.tsx` (2.332 linhas)
+- `src/modules/propostas/store.ts` (modelo da proposta + ações)
 
-**❌ Faltam (precisam migração + RPC nova):**
-1. `rpc_proposta_aprovar` (status → APROVADA, auditoria)
-2. `rpc_proposta_reprovar` (motivo, status → REPROVADA)
-3. `rpc_proposta_cancelar` / `rpc_proposta_reabrir` (motivo)
-4. `rpc_proposta_gerar_contrato` (copia cliente/projetos/valores/módulos/inversores)
-5. `rpc_contrato_gerar_aditivo`
-6. `rpc_contrato_enviar_engenharia` (cria obra ATIVA status EM_PROJETO_APROVACAO copiando dados)
-7. `rpc_contrato_enviar_financiamento` (cria pendência financiamento, gated por `possui_financiamento=true`)
-8. `rpc_comissao_gerar_de_contrato` (faixas R$/kWp: 2.00-2.10=3%, 2.11-2.30=4%, 2.31-2.44=5%, ≥2.45=6%)
-9. `rpc_proposta_enviar_assinatura` (registra solicitação, status AGUARDANDO_ASSINATURA)
-10. Tabela `financiamentos_pendencias` (não existe)
-11. Tabela `comercial_assinatura_solicitacoes` (não existe)
+### Onda P1 — UI e regras de bloqueio (frontend)
 
-## Plano em 3 sub-ondas
+1. Renomear ação "Editar Dados do Cliente" → **"Corrigir Dados Cadastrais"** em toolbar, processos e atalhos.
+2. Modal `CorrigirCadastraisDialog`:
+   - Apenas campos do bloco CLIENTE / ENDEREÇO / CONTATO listados no comando (nome, CPF/CNPJ, RG/IE, telefone, WhatsApp, e-mail, CEP, logradouro, número, bairro, complemento, cidade, UF, responsável de contato, observações).
+   - Campo **Motivo da correção** obrigatório (mín. 5 chars).
+   - Bloqueado quando status ∈ {CANCELADA, EXPIRADA, SUBSTITUÍDA}.
+3. Botão **Gerar Nova Proposta**:
+   - Mantém comportamento atual (mesmo do botão laranja, novaProposta(lead)).
+   - Adiciona prompt: *"Deseja marcar esta nova proposta como proposta ativa do lead?"* (Sim marca anteriores EM ABERTO como **SUBSTITUÍDA**, Não apenas cria).
+4. Mensagens de bloqueio padronizadas (constantes) para:
+   - Tentativa de editar campo comercial/técnico/financeiro.
+   - Aprovar proposta expirada.
+   - Tentativa de excluir.
+5. Toolbars por status (em aberto / fechada / reprovada / cancelada / expirada / substituída) — gating dos botões `availableProcesses` e `statusActions` conforme seção 7 do comando.
+6. Remover qualquer caminho remanescente para: editar livremente, duplicar, excluir, gerar contrato manual, enviar engenharia/financiamento/assinatura na camada Propostas.
 
-### D27.COM.3.a — Backend Crítico (prioridade absoluta) — esta entrega
-Criar as 5 RPCs prioritárias + 1 tabela:
-- `rpc_proposta_aprovar(p_id, p_observacao)` — single + variant em lote chamando em loop server-side
-- `rpc_proposta_gerar_contrato(p_id)` — atômica, copia tudo, vincula `propostas.contrato_id`
-- `rpc_contrato_enviar_engenharia(p_id)` — cria `obras` ATIVA + idempotência
-- `rpc_contrato_enviar_financiamento(p_id)` — cria `financiamentos_pendencias`
-- `rpc_comissao_gerar_de_contrato(p_id)` — calcula faixa R$/kWp e insere em `comercial_comissoes` PREVISTA
+### Onda P2 — Status SUBSTITUÍDA + EXPIRADA + Proposta Ativa
 
-Toda RPC: SECURITY DEFINER, search_path=public, REVOKE anon, GRANT authenticated, auditoria em audit_log, idempotente, valida permissão.
+1. Estender enum/string de status no `store.ts` para incluir `SUBSTITUIDA` e garantir `EXPIRADA`.
+2. Campo `propostaAtivaId` por lead (derivado) + ação `marcarComoAtiva(propostaId)`.
+3. Job leve no carregamento da página: propostas EM ABERTO com `validade < hoje` → marcar `EXPIRADA` automaticamente (com log).
+4. Filtros da lista: nova aba/chip **Substituídas** e **Expiradas**; abas existentes (Aberto / Reprovado / Fechadas) revisadas para refletir os novos status.
 
-### D27.COM.3.b — Wire UI nos 5 botões prioritários
-- Repo `comercial-processos-repo.ts` (hooks React Query para as 5 RPCs com toast + invalidate)
-- `PropostasPage.tsx`: `ribbonRmComercial({ aprovar, gerarContrato, ... })` chama hooks reais com a proposta atualmente selecionada/vista; lote percorre seleção
-- `comercial.tsx` aba Contratos Assinados: `enviarEngenharia`, `enviarFinanciamento`, `gerarComissao` chamam hooks reais com o contrato selecionado
-- Botões desabilitam quando não aplicável (sem seleção, status incompatível, financiamento=false, etc.) com tooltip
+### Onda P3 — Auditoria obrigatória
 
-### D27.COM.3.c — Secundários (próximo turno)
-- Reprovar / Cancelar / Reabrir / Aditivo / Enviar Assinatura
-- Processos em lote para todos
-- Botões "alterar consultor/cidade/canal/origem" em lote
+Schema novo (mínimo) — entrega via migração Supabase:
+- Tabela `propostas_audit` (id, proposta_id, lead_id, usuario_id, usuario_email, acao, status_anterior, status_novo, campo, valor_anterior, valor_novo, motivo, ip, user_agent, created_at) com RLS leitura authenticated, INSERT só via RPC `rpc_proposta_audit_log`.
 
-## Decisão necessária antes de migrar
+Eventos cobertos: criação, correção cadastral, geração de nova proposta, aprovação, reprovação, cancelamento, reabertura, expiração automática, marcação como substituída, criação automática do contrato.
 
-Confirme o seguinte para D27.COM.3.a (precisa do seu OK porque cria 5 RPCs + 1 tabela e ativa fluxo cross-módulo Comercial→Engenharia→Financiamentos):
+UI: substituir o `historico` da proposta hoje genérico por leitura desta tabela no `ModuloHistoricoDrawer` (com diff antes/depois e motivo).
 
-1. **Aprovação direta** (sem workflow): a `rpc_proposta_aprovar` muda status direto para APROVADA sem passar por `workflow_aprovacoes`. A exceção R$/kWp (workflow D5.1 oficial) continua intacta. OK?
-2. **Gerar contrato**: contrato nasce em status `EM_ABERTO` e a proposta vira `CONVERTIDA_EM_CONTRATO` (segue spec C5). Confirma esses estados?
-3. **Enviar Engenharia**: criar obra direta em status `EM_PROJETO_APROVACAO` (regra operacional Meta Sun) sem equipe, sem cronograma. OK?
-4. **Comissão**: gerar em status PREVISTA usando vendedor do contrato e R$/kWp calculado. Reaproveita trigger `tg_assinatura_cria_comissao`? (se sim, este botão vira "Recalcular comissão" em vez de "Gerar"). Quer manter como "Gerar" idempotente (se já existe PREVISTA, retorna a existente)?
-5. **Lote**: tamanho máximo por chamada? Sugestão: 100 registros (igual padrão D20.SUP.4).
+### Onda P4 — Contrato automático ao aprovar
 
-Responda OK aos 5 ou ajuste, e eu envio a migração da D27.COM.3.a.
+1. Ao executar APROVAR PROPOSTA (após validação dos campos obrigatórios cliente/comercial/técnico listados na seção 6):
+   - Status → `APROVADA`.
+   - Bloqueio definitivo de edição comercial/técnica.
+   - Criação automática de **Contrato Pendente** vinculado à proposta (reusando a estrutura atual de contratos do módulo Comercial).
+   - Auditoria registra `CONTRATO_AUTO_CRIADO`.
+2. Remover de vez quaisquer botões manuais "Gerar Contrato / Enviar Engenharia / Enviar Financiamento / Enviar Assinatura" remanescentes na camada Propostas.
+3. Em PROPOSTAS FECHADAS, adicionar ação **Visualizar Contrato Vinculado** (link para o contrato gerado).
+
+### Fora de escopo (explícito)
+
+- Não mexer em workflow de Contratos, Engenharia, Financiamento ou Assinatura (apenas garantir que Propostas não os dispara manualmente).
+- Não mexer no módulo Financeiro nem em Comissões.
+- Não criar permissões novas além das estritamente necessárias para `proposta.corrigir_cadastral` e `proposta.reabrir` (se ainda não existirem).
+
+### Pergunta antes de começar
+
+Posso iniciar pela **Onda P1 (UI + regras de bloqueio + Corrigir Dados Cadastrais + prompt de proposta ativa)** sem alterar banco? Ou prefere que eu já entregue Onda P1 + P3 (auditoria) juntas para não passar duas vezes nos mesmos arquivos?

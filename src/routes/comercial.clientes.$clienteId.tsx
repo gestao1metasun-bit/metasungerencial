@@ -445,3 +445,97 @@ function NovaOportunidadeButton({ clienteId }: { clienteId: string }) {
     </Dialog>
   );
 }
+
+/* ============================================================
+ * C-ENT.1.e — Edição cadastral de Cliente Supabase
+ * (campos cadastrais simples; comercial/contratos/propostas NÃO entram)
+ * ============================================================ */
+type ClienteData = {
+  id: string; nome: string; doc: string | null; telefone: string | null;
+  telefone2?: string | null; email: string | null; cep?: string | null;
+  rua?: string | null; numero?: string | null; bairro?: string | null;
+  complemento?: string | null; cidade: string | null; uf: string | null;
+};
+function EditarClienteButton({ cliente }: { cliente: ClienteData & Record<string, unknown> }) {
+  const podeEditar = useHasPermission("comercial.cliente.editar");
+  const [open, setOpen] = useState(false);
+  if (podeEditar.data !== true) return null;
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Pencil className="h-4 w-4 mr-2" /> Editar
+      </Button>
+      {open && (
+        <EditarClienteDialog
+          cliente={cliente}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function EditarClienteDialog({ cliente, onClose }: { cliente: ClienteData; onClose: () => void }) {
+  const atualizar = useAtualizarClienteSupabase();
+  const [f, setF] = useState({
+    nome: cliente.nome ?? "",
+    doc: cliente.doc ?? "",
+    telefone: cliente.telefone ?? "",
+    telefone2: cliente.telefone2 ?? "",
+    email: cliente.email ?? "",
+    cep: cliente.cep ?? "",
+    rua: cliente.rua ?? "",
+    numero: cliente.numero ?? "",
+    bairro: cliente.bairro ?? "",
+    complemento: cliente.complemento ?? "",
+    cidade: cliente.cidade ?? "",
+    uf: cliente.uf ?? "",
+  });
+  const set = <K extends keyof typeof f>(k: K, v: string) => setF((p) => ({ ...p, [k]: v }));
+
+  const salvar = async () => {
+    if (!f.nome.trim()) { toast.error("Nome é obrigatório"); return; }
+    try {
+      await atualizar.mutateAsync({ id: cliente.id, patch: f });
+      toast.success("Cliente atualizado");
+      onClose();
+    } catch (e) {
+      toast.error(`Falha ao atualizar: ${(e as Error).message}`);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Editar cadastro do cliente</DialogTitle>
+          <DialogDescription className="text-xs">
+            Atualiza apenas dados cadastrais (Supabase, RLS aplicada). Histórico, propostas,
+            contratos e dados comerciais não são alterados aqui.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="md:col-span-2"><Label>Nome *</Label><Input value={f.nome} onChange={(e) => set("nome", e.target.value)} /></div>
+          <div><Label>CPF/CNPJ</Label><Input value={f.doc} onChange={(e) => set("doc", e.target.value)} /></div>
+          <div><Label>Telefone</Label><Input value={f.telefone} onChange={(e) => set("telefone", e.target.value)} /></div>
+          <div><Label>WhatsApp</Label><Input value={f.telefone2} onChange={(e) => set("telefone2", e.target.value)} /></div>
+          <div><Label>E-mail</Label><Input value={f.email} onChange={(e) => set("email", e.target.value)} /></div>
+          <div><Label>CEP</Label><Input value={f.cep} onChange={(e) => set("cep", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label>Rua</Label><Input value={f.rua} onChange={(e) => set("rua", e.target.value)} /></div>
+          <div><Label>Número</Label><Input value={f.numero} onChange={(e) => set("numero", e.target.value)} /></div>
+          <div><Label>Bairro</Label><Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} /></div>
+          <div><Label>Complemento</Label><Input value={f.complemento} onChange={(e) => set("complemento", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label>Cidade</Label><Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} /></div>
+          <div><Label>UF</Label><Input value={f.uf} maxLength={2} onChange={(e) => set("uf", e.target.value.toUpperCase())} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={atualizar.isPending}>Cancelar</Button>
+          <Button onClick={salvar} disabled={atualizar.isPending}>
+            {atualizar.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Pencil className="h-4 w-4 mr-2" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

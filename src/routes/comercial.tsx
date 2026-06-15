@@ -73,6 +73,7 @@ import { useClientesSimilares } from "@/lib/repositories/oportunidades-repo";
 import { ClienteDuplicidadeAlert } from "@/components/app/comercial/ClienteDuplicidadeAlert";
 import { ClienteCadastroSupabaseDialog } from "@/components/app/comercial/ClienteCadastroSupabaseDialog";
 import { Open360Button } from "@/components/app/comercial/Open360Button";
+import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";

@@ -3367,11 +3367,33 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
     cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
   });
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
+  // C-ENT.1.c — Debounce + busca de similares (rpc_cliente_buscar_similar).
+  const [debounced, setDebounced] = useState({ nome: "", doc: "", telefone: "", email: "" });
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced({
+      nome: f.nome.trim(), doc: f.doc.trim(), telefone: f.telefone.trim(), email: f.email.trim(),
+    }), 400);
+    return () => clearTimeout(t);
+  }, [f.nome, f.doc, f.telefone, f.email]);
+  const similares = useClientesSimilares(debounced, open);
+  const [dupAlertOpen, setDupAlertOpen] = useState(false);
   const lookupCEP = async (cep: string) => {
     set("cep", cep);
     if (cep.replace(/\D/g, "").length !== 8) return;
     const r = await buscarCEP(cep);
     if (r) setF((p) => ({ ...p, rua: r.rua ?? p.rua, bairro: r.bairro ?? p.bairro, cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf }));
+  };
+  const persistir = () => {
+    try {
+      const c = addClienteFull({ ...f, nome: f.nome.trim() });
+      toast.success(`Cliente cadastrado: ${c.nome}`);
+      onCreated(c);
+      setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
+    } catch (e) {
+      if (e instanceof DuplicateClienteError) {
+        toast.error(`CPF/CNPJ já cadastrado (${e.existing.nome}). Selecione o cliente existente ou edite em Cadastros > Clientes.`);
+      } else throw e;
+    }
   };
   const salvar = () => {
     if (!f.nome.trim()) { toast.error("Informe o nome"); return; }
@@ -3384,16 +3406,12 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
         return;
       }
     }
-    try {
-      const c = addClienteFull({ ...f, nome: f.nome.trim() });
-      toast.success(`Cliente cadastrado: ${c.nome}`);
-      onCreated(c);
-      setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
-    } catch (e) {
-      if (e instanceof DuplicateClienteError) {
-        toast.error(`CPF/CNPJ já cadastrado (${e.existing.nome}). Selecione o cliente existente ou edite em Cadastros > Clientes.`);
-      } else throw e;
+    // C-ENT.1.c — Se houver similares no banco oficial, abre alerta antes de salvar.
+    if ((similares.data ?? []).length > 0) {
+      setDupAlertOpen(true);
+      return;
     }
+    persistir();
   };
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>

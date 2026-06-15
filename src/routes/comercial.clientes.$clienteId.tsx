@@ -98,6 +98,7 @@ function useLeadsPorCliente(clienteId: string) {
 
 function WorkspaceClientePage() {
   const { clienteId } = Route.useParams();
+  const perm = useHasPermission("comercial.cliente.visualizar");
   const cliente = useCliente(clienteId);
   const oportunidades = useOportunidadesPorCliente(clienteId);
   const propostas = usePropostasPorCliente(clienteId);
@@ -111,20 +112,45 @@ function WorkspaceClientePage() {
     return { valorPropostas, valorContratos, oportunidadesAbertas };
   }, [propostas.data, contratos.data, oportunidades.data]);
 
-  if (cliente.isLoading) {
+  if (perm.isLoading || cliente.isLoading) {
     return (
       <div className="p-2">
         <PageHeader title="Workspace 360º" subtitle="Carregando cliente..." />
       </div>
     );
   }
-  if (!cliente.data) {
+  if (perm.data === false) {
     return (
       <div className="p-2">
-        <PageHeader title="Cliente não encontrado" subtitle="Verifique o link." />
-        <Link to="/comercial" className="text-sm text-primary underline">
-          Voltar para Comercial
-        </Link>
+        <PageHeader
+          title="Acesso negado"
+          subtitle="Você não possui permissão para visualizar clientes."
+        />
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/comercial">
+            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para Comercial
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+  if (!cliente.data) {
+    return (
+      <div className="p-2 space-y-3">
+        <PageHeader
+          title="Cliente não encontrado"
+          subtitle="O cliente informado não existe, foi removido ou você não tem acesso."
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/comercial/clientes">
+              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para Clientes
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/comercial">Ir para Comercial</Link>
+          </Button>
+        </div>
       </div>
     );
   }

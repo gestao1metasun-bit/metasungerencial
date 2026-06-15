@@ -1516,6 +1516,19 @@ function PropostaSheet({
     final.atualizadoEm = new Date().toISOString().slice(0, 10);
     upsertProposta(final);
     setP(final);
+    // Onda P2 — Governança Enterprise: se o usuário pediu para marcar como ativa
+    // ao gerar nova proposta, aplica SUBSTITUIDA nas demais propostas em aberto do lead.
+    try {
+      const marcar = (window as any).__propostasMarcarAtiva;
+      if (marcar === true && final.leadId) {
+        marcarPropostaAtivaDoLead(
+          final.id,
+          final.criadoPor ?? "usuário",
+          `Nova proposta ${final.numero} marcada como ativa do lead.`,
+        );
+      }
+      (window as any).__propostasMarcarAtiva = undefined;
+    } catch { /* noop */ }
     toast.success(novoStatus ? `Proposta ${novoStatus.toLowerCase()}.` : "Rascunho salvo.");
   }
 

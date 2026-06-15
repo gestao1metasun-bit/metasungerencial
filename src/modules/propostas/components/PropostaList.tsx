@@ -37,6 +37,7 @@ import {
   calcPrecificacao, calcDimensionamento, fmtBRL,
   aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
+  expirarPropostasVencidasAuto,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
@@ -51,7 +52,9 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
     case "ENVIADA": return "secondary";
     case "RECUSADA":
     case "VENCIDA":
+    case "EXPIRADA":
     case "CANCELADA": return "destructive";
+    case "SUBSTITUIDA": return "outline";
     default: return "outline";
   }
 }
@@ -1762,14 +1765,10 @@ export function PropostaList({
   onNova: (preset?: Partial<PropostaFV>) => void;
   onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
-  // Auto-vence propostas passadas da validade
+  // Onda P2 — Auto-expira propostas em aberto (RASCUNHO/GERADA/ENVIADA) passadas da validade.
+  // Idempotente — registra auditoria pelo próprio store e move para EXPIRADA.
   useEffect(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
-    propostas.forEach((p) => {
-      if (p.status === "ENVIADA" && p.validade && p.validade < hoje) {
-        upsertProposta({ ...p, status: "VENCIDA", atualizadoEm: hoje });
-      }
-    });
+    try { expirarPropostasVencidasAuto("sistema"); } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propostas.length]);
 
@@ -2101,7 +2100,9 @@ export function PropostaList({
                   ["APROVADA","Aprovadas"],
                   ["RECUSADA","Reprovadas"],
                   ["CANCELADA","Canceladas"],
-                  ["VENCIDA","Expiradas"],
+                  ["EXPIRADA","Expiradas"],
+                  ["SUBSTITUIDA","Substituídas"],
+                  ["VENCIDA","Vencidas (legado)"],
                 ] as const).map(([k,lab]) => (
                   <Button
                     key={k}

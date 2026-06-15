@@ -54,6 +54,7 @@ import {
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
   upsertCustoFV, removeCustoFV, upsertProposta, removeProposta,
+  marcarPropostaAtivaDoLead, expirarPropostasVencidasAuto,
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,
@@ -1515,6 +1516,19 @@ function PropostaSheet({
     final.atualizadoEm = new Date().toISOString().slice(0, 10);
     upsertProposta(final);
     setP(final);
+    // Onda P2 — Governança Enterprise: se o usuário pediu para marcar como ativa
+    // ao gerar nova proposta, aplica SUBSTITUIDA nas demais propostas em aberto do lead.
+    try {
+      const marcar = (window as any).__propostasMarcarAtiva;
+      if (marcar === true && final.leadId) {
+        marcarPropostaAtivaDoLead(
+          final.id,
+          final.criadoPor ?? "usuário",
+          `Nova proposta ${final.numero} marcada como ativa do lead.`,
+        );
+      }
+      (window as any).__propostasMarcarAtiva = undefined;
+    } catch { /* noop */ }
     toast.success(novoStatus ? `Proposta ${novoStatus.toLowerCase()}.` : "Rascunho salvo.");
   }
 

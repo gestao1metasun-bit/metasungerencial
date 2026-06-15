@@ -135,6 +135,8 @@ export function statusTone(
       return "success";
     case LEAD_STATUS.PERDIDO:
       return "destructive";
+    case LEAD_STATUS.CANCELADO:
+      return "neutral";
 
     // Proposta
     case PROPOSTA_STATUS.AGUARDANDO_GERACAO:

@@ -1765,14 +1765,10 @@ export function PropostaList({
   onNova: (preset?: Partial<PropostaFV>) => void;
   onSelecionarUltima?: (propostaId: string | null) => void;
 }) {
-  // Auto-vence propostas passadas da validade
+  // Onda P2 — Auto-expira propostas em aberto (RASCUNHO/GERADA/ENVIADA) passadas da validade.
+  // Idempotente — registra auditoria pelo próprio store e move para EXPIRADA.
   useEffect(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
-    propostas.forEach((p) => {
-      if (p.status === "ENVIADA" && p.validade && p.validade < hoje) {
-        upsertProposta({ ...p, status: "VENCIDA", atualizadoEm: hoje });
-      }
-    });
+    try { expirarPropostasVencidasAuto("sistema"); } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propostas.length]);
 

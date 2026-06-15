@@ -66,7 +66,7 @@ export function useOportunidadesPorCliente(clienteId?: string | null) {
       if (error) {
         await logError({
           modulo: "comercial",
-          codigo: "oportunidades.list_by_cliente",
+          acao: "oportunidades.list_by_cliente",
           mensagem: error.message,
         });
         throw error;
@@ -115,7 +115,7 @@ export function useCriarOportunidade() {
       if (error) {
         await logError({
           modulo: "comercial",
-          codigo: "oportunidades.criar",
+          acao: "oportunidades.criar",
           mensagem: error.message,
         });
         throw error;
@@ -168,7 +168,7 @@ export function useAtualizarOportunidade() {
       if (error) {
         await logError({
           modulo: "comercial",
-          codigo: "oportunidades.atualizar",
+          acao: "oportunidades.atualizar",
           mensagem: error.message,
         });
         throw error;
@@ -202,7 +202,7 @@ export function useCancelarOportunidade() {
       if (error) {
         await logError({
           modulo: "comercial",
-          codigo: "oportunidades.cancelar",
+          acao: "oportunidades.cancelar",
           mensagem: error.message,
         });
         throw error;

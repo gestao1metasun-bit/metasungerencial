@@ -4,12 +4,15 @@
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, ShieldAlert, Loader2, RefreshCcw, Users } from "lucide-react";
+import { Search, ShieldAlert, Loader2, RefreshCcw, Users, Plus, ExternalLink, Target } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -23,6 +26,10 @@ import {
 } from "@/lib/repositories/clientes-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { Open360Button } from "@/components/app/comercial/Open360Button";
+import { ClienteCadastroSupabaseDialog } from "@/components/app/comercial/ClienteCadastroSupabaseDialog";
+import { useCriarOportunidade } from "@/lib/repositories/oportunidades-repo";
+import { toast } from "sonner";
+import type { ClienteRecord } from "@/lib/clientes-store";
 
 export const Route = createFileRoute("/comercial/clientes/")({
   head: () => ({ meta: [{ title: "Clientes — Meta Sun ERP" }] }),

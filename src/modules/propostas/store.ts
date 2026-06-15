@@ -167,7 +167,10 @@ export type LinhaCusto = {
 
 export type StatusProposta =
   | "RASCUNHO" | "GERADA" | "ENVIADA" | "APROVADA"
-  | "RECUSADA" | "VENCIDA" | "CANCELADA";
+  | "RECUSADA" | "VENCIDA" | "CANCELADA"
+  // Onda P2 — governança enterprise
+  | "SUBSTITUIDA"   // marcada como inativa porque outra proposta do mesmo lead virou ativa
+  | "EXPIRADA";     // passou da validade comercial sem aprovação
 
 /** Registro histórico de endereço — preserva versões anteriores ao atualizar. */
 export type EnderecoHistorico = {

@@ -105,7 +105,7 @@ function WorkspaceClientePage() {
   const leads = useLeadsPorCliente(clienteId);
 
   const stats = useMemo(() => {
-    const valorPropostas = (propostas.data ?? []).reduce((s, p) => s + (Number(p.valor_total) || 0), 0);
+    const valorPropostas = (propostas.data ?? []).reduce((s, p) => s + (Number(p.valor_final) || 0), 0);
     const valorContratos = (contratos.data ?? []).reduce((s, c) => s + (Number(c.valor_total) || 0), 0);
     const oportunidadesAbertas = (oportunidades.data ?? []).filter((o) => o.status === "ABERTA").length;
     return { valorPropostas, valorContratos, oportunidadesAbertas };
@@ -246,8 +246,8 @@ function WorkspaceClientePage() {
                     <TableCell>
                       <Badge variant="outline">{p.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_total)}</TableCell>
-                    <TableCell className="text-xs">{p.validade_em ? new Date(p.validade_em).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_final)}</TableCell>
+                    <TableCell className="text-xs">{p.validade ? new Date(p.validade).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
@@ -280,12 +280,12 @@ function WorkspaceClientePage() {
               <TableBody>
                 {(contratos.data ?? []).map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs">{c.numero ?? c.id.slice(0, 8)}</TableCell>
+                    <TableCell className="font-mono text-xs">{c.codigo ?? c.id.slice(0, 8)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{c.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{fmtBRL(c.valor_total)}</TableCell>
-                    <TableCell className="text-xs">{c.assinado_em ? new Date(c.assinado_em).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell className="text-xs">{c.data_assinatura ? new Date(c.data_assinatura).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>

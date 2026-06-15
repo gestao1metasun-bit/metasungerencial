@@ -51,7 +51,9 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
     case "ENVIADA": return "secondary";
     case "RECUSADA":
     case "VENCIDA":
+    case "EXPIRADA":
     case "CANCELADA": return "destructive";
+    case "SUBSTITUIDA": return "outline";
     default: return "outline";
   }
 }

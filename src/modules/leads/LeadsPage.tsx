@@ -428,7 +428,33 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </DialogDescription>
         </DialogHeader>
 
+        <div className="mb-3 rounded-md border border-dashed border-border bg-muted/30 p-3">
+          <ClienteAutocompleteSupabase
+            label="Vincular cliente já cadastrado (opcional)"
+            value={clienteExistenteId}
+            onChange={(c) => {
+              if (!c) { setClienteExistenteId(null); return; }
+              setClienteExistenteId(c.id);
+              setNome(c.nome);
+              if (c.doc) setDoc(formatDoc(c.doc, c.doc.replace(/\D/g, "").length === 14 ? "PJ" : "PF"));
+              if (c.telefone && !telefone) setTelefone(formatTelefoneBR(c.telefone));
+              if (c.cep) setCep(formatCEP(c.cep));
+              if (c.rua) setRua(c.rua);
+              if (c.numero) setNumero(c.numero);
+              if (c.bairro) setBairro(c.bairro);
+              if (c.cidade) setCidade(c.cidade);
+              if (c.uf) setUf(c.uf);
+            }}
+            showOpen360={false}
+            showNovoCliente={false}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Lead é entrada comercial; cliente é cadastro oficial. Se não vincular nem encontrar duplicidade por CPF/CNPJ, um cliente novo será criado em Supabase.
+          </p>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-6">
+
           <div className="sm:col-span-2">
             <Label>Tipo</Label>
             <Select value={tipoPessoa} onValueChange={(v) => { setTipoPessoa(v as "PF" | "PJ"); setDoc(""); setDocInvalido(false); setClienteExistenteId(null); setLeadExistenteNumero(null); }}>

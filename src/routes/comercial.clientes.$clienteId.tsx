@@ -55,7 +55,7 @@ function usePropostasPorCliente(clienteId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("propostas")
-        .select("id,numero,cliente_nome,valor_total,status,created_at,oportunidade_id,validade_em")
+        .select("id,numero,cliente_nome,valor_final,status,created_at,oportunidade_id,validade")
         .eq("cliente_id", clienteId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
@@ -71,7 +71,7 @@ function useContratosPorCliente(clienteId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contratos")
-        .select("id,numero,valor_total,status,assinado_em,created_at,proposta_id")
+        .select("id,codigo,valor_total,status,data_assinatura,created_at,proposta_id")
         .eq("cliente_id", clienteId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });

@@ -42,6 +42,7 @@ import { useGrupos, useSubgrupos } from "@/lib/fin-grupos-store";
 import { useCentrosCustoFin } from "@/lib/fin-centros-custo-store";
 import { useTiposAplicacao } from "@/lib/fin-tipos-aplicacao-store";
 import { useMeiosPagamento } from "@/lib/fin-meios-pagamento-store";
+// LEGADO LS — pendente F-ENT.CLIENTES (Financeiro Supabase). Não estender.
 import { useClientesFull, addClienteFull, DuplicateClienteError } from "@/lib/clientes-store";
 import { readLancamentos, fmtBRLPrecise } from "@/lib/financeiro-store";
 import { calcularEncargos } from "@/lib/fin-calculo-encargos";

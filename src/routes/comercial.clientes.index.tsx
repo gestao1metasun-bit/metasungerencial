@@ -37,11 +37,16 @@ export const Route = createFileRoute("/comercial/clientes/")({
 });
 
 function ClientesIndexPage() {
+  const navigate = useNavigate();
   const perm = useHasPermission("comercial.cliente.visualizar");
+  const podeCriar = useHasPermission("comercial.cliente.criar");
   const [rawSearch, setRawSearch] = useState("");
   const [search, setSearch] = useState("");
   const [orderBy, setOrderBy] = useState<ClientesOrder>("nome");
   const [orderDir, setOrderDir] = useState<"asc" | "desc">("asc");
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [posCriado, setPosCriado] = useState<ClienteRecord | null>(null);
+  const criarOp = useCriarOportunidade();
 
   useEffect(() => {
     const t = setTimeout(() => setSearch(rawSearch.trim()), 300);
@@ -84,11 +89,73 @@ function ClientesIndexPage() {
         title="Clientes"
         subtitle="Base oficial de clientes do ERP"
         actions={
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCcw className="mr-2 h-4 w-4" /> Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCcw className="mr-2 h-4 w-4" /> Atualizar
+            </Button>
+            {podeCriar.data === true && (
+              <Button size="sm" onClick={() => setNovoOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Novo cliente
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <ClienteCadastroSupabaseDialog
+        open={novoOpen}
+        onClose={() => setNovoOpen(false)}
+        showOpen360Action
+        silenceSuccessToast
+        onCreated={(c) => setPosCriado(c)}
+      />
+
+      <Dialog open={!!posCriado} onOpenChange={(v) => { if (!v) setPosCriado(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cliente cadastrado</DialogTitle>
+            <DialogDescription>
+              {posCriado?.nome} foi criado em <b>public.clientes</b>. O que deseja fazer?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" onClick={() => setPosCriado(null)}>Fechar</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (!posCriado) return;
+                  try {
+                    const op = await criarOp.mutateAsync({
+                      cliente_id: posCriado.id,
+                      nome: `Oportunidade — ${posCriado.nome}`,
+                    });
+                    toast.success("Oportunidade criada");
+                    setPosCriado(null);
+                    navigate({ to: "/comercial/clientes/$clienteId", params: { clienteId: posCriado.id } });
+                    void op;
+                  } catch (e) {
+                    toast.error(`Falha ao criar oportunidade: ${(e as Error).message}`);
+                  }
+                }}
+              >
+                <Target className="mr-2 h-4 w-4" /> Criar oportunidade
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!posCriado) return;
+                  const id = posCriado.id;
+                  setPosCriado(null);
+                  navigate({ to: "/comercial/clientes/$clienteId", params: { clienteId: id } });
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" /> Abrir 360º
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="p-3">
         <div className="flex flex-wrap items-end gap-2">

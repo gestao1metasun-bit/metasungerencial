@@ -667,7 +667,15 @@ function LeadDetailDialog({
           <Button
             disabled={!podeSolicitarProposta}
             onClick={() => setSolicitarOpen(true)}
-            title={!podeSolicitarProposta ? "Disponível apenas para leads em atendimento ou cadastrados." : undefined}
+            title={
+              podeConverter === false
+                ? "Sem permissão (comercial.lead.converter)."
+                : isCancelado
+                  ? "Lead cancelado — conversão bloqueada."
+                  : !podeSolicitarProposta
+                    ? "Disponível apenas para leads em atendimento ou cadastrados."
+                    : undefined
+            }
           >
             <Send className="mr-1 h-4 w-4" /> Solicitar Proposta
           </Button>
@@ -680,6 +688,17 @@ function LeadDetailDialog({
               }}
             >
               Mover para EM ATENDIMENTO
+            </Button>
+          )}
+          {!isCancelado && !isConvertido && onCancelarLead && (
+            <Button
+              variant="outline"
+              className="ml-auto border-destructive/40 text-destructive hover:bg-destructive/10"
+              disabled={podeCancelar === false}
+              title={podeCancelar === false ? "Sem permissão (comercial.lead.cancelar)." : undefined}
+              onClick={() => { onClose(); onCancelarLead(); }}
+            >
+              Cancelar lead
             </Button>
           )}
         </div>

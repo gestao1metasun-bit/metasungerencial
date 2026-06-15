@@ -1009,6 +1009,90 @@ export function retornarPropostaParaOrcamento(propostaId: string, usuario: strin
   });
 }
 
+/* ============== Onda P2 — Governança Enterprise: Ativa / Substituída / Expirada ============== */
+
+/** Status considerados "em aberto" — passíveis de virarem SUBSTITUIDA quando outra proposta do
+ *  mesmo lead é marcada como ativa, e passíveis de virarem EXPIRADA pela validade. */
+const _STATUS_ABERTOS: StatusProposta[] = ["RASCUNHO", "GERADA", "ENVIADA"];
+
+/** Marca uma proposta como ativa do lead e move TODAS as outras propostas em aberto do mesmo
+ *  lead para SUBSTITUIDA. Não altera propostas já APROVADAS / CANCELADAS / RECUSADAS / VENCIDAS /
+ *  EXPIRADAS / SUBSTITUIDAS — apenas as que estavam em aberto. */
+export function marcarPropostaAtivaDoLead(propostaId: string, usuario: string, motivo?: string) {
+  const cur = propsS.read();
+  const alvo = cur.find((p) => p.id === propostaId);
+  if (!alvo || !alvo.leadId) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const motivoFinal = motivo && motivo.trim().length >= 5
+    ? motivo.trim()
+    : `Proposta ${alvo.numero} marcada como ativa do lead.`;
+  const substituidos: { id: string; numero: string; statusAnterior: StatusProposta }[] = [];
+  const next = cur.map((p) => {
+    if (p.leadId !== alvo.leadId) return p;
+    if (p.id === alvo.id) return p; // a própria
+    if (!_STATUS_ABERTOS.includes(p.status)) return p;
+    substituidos.push({ id: p.id, numero: p.numero, statusAnterior: p.status });
+    return {
+      ...p,
+      status: "SUBSTITUIDA" as StatusProposta,
+      motivoStatus: motivoFinal,
+      atualizadoEm: hoje,
+    };
+  });
+  if (!substituidos.length) return;
+  propsS.write(next);
+  for (const s of substituidos) {
+    _pushAudit({
+      entidade: "proposta",
+      entidadeId: s.id,
+      acao: "SUBSTITUIDA",
+      usuario,
+      motivo: motivoFinal,
+      valorAnterior: s.statusAnterior,
+      valorNovo: "SUBSTITUIDA",
+      detalhe: `Proposta ${s.numero} marcada como SUBSTITUIDA — proposta ${alvo.numero} virou a ativa do lead.`,
+    });
+  }
+}
+
+/** Auto-expira propostas em aberto (RASCUNHO / GERADA / ENVIADA) cuja validade já passou.
+ *  Retorna a quantidade de propostas expiradas. Idempotente — pode rodar várias vezes. */
+export function expirarPropostasVencidasAuto(usuario: string = "sistema"): number {
+  const cur = propsS.read();
+  const hoje = new Date().toISOString().slice(0, 10);
+  let mudou = 0;
+  const expiradas: { id: string; numero: string; statusAnterior: StatusProposta }[] = [];
+  const next = cur.map((p) => {
+    if (!_STATUS_ABERTOS.includes(p.status)) return p;
+    if (!p.validade || p.validade >= hoje) return p;
+    mudou++;
+    expiradas.push({ id: p.id, numero: p.numero, statusAnterior: p.status });
+    return {
+      ...p,
+      status: "EXPIRADA" as StatusProposta,
+      motivoStatus: `Validade comercial expirada em ${p.validade}.`,
+      atualizadoEm: hoje,
+    };
+  });
+  if (!mudou) return 0;
+  propsS.write(next);
+  for (const e of expiradas) {
+    _pushAudit({
+      entidade: "proposta",
+      entidadeId: e.id,
+      acao: "EXPIRADA",
+      usuario,
+      valorAnterior: e.statusAnterior,
+      valorNovo: "EXPIRADA",
+      detalhe: `Proposta ${e.numero} expirada automaticamente — validade vencida.`,
+    });
+  }
+  return mudou;
+}
+
+
+
+
 
 
 /** Atalho: aprovar proposta + marcar lead como CONVERTIDO_EM_CONTRATO (chamado quando o contrato for gerado — Entrega 3). */

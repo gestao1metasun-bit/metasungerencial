@@ -1680,17 +1680,20 @@ function RedigirContratoDialog({
   }
   function rmClausula(id: string) { setClausulas(clausulas.filter((c) => c.id !== id)); }
 
-  // === Autocomplete de CLIENTE pelo CPF/CNPJ ===
-  const allClientes = useClientesFull();
+  // === C-ENT.1.f — Autocomplete de CLIENTE pelo CPF/CNPJ (Supabase oficial) ===
   const [clienteVincId, setClienteVincId] = useState<string | null>(null);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const docDigits = doc.replace(/\D/g, "");
-  const sugestoesClientes = useMemo(() => {
-    if (docDigits.length < 3) return [];
-    return allClientes
-      .filter((c) => c.doc.replace(/\D/g, "").startsWith(docDigits))
-      .slice(0, 8);
-  }, [allClientes, docDigits]);
+  const { data: sugestoesRows = [] } = useClientesSupabase({
+    search: docDigits.length >= 3 ? docDigits : "",
+    orderBy: "nome",
+    orderDir: "asc",
+    limit: 8,
+  });
+  const sugestoesClientes = useMemo<ClienteRecord[]>(
+    () => (docDigits.length >= 3 ? sugestoesRows.map(clienteRowToRecord) : []),
+    [sugestoesRows, docDigits],
+  );
 
   function selecionarCliente(c: ClienteRecord) {
     setClienteVincId(c.id);

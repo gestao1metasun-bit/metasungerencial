@@ -39,7 +39,9 @@ import { useAuth } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
-  usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
+  // LEGADO LS — fluxos antigos (aprovação/contrato) ainda dependem.
+  // C-ENT.3: criação de proposta a partir do lead saiu de LS para Supabase.
+  usePropostas, aprovarPropostaDoLead,
   marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
   fmtBRL, calcPrecificacao, calcDimensionamento, type PropostaFV,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP,
@@ -53,6 +55,16 @@ import {
   criarClienteSupabase,
   atualizarClienteSupabase,
 } from "@/lib/repositories/clientes-supabase-repo";
+// C-ENT.3 — Propostas oficiais (Supabase).
+import {
+  useCriarPropostaDoLead,
+  useCancelarPropostaSupabase,
+  useGerarNovaVersaoProposta,
+  usePropostasPorLead,
+  statusPropostaBadgeClass,
+  isPropostaSubstituida,
+  type PropostaSupabase,
+} from "@/lib/repositories/propostas-supabase-repo";
 import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { logError } from "@/lib/repositories/error-log-repo";

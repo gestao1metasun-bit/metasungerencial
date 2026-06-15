@@ -69,6 +69,7 @@ import {
 } from "@/lib/contratos-store";
 import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesSupabase, clienteRowToRecord } from "@/lib/repositories/clientes-supabase-repo";
 import { useClientesSimilares } from "@/lib/repositories/oportunidades-repo";
 import { ClienteDuplicidadeAlert } from "@/components/app/comercial/ClienteDuplicidadeAlert";
 import { ClienteCadastroSupabaseDialog } from "@/components/app/comercial/ClienteCadastroSupabaseDialog";

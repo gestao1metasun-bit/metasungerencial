@@ -275,6 +275,14 @@ export function LeadsPage() {
         <LeadDetailDialog
           lead={detalhe}
           onClose={() => setDetalhe(null)}
+          onCancelarLead={() => setCancelarAlvo(detalhe)}
+        />
+      )}
+      {cancelarAlvo && (
+        <CancelarLeadDialog
+          lead={cancelarAlvo}
+          usuario={user?.email ?? "—"}
+          onClose={() => setCancelarAlvo(null)}
         />
       )}
     </div>

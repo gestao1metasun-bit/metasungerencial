@@ -218,3 +218,53 @@ export function useCancelarOportunidade() {
     },
   });
 }
+
+// C-ENT.1.b — Detecção de duplicidade de clientes via rpc_cliente_buscar_similar.
+export type ClienteSimilarRow = {
+  id: string;
+  nome: string;
+  doc: string | null;
+  email: string | null;
+  telefone: string | null;
+  tipo_pessoa: string;
+  status: string;
+  score: number;
+  motivo: "documento" | "email" | "telefone" | "nome";
+};
+
+export type BuscarSimilarInput = {
+  doc?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  nome?: string | null;
+};
+
+export function useClientesSimilares(input: BuscarSimilarInput, enabled = true) {
+  const has =
+    !!input.doc?.trim() ||
+    !!input.email?.trim() ||
+    !!input.telefone?.trim() ||
+    (!!input.nome && input.nome.trim().length >= 3);
+  return useQuery({
+    queryKey: ["clientes", "similares", input],
+    enabled: enabled && has,
+    staleTime: 30_000,
+    queryFn: async (): Promise<ClienteSimilarRow[]> => {
+      const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
+        p_doc: input.doc ?? undefined,
+        p_email: input.email ?? undefined,
+        p_telefone: input.telefone ?? undefined,
+        p_nome: input.nome ?? undefined,
+      });
+      if (error) {
+        await logError({
+          modulo: "comercial",
+          acao: "clientes.buscar_similar",
+          mensagem: error.message,
+        });
+        throw error;
+      }
+      return (data ?? []) as ClienteSimilarRow[];
+    },
+  });
+}

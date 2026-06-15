@@ -14696,6 +14696,25 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_cliente_buscar_similar: {
+        Args: {
+          p_doc?: string
+          p_email?: string
+          p_nome?: string
+          p_telefone?: string
+        }
+        Returns: {
+          doc: string
+          email: string
+          id: string
+          motivo: string
+          nome: string
+          score: number
+          status: string
+          telefone: string
+          tipo_pessoa: string
+        }[]
+      }
       rpc_comissao_alterar_percentual: {
         Args: {
           p_comissao_id: string

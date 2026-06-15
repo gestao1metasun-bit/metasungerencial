@@ -66,6 +66,7 @@ import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.apro
 import { Route as EngenhariaGestaoServicosIndexRouteImport } from './routes/engenharia.gestao-servicos.index'
 import { Route as EngenhariaGestaoServicosModelosRouteImport } from './routes/engenharia.gestao-servicos.modelos'
 import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
+import { Route as ComercialClientesClienteIdRouteImport } from './routes/comercial.clientes.$clienteId'
 
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
@@ -357,6 +358,12 @@ const EngenhariaGestaoServicosOsIdRoute =
     path: '/gestao-servicos/$osId',
     getParentRoute: () => EngenhariaRoute,
   } as any)
+const ComercialClientesClienteIdRoute =
+  ComercialClientesClienteIdRouteImport.update({
+    id: '/clientes/$clienteId',
+    path: '/clientes/$clienteId',
+    getParentRoute: () => ComercialRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -367,7 +374,7 @@ export interface FileRoutesByFullPath {
   '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
-  '/comercial': typeof ComercialRoute
+  '/comercial': typeof ComercialRouteWithChildren
   '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
@@ -413,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
@@ -426,7 +434,7 @@ export interface FileRoutesByTo {
   '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
-  '/comercial': typeof ComercialRoute
+  '/comercial': typeof ComercialRouteWithChildren
   '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
@@ -472,6 +480,7 @@ export interface FileRoutesByTo {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/engenharia/gestao-servicos': typeof EngenhariaGestaoServicosIndexRoute
@@ -486,7 +495,7 @@ export interface FileRoutesById {
   '/auditoria': typeof AuditoriaRoute
   '/cadastrar': typeof CadastrarRoute
   '/cadastros': typeof CadastrosRoute
-  '/comercial': typeof ComercialRoute
+  '/comercial': typeof ComercialRouteWithChildren
   '/configuracoes': typeof ConfiguracoesRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/dashboards': typeof DashboardsRouteWithChildren
@@ -532,6 +541,7 @@ export interface FileRoutesById {
   '/dashboards/financiamentos': typeof DashboardsFinanciamentosRoute
   '/dashboards/posvenda': typeof DashboardsPosvendaRoute
   '/paineis/$': typeof PaineisSplatRoute
+  '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
@@ -593,6 +603,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/comercial/clientes/$clienteId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/engenharia/gestao-servicos/'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/comercial/clientes/$clienteId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/engenharia/gestao-servicos'
@@ -711,6 +723,7 @@ export interface FileRouteTypes {
     | '/dashboards/financiamentos'
     | '/dashboards/posvenda'
     | '/paineis/$'
+    | '/comercial/clientes/$clienteId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/engenharia/gestao-servicos/'
@@ -725,7 +738,7 @@ export interface RootRouteChildren {
   AuditoriaRoute: typeof AuditoriaRoute
   CadastrarRoute: typeof CadastrarRoute
   CadastrosRoute: typeof CadastrosRoute
-  ComercialRoute: typeof ComercialRoute
+  ComercialRoute: typeof ComercialRouteWithChildren
   ConfiguracoesRoute: typeof ConfiguracoesRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DashboardsRoute: typeof DashboardsRouteWithChildren
@@ -1152,6 +1165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngenhariaGestaoServicosOsIdRouteImport
       parentRoute: typeof EngenhariaRoute
     }
+    '/comercial/clientes/$clienteId': {
+      id: '/comercial/clientes/$clienteId'
+      path: '/clientes/$clienteId'
+      fullPath: '/comercial/clientes/$clienteId'
+      preLoaderRoute: typeof ComercialClientesClienteIdRouteImport
+      parentRoute: typeof ComercialRoute
+    }
   }
 }
 
@@ -1187,6 +1207,18 @@ const AnalyticsRouteChildren: AnalyticsRouteChildren = {
 
 const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
   AnalyticsRouteChildren,
+)
+
+interface ComercialRouteChildren {
+  ComercialClientesClienteIdRoute: typeof ComercialClientesClienteIdRoute
+}
+
+const ComercialRouteChildren: ComercialRouteChildren = {
+  ComercialClientesClienteIdRoute: ComercialClientesClienteIdRoute,
+}
+
+const ComercialRouteWithChildren = ComercialRoute._addFileChildren(
+  ComercialRouteChildren,
 )
 
 interface ConfiguracoesRouteChildren {
@@ -1263,7 +1295,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditoriaRoute: AuditoriaRoute,
   CadastrarRoute: CadastrarRoute,
   CadastrosRoute: CadastrosRoute,
-  ComercialRoute: ComercialRoute,
+  ComercialRoute: ComercialRouteWithChildren,
   ConfiguracoesRoute: ConfiguracoesRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DashboardsRoute: DashboardsRouteWithChildren,

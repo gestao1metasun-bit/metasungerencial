@@ -179,7 +179,12 @@ function WorkspaceClientePage() {
       <PageHeader
         title={c.nome}
         subtitle={`Workspace 360º · ${c.doc ?? "sem documento"} · ${c.email ?? "sem email"}`}
-        actions={<NovaOportunidadeButton clienteId={c.id} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <EditarClienteButton cliente={c} />
+            <NovaOportunidadeButton clienteId={c.id} />
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">

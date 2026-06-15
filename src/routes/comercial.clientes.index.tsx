@@ -4,7 +4,8 @@
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, ShieldAlert, Loader2, RefreshCcw, Users, Plus, ExternalLink, Target } from "lucide-react";
+import { Search, ShieldAlert, Loader2, RefreshCcw, Users, Plus, ExternalLink, Target, Database } from "lucide-react";
+import { useIsAdmin } from "@/lib/auth-store";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ function ClientesIndexPage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.cliente.visualizar");
   const podeCriar = useHasPermission("comercial.cliente.criar");
+  const admin = useIsAdmin();
   const [rawSearch, setRawSearch] = useState("");
   const [search, setSearch] = useState("");
   const [orderBy, setOrderBy] = useState<ClientesOrder>("nome");
@@ -93,6 +95,13 @@ function ClientesIndexPage() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCcw className="mr-2 h-4 w-4" /> Atualizar
             </Button>
+            {admin && (
+              <Link to="/comercial/clientes/backfill">
+                <Button variant="outline" size="sm" title="Backfill LS → Supabase (admin)">
+                  <Database className="mr-2 h-4 w-4" /> Backfill LS
+                </Button>
+              </Link>
+            )}
             {podeCriar.data === true && (
               <Button size="sm" onClick={() => setNovoOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Novo cliente

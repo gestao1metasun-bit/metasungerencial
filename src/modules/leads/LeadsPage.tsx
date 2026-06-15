@@ -46,10 +46,14 @@ import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,
   enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
-// LEGADO LS — pendente C-ENT.2 (Leads Supabase). Não estender; ver clientes-supabase-repo.ts.
+// C-ENT.2 — Clientes oficiais (Supabase). LS removido do fluxo de Leads.
 import {
-  findClienteByDoc, addClienteFull, updateClienteFull, useClientesFull,
-} from "@/lib/clientes-store";
+  criarClienteSupabase,
+  atualizarClienteSupabase,
+} from "@/lib/repositories/clientes-supabase-repo";
+import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
+import { useHasPermission } from "@/hooks/use-has-permission";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 function fmtDate(iso: string) {
   try {
@@ -60,6 +64,8 @@ function fmtDate(iso: string) {
 export function LeadsPage() {
   const leads = useLeads();
   const consultores = useConsultoresAtivos();
+  const { data: podeVer } = useHasPermission("comercial.lead.visualizar");
+  const { data: podeCriar } = useHasPermission("comercial.lead.criar");
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("TODOS");
   const [filtroOrigem, setFiltroOrigem] = useState<string>("TODOS");
@@ -177,12 +183,16 @@ export function LeadsPage() {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button onClick={() => setNovoOpen(true)}>
+            <Button onClick={() => setNovoOpen(true)} disabled={podeCriar === false} title={podeCriar === false ? "Sem permissão (comercial.lead.criar)" : undefined}>
               <Plus className="mr-1 h-4 w-4" /> Novo Lead
             </Button>
           </div>
         </div>
       </Card>
+
+      {podeVer === false && (
+        <Card className="p-4 text-sm text-muted-foreground">Você não tem permissão para visualizar leads (comercial.lead.visualizar).</Card>
+      )}
 
       <Card className="overflow-hidden">
         <Table>
@@ -302,20 +312,33 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     // Lead já cadastrado?
     const leadExist = findLeadByDoc(masked);
     if (leadExist) setLeadExistenteNumero(leadExist.numero);
-    // Cliente já cadastrado?
-    const cli = findClienteByDoc(masked);
-    if (cli) {
-      setClienteExistenteId(cli.id);
-      // Pré-preenche dados do cliente; endereço pode ser editado
-      setNome(cli.nome);
-      if (!telefone) setTelefone(formatTelefoneBR(cli.telefone || ""));
-      setCep(formatCEP(cli.cep || ""));
-      setRua(cli.rua || "");
-      setNumero(cli.numero || "");
-      setBairro(cli.bairro || "");
-      setCidade(cli.cidade || "");
-      setUf(cli.uf || "");
-    }
+    // Cliente já cadastrado? — Supabase via RPC oficial de similaridade.
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
+          p_doc: masked, p_email: undefined, p_telefone: undefined, p_nome: undefined,
+        });
+        if (error) return;
+        const top = Array.isArray(data) ? (data as Array<{ id: string; score: number; nome: string; telefone: string | null }>).find((r) => (r.score ?? 0) >= 80) : null;
+        if (!top) return;
+        // Carrega dados completos para pré-preencher endereço
+        const { data: cli } = await supabase
+          .from("clientes")
+          .select("id,nome,telefone,cep,rua,numero,bairro,cidade,uf")
+          .eq("id", top.id)
+          .maybeSingle();
+        if (!cli) return;
+        setClienteExistenteId(cli.id);
+        setNome(cli.nome);
+        if (!telefone) setTelefone(formatTelefoneBR(cli.telefone ?? ""));
+        setCep(formatCEP(cli.cep ?? ""));
+        setRua(cli.rua ?? "");
+        setNumero(cli.numero ?? "");
+        setBairro(cli.bairro ?? "");
+        setCidade(cli.cidade ?? "");
+        setUf(cli.uf ?? "");
+      } catch { /* silencioso: usuário pode seguir manualmente */ }
+    })();
   }
 
   async function buscarCep() {
@@ -360,25 +383,27 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
       toast.error(`Telefone já cadastrado no lead ${telDup.numero} — ${telDup.nome}. Aguarde 90 dias para novo cadastro.`);
       return;
     }
-    // Cadastra ou reaproveita cliente
+    // Cadastra ou reaproveita cliente (Supabase oficial — RLS aplicada).
     let clienteId = clienteExistenteId ?? undefined;
     try {
       if (clienteId) {
-        // Atualiza endereço se editado
-        updateClienteFull(clienteId, {
+        await atualizarClienteSupabase(clienteId, {
           nome, telefone, cep: cep.replace(/\D/g, ""),
           rua, numero, bairro, cidade, uf,
         });
       } else {
-        const novo = addClienteFull({
+        const novo = await criarClienteSupabase({
           nome, doc, telefone,
           cep: cep.replace(/\D/g, ""),
           rua, numero, bairro, cidade, uf,
+          tipo_pessoa: tipoPessoa,
         });
         clienteId = novo.id;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar cliente."); return;
+      const msg = err instanceof Error ? err.message : "Falha ao salvar cliente.";
+      logError({ modulo: "comercial", tela: "leads-novo", acao: "cliente.salvar", mensagem: msg, severidade: "error" });
+      toast.error(msg); return;
     }
     console.info("[lead-save] chamando criarLead");
     const lead = criarLead({
@@ -403,7 +428,33 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </DialogDescription>
         </DialogHeader>
 
+        <div className="mb-3 rounded-md border border-dashed border-border bg-muted/30 p-3">
+          <ClienteAutocompleteSupabase
+            label="Vincular cliente já cadastrado (opcional)"
+            value={clienteExistenteId}
+            onChange={(c) => {
+              if (!c) { setClienteExistenteId(null); return; }
+              setClienteExistenteId(c.id);
+              setNome(c.nome);
+              if (c.doc) setDoc(formatDoc(c.doc, c.doc.replace(/\D/g, "").length === 14 ? "PJ" : "PF"));
+              if (c.telefone && !telefone) setTelefone(formatTelefoneBR(c.telefone));
+              if (c.cep) setCep(formatCEP(c.cep));
+              if (c.rua) setRua(c.rua);
+              if (c.numero) setNumero(c.numero);
+              if (c.bairro) setBairro(c.bairro);
+              if (c.cidade) setCidade(c.cidade);
+              if (c.uf) setUf(c.uf);
+            }}
+            showOpen360={false}
+            showNovoCliente={false}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Lead é entrada comercial; cliente é cadastro oficial. Se não vincular nem encontrar duplicidade por CPF/CNPJ, um cliente novo será criado em Supabase.
+          </p>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-6">
+
           <div className="sm:col-span-2">
             <Label>Tipo</Label>
             <Select value={tipoPessoa} onValueChange={(v) => { setTipoPessoa(v as "PF" | "PJ"); setDoc(""); setDocInvalido(false); setClienteExistenteId(null); setLeadExistenteNumero(null); }}>

@@ -1614,6 +1614,52 @@ export type Database = {
         }
         Relationships: []
       }
+      contrato_propostas: {
+        Row: {
+          contrato_id: string
+          criado_em: string
+          criado_por: string | null
+          id: string
+          proposta_id: string
+        }
+        Insert: {
+          contrato_id: string
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          proposta_id: string
+        }
+        Update: {
+          contrato_id?: string
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          proposta_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_propostas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrato_propostas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "contrato_propostas_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: true
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos: {
         Row: {
           assinado: boolean
@@ -14776,6 +14822,10 @@ export type Database = {
           p_tipo?: string
           p_valor_delta?: number
         }
+        Returns: string
+      }
+      rpc_contrato_gerar_de_propostas: {
+        Args: { p_proposta_ids: string[] }
         Returns: string
       }
       rpc_contrato_marcar_engenharia_liberada: {

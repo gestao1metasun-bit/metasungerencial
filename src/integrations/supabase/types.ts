@@ -3821,6 +3821,7 @@ export type Database = {
           nome: string
           numero: string | null
           observacao: string | null
+          oportunidade_id: string | null
           origem: string | null
           status: string
           telefone: string | null
@@ -3840,6 +3841,7 @@ export type Database = {
           nome: string
           numero?: string | null
           observacao?: string | null
+          oportunidade_id?: string | null
           origem?: string | null
           status?: string
           telefone?: string | null
@@ -3859,12 +3861,21 @@ export type Database = {
           nome?: string
           numero?: string | null
           observacao?: string | null
+          oportunidade_id?: string | null
           origem?: string | null
           status?: string
           telefone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       logs_integracao: {
         Row: {
@@ -5121,6 +5132,144 @@ export type Database = {
             columns: ["titulo_id"]
             isOneToOne: false
             referencedRelation: "v_titulos_enriquecido"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oportunidades: {
+        Row: {
+          centro_custo_id: string | null
+          centro_resultado_id: string | null
+          cliente_id: string
+          codigo: string | null
+          codigo_externo: string | null
+          competencia: string | null
+          consultor_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          descricao: string | null
+          hash_remessa: string | null
+          id: string
+          lote_id: string | null
+          motivo_status: string | null
+          natureza_id: string | null
+          nome: string
+          observacoes: string | null
+          pipeline_etapa_id: string | null
+          proxima_acao: string | null
+          proxima_acao_em: string | null
+          row_version: number
+          sistema_destino: string | null
+          status: string
+          status_integracao: string | null
+          tags: string[] | null
+          ultimo_contato: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id: string
+          codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string | null
+          hash_remessa?: string | null
+          id?: string
+          lote_id?: string | null
+          motivo_status?: string | null
+          natureza_id?: string | null
+          nome: string
+          observacoes?: string | null
+          pipeline_etapa_id?: string | null
+          proxima_acao?: string | null
+          proxima_acao_em?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string | null
+          tags?: string[] | null
+          ultimo_contato?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          centro_custo_id?: string | null
+          centro_resultado_id?: string | null
+          cliente_id?: string
+          codigo?: string | null
+          codigo_externo?: string | null
+          competencia?: string | null
+          consultor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          descricao?: string | null
+          hash_remessa?: string | null
+          id?: string
+          lote_id?: string | null
+          motivo_status?: string | null
+          natureza_id?: string | null
+          nome?: string
+          observacoes?: string | null
+          pipeline_etapa_id?: string | null
+          proxima_acao?: string | null
+          proxima_acao_em?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string | null
+          tags?: string[] | null
+          ultimo_contato?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oportunidades_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_centro_resultado_id_fkey"
+            columns: ["centro_resultado_id"]
+            isOneToOne: false
+            referencedRelation: "centros_resultado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_natureza_id_fkey"
+            columns: ["natureza_id"]
+            isOneToOne: false
+            referencedRelation: "naturezas_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oportunidades_pipeline_etapa_id_fkey"
+            columns: ["pipeline_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "comercial_pipeline_etapas"
             referencedColumns: ["id"]
           },
         ]
@@ -7935,6 +8084,7 @@ export type Database = {
           modulos_qtd: number | null
           motivo_status: string | null
           numero: string | null
+          oportunidade_id: string | null
           parametro_rs_kwp_aplicado: number | null
           potencia_kwp: number | null
           renovacao_motivo: string | null
@@ -7972,6 +8122,7 @@ export type Database = {
           modulos_qtd?: number | null
           motivo_status?: string | null
           numero?: string | null
+          oportunidade_id?: string | null
           parametro_rs_kwp_aplicado?: number | null
           potencia_kwp?: number | null
           renovacao_motivo?: string | null
@@ -8009,6 +8160,7 @@ export type Database = {
           modulos_qtd?: number | null
           motivo_status?: string | null
           numero?: string | null
+          oportunidade_id?: string | null
           parametro_rs_kwp_aplicado?: number | null
           potencia_kwp?: number | null
           renovacao_motivo?: string | null
@@ -8032,6 +8184,13 @@ export type Database = {
             columns: ["aprovacao_excecao_id"]
             isOneToOne: false
             referencedRelation: "workflow_aprovacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
             referencedColumns: ["id"]
           },
           {
@@ -15409,6 +15568,10 @@ export type Database = {
         | "comercial.proposta.cancelar"
         | "comercial.proposta.reabrir"
         | "comercial.contrato.enviar_assinatura"
+        | "comercial.oportunidade.visualizar"
+        | "comercial.oportunidade.criar"
+        | "comercial.oportunidade.editar"
+        | "comercial.oportunidade.cancelar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15776,6 +15939,10 @@ export const Constants = {
         "comercial.proposta.cancelar",
         "comercial.proposta.reabrir",
         "comercial.contrato.enviar_assinatura",
+        "comercial.oportunidade.visualizar",
+        "comercial.oportunidade.criar",
+        "comercial.oportunidade.editar",
+        "comercial.oportunidade.cancelar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

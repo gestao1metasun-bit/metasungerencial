@@ -39,7 +39,9 @@ import { useAuth } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { HistoricoTimeline } from "@/components/app/HistoricoTimeline";
 import {
-  usePropostas, criarPropostaParaLead, aprovarPropostaDoLead,
+  // LEGADO LS — fluxos antigos (aprovação/contrato) ainda dependem.
+  // C-ENT.3: criação de proposta a partir do lead saiu de LS para Supabase.
+  usePropostas, aprovarPropostaDoLead,
   marcarPropostaNaoAprovada, cancelarPropostaComMotivo,
   fmtBRL, calcPrecificacao, calcDimensionamento, type PropostaFV,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP,
@@ -53,6 +55,16 @@ import {
   criarClienteSupabase,
   atualizarClienteSupabase,
 } from "@/lib/repositories/clientes-supabase-repo";
+// C-ENT.3 — Propostas oficiais (Supabase).
+import {
+  useCriarPropostaDoLead,
+  useCancelarPropostaSupabase,
+  useGerarNovaVersaoProposta,
+  usePropostasPorLead,
+  statusPropostaBadgeClass,
+  isPropostaSubstituida,
+  type PropostaSupabase,
+} from "@/lib/repositories/propostas-supabase-repo";
 import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { logError } from "@/lib/repositories/error-log-repo";
@@ -881,32 +893,44 @@ function SolicitarPropostaDialog({
   const consultores = useConsultoresAtivos();
   const [observacao, setObservacao] = useState("");
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
+  const criar = useCriarPropostaDoLead();
 
-  const confirmar = () => {
-    const proposta = criarPropostaParaLead({
-      leadId: lead.id,
-      leadNumero: lead.numero,
-      clienteNome: lead.nome,
-      clienteTelefone: lead.telefone,
-      consumoKwh: lead.consumoKwh,
-      consultorNome,
-      observacao: observacao.trim() || undefined,
-      usuario,
-    });
-    setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
-    toast.success(
-      `Proposta ${proposta.numero} (${proposta.versao}) criada — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}.`,
-    );
-    onClose();
+  const confirmar = async () => {
+    if (!lead.clienteId) {
+      toast.error("Lead sem cliente vinculado no Supabase. Edite o lead para vincular um cliente antes de gerar a proposta.");
+      return;
+    }
+    try {
+      const novoId = await criar.mutateAsync({
+        leadId: lead.id,
+        observacao: observacao.trim() || undefined,
+      });
+      setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
+      toast.success(
+        `Proposta criada em rascunho — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}. ID: ${novoId.slice(0, 8)}…`,
+      );
+      onClose();
+    } catch (err) {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Não foi possível criar a proposta.");
+      void logError({
+        modulo: "comercial",
+        tela: "leads",
+        acao: "solicitar-proposta",
+        mensagem: e?.message ?? "Falha ao criar proposta a partir do lead",
+        payload: { leadId: lead.id },
+      });
+    }
   };
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Solicitar proposta</DialogTitle>
           <DialogDescription>
-            Os dados do lead já foram preenchidos no cadastro. Basta confirmar.
+            A proposta nasce em <b>RASCUNHO</b>, vinculada ao lead e ao cliente Supabase.
+            Edição comercial/técnica é feita em Comercial → Propostas.
           </DialogDescription>
         </DialogHeader>
 
@@ -915,6 +939,10 @@ function SolicitarPropostaDialog({
           <Field label="Telefone" value={lead.telefone} />
           <Field label="Consumo" value={`${lead.consumoKwh} kWh/mês`} />
           <Field label="Consultor" value={consultorNome} />
+          <Field
+            label="Cliente Supabase"
+            value={lead.clienteId ? `${lead.clienteId.slice(0, 8)}…` : "— (vincule antes)"}
+          />
           <Field label="Origem" value={ORIGEM_LEAD_LABEL[lead.origem] ?? lead.origem} />
         </div>
 
@@ -925,7 +953,9 @@ function SolicitarPropostaDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={confirmar}>Confirmar solicitação</Button>
+          <Button onClick={confirmar} disabled={criar.isPending || !lead.clienteId}>
+            {criar.isPending ? "Criando…" : "Confirmar solicitação"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -948,190 +978,143 @@ function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
 }
 
 function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
-  const todas = usePropostas();
-  const contratos = useContratos();
-  const propostas = useMemo(
-    () => todas.filter((p) => p.leadId === lead.id)
-      .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || "")),
-    [todas, lead.id],
-  );
-  const [acao, setAcao] = useState<{ proposta: PropostaFV; tipo: "aprovar" | "recusar" | "cancelar" } | null>(null);
-  const [anexarAlvo, setAnexarAlvo] = useState<string | null>(null);
-  const [cancelarContratoAlvo, setCancelarContratoAlvo] = useState<string | null>(null);
+  void usuario;
+  const { data: propostas = [], isLoading } = usePropostasPorLead(lead.id);
+  const cancelar = useCancelarPropostaSupabase();
+  const gerarNova = useGerarNovaVersaoProposta();
+  const { data: podeCancelar } = useHasPermission("comercial.proposta.cancelar");
+  const { data: podeGerarNova } = useHasPermission("comercial.proposta.gerar_nova");
 
-  if (propostas.length === 0) {
+  const [acao, setAcao] = useState<
+    | { proposta: PropostaSupabase; tipo: "cancelar" | "gerar_nova" }
+    | null
+  >(null);
+
+  if (isLoading) {
     return (
       <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-        Nenhuma proposta vinculada ainda. Use <span className="font-medium">Solicitar Proposta</span> para gerar a P01.
+        Carregando propostas…
       </div>
     );
   }
 
-  function executarAprovacao(p: PropostaFV, motivo: string, comFinanciamento: boolean, banco?: string) {
-    aprovarPropostaDoLead(p.id, usuario, motivo);
-    const dim = calcDimensionamento(p);
-    const r = criarContratoDeProposta({
-      propostaId: p.id,
-      propostaNumero: p.numero,
-      leadId: lead.id,
-      leadNumero: lead.numero,
-      cliente: p.clienteNome,
-      clienteId: p.clienteId,
-      clienteFull: undefined,
-      vendedor: p.consultor ?? p.criadoPor ?? "—",
-      valor: calcPrecificacao(p).valorFinal,
-      kwp: dim.potenciaFinalKwp,
-      modulos: dim.qtdFinal,
-      potencia: dim.potenciaFinalKwp,
-      obs: p.obsCliente,
-      usuario,
-      possuiFinanciamento: comFinanciamento,
-      financiamentoBanco: banco,
-    });
-    if (!r.ok) {
-      toast.warning(`Proposta aprovada. Contrato pendente: complete o cadastro do cliente em Comercial → Contratos. Faltam: ${r.missing.join(", ")}.`);
-      return;
-    }
-    const aviso = r.missing.length
-      ? ` (complete o cadastro do cliente: ${r.missing.slice(0, 3).join(", ")}${r.missing.length > 3 ? "…" : ""})`
-      : "";
-    toast.success(
-      `Proposta ${p.numero} aprovada. Contrato ${r.contratoId} gerado e obra enviada para Engenharia (Em projeto/aprovação)${comFinanciamento ? " · Financiamento marcado" : ""}.${aviso}`,
+  if (propostas.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+        Nenhuma proposta vinculada ainda. Use <span className="font-medium">Solicitar Proposta</span> para gerar a primeira versão (P01).
+      </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-2 text-sm font-semibold">Propostas deste lead</div>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-sm font-semibold">Propostas deste lead (Supabase)</div>
+        <div className="text-[11px] text-muted-foreground">
+          Edição comercial/aprovação: <span className="font-medium">Comercial → Propostas</span>
+        </div>
+      </div>
       <div className="overflow-hidden rounded-md border border-border">
         <Table>
           <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Versão</TableHead>
-                <TableHead>Número</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Contrato</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="w-[120px] text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {propostas.map((p) => {
-                const canonical = mapStatusLegacyToCanonical(p.status);
-                const valor = calcPrecificacao(p).valorFinal;
-                const podeAprovar = p.status !== "APROVADA" && p.status !== "CANCELADA" && p.status !== "VENCIDA";
-                const contrato = contratos.find((c) => c.propostaId === p.id);
-                const rowActions: import("@/components/app/enterprise").RowAction[] = [
-                  { kind: "aprovar", label: "Aprovar", disabled: !podeAprovar },
-                  { kind: "reprovar", label: "Não aprovar", disabled: !podeAprovar, overflow: true },
-                  { kind: "cancelar", label: "Cancelar proposta", disabled: p.status === "CANCELADA" || p.status === "APROVADA" || !!contrato, overflow: true },
-                ];
-                if (contrato && !contrato.contratoAssinadoArquivo && !contrato.cancelado) {
-                  rowActions.push({ kind: "anexos", label: "Anexar assinado", overflow: true });
-                }
-                if (contrato && contrato.contratoAssinadoArquivo && contrato.status !== "ENVIADO PARA ENGENHARIA" && !contrato.cancelado) {
-                  rowActions.push({ kind: "baixar", label: "Enviar p/ engenharia", overflow: true });
-                }
-                if (contrato && !contrato.cancelado) {
-                  rowActions.push({ kind: "excluir", label: "Cancelar contrato", overflow: true });
-                }
-                return (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">{p.versao ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{p.numero}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`${statusClass(canonical)} text-[10px]`}>
-                        {PROPOSTA_STATUS_LABEL[canonical as keyof typeof PROPOSTA_STATUS_LABEL] ?? canonical}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {contrato ? (
-                        <div className="flex flex-col">
-                          <span className="font-mono">{contrato.id}</span>
-                          <span className="text-[10px] text-muted-foreground">{contrato.status}</span>
-                        </div>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{valor > 0 ? fmtBRL(valor) : "—"}</TableCell>
-                    <TableCell>
-                      <RowActions
-                        rowId={p.id}
-                        actions={rowActions}
-                        onAction={(kind) => {
-                          if (kind === "aprovar") setAcao({ proposta: p, tipo: "aprovar" });
-                          else if (kind === "reprovar") setAcao({ proposta: p, tipo: "recusar" });
-                          else if (kind === "cancelar") setAcao({ proposta: p, tipo: "cancelar" });
-                          else if (kind === "anexos" && contrato) setAnexarAlvo(contrato.id);
-                          else if (kind === "baixar" && contrato) {
-                            const r = enviarContratoParaEngenharia(contrato.id, usuario);
-                            if (!r.ok) toast.error(r.motivo);
-                            else toast.success(`Contrato ${contrato.id} enviado para engenharia.`);
-                          }
-                          else if (kind === "excluir" && contrato) setCancelarContratoAlvo(contrato.id);
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+            <TableRow>
+              <TableHead className="w-16">Versão</TableHead>
+              <TableHead>Número</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">kWp</TableHead>
+              <TableHead className="w-[120px] text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {propostas.map((p) => {
+              const substituida = isPropostaSubstituida(p, propostas);
+              const isTerminal =
+                p.status === "CANCELADA" ||
+                p.status === "ASSINADA" ||
+                p.status === "APROVADA";
+              const rowActions: import("@/components/app/enterprise").RowAction[] = [
+                {
+                  kind: "editar",
+                  label: "Gerar nova versão",
+                  disabled:
+                    podeGerarNova === false ||
+                    !(p.status === "APROVADA" || p.status === "ASSINADA" || p.status === "VENCIDA"),
+                  overflow: false,
+                },
+                {
+                  kind: "cancelar",
+                  label: "Cancelar proposta",
+                  disabled: podeCancelar === false || isTerminal,
+                  overflow: true,
+                },
+              ];
+              return (
+                <TableRow key={p.id} className={substituida ? "opacity-60" : undefined}>
+                  <TableCell className="font-mono text-xs">{`P${String(p.versao_num ?? 1).padStart(2, "0")}`}</TableCell>
+                  <TableCell className="text-xs">{p.numero ?? "—"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex rounded px-2 py-0.5 text-[10px] font-semibold ${statusPropostaBadgeClass(p.status)}`}>
+                      {substituida ? `${p.status} (substituída)` : p.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {p.valor_final != null ? fmtBRL(p.valor_final) : "—"}
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {p.potencia_kwp != null ? p.potencia_kwp.toFixed(2) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <RowActions
+                      rowId={p.id}
+                      actions={rowActions}
+                      onAction={(kind) => {
+                        if (kind === "editar") setAcao({ proposta: p, tipo: "gerar_nova" });
+                        else if (kind === "cancelar") setAcao({ proposta: p, tipo: "cancelar" });
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
-      {acao && acao.tipo === "aprovar" && (
-        <AprovarPropostaDialog
-          proposta={acao.proposta}
-          onClose={() => setAcao(null)}
-          onConfirm={(motivo, comFin, banco) => {
-            executarAprovacao(acao.proposta, motivo, comFin, banco);
-            setAcao(null);
-          }}
-        />
-      )}
-
-      {acao && acao.tipo !== "aprovar" && (
+      {acao && (
         <MotivoDialog
           titulo={
-            acao.tipo === "recusar" ? `Marcar proposta ${acao.proposta.versao ?? ""} como NÃO APROVADA` :
-            `Cancelar proposta ${acao.proposta.versao ?? ""}`
+            acao.tipo === "cancelar"
+              ? `Cancelar proposta ${acao.proposta.numero ?? acao.proposta.id.slice(0, 8)}`
+              : `Gerar nova versão a partir de ${acao.proposta.numero ?? acao.proposta.id.slice(0, 8)}`
           }
-          descricao="Esta ação fica registrada no histórico com motivo obrigatório."
+          descricao={
+            acao.tipo === "cancelar"
+              ? "Esta ação fica registrada. Motivo mínimo de 5 caracteres."
+              : "A proposta atual será marcada como EM REVISÃO (substituída) e uma nova versão em RASCUNHO será criada."
+          }
           onClose={() => setAcao(null)}
-          onConfirm={(motivo) => {
-            if (acao.tipo === "recusar") {
-              marcarPropostaNaoAprovada(acao.proposta.id, usuario, motivo);
-              toast.success(`Proposta ${acao.proposta.numero} marcada como NÃO APROVADA.`);
-            } else {
-              cancelarPropostaComMotivo(acao.proposta.id, usuario, motivo);
-              toast.success(`Proposta ${acao.proposta.numero} cancelada.`);
+          onConfirm={async (motivo) => {
+            try {
+              if (acao.tipo === "cancelar") {
+                await cancelar.mutateAsync({ id: acao.proposta.id, motivo });
+                toast.success("Proposta cancelada.");
+              } else {
+                const novoId = await gerarNova.mutateAsync({ id: acao.proposta.id, motivo });
+                toast.success(`Nova versão criada (${novoId.slice(0, 8)}…).`);
+              }
+              setAcao(null);
+            } catch (err) {
+              const e = err as { message?: string };
+              toast.error(e?.message ?? "Não foi possível concluir a ação.");
+              void logError({
+                modulo: "comercial",
+                tela: "leads",
+                acao: `proposta-${acao.tipo}`,
+                mensagem: e?.message ?? "Falha em ação de proposta",
+                payload: { propostaId: acao.proposta.id },
+              });
             }
-            setAcao(null);
-          }}
-        />
-      )}
-
-      {anexarAlvo && (
-        <AnexarAssinadoDialog
-          contratoId={anexarAlvo}
-          onClose={() => setAnexarAlvo(null)}
-          onConfirm={(arquivo) => {
-            anexarContratoAssinado(anexarAlvo, arquivo, usuario);
-            toast.success(`Contrato ${anexarAlvo} marcado como ASSINADO.`);
-            setAnexarAlvo(null);
-          }}
-        />
-      )}
-
-      {cancelarContratoAlvo && (
-        <MotivoDialog
-          titulo={`Cancelar contrato ${cancelarContratoAlvo}`}
-          descricao="Cancelar o contrato bloqueia novas obras vinculadas. Não é possível cancelar se houver obra em andamento operacional."
-          onClose={() => setCancelarContratoAlvo(null)}
-          onConfirm={(motivo) => {
-            const r = cancelarContrato(cancelarContratoAlvo, motivo, usuario);
-            if (!r.ok) toast.error(r.motivo ?? "Não foi possível cancelar.");
-            else toast.success(`Contrato ${cancelarContratoAlvo} cancelado.`);
-            setCancelarContratoAlvo(null);
           }}
         />
       )}

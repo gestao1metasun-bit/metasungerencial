@@ -15149,7 +15149,11 @@ export type Database = {
         Returns: string
       }
       rpc_proposta_cancelar: {
-        Args: { p_motivo: string; p_proposta_id: string }
+        Args: { _id: string; _motivo: string }
+        Returns: undefined
+      }
+      rpc_proposta_criar_do_lead: {
+        Args: { _lead_id: string; _observacao?: string }
         Returns: string
       }
       rpc_proposta_decidir_aprovacao_excecao: {
@@ -15597,6 +15601,9 @@ export type Database = {
         | "comercial.lead.visualizar"
         | "comercial.lead.cancelar"
         | "comercial.lead.converter"
+        | "comercial.proposta.visualizar"
+        | "comercial.proposta.gerar_nova"
+        | "comercial.proposta.gerar_contrato"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15974,6 +15981,9 @@ export const Constants = {
         "comercial.lead.visualizar",
         "comercial.lead.cancelar",
         "comercial.lead.converter",
+        "comercial.proposta.visualizar",
+        "comercial.proposta.gerar_nova",
+        "comercial.proposta.gerar_contrato",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

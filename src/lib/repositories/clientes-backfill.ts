@@ -109,10 +109,10 @@ async function buscarSimilares(c: ClienteRecord): Promise<SimilarRow[]> {
   const nome = (c.nome ?? "").trim();
 
   const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
-    p_doc: doc || null,
-    p_email: email || null,
-    p_telefone: tel || null,
-    p_nome: nome || null,
+    p_doc: doc || undefined,
+    p_email: email || undefined,
+    p_telefone: tel || undefined,
+    p_nome: nome || undefined,
   });
   if (error) {
     logError({

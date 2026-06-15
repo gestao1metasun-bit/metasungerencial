@@ -251,10 +251,10 @@ export function useClientesSimilares(input: BuscarSimilarInput, enabled = true) 
     staleTime: 30_000,
     queryFn: async (): Promise<ClienteSimilarRow[]> => {
       const { data, error } = await supabase.rpc("rpc_cliente_buscar_similar", {
-        p_doc: input.doc ?? null,
-        p_email: input.email ?? null,
-        p_telefone: input.telefone ?? null,
-        p_nome: input.nome ?? null,
+        p_doc: input.doc ?? undefined,
+        p_email: input.email ?? undefined,
+        p_telefone: input.telefone ?? undefined,
+        p_nome: input.nome ?? undefined,
       });
       if (error) {
         await logError({

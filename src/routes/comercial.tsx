@@ -71,6 +71,7 @@ import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
 import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
 import { useClientesSimilares } from "@/lib/repositories/oportunidades-repo";
 import { ClienteDuplicidadeAlert } from "@/components/app/comercial/ClienteDuplicidadeAlert";
+import { ClienteCadastroSupabaseDialog } from "@/components/app/comercial/ClienteCadastroSupabaseDialog";
 import { Open360Button } from "@/components/app/comercial/Open360Button";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
@@ -3364,144 +3365,19 @@ function ClientePicker({ value, onPick }: { value?: string; onPick: (c: ClienteR
   );
 }
 
+/**
+ * C-ENT.1.e — NovoClienteDialog agora delega 100% ao componente oficial
+ * `ClienteCadastroSupabaseDialog` (fonte de verdade: public.clientes).
+ * Mantemos esta função fina apenas para preservar o call-site existente.
+ */
 function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (c: ClienteRecord) => void }) {
-  const [f, setF] = useState({
-    nome: "", doc: "", telefone: "", email: "",
-    cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "",
-  });
-  const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
-  // C-ENT.1.c — Debounce + busca de similares (rpc_cliente_buscar_similar).
-  const [debounced, setDebounced] = useState({ nome: "", doc: "", telefone: "", email: "" });
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced({
-      nome: f.nome.trim(), doc: f.doc.trim(), telefone: f.telefone.trim(), email: f.email.trim(),
-    }), 400);
-    return () => clearTimeout(t);
-  }, [f.nome, f.doc, f.telefone, f.email]);
-  const similares = useClientesSimilares(debounced, open);
-  const [dupAlertOpen, setDupAlertOpen] = useState(false);
-  const lookupCEP = async (cep: string) => {
-    set("cep", cep);
-    if (cep.replace(/\D/g, "").length !== 8) return;
-    const r = await buscarCEP(cep);
-    if (r) setF((p) => ({ ...p, rua: r.rua ?? p.rua, bairro: r.bairro ?? p.bairro, cidade: r.cidade ?? p.cidade, uf: r.uf ?? p.uf }));
-  };
-  const persistir = () => {
-    try {
-      const c = addClienteFull({ ...f, nome: f.nome.trim() });
-      toast.success(`Cliente cadastrado: ${c.nome}`);
-      onCreated(c);
-      setF({ nome: "", doc: "", telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", complemento: "", cidade: "", uf: "" });
-    } catch (e) {
-      if (e instanceof DuplicateClienteError) {
-        toast.error(`CPF/CNPJ já cadastrado (${e.existing.nome}). Selecione o cliente existente ou edite em Cadastros > Clientes.`);
-      } else throw e;
-    }
-  };
-  const salvar = () => {
-    if (!f.nome.trim()) { toast.error("Informe o nome"); return; }
-    if (f.doc && !isDocValid(f.doc)) { toast.error("CPF/CNPJ inválido"); return; }
-    if (f.telefone && !isTelValid(f.telefone)) { toast.error("Telefone inválido"); return; }
-    if (f.doc) {
-      const dup = findClienteByDoc(f.doc);
-      if (dup) {
-        toast.error(`CPF/CNPJ já cadastrado (${dup.nome}). Selecione o cliente existente ou edite os dados em Cadastros > Clientes.`);
-        return;
-      }
-    }
-    // C-ENT.1.c — Se houver similares no banco oficial, abre alerta antes de salvar.
-    if ((similares.data ?? []).length > 0) {
-      setDupAlertOpen(true);
-      return;
-    }
-    persistir();
-  };
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 gap-0">
-        <div className="border-b bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4">
-          <DialogHeader className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl">Novo cliente</DialogTitle>
-                <DialogDescription className="text-xs">Cadastro rápido — E-mail é opcional. Use o CEP para preencher endereço.</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-        </div>
-
-        <div className="overflow-y-auto px-6 py-5 space-y-4" style={{ maxHeight: "calc(92vh - 140px)" }}>
-          <div className="rounded-lg border bg-card p-5 space-y-4">
-            <div className="flex items-center gap-2 border-b pb-3">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Identificação</span>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
-                <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>CPF / CNPJ *</Label>
-                <Input value={f.doc} onChange={(e) => set("doc", maskDoc(e.target.value))} maxLength={18} placeholder="000.000.000-00" />
-              </div>
-              <div className="space-y-1.5"><Label>Telefone *</Label>
-                <Input value={f.telefone} onChange={(e) => set("telefone", maskTel(e.target.value))} maxLength={15} placeholder="(00) 00000-0000" />
-              </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>E-mail (opcional)</Label>
-                <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-card p-5 space-y-4">
-            <div className="flex items-center gap-2 border-b pb-3">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Endereço</span>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-1.5"><Label>CEP</Label>
-                <Input value={f.cep} onChange={(e) => lookupCEP(e.target.value)} maxLength={10} placeholder="69000-000" />
-              </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>Rua</Label>
-                <Input value={f.rua} onChange={(e) => set("rua", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Número</Label>
-                <Input value={f.numero} onChange={(e) => set("numero", e.target.value)} maxLength={10} />
-              </div>
-              <div className="space-y-1.5"><Label>Bairro</Label>
-                <Input value={f.bairro} onChange={(e) => set("bairro", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>Complemento</Label>
-                <Input value={f.complemento} onChange={(e) => set("complemento", e.target.value)} />
-              </div>
-              <div className="space-y-1.5 md:col-span-2"><Label>Cidade</Label>
-                <Input value={f.cidade} onChange={(e) => set("cidade", e.target.value)} />
-              </div>
-              <div className="space-y-1.5"><Label>UF</Label>
-                <Input value={f.uf} onChange={(e) => set("uf", e.target.value.toUpperCase())} maxLength={2} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t bg-muted/30 px-6 py-3">
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button onClick={salvar} className="bg-primary text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Cadastrar cliente</Button>
-          </DialogFooter>
-        </div>
-      </DialogContent>
-      <ClienteDuplicidadeAlert
-        open={dupAlertOpen}
-        onOpenChange={setDupAlertOpen}
-        similares={similares.data ?? []}
-        novoCliente={{ nome: f.nome, doc: f.doc, telefone: f.telefone, email: f.email }}
-        onContinuar={() => { setDupAlertOpen(false); persistir(); }}
-        onCancelar={() => setDupAlertOpen(false)}
-      />
-    </Dialog>
+    <ClienteCadastroSupabaseDialog
+      open={open}
+      onClose={onClose}
+      onCreated={onCreated}
+      showOpen360Action
+    />
   );
 }
 

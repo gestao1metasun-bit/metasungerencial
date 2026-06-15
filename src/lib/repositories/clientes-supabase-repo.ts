@@ -1,11 +1,15 @@
 /**
- * C-ENT.1.d — Repositório oficial de Clientes (Supabase, public.clientes).
+ * C-ENT.1.d/e — Repositório oficial de Clientes (Supabase, public.clientes).
  * Fonte de verdade do módulo Comercial Enterprise.
- * Não substitui clientes-store (LS) ainda usado pelo cadastro legado em /comercial.
+ *
+ * C-ENT.1.e: + criar/atualizar cliente em Supabase (RLS: consultor_id = auth.uid()
+ * ou is_admin). Espelho em LS (`addClienteFull`) mantido APENAS por compat com
+ * seletores legados (Pendência: migrar seletores em subwave posterior).
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logError } from "@/lib/repositories/error-log-repo";
+import { addClienteFull, updateClienteFull, type ClienteRecord } from "@/lib/clientes-store";
 
 export type ClienteRow = {
   id: string;
@@ -31,7 +35,7 @@ export type ClientesQuery = {
   limit?: number;
 };
 
-const onlyDigits = (s: string) => s.replace(/\D/g, "");
+const onlyDigits = (s: string) => (s ?? "").replace(/\D/g, "");
 
 export function useClientesSupabase(q: ClientesQuery = {}) {
   const search = (q.search ?? "").trim();
@@ -98,6 +102,184 @@ export function useConsultoresMap() {
         m[r.user_id] = r.nome || r.email || r.user_id.slice(0, 8);
       }
       return m;
+    },
+  });
+}
+
+/* ============================================================
+ * C-ENT.1.e — Criar / Atualizar cliente (Supabase, RLS aplicada)
+ * ============================================================ */
+
+export type NovoClienteInput = {
+  nome: string;
+  doc?: string;
+  telefone?: string;
+  telefone2?: string;
+  email?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
+  complemento?: string;
+  cidade?: string;
+  uf?: string;
+  tipo_pessoa?: "PF" | "PJ" | "EX";
+  observacao?: string | null;
+};
+
+export type AtualizarClienteInput = Partial<NovoClienteInput>;
+
+function clean<T extends Record<string, unknown>>(o: T): Partial<T> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(o)) {
+    if (v === undefined) continue;
+    if (typeof v === "string" && v.trim() === "") continue;
+    out[k] = typeof v === "string" ? v.trim() : v;
+  }
+  return out as Partial<T>;
+}
+
+function toLsRecord(row: ClienteRow & {
+  telefone2?: string | null; cep?: string | null; rua?: string | null;
+  numero?: string | null; bairro?: string | null; complemento?: string | null;
+}): ClienteRecord {
+  return {
+    id: row.id,
+    nome: row.nome,
+    doc: row.doc ?? "",
+    telefone: row.telefone ?? "",
+    telefone2: row.telefone2 ?? "",
+    email: row.email ?? "",
+    cep: row.cep ?? "",
+    rua: row.rua ?? "",
+    numero: row.numero ?? "",
+    bairro: row.bairro ?? "",
+    complemento: row.complemento ?? "",
+    cidade: row.cidade ?? "",
+    uf: row.uf ?? "",
+    status: row.status ?? "Ativo",
+    atualizado: (row.updated_at ?? new Date().toISOString()).slice(0, 10),
+  };
+}
+
+export async function criarClienteSupabase(input: NovoClienteInput): Promise<ClienteRecord> {
+  const { data: u } = await supabase.auth.getUser();
+  const uid = u.user?.id;
+  if (!uid) throw new Error("Usuário não autenticado");
+
+  const docDigits = onlyDigits(input.doc ?? "");
+  const tipo: "PF" | "PJ" | "EX" =
+    input.tipo_pessoa ?? (docDigits.length === 14 ? "PJ" : "PF");
+
+  const payload = clean({
+    nome: input.nome,
+    doc: docDigits ? input.doc : null,
+    telefone: input.telefone ?? null,
+    telefone2: input.telefone2 ?? null,
+    email: input.email ?? null,
+    cep: input.cep ?? null,
+    rua: input.rua ?? null,
+    numero: input.numero ?? null,
+    bairro: input.bairro ?? null,
+    complemento: input.complemento ?? null,
+    cidade: input.cidade ?? null,
+    uf: input.uf ?? null,
+    tipo_pessoa: tipo,
+    consultor_id: uid,
+    status: "Ativo",
+  });
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .insert(payload as never)
+    .select("*")
+    .single();
+
+  if (error) {
+    logError({
+      modulo: "comercial",
+      tela: "cliente-cadastro",
+      acao: "cliente.criar",
+      mensagem: error.message,
+      severidade: "error",
+      payload: { input },
+    });
+    throw error;
+  }
+
+  const row = data as unknown as ClienteRow & Record<string, string | null>;
+  const ls = toLsRecord(row);
+  // Espelho LS — compat com seletores legados (NÃO é fonte de verdade).
+  try { addClienteFull({ ...ls, id: ls.id }); } catch { /* duplicado: ignora */ }
+  return ls;
+}
+
+export async function atualizarClienteSupabase(
+  id: string,
+  patch: AtualizarClienteInput,
+): Promise<ClienteRecord> {
+  const payload = clean({
+    nome: patch.nome,
+    doc: patch.doc !== undefined ? (onlyDigits(patch.doc) ? patch.doc : null) : undefined,
+    telefone: patch.telefone,
+    telefone2: patch.telefone2,
+    email: patch.email,
+    cep: patch.cep,
+    rua: patch.rua,
+    numero: patch.numero,
+    bairro: patch.bairro,
+    complemento: patch.complemento,
+    cidade: patch.cidade,
+    uf: patch.uf,
+    tipo_pessoa: patch.tipo_pessoa,
+  });
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .update(payload as never)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    logError({
+      modulo: "comercial",
+      tela: "cliente-edicao",
+      acao: "cliente.atualizar",
+      mensagem: error.message,
+      severidade: "error",
+      payload: { id, patch },
+    });
+    throw error;
+  }
+
+  const row = data as unknown as ClienteRow & Record<string, string | null>;
+  const ls = toLsRecord(row);
+  try { updateClienteFull(ls.id, ls); } catch { /* sem registro local: tudo bem */ }
+  return ls;
+}
+
+export function useCriarClienteSupabase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: criarClienteSupabase,
+    onSuccess: (cli) => {
+      qc.invalidateQueries({ queryKey: ["clientes-supabase"] });
+      qc.invalidateQueries({ queryKey: ["cliente", cli.id] });
+      qc.invalidateQueries({ queryKey: ["clientes-similares"] });
+    },
+  });
+}
+
+export function useAtualizarClienteSupabase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { id: string; patch: AtualizarClienteInput }) =>
+      atualizarClienteSupabase(args.id, args.patch),
+    onSuccess: (cli) => {
+      qc.invalidateQueries({ queryKey: ["clientes-supabase"] });
+      qc.invalidateQueries({ queryKey: ["cliente", cli.id] });
+      qc.invalidateQueries({ queryKey: ["clientes-similares"] });
     },
   });
 }

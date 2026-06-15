@@ -58,9 +58,7 @@ export function useClientesSupabase(q: ClientesQuery = {}) {
     queryFn: async (): Promise<ClienteRow[]> => {
       let query = supabase
         .from("clientes")
-        .select(
-          "id,nome,doc,telefone,email,consultor_id,cidade,uf,status,tipo_pessoa,created_at,updated_at",
-        )
+        .select(CLIENTE_SELECT)
         .is("deleted_at", null)
         .order(orderBy, { ascending: orderDir === "asc" })
         .limit(limit);

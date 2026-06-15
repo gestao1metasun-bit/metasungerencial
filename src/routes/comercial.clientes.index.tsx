@@ -95,6 +95,13 @@ function ClientesIndexPage() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCcw className="mr-2 h-4 w-4" /> Atualizar
             </Button>
+            {admin && (
+              <Link to="/comercial/clientes/backfill">
+                <Button variant="outline" size="sm" title="Backfill LS → Supabase (admin)">
+                  <Database className="mr-2 h-4 w-4" /> Backfill LS
+                </Button>
+              </Link>
+            )}
             {podeCriar.data === true && (
               <Button size="sm" onClick={() => setNovoOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Novo cliente

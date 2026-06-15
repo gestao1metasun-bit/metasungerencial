@@ -1293,7 +1293,9 @@ function CancelarLeadDialog({
     if (!r.ok) {
       toast.error(r.erro ?? "Não foi possível cancelar o lead.");
       void logError({
-        contexto: "leads.cancelar",
+        modulo: "comercial",
+        tela: "leads",
+        acao: "cancelar",
         mensagem: r.erro ?? "Falha ao cancelar lead",
         payload: { leadId: lead.id, motivo },
       });

@@ -64,10 +64,8 @@ export function ClienteAutocompleteSupabase({
   hideLabel = false,
   className,
 }: Props) {
-  // @ts-expect-error perms recém-adicionadas (regen de types pendente)
-  const podeVisualizar = useHasPermission("comercial.cliente.visualizar");
-  // @ts-expect-error idem
-  const podeCriar = useHasPermission("comercial.cliente.criar");
+  const { data: podeVisualizar } = useHasPermission("comercial.cliente.visualizar");
+  const { data: podeCriar } = useHasPermission("comercial.cliente.criar");
 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);

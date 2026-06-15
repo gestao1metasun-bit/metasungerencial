@@ -203,6 +203,41 @@ export function setLeadStatus(id: string, status: LeadStatus, usuario?: string, 
   });
 }
 
+/**
+ * C-ENT.2.b — Cancelamento governado do Lead.
+ * Não exclui dados. Apenas muda status para CANCELADO e registra auditoria
+ * com motivo + observação opcional.
+ */
+export function cancelarLead(
+  id: string,
+  motivo: string,
+  observacao: string | undefined,
+  usuario?: string,
+): { ok: boolean; erro?: string } {
+  const idx = cache.findIndex((x) => x.id === id);
+  if (idx < 0) return { ok: false, erro: "Lead não encontrado." };
+  const old = cache[idx];
+  if (old.status === LEAD_STATUS.CANCELADO) {
+    return { ok: false, erro: "Lead já está cancelado." };
+  }
+  if (old.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO) {
+    return { ok: false, erro: "Lead já convertido em contrato — cancelamento bloqueado." };
+  }
+  const detalhe = observacao && observacao.trim()
+    ? `${motivo} — ${observacao.trim()}`
+    : motivo;
+  const next = [...cache];
+  next[idx] = { ...old, status: LEAD_STATUS.CANCELADO, atualizadoEm: new Date().toISOString() };
+  write(next);
+  pushAudit({
+    entidade: "lead", entidadeId: id,
+    acao: "CANCELAMENTO", usuario,
+    campo: "status", valorAnterior: old.status, valorNovo: LEAD_STATUS.CANCELADO,
+    motivo: detalhe,
+  });
+  return { ok: true };
+}
+
 export function trocarOrigemLead(
   id: string, novaOrigem: OrigemLead, usuario: string, motivo: string,
 ) {

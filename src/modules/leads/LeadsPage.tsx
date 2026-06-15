@@ -24,10 +24,12 @@ import { toast } from "sonner";
 
 import {
   useLeads, criarLead, setLeadStatus, trocarOrigemLead, trocarConsultorLead,
+  cancelarLead,
   findLeadByDoc, findLeadByTelefoneRecent, type Lead,
 } from "./store";
 import {
   LEAD_STATUS, LEAD_STATUS_LABEL, LEAD_STATUS_OPTIONS,
+  LEAD_CANCEL_MOTIVOS,
   ORIGEM_LEAD_LABEL, ORIGEM_LEAD_OPTIONS,
   PROPOSTA_STATUS_LABEL,
   statusClass, type LeadStatus, type OrigemLead,
@@ -66,12 +68,16 @@ export function LeadsPage() {
   const consultores = useConsultoresAtivos();
   const { data: podeVer } = useHasPermission("comercial.lead.visualizar");
   const { data: podeCriar } = useHasPermission("comercial.lead.criar");
+  const { data: podeCancelar } = useHasPermission("comercial.lead.cancelar");
+  const { data: podeConverter } = useHasPermission("comercial.lead.converter");
+  const { user } = useAuth();
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("TODOS");
   const [filtroOrigem, setFiltroOrigem] = useState<string>("TODOS");
   const [filtroConsultor, setFiltroConsultor] = useState<string>("TODOS");
   const [novoOpen, setNovoOpen] = useState(false);
   const [detalhe, setDetalhe] = useState<Lead | null>(null);
+  const [cancelarAlvo, setCancelarAlvo] = useState<Lead | null>(null);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -234,8 +240,28 @@ export function LeadsPage() {
                 <TableCell>
                   <RowActions
                     rowId={l.id}
-                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
-                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
+                    actions={[
+                      { kind: "visualizar", label: `Ver ${l.numero}` },
+                      {
+                        kind: "cancelar",
+                        label: "Cancelar lead",
+                        disabled:
+                          podeCancelar === false ||
+                          l.status === LEAD_STATUS.CANCELADO ||
+                          l.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO,
+                        overflow: true,
+                      },
+                    ]}
+                    onAction={(kind) => {
+                      if (kind === "visualizar") setDetalhe(l);
+                      else if (kind === "cancelar") {
+                        if (podeCancelar === false) {
+                          toast.error("Sem permissão (comercial.lead.cancelar).");
+                          return;
+                        }
+                        setCancelarAlvo(l);
+                      }
+                    }}
                   />
                 </TableCell>
               </TableRow>
@@ -249,6 +275,14 @@ export function LeadsPage() {
         <LeadDetailDialog
           lead={detalhe}
           onClose={() => setDetalhe(null)}
+          onCancelarLead={() => setCancelarAlvo(detalhe)}
+        />
+      )}
+      {cancelarAlvo && (
+        <CancelarLeadDialog
+          lead={cancelarAlvo}
+          usuario={user?.email ?? "—"}
+          onClose={() => setCancelarAlvo(null)}
         />
       )}
     </div>
@@ -569,19 +603,28 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
 /* =================== Detalhe + ações =================== */
 
-function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }) {
+function LeadDetailDialog({
+  lead, onClose, onCancelarLead,
+}: { lead: Lead; onClose: () => void; onCancelarLead?: () => void }) {
   const consultores = useConsultoresAtivos();
   const { user, role } = useAuth();
   const isAdminMaster = role === "admin_master";
   const isGerente = role === "admin_master" || role === "admin_geral";
+  const { data: podeConverter } = useHasPermission("comercial.lead.converter");
+  const { data: podeCancelar } = useHasPermission("comercial.lead.cancelar");
 
   const [trocaOrigemOpen, setTrocaOrigemOpen] = useState(false);
   const [trocaConsultorOpen, setTrocaConsultorOpen] = useState(false);
   const [solicitarOpen, setSolicitarOpen] = useState(false);
 
+  const isCancelado = lead.status === LEAD_STATUS.CANCELADO;
+  const isConvertido = lead.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO;
   const podeSolicitarProposta =
-    lead.status === LEAD_STATUS.LEAD_CADASTRADO ||
-    lead.status === LEAD_STATUS.EM_ATENDIMENTO;
+    podeConverter !== false &&
+    !isCancelado &&
+    !isConvertido &&
+    (lead.status === LEAD_STATUS.LEAD_CADASTRADO ||
+      lead.status === LEAD_STATUS.EM_ATENDIMENTO);
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -624,7 +667,15 @@ function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }
           <Button
             disabled={!podeSolicitarProposta}
             onClick={() => setSolicitarOpen(true)}
-            title={!podeSolicitarProposta ? "Disponível apenas para leads em atendimento ou cadastrados." : undefined}
+            title={
+              podeConverter === false
+                ? "Sem permissão (comercial.lead.converter)."
+                : isCancelado
+                  ? "Lead cancelado — conversão bloqueada."
+                  : !podeSolicitarProposta
+                    ? "Disponível apenas para leads em atendimento ou cadastrados."
+                    : undefined
+            }
           >
             <Send className="mr-1 h-4 w-4" /> Solicitar Proposta
           </Button>
@@ -637,6 +688,17 @@ function LeadDetailDialog({ lead, onClose }: { lead: Lead; onClose: () => void }
               }}
             >
               Mover para EM ATENDIMENTO
+            </Button>
+          )}
+          {!isCancelado && !isConvertido && onCancelarLead && (
+            <Button
+              variant="outline"
+              className="ml-auto border-destructive/40 text-destructive hover:bg-destructive/10"
+              disabled={podeCancelar === false}
+              title={podeCancelar === false ? "Sem permissão (comercial.lead.cancelar)." : undefined}
+              onClick={() => { onClose(); onCancelarLead(); }}
+            >
+              Cancelar lead
             </Button>
           )}
         </div>
@@ -1202,6 +1264,89 @@ function AprovarPropostaDialog({
             if (!motivo.trim()) { toast.error("Informe o motivo da aprovação."); return; }
             onConfirm(motivo.trim(), comFinanciamento, comFinanciamento ? banco : undefined);
           }}>Aprovar e gerar contrato</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* =================== Cancelar Lead (C-ENT.2.b) =================== */
+
+function CancelarLeadDialog({
+  lead, usuario, onClose,
+}: { lead: Lead; usuario: string; onClose: () => void }) {
+  const [motivo, setMotivo] = useState<string>(LEAD_CANCEL_MOTIVOS[0]);
+  const [observacao, setObservacao] = useState("");
+
+  const isOutro = motivo === "Outro";
+
+  const confirmar = () => {
+    if (!motivo) {
+      toast.error("Selecione um motivo.");
+      return;
+    }
+    if (isOutro && !observacao.trim()) {
+      toast.error('Para motivo "Outro", informe a observação.');
+      return;
+    }
+    const r = cancelarLead(lead.id, motivo, observacao, usuario);
+    if (!r.ok) {
+      toast.error(r.erro ?? "Não foi possível cancelar o lead.");
+      void logError({
+        modulo: "comercial",
+        tela: "leads",
+        acao: "cancelar",
+        mensagem: r.erro ?? "Falha ao cancelar lead",
+        payload: { leadId: lead.id, motivo },
+      });
+      return;
+    }
+    toast.success(`Lead ${lead.numero} cancelado.`);
+    onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancelar lead {lead.numero}</DialogTitle>
+          <DialogDescription>
+            O lead não será excluído. Ele sai da operação ativa e fica consultável
+            no histórico com motivo registrado.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Motivo <span className="text-destructive">*</span></Label>
+            <Select value={motivo} onValueChange={setMotivo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LEAD_CANCEL_MOTIVOS.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>
+              Observação {isOutro ? <span className="text-destructive">*</span> : <span className="text-muted-foreground">(opcional)</span>}
+            </Label>
+            <Textarea
+              rows={3}
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder={isOutro ? "Descreva o motivo do cancelamento" : "Detalhe adicional (opcional)"}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Voltar</Button>
+          <Button
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={confirmar}
+          >
+            Cancelar lead
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

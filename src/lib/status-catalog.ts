@@ -11,6 +11,7 @@ export const LEAD_STATUS = {
   PROPOSTA_SOLICITADA: "PROPOSTA_SOLICITADA",
   CONVERTIDO_EM_CONTRATO: "CONVERTIDO_EM_CONTRATO",
   PERDIDO: "PERDIDO",
+  CANCELADO: "CANCELADO",
 } as const;
 export type LeadStatus = (typeof LEAD_STATUS)[keyof typeof LEAD_STATUS];
 
@@ -20,7 +21,18 @@ export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
   PROPOSTA_SOLICITADA: "PROPOSTA SOLICITADA",
   CONVERTIDO_EM_CONTRATO: "CONVERTIDO EM CONTRATO",
   PERDIDO: "PERDIDO",
+  CANCELADO: "CANCELADO",
 };
+
+/** Motivos canônicos para cancelamento de Lead (C-ENT.2.b). */
+export const LEAD_CANCEL_MOTIVOS = [
+  "Sem retorno",
+  "Cliente desistiu",
+  "Duplicado",
+  "Sem perfil",
+  "Outro",
+] as const;
+export type LeadCancelMotivo = (typeof LEAD_CANCEL_MOTIVOS)[number];
 
 /* =================== ORIGEM DO LEAD =================== */
 export const ORIGEM_LEAD = {
@@ -123,6 +135,8 @@ export function statusTone(
       return "success";
     case LEAD_STATUS.PERDIDO:
       return "destructive";
+    case LEAD_STATUS.CANCELADO:
+      return "neutral";
 
     // Proposta
     case PROPOSTA_STATUS.AGUARDANDO_GERACAO:

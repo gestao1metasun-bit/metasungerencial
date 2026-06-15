@@ -45,6 +45,19 @@ const SELECT_COLS =
 
 /* ============================== READS ============================== */
 
+function reportError(acao: string, err: unknown, payload?: Record<string, unknown>) {
+  const e = err as { message?: string; stack?: string };
+  logError({
+    modulo: "comercial",
+    tela: "propostas-supabase-repo",
+    acao,
+    mensagem: e?.message ?? String(err),
+    stack: e?.stack,
+    payload,
+    severidade: "error",
+  });
+}
+
 export async function listarPropostasPorLead(leadId: string): Promise<PropostaSupabase[]> {
   const { data, error } = await supabase
     .from("propostas")
@@ -53,7 +66,7 @@ export async function listarPropostasPorLead(leadId: string): Promise<PropostaSu
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) {
-    void logError("propostas-supabase-repo.listarPropostasPorLead", error, { leadId });
+    reportError("listarPropostasPorLead", error, { leadId });
     throw error;
   }
   return (data ?? []) as unknown as PropostaSupabase[];
@@ -67,7 +80,7 @@ export async function listarPropostasPorCliente(clienteId: string): Promise<Prop
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) {
-    void logError("propostas-supabase-repo.listarPropostasPorCliente", error, { clienteId });
+    reportError("listarPropostasPorCliente", error, { clienteId });
     throw error;
   }
   return (data ?? []) as unknown as PropostaSupabase[];
@@ -76,14 +89,15 @@ export async function listarPropostasPorCliente(clienteId: string): Promise<Prop
 /* ============================== WRITES ============================== */
 
 export async function criarPropostaDoLead(leadId: string, observacao?: string): Promise<string> {
+  const obs = observacao?.trim();
   const { data, error } = await withPerf("rpc.proposta_criar_do_lead", () =>
     supabase.rpc("rpc_proposta_criar_do_lead", {
       _lead_id: leadId,
-      _observacao: observacao?.trim() || null,
+      _observacao: obs && obs.length > 0 ? obs : undefined,
     }),
   );
   if (error) {
-    void logError("propostas-supabase-repo.criarPropostaDoLead", error, { leadId });
+    reportError("criarPropostaDoLead", error, { leadId });
     throw error;
   }
   return data as unknown as string;
@@ -97,7 +111,7 @@ export async function cancelarPropostaSupabase(id: string, motivo: string): Prom
     supabase.rpc("rpc_proposta_cancelar", { _id: id, _motivo: motivo.trim() }),
   );
   if (error) {
-    void logError("propostas-supabase-repo.cancelarPropostaSupabase", error, { id });
+    reportError("cancelarPropostaSupabase", error, { id });
     throw error;
   }
 }

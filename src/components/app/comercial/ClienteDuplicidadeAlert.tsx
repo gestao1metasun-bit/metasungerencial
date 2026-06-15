@@ -116,14 +116,7 @@ export function ClienteDuplicidadeAlert({
             Cancelar cadastro
           </Button>
           <div className="flex gap-2">
-            {top && (
-              <Button variant="outline" asChild>
-                <span>
-                  <Open360Button clienteId={top.id} size="sm" variant="outline" />
-                  <span className="sr-only">Abrir 360º do mais provável</span>
-                </span>
-              </Button>
-            )}
+            {top && <Open360Button clienteId={top.id} size="sm" variant="outline" />}
             <Button
               onClick={handleContinuar}
               className="bg-amber-600 text-white hover:bg-amber-700"

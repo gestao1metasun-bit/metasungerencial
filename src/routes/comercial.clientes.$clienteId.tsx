@@ -25,6 +25,7 @@ import {
   useOportunidadesPorCliente,
   useCriarOportunidade,
 } from "@/lib/repositories/oportunidades-repo";
+import { useHasPermission } from "@/hooks/use-has-permission";
 
 export const Route = createFileRoute("/comercial/clientes/$clienteId")({
   head: () => ({ meta: [{ title: "Workspace 360º — Cliente — Meta Sun" }] }),

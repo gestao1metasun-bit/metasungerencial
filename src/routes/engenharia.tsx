@@ -54,6 +54,7 @@ import {
   useEstoqueState,
   isMaterialEntregueTotal,
 } from "@/lib/estoque-store";
+// LEGADO LS — pendente E-ENT.CLIENTES (Engenharia Supabase). Não estender.
 import { addCliente, useClientesAll } from "@/lib/clientes-store";
 import { fmtInversorNumero } from "@/lib/inversor-fmt";
 import { useEquipes, setEquipes as setEquipesStore } from "@/lib/equipes-store";

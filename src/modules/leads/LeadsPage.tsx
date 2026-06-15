@@ -893,32 +893,44 @@ function SolicitarPropostaDialog({
   const consultores = useConsultoresAtivos();
   const [observacao, setObservacao] = useState("");
   const consultorNome = consultores.find((c) => c.id === lead.consultorId)?.nome ?? lead.consultorId;
+  const criar = useCriarPropostaDoLead();
 
-  const confirmar = () => {
-    const proposta = criarPropostaParaLead({
-      leadId: lead.id,
-      leadNumero: lead.numero,
-      clienteNome: lead.nome,
-      clienteTelefone: lead.telefone,
-      consumoKwh: lead.consumoKwh,
-      consultorNome,
-      observacao: observacao.trim() || undefined,
-      usuario,
-    });
-    setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
-    toast.success(
-      `Proposta ${proposta.numero} (${proposta.versao}) criada — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}.`,
-    );
-    onClose();
+  const confirmar = async () => {
+    if (!lead.clienteId) {
+      toast.error("Lead sem cliente vinculado no Supabase. Edite o lead para vincular um cliente antes de gerar a proposta.");
+      return;
+    }
+    try {
+      const novoId = await criar.mutateAsync({
+        leadId: lead.id,
+        observacao: observacao.trim() || undefined,
+      });
+      setLeadStatus(lead.id, LEAD_STATUS.PROPOSTA_SOLICITADA, usuario);
+      toast.success(
+        `Proposta criada em rascunho — ${PROPOSTA_STATUS_LABEL.AGUARDANDO_GERACAO}. ID: ${novoId.slice(0, 8)}…`,
+      );
+      onClose();
+    } catch (err) {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Não foi possível criar a proposta.");
+      void logError({
+        modulo: "comercial",
+        tela: "leads",
+        acao: "solicitar-proposta",
+        mensagem: e?.message ?? "Falha ao criar proposta a partir do lead",
+        payload: { leadId: lead.id },
+      });
+    }
   };
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Solicitar proposta</DialogTitle>
           <DialogDescription>
-            Os dados do lead já foram preenchidos no cadastro. Basta confirmar.
+            A proposta nasce em <b>RASCUNHO</b>, vinculada ao lead e ao cliente Supabase.
+            Edição comercial/técnica é feita em Comercial → Propostas.
           </DialogDescription>
         </DialogHeader>
 
@@ -927,6 +939,10 @@ function SolicitarPropostaDialog({
           <Field label="Telefone" value={lead.telefone} />
           <Field label="Consumo" value={`${lead.consumoKwh} kWh/mês`} />
           <Field label="Consultor" value={consultorNome} />
+          <Field
+            label="Cliente Supabase"
+            value={lead.clienteId ? `${lead.clienteId.slice(0, 8)}…` : "— (vincule antes)"}
+          />
           <Field label="Origem" value={ORIGEM_LEAD_LABEL[lead.origem] ?? lead.origem} />
         </div>
 
@@ -937,7 +953,9 @@ function SolicitarPropostaDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={confirmar}>Confirmar solicitação</Button>
+          <Button onClick={confirmar} disabled={criar.isPending || !lead.clienteId}>
+            {criar.isPending ? "Criando…" : "Confirmar solicitação"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

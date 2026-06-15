@@ -40,6 +40,7 @@ import {
   useReprovarProposta,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useTabFromHash } from "@/lib/route-tabs";
+// LEGADO LS — pendente migração PropostasPage Supabase. Não estender.
 import { useClientesFull, addClienteFull } from "@/lib/clientes-store";
 import { upsertContrato } from "@/lib/contratos-store";
 import {

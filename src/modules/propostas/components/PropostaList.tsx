@@ -43,6 +43,7 @@ import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
   propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
+// LEGADO LS — check de existência sincrônico. Migrar com PropostasPage.
 import { findClienteByDoc } from "@/lib/clientes-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {

@@ -65,6 +65,7 @@ import {
   isPropostaSubstituida,
   type PropostaSupabase,
 } from "@/lib/repositories/propostas-supabase-repo";
+import { useGerarContratoDePropostas } from "@/lib/repositories/contratos-supabase-repo";
 import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { logError } from "@/lib/repositories/error-log-repo";

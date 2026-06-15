@@ -16,8 +16,14 @@ export type ClienteRow = {
   nome: string;
   doc: string | null;
   telefone: string | null;
+  telefone2: string | null;
   email: string | null;
   consultor_id: string | null;
+  cep: string | null;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  complemento: string | null;
   cidade: string | null;
   uf: string | null;
   status: string | null;
@@ -25,6 +31,9 @@ export type ClienteRow = {
   created_at: string;
   updated_at: string;
 };
+
+const CLIENTE_SELECT =
+  "id,nome,doc,telefone,telefone2,email,consultor_id,cep,rua,numero,bairro,complemento,cidade,uf,status,tipo_pessoa,created_at,updated_at";
 
 export type ClientesOrder = "nome" | "updated_at" | "created_at";
 

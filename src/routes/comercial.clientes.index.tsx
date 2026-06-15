@@ -4,7 +4,8 @@
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, ShieldAlert, Loader2, RefreshCcw, Users, Plus, ExternalLink, Target } from "lucide-react";
+import { Search, ShieldAlert, Loader2, RefreshCcw, Users, Plus, ExternalLink, Target, Database } from "lucide-react";
+import { useIsAdmin } from "@/lib/auth-store";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

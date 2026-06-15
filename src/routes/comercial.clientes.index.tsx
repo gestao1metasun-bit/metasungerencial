@@ -41,6 +41,7 @@ function ClientesIndexPage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.cliente.visualizar");
   const podeCriar = useHasPermission("comercial.cliente.criar");
+  const admin = useIsAdmin();
   const [rawSearch, setRawSearch] = useState("");
   const [search, setSearch] = useState("");
   const [orderBy, setOrderBy] = useState<ClientesOrder>("nome");

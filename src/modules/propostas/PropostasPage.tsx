@@ -54,6 +54,7 @@ import {
   upsertModuloFV, removeModuloFV, upsertInversorFV, removeInversorFV,
   upsertDistribuidorFV, removeDistribuidorFV, upsertParametroFV, removeParametroFV,
   upsertCustoFV, removeCustoFV, upsertProposta, removeProposta,
+  marcarPropostaAtivaDoLead, expirarPropostasVencidasAuto,
   novaPropostaVazia, proximoNumeroProposta, calcDimensionamento, calcPrecificacao,
   calcResultado, gerarCustosSugeridos, sugerirParametro, potenciaInversores,
   consumoEfetivo, somaMensal, fmtBRL, fmtNum, validarParaGeracao,

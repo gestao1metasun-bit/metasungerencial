@@ -68,11 +68,13 @@ import {
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
 import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
-import { useClientesFull, addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
+import { useClientesSupabase, clienteRowToRecord } from "@/lib/repositories/clientes-supabase-repo";
 import { useClientesSimilares } from "@/lib/repositories/oportunidades-repo";
 import { ClienteDuplicidadeAlert } from "@/components/app/comercial/ClienteDuplicidadeAlert";
 import { ClienteCadastroSupabaseDialog } from "@/components/app/comercial/ClienteCadastroSupabaseDialog";
 import { Open360Button } from "@/components/app/comercial/Open360Button";
+import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
@@ -1516,6 +1518,33 @@ function CompletarDadosClienteDialog({
               <Users className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">Identificação</span>
             </div>
+
+            {/* C-ENT.1.f — Autocomplete oficial Supabase para pré-preencher os campos do cliente */}
+            <ClienteAutocompleteSupabase
+              label="Vincular a cliente existente (Supabase)"
+              placeholder="Buscar cliente oficial por nome, CPF/CNPJ, telefone ou e-mail…"
+              showOpen360={false}
+              showNovoCliente={false}
+              onChange={(c) => {
+                if (!c) return;
+                setF((p) => ({
+                  ...p,
+                  nome: c.nome ?? p.nome,
+                  doc: maskDoc(c.doc ?? ""),
+                  telefone: maskTel(c.telefone ?? ""),
+                  email: c.email ?? p.email,
+                  cep: c.cep ?? p.cep,
+                  rua: c.rua ?? p.rua,
+                  numero: c.numero ?? p.numero,
+                  bairro: c.bairro ?? p.bairro,
+                  complemento: c.complemento ?? p.complemento,
+                  cidade: c.cidade ?? p.cidade,
+                  uf: c.uf ?? p.uf,
+                }));
+                toast.success(`Cliente ${c.nome} carregado do cadastro oficial.`);
+              }}
+            />
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
                 <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />
@@ -1652,17 +1681,20 @@ function RedigirContratoDialog({
   }
   function rmClausula(id: string) { setClausulas(clausulas.filter((c) => c.id !== id)); }
 
-  // === Autocomplete de CLIENTE pelo CPF/CNPJ ===
-  const allClientes = useClientesFull();
+  // === C-ENT.1.f — Autocomplete de CLIENTE pelo CPF/CNPJ (Supabase oficial) ===
   const [clienteVincId, setClienteVincId] = useState<string | null>(null);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const docDigits = doc.replace(/\D/g, "");
-  const sugestoesClientes = useMemo(() => {
-    if (docDigits.length < 3) return [];
-    return allClientes
-      .filter((c) => c.doc.replace(/\D/g, "").startsWith(docDigits))
-      .slice(0, 8);
-  }, [allClientes, docDigits]);
+  const { data: sugestoesRows = [] } = useClientesSupabase({
+    search: docDigits.length >= 3 ? docDigits : "",
+    orderBy: "nome",
+    orderDir: "asc",
+    limit: 8,
+  });
+  const sugestoesClientes = useMemo<ClienteRecord[]>(
+    () => (docDigits.length >= 3 ? sugestoesRows.map(clienteRowToRecord) : []),
+    [sugestoesRows, docDigits],
+  );
 
   function selecionarCliente(c: ClienteRecord) {
     setClienteVincId(c.id);
@@ -3309,59 +3341,16 @@ function comissaoFromParametro(parametro: number): { pct: number | null; aprovac
 /* ---------------- CLIENTE PICKER + NOVO CLIENTE ---------------- */
 
 function ClientePicker({ value, onPick }: { value?: string; onPick: (c: ClienteRecord) => void }) {
-  const clientes = useClientesFull();
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const [novoOpen, setNovoOpen] = useState(false);
-  const filtrados = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return clientes.slice(0, 10);
-    return clientes.filter((c) =>
-      c.nome.toLowerCase().includes(s) ||
-      (c.doc ?? "").toLowerCase().includes(s) ||
-      (c.cidade ?? "").toLowerCase().includes(s),
-    ).slice(0, 20);
-  }, [q, clientes]);
-  const selecionado = clientes.find((c) => c.id === value);
-
+  // C-ENT.1.f — delega ao componente oficial Supabase. Mantém assinatura legada.
   return (
-    <>
-      <div className="space-y-1.5">
-        <Label>Cliente *</Label>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Input
-              value={open ? q : (selecionado?.nome ?? q)}
-              placeholder="Buscar cliente por nome, CPF/CNPJ ou cidade…"
-              onFocus={() => setOpen(true)}
-              onChange={(e) => { setQ(e.target.value); setOpen(true); }}
-              onBlur={() => setTimeout(() => setOpen(false), 200)}
-            />
-            {open && filtrados.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded-md border bg-popover shadow-lg">
-                {filtrados.map((c) => (
-                  <button
-                    type="button" key={c.id}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { onPick(c); setOpen(false); setQ(""); }}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
-                  >
-                    <div className="font-medium">{c.nome}</div>
-                    <div className="text-[11px] text-muted-foreground font-mono">
-                      {c.doc || "—"} · {c.cidade}/{c.uf} · {c.telefone || "—"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button type="button" variant="outline" onClick={() => setNovoOpen(true)}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Novo
-          </Button>
-        </div>
-      </div>
-      <NovoClienteDialog open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={(c) => { onPick(c); setNovoOpen(false); }} />
-    </>
+    <ClienteAutocompleteSupabase
+      value={value ?? null}
+      onChange={(c) => { if (c) onPick(c); }}
+      label="Cliente"
+      required
+      showOpen360
+      showNovoCliente
+    />
   );
 }
 

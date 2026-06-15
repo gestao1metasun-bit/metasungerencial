@@ -16,8 +16,14 @@ export type ClienteRow = {
   nome: string;
   doc: string | null;
   telefone: string | null;
+  telefone2: string | null;
   email: string | null;
   consultor_id: string | null;
+  cep: string | null;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  complemento: string | null;
   cidade: string | null;
   uf: string | null;
   status: string | null;
@@ -25,6 +31,9 @@ export type ClienteRow = {
   created_at: string;
   updated_at: string;
 };
+
+const CLIENTE_SELECT =
+  "id,nome,doc,telefone,telefone2,email,consultor_id,cep,rua,numero,bairro,complemento,cidade,uf,status,tipo_pessoa,created_at,updated_at";
 
 export type ClientesOrder = "nome" | "updated_at" | "created_at";
 
@@ -49,9 +58,7 @@ export function useClientesSupabase(q: ClientesQuery = {}) {
     queryFn: async (): Promise<ClienteRow[]> => {
       let query = supabase
         .from("clientes")
-        .select(
-          "id,nome,doc,telefone,email,consultor_id,cidade,uf,status,tipo_pessoa,created_at,updated_at",
-        )
+        .select(CLIENTE_SELECT)
         .is("deleted_at", null)
         .order(orderBy, { ascending: orderDir === "asc" })
         .limit(limit);
@@ -139,10 +146,7 @@ function clean<T extends Record<string, unknown>>(o: T): Partial<T> {
   return out as Partial<T>;
 }
 
-function toLsRecord(row: ClienteRow & {
-  telefone2?: string | null; cep?: string | null; rua?: string | null;
-  numero?: string | null; bairro?: string | null; complemento?: string | null;
-}): ClienteRecord {
+export function clienteRowToRecord(row: ClienteRow): ClienteRecord {
   return {
     id: row.id,
     nome: row.nome,
@@ -160,6 +164,39 @@ function toLsRecord(row: ClienteRow & {
     status: row.status ?? "Ativo",
     atualizado: (row.updated_at ?? new Date().toISOString()).slice(0, 10),
   };
+}
+
+// Alias interno (mantém nome curto usado no resto do arquivo).
+const toLsRecord = (row: ClienteRow) => clienteRowToRecord(row);
+
+/** Busca pontual por UUID (Supabase) — usada por seletores e flows pontuais. */
+export function useClienteSupabaseById(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ["cliente", id],
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: async (): Promise<ClienteRecord | null> => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("clientes")
+        .select(CLIENTE_SELECT)
+        .eq("id", id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (error) {
+        logError({
+          modulo: "comercial",
+          tela: "cliente-by-id",
+          acao: "cliente.obter",
+          mensagem: error.message,
+          severidade: "error",
+          payload: { id },
+        });
+        throw error;
+      }
+      return data ? clienteRowToRecord(data as ClienteRow) : null;
+    },
+  });
 }
 
 export async function criarClienteSupabase(input: NovoClienteInput): Promise<ClienteRecord> {

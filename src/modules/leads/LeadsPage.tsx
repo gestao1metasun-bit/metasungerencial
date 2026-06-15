@@ -65,6 +65,7 @@ import {
   isPropostaSubstituida,
   type PropostaSupabase,
 } from "@/lib/repositories/propostas-supabase-repo";
+import { useGerarContratoDePropostas } from "@/lib/repositories/contratos-supabase-repo";
 import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteAutocompleteSupabase";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { logError } from "@/lib/repositories/error-log-repo";
@@ -982,13 +983,17 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
   const { data: propostas = [], isLoading } = usePropostasPorLead(lead.id);
   const cancelar = useCancelarPropostaSupabase();
   const gerarNova = useGerarNovaVersaoProposta();
+  const gerarContrato = useGerarContratoDePropostas();
   const { data: podeCancelar } = useHasPermission("comercial.proposta.cancelar");
   const { data: podeGerarNova } = useHasPermission("comercial.proposta.gerar_nova");
+  const { data: podeGerarContrato } = useHasPermission("comercial.contrato.criar");
 
   const [acao, setAcao] = useState<
     | { proposta: PropostaSupabase; tipo: "cancelar" | "gerar_nova" }
     | null
   >(null);
+  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [confirmContrato, setConfirmContrato] = useState(false);
 
   if (isLoading) {
     return (
@@ -1006,18 +1011,55 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
     );
   }
 
+  const isElegivelContrato = (p: PropostaSupabase) =>
+    (p.status === "APROVADA" || p.status === "ASSINADA") && !p.contrato_id;
+
+  const elegiveis = propostas.filter(isElegivelContrato);
+  const propostasSelecionadas = propostas.filter((p) => selecionadas.has(p.id));
+  const totalValor = propostasSelecionadas.reduce((s, p) => s + (p.valor_final ?? 0), 0);
+  const totalKwp = propostasSelecionadas.reduce((s, p) => s + (p.potencia_kwp ?? 0), 0);
+  const totalModulos = propostasSelecionadas.reduce((s, p) => s + (p.modulos_qtd ?? 0), 0);
+
+  function toggleSelecao(id: string) {
+    setSelecionadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-sm font-semibold">Propostas deste lead (Supabase)</div>
-        <div className="text-[11px] text-muted-foreground">
-          Edição comercial/aprovação: <span className="font-medium">Comercial → Propostas</span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            disabled={
+              podeGerarContrato === false ||
+              selecionadas.size === 0 ||
+              gerarContrato.isPending
+            }
+            onClick={() => setConfirmContrato(true)}
+            title={
+              podeGerarContrato === false
+                ? "Sem permissão comercial.contrato.criar"
+                : selecionadas.size === 0
+                  ? "Selecione propostas APROVADA/ASSINADA não contratadas"
+                  : "Gerar contrato com as propostas selecionadas"
+            }
+          >
+            Gerar contrato ({selecionadas.size})
+          </Button>
         </div>
       </div>
       <div className="overflow-hidden rounded-md border border-border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10"></TableHead>
               <TableHead className="w-16">Versão</TableHead>
               <TableHead>Número</TableHead>
               <TableHead>Status</TableHead>
@@ -1032,7 +1074,9 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               const isTerminal =
                 p.status === "CANCELADA" ||
                 p.status === "ASSINADA" ||
-                p.status === "APROVADA";
+                p.status === "APROVADA" ||
+                p.status === "CONTRATADA";
+              const elegivel = isElegivelContrato(p);
               const rowActions: import("@/components/app/enterprise").RowAction[] = [
                 {
                   kind: "editar",
@@ -1051,12 +1095,23 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
               ];
               return (
                 <TableRow key={p.id} className={substituida ? "opacity-60" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selecionadas.has(p.id)}
+                      disabled={!elegivel}
+                      onCheckedChange={() => toggleSelecao(p.id)}
+                      aria-label="Selecionar proposta"
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{`P${String(p.versao_num ?? 1).padStart(2, "0")}`}</TableCell>
                   <TableCell className="text-xs">{p.numero ?? "—"}</TableCell>
                   <TableCell>
                     <span className={`inline-flex rounded px-2 py-0.5 text-[10px] font-semibold ${statusPropostaBadgeClass(p.status)}`}>
                       {substituida ? `${p.status} (substituída)` : p.status}
                     </span>
+                    {p.contrato_id && (
+                      <span className="ml-1 inline-flex rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-800">CONTRATADA</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-xs">
                     {p.valor_final != null ? fmtBRL(p.valor_final) : "—"}
@@ -1080,6 +1135,11 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
           </TableBody>
         </Table>
       </div>
+      {elegiveis.length === 0 && (
+        <div className="mt-2 text-[11px] text-muted-foreground">
+          Nenhuma proposta elegível para contrato (necessário status APROVADA/ASSINADA e não contratada).
+        </div>
+      )}
 
       {acao && (
         <MotivoDialog
@@ -1118,9 +1178,61 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
           }}
         />
       )}
+
+      {confirmContrato && (
+        <Dialog open onOpenChange={(v) => { if (!v) setConfirmContrato(false); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Gerar contrato</DialogTitle>
+              <DialogDescription>
+                Será criado um contrato consolidando {propostasSelecionadas.length} proposta(s) do cliente
+                <span className="font-medium"> {lead.nome}</span>. Cada proposta gera um projeto inicial e passa para o status CONTRATADA.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 text-sm">
+              <div className="rounded border border-border p-2 text-xs">
+                <div><span className="text-muted-foreground">Propostas:</span> {propostasSelecionadas.map((p) => p.numero ?? p.id.slice(0,8)).join(", ")}</div>
+                <div className="mt-1 flex justify-between"><span className="text-muted-foreground">Valor total</span><span className="font-medium">{fmtBRL(totalValor)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Potência total</span><span>{totalKwp.toFixed(2)} kWp</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Módulos</span><span>{totalModulos}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Projetos a criar</span><span>{propostasSelecionadas.length}</span></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmContrato(false)} disabled={gerarContrato.isPending}>Cancelar</Button>
+              <Button
+                disabled={gerarContrato.isPending || propostasSelecionadas.length === 0}
+                onClick={async () => {
+                  try {
+                    const contratoId = await gerarContrato.mutateAsync(
+                      propostasSelecionadas.map((p) => p.id),
+                    );
+                    toast.success(`Contrato criado (${contratoId.slice(0, 8)}…).`);
+                    setSelecionadas(new Set());
+                    setConfirmContrato(false);
+                  } catch (err) {
+                    const e = err as { message?: string };
+                    toast.error(e?.message ?? "Não foi possível gerar o contrato.");
+                    void logError({
+                      modulo: "comercial",
+                      tela: "leads",
+                      acao: "contrato-gerar",
+                      mensagem: e?.message ?? "Falha ao gerar contrato",
+                      payload: { propostaIds: propostasSelecionadas.map((p) => p.id) },
+                    });
+                  }
+                }}
+              >
+                {gerarContrato.isPending ? "Gerando…" : "Confirmar geração"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+
 
 function MotivoDialog({
   titulo, descricao, onClose, onConfirm,

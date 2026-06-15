@@ -377,25 +377,27 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
       toast.error(`Telefone já cadastrado no lead ${telDup.numero} — ${telDup.nome}. Aguarde 90 dias para novo cadastro.`);
       return;
     }
-    // Cadastra ou reaproveita cliente
+    // Cadastra ou reaproveita cliente (Supabase oficial — RLS aplicada).
     let clienteId = clienteExistenteId ?? undefined;
     try {
       if (clienteId) {
-        // Atualiza endereço se editado
-        updateClienteFull(clienteId, {
+        await atualizarClienteSupabase(clienteId, {
           nome, telefone, cep: cep.replace(/\D/g, ""),
           rua, numero, bairro, cidade, uf,
         });
       } else {
-        const novo = addClienteFull({
+        const novo = await criarClienteSupabase({
           nome, doc, telefone,
           cep: cep.replace(/\D/g, ""),
           rua, numero, bairro, cidade, uf,
+          tipo_pessoa: tipoPessoa,
         });
         clienteId = novo.id;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar cliente."); return;
+      const msg = err instanceof Error ? err.message : "Falha ao salvar cliente.";
+      logError({ modulo: "comercial", tela: "leads-novo", acao: "cliente.salvar", mensagem: msg, severidade: "error" });
+      toast.error(msg); return;
     }
     console.info("[lead-save] chamando criarLead");
     const lead = criarLead({

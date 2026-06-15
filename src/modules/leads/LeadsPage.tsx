@@ -183,12 +183,16 @@ export function LeadsPage() {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button onClick={() => setNovoOpen(true)}>
+            <Button onClick={() => setNovoOpen(true)} disabled={podeCriar === false} title={podeCriar === false ? "Sem permissão (comercial.lead.criar)" : undefined}>
               <Plus className="mr-1 h-4 w-4" /> Novo Lead
             </Button>
           </div>
         </div>
       </Card>
+
+      {podeVer === false && (
+        <Card className="p-4 text-sm text-muted-foreground">Você não tem permissão para visualizar leads (comercial.lead.visualizar).</Card>
+      )}
 
       <Card className="overflow-hidden">
         <Table>

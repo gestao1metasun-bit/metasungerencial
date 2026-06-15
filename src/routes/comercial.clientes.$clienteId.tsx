@@ -19,12 +19,13 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Target, FileText, FileSignature, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Target, FileText, FileSignature, AlertTriangle, Pencil, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOportunidadesPorCliente,
   useCriarOportunidade,
 } from "@/lib/repositories/oportunidades-repo";
+import { useAtualizarClienteSupabase } from "@/lib/repositories/clientes-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 
 export const Route = createFileRoute("/comercial/clientes/$clienteId")({

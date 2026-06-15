@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { logError } from "@/lib/error-log";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 export type OportunidadeStatus =
   | "ABERTA"

@@ -15604,6 +15604,10 @@ export type Database = {
         | "comercial.proposta.visualizar"
         | "comercial.proposta.gerar_nova"
         | "comercial.proposta.gerar_contrato"
+        | "comercial.contrato.visualizar"
+        | "comercial.contrato.criar"
+        | "comercial.contrato.cancelar"
+        | "comercial.contrato.editar_cadastro"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -15984,6 +15988,10 @@ export const Constants = {
         "comercial.proposta.visualizar",
         "comercial.proposta.gerar_nova",
         "comercial.proposta.gerar_contrato",
+        "comercial.contrato.visualizar",
+        "comercial.contrato.criar",
+        "comercial.contrato.cancelar",
+        "comercial.contrato.editar_cadastro",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

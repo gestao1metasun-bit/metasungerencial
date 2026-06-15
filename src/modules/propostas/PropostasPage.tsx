@@ -586,9 +586,9 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
           ]}
           availableProcesses={[
             // ▼ Proposta
-            { key: "aprovar_proposta",     label: "Aprovar Proposta",        group: "Proposta" },
-            { key: "reprovar_proposta",    label: "Reprovar Proposta",       group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "editar_cliente",       label: "Editar Dados do Cliente", group: "Proposta" },
+            { key: "aprovar_proposta",     label: "Aprovar Proposta",          group: "Proposta" },
+            { key: "reprovar_proposta",    label: "Reprovar Proposta",         group: "Proposta", destructive: true, requerMotivo: true },
+            { key: "editar_cliente",       label: "Corrigir Dados Cadastrais", group: "Proposta", requerMotivo: true },
             // ▼ Nova Proposta
             { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta",     group: "Nova Proposta" },
             // ▼ Encerramento
@@ -603,6 +603,11 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               );
 
             if (key === "aprovar_proposta") {
+              const pAtiva = getPropostaAtiva();
+              if (pAtiva && String(pAtiva.status).toUpperCase() === "VENCIDA") {
+                toast.error("Esta proposta está expirada. Gere uma nova proposta ou solicite revalidação por perfil autorizado.");
+                return;
+              }
               if (!confirmarProcesso("Aprovar Proposta", "Comercial > Contratos Pendentes (geração automática)", "APROVADA")) return;
               executarAprovar();
             } else if (key === "reprovar_proposta") {
@@ -611,9 +616,13 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "editar_cliente") {
               const p = getPropostaAtiva();
               if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
-              const bloqueados = ["APROVADA", "ASSINADA", "CANCELADA", "REPROVADA"];
+              // Governança Enterprise: correção cadastral só em propostas em aberto.
+              // Campos comerciais/técnicos/financeiros NUNCA são editáveis — exigem Gerar Nova Proposta.
+              const bloqueados = ["APROVADA", "ASSINADA", "CANCELADA", "REPROVADA", "RECUSADA", "VENCIDA", "SUBSTITUIDA", "EXPIRADA"];
               if (bloqueados.includes(String(p.status).toUpperCase())) {
-                toast.error(`Proposta ${p.status} não pode ter dados do cliente alterados.`);
+                toast.error(
+                  `Proposta ${p.status} não permite correção cadastral. Apenas propostas em aberto podem ser corrigidas.`,
+                );
                 return;
               }
               setEditandoCliente(p);
@@ -622,6 +631,16 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const lead = typeof sel === "function" ? sel() : propostaSelecionada;
               if (!lead) { toast.info("Flegue 1 lead na lista abaixo."); return; }
               if (!confirmarProcesso("Gerar Nova Proposta", "Comercial > Propostas (nova proposta para o lead flegado)", "RASCUNHO")) return;
+              // Governança Enterprise: pergunta se a nova proposta vira a proposta ativa do lead.
+              // Marcação efetiva como SUBSTITUÍDA das anteriores em aberto será aplicada na Onda P2
+              // (novo status no store + ação marcarComoAtiva). Por ora a escolha é registrada em window
+              // para o LeadModal/PropostaSheet consumir quando a nova proposta for salva.
+              const marcarAtiva = window.confirm(
+                "Deseja marcar esta nova proposta como proposta ativa do lead?\n\n" +
+                "OK = a nova proposta nasce como ATIVA (as anteriores em aberto serão marcadas como SUBSTITUÍDAS na Onda P2).\n" +
+                "Cancelar = a nova proposta nasce em aberto, sem alterar a proposta ativa atual.",
+              );
+              try { (window as any).__propostasMarcarAtiva = marcarAtiva; } catch { /* noop */ }
               novaProposta(lead);
             } else if (key === "cancelar_proposta") {
               if (!confirmarProcesso("Cancelar Proposta", "Comercial > Propostas Canceladas", "CANCELADA")) return;

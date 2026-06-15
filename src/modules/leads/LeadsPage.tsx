@@ -64,6 +64,8 @@ function fmtDate(iso: string) {
 export function LeadsPage() {
   const leads = useLeads();
   const consultores = useConsultoresAtivos();
+  const { data: podeVer } = useHasPermission("comercial.lead.visualizar");
+  const { data: podeCriar } = useHasPermission("comercial.lead.criar");
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("TODOS");
   const [filtroOrigem, setFiltroOrigem] = useState<string>("TODOS");

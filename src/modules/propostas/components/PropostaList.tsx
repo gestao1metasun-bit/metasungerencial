@@ -37,6 +37,7 @@ import {
   calcPrecificacao, calcDimensionamento, fmtBRL,
   aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
+  expirarPropostasVencidasAuto,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,

@@ -3309,59 +3309,16 @@ function comissaoFromParametro(parametro: number): { pct: number | null; aprovac
 /* ---------------- CLIENTE PICKER + NOVO CLIENTE ---------------- */
 
 function ClientePicker({ value, onPick }: { value?: string; onPick: (c: ClienteRecord) => void }) {
-  const clientes = useClientesFull();
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const [novoOpen, setNovoOpen] = useState(false);
-  const filtrados = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return clientes.slice(0, 10);
-    return clientes.filter((c) =>
-      c.nome.toLowerCase().includes(s) ||
-      (c.doc ?? "").toLowerCase().includes(s) ||
-      (c.cidade ?? "").toLowerCase().includes(s),
-    ).slice(0, 20);
-  }, [q, clientes]);
-  const selecionado = clientes.find((c) => c.id === value);
-
+  // C-ENT.1.f — delega ao componente oficial Supabase. Mantém assinatura legada.
   return (
-    <>
-      <div className="space-y-1.5">
-        <Label>Cliente *</Label>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Input
-              value={open ? q : (selecionado?.nome ?? q)}
-              placeholder="Buscar cliente por nome, CPF/CNPJ ou cidade…"
-              onFocus={() => setOpen(true)}
-              onChange={(e) => { setQ(e.target.value); setOpen(true); }}
-              onBlur={() => setTimeout(() => setOpen(false), 200)}
-            />
-            {open && filtrados.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded-md border bg-popover shadow-lg">
-                {filtrados.map((c) => (
-                  <button
-                    type="button" key={c.id}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { onPick(c); setOpen(false); setQ(""); }}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
-                  >
-                    <div className="font-medium">{c.nome}</div>
-                    <div className="text-[11px] text-muted-foreground font-mono">
-                      {c.doc || "—"} · {c.cidade}/{c.uf} · {c.telefone || "—"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button type="button" variant="outline" onClick={() => setNovoOpen(true)}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Novo
-          </Button>
-        </div>
-      </div>
-      <NovoClienteDialog open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={(c) => { onPick(c); setNovoOpen(false); }} />
-    </>
+    <ClienteAutocompleteSupabase
+      value={value ?? null}
+      onChange={(c) => { if (c) onPick(c); }}
+      label="Cliente"
+      required
+      showOpen360
+      showNovoCliente
+    />
   );
 }
 

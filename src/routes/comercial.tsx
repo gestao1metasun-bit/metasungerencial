@@ -3490,6 +3490,14 @@ function NovoClienteDialog({ open, onClose, onCreated }: { open: boolean; onClos
           </DialogFooter>
         </div>
       </DialogContent>
+      <ClienteDuplicidadeAlert
+        open={dupAlertOpen}
+        onOpenChange={setDupAlertOpen}
+        similares={similares.data ?? []}
+        novoCliente={{ nome: f.nome, doc: f.doc, telefone: f.telefone, email: f.email }}
+        onContinuar={() => { setDupAlertOpen(false); persistir(); }}
+        onCancelar={() => setDupAlertOpen(false)}
+      />
     </Dialog>
   );
 }

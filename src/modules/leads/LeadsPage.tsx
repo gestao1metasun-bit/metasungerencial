@@ -46,7 +46,6 @@ import {
   useContratos, criarContratoDeProposta, anexarContratoAssinado,
   enviarContratoParaEngenharia, cancelarContrato, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
-import {
 // LEGADO LS — pendente C-ENT.2 (Leads Supabase). Não estender; ver clientes-supabase-repo.ts.
 import {
   findClienteByDoc, addClienteFull, updateClienteFull, useClientesFull,

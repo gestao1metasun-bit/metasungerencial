@@ -2100,7 +2100,9 @@ export function PropostaList({
                   ["APROVADA","Aprovadas"],
                   ["RECUSADA","Reprovadas"],
                   ["CANCELADA","Canceladas"],
-                  ["VENCIDA","Expiradas"],
+                  ["EXPIRADA","Expiradas"],
+                  ["SUBSTITUIDA","Substituídas"],
+                  ["VENCIDA","Vencidas (legado)"],
                 ] as const).map(([k,lab]) => (
                   <Button
                     key={k}

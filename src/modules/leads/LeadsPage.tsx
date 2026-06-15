@@ -240,8 +240,28 @@ export function LeadsPage() {
                 <TableCell>
                   <RowActions
                     rowId={l.id}
-                    actions={[{ kind: "visualizar", label: `Ver ${l.numero}` }]}
-                    onAction={(kind) => { if (kind === "visualizar") setDetalhe(l); }}
+                    actions={[
+                      { kind: "visualizar", label: `Ver ${l.numero}` },
+                      {
+                        kind: "cancelar",
+                        label: "Cancelar lead",
+                        disabled:
+                          podeCancelar === false ||
+                          l.status === LEAD_STATUS.CANCELADO ||
+                          l.status === LEAD_STATUS.CONVERTIDO_EM_CONTRATO,
+                        overflow: true,
+                      },
+                    ]}
+                    onAction={(kind) => {
+                      if (kind === "visualizar") setDetalhe(l);
+                      else if (kind === "cancelar") {
+                        if (podeCancelar === false) {
+                          toast.error("Sem permissão (comercial.lead.cancelar).");
+                          return;
+                        }
+                        setCancelarAlvo(l);
+                      }
+                    }}
                   />
                 </TableCell>
               </TableRow>

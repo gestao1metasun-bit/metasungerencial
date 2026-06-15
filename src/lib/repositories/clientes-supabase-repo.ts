@@ -89,12 +89,13 @@ export function useConsultoresMap() {
     queryFn: async (): Promise<Record<string, string>> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name,email")
+        .select("user_id,nome,email")
         .limit(500);
       if (error) return {};
       const m: Record<string, string> = {};
-      for (const r of (data ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>) {
-        m[r.id] = r.full_name || r.email || r.id.slice(0, 8);
+      for (const r of (data ?? []) as Array<{ user_id: string | null; nome: string | null; email: string | null }>) {
+        if (!r.user_id) continue;
+        m[r.user_id] = r.nome || r.email || r.user_id.slice(0, 8);
       }
       return m;
     },

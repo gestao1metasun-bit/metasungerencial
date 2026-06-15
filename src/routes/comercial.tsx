@@ -1517,6 +1517,33 @@ function CompletarDadosClienteDialog({
               <Users className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">Identificação</span>
             </div>
+
+            {/* C-ENT.1.f — Autocomplete oficial Supabase para pré-preencher os campos do cliente */}
+            <ClienteAutocompleteSupabase
+              label="Vincular a cliente existente (Supabase)"
+              placeholder="Buscar cliente oficial por nome, CPF/CNPJ, telefone ou e-mail…"
+              showOpen360={false}
+              showNovoCliente={false}
+              onChange={(c) => {
+                if (!c) return;
+                setF((p) => ({
+                  ...p,
+                  nome: c.nome ?? p.nome,
+                  doc: maskDoc(c.doc ?? ""),
+                  telefone: maskTel(c.telefone ?? ""),
+                  email: c.email ?? p.email,
+                  cep: c.cep ?? p.cep,
+                  rua: c.rua ?? p.rua,
+                  numero: c.numero ?? p.numero,
+                  bairro: c.bairro ?? p.bairro,
+                  complemento: c.complemento ?? p.complemento,
+                  cidade: c.cidade ?? p.cidade,
+                  uf: c.uf ?? p.uf,
+                }));
+                toast.success(`Cliente ${c.nome} carregado do cadastro oficial.`);
+              }}
+            />
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-1.5 md:col-span-2"><Label>Nome / Razão social *</Label>
                 <Input value={f.nome} onChange={(e) => set("nome", e.target.value)} />

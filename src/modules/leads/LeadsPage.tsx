@@ -1269,3 +1269,84 @@ function AprovarPropostaDialog({
     </Dialog>
   );
 }
+
+/* =================== Cancelar Lead (C-ENT.2.b) =================== */
+
+function CancelarLeadDialog({
+  lead, usuario, onClose,
+}: { lead: Lead; usuario: string; onClose: () => void }) {
+  const [motivo, setMotivo] = useState<string>(LEAD_CANCEL_MOTIVOS[0]);
+  const [observacao, setObservacao] = useState("");
+
+  const isOutro = motivo === "Outro";
+
+  const confirmar = () => {
+    if (!motivo) {
+      toast.error("Selecione um motivo.");
+      return;
+    }
+    if (isOutro && !observacao.trim()) {
+      toast.error('Para motivo "Outro", informe a observação.');
+      return;
+    }
+    const r = cancelarLead(lead.id, motivo, observacao, usuario);
+    if (!r.ok) {
+      toast.error(r.erro ?? "Não foi possível cancelar o lead.");
+      void logError({
+        contexto: "leads.cancelar",
+        mensagem: r.erro ?? "Falha ao cancelar lead",
+        payload: { leadId: lead.id, motivo },
+      });
+      return;
+    }
+    toast.success(`Lead ${lead.numero} cancelado.`);
+    onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancelar lead {lead.numero}</DialogTitle>
+          <DialogDescription>
+            O lead não será excluído. Ele sai da operação ativa e fica consultável
+            no histórico com motivo registrado.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Motivo <span className="text-destructive">*</span></Label>
+            <Select value={motivo} onValueChange={setMotivo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LEAD_CANCEL_MOTIVOS.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>
+              Observação {isOutro ? <span className="text-destructive">*</span> : <span className="text-muted-foreground">(opcional)</span>}
+            </Label>
+            <Textarea
+              rows={3}
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder={isOutro ? "Descreva o motivo do cancelamento" : "Detalhe adicional (opcional)"}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Voltar</Button>
+          <Button
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={confirmar}
+          >
+            Cancelar lead
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

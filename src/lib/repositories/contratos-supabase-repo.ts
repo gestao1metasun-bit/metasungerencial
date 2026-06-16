@@ -242,7 +242,7 @@ export async function cancelarContratoSupabase(
   const { error } = await supabase.rpc("rpc_contrato_cancelar", {
     _id: id,
     _motivo: motivo,
-    _observacao: observacao ?? null,
+    _observacao: observacao ?? undefined,
   });
   if (error) {
     reportError("cancelarContratoSupabase", error, { id, motivo });

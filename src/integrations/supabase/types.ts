@@ -14803,6 +14803,10 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_contrato_cancelar: {
+        Args: { _id: string; _motivo: string; _observacao?: string }
+        Returns: undefined
+      }
       rpc_contrato_enviar_assinatura: {
         Args: { p_contrato_id: string; p_observacao?: string }
         Returns: string

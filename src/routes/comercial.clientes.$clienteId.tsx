@@ -200,6 +200,7 @@ function WorkspaceClientePage() {
           <TabsTrigger value="oportunidades">Oportunidades ({oportunidades.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="propostas">Propostas ({propostas.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="contratos">Contratos ({contratos.data?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="projetos">Projetos ({projetosCliente.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="leads">Leads ({leads.data?.length ?? 0})</TabsTrigger>
         </TabsList>
 

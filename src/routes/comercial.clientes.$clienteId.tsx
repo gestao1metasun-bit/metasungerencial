@@ -105,6 +105,7 @@ function WorkspaceClientePage() {
   const oportunidades = useOportunidadesPorCliente(clienteId);
   const propostas = usePropostasPorCliente(clienteId);
   const contratos = useContratosPorCliente(clienteId);
+  const projetosCliente = useProjetosPorCliente(clienteId);
   const leads = useLeadsPorCliente(clienteId);
 
   const stats = useMemo(() => {

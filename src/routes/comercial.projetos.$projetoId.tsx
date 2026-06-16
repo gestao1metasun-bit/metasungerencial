@@ -202,6 +202,8 @@ function ProjetoWorkspacePage() {
               aditivos={aditivos.data ?? []}
               mostrarProjeto={false}
               empty="Nenhum aditivo aplicado a este projeto."
+              podeCompensar={permAditivoCompensar.data === true && upper(c?.status) !== "CANCELADO"}
+              onCompensar={(a) => setCompensarOrigem(a)}
             />
           </TabsContent>
         )}

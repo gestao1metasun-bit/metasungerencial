@@ -174,6 +174,11 @@ function ContratoWorkspacePage() {
                 </Button>
               </Link>
             )}
+            {permAditivoCriar.data === true && !cancelado && (
+              <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
+              </Button>
+            )}
             {permCancelar.data === true && !cancelado && (
               <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar contrato

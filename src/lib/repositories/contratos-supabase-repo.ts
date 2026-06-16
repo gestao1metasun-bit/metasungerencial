@@ -114,8 +114,8 @@ export async function listarContratos(): Promise<ContratoSupabaseListItem[]> {
       ? supabase.from("clientes").select("id,nome").in("id", clienteIds)
       : Promise.resolve({ data: [], error: null } as { data: { id: string; nome: string | null }[] | null; error: unknown }),
     consultorIds.length
-      ? supabase.from("profiles").select("id,nome,full_name,email").in("id", consultorIds)
-      : Promise.resolve({ data: [], error: null } as { data: { id: string; nome: string | null; full_name?: string | null; email?: string | null }[] | null; error: unknown }),
+      ? supabase.from("profiles").select("user_id,nome,email").in("user_id", consultorIds)
+      : Promise.resolve({ data: [] as { user_id: string; nome: string | null; email: string | null }[], error: null }),
     supabase.from("projetos").select("contrato_id").in("contrato_id", contratoIds).is("deleted_at", null),
   ]);
 
@@ -123,7 +123,9 @@ export async function listarContratos(): Promise<ContratoSupabaseListItem[]> {
     (clientesRes.data ?? []).map((c) => [c.id, c.nome ?? null]),
   );
   const consultorMap = new Map<string, string | null>(
-    (consultoresRes.data ?? []).map((p) => [p.id, p.nome ?? p.full_name ?? p.email ?? null]),
+    ((consultoresRes.data ?? []) as { user_id: string; nome: string | null; email: string | null }[]).map(
+      (p) => [p.user_id, p.nome ?? p.email ?? null],
+    ),
   );
   const projetosCount = new Map<string, number>();
   for (const p of (projetosRes.data ?? []) as { contrato_id: string | null }[]) {

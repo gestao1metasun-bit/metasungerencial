@@ -190,6 +190,16 @@ function ProjetoWorkspacePage() {
           </div>
         </TabsContent>
 
+        {permAditivoVer.data !== false && (
+          <TabsContent value="aditivos" className="mt-3">
+            <AditivosListPanel
+              aditivos={aditivos.data ?? []}
+              mostrarProjeto={false}
+              empty="Nenhum aditivo aplicado a este projeto."
+            />
+          </TabsContent>
+        )}
+
         <TabsContent value="execucao" className="mt-3">
           <Card className="p-3 text-sm space-y-2">
             <h3 className="font-semibold">Dados de execução</h3>

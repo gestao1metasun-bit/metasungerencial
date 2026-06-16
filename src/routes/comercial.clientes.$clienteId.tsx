@@ -26,6 +26,7 @@ import {
   useCriarOportunidade,
 } from "@/lib/repositories/oportunidades-repo";
 import { useAtualizarClienteSupabase } from "@/lib/repositories/clientes-supabase-repo";
+import { useProjetosPorCliente } from "@/lib/repositories/contratos-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 
 export const Route = createFileRoute("/comercial/clientes/$clienteId")({

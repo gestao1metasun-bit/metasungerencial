@@ -14830,6 +14830,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_aditivo_aplicar: { Args: { _payload: Json }; Returns: string }
       rpc_carteira_transferir_individual: {
         Args: {
           p_escopo: string

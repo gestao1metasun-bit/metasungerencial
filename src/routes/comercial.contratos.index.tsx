@@ -69,7 +69,7 @@ function ContratosListPage() {
     );
   }
 
-  if (!perm.granted) {
+  if (!perm.data !== false) {
     return (
       <div className="p-2">
         <PageHeader title="Contratos" subtitle="Acesso negado" />
@@ -92,7 +92,7 @@ function ContratosListPage() {
         <PageHeader
           title="Contratos"
           subtitle="Contratos oficiais gerados a partir de propostas aprovadas"
-          right={
+          actions={
             <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
               <RefreshCcw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
             </Button>
@@ -196,7 +196,7 @@ function ContratosListPage() {
                             </TooltipTrigger>
                             <TooltipContent>Propostas origem</TooltipContent>
                           </Tooltip>
-                          {permCancelar.granted && !cancelado && (
+                          {permCancelar.data === true && !cancelado && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"

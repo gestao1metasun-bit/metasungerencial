@@ -345,6 +345,21 @@ function ContratoWorkspacePage() {
         </TabsContent>
 
 
+        {permAditivoVer.data !== false && (
+          <TabsContent value="aditivos" className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Aditivos aplicados a este contrato (projeto específico ou contrato inteiro).
+              </p>
+              {permAditivoCriar.data === true && !cancelado && (
+                <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
+                </Button>
+              )}
+            </div>
+            <AditivosListPanel aditivos={aditivos.data ?? []} />
+          </TabsContent>
+        )}
 
         <TabsContent value="documentos" className="mt-3">
           <DocumentosObjetoPanel

@@ -2666,6 +2666,42 @@ export type Database = {
           },
         ]
       }
+      eventos_timeline: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          evento_tipo: string
+          id: string
+          objeto_id: string
+          objeto_tipo: string
+          payload: Json
+          titulo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          evento_tipo: string
+          id?: string
+          objeto_id: string
+          objeto_tipo: string
+          payload?: Json
+          titulo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          evento_tipo?: string
+          id?: string
+          objeto_id?: string
+          objeto_tipo?: string
+          payload?: Json
+          titulo?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       exportacoes_geradas: {
         Row: {
           ambiente: string
@@ -15428,6 +15464,17 @@ export type Database = {
       rpc_taxa_estornar: {
         Args: { _motivo: string; _request_id?: string; _taxa_id: string }
         Returns: Json
+      }
+      rpc_timeline_registrar: {
+        Args: {
+          _descricao?: string
+          _evento_tipo: string
+          _objeto_id: string
+          _objeto_tipo: string
+          _payload?: Json
+          _titulo: string
+        }
+        Returns: string
       }
       rpc_titulo_baixar: {
         Args: {

@@ -154,6 +154,9 @@ function ProjetoWorkspacePage() {
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="execucao">Dados de execução</TabsTrigger>
+          {permAditivoVer.data !== false && (
+            <TabsTrigger value="aditivos">Aditivos ({aditivos.data?.length ?? 0})</TabsTrigger>
+          )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoria</TabsTrigger>

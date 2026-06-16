@@ -79,11 +79,11 @@ export function DocumentosObjetoPanel({
             payload: { anexo_id: novo.id, nome: novo.nome, mime: novo.mime, tamanho: novo.tamanho },
           });
         } catch (err) {
-          logError({ scope: "timeline.documento_anexado", error: err });
+          logError({ modulo: "comercial", acao: "timeline.documento_anexado", mensagem: (err as Error)?.message ?? String(err), severidade: "warn" });
         }
       }
     } catch (err) {
-      logError({ scope: "anexos.upload", error: err, context: { objetoTipo, objetoId } });
+      logError({ modulo: "comercial", acao: "anexos.upload", mensagem: (err as Error)?.message ?? String(err), payload: { objetoTipo, objetoId }, severidade: "error" });
       toast.error("Falha ao anexar documento.");
     }
   }
@@ -93,7 +93,7 @@ export function DocumentosObjetoPanel({
       const url = await anexosRepo.getSignedUrl(a.storage_path, 300);
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      logError({ scope: "anexos.signed_url", error: err });
+      logError({ modulo: "comercial", acao: "anexos.signed_url", mensagem: (err as Error)?.message ?? String(err), severidade: "warn" });
       toast.error("Falha ao gerar link de download.");
     }
   }

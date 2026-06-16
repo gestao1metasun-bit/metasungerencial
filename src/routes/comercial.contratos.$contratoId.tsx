@@ -91,6 +91,7 @@ function ContratoWorkspacePage() {
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
   const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
   const permAditivoCriar = useHasPermission("comercial.aditivo.criar");
+  const permAditivoCompensar = useHasPermission("comercial.aditivo.compensar");
   const contrato = useContratoSupabaseById(contratoId);
   const propostas = usePropostasDoContrato(contratoId);
   const projetos = useProjetosPorContrato(contratoId);
@@ -101,6 +102,7 @@ function ContratoWorkspacePage() {
   const [tab, setTab] = useTabFromHash("resumo");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
+  const [compensarOrigem, setCompensarOrigem] = useState<import("@/lib/repositories/aditivos-repo").AditivoSupabase | null>(null);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];

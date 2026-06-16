@@ -89,14 +89,18 @@ function ContratoWorkspacePage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.contrato.visualizar");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
+  const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
+  const permAditivoCriar = useHasPermission("comercial.aditivo.criar");
   const contrato = useContratoSupabaseById(contratoId);
   const propostas = usePropostasDoContrato(contratoId);
   const projetos = useProjetosPorContrato(contratoId);
+  const aditivos = useAditivosPorContrato(contratoId);
   const cliente = useCliente(contrato.data?.cliente_id);
   const consultor = useConsultor(contrato.data?.consultor_id);
   const cancelar = useCancelarContratoSupabase();
   const [tab, setTab] = useTabFromHash("resumo");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];

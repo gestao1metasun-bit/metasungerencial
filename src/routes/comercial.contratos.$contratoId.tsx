@@ -52,7 +52,7 @@ function useCliente(id: string | null | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clientes")
-        .select("id,nome,cidade,uf,endereco,documento,email,telefone")
+        .select("id,nome,cidade,uf,rua,numero,bairro,doc,email,telefone")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
@@ -193,8 +193,8 @@ function ContratoWorkspacePage() {
               </h3>
               <Field label="Código" value={c.codigo ?? "—"} mono />
               <Field label="Cliente" value={clienteNome} />
-              <Field label="Documento" value={cliente.data?.documento ?? "—"} />
-              <Field label="Endereço" value={[cliente.data?.endereco, cliente.data?.cidade, cliente.data?.uf].filter(Boolean).join(", ") || "—"} />
+              <Field label="Documento" value={cliente.data?.doc ?? "—"} />
+              <Field label="Endereço" value={[cliente.data?.rua, cliente.data?.numero, cliente.data?.bairro, cliente.data?.cidade, cliente.data?.uf].filter(Boolean).join(", ") || "—"} />
               <Field label="Consultor" value={consultor.data?.nome ?? consultor.data?.email ?? "—"} />
               <Field label="Status" value={c.status} />
               <Field label="Etapa" value={String(((c.dados ?? {}) as Record<string, unknown>)["etapa"] ?? "—")} />

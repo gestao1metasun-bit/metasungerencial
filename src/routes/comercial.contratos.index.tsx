@@ -69,7 +69,7 @@ function ContratosListPage() {
     );
   }
 
-  if (!perm.data !== false) {
+  if (perm.data === false) {
     return (
       <div className="p-2">
         <PageHeader title="Contratos" subtitle="Acesso negado" />

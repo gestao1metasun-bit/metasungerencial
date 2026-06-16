@@ -13,7 +13,7 @@ import {
 } from "@/lib/repositories/anexos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { toast } from "sonner";
-import { logError } from "@/lib/error-log";
+import { logError } from "@/lib/repositories/error-log-repo";
 import { timelineRepo, type ObjetoTipo } from "@/lib/repositories/timeline-repo";
 
 interface Props {

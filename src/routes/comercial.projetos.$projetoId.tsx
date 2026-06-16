@@ -23,10 +23,12 @@ import {
   useContratoSupabaseById,
   usePropostasDoContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
+import { useAditivosPorProjeto } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
+import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
 
 export const Route = createFileRoute("/comercial/projetos/$projetoId")({
   head: () => ({ meta: [{ title: "Projeto — Workspace — Meta Sun" }] }),

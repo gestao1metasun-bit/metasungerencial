@@ -103,6 +103,11 @@ function ContratoWorkspacePage() {
     return { valor, potencia, modulos };
   }, [propostas.data]);
 
+  const consumo = useMemo(() => {
+    if (!contrato.data) return null;
+    return calcularConsumoContrato(contrato.data, projetos.data ?? []);
+  }, [contrato.data, projetos.data]);
+
   if (perm.isLoading || contrato.isLoading) {
     return (
       <div className="p-2">

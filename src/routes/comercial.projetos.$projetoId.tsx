@@ -58,10 +58,12 @@ function ProjetoWorkspacePage() {
   const { projetoId } = Route.useParams();
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.projeto.visualizar");
+  const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
   const projeto = useProjetoSupabaseById(projetoId);
   const contrato = useContratoSupabaseById(projeto.data?.contrato_id);
   const propostas = usePropostasDoContrato(projeto.data?.contrato_id);
   const cliente = useCliente(projeto.data?.cliente_id);
+  const aditivos = useAditivosPorProjeto(projetoId);
   const [tab, setTab] = useTabFromHash("resumo");
 
   if (perm.isLoading || projeto.isLoading) {

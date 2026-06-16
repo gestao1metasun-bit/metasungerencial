@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Loader2, ShieldAlert, FileSignature, FileText, Users, Ban, ExternalLink,
-  Zap, DollarSign, Layers, History, ClipboardList,
+  Zap, DollarSign, Layers, History, ClipboardList, Plus,
 } from "lucide-react";
 import {
   useContratoSupabaseById,
@@ -27,8 +27,11 @@ import {
   useCancelarContratoSupabase,
   calcularConsumoContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
+import { useAditivosPorContrato } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
+import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
+import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";

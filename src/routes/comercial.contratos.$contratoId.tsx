@@ -29,6 +29,8 @@ import {
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { useTabFromHash } from "@/lib/route-tabs";
+import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
+import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),

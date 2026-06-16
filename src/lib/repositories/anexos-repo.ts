@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export type EntidadeAnexavel =
   | 'clientes' | 'fornecedores' | 'contratos' | 'aditivos' | 'propostas'
-  | 'pedidos_venda' | 'projetos_contrato' | 'obras' | 'titulos_financeiros'
+  | 'pedidos_venda' | 'projetos' | 'projetos_contrato' | 'obras' | 'titulos_financeiros'
   | 'parcelas_financeiras' | 'movimentacoes_financeiras' | 'boletos'
   | 'adiantamentos' | 'rescisoes_contrato' | 'extrato_banco'
   | 'workflow_aprovacoes' | 'estoque_movimentos' | 'estoque_reservas'

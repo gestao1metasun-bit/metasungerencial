@@ -37,6 +37,10 @@ export type AditivoSupabase = {
   aplicado_em: string | null;
   created_at: string;
   updated_at: string;
+  tipo_aditivo: "NORMAL" | "COMPENSATORIO";
+  aditivo_origem_id: string | null;
+  motivo_compensacao: string | null;
+  observacao_compensacao: string | null;
 };
 
 const COLS =
@@ -44,7 +48,8 @@ const COLS =
   "valor_anterior,valor_novo,diferenca_valor,potencia_anterior,potencia_nova,diferenca_potencia," +
   "modulos_anterior,modulos_novo,diferenca_modulos,inversor_anterior,inversor_novo," +
   "payload_alteracoes,dados,criado_por,aplicado_por,aprovado_por,aprovado_em,aplicado_em," +
-  "created_at,updated_at";
+  "created_at,updated_at," +
+  "tipo_aditivo,aditivo_origem_id,motivo_compensacao,observacao_compensacao";
 
 function reportError(acao: string, err: unknown, payload?: Record<string, unknown>) {
   const e = err as { message?: string; stack?: string };

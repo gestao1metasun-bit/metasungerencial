@@ -394,6 +394,12 @@ function ContratoWorkspacePage() {
           setCancelOpen(false);
         }}
       />
+      <NovoAditivoDialog
+        open={novoAditivoOpen}
+        onOpenChange={setNovoAditivoOpen}
+        contrato={c}
+        projetos={projetos.data ?? []}
+      />
     </div>
   );
 }

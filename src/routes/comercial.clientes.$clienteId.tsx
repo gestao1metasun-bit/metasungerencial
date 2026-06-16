@@ -306,11 +306,12 @@ function WorkspaceClientePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Número</TableHead>
+                  <TableHead>Código</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Assinado em</TableHead>
                   <TableHead>Criado</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -318,19 +319,70 @@ function WorkspaceClientePage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-mono text-xs">{c.codigo ?? c.id.slice(0, 8)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{c.status}</Badge>
+                      <Badge variant={c.status === "CANCELADO" ? "destructive" : "outline"}>{c.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{fmtBRL(c.valor_total)}</TableCell>
                     <TableCell className="text-xs">{c.data_assinatura ? new Date(c.data_assinatura).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Link to="/comercial/contratos/$contratoId" params={{ contratoId: c.id }}>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs">Abrir contrato</Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(contratos.data ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-6">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-6">
                       Sem contratos para este cliente.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="projetos" className="mt-3">
+          <Card className="p-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Contrato</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Endereço</TableHead>
+                  <TableHead className="text-right">Valor ref.</TableHead>
+                  <TableHead className="text-right">Potência</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(projetosCliente.data ?? []).map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-mono text-xs">{p.codigo ?? p.id.slice(0, 8)}</TableCell>
+                    <TableCell className="text-xs">
+                      {p.contrato_id ? (
+                        <Link to="/comercial/contratos/$contratoId" params={{ contratoId: p.contrato_id }} className="underline">
+                          Abrir
+                        </Link>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{p.tipo}</TableCell>
+                    <TableCell className="text-xs">{[p.cidade, p.uf].filter(Boolean).join("/") || "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_estimado)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.potencia_kwp != null ? Number(p.potencia_kwp).toFixed(2) : "—"}
+                    </TableCell>
+                    <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+                {(projetosCliente.data ?? []).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-6">
+                      Sem projetos vinculados a contratos deste cliente.
                     </TableCell>
                   </TableRow>
                 )}

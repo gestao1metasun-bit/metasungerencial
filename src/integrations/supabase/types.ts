@@ -307,6 +307,7 @@ export type Database = {
       }
       aditivos: {
         Row: {
+          aditivo_origem_id: string | null
           aplicado_em: string | null
           aplicado_por: string | null
           aprovado_em: string | null
@@ -331,13 +332,16 @@ export type Database = {
           modulos_anterior: number | null
           modulos_novo: number | null
           motivo: string | null
+          motivo_compensacao: string | null
           numero: number
+          observacao_compensacao: string | null
           payload_alteracoes: Json
           potencia_anterior: number | null
           potencia_nova: number | null
           projeto_id: string | null
           status: string
           tipo: string
+          tipo_aditivo: string
           tipo_escopo: string
           updated_at: string
           valor_anterior: number | null
@@ -345,6 +349,7 @@ export type Database = {
           valor_novo: number | null
         }
         Insert: {
+          aditivo_origem_id?: string | null
           aplicado_em?: string | null
           aplicado_por?: string | null
           aprovado_em?: string | null
@@ -369,13 +374,16 @@ export type Database = {
           modulos_anterior?: number | null
           modulos_novo?: number | null
           motivo?: string | null
+          motivo_compensacao?: string | null
           numero?: number
+          observacao_compensacao?: string | null
           payload_alteracoes?: Json
           potencia_anterior?: number | null
           potencia_nova?: number | null
           projeto_id?: string | null
           status?: string
           tipo?: string
+          tipo_aditivo?: string
           tipo_escopo?: string
           updated_at?: string
           valor_anterior?: number | null
@@ -383,6 +391,7 @@ export type Database = {
           valor_novo?: number | null
         }
         Update: {
+          aditivo_origem_id?: string | null
           aplicado_em?: string | null
           aplicado_por?: string | null
           aprovado_em?: string | null
@@ -407,13 +416,16 @@ export type Database = {
           modulos_anterior?: number | null
           modulos_novo?: number | null
           motivo?: string | null
+          motivo_compensacao?: string | null
           numero?: number
+          observacao_compensacao?: string | null
           payload_alteracoes?: Json
           potencia_anterior?: number | null
           potencia_nova?: number | null
           projeto_id?: string | null
           status?: string
           tipo?: string
+          tipo_aditivo?: string
           tipo_escopo?: string
           updated_at?: string
           valor_anterior?: number | null
@@ -421,6 +433,13 @@ export type Database = {
           valor_novo?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "aditivos_aditivo_origem_id_fkey"
+            columns: ["aditivo_origem_id"]
+            isOneToOne: false
+            referencedRelation: "aditivos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "aditivos_contrato_id_fkey"
             columns: ["contrato_id"]
@@ -15785,6 +15804,7 @@ export type Database = {
         | "comercial.aditivo.visualizar"
         | "comercial.aditivo.criar"
         | "comercial.aditivo.cancelar"
+        | "comercial.aditivo.compensar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -16174,6 +16194,7 @@ export const Constants = {
         "comercial.aditivo.visualizar",
         "comercial.aditivo.criar",
         "comercial.aditivo.cancelar",
+        "comercial.aditivo.compensar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

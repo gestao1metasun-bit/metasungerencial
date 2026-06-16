@@ -22,13 +22,16 @@ import {
   useProjetoSupabaseById,
   useContratoSupabaseById,
   usePropostasDoContrato,
+  useProjetosPorContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
-import { useAditivosPorProjeto } from "@/lib/repositories/aditivos-repo";
+import { useAditivosPorProjeto, type AditivoSupabase } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
+import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
+import { useState } from "react";
 
 export const Route = createFileRoute("/comercial/projetos/$projetoId")({
   head: () => ({ meta: [{ title: "Projeto — Workspace — Meta Sun" }] }),
@@ -59,12 +62,15 @@ function ProjetoWorkspacePage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.projeto.visualizar");
   const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
+  const permAditivoCompensar = useHasPermission("comercial.aditivo.compensar");
   const projeto = useProjetoSupabaseById(projetoId);
   const contrato = useContratoSupabaseById(projeto.data?.contrato_id);
   const propostas = usePropostasDoContrato(projeto.data?.contrato_id);
+  const projetosDoContrato = useProjetosPorContrato(projeto.data?.contrato_id);
   const cliente = useCliente(projeto.data?.cliente_id);
   const aditivos = useAditivosPorProjeto(projetoId);
   const [tab, setTab] = useTabFromHash("resumo");
+  const [compensarOrigem, setCompensarOrigem] = useState<AditivoSupabase | null>(null);
 
   if (perm.isLoading || projeto.isLoading) {
     return (
@@ -196,6 +202,8 @@ function ProjetoWorkspacePage() {
               aditivos={aditivos.data ?? []}
               mostrarProjeto={false}
               empty="Nenhum aditivo aplicado a este projeto."
+              podeCompensar={permAditivoCompensar.data === true && String(c?.status ?? "").toUpperCase() !== "CANCELADO"}
+              onCompensar={(a) => setCompensarOrigem(a)}
             />
           </TabsContent>
         )}
@@ -242,6 +250,17 @@ function ProjetoWorkspacePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {c && compensarOrigem && (
+        <NovoAditivoDialog
+          open={!!compensarOrigem}
+          onOpenChange={(v) => { if (!v) setCompensarOrigem(null); }}
+          contrato={c}
+          projetos={projetosDoContrato.data ?? []}
+          projetoIdInicial={p.id}
+          aditivoOrigem={compensarOrigem}
+        />
+      )}
     </div>
   );
 }

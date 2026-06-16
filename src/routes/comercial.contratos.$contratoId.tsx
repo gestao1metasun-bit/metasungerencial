@@ -228,7 +228,13 @@ function ContratoWorkspacePage() {
               <Field label="Módulos consolidados (propostas)" value={String(totais.modulos)} />
             </Card>
           </div>
+          {consumo && (
+            <div className="mt-2">
+              <ConsumoContratoCard consumo={consumo} />
+            </div>
+          )}
         </TabsContent>
+
 
         <TabsContent value="propostas" className="mt-3">
           <Card className="p-2">

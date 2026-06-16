@@ -201,6 +201,9 @@ function ContratoWorkspacePage() {
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="propostas">Propostas origem ({propostas.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="projetos">Projetos ({projetos.data?.length ?? 0})</TabsTrigger>
+          {permAditivoVer.data !== false && (
+            <TabsTrigger value="aditivos">Aditivos ({aditivos.data?.length ?? 0})</TabsTrigger>
+          )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoria</TabsTrigger>

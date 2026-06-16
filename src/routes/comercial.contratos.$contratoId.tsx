@@ -29,6 +29,8 @@ import {
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { useTabFromHash } from "@/lib/route-tabs";
+import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
+import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),
@@ -306,24 +308,23 @@ function ContratoWorkspacePage() {
         </TabsContent>
 
         <TabsContent value="documentos" className="mt-3">
-          <Card className="p-4 text-sm text-muted-foreground">
-            <FileText className="h-5 w-5 inline mr-1" />
-            Gestão de documentos do contrato — em planejamento (próximas ondas C-ENT.6+).
-          </Card>
+          <DocumentosObjetoPanel
+            objetoTipo="contratos"
+            objetoId={c.id}
+            permissaoVisualizar="comercial.contrato.visualizar"
+            permissaoUpload="comercial.contrato.editar_cadastro"
+            timelineObjetoTipo="contrato"
+          />
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-3">
-          <Card className="p-4 text-sm text-muted-foreground">
-            <History className="h-5 w-5 inline mr-1" />
-            Timeline operacional do contrato — em planejamento (próximas ondas C-ENT.6+).
-          </Card>
+          <TimelineObjetoPanel objetoTipo="contrato" objetoId={c.id} />
         </TabsContent>
 
         <TabsContent value="auditoria" className="mt-3">
           <Card className="p-4 text-sm text-muted-foreground">
             <Users className="h-5 w-5 inline mr-1" />
-            Eventos auditáveis serão exibidos a partir de <code>audit_log</code> e
-            <code> comercial_assinatura_eventos</code> em onda futura.
+            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais já aparecem na aba <strong>Timeline</strong>.
           </Card>
         </TabsContent>
       </Tabs>

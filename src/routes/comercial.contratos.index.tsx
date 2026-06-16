@@ -219,11 +219,11 @@ function ContratosListPage() {
 
         <CancelarContratoDialog
           open={!!cancelTarget}
-          onOpenChange={(v) => !v && setCancelTarget(null)}
+          onOpenChange={(v: boolean) => !v && setCancelTarget(null)}
           contratoId={cancelTarget?.id ?? null}
           codigo={cancelTarget?.codigo ?? null}
           loading={cancelar.isPending}
-          onConfirm={async (motivo, observacao) => {
+          onConfirm={async (motivo: string, observacao?: string | null) => {
             if (!cancelTarget) return;
             await cancelar.mutateAsync({ id: cancelTarget.id, motivo, observacao });
             setCancelTarget(null);

@@ -357,6 +357,7 @@ function WorkspaceClientePage() {
                   <TableHead className="text-right">Valor ref.</TableHead>
                   <TableHead className="text-right">Potência</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -377,11 +378,16 @@ function WorkspaceClientePage() {
                       {p.potencia_kwp != null ? Number(p.potencia_kwp).toFixed(2) : "—"}
                     </TableCell>
                     <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Link to="/comercial/projetos/$projetoId" params={{ projetoId: p.id }} className="underline text-xs">
+                        Abrir projeto
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(projetosCliente.data ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-6">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground text-sm py-6">
                       Sem projetos vinculados a contratos deste cliente.
                     </TableCell>
                   </TableRow>

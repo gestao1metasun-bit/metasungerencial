@@ -359,7 +359,11 @@ function ContratoWorkspacePage() {
                 </Button>
               )}
             </div>
-            <AditivosListPanel aditivos={aditivos.data ?? []} />
+            <AditivosListPanel
+              aditivos={aditivos.data ?? []}
+              podeCompensar={permAditivoCompensar.data === true && !cancelado}
+              onCompensar={(a) => { setCompensarOrigem(a); setNovoAditivoOpen(true); }}
+            />
           </TabsContent>
         )}
 

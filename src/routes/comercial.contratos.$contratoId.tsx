@@ -402,9 +402,10 @@ function ContratoWorkspacePage() {
       />
       <NovoAditivoDialog
         open={novoAditivoOpen}
-        onOpenChange={setNovoAditivoOpen}
+        onOpenChange={(v) => { setNovoAditivoOpen(v); if (!v) setCompensarOrigem(null); }}
         contrato={c}
         projetos={projetos.data ?? []}
+        aditivoOrigem={compensarOrigem}
       />
     </div>
   );

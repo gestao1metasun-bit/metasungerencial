@@ -25,12 +25,14 @@ import {
   usePropostasDoContrato,
   useProjetosPorContrato,
   useCancelarContratoSupabase,
+  calcularConsumoContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
+import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),
@@ -100,6 +102,11 @@ function ContratoWorkspacePage() {
     const modulos = rows.reduce((s, p) => s + (Number(p.modulos_qtd) || 0), 0);
     return { valor, potencia, modulos };
   }, [propostas.data]);
+
+  const consumo = useMemo(() => {
+    if (!contrato.data) return null;
+    return calcularConsumoContrato(contrato.data, projetos.data ?? []);
+  }, [contrato.data, projetos.data]);
 
   if (perm.isLoading || contrato.isLoading) {
     return (
@@ -221,7 +228,13 @@ function ContratoWorkspacePage() {
               <Field label="Módulos consolidados (propostas)" value={String(totais.modulos)} />
             </Card>
           </div>
+          {consumo && (
+            <div className="mt-2">
+              <ConsumoContratoCard consumo={consumo} />
+            </div>
+          )}
         </TabsContent>
+
 
         <TabsContent value="propostas" className="mt-3">
           <Card className="p-2">
@@ -265,7 +278,8 @@ function ContratoWorkspacePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="projetos" className="mt-3">
+        <TabsContent value="projetos" className="mt-3 space-y-2">
+          {consumo && <ConsumoContratoCard consumo={consumo} />}
           <Card className="p-2">
             <Table>
               <TableHeader>
@@ -278,6 +292,7 @@ function ContratoWorkspacePage() {
                   <TableHead className="text-right">Módulos</TableHead>
                   <TableHead>Inversor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -293,11 +308,18 @@ function ContratoWorkspacePage() {
                     <TableCell className="text-right tabular-nums">{p.modulos_qtde ?? "—"}</TableCell>
                     <TableCell className="text-xs">{p.inversor ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Link to="/comercial/projetos/$projetoId" params={{ projetoId: p.id }}>
+                        <Button size="sm" variant="outline">
+                          <ExternalLink className="h-3 w-3 mr-1" /> Abrir
+                        </Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(projetos.data ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-6 text-sm">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-6 text-sm">
                       Nenhum projeto criado para este contrato.
                     </TableCell>
                   </TableRow>
@@ -306,6 +328,8 @@ function ContratoWorkspacePage() {
             </Table>
           </Card>
         </TabsContent>
+
+
 
         <TabsContent value="documentos" className="mt-3">
           <DocumentosObjetoPanel

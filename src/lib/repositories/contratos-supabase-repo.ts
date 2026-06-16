@@ -330,3 +330,126 @@ export function useCancelarContratoSupabase() {
     },
   });
 }
+
+/* ============================== C-ENT.7 — Projeto individual + Consumo do contrato ============================== */
+
+export async function obterProjetoPorId(id: string): Promise<ProjetoSupabase | null> {
+  const { data, error } = await supabase
+    .from("projetos")
+    .select(
+      "id,codigo,contrato_id,cliente_id,tipo,status,inversor,potencia_kwp,modulos_qtde,valor_estimado,cidade,uf,consultor_id,dados,created_at,updated_at",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) {
+    reportError("obterProjetoPorId", error, { id });
+    throw error;
+  }
+  return (data as unknown as ProjetoSupabase) ?? null;
+}
+
+export function useProjetoSupabaseById(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ["projetos-supabase", "id", id],
+    queryFn: () => obterProjetoPorId(id!),
+    enabled: !!id,
+    staleTime: 15_000,
+  });
+}
+
+export type ConsumoContrato = {
+  valor_global: number;
+  valor_consumido: number;
+  valor_saldo: number;
+  valor_pct: number;
+  potencia_global: number;
+  potencia_consumida: number;
+  potencia_saldo: number;
+  potencia_pct: number;
+  modulos_globais: number;
+  modulos_consumidos: number;
+  modulos_saldo: number;
+  modulos_pct: number;
+  projetos_qtde: number;
+  excedido: boolean;
+};
+
+/**
+ * Calcula o consumo de limites globais do contrato vs projetos vinculados.
+ * Saldos negativos indicam estouro (alerta vermelho na UI).
+ */
+export function calcularConsumoContrato(
+  contrato: Pick<ContratoSupabase, "valor_total" | "potencia_kwp" | "modulos_qtde">,
+  projetos: Pick<ProjetoSupabase, "valor_estimado" | "potencia_kwp" | "modulos_qtde">[],
+): ConsumoContrato {
+  const valor_global = Number(contrato.valor_total) || 0;
+  const potencia_global = Number(contrato.potencia_kwp) || 0;
+  const modulos_globais = Number(contrato.modulos_qtde) || 0;
+
+  const valor_consumido = projetos.reduce((s, p) => s + (Number(p.valor_estimado) || 0), 0);
+  const potencia_consumida = projetos.reduce((s, p) => s + (Number(p.potencia_kwp) || 0), 0);
+  const modulos_consumidos = projetos.reduce((s, p) => s + (Number(p.modulos_qtde) || 0), 0);
+
+  const valor_saldo = valor_global - valor_consumido;
+  const potencia_saldo = potencia_global - potencia_consumida;
+  const modulos_saldo = modulos_globais - modulos_consumidos;
+
+  const pct = (consumido: number, global: number) =>
+    global > 0 ? Math.min(999, Math.round((consumido / global) * 100)) : 0;
+
+  return {
+    valor_global,
+    valor_consumido,
+    valor_saldo,
+    valor_pct: pct(valor_consumido, valor_global),
+    potencia_global,
+    potencia_consumida,
+    potencia_saldo,
+    potencia_pct: pct(potencia_consumida, potencia_global),
+    modulos_globais,
+    modulos_consumidos,
+    modulos_saldo,
+    modulos_pct: pct(modulos_consumidos, modulos_globais),
+    projetos_qtde: projetos.length,
+    excedido: valor_saldo < 0 || potencia_saldo < 0 || modulos_saldo < 0,
+  };
+}
+
+/**
+ * Validador utilitário: garante que somar um novo projeto (ou alterações) ao contrato
+ * não ultrapasse limites globais. Use antes de qualquer criação manual futura.
+ */
+export type ProjetoLimitsPayload = {
+  valor_estimado?: number | null;
+  potencia_kwp?: number | null;
+  modulos_qtde?: number | null;
+};
+
+export function validarLimitesProjetoNoContrato(
+  contrato: Pick<ContratoSupabase, "valor_total" | "potencia_kwp" | "modulos_qtde">,
+  projetosAtuais: Pick<ProjetoSupabase, "valor_estimado" | "potencia_kwp" | "modulos_qtde">[],
+  novoProjeto: ProjetoLimitsPayload,
+  excluirProjetoId?: string,
+  todosProjetos?: Pick<ProjetoSupabase, "id" | "valor_estimado" | "potencia_kwp" | "modulos_qtde">[],
+): { ok: boolean; erros: string[] } {
+  const base = excluirProjetoId && todosProjetos
+    ? todosProjetos.filter((p) => p.id !== excluirProjetoId)
+    : projetosAtuais;
+  const consumo = calcularConsumoContrato(contrato, base);
+  const erros: string[] = [];
+  const v = Number(novoProjeto.valor_estimado) || 0;
+  const p = Number(novoProjeto.potencia_kwp) || 0;
+  const m = Number(novoProjeto.modulos_qtde) || 0;
+  if (consumo.valor_global > 0 && v > consumo.valor_saldo) {
+    erros.push(`Valor excede o saldo do contrato em R$ ${(v - consumo.valor_saldo).toFixed(2)}.`);
+  }
+  if (consumo.potencia_global > 0 && p > consumo.potencia_saldo) {
+    erros.push(`Potência excede o saldo do contrato em ${(p - consumo.potencia_saldo).toFixed(2)} kWp.`);
+  }
+  if (consumo.modulos_globais > 0 && m > consumo.modulos_saldo) {
+    erros.push(`Módulos excedem o saldo do contrato em ${m - consumo.modulos_saldo} unidades.`);
+  }
+  return { ok: erros.length === 0, erros };
+}
+

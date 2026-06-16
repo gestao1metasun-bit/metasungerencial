@@ -104,6 +104,11 @@ export type AplicarAditivoInput = {
   inversor_novo?: string | null;
   observacoes?: string | null;
   payload_alteracoes?: Record<string, unknown>;
+  // C-ENT.9
+  tipo_aditivo?: "NORMAL" | "COMPENSATORIO";
+  aditivo_origem_id?: string | null;
+  motivo_compensacao?: string | null;
+  observacao_compensacao?: string | null;
 };
 
 export async function aplicarAditivo(input: AplicarAditivoInput): Promise<string> {

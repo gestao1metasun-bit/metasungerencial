@@ -307,55 +307,118 @@ export type Database = {
       }
       aditivos: {
         Row: {
+          aplicado_em: string | null
+          aplicado_por: string | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          codigo: string | null
           consultor_id: string | null
           contrato_id: string
           created_at: string
+          criado_por: string | null
           dados: Json
           data_evento: string | null
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
           descricao: string | null
+          diferenca_modulos: number | null
+          diferenca_potencia: number | null
+          diferenca_valor: number | null
           id: string
+          inversor_anterior: string | null
+          inversor_novo: string | null
+          modulos_anterior: number | null
+          modulos_novo: number | null
+          motivo: string | null
           numero: number
+          payload_alteracoes: Json
+          potencia_anterior: number | null
+          potencia_nova: number | null
+          projeto_id: string | null
           status: string
           tipo: string
+          tipo_escopo: string
           updated_at: string
+          valor_anterior: number | null
           valor_delta: number
+          valor_novo: number | null
         }
         Insert: {
+          aplicado_em?: string | null
+          aplicado_por?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          codigo?: string | null
           consultor_id?: string | null
           contrato_id: string
           created_at?: string
+          criado_por?: string | null
           dados?: Json
           data_evento?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao?: string | null
+          diferenca_modulos?: number | null
+          diferenca_potencia?: number | null
+          diferenca_valor?: number | null
           id?: string
+          inversor_anterior?: string | null
+          inversor_novo?: string | null
+          modulos_anterior?: number | null
+          modulos_novo?: number | null
+          motivo?: string | null
           numero?: number
+          payload_alteracoes?: Json
+          potencia_anterior?: number | null
+          potencia_nova?: number | null
+          projeto_id?: string | null
           status?: string
           tipo?: string
+          tipo_escopo?: string
           updated_at?: string
+          valor_anterior?: number | null
           valor_delta?: number
+          valor_novo?: number | null
         }
         Update: {
+          aplicado_em?: string | null
+          aplicado_por?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          codigo?: string | null
           consultor_id?: string | null
           contrato_id?: string
           created_at?: string
+          criado_por?: string | null
           dados?: Json
           data_evento?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
           descricao?: string | null
+          diferenca_modulos?: number | null
+          diferenca_potencia?: number | null
+          diferenca_valor?: number | null
           id?: string
+          inversor_anterior?: string | null
+          inversor_novo?: string | null
+          modulos_anterior?: number | null
+          modulos_novo?: number | null
+          motivo?: string | null
           numero?: number
+          payload_alteracoes?: Json
+          potencia_anterior?: number | null
+          potencia_nova?: number | null
+          projeto_id?: string | null
           status?: string
           tipo?: string
+          tipo_escopo?: string
           updated_at?: string
+          valor_anterior?: number | null
           valor_delta?: number
+          valor_novo?: number | null
         }
         Relationships: [
           {
@@ -371,6 +434,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_bridge_pv"
             referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "aditivos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -14760,6 +14830,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_aditivo_aplicar: { Args: { _payload: Json }; Returns: string }
       rpc_carteira_transferir_individual: {
         Args: {
           p_escopo: string
@@ -15711,6 +15782,9 @@ export type Database = {
         | "comercial.contrato.editar_cadastro"
         | "comercial.projeto.visualizar"
         | "comercial.projeto.editar_cadastro"
+        | "comercial.aditivo.visualizar"
+        | "comercial.aditivo.criar"
+        | "comercial.aditivo.cancelar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_status:
         | "PREVISTA"
@@ -16097,6 +16171,9 @@ export const Constants = {
         "comercial.contrato.editar_cadastro",
         "comercial.projeto.visualizar",
         "comercial.projeto.editar_cadastro",
+        "comercial.aditivo.visualizar",
+        "comercial.aditivo.criar",
+        "comercial.aditivo.cancelar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_status: [

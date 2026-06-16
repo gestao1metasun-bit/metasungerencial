@@ -23,10 +23,12 @@ import {
   useContratoSupabaseById,
   usePropostasDoContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
+import { useAditivosPorProjeto } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
+import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
 
 export const Route = createFileRoute("/comercial/projetos/$projetoId")({
   head: () => ({ meta: [{ title: "Projeto — Workspace — Meta Sun" }] }),
@@ -56,10 +58,12 @@ function ProjetoWorkspacePage() {
   const { projetoId } = Route.useParams();
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.projeto.visualizar");
+  const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
   const projeto = useProjetoSupabaseById(projetoId);
   const contrato = useContratoSupabaseById(projeto.data?.contrato_id);
   const propostas = usePropostasDoContrato(projeto.data?.contrato_id);
   const cliente = useCliente(projeto.data?.cliente_id);
+  const aditivos = useAditivosPorProjeto(projetoId);
   const [tab, setTab] = useTabFromHash("resumo");
 
   if (perm.isLoading || projeto.isLoading) {
@@ -150,6 +154,9 @@ function ProjetoWorkspacePage() {
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="execucao">Dados de execução</TabsTrigger>
+          {permAditivoVer.data !== false && (
+            <TabsTrigger value="aditivos">Aditivos ({aditivos.data?.length ?? 0})</TabsTrigger>
+          )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
@@ -182,6 +189,16 @@ function ProjetoWorkspacePage() {
             </Card>
           </div>
         </TabsContent>
+
+        {permAditivoVer.data !== false && (
+          <TabsContent value="aditivos" className="mt-3">
+            <AditivosListPanel
+              aditivos={aditivos.data ?? []}
+              mostrarProjeto={false}
+              empty="Nenhum aditivo aplicado a este projeto."
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="execucao" className="mt-3">
           <Card className="p-3 text-sm space-y-2">

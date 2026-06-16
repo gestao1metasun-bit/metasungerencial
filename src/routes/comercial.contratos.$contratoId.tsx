@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Loader2, ShieldAlert, FileSignature, FileText, Users, Ban, ExternalLink,
-  Zap, DollarSign, Layers, History, ClipboardList,
+  Zap, DollarSign, Layers, History, ClipboardList, Plus,
 } from "lucide-react";
 import {
   useContratoSupabaseById,
@@ -27,8 +27,11 @@ import {
   useCancelarContratoSupabase,
   calcularConsumoContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
+import { useAditivosPorContrato } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
+import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
+import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
@@ -86,14 +89,18 @@ function ContratoWorkspacePage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.contrato.visualizar");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
+  const permAditivoVer = useHasPermission("comercial.aditivo.visualizar");
+  const permAditivoCriar = useHasPermission("comercial.aditivo.criar");
   const contrato = useContratoSupabaseById(contratoId);
   const propostas = usePropostasDoContrato(contratoId);
   const projetos = useProjetosPorContrato(contratoId);
+  const aditivos = useAditivosPorContrato(contratoId);
   const cliente = useCliente(contrato.data?.cliente_id);
   const consultor = useConsultor(contrato.data?.consultor_id);
   const cancelar = useCancelarContratoSupabase();
   const [tab, setTab] = useTabFromHash("resumo");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];
@@ -167,6 +174,11 @@ function ContratoWorkspacePage() {
                 </Button>
               </Link>
             )}
+            {permAditivoCriar.data === true && !cancelado && (
+              <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
+              </Button>
+            )}
             {permCancelar.data === true && !cancelado && (
               <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar contrato
@@ -189,6 +201,9 @@ function ContratoWorkspacePage() {
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="propostas">Propostas origem ({propostas.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="projetos">Projetos ({projetos.data?.length ?? 0})</TabsTrigger>
+          {permAditivoVer.data !== false && (
+            <TabsTrigger value="aditivos">Aditivos ({aditivos.data?.length ?? 0})</TabsTrigger>
+          )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
@@ -330,6 +345,21 @@ function ContratoWorkspacePage() {
         </TabsContent>
 
 
+        {permAditivoVer.data !== false && (
+          <TabsContent value="aditivos" className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Aditivos aplicados a este contrato (projeto específico ou contrato inteiro).
+              </p>
+              {permAditivoCriar.data === true && !cancelado && (
+                <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
+                </Button>
+              )}
+            </div>
+            <AditivosListPanel aditivos={aditivos.data ?? []} />
+          </TabsContent>
+        )}
 
         <TabsContent value="documentos" className="mt-3">
           <DocumentosObjetoPanel
@@ -363,6 +393,12 @@ function ContratoWorkspacePage() {
           await cancelar.mutateAsync({ id: c.id, motivo, observacao });
           setCancelOpen(false);
         }}
+      />
+      <NovoAditivoDialog
+        open={novoAditivoOpen}
+        onOpenChange={setNovoAditivoOpen}
+        contrato={c}
+        projetos={projetos.data ?? []}
       />
     </div>
   );

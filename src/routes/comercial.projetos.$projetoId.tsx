@@ -22,13 +22,16 @@ import {
   useProjetoSupabaseById,
   useContratoSupabaseById,
   usePropostasDoContrato,
+  useProjetosPorContrato,
 } from "@/lib/repositories/contratos-supabase-repo";
-import { useAditivosPorProjeto } from "@/lib/repositories/aditivos-repo";
+import { useAditivosPorProjeto, type AditivoSupabase } from "@/lib/repositories/aditivos-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
+import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
+import { useState } from "react";
 
 export const Route = createFileRoute("/comercial/projetos/$projetoId")({
   head: () => ({ meta: [{ title: "Projeto — Workspace — Meta Sun" }] }),

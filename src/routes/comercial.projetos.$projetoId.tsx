@@ -250,6 +250,17 @@ function ProjetoWorkspacePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {c && compensarOrigem && (
+        <NovoAditivoDialog
+          open={!!compensarOrigem}
+          onOpenChange={(v) => { if (!v) setCompensarOrigem(null); }}
+          contrato={c}
+          projetos={projetosDoContrato.data ?? []}
+          projetoIdInicial={p.id}
+          aditivoOrigem={compensarOrigem}
+        />
+      )}
     </div>
   );
 }

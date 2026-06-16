@@ -272,7 +272,8 @@ function ContratoWorkspacePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="projetos" className="mt-3">
+        <TabsContent value="projetos" className="mt-3 space-y-2">
+          {consumo && <ConsumoContratoCard consumo={consumo} />}
           <Card className="p-2">
             <Table>
               <TableHeader>
@@ -285,6 +286,7 @@ function ContratoWorkspacePage() {
                   <TableHead className="text-right">Módulos</TableHead>
                   <TableHead>Inversor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -300,11 +302,18 @@ function ContratoWorkspacePage() {
                     <TableCell className="text-right tabular-nums">{p.modulos_qtde ?? "—"}</TableCell>
                     <TableCell className="text-xs">{p.inversor ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline">{p.status}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Link to="/comercial/projetos/$projetoId" params={{ projetoId: p.id }}>
+                        <Button size="sm" variant="outline">
+                          <ExternalLink className="h-3 w-3 mr-1" /> Abrir
+                        </Button>
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {(projetos.data ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-6 text-sm">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-6 text-sm">
                       Nenhum projeto criado para este contrato.
                     </TableCell>
                   </TableRow>
@@ -313,6 +322,8 @@ function ContratoWorkspacePage() {
             </Table>
           </Card>
         </TabsContent>
+
+
 
         <TabsContent value="documentos" className="mt-3">
           <DocumentosObjetoPanel

@@ -383,6 +383,13 @@ function ContratoWorkspacePage() {
           <TimelineObjetoPanel objetoTipo="contrato" objetoId={c.id} />
         </TabsContent>
 
+        <TabsContent value="comissoes" className="mt-3 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Comissões vinculadas ao contrato (incluindo complementares por aditivo e versões substituídas).
+          </p>
+          <ComissoesContratoPanel contratoId={c.id} />
+        </TabsContent>
+
         <TabsContent value="auditoria" className="mt-3">
           <Card className="p-4 text-sm text-muted-foreground">
             <Users className="h-5 w-5 inline mr-1" />

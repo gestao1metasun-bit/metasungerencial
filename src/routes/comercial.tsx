@@ -189,7 +189,20 @@ function ComercialPage() {
           <PropostasPage embedded />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
-          <ContratosUnificadosTab contratos={contratos} setContratos={setContratos} vendedoresList={vendedoresList} />
+          <ContratosUnificadosTab
+            contratos={contratos}
+            setContratos={setContratos}
+            vendedoresList={vendedoresList}
+            renderAberto={({ contratos: cc, setContratos: sc }) => (
+              <ContratosTab contratos={cc} setContratos={sc} filtroStatus="ambos" />
+            )}
+            renderContrato={({ contratos: cc, setContratos: sc, vendedoresList: vv }) => (
+              <ContratoAssinadoTab contratos={cc} setContratos={sc} vendedoresList={vv} />
+            )}
+            renderFechado={({ contratos: cc }) => (
+              <ContratosCanceladosTab contratos={cc} />
+            )}
+          />
         </TabsContent>
         <TabsContent value="aditivos" className="mt-5">
           <AditivosTab contratos={contratos} />

@@ -7,6 +7,18 @@ import {
   Eye, Paperclip, ChevronDown, Ban, RotateCcw, HandCoins,
 } from "lucide-react";
 import {
+  valorContrato, fmtContratoId, useAuthCurrent,
+  KpiBlock, KpiSmall,
+  volumeSeed, CHART_COLORS, MESES,
+  type Contrato, type Vendedor, type Proposta, type VolumeMes,
+} from "@/modules/comercial/_shared";
+import { ContratosUnificadosTab } from "@/modules/comercial/ContratosSection";
+import { VendedoresTab } from "@/modules/comercial/VendedoresTab";
+import { AditivosTab } from "@/modules/comercial/AditivosTab";
+import { AnaliseExecutivaTab, IndicadoresTab as IndicadoresTabImpl } from "@/modules/comercial/AnaliseExecutivaTab";
+// Re-export para preservar `import { IndicadoresTab } from "@/routes/comercial"` em /dashboard.
+export const IndicadoresTab = IndicadoresTabImpl;
+import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ContratoImpressao } from "@/components/app/ContratoImpressao";

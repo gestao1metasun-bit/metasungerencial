@@ -460,8 +460,3 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
     </div>
   );
 }
-
-function statusFromContract(c: { status: string; cancelado: boolean }): string {
-  if (c.cancelado || c.status === "CANCELADO") return "CANCELADO";
-  return c.status;
-}

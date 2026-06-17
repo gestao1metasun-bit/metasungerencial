@@ -93,10 +93,8 @@ import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteA
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
-import { AditivosPanel } from "@/components/app/AditivosPanel";
-import { AditivoBadge } from "@/components/app/AditivoBadge";
-import { useAditivos, useAditivosByContrato, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
-import { usePodeGerenciarAditivos } from "@/lib/auth-store";
+// C-ENT.11.c — Aditivos LS descontinuados no /comercial. Verdade oficial = Supabase
+// (workspace do contrato/projeto). Não importar mais AditivosPanel/AditivoBadge/aditivos-store.
 
 
 
@@ -452,12 +450,10 @@ function ContratoAssinadoRow({
   const enviados = total - pendentes;
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
-  const [aditivosOpen, setAditivosOpen] = useState(false);
   const [anexosOpen, setAnexosOpen] = useState(false);
-  const aditivosDoContrato = useAditivosByContrato(c.id);
-  const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
-  const podeGerenciarAditivos = usePodeGerenciarAditivos();
-  const { user: aditivoUser } = useAuthCurrent();
+  // C-ENT.11.c — gestão de aditivos saiu para o workspace do contrato (Supabase).
+  // Não há mais leitura LS aqui; o badge de "pendentes" deixou de existir em /comercial.
+  const pendentesAditivos = 0;
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
 
   return (
@@ -565,9 +561,12 @@ function ContratoAssinadoRow({
                 toast.info("Comissões agora vivem em /comercial/comissoes (Supabase). Esta ação foi desativada.");
                 break;
               }
-              case "duplicar":
-                setAditivosOpen(true);
+              case "duplicar": {
+                // C-ENT.11.c — "Gerenciar aditivos" agora abre o workspace oficial do contrato
+                // (aba Aditivos Supabase). Sem fluxo LS paralelo.
+                window.location.href = `/comercial/contratos/${c.id}#tab=aditivos`;
                 break;
+              }
               case "historico":
                 onImprimir(c);
                 break;
@@ -591,14 +590,8 @@ function ContratoAssinadoRow({
           }}
         />
         <EditarContratoDialog contrato={c} vendedoresList={vendedoresList} open={editOpen} onOpenChange={setEditOpen} hideTrigger lockDados />
-        <Dialog open={aditivosOpen} onOpenChange={setAditivosOpen}>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Aditivos — contrato {fmtContratoId(c.id)} · {c.cliente}</DialogTitle>
-            </DialogHeader>
-            <AditivosPanel contrato={c} usuario={aditivoUser} podeGerenciar={podeGerenciarAditivos} />
-          </DialogContent>
-        </Dialog>
+        {/* C-ENT.11.c — Diálogo LS de Aditivos removido. Gestão oficial vive em
+            /comercial/contratos/$contratoId#tab=aditivos (Supabase, RPC oficial). */}
       </TableCell>
     </TableRow>
     </>

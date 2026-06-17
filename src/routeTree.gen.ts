@@ -65,11 +65,13 @@ import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comer
 import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
 import { Route as EngenhariaGestaoServicosIndexRouteImport } from './routes/engenharia.gestao-servicos.index'
 import { Route as ComercialContratosIndexRouteImport } from './routes/comercial.contratos.index'
+import { Route as ComercialComissoesIndexRouteImport } from './routes/comercial.comissoes.index'
 import { Route as ComercialClientesIndexRouteImport } from './routes/comercial.clientes.index'
 import { Route as EngenhariaGestaoServicosModelosRouteImport } from './routes/engenharia.gestao-servicos.modelos'
 import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
 import { Route as ComercialProjetosProjetoIdRouteImport } from './routes/comercial.projetos.$projetoId'
 import { Route as ComercialContratosContratoIdRouteImport } from './routes/comercial.contratos.$contratoId'
+import { Route as ComercialComissoesComissaoIdRouteImport } from './routes/comercial.comissoes.$comissaoId'
 import { Route as ComercialClientesBackfillRouteImport } from './routes/comercial.clientes.backfill'
 import { Route as ComercialClientesClienteIdRouteImport } from './routes/comercial.clientes.$clienteId'
 
@@ -356,6 +358,11 @@ const ComercialContratosIndexRoute = ComercialContratosIndexRouteImport.update({
   path: '/contratos/',
   getParentRoute: () => ComercialRoute,
 } as any)
+const ComercialComissoesIndexRoute = ComercialComissoesIndexRouteImport.update({
+  id: '/comissoes/',
+  path: '/comissoes/',
+  getParentRoute: () => ComercialRoute,
+} as any)
 const ComercialClientesIndexRoute = ComercialClientesIndexRouteImport.update({
   id: '/clientes/',
   path: '/clientes/',
@@ -383,6 +390,12 @@ const ComercialContratosContratoIdRoute =
   ComercialContratosContratoIdRouteImport.update({
     id: '/contratos/$contratoId',
     path: '/contratos/$contratoId',
+    getParentRoute: () => ComercialRoute,
+  } as any)
+const ComercialComissoesComissaoIdRoute =
+  ComercialComissoesComissaoIdRouteImport.update({
+    id: '/comissoes/$comissaoId',
+    path: '/comissoes/$comissaoId',
     getParentRoute: () => ComercialRoute,
   } as any)
 const ComercialClientesBackfillRoute =
@@ -455,11 +468,13 @@ export interface FileRoutesByFullPath {
   '/paineis/$': typeof PaineisSplatRoute
   '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/comercial/clientes/backfill': typeof ComercialClientesBackfillRoute
+  '/comercial/comissoes/$comissaoId': typeof ComercialComissoesComissaoIdRoute
   '/comercial/contratos/$contratoId': typeof ComercialContratosContratoIdRoute
   '/comercial/projetos/$projetoId': typeof ComercialProjetosProjetoIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes/': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes/': typeof ComercialComissoesIndexRoute
   '/comercial/contratos/': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -520,11 +535,13 @@ export interface FileRoutesByTo {
   '/paineis/$': typeof PaineisSplatRoute
   '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/comercial/clientes/backfill': typeof ComercialClientesBackfillRoute
+  '/comercial/comissoes/$comissaoId': typeof ComercialComissoesComissaoIdRoute
   '/comercial/contratos/$contratoId': typeof ComercialContratosContratoIdRoute
   '/comercial/projetos/$projetoId': typeof ComercialProjetosProjetoIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes': typeof ComercialComissoesIndexRoute
   '/comercial/contratos': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -586,11 +603,13 @@ export interface FileRoutesById {
   '/paineis/$': typeof PaineisSplatRoute
   '/comercial/clientes/$clienteId': typeof ComercialClientesClienteIdRoute
   '/comercial/clientes/backfill': typeof ComercialClientesBackfillRoute
+  '/comercial/comissoes/$comissaoId': typeof ComercialComissoesComissaoIdRoute
   '/comercial/contratos/$contratoId': typeof ComercialContratosContratoIdRoute
   '/comercial/projetos/$projetoId': typeof ComercialProjetosProjetoIdRoute
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes/': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes/': typeof ComercialComissoesIndexRoute
   '/comercial/contratos/': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -653,11 +672,13 @@ export interface FileRouteTypes {
     | '/paineis/$'
     | '/comercial/clientes/$clienteId'
     | '/comercial/clientes/backfill'
+    | '/comercial/comissoes/$comissaoId'
     | '/comercial/contratos/$contratoId'
     | '/comercial/projetos/$projetoId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes/'
+    | '/comercial/comissoes/'
     | '/comercial/contratos/'
     | '/engenharia/gestao-servicos/'
   fileRoutesByTo: FileRoutesByTo
@@ -718,11 +739,13 @@ export interface FileRouteTypes {
     | '/paineis/$'
     | '/comercial/clientes/$clienteId'
     | '/comercial/clientes/backfill'
+    | '/comercial/comissoes/$comissaoId'
     | '/comercial/contratos/$contratoId'
     | '/comercial/projetos/$projetoId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes'
+    | '/comercial/comissoes'
     | '/comercial/contratos'
     | '/engenharia/gestao-servicos'
   id:
@@ -783,11 +806,13 @@ export interface FileRouteTypes {
     | '/paineis/$'
     | '/comercial/clientes/$clienteId'
     | '/comercial/clientes/backfill'
+    | '/comercial/comissoes/$comissaoId'
     | '/comercial/contratos/$contratoId'
     | '/comercial/projetos/$projetoId'
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes/'
+    | '/comercial/comissoes/'
     | '/comercial/contratos/'
     | '/engenharia/gestao-servicos/'
   fileRoutesById: FileRoutesById
@@ -1221,6 +1246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComercialContratosIndexRouteImport
       parentRoute: typeof ComercialRoute
     }
+    '/comercial/comissoes/': {
+      id: '/comercial/comissoes/'
+      path: '/comissoes'
+      fullPath: '/comercial/comissoes/'
+      preLoaderRoute: typeof ComercialComissoesIndexRouteImport
+      parentRoute: typeof ComercialRoute
+    }
     '/comercial/clientes/': {
       id: '/comercial/clientes/'
       path: '/clientes'
@@ -1254,6 +1286,13 @@ declare module '@tanstack/react-router' {
       path: '/contratos/$contratoId'
       fullPath: '/comercial/contratos/$contratoId'
       preLoaderRoute: typeof ComercialContratosContratoIdRouteImport
+      parentRoute: typeof ComercialRoute
+    }
+    '/comercial/comissoes/$comissaoId': {
+      id: '/comercial/comissoes/$comissaoId'
+      path: '/comissoes/$comissaoId'
+      fullPath: '/comercial/comissoes/$comissaoId'
+      preLoaderRoute: typeof ComercialComissoesComissaoIdRouteImport
       parentRoute: typeof ComercialRoute
     }
     '/comercial/clientes/backfill': {
@@ -1310,18 +1349,22 @@ const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
 interface ComercialRouteChildren {
   ComercialClientesClienteIdRoute: typeof ComercialClientesClienteIdRoute
   ComercialClientesBackfillRoute: typeof ComercialClientesBackfillRoute
+  ComercialComissoesComissaoIdRoute: typeof ComercialComissoesComissaoIdRoute
   ComercialContratosContratoIdRoute: typeof ComercialContratosContratoIdRoute
   ComercialProjetosProjetoIdRoute: typeof ComercialProjetosProjetoIdRoute
   ComercialClientesIndexRoute: typeof ComercialClientesIndexRoute
+  ComercialComissoesIndexRoute: typeof ComercialComissoesIndexRoute
   ComercialContratosIndexRoute: typeof ComercialContratosIndexRoute
 }
 
 const ComercialRouteChildren: ComercialRouteChildren = {
   ComercialClientesClienteIdRoute: ComercialClientesClienteIdRoute,
   ComercialClientesBackfillRoute: ComercialClientesBackfillRoute,
+  ComercialComissoesComissaoIdRoute: ComercialComissoesComissaoIdRoute,
   ComercialContratosContratoIdRoute: ComercialContratosContratoIdRoute,
   ComercialProjetosProjetoIdRoute: ComercialProjetosProjetoIdRoute,
   ComercialClientesIndexRoute: ComercialClientesIndexRoute,
+  ComercialComissoesIndexRoute: ComercialComissoesIndexRoute,
   ComercialContratosIndexRoute: ComercialContratosIndexRoute,
 }
 

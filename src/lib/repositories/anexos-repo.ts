@@ -14,7 +14,11 @@ export type EntidadeAnexavel =
   | 'adiantamentos' | 'rescisoes_contrato' | 'extrato_banco'
   | 'workflow_aprovacoes' | 'estoque_movimentos' | 'estoque_reservas'
   | 'estoque_entregas' | 'ordens_compra' | 'cotacoes_compra'
-  | 'solicitacoes_material' | 'financiamentos' | 'produtos' | 'leads' | 'tarefas';
+  | 'solicitacoes_material' | 'financiamentos' | 'produtos' | 'leads' | 'tarefas'
+  | 'operacoes_financeiras' | 'operacoes_financeiras_parcelas'
+  | 'os_ordens' | 'os_tarefas' | 'os_formularios_definicao'
+  | 'os_servicos_faturar' | 'os_requisicoes_equipamento'
+  | 'comercial_comissoes';
 
 export interface Anexo {
   id: string;

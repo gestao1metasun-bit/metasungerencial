@@ -36,6 +36,7 @@ import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
+import { ComissoesContratoPanel } from "@/components/app/comissoes/ComissoesContratoPanel";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),
@@ -208,6 +209,7 @@ function ContratoWorkspacePage() {
           )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
         </TabsList>
 
@@ -379,6 +381,13 @@ function ContratoWorkspacePage() {
 
         <TabsContent value="timeline" className="mt-3">
           <TimelineObjetoPanel objetoTipo="contrato" objetoId={c.id} />
+        </TabsContent>
+
+        <TabsContent value="comissoes" className="mt-3 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Comissões vinculadas ao contrato (incluindo complementares por aditivo e versões substituídas).
+          </p>
+          <ComissoesContratoPanel contratoId={c.id} />
         </TabsContent>
 
         <TabsContent value="auditoria" className="mt-3">

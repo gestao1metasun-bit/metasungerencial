@@ -51,11 +51,13 @@ import {
 import { fmtBRL } from "@/lib/mock-data";
 
 const STATUS_TONE: Record<ComissaoStatus, string> = {
-  PREVISTA:  "bg-sky-50 text-sky-700 border-sky-200",
-  LIBERADA:  "bg-amber-50 text-amber-700 border-amber-200",
-  PAGA:      "bg-emerald-50 text-emerald-700 border-emerald-200",
-  CANCELADA: "bg-slate-100 text-slate-600 border-slate-200",
-  ESTORNADA: "bg-red-50 text-red-700 border-red-200",
+  PREVISTA:    "bg-sky-50 text-sky-700 border-sky-200",
+  APROVADA:    "bg-indigo-50 text-indigo-700 border-indigo-200",
+  LIBERADA:    "bg-amber-50 text-amber-700 border-amber-200",
+  PAGA:        "bg-emerald-50 text-emerald-700 border-emerald-200",
+  CANCELADA:   "bg-slate-100 text-slate-600 border-slate-200",
+  ESTORNADA:   "bg-red-50 text-red-700 border-red-200",
+  SUBSTITUIDA: "bg-zinc-100 text-zinc-600 border-zinc-200",
 };
 
 const COLS: ColumnDef[] = [
@@ -138,9 +140,10 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
 
   const totais = useMemo(() => {
     const t: Record<ComissaoStatus, { qtd: number; valor: number }> = {
-      PREVISTA:  { qtd: 0, valor: 0 }, LIBERADA: { qtd: 0, valor: 0 },
-      PAGA:      { qtd: 0, valor: 0 }, CANCELADA: { qtd: 0, valor: 0 },
-      ESTORNADA: { qtd: 0, valor: 0 },
+      PREVISTA:    { qtd: 0, valor: 0 }, APROVADA:    { qtd: 0, valor: 0 },
+      LIBERADA:    { qtd: 0, valor: 0 }, PAGA:        { qtd: 0, valor: 0 },
+      CANCELADA:   { qtd: 0, valor: 0 }, ESTORNADA:   { qtd: 0, valor: 0 },
+      SUBSTITUIDA: { qtd: 0, valor: 0 },
     };
     for (const r of linhas) { t[r.status].qtd++; t[r.status].valor += Number(r.valor_calculado || 0); }
     return t;

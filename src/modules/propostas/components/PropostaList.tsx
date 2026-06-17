@@ -95,15 +95,21 @@ export function duplicarProposta(p: PropostaFV) {
 }
 
 export function excluirProposta(p: PropostaFV) {
-  if (p.status === "APROVADA") {
-    toast.error(
-      "Proposta aprovada não pode ser excluída pela tela de Propostas. " +
-      "Abra Comercial → Contratos, localize o contrato vinculado e cancele-o primeiro.",
-      { duration: 6000 },
-    );
-    return;
-  }
   if (p.status !== "RASCUNHO") {
+    if (p.status === "APROVADA" || p.status === "ATIVA") {
+      toast.error(
+        "Proposta aprovada não pode ser excluída — cancele a minuta/contrato vinculado em Comercial → Contratos.",
+        { duration: 6000 },
+      );
+      return;
+    }
+    if (p.status === "CONTRATO_PENDENTE" || p.status === "CONTRATADA") {
+      toast.error(
+        "Proposta vinculada a contrato não pode ser excluída — cancele a minuta/contrato antes.",
+        { duration: 6000 },
+      );
+      return;
+    }
     toast.error("Propostas geradas não podem ser excluídas — use Cancelar.");
     return;
   }
@@ -128,7 +134,15 @@ export function excluirProposta(p: PropostaFV) {
 /** Cancela uma proposta — move para status CANCELADA com motivo. */
 export function cancelarProposta(p: PropostaFV) {
   if (p.status === "CANCELADA") { toast.info("Proposta já está cancelada."); return; }
-  if (p.status === "APROVADA") { toast.error("Proposta aprovada não pode ser cancelada — retorne o contrato antes."); return; }
+  if (p.status === "APROVADA" || p.status === "ATIVA") {
+    toast.error("Proposta aprovada não pode ser cancelada — cancele a minuta no contrato pendente antes."); return;
+  }
+  if (p.status === "CONTRATO_PENDENTE") {
+    toast.error("Esta proposta gerou um contrato pendente. Cancele a minuta em Comercial → Contratos → Pendentes."); return;
+  }
+  if (p.status === "CONTRATADA") {
+    toast.error("Proposta contratada não pode ser cancelada por aqui — opere pelo contrato ativo."); return;
+  }
   const motivo = prompt(`Cancelar proposta ${p.numero}?\n\nMotivo (obrigatório):`);
   if (!motivo || !motivo.trim()) { toast.error("Informe o motivo do cancelamento."); return; }
   cancelarPropostaComMotivo(p.id, p.criadoPor || "Operador", motivo.trim());

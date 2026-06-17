@@ -1511,7 +1511,11 @@ function TabelaView({
           </div>
         );
       case "consultor": return <span className="block truncate">{l.consultor || "—"}</span>;
-      case "cidade":    return <span className="block truncate">{l.cidade ? `${l.cidade}/${l.estado || ""}` : "—"}</span>;
+      case "cidade": {
+        // D18.6 — Nunca renderizar "Cidade/" ou "/UF"; só junta com barra quando houver UF.
+        if (!l.cidade) return <span>—</span>;
+        return <span className="block truncate">{l.estado ? `${l.cidade}/${l.estado}` : l.cidade}</span>;
+      }
       case "bairro":    return <span className="block truncate">{l.bairro || "—"}</span>;
       case "tipoPessoa": return <span className="text-[11px] text-muted-foreground">{l.tipoPessoa || "—"}</span>;
       case "criado":    return <span className="tabular-nums">{fmtData(l.dataPrimeira)}</span>;
@@ -1539,8 +1543,15 @@ function TabelaView({
       case "potencia":   return <span className="tabular-nums">{l.potenciaW ? `${l.potenciaW} Wp` : "—"}</span>;
       case "potenciaKwp": return <span className="tabular-nums">{l.potenciaKwp ? `${l.potenciaKwp.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} kWp` : "—"}</span>;
       case "inversores": return <span className="block truncate text-xs">{l.inversores}</span>;
-      case "valor":     return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
-      case "valorKwp":  return <span className="tabular-nums">{l.valorKwp ? fmtBRL(l.valorKwp) : "—"}</span>;
+      case "valor": {
+        // D18.6 — valor 0 em proposta ativa = dado inconsistente, não R$ 0,00 silencioso.
+        const ativa = ["GERADA","ENVIADA","APROVADA","CONTRATADA","ATIVA"].includes(l.status as string);
+        if (!l.valor && ativa) {
+          return <Badge variant="destructive" className="text-[10px]">Dados inconsistentes</Badge>;
+        }
+        return <span className="tabular-nums">{fmtBRL(l.valor)}</span>;
+      }
+      case "valorKwp":  return <span className="tabular-nums">{l.valorKwp ? `${fmtBRL(l.valorKwp)}/kWp` : "—"}</span>;
       case "status": {
         // Espelha o status mostrado no Kanban: se o lead tem fase pós-aprovação,
         // usa a coluna-âncora correspondente; senão, fallback para o assign.

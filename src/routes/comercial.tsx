@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
@@ -79,7 +79,8 @@ import {
   liberarContratoParaGerar, revogarLiberacaoContrato,
   type ContratoFull, type ClienteFull, type ProjetoVinculado, type PagamentoLinha,
 } from "@/lib/contratos-store";
-import { gerarAPdeComissao, getTitulos } from "@/lib/fin-titulos-store";
+// C-ENT.11.b — gerarAPdeComissao/getTitulos LS removidos: comissão oficial vive em Supabase
+// (comercial_comissoes + RPCs em /comercial/comissoes). Trigger PREVISTA roda em rpc_contrato_assinar.
 // LEGADO LS — write-back de contrato (1808) e check sync de duplicidade (3523) ainda dependem do store local.
 // Leitura/autocomplete e cadastro já estão em Supabase. Eliminar nesta sequência junto com C-ENT.2+.
 import { addClienteFull, findClienteByDoc, updateClienteFull, DuplicateClienteError, type ClienteRecord } from "@/lib/clientes-store";
@@ -189,20 +190,8 @@ function ComercialPage() {
           <PropostasPage embedded />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
-          <ContratosUnificadosTab
-            contratos={contratos}
-            setContratos={setContratos}
-            vendedoresList={vendedoresList}
-            renderAberto={({ contratos: cc, setContratos: sc }) => (
-              <ContratosTab contratos={cc} setContratos={sc} filtroStatus="ambos" />
-            )}
-            renderContrato={({ contratos: cc, setContratos: sc, vendedoresList: vv }) => (
-              <ContratoAssinadoTab contratos={cc} setContratos={sc} vendedoresList={vv} />
-            )}
-            renderFechado={({ contratos: cc }) => (
-              <ContratosCanceladosTab contratos={cc} />
-            )}
-          />
+          {/* C-ENT.11.b — Contratos LS deixa de ser canônico. Verdade oficial = Supabase em /comercial/contratos. */}
+          <ContratosRedirectCard />
         </TabsContent>
         <TabsContent value="aditivos" className="mt-5">
           <AditivosTab contratos={contratos} />
@@ -532,21 +521,9 @@ function ContratoAssinadoRow({
                 setEditOpen(true);
                 break;
               case "baixar": {
-                const apId = `AP-COM-${c.id}`;
-                const ja = getTitulos().find((t) => t.id === apId);
-                if (ja) { toast.info(`Comissão já liberada (${apId}).`); return; }
-                const beneficiario = c.vendedor || prompt("Beneficiário da comissão:") || "";
-                if (!beneficiario.trim()) { toast.error("Informe o beneficiário."); return; }
-                const vencDefault = new Date(); vencDefault.setDate(vencDefault.getDate() + 30);
-                const venc = prompt("Vencimento (AAAA-MM-DD):", vencDefault.toISOString().slice(0, 10)) || "";
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) { toast.error("Data inválida."); return; }
-                try {
-                  gerarAPdeComissao({
-                    id: apId, contratoId: c.id, cliente: c.cliente,
-                    valor: c.comissaoValor!, vencimento: venc, beneficiario: beneficiario.trim(),
-                  }, "Comercial");
-                  toast.success(`Comissão liberada: AP gerada no Financeiro (${apId}).`);
-                } catch (e: any) { toast.error(e?.message ?? "Erro ao liberar comissão."); }
+                // C-ENT.11.b — Geração LS de comissão descontinuada. Motor oficial = Supabase
+                // (trigger PREVISTA em rpc_contrato_assinar + RPCs liberar/pagar em comercial.comissao.*).
+                toast.info("Comissões agora vivem em /comercial/comissoes (Supabase). Esta ação foi desativada.");
                 break;
               }
               case "duplicar":

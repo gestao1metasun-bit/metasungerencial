@@ -4,7 +4,7 @@
  * ZERO mudança de comportamento. As tabs internas (ContratosTab/ContratoAssinadoTab/
  * ContratosCanceladosTab) seguem residindo em comercial.tsx e são repassadas via props.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ColunasButton, ColunasManager, KanbanGeneric, useKanbanColumns, type KCol, type KItem } from "@/components/app/KanbanColumns";
 import { fmtBRL } from "@/lib/mock-data";
 import { valorContrato, type Contrato, type Vendedor } from "./_shared";

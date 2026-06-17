@@ -185,7 +185,7 @@ function ContratosListPage() {
                         {c.potencia_kwp != null ? Number(c.potencia_kwp).toFixed(2) : "—"}
                       </TableCell>
                       <TableCell className="text-center tabular-nums">{c.projetos_count}</TableCell>
-                      <TableCell>{statusBadge(c.status)}</TableCell>
+                      <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(c.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>

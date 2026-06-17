@@ -112,6 +112,40 @@ export function useGerarContratoDaProposta() {
   });
 }
 
+// D18.8 — Aprovar contrato em estado de minuta (MINUTA → ATIVO).
+export function useAprovarMinutaContrato() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (i: { contratoId: string; observacao?: string }) =>
+      call<string>("rpc_contrato_aprovar_minuta", {
+        p_contrato_id: i.contratoId,
+        p_observacao: i.observacao ?? null,
+      }),
+    onSuccess: () => {
+      toast.success("Contrato aprovado com sucesso. Está ATIVO.");
+      invalidateComercial(qc);
+    },
+    onError: (e: Error) => toast.error(`Falha ao aprovar contrato: ${e.message}`),
+  });
+}
+
+// D18.8 — Cancelar minuta (devolve a proposta de origem para APROVADA).
+export function useCancelarMinutaContrato() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (i: { contratoId: string; motivo: string }) =>
+      call<string>("rpc_contrato_cancelar_minuta", {
+        p_contrato_id: i.contratoId,
+        p_motivo: i.motivo,
+      }),
+    onSuccess: () => {
+      toast.success("Minuta cancelada. A proposta de origem voltou para aprovada.");
+      invalidateComercial(qc);
+    },
+    onError: (e: Error) => toast.error(`Falha ao cancelar minuta: ${e.message}`),
+  });
+}
+
 export function useEnviarContratoEngenharia() {
   const qc = useQueryClient();
   return useMutation({

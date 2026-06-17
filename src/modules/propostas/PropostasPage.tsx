@@ -618,12 +618,13 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (key === "editar_cliente") {
               const p = getPropostaAtiva();
               if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
-              // Governança Enterprise: correção cadastral só em propostas em aberto.
+              // Governança Enterprise D18.4: correção cadastral só em propostas em aberto.
+              // CONTRATADA/SUBSTITUIDA/CANCELADA/EXPIRADA = documentos históricos.
               // Campos comerciais/técnicos/financeiros NUNCA são editáveis — exigem Gerar Nova Proposta.
-              const bloqueados = ["APROVADA", "ASSINADA", "CANCELADA", "REPROVADA", "RECUSADA", "VENCIDA", "SUBSTITUIDA", "EXPIRADA"];
+              const bloqueados = ["APROVADA", "ASSINADA", "CONTRATADA", "CANCELADA", "REPROVADA", "RECUSADA", "VENCIDA", "SUBSTITUIDA", "EXPIRADA"];
               if (bloqueados.includes(String(p.status).toUpperCase())) {
                 toast.error(
-                  `Proposta ${p.status} não permite correção cadastral. Apenas propostas em aberto podem ser corrigidas.`,
+                  `Proposta ${p.status} é documento histórico e não permite edição. Gere nova proposta ou ajuste o cadastro no Cliente/Contrato.`,
                 );
                 return;
               }

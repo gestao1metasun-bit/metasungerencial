@@ -150,27 +150,7 @@ function fmtDataBR(v?: string | null): string {
   return s;
 }
 
-/** Normaliza ID legado "CT-YYYY-NNNN" para o padrão "NNN/YYYY". */
-function fmtContratoId(id: string): string {
-  const m = id.match(/^CT-(\d{4})-(\d+)$/);
-  if (m) return `${String(m[2]).slice(-3).padStart(3, "0")}/${m[1]}`;
-  return id;
-}
-
-type Contrato = ContratoFull;
-type Vendedor = (typeof vendedoresSeed)[number];
-type Proposta = (typeof propostasSeed)[number];
-export type VolumeMes = { id: string; mes: string; ano: number; qtd: number; valor: number };
-
-const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-
-const volumeSeed: VolumeMes[] = [
-  { id: "V-01", mes: "Jan", ano: 2026, qtd: 18, valor: 1240000 },
-  { id: "V-02", mes: "Fev", ano: 2026, qtd: 22, valor: 1580000 },
-  { id: "V-03", mes: "Mar", ano: 2026, qtd: 28, valor: 1920000 },
-  { id: "V-04", mes: "Abr", ano: 2026, qtd: 33, valor: 2410000 },
-  { id: "V-05", mes: "Mai", ano: 2026, qtd: 26, valor: 1850000 },
-];
+// C-ENT.11.a — tipos (Contrato/Vendedor/Proposta/VolumeMes), MESES, volumeSeed e fmtContratoId movidos para @/modules/comercial/_shared
 
 function ComercialPage() {
   const [tab, setTab] = useTabFromHash("/comercial");

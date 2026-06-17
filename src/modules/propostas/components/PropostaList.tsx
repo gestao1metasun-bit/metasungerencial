@@ -48,9 +48,12 @@ import { findClienteByDoc } from "@/lib/clientes-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
-    case "APROVADA": return "default";
+    case "APROVADA":
+    case "ATIVA":
+    case "CONTRATADA": return "default";
     case "GERADA":
-    case "ENVIADA": return "secondary";
+    case "ENVIADA":
+    case "CONTRATO_PENDENTE": return "secondary";
     case "RECUSADA":
     case "VENCIDA":
     case "EXPIRADA":
@@ -59,6 +62,12 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
     default: return "outline";
   }
 }
+
+/** D18.9 — Status em que a proposta está "fechada" (não permite mais aprovar/cancelar/excluir/editar pelo módulo de propostas). */
+const STATUS_FECHADOS = new Set<StatusProposta>([
+  "APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA",
+  "CANCELADA","RECUSADA","VENCIDA","EXPIRADA","SUBSTITUIDA",
+]);
 
 function readLS<T>(key: string, fb: T): T {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fb; } catch { return fb; }

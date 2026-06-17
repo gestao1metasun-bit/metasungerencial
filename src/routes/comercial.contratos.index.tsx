@@ -22,6 +22,8 @@ import {
 import { useContratosSupabase, useCancelarContratoSupabase } from "@/lib/repositories/contratos-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { classificarEtapaContrato, type EtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/")({
   head: () => ({ meta: [{ title: "Contratos — Meta Sun" }] }),
@@ -31,11 +33,11 @@ export const Route = createFileRoute("/comercial/contratos/")({
 const fmtBRL = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const statusBadge = (status: string) => {
-  const s = (status ?? "").toUpperCase();
-  if (s === "CANCELADO") return <Badge variant="destructive">{s}</Badge>;
-  if (s === "ATIVO") return <Badge>{s}</Badge>;
-  return <Badge variant="outline">{s || "—"}</Badge>;
+const statusBadge = (status: string, cancelado?: boolean) => {
+  const etapa = classificarEtapaContrato(status, cancelado);
+  if (etapa === "cancelado") return <Badge variant="destructive">CANCELADO</Badge>;
+  if (etapa === "minuta") return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-950/40">CONTRATO PENDENTE</Badge>;
+  return <Badge>ATIVO</Badge>;
 };
 
 function ContratosListPage() {
@@ -45,18 +47,28 @@ function ContratosListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useContratosSupabase();
   const cancelar = useCancelarContratoSupabase();
   const [busca, setBusca] = useState("");
+  const [etapa, setEtapa] = useState<EtapaContrato>("minuta");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; codigo: string | null } | null>(null);
+
+  const contagem = useMemo(() => {
+    const rows = data ?? [];
+    return {
+      minuta: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "minuta").length,
+      ativo: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "ativo").length,
+      cancelado: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "cancelado").length,
+    };
+  }, [data]);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    const rows = data ?? [];
+    const rows = (data ?? []).filter((r) => classificarEtapaContrato(r.status, r.cancelado) === etapa);
     if (!q) return rows;
     return rows.filter((r) =>
       [r.codigo, r.cliente_nome, r.consultor_nome, r.status]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q)),
     );
-  }, [data, busca]);
+  }, [data, busca, etapa]);
 
   if (perm.isLoading) {
     return (

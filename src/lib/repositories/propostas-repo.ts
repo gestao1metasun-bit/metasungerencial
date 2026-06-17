@@ -53,6 +53,35 @@ function safeValor(p: PropostaFV): number | null {
 export function rowToProposta(r: Row): PropostaFV {
   // `dados` carrega o objeto completo; colunas servem para filtros/relatórios.
   const base = (r.dados as Partial<PropostaFV> | null) ?? {};
+  const d = (r.dados as Record<string, any> | null) ?? {};
+
+  // D18.6 — Binding compat para massas salvas em snake_case (ex.: HOMOLOGACAO_FIXA_D18).
+  // Mapeia colunas tabulares (r.*) e chaves snake_case dentro de `dados` para
+  // os campos camelCase usados pela grid (Lead.consultor, consumoMedio,
+  // modulosQtd, moduloPotenciaWp, valorFinalManual, inversores, cidade/estado).
+  const consultorTxt =
+    (base as any).consultor ?? d.consultor_nome ?? d.consultorNome ?? d.vendedor ?? undefined;
+  const modulosQtdNum =
+    (base as any).modulosQtd ?? r.modulos_qtd ?? d.modulos_qtd ?? d.quantidade_modulos ?? undefined;
+  const moduloWp =
+    (base as any).moduloPotenciaWp ?? d.potencia_modulo_wp ?? d.modulo_wp ?? undefined;
+  const consumoNum =
+    (base as any).consumoMedio ?? d.consumo_kwh ?? d.consumo_medio ?? d.consumo_mensal ?? undefined;
+  // valor_final é a fonte de verdade no Supabase; usamos valorFinalManual para
+  // que calcPrecificacao().valorFinal devolva esse número sem mascarar com `|| 0`.
+  const valorFinalNum =
+    (base as any).valorFinalManual ?? r.valor_final ?? d.valor_total ?? d.valor_proposta ?? undefined;
+  const cidadeTxt = (base as any).cidade ?? d.cidade ?? undefined;
+  const ufTxt = (base as any).estado ?? d.uf ?? d.estado ?? undefined;
+  // Inversor: `dados` pode trazer string ("Sofar 20k") ou array já estruturado.
+  let inversoresArr: any[] | undefined = (base as any).inversores;
+  let inversorMarcaTxt: string | undefined = (base as any).inversorMarca;
+  if ((!inversoresArr || inversoresArr.length === 0) && (d.inversor || d.modelo_inversor)) {
+    const txt = String(d.inversor ?? d.modelo_inversor);
+    inversorMarcaTxt = inversorMarcaTxt ?? txt;
+    inversoresArr = [{ inversorId: txt, quantidade: 1 }];
+  }
+
   return {
     ...(base as PropostaFV),
     id: r.id,
@@ -68,6 +97,18 @@ export function rowToProposta(r: Row): PropostaFV {
     validade: r.validade ?? base.validade ?? "",
     criadoEm: base.criadoEm ?? r.created_at,
     atualizadoEm: base.atualizadoEm ?? r.updated_at,
+    // Binding D18.6
+    consultor: consultorTxt,
+    modulosQtd: modulosQtdNum != null ? Number(modulosQtdNum) : (base as any).modulosQtd,
+    moduloPotenciaWp: moduloWp != null ? Number(moduloWp) : (base as any).moduloPotenciaWp,
+    consumoMedio: consumoNum != null ? Number(consumoNum) : (base as any).consumoMedio,
+    valorFinalManual: valorFinalNum != null ? Number(valorFinalNum) : (base as any).valorFinalManual,
+    cidade: cidadeTxt,
+    estado: ufTxt,
+    clienteCidade: (base as any).clienteCidade ?? cidadeTxt,
+    clienteUf: (base as any).clienteUf ?? ufTxt,
+    inversores: inversoresArr ?? [],
+    inversorMarca: inversorMarcaTxt,
   } as PropostaFV;
 }
 

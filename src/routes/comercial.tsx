@@ -215,6 +215,45 @@ function ComercialPage() {
 
 // C-ENT.11.a — ContratosUnificadosTab + ContratosKanbanView + valorContrato movidos para @/modules/comercial/{ContratosSection,_shared}
 
+/**
+ * C-ENT.11.b — Card de redirecionamento para a lista oficial de Contratos (Supabase).
+ * A aba interna "Contratos" do /comercial deixou de ser canônica para eliminar duplicidade
+ * de verdade entre LS e Supabase. Toda operação real (criar/cancelar/visualizar/aditivos/
+ * comissões) ocorre em /comercial/contratos e /comercial/contratos/$contratoId.
+ */
+function ContratosRedirectCard() {
+  return (
+    <Card className="p-8">
+      <div className="mx-auto max-w-2xl space-y-4 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <FileSignature className="h-6 w-6 text-primary" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">Contratos agora vivem em uma tela própria</h3>
+          <p className="text-sm text-muted-foreground">
+            A lista oficial de contratos é mantida em Supabase (verdade única).
+            A aba antiga foi desativada para evitar duas fontes paralelas.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button asChild>
+            <Link to="/comercial/contratos">
+              <FileSignature className="mr-2 h-4 w-4" /> Abrir Contratos (oficial)
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/comercial/comissoes">Comissões</Link>
+          </Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          C-ENT.11.b — Recableamento Comercial: contratos LS deixaram de ser canônicos.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+
 function ContratoAssinadoTab({
   contratos, setContratos, vendedoresList,
 }: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) {

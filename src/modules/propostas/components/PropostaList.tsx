@@ -63,11 +63,10 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
   }
 }
 
-/** D18.9 — Status em que a proposta está "fechada" (não permite mais aprovar/cancelar/excluir/editar pelo módulo de propostas). */
-const STATUS_FECHADOS = new Set<StatusProposta>([
-  "APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA",
-  "CANCELADA","RECUSADA","VENCIDA","EXPIRADA","SUBSTITUIDA",
-]);
+// D18.9 — Os bloqueios de aprovar/cancelar/excluir por status estão inline nas funções
+// excluirProposta/cancelarProposta e na construção de actions abaixo.
+
+
 
 function readLS<T>(key: string, fb: T): T {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fb; } catch { return fb; }

@@ -259,19 +259,15 @@ function seedAll(): ContratoFull[] {
 
 function read(): ContratoFull[] {
   if (cache) return cache;
-  if (typeof window === "undefined") { cache = seedAll(); return cache; }
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) { cache = JSON.parse(raw); return cache!; }
-  } catch {}
+  // D18.fix — Contratos vive em Supabase; cache é só memória.
+  // Removida persistência em LS (chave ms.contratos.v2 é proibida por ls-guard).
   cache = seedAll();
-  try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch {}
   return cache;
 }
 
 function write(next: ContratoFull[]) {
   cache = next;
-  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+  // D18.fix — sem persistência LS; Supabase é a fonte da verdade.
   listeners.forEach((l) => l());
 }
 
@@ -305,7 +301,7 @@ async function syncFromSupabase(): Promise<void> {
     for (const c of remote) byId.set(c.id, c);
     const merged = Array.from(byId.values());
     lastSyncAt = Date.now();
-    try { localStorage.setItem(SYNC_FLAG_KEY, String(lastSyncAt)); } catch {}
+    // D18.fix — flag lastSync vive em memória; LS é proibido por ls-guard.
     write(merged);
   } catch (e) {
     // Sync falhou (provavelmente sem sessão) — segue com cache local.

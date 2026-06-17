@@ -82,7 +82,8 @@ export const errorLogRepo = {
 
       const { error } = await supabase.from("error_log").insert({
         user_id: user.id,
-        modulo: input.modulo ?? null,
+        // audit_log trigger exige modulo NOT NULL; default seguro evita 23502.
+        modulo: input.modulo ?? "plataforma",
         tela: input.tela ?? window.location.pathname,
         acao: input.acao ?? null,
         mensagem: String(input.mensagem ?? "erro desconhecido").slice(0, 2000),

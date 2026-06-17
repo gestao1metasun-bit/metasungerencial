@@ -104,7 +104,7 @@ export const Route = createFileRoute("/comercial")({
   component: ComercialPage,
 });
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+// C-ENT.11.a — CHART_COLORS movido para @/modules/comercial/_shared
 
 /* ---------------- Máscaras / formatadores ---------------- */
 const onlyDigits = (v: string) => v.replace(/\D/g, "");

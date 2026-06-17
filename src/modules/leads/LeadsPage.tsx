@@ -1209,9 +1209,10 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                     const contratoId = await gerarContrato.mutateAsync(
                       propostasSelecionadas.map((p) => p.id),
                     );
-                    toast.success(`Contrato criado (${contratoId.slice(0, 8)}…).`);
+                    toast.success("Contrato pendente criado. Abrindo workspace para revisão.");
                     setSelecionadas(new Set());
                     setConfirmContrato(false);
+                    navigate({ to: "/comercial/contratos/$contratoId", params: { contratoId } });
                   } catch (err) {
                     const e = err as { message?: string };
                     toast.error(e?.message ?? "Não foi possível gerar o contrato.");

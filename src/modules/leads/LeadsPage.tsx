@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, Eye, Send, History as HistoryIcon, Lock } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

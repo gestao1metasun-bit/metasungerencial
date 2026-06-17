@@ -28,6 +28,8 @@ import {
 import { useAtualizarClienteSupabase } from "@/lib/repositories/clientes-supabase-repo";
 import { useProjetosPorCliente } from "@/lib/repositories/contratos-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
+import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
+import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 
 export const Route = createFileRoute("/comercial/clientes/$clienteId")({
   head: () => ({ meta: [{ title: "Workspace 360º — Cliente — Meta Sun" }] }),
@@ -204,6 +206,9 @@ function WorkspaceClientePage() {
           <TabsTrigger value="contratos">Contratos ({contratos.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="projetos">Projetos ({projetosCliente.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="leads">Leads ({leads.data?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumo" className="mt-3">
@@ -428,6 +433,29 @@ function WorkspaceClientePage() {
                 )}
               </TableBody>
             </Table>
+          </Card>
+        </TabsContent>
+
+        {/* C-ENT.11.e — Documentos universais (motor anexos C-ENT.6). */}
+        <TabsContent value="documentos" className="mt-3">
+          <DocumentosObjetoPanel
+            objetoTipo="clientes"
+            objetoId={c.id}
+            permissaoVisualizar="comercial.cliente.visualizar"
+            permissaoUpload="comercial.cliente.editar"
+            timelineObjetoTipo="cliente"
+          />
+        </TabsContent>
+
+        {/* C-ENT.11.e — Timeline universal (motor eventos_timeline C-ENT.6). */}
+        <TabsContent value="timeline" className="mt-3">
+          <TimelineObjetoPanel objetoTipo="cliente" objetoId={c.id} />
+        </TabsContent>
+
+        {/* C-ENT.11.e — Auditoria honesta: motor universal vem em onda futura. */}
+        <TabsContent value="auditoria" className="mt-3">
+          <Card className="p-6 text-sm text-muted-foreground">
+            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais já aparecem na aba <strong>Timeline</strong>.
           </Card>
         </TabsContent>
       </Tabs>

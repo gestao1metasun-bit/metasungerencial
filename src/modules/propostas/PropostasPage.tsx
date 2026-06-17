@@ -2409,12 +2409,37 @@ function EditarDadosClienteDialog({
     }
   }
 
+  // D18.4 — guard de governança: se a proposta já é histórica, dialog é somente leitura.
+  const STATUS_LOCKED = ["APROVADA","ASSINADA","CONTRATADA","CANCELADA","REPROVADA","RECUSADA","VENCIDA","SUBSTITUIDA","EXPIRADA"];
+  const statusUpper = String(proposta.status ?? "").toUpperCase();
+  const isLocked = STATUS_LOCKED.includes(statusUpper);
+  const lockedMsg = statusUpper === "CONTRATADA"
+    ? "Esta proposta já gerou contrato e está bloqueada para edição. Alterações cadastrais devem ser feitas no Cliente ou no Contrato, conforme permissão."
+    : statusUpper === "SUBSTITUIDA"
+      ? "Esta proposta foi substituída por outra versão e está somente leitura."
+      : statusUpper === "CANCELADA"
+        ? "Esta proposta foi cancelada e está somente leitura."
+        : `Proposta ${statusUpper} é documento histórico. Gere nova proposta ou ajuste o cadastro no objeto correto.`;
+
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Editar dados do cliente · Proposta {proposta.numero}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <span>Editar dados do cliente · Proposta {proposta.numero}</span>
+            {isLocked && (
+              <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
+                {statusUpper}
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
+        {isLocked && (
+          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            {lockedMsg}
+          </div>
+        )}
+        <fieldset disabled={isLocked} className="contents">
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <Label className="text-xs">Nome / Razão social *</Label>
@@ -2477,9 +2502,12 @@ function EditarDadosClienteDialog({
             <Input value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} maxLength={2} />
           </div>
         </div>
+        </fieldset>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
-          <Button onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar dados do cliente"}</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>{isLocked ? "Fechar" : "Cancelar"}</Button>
+          {!isLocked && (
+            <Button onClick={salvar} disabled={salvando}>{salvando ? "Salvando…" : "Salvar dados do cliente"}</Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

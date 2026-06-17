@@ -281,19 +281,36 @@ function WorkspaceClientePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(propostas.data ?? []).map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">{p.numero ?? p.id.slice(0, 8)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{p.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_final)}</TableCell>
-                    <TableCell className="text-xs">{p.validade ? new Date(p.validade).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {new Date(p.created_at).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(propostas.data ?? []).map((p) => {
+                  const d = (p as { dados?: Record<string, unknown> | null }).dados ?? {};
+                  const inconsist = (d as Record<string, unknown>)?.dados_inconsistentes === true;
+                  const excecao = (d as Record<string, unknown>)?.excecao_comercial === true;
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{p.numero ?? p.id.slice(0, 8)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Badge variant="outline">{p.status}</Badge>
+                          {inconsist && (
+                            <Badge variant="destructive" className="text-[10px]" title="Dados críticos faltando ou inconsistentes">
+                              Dados inconsistentes
+                            </Badge>
+                          )}
+                          {excecao && (
+                            <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-900 border-amber-300" title="Negociação fora do parâmetro mínimo R$/kWp">
+                              Exceção comercial
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtBRL(p.valor_final)}</TableCell>
+                      <TableCell className="text-xs">{p.validade ? new Date(p.validade).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {(propostas.data ?? []).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-6">

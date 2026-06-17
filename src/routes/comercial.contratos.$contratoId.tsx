@@ -37,6 +37,8 @@ import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObje
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
 import { ComissoesContratoPanel } from "@/components/app/comissoes/ComissoesContratoPanel";
+import { MinutaContratoPanel } from "@/components/app/contratos/MinutaContratoPanel";
+import { classificarEtapaContrato, rotuloEtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),
@@ -46,11 +48,11 @@ export const Route = createFileRoute("/comercial/contratos/$contratoId")({
 const fmtBRL = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const statusBadge = (status: string) => {
-  const s = (status ?? "").toUpperCase();
-  if (s === "CANCELADO") return <Badge variant="destructive">{s}</Badge>;
-  if (s === "ATIVO") return <Badge>{s}</Badge>;
-  return <Badge variant="outline">{s || "—"}</Badge>;
+const statusBadge = (status: string, cancelado?: boolean) => {
+  const e = classificarEtapaContrato(status, cancelado);
+  if (e === "cancelado") return <Badge variant="destructive">CANCELADO</Badge>;
+  if (e === "minuta") return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-950/40">CONTRATO PENDENTE</Badge>;
+  return <Badge>ATIVO</Badge>;
 };
 
 function useCliente(id: string | null | undefined) {

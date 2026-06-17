@@ -22,6 +22,8 @@ import {
 import { useContratosSupabase, useCancelarContratoSupabase } from "@/lib/repositories/contratos-supabase-repo";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { classificarEtapaContrato, type EtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/")({
   head: () => ({ meta: [{ title: "Contratos — Meta Sun" }] }),
@@ -31,11 +33,11 @@ export const Route = createFileRoute("/comercial/contratos/")({
 const fmtBRL = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const statusBadge = (status: string) => {
-  const s = (status ?? "").toUpperCase();
-  if (s === "CANCELADO") return <Badge variant="destructive">{s}</Badge>;
-  if (s === "ATIVO") return <Badge>{s}</Badge>;
-  return <Badge variant="outline">{s || "—"}</Badge>;
+const statusBadge = (status: string, cancelado?: boolean) => {
+  const etapa = classificarEtapaContrato(status, cancelado);
+  if (etapa === "cancelado") return <Badge variant="destructive">CANCELADO</Badge>;
+  if (etapa === "minuta") return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-950/40">CONTRATO PENDENTE</Badge>;
+  return <Badge>ATIVO</Badge>;
 };
 
 function ContratosListPage() {
@@ -45,18 +47,28 @@ function ContratosListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useContratosSupabase();
   const cancelar = useCancelarContratoSupabase();
   const [busca, setBusca] = useState("");
+  const [etapa, setEtapa] = useState<EtapaContrato>("minuta");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; codigo: string | null } | null>(null);
+
+  const contagem = useMemo(() => {
+    const rows = data ?? [];
+    return {
+      minuta: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "minuta").length,
+      ativo: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "ativo").length,
+      cancelado: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "cancelado").length,
+    };
+  }, [data]);
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    const rows = data ?? [];
+    const rows = (data ?? []).filter((r) => classificarEtapaContrato(r.status, r.cancelado) === etapa);
     if (!q) return rows;
     return rows.filter((r) =>
       [r.codigo, r.cliente_nome, r.consultor_nome, r.status]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q)),
     );
-  }, [data, busca]);
+  }, [data, busca, etapa]);
 
   if (perm.isLoading) {
     return (
@@ -100,7 +112,14 @@ function ContratosListPage() {
         />
 
         <Card className="p-2">
-          <div className="flex items-center gap-2">
+          <Tabs value={etapa} onValueChange={(v) => setEtapa(v as EtapaContrato)}>
+            <TabsList>
+              <TabsTrigger value="minuta">Pendentes ({contagem.minuta})</TabsTrigger>
+              <TabsTrigger value="ativo">Ativos ({contagem.ativo})</TabsTrigger>
+              <TabsTrigger value="cancelado">Cancelados ({contagem.cancelado})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex items-center gap-2 mt-2">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -128,7 +147,11 @@ function ContratosListPage() {
           ) : filtrados.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
               <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Nenhum contrato encontrado. Gere contratos a partir de propostas aprovadas em /comercial → Leads.
+              {etapa === "minuta"
+                ? "Nenhum contrato pendente. Aprove uma proposta em /comercial → Propostas para criar uma minuta."
+                : etapa === "ativo"
+                  ? "Nenhum contrato ativo. Aprove uma minuta para movê-la para Ativos."
+                  : "Nenhum contrato cancelado."}
             </div>
           ) : (
             <Table>
@@ -162,7 +185,7 @@ function ContratosListPage() {
                         {c.potencia_kwp != null ? Number(c.potencia_kwp).toFixed(2) : "—"}
                       </TableCell>
                       <TableCell className="text-center tabular-nums">{c.projetos_count}</TableCell>
-                      <TableCell>{statusBadge(c.status)}</TableCell>
+                      <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(c.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>

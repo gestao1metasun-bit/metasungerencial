@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, Eye, Send, History as HistoryIcon, Lock } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -980,6 +981,7 @@ function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
 
 function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
   void usuario;
+  const navigate = useNavigate();
   const { data: propostas = [], isLoading } = usePropostasPorLead(lead.id);
   const cancelar = useCancelarPropostaSupabase();
   const gerarNova = useGerarNovaVersaoProposta();
@@ -1207,9 +1209,10 @@ function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }
                     const contratoId = await gerarContrato.mutateAsync(
                       propostasSelecionadas.map((p) => p.id),
                     );
-                    toast.success(`Contrato criado (${contratoId.slice(0, 8)}…).`);
+                    toast.success("Contrato pendente criado. Abrindo workspace para revisão.");
                     setSelecionadas(new Set());
                     setConfirmContrato(false);
+                    navigate({ to: "/comercial/contratos/$contratoId", params: { contratoId } });
                   } catch (err) {
                     const e = err as { message?: string };
                     toast.error(e?.message ?? "Não foi possível gerar o contrato.");

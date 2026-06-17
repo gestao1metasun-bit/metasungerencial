@@ -37,6 +37,8 @@ import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObje
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
 import { ComissoesContratoPanel } from "@/components/app/comissoes/ComissoesContratoPanel";
+import { MinutaContratoPanel } from "@/components/app/contratos/MinutaContratoPanel";
+import { classificarEtapaContrato, rotuloEtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
   head: () => ({ meta: [{ title: "Contrato — Workspace — Meta Sun" }] }),
@@ -46,11 +48,11 @@ export const Route = createFileRoute("/comercial/contratos/$contratoId")({
 const fmtBRL = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const statusBadge = (status: string) => {
-  const s = (status ?? "").toUpperCase();
-  if (s === "CANCELADO") return <Badge variant="destructive">{s}</Badge>;
-  if (s === "ATIVO") return <Badge>{s}</Badge>;
-  return <Badge variant="outline">{s || "—"}</Badge>;
+const statusBadge = (status: string, cancelado?: boolean) => {
+  const e = classificarEtapaContrato(status, cancelado);
+  if (e === "cancelado") return <Badge variant="destructive">CANCELADO</Badge>;
+  if (e === "minuta") return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-950/40">CONTRATO PENDENTE</Badge>;
+  return <Badge>ATIVO</Badge>;
 };
 
 function useCliente(id: string | null | undefined) {
@@ -157,14 +159,17 @@ function ContratoWorkspacePage() {
   }
 
   const c = contrato.data;
-  const cancelado = c.status === "CANCELADO" || c.cancelado;
+  const etapa = classificarEtapaContrato(c.status, c.cancelado);
+  const ehMinuta = etapa === "minuta";
+  const cancelado = etapa === "cancelado";
   const clienteNome = cliente.data?.nome ?? "—";
+  const propostaOrigemId = (propostas.data ?? [])[0]?.id ?? null;
 
   return (
     <div className="p-2 space-y-2">
       <PageHeader
         title={`Contrato ${c.codigo ?? c.id.slice(0, 8)}`}
-        subtitle={`Cliente: ${clienteNome} · ${statusFromContract(c)}`}
+        subtitle={`Cliente: ${clienteNome} · ${rotuloEtapaContrato(etapa).toUpperCase()}`}
         actions={
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" onClick={() => navigate({ to: "/comercial/contratos" })}>
@@ -177,12 +182,19 @@ function ContratoWorkspacePage() {
                 </Button>
               </Link>
             )}
-            {permAditivoCriar.data === true && !cancelado && (
+            {ehMinuta && propostaOrigemId && (
+              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id ?? "" }} hash={`tab=propostas&proposta=${propostaOrigemId}`}>
+                <Button size="sm" variant="outline">
+                  <FileText className="h-4 w-4 mr-1" /> Proposta origem
+                </Button>
+              </Link>
+            )}
+            {!ehMinuta && permAditivoCriar.data === true && !cancelado && (
               <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
               </Button>
             )}
-            {permCancelar.data === true && !cancelado && (
+            {!ehMinuta && permCancelar.data === true && !cancelado && (
               <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar contrato
               </Button>
@@ -191,6 +203,25 @@ function ContratoWorkspacePage() {
         }
       />
 
+      {ehMinuta && (
+        <MinutaContratoPanel
+          contrato={{
+            id: c.id,
+            codigo: c.codigo,
+            status: c.status,
+            valor_total: Number(c.valor_total) || 0,
+            valor_entrada: (c as { valor_entrada?: number | null }).valor_entrada ?? null,
+            observacoes: (c as { observacoes?: string | null }).observacoes ?? null,
+            data_assinatura: (c as { data_assinatura?: string | null }).data_assinatura ?? null,
+            forma_pagamento: (c as { forma_pagamento?: string | null }).forma_pagamento ?? null,
+            possui_financiamento: !!(c as { possui_financiamento?: boolean }).possui_financiamento,
+            financiamento_banco: (c as { financiamento_banco?: string | null }).financiamento_banco ?? null,
+            financiamento_valor: (c as { financiamento_valor?: number | null }).financiamento_valor ?? null,
+            dados: (c.dados ?? null) as Record<string, unknown> | null,
+          }}
+        />
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <StatCard label="Valor global" value={fmtBRL(c.valor_total)} icon={DollarSign} />
         <StatCard label="Potência (kWp)" value={(Number(c.potencia_kwp) || 0).toFixed(2)} icon={Zap} />
@@ -198,6 +229,7 @@ function ContratoWorkspacePage() {
         <StatCard label="Propostas" value={String(propostas.data?.length ?? 0)} icon={FileText} />
         <StatCard label="Projetos" value={String(projetos.data?.length ?? 0)} icon={ClipboardList} />
       </div>
+
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -427,9 +459,4 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
       <span className={mono ? "font-mono text-xs" : "text-right"}>{value}</span>
     </div>
   );
-}
-
-function statusFromContract(c: { status: string; cancelado: boolean }): string {
-  if (c.cancelado || c.status === "CANCELADO") return "CANCELADO";
-  return c.status;
 }

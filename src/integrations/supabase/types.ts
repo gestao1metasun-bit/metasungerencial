@@ -15247,6 +15247,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rpc_contrato_aprovar_minuta: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: string
+      }
       rpc_contrato_assinar: {
         Args: {
           p_contrato_id: string
@@ -15260,6 +15264,10 @@ export type Database = {
       rpc_contrato_cancelar: {
         Args: { _id: string; _motivo: string; _observacao?: string }
         Returns: undefined
+      }
+      rpc_contrato_cancelar_minuta: {
+        Args: { p_contrato_id: string; p_motivo: string }
+        Returns: string
       }
       rpc_contrato_enviar_assinatura: {
         Args: { p_contrato_id: string; p_observacao?: string }
@@ -16138,6 +16146,8 @@ export type Database = {
         | "comercial.comissao.pagar"
         | "comercial.comissao.aprovar"
         | "comercial.comissao.substituir"
+        | "comercial.contrato.aprovar_minuta"
+        | "comercial.contrato.editar_minuta"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_origem: "CONTRATO" | "ADITIVO" | "AJUSTE"
       comercial_comissao_status:
@@ -16543,6 +16553,8 @@ export const Constants = {
         "comercial.comissao.pagar",
         "comercial.comissao.aprovar",
         "comercial.comissao.substituir",
+        "comercial.contrato.aprovar_minuta",
+        "comercial.contrato.editar_minuta",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_origem: ["CONTRATO", "ADITIVO", "AJUSTE"],

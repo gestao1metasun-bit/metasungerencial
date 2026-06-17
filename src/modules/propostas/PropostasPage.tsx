@@ -660,6 +660,14 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
             } else if (a === "editar") {
               const p = getPropostaAtiva();
               if (!p) { toast.info("Selecione uma proposta na tabela."); return; }
+              // D18.4: mesma trava do "editar_cliente" — proposta histórica é somente leitura.
+              const bloqueadosEdit = ["APROVADA", "ASSINADA", "CONTRATADA", "CANCELADA", "REPROVADA", "RECUSADA", "VENCIDA", "SUBSTITUIDA", "EXPIRADA"];
+              if (bloqueadosEdit.includes(String(p.status).toUpperCase())) {
+                toast.error(
+                  `Proposta ${p.status} é documento histórico e não permite edição. Gere nova proposta ou ajuste o cadastro no Cliente/Contrato.`,
+                );
+                return;
+              }
               // Edição inline pela barra = SOMENTE dados do cliente (nome/CPF/endereço/contato).
               // Para editar a proposta inteira, abrir pelo botão "Visualizar/Editar proposta" da linha.
               setEditandoCliente(p);

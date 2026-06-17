@@ -628,7 +628,7 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
           else if (a === "favoritos") notifyUnavailable();
           else if (a === "colunas") notifyUnavailable();
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
+          else if (a === "filtroAvancado") notifyUnavailable();
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
@@ -868,7 +868,7 @@ function ContratosTab({
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
           else if (a === "favoritos") notifyUnavailable();
           else if (a === "colunas") notifyUnavailable();
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
+          else if (a === "filtroAvancado") notifyUnavailable();
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}

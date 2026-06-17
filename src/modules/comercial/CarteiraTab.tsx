@@ -257,8 +257,8 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
           if (p === "abrirLead") irPara("orcamentos");
           else if (p === "abrirProposta") irPara("orcamentos");
           else if (p === "abrirContrato") irPara("contratos");
-          else if (p === "transferir") toast.info("Transferência usa RPC oficial (Comercial C4) — UI dedicada em D17.UI Fase 3.");
-          else if (p === "historico") toast.info("Histórico de carteira (comercial_carteira_transferencias) — UI dedicada em D17.UI Fase 3.");
+          else if (p === "transferir") notifyUnavailable();
+          else if (p === "historico") notifyUnavailable();
         }}
         onAction={(a) => {
           if (a === "atualizar") notifyDone("Carteira recalculada.");
@@ -400,7 +400,7 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
         label="item(ns) selecionado(s)"
         onClear={sel.clear}
         actions={[
-          { key: "transferir", label: "Transferir carteira", tone: "indigo", onClick: () => toast.info("Transferência em lote usa RPC oficial (Comercial C4) — UI dedicada em D17.UI Fase 3.") },
+          { key: "transferir", label: "Transferir carteira", tone: "indigo", onClick: () => notifyUnavailable() },
           { key: "exportar", label: "Exportar", tone: "azul", onClick: () => notifyUnavailable() },
         ]}
       />

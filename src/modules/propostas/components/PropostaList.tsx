@@ -953,7 +953,8 @@ function LeadDetail({
                     // Regra: proposta NÃO pode ser editada depois de criada.
                     // Para alterar valores/condições, o operador gera uma nova proposta no mesmo card.
                     const podeExcluir = ehRascunho && !lead.bloqueado;
-                    const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
+                    const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
+                    const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
                     const podeReativar = p.status === "CANCELADA";
                     const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
                     if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });

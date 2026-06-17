@@ -31,7 +31,7 @@ import {
   useCancelarMinutaContrato,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useQueryClient } from "@tanstack/react-query";
-import { logError } from "@/lib/error-log";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 type FormaPagamento = "A_VISTA" | "PARCELADO" | "FINANCIAMENTO" | "MISTO" | "";
 

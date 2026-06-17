@@ -981,6 +981,7 @@ function mapStatusLegacyToCanonical(s: PropostaFV["status"]): string {
 
 function PropostasDoLeadPanel({ lead, usuario }: { lead: Lead; usuario: string }) {
   void usuario;
+  const navigate = useNavigate();
   const { data: propostas = [], isLoading } = usePropostasPorLead(lead.id);
   const cancelar = useCancelarPropostaSupabase();
   const gerarNova = useGerarNovaVersaoProposta();

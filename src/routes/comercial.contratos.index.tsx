@@ -112,7 +112,14 @@ function ContratosListPage() {
         />
 
         <Card className="p-2">
-          <div className="flex items-center gap-2">
+          <Tabs value={etapa} onValueChange={(v) => setEtapa(v as EtapaContrato)}>
+            <TabsList>
+              <TabsTrigger value="minuta">Pendentes ({contagem.minuta})</TabsTrigger>
+              <TabsTrigger value="ativo">Ativos ({contagem.ativo})</TabsTrigger>
+              <TabsTrigger value="cancelado">Cancelados ({contagem.cancelado})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex items-center gap-2 mt-2">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -140,7 +147,11 @@ function ContratosListPage() {
           ) : filtrados.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
               <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Nenhum contrato encontrado. Gere contratos a partir de propostas aprovadas em /comercial → Leads.
+              {etapa === "minuta"
+                ? "Nenhum contrato pendente. Aprove uma proposta em /comercial → Propostas para criar uma minuta."
+                : etapa === "ativo"
+                  ? "Nenhum contrato ativo. Aprove uma minuta para movê-la para Ativos."
+                  : "Nenhum contrato cancelado."}
             </div>
           ) : (
             <Table>

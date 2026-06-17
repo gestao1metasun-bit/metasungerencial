@@ -92,9 +92,9 @@ export function ContratosUnificadosTab({
   contratos: Contrato[];
   setContratos: (v: Contrato[]) => void;
   vendedoresList: Vendedor[];
-  renderAberto: (args: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) => JSX.Element;
-  renderContrato: (args: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) => JSX.Element;
-  renderFechado: (args: { contratos: Contrato[] }) => JSX.Element;
+  renderAberto: (args: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void }) => ReactNode;
+  renderContrato: (args: { contratos: Contrato[]; setContratos: (v: Contrato[]) => void; vendedoresList: Vendedor[] }) => ReactNode;
+  renderFechado: (args: { contratos: Contrato[] }) => ReactNode;
 }) {
   const aRedigir = contratos.filter((c) => c.status === "Pendente" && !c.contratoRedigido && !c.cancelado).length;
   const aguardando = contratos.filter((c) => c.contratoRedigido && c.status === "Pendente" && !c.cancelado).length;

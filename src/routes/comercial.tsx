@@ -4794,19 +4794,4 @@ function PedidosVendaTab({ contratos }: { contratos: Contrato[] }) {
 
 // C-ENT.11.a — AditivosTab movido para @/modules/comercial/AditivosTab
 
-/** Helper local: pega email/nome do usuário autenticado para auditoria. */
-function useAuthCurrent(): { user: string } {
-  // Importa de forma leve para não criar ciclo com auth-store.
-  // Usa useIsAdmin não, mas precisamos do email — reaproveita useAuth.
-  // (import dinâmico evitado — usamos sessão direta)
-  if (typeof window === "undefined") return { user: "sistema" };
-  try {
-    const raw = Object.keys(localStorage).find((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
-    if (raw) {
-      const data = JSON.parse(localStorage.getItem(raw) || "{}");
-      const email = data?.user?.email || data?.currentSession?.user?.email;
-      if (email) return { user: email };
-    }
-  } catch {}
-  return { user: "operador" };
-}
+// C-ENT.11.a — useAuthCurrent movido para @/modules/comercial/_shared

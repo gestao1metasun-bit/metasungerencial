@@ -561,9 +561,12 @@ function ContratoAssinadoRow({
                 toast.info("Comissões agora vivem em /comercial/comissoes (Supabase). Esta ação foi desativada.");
                 break;
               }
-              case "duplicar":
-                setAditivosOpen(true);
+              case "duplicar": {
+                // C-ENT.11.c — "Gerenciar aditivos" agora abre o workspace oficial do contrato
+                // (aba Aditivos Supabase). Sem fluxo LS paralelo.
+                window.location.href = `/comercial/contratos/${c.id}#tab=aditivos`;
                 break;
+              }
               case "historico":
                 onImprimir(c);
                 break;

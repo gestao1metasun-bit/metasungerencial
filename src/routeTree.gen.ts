@@ -65,6 +65,7 @@ import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comer
 import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
 import { Route as EngenhariaGestaoServicosIndexRouteImport } from './routes/engenharia.gestao-servicos.index'
 import { Route as ComercialContratosIndexRouteImport } from './routes/comercial.contratos.index'
+import { Route as ComercialComissoesIndexRouteImport } from './routes/comercial.comissoes.index'
 import { Route as ComercialClientesIndexRouteImport } from './routes/comercial.clientes.index'
 import { Route as EngenhariaGestaoServicosModelosRouteImport } from './routes/engenharia.gestao-servicos.modelos'
 import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
@@ -356,6 +357,11 @@ const ComercialContratosIndexRoute = ComercialContratosIndexRouteImport.update({
   path: '/contratos/',
   getParentRoute: () => ComercialRoute,
 } as any)
+const ComercialComissoesIndexRoute = ComercialComissoesIndexRouteImport.update({
+  id: '/comissoes/',
+  path: '/comissoes/',
+  getParentRoute: () => ComercialRoute,
+} as any)
 const ComercialClientesIndexRoute = ComercialClientesIndexRouteImport.update({
   id: '/clientes/',
   path: '/clientes/',
@@ -460,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes/': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes/': typeof ComercialComissoesIndexRoute
   '/comercial/contratos/': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -525,6 +532,7 @@ export interface FileRoutesByTo {
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes': typeof ComercialComissoesIndexRoute
   '/comercial/contratos': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -591,6 +599,7 @@ export interface FileRoutesById {
   '/engenharia/gestao-servicos/$osId': typeof EngenhariaGestaoServicosOsIdRoute
   '/engenharia/gestao-servicos/modelos': typeof EngenhariaGestaoServicosModelosRoute
   '/comercial/clientes/': typeof ComercialClientesIndexRoute
+  '/comercial/comissoes/': typeof ComercialComissoesIndexRoute
   '/comercial/contratos/': typeof ComercialContratosIndexRoute
   '/engenharia/gestao-servicos/': typeof EngenhariaGestaoServicosIndexRoute
 }
@@ -658,6 +667,7 @@ export interface FileRouteTypes {
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes/'
+    | '/comercial/comissoes/'
     | '/comercial/contratos/'
     | '/engenharia/gestao-servicos/'
   fileRoutesByTo: FileRoutesByTo
@@ -723,6 +733,7 @@ export interface FileRouteTypes {
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes'
+    | '/comercial/comissoes'
     | '/comercial/contratos'
     | '/engenharia/gestao-servicos'
   id:
@@ -788,6 +799,7 @@ export interface FileRouteTypes {
     | '/engenharia/gestao-servicos/$osId'
     | '/engenharia/gestao-servicos/modelos'
     | '/comercial/clientes/'
+    | '/comercial/comissoes/'
     | '/comercial/contratos/'
     | '/engenharia/gestao-servicos/'
   fileRoutesById: FileRoutesById
@@ -1221,6 +1233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComercialContratosIndexRouteImport
       parentRoute: typeof ComercialRoute
     }
+    '/comercial/comissoes/': {
+      id: '/comercial/comissoes/'
+      path: '/comissoes'
+      fullPath: '/comercial/comissoes/'
+      preLoaderRoute: typeof ComercialComissoesIndexRouteImport
+      parentRoute: typeof ComercialRoute
+    }
     '/comercial/clientes/': {
       id: '/comercial/clientes/'
       path: '/clientes'
@@ -1313,6 +1332,7 @@ interface ComercialRouteChildren {
   ComercialContratosContratoIdRoute: typeof ComercialContratosContratoIdRoute
   ComercialProjetosProjetoIdRoute: typeof ComercialProjetosProjetoIdRoute
   ComercialClientesIndexRoute: typeof ComercialClientesIndexRoute
+  ComercialComissoesIndexRoute: typeof ComercialComissoesIndexRoute
   ComercialContratosIndexRoute: typeof ComercialContratosIndexRoute
 }
 
@@ -1322,6 +1342,7 @@ const ComercialRouteChildren: ComercialRouteChildren = {
   ComercialContratosContratoIdRoute: ComercialContratosContratoIdRoute,
   ComercialProjetosProjetoIdRoute: ComercialProjetosProjetoIdRoute,
   ComercialClientesIndexRoute: ComercialClientesIndexRoute,
+  ComercialComissoesIndexRoute: ComercialComissoesIndexRoute,
   ComercialContratosIndexRoute: ComercialContratosIndexRoute,
 }
 

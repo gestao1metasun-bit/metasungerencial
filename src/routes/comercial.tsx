@@ -93,6 +93,7 @@ import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteA
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
+import { notifyUnavailable, notifyDone } from "@/lib/comercial-ux";
 // C-ENT.11.c — Aditivos LS descontinuados no /comercial. Verdade oficial = Supabase
 // (workspace do contrato/projeto). Não importar mais AditivosPanel/AditivoBadge/aditivos-store.
 
@@ -316,35 +317,35 @@ function ContratoAssinadoTab({
           { key: "exportar_lote_csv",        label: "Exportar selecionados (CSV)",    group: "Manutenção", permiteLote: true },
         ] as EnterpriseProcessItem[]}
         onProcess={(key) => {
-          if (key === "atualizar_lista") toast.info("Contratos atualizados.");
-          else if (key === "editar_contrato") toast.info("Abra o contrato e clique em Editar (chega em D27.COM.2b).");
-          else if (key === "gerar_aditivo") toast.info("Gerar aditivo: aba Aditivos (chega em D27.COM.AD).");
+          if (key === "atualizar_lista") notifyDone("Contratos atualizados.");
+          else if (key === "editar_contrato") notifyUnavailable();
+          else if (key === "gerar_aditivo") notifyUnavailable();
           else if (key === "cancelar_contrato" || key === "reabrir_contrato")
-            toast.info("Ação governada (motivo + workflow) chega em D27.COM.2b.");
+            notifyUnavailable();
           else if (key === "enviar_engenharia") toast.info("Use rpc_engenharia_libera dentro do contrato assinado (C5).");
-          else if (key === "enviar_financiamentos") toast.info("Envio para Financiamentos chega em D27.COM.FIN.");
+          else if (key === "enviar_financiamentos") notifyUnavailable();
           else if (key === "enviar_financeiro") toast.info("Use rpc_financeiro_libera dentro do contrato assinado (C5).");
           else if (key === "gerar_comissao") toast.info("Comissão é gerada automaticamente na assinatura (C6).");
-          else if (key === "enviar_assinar") toast.info("Envio para assinatura digital chega em D27.COM.6.");
-          else if (key === "recalcular_comissao" || key === "cancelar_comissao") toast.info("Recálculo/cancelamento de comissão chega em D27.COM.2b.");
-          else if (key.startsWith("alterar_")) toast.info("Alterações em lote (consultor/cidade/canal/origem) chegam em D27.COM.3.");
-          else if (key.startsWith("rel_")) toast.info(`Relatório ${key.replace("rel_", "")} chega em D27.COM.5 (Painel Executivo).`);
-          else if (key === "exportar_lote_csv") toast.info("Exportação CSV em lote chega em D27.COM.3.");
-          else if (key.endsWith("_lote")) toast.info("Operação em lote chega em D27.COM.3.");
+          else if (key === "enviar_assinar") notifyUnavailable();
+          else if (key === "recalcular_comissao" || key === "cancelar_comissao") notifyUnavailable();
+          else if (key.startsWith("alterar_")) notifyUnavailable();
+          else if (key.startsWith("rel_")) notifyUnavailable();
+          else if (key === "exportar_lote_csv") notifyUnavailable();
+          else if (key.endsWith("_lote")) notifyUnavailable();
         }}
         searchPlaceholder="Buscar contrato, cliente, proposta…"
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Contratos atualizados.");
-          else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
-          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b).");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
-          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
-          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          if (a === "atualizar") notifyDone("Contratos atualizados.");
+          else if (a === "editar" || a === "duplicar") notifyUnavailable();
+          else if (a === "excluir") notifyUnavailable();
+          else if (a === "exportar") notifyUnavailable();
+          else if (a === "enviar") notifyUnavailable();
+          else if (a === "anexos") notifyUnavailable();
           else if (a === "auditoria") toast.info("Auditoria oficial em /auditoria (D24).");
-          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
+          else if (a === "favoritos") notifyUnavailable();
+          else if (a === "colunas") notifyUnavailable();
           else if (a === "historico") setHistOpen(true);
           else if (a === "filtroAvancado") toast.info("Use os subgrupos acima (Em aberto / Em contrato / Fechado).");
         }}
@@ -427,10 +428,10 @@ function ContratoAssinadoTab({
         label="contrato(s) selecionado(s)"
         onClear={sel.clear}
         actions={[
-          { key: "enviar_eng", label: "Enviar Engenharia", tone: "azul", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
-          { key: "enviar_fin", label: "Enviar Financeiro", tone: "verde", onClick: () => { toast.info(`${sel.count} contrato(s) — envio em lote chega em D27.COM.`); sel.clear(); } },
+          { key: "enviar_eng", label: "Enviar Engenharia", tone: "azul", onClick: () => { notifyUnavailable(); sel.clear(); } },
+          { key: "enviar_fin", label: "Enviar Financeiro", tone: "verde", onClick: () => { notifyUnavailable(); sel.clear(); } },
           { key: "imprimir", label: "Imprimir", tone: "indigo", onClick: () => { window.print(); } },
-          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => notifyUnavailable() },
         ]}
       />
 
@@ -619,15 +620,15 @@ function ContratosCanceladosTab({ contratos }: { contratos: Contrato[] }) {
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          if (a === "atualizar") notifyDone("Lista atualizada.");
+          else if (a === "exportar") notifyUnavailable();
           else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
-          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
-          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "enviar") notifyUnavailable();
+          else if (a === "anexos") notifyUnavailable();
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
-          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
+          else if (a === "favoritos") notifyUnavailable();
+          else if (a === "colunas") notifyUnavailable();
+          else if (a === "filtroAvancado") notifyUnavailable();
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
@@ -857,17 +858,17 @@ function ContratosTab({
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Lista atualizada.");
-          else if (a === "editar" || a === "duplicar") toast.info("Use a linha do contrato (chega em D27.COM.2b).");
-          else if (a === "excluir") toast.info("Exclusão de contrato exige motivo + workflow (chega em D27.COM.2b). Use 'Retornar para Orçamentos' na linha.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D27.COM.3.");
+          if (a === "atualizar") notifyDone("Lista atualizada.");
+          else if (a === "editar" || a === "duplicar") notifyUnavailable();
+          else if (a === "excluir") notifyUnavailable();
+          else if (a === "exportar") notifyUnavailable();
           else if (a === "imprimir") toast.info("Use o botão Imprimir dentro do contrato.");
-          else if (a === "enviar") toast.info("Envio por e-mail/WhatsApp chega em D27.COM.6.");
-          else if (a === "anexos") toast.info("Anexos universais chegam em D27.COM.7.");
+          else if (a === "enviar") notifyUnavailable();
+          else if (a === "anexos") notifyUnavailable();
           else if (a === "historico" || a === "auditoria") toast.info("Histórico universal em /auditoria (D24).");
-          else if (a === "favoritos") toast.info("Favoritos por usuário chegam em D27.COM.5.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D27.COM.5.");
-          else if (a === "filtroAvancado") toast.info("Filtros avançados em D27.COM.3.");
+          else if (a === "favoritos") notifyUnavailable();
+          else if (a === "colunas") notifyUnavailable();
+          else if (a === "filtroAvancado") notifyUnavailable();
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}
@@ -1074,9 +1075,9 @@ function ContratosTab({
         label="contrato(s) selecionado(s)"
         onClear={() => { selARedigir.clear(); selRedigidos.clear(); }}
         actions={[
-          { key: "liberar", label: "Liberar para gerar", tone: "verde", onClick: () => { toast.info(`${selARedigir.count + selRedigidos.count} contrato(s) — liberação em lote chega em D27.COM.`); selARedigir.clear(); selRedigidos.clear(); } },
-          { key: "retornar", label: "Retornar para Orçamentos", tone: "ambar", onClick: () => { toast.info("Retorno em lote exige motivo + workflow (chega em D27.COM)."); } },
-          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação em lote chega em D17.UI.3.") },
+          { key: "liberar", label: "Liberar para gerar", tone: "verde", onClick: () => { notifyUnavailable(); selARedigir.clear(); selRedigidos.clear(); } },
+          { key: "retornar", label: "Retornar para Orçamentos", tone: "ambar", onClick: () => { notifyUnavailable(); } },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => notifyUnavailable() },
         ]}
       />
 

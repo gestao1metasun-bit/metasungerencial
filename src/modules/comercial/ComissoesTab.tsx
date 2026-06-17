@@ -49,6 +49,7 @@ import {
   type ComissaoStatus,
 } from "@/lib/repositories/comercial-comissao-repo";
 import { fmtBRL } from "@/lib/mock-data";
+import { notifyUnavailable, notifyDone } from "@/lib/comercial-ux";
 
 const STATUS_TONE: Record<ComissaoStatus, string> = {
   PREVISTA:    "bg-sky-50 text-sky-700 border-sky-200",
@@ -243,8 +244,8 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
           else if (p === "abrirPV") void navigate({ to: "/pedidos-venda" });
         }}
         onAction={(a) => {
-          if (a === "atualizar") { void refetch(); toast.info("Comissões atualizadas."); }
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          if (a === "atualizar") { void refetch(); notifyDone("Comissões atualizadas."); }
+          else if (a === "exportar") notifyUnavailable();
           else if (a === "imprimir") window.print();
         }}
         extraRight={
@@ -370,9 +371,9 @@ export function ComissoesTab({ onChangeTab }: { onChangeTab?: (tab: string) => v
         label="comissão(ões) selecionada(s)"
         onClear={sel.clear}
         actions={[
-          { key: "liberar", label: "Liberar", tone: "verde", onClick: () => toast.info("Liberação em lote chega em Comercial C6.2.") },
-          { key: "pagar", label: "Marcar pagas", tone: "verde", onClick: () => toast.info("Baixa em lote chega em Comercial C6.2.") },
-          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV chega em D17.UI.3.") },
+          { key: "liberar", label: "Liberar", tone: "verde", onClick: () => notifyUnavailable() },
+          { key: "pagar", label: "Marcar pagas", tone: "verde", onClick: () => notifyUnavailable() },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => notifyUnavailable() },
         ]}
       />
 

@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { EnterpriseRecordToolbar, ribbonRmComercial, layoutBarRm } from "@/components/app/enterprise";
 import { fmtBRL } from "@/lib/mock-data";
 import type { Contrato, Vendedor } from "./_shared";
+import { notifyUnavailable, notifyDone } from "@/lib/comercial-ux";
 
 export function VendedoresTab({
   contratos, vendedoresList, setVendedoresList,
@@ -42,10 +43,10 @@ export function VendedoresTab({
         search={busca}
         onSearchChange={setBusca}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Lista de vendedores atualizada.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
-          else if (a === "colunas") toast.info("Gestor de colunas chega em D17.UI.3.");
-          else if (a === "filtroAvancado") toast.info("Filtros avançados chegam em D17.UI.3.");
+          if (a === "atualizar") notifyDone("Lista de vendedores atualizada.");
+          else if (a === "exportar") notifyUnavailable();
+          else if (a === "colunas") notifyUnavailable();
+          else if (a === "filtroAvancado") notifyUnavailable();
         }}
         statusActions={ribbonRmComercial()}
         layoutBar={layoutBarRm()}

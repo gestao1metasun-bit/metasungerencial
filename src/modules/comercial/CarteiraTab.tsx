@@ -42,6 +42,7 @@ import { useContratos } from "@/lib/contratos-store";
 import { useConsultores } from "@/lib/consultores-store";
 import { fmtBRL } from "@/lib/mock-data";
 import { ORIGEM_LEAD_LABEL } from "@/lib/status-catalog";
+import { notifyUnavailable, notifyDone } from "@/lib/comercial-ux";
 
 type CarteiraRow = {
   id: string;
@@ -227,9 +228,9 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
       else if (row.tipo === "PROPOSTA") irPara("orcamentos");
       else if (row.tipo === "CONTRATO") irPara("contratos");
     } else if (kind === "historico") {
-      toast.info("Histórico consolidado da carteira chega em D17.UI.4.");
+      notifyUnavailable();
     } else if (kind === "anexos") {
-      toast.info("Anexos chegam em D6.13.4 (Attachment Engine universal).");
+      notifyUnavailable();
     }
   };
 
@@ -256,12 +257,12 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
           if (p === "abrirLead") irPara("orcamentos");
           else if (p === "abrirProposta") irPara("orcamentos");
           else if (p === "abrirContrato") irPara("contratos");
-          else if (p === "transferir") toast.info("Transferência usa RPC oficial (Comercial C4) — UI dedicada em D17.UI Fase 3.");
-          else if (p === "historico") toast.info("Histórico de carteira (comercial_carteira_transferencias) — UI dedicada em D17.UI Fase 3.");
+          else if (p === "transferir") notifyUnavailable();
+          else if (p === "historico") notifyUnavailable();
         }}
         onAction={(a) => {
-          if (a === "atualizar") toast.info("Carteira recalculada.");
-          else if (a === "exportar") toast.info("Exportação CSV chega em D17.UI.3.");
+          if (a === "atualizar") notifyDone("Carteira recalculada.");
+          else if (a === "exportar") notifyUnavailable();
           else if (a === "imprimir") window.print();
         }}
         extraRight={
@@ -399,8 +400,8 @@ export function CarteiraTab({ onChangeTab }: { onChangeTab?: (tab: string) => vo
         label="item(ns) selecionado(s)"
         onClear={sel.clear}
         actions={[
-          { key: "transferir", label: "Transferir carteira", tone: "indigo", onClick: () => toast.info("Transferência em lote usa RPC oficial (Comercial C4) — UI dedicada em D17.UI Fase 3.") },
-          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => toast.info("Exportação CSV chega em D17.UI.3.") },
+          { key: "transferir", label: "Transferir carteira", tone: "indigo", onClick: () => notifyUnavailable() },
+          { key: "exportar", label: "Exportar", tone: "azul", onClick: () => notifyUnavailable() },
         ]}
       />
     </div>

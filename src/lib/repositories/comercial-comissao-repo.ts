@@ -15,26 +15,49 @@ import { withPerf } from "@/lib/perf";
 import { toast } from "sonner";
 
 export type ComissaoStatus =
-  | "PREVISTA" | "LIBERADA" | "PAGA" | "CANCELADA" | "ESTORNADA";
+  | "PREVISTA" | "APROVADA" | "LIBERADA" | "PAGA"
+  | "CANCELADA" | "ESTORNADA" | "SUBSTITUIDA";
+
+export type ComissaoOrigem = "CONTRATO" | "ADITIVO" | "AJUSTE";
+export type ComissaoTipoBeneficiario =
+  | "CONSULTOR" | "INDICADOR" | "GERENTE" | "PARCEIRO" | "BANCO" | "OUTRO";
 
 export type Comissao = {
   id: string;
+  codigo: string | null;
   contrato_id: string;
+  projeto_id: string | null;
+  proposta_id: string | null;
+  aditivo_id: string | null;
   assinatura_evento_id: string | null;
   vendedor_id: string | null;
   vendedor_nome: string | null;
+  beneficiario_id: string | null;
+  beneficiario_nome: string | null;
+  tipo_beneficiario: ComissaoTipoBeneficiario;
+  origem: ComissaoOrigem;
+  comissao_origem_id: string | null;
+  substituida_por_comissao_id: string | null;
   percentual: number;
   valor_base: number;
   valor_calculado: number;
+  valor_previsto: number | null;
+  valor_aprovado: number | null;
+  valor_pago: number | null;
   status: ComissaoStatus;
   observacao: string | null;
+  motivo: string | null;
+  justificativa_aprovacao: string | null;
+  titulo_financeiro_id: string | null;
   prevista_em: string;
+  aprovada_em: string | null;
   liberada_em: string | null;
   paga_em: string | null;
   cancelada_em: string | null;
   motivo_cancelamento: string | null;
   estornada_em: string | null;
   motivo_estorno: string | null;
+  substituida_em: string | null;
   row_version: number;
   created_at: string;
   updated_at: string;
@@ -147,6 +170,116 @@ export function useAlterarPercentualComissao() {
       toast.success("Percentual de comissão atualizado.");
       qc.invalidateQueries({ queryKey: ["comissoes"] });
       qc.invalidateQueries({ queryKey: ["comissao-eventos"] });
+    },
+    onError: (e: Error) => toast.error(`Falha: ${e.message}`),
+  });
+}
+
+// ============================================================
+// C-ENT.10 — Motor Enterprise de Comissões
+// ============================================================
+
+export function useComissaoById(id: string | undefined) {
+  return useQuery({
+    queryKey: ["comissao", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("comercial_comissoes" as never)
+        .select("*")
+        .eq("id", id!)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as unknown as Comissao | null;
+    },
+  });
+}
+
+export function useComissoesAll(opts?: { status?: ComissaoStatus; origem?: ComissaoOrigem }) {
+  return useQuery({
+    queryKey: ["comissoes", "all", opts?.status ?? null, opts?.origem ?? null],
+    queryFn: async () => {
+      let q = supabase
+        .from("comercial_comissoes" as never)
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (opts?.status) q = q.eq("status", opts.status);
+      if (opts?.origem) q = q.eq("origem", opts.origem);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as unknown as Comissao[];
+    },
+  });
+}
+
+export function useAprovarComissao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { comissaoId: string; justificativa?: string }) => {
+      const { data, error } = await withPerf("rpc.comissao_aprovar", () => supabase.rpc(
+        "rpc_comissao_aprovar" as never,
+        { p_comissao_id: input.comissaoId, p_justificativa: input.justificativa ?? null } as never,
+      ));
+      if (error) throw error;
+      return data as unknown as Comissao;
+    },
+    onSuccess: () => {
+      toast.success("Comissão aprovada.");
+      qc.invalidateQueries({ queryKey: ["comissoes"] });
+      qc.invalidateQueries({ queryKey: ["comissao"] });
+      qc.invalidateQueries({ queryKey: ["comissao-eventos"] });
+    },
+    onError: (e: Error) => toast.error(`Falha: ${e.message}`),
+  });
+}
+
+export function useSubstituirComissao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { comissaoId: string; novoPercentual: number; motivo: string }) => {
+      const { data, error } = await withPerf("rpc.comissao_substituir", () => supabase.rpc(
+        "rpc_comissao_substituir" as never,
+        {
+          p_comissao_id: input.comissaoId,
+          p_novo_percentual: input.novoPercentual,
+          p_motivo: input.motivo,
+        } as never,
+      ));
+      if (error) throw error;
+      return data as unknown as Comissao;
+    },
+    onSuccess: () => {
+      toast.success("Comissão substituída por nova versão.");
+      qc.invalidateQueries({ queryKey: ["comissoes"] });
+      qc.invalidateQueries({ queryKey: ["comissao"] });
+      qc.invalidateQueries({ queryKey: ["comissao-eventos"] });
+    },
+    onError: (e: Error) => toast.error(`Falha: ${e.message}`),
+  });
+}
+
+export function useGerarComissaoDeAditivo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { aditivoId: string; percentual?: number; observacao?: string }) => {
+      const { data, error } = await withPerf("rpc.comissao_gerar_de_aditivo", () => supabase.rpc(
+        "rpc_comissao_gerar_de_aditivo" as never,
+        {
+          p_aditivo_id: input.aditivoId,
+          p_percentual: input.percentual ?? null,
+          p_observacao: input.observacao ?? null,
+        } as never,
+      ));
+      if (error) throw error;
+      return data as unknown as Comissao;
+    },
+    onSuccess: () => {
+      toast.success("Comissão complementar gerada do aditivo.");
+      qc.invalidateQueries({ queryKey: ["comissoes"] });
+      qc.invalidateQueries({ queryKey: ["comissao"] });
     },
     onError: (e: Error) => toast.error(`Falha: ${e.message}`),
   });

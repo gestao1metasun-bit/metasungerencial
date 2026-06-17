@@ -274,4 +274,4 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   );
 }
 
-export { ProjetoWorkspacePage };
+

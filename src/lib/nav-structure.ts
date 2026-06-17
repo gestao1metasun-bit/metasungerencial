@@ -64,7 +64,7 @@ export type MacroModule = {
 // ── Macro módulos (D20.SUP.4 — Suprimentos absorve Compras+Estoque no menu) ──
 export const MACRO_MODULES: MacroModule[] = [
   { key: "analytics",      label: "Analytics",      to: "/analytics",              icon: LayoutDashboard, matches: ["/analytics", "/paineis", "/dashboards", "/dashboard", "/analises", "/relatorios", "/tarefas"], accessKey: "dashboard" },
-  { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas"], accessKey: "comercial" },
+  { key: "comercial",      label: "Comercial",      to: "/comercial",              icon: Briefcase,       matches: ["/comercial", "/leads", "/propostas" /* C-ENT.11.d: /propostas é redirect legado, mantido em matches para destacar Comercial ao chegar pelo link antigo */], accessKey: "comercial" },
   { key: "financeiro",     label: "Financeiro",     to: "/financeiro",             icon: Wallet,          matches: ["/financeiro", "/financeiro-titulos", "/pedidos-venda", "/operacoes-financeiras"], accessKey: "financeiro" },
   { key: "financiamentos", label: "Financiamentos", to: "/financiamentos",         icon: Banknote,        matches: ["/financiamentos"], accessKey: "financiamentos" },
   { key: "suprimentos",    label: "Suprimentos",    to: "/suprimentos",            icon: Boxes,           matches: ["/suprimentos", "/solicitacoes-material", "/compras", "/estoque", "/estoque-fundacao", "/fornecedores"], accessKey: "estoque" },

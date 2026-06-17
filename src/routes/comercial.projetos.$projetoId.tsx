@@ -57,7 +57,7 @@ function useCliente(id: string | null | undefined) {
   });
 }
 
-function ProjetoWorkspacePage() {
+export function ProjetoWorkspacePage() {
   const { projetoId } = Route.useParams();
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.projeto.visualizar");

@@ -93,10 +93,8 @@ import { ClienteAutocompleteSupabase } from "@/components/app/comercial/ClienteA
 import { useContratoBase, setContratoBase, getContratoBase, type BaseClausula } from "@/lib/contrato-base-store";
 import { clausulasBase } from "@/lib/contrato-template";
 import { Textarea } from "@/components/ui/textarea";
-import { AditivosPanel } from "@/components/app/AditivosPanel";
-import { AditivoBadge } from "@/components/app/AditivoBadge";
-import { useAditivos, useAditivosByContrato, isPendente as isAditivoPendente } from "@/lib/aditivos-store";
-import { usePodeGerenciarAditivos } from "@/lib/auth-store";
+// C-ENT.11.c — Aditivos LS descontinuados no /comercial. Verdade oficial = Supabase
+// (workspace do contrato/projeto). Não importar mais AditivosPanel/AditivoBadge/aditivos-store.
 
 
 

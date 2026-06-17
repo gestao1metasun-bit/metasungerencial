@@ -450,12 +450,10 @@ function ContratoAssinadoRow({
   const enviados = total - pendentes;
   const temAnexo = !!c.contratoAssinadoArquivo;
   const [editOpen, setEditOpen] = useState(false);
-  const [aditivosOpen, setAditivosOpen] = useState(false);
   const [anexosOpen, setAnexosOpen] = useState(false);
-  const aditivosDoContrato = useAditivosByContrato(c.id);
-  const pendentesAditivos = aditivosDoContrato.filter(isAditivoPendente).length;
-  const podeGerenciarAditivos = usePodeGerenciarAditivos();
-  const { user: aditivoUser } = useAuthCurrent();
+  // C-ENT.11.c — gestão de aditivos saiu para o workspace do contrato (Supabase).
+  // Não há mais leitura LS aqui; o badge de "pendentes" deixou de existir em /comercial.
+  const pendentesAditivos = 0;
   const { node: anexoInput, trigger: abrirSeletor } = useAnexarHandler(c);
 
   return (

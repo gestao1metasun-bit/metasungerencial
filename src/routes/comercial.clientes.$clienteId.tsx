@@ -60,7 +60,7 @@ function usePropostasPorCliente(clienteId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("propostas")
-        .select("id,numero,cliente_nome,valor_final,status,created_at,oportunidade_id,validade")
+        .select("id,numero,cliente_nome,valor_final,status,created_at,oportunidade_id,validade,dados")
         .eq("cliente_id", clienteId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });

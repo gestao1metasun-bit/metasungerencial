@@ -48,9 +48,12 @@ import { findClienteByDoc } from "@/lib/clientes-store";
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
-    case "APROVADA": return "default";
+    case "APROVADA":
+    case "ATIVA":
+    case "CONTRATADA": return "default";
     case "GERADA":
-    case "ENVIADA": return "secondary";
+    case "ENVIADA":
+    case "CONTRATO_PENDENTE": return "secondary";
     case "RECUSADA":
     case "VENCIDA":
     case "EXPIRADA":
@@ -59,6 +62,11 @@ export function statusVariant(s: StatusProposta): "default" | "secondary" | "des
     default: return "outline";
   }
 }
+
+// D18.9 — Os bloqueios de aprovar/cancelar/excluir por status estão inline nas funções
+// excluirProposta/cancelarProposta e na construção de actions abaixo.
+
+
 
 function readLS<T>(key: string, fb: T): T {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fb; } catch { return fb; }
@@ -86,15 +94,21 @@ export function duplicarProposta(p: PropostaFV) {
 }
 
 export function excluirProposta(p: PropostaFV) {
-  if (p.status === "APROVADA") {
-    toast.error(
-      "Proposta aprovada não pode ser excluída pela tela de Propostas. " +
-      "Abra Comercial → Contratos, localize o contrato vinculado e cancele-o primeiro.",
-      { duration: 6000 },
-    );
-    return;
-  }
   if (p.status !== "RASCUNHO") {
+    if (p.status === "APROVADA" || p.status === "ATIVA") {
+      toast.error(
+        "Proposta aprovada não pode ser excluída — cancele a minuta/contrato vinculado em Comercial → Contratos.",
+        { duration: 6000 },
+      );
+      return;
+    }
+    if (p.status === "CONTRATO_PENDENTE" || p.status === "CONTRATADA") {
+      toast.error(
+        "Proposta vinculada a contrato não pode ser excluída — cancele a minuta/contrato antes.",
+        { duration: 6000 },
+      );
+      return;
+    }
     toast.error("Propostas geradas não podem ser excluídas — use Cancelar.");
     return;
   }
@@ -119,7 +133,15 @@ export function excluirProposta(p: PropostaFV) {
 /** Cancela uma proposta — move para status CANCELADA com motivo. */
 export function cancelarProposta(p: PropostaFV) {
   if (p.status === "CANCELADA") { toast.info("Proposta já está cancelada."); return; }
-  if (p.status === "APROVADA") { toast.error("Proposta aprovada não pode ser cancelada — retorne o contrato antes."); return; }
+  if (p.status === "APROVADA" || p.status === "ATIVA") {
+    toast.error("Proposta aprovada não pode ser cancelada — cancele a minuta no contrato pendente antes."); return;
+  }
+  if (p.status === "CONTRATO_PENDENTE") {
+    toast.error("Esta proposta gerou um contrato pendente. Cancele a minuta em Comercial → Contratos → Pendentes."); return;
+  }
+  if (p.status === "CONTRATADA") {
+    toast.error("Proposta contratada não pode ser cancelada por aqui — opere pelo contrato ativo."); return;
+  }
   const motivo = prompt(`Cancelar proposta ${p.numero}?\n\nMotivo (obrigatório):`);
   if (!motivo || !motivo.trim()) { toast.error("Informe o motivo do cancelamento."); return; }
   cancelarPropostaComMotivo(p.id, p.criadoPor || "Operador", motivo.trim());
@@ -931,7 +953,8 @@ function LeadDetail({
                     // Regra: proposta NÃO pode ser editada depois de criada.
                     // Para alterar valores/condições, o operador gera uma nova proposta no mesmo card.
                     const podeExcluir = ehRascunho && !lead.bloqueado;
-                    const podeCancelar = !lead.bloqueado && p.status !== "CANCELADA" && p.status !== "APROVADA";
+                    const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
+                    const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
                     const podeReativar = p.status === "CANCELADA";
                     const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
                     if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });

@@ -209,12 +209,8 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "vendedores", label: "Vendedores", group: "Estrutura" },
     ],
   },
-  "/propostas": {
-    default: "lista",
-    tabs: [
-      { value: "lista", label: "Propostas", group: "Operação" },
-    ],
-  },
+  // C-ENT.11.d — /propostas é rota legada (redirect → /comercial?tab=orcamentos).
+  // Entrada removida para não exibir tab bar duplicada antes do redirect.
   "/financiamentos": {
     default: "carteira",
     tabs: [

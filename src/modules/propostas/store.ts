@@ -170,7 +170,11 @@ export type StatusProposta =
   | "RECUSADA" | "VENCIDA" | "CANCELADA"
   // Onda P2 — governança enterprise
   | "SUBSTITUIDA"   // marcada como inativa porque outra proposta do mesmo lead virou ativa
-  | "EXPIRADA";     // passou da validade comercial sem aprovação
+  | "EXPIRADA"      // passou da validade comercial sem aprovação
+  // D18.8 — fluxo Proposta → Minuta → Contrato
+  | "CONTRATO_PENDENTE" // proposta gerou uma minuta de contrato (travada para edição)
+  | "CONTRATADA"        // contrato ativo aprovado a partir desta proposta
+  | "ATIVA";            // legado Supabase para propostas ativas (equivale a APROVADA)
 
 /** Registro histórico de endereço — preserva versões anteriores ao atualizar. */
 export type EnderecoHistorico = {

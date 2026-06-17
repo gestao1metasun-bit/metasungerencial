@@ -155,7 +155,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
     } catch (e) {
       const msg = (e as Error)?.message ?? String(e);
       toast.error(`Erro ao salvar minuta: ${msg}`);
-      logError({ origem: "MinutaContratoPanel.salvar", mensagem: msg, contexto: { contratoId: contrato.id } });
+      logError({ modulo: "comercial", tela: "MinutaContratoPanel", acao: "salvar", mensagem: msg, payload: { contratoId: contrato.id } });
       return false;
     } finally {
       setSalvando(false);

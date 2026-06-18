@@ -35,8 +35,13 @@ export type ContratoSupabase = {
 
 export type ContratoSupabaseListItem = ContratoSupabase & {
   cliente_nome: string | null;
+  cliente_doc: string | null;
+  cliente_cidade: string | null;
+  cliente_uf: string | null;
   consultor_nome: string | null;
   projetos_count: number;
+  proposta_origem_numero: string | null;
+  proposta_origem_id: string | null;
 };
 
 export type PropostaDoContrato = {

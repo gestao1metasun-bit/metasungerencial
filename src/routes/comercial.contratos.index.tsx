@@ -122,8 +122,8 @@ function ContratosListPage() {
         <Card className="p-2">
           <Tabs value={etapa} onValueChange={(v) => setEtapa(v as EtapaContrato)}>
             <TabsList>
-              <TabsTrigger value="minuta">Pendentes ({contagem.minuta})</TabsTrigger>
-              <TabsTrigger value="gerado">Contratos Gerados ({contagem.gerado})</TabsTrigger>
+              <TabsTrigger value="minuta">Pendentes de Redação ({contagem.minuta})</TabsTrigger>
+              <TabsTrigger value="gerado">Contratos Gerados / Aguardando Assinatura ({contagem.gerado})</TabsTrigger>
               <TabsTrigger value="assinado">Contratos Assinados ({contagem.assinado})</TabsTrigger>
               <TabsTrigger value="cancelado">Cancelados ({contagem.cancelado})</TabsTrigger>
             </TabsList>

@@ -286,7 +286,7 @@ export function MinutaContratoPanel({
       inversor: proposta?.inversor ?? "",
       forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
       prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
-      cidade: state.local_assinatura || state.contratante_cidade || "",
+      cidade: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
       cidade_foro: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
       data_contrato: state.data_base_contrato || "",
       endereco_instalacao: state.endereco_instalacao || state.contratante_endereco || "",

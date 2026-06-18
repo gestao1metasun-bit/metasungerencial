@@ -757,7 +757,7 @@ export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
 // Forma de pagamento
 // =====================================================================
 export type FormaPagamentoTipo =
-  | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "MISTO";
+  | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
 
 export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
   PIX: "PIX",
@@ -765,72 +765,112 @@ export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
   CARTAO: "Cartão",
   FINANCIAMENTO: "Financiamento",
   ENTRADA_PARCELAS: "Entrada + Parcelas",
+  PERMUTA: "Permuta",
   MISTO: "Misto (combinado)",
+};
+
+/** Momento do PIX complementar (entrada/gatilho). */
+export type PixComplementoMomento =
+  | "ENTRADA"
+  | "APROVACAO_PROJETO"
+  | "ENTREGA_MATERIAL"
+  | "CONCLUSAO_PROJETO";
+
+export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
+  ENTRADA: "PIX de entrada (assinatura)",
+  APROVACAO_PROJETO: "PIX na aprovação do projeto",
+  ENTREGA_MATERIAL: "PIX na entrega do material",
+  CONCLUSAO_PROJETO: "PIX na conclusão do projeto",
 };
 
 export type FormaPagamentoConfig = {
   tipo: FormaPagamentoTipo;
   pix?: { valor: number; data: string; chave: string; observacao: string };
   boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string };
-  cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; observacao: string };
+  cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string };
   financiamento?: { banco: string; valor: number; entrada: number; prazo_meses: number; status: string; observacao: string; clausula: string };
   entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string };
+  permuta?: { valor: number; descricao: string; observacao: string };
   misto?: { componentes: Array<{ tipo: FormaPagamentoTipo; valor: number; obs: string }> };
+  /** PIX complementar opcional — não disponível para FINANCIAMENTO/PERMUTA. */
+  pix_complemento?: { momento: PixComplementoMomento; valor: number; observacao: string } | null;
 };
 
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];
 
+/** Tipos que ACEITAM um PIX complementar (entrada/gatilho). */
+export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
+  "PIX", "BOLETO", "CARTAO", "ENTRADA_PARCELAS", "MISTO",
+];
+
 export function somaFormaPagamento(fp: FormaPagamentoConfig | null | undefined): number {
   if (!fp) return 0;
+  let base = 0;
   switch (fp.tipo) {
-    case "PIX": return Number(fp.pix?.valor) || 0;
-    case "BOLETO": return Number(fp.boleto?.valor) || 0;
-    case "CARTAO": return Number(fp.cartao?.valor) || 0;
+    case "PIX": base = Number(fp.pix?.valor) || 0; break;
+    case "BOLETO": base = Number(fp.boleto?.valor) || 0; break;
+    case "CARTAO": base = Number(fp.cartao?.valor) || 0; break;
     case "FINANCIAMENTO": {
-      const f = fp.financiamento; return (Number(f?.valor) || 0) + (Number(f?.entrada) || 0);
+      const f = fp.financiamento; base = (Number(f?.valor) || 0) + (Number(f?.entrada) || 0); break;
     }
     case "ENTRADA_PARCELAS": {
-      const e = fp.entrada_parcelas; return (Number(e?.entrada) || 0) + (Number(e?.saldo) || 0);
+      const e = fp.entrada_parcelas; base = (Number(e?.entrada) || 0) + (Number(e?.saldo) || 0); break;
     }
-    case "MISTO": return (fp.misto?.componentes ?? []).reduce((s, c) => s + (Number(c.valor) || 0), 0);
+    case "PERMUTA": base = Number(fp.permuta?.valor) || 0; break;
+    case "MISTO": base = (fp.misto?.componentes ?? []).reduce((s, c) => s + (Number(c.valor) || 0), 0); break;
   }
+  if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
+    base += Number(fp.pix_complemento.valor) || 0;
+  }
+  return base;
 }
 
 export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefined): string {
   if (!fp) return "—";
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  let desc = "";
   switch (fp.tipo) {
     case "PIX":
-      return `PIX no valor de ${brl(fp.pix?.valor ?? 0)}${fp.pix?.data ? ` previsto para ${fp.pix.data}` : ""}.`;
+      desc = `PIX no valor de ${brl(fp.pix?.valor ?? 0)}${fp.pix?.data ? ` previsto para ${fp.pix.data}` : ""}.`; break;
     case "BOLETO": {
       const b = fp.boleto!;
-      return `Boleto: ${b.parcelas}x de ${brl(b.valor_parcela)} (total ${brl(b.valor)}), 1º venc. em ${b.primeiro_venc || "—"}, dia fixo ${b.dia_fixo || "—"}.`;
+      const vp = b.parcelas > 0 ? (b.valor / b.parcelas) : 0;
+      desc = `Boleto: ${b.parcelas}x de ${brl(vp)} (total ${brl(b.valor)}), 1º venc. em ${b.primeiro_venc || "—"}, dia fixo ${b.dia_fixo || "—"}.`; break;
     }
     case "CARTAO": {
       const c = fp.cartao!;
-      return `Cartão ${c.bandeira || ""}: ${c.parcelas}x (total ${brl(c.valor)}).`.trim();
+      desc = `Cartão ${c.bandeira || ""}: ${c.parcelas}x (total ${brl(c.valor)})${c.com_juros ? " com juros do cliente" : " sem juros"}.`.trim(); break;
     }
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
-      return `Financiamento ${f.banco || ""}, valor financiado ${brl(f.valor)}${f.entrada > 0 ? `, entrada ${brl(f.entrada)}` : ""}, prazo ${f.prazo_meses || "—"} meses.`;
+      desc = `Financiamento ${f.banco || ""}, valor financiado ${brl(f.valor)}${f.entrada > 0 ? `, entrada ${brl(f.entrada)}` : ""}, prazo ${f.prazo_meses || "—"} meses.`; break;
     }
     case "ENTRADA_PARCELAS": {
       const e = fp.entrada_parcelas!;
-      return `Entrada de ${brl(e.entrada)} em ${e.entrada_data || "—"} + ${e.parcelas}x do saldo ${brl(e.saldo)}, 1º venc. ${e.primeiro_venc || "—"}.`;
+      desc = `Entrada de ${brl(e.entrada)} em ${e.entrada_data || "—"} + ${e.parcelas}x do saldo ${brl(e.saldo)}, 1º venc. ${e.primeiro_venc || "—"}.`; break;
+    }
+    case "PERMUTA": {
+      const p = fp.permuta!;
+      desc = `Permuta no valor de ${brl(p.valor)} — ${p.descricao || "descrição da permuta a definir"}.`; break;
     }
     case "MISTO":
-      return (fp.misto?.componentes ?? []).map((c) => `${FP_LABEL[c.tipo]} ${brl(c.valor)}`).join(" + ") || "—";
+      desc = (fp.misto?.componentes ?? []).map((c) => `${FP_LABEL[c.tipo]} ${brl(c.valor)}`).join(" + ") || "—"; break;
   }
+  if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
+    desc += ` Acrescido de PIX complementar de ${brl(fp.pix_complemento.valor)} — ${PIX_COMPLEMENTO_LABEL[fp.pix_complemento.momento]}.`;
+  }
+  return desc;
 }
 
 export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoConfig {
-  const base: FormaPagamentoConfig = { tipo };
+  const base: FormaPagamentoConfig = { tipo, pix_complemento: null };
   switch (tipo) {
     case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "" }; break;
     case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "" }; break;
-    case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, observacao: "" }; break;
+    case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "" }; break;
     case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "" }; break;
     case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "" }; break;
+    case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "" }; break;
     case "MISTO": base.misto = { componentes: [{ tipo: "PIX", valor: 0, obs: "" }] }; break;
   }
   return base;

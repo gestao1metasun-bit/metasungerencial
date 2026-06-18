@@ -661,24 +661,38 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
         </div>
       )}
 
-      {tipo === "BOLETO" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-          <NumField label="Valor total" v={value!.boleto?.valor} on={(v) => patch("boleto", { valor: v })} disabled={disabled} />
-          <NumField label="Qtde parcelas" v={value!.boleto?.parcelas} on={(v) => patch("boleto", { parcelas: v })} disabled={disabled} />
-          <NumField label="Valor da parcela" v={value!.boleto?.valor_parcela} on={(v) => patch("boleto", { valor_parcela: v })} disabled={disabled} />
-          <DateField label="1º vencimento" v={value!.boleto?.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
-          <NumField label="Dia fixo de vencimento" v={value!.boleto?.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
-          <Field label="Observação" v={value!.boleto?.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
-        </div>
-      )}
+      {tipo === "BOLETO" && (() => {
+        const b = value!.boleto!;
+        const parcelaCalc = b.parcelas > 0 ? b.valor / b.parcelas : 0;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v, valor_parcela: b.parcelas > 0 ? v / b.parcelas : 0 })} disabled={disabled} />
+            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v, valor_parcela: v > 0 ? b.valor / v : 0 })} disabled={disabled} />
+            <div>
+              <Label className="text-xs">Valor da parcela (calculado)</Label>
+              <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />
+            </div>
+            <DateField label="1º vencimento" v={b.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
+            <NumField label="Dia fixo de vencimento" v={b.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
+            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
+          </div>
+        );
+      })()}
 
       {tipo === "CARTAO" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.cartao?.valor} on={(v) => patch("cartao", { valor: v })} disabled={disabled} />
           <NumField label="Qtde parcelas" v={value!.cartao?.parcelas} on={(v) => patch("cartao", { parcelas: v })} disabled={disabled} />
           <Field label="Bandeira" v={value!.cartao?.bandeira} on={(v) => patch("cartao", { bandeira: v })} disabled={disabled} />
-          <NumField label="Taxa (%)" v={value!.cartao?.taxa} on={(v) => patch("cartao", { taxa: v })} disabled={disabled} />
-          <Field label="Observação" v={value!.cartao?.observacao} on={(v) => patch("cartao", { observacao: v })} disabled={disabled} className="md:col-span-2" />
+          <div className="flex items-center gap-2 pt-5 md:col-span-2">
+            <input type="checkbox" id="cartao_juros" disabled={disabled}
+              checked={value!.cartao?.com_juros ?? false}
+              onChange={(e) => patch("cartao", { com_juros: e.target.checked })} />
+            <Label htmlFor="cartao_juros" className="text-xs cursor-pointer">
+              Parcelamento <strong>com juros</strong> do cliente (não calcula valor da parcela)
+            </Label>
+          </div>
+          <Field label="Observação" v={value!.cartao?.observacao} on={(v) => patch("cartao", { observacao: v })} disabled={disabled} className="md:col-span-3" />
         </div>
       )}
 
@@ -715,6 +729,17 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
         </div>
       )}
 
+      {tipo === "PERMUTA" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor da permuta" v={value!.permuta?.valor} on={(v) => patch("permuta", { valor: v })} disabled={disabled} />
+          <Field label="Descrição do bem/serviço *" v={value!.permuta?.descricao} on={(v) => patch("permuta", { descricao: v })} disabled={disabled} className="md:col-span-2" />
+          <div className="md:col-span-3">
+            <Label className="text-xs">Condições da permuta (entra no contrato)</Label>
+            <Textarea rows={3} className="mt-1" disabled={disabled} value={value!.permuta?.observacao ?? ""} onChange={(e) => patch("permuta", { observacao: e.target.value })} />
+          </div>
+        </div>
+      )}
+
       {tipo === "MISTO" && value!.misto && (
         <div className="space-y-2 text-sm">
           <p className="text-xs text-muted-foreground">
@@ -732,7 +757,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
                 }} disabled={disabled}>
                   <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(["PIX","BOLETO","CARTAO","FINANCIAMENTO"] as FormaPagamentoTipo[]).map((t) =>
+                    {(["PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
                       <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -759,6 +784,71 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
             const arr = [...value!.misto!.componentes, { tipo: "PIX" as FormaPagamentoTipo, valor: 0, obs: "" }];
             patch("misto", { componentes: arr });
           }}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar componente</Button>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* PIX complementar — entrada / gatilho. Não disponível para      */}
+      {/* FINANCIAMENTO nem PERMUTA.                                     */}
+      {/* ============================================================== */}
+      {tipo && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(tipo) && (
+        <div className="rounded-md border border-sky-300/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="pix_complemento_on"
+              disabled={disabled}
+              checked={!!value!.pix_complemento}
+              onChange={(e) => onChange(
+                e.target.checked
+                  ? { ...value!, pix_complemento: { momento: "ENTRADA", valor: 0, observacao: "" } }
+                  : { ...value!, pix_complemento: null },
+              )}
+            />
+            <Label htmlFor="pix_complemento_on" className="text-xs font-semibold cursor-pointer">
+              Adicionar <strong>PIX complementar</strong> (entrada, aprovação, entrega ou conclusão)
+            </Label>
+          </div>
+          {value!.pix_complemento && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+              <div>
+                <Label className="text-xs">Momento *</Label>
+                <Select
+                  value={value!.pix_complemento.momento}
+                  onValueChange={(v) => onChange({
+                    ...value!,
+                    pix_complemento: { ...value!.pix_complemento!, momento: v as PixComplementoMomento },
+                  })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PIX_COMPLEMENTO_LABEL) as PixComplementoMomento[]).map((m) => (
+                      <SelectItem key={m} value={m}>{PIX_COMPLEMENTO_LABEL[m]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <NumField
+                label="Valor do PIX *"
+                v={value!.pix_complemento.valor}
+                on={(v) => onChange({
+                  ...value!,
+                  pix_complemento: { ...value!.pix_complemento!, valor: v },
+                })}
+                disabled={disabled}
+              />
+              <Field
+                label="Observação"
+                v={value!.pix_complemento.observacao}
+                on={(v) => onChange({
+                  ...value!,
+                  pix_complemento: { ...value!.pix_complemento!, observacao: v },
+                })}
+                disabled={disabled}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,183 +1,473 @@
 /**
- * D18.18 — Template padrão de cláusulas e helpers de variáveis do contrato.
+ * D18.20 — Template padrão Meta Sun + numeração X.Y + operações
+ *           "alterar / retirar / adicionar" com renumeração automática.
  *
  * Frontend-only. Cláusulas vivem em `contratos.dados.clausulas` (jsonb).
- * Variáveis são substituídas no momento da prévia/render.
+ *
+ * Estrutura:
+ *   - GRUPO: cabeçalho ("CLÁUSULA PRIMEIRA – DO OBJETO"), grupo = 1..N
+ *   - ITEM:  conteúdo numerado "{grupo}.{subordem}" (ex. 3.2)
+ *
+ * O "número" exibido (1.1, 3.2 …) é recomputado via `renumerar()`.
+ * A inserção respeita "antes/depois" da cláusula de referência e
+ * desloca automaticamente as subsequentes do mesmo grupo
+ * (3.3 vira 3.4, 3.4 vira 3.5 …).
  */
 
 export type ClausulaCategoria =
   | "IDENTIFICACAO"
   | "OBJETO"
-  | "ESCOPO_TECNICO"
   | "VALOR_PAGAMENTO"
   | "PRAZO"
+  | "GARANTIAS"
   | "OBRIG_CONTRATADA"
   | "OBRIG_CONTRATANTE"
-  | "FINANCIAMENTO"
-  | "ENERGIA_CONCESSIONARIA"
-  | "GARANTIAS"
-  | "ADITIVOS"
-  | "CANCELAMENTO"
-  | "ASSINATURA"
+  | "VINCULO"
+  | "RESCISAO"
   | "FORO";
 
 export const CATEGORIA_LABEL: Record<ClausulaCategoria, string> = {
   IDENTIFICACAO: "Identificação das Partes",
   OBJETO: "Objeto",
-  ESCOPO_TECNICO: "Escopo Técnico",
   VALOR_PAGAMENTO: "Valor e Pagamento",
-  PRAZO: "Prazo",
+  PRAZO: "Prazo, Cronograma e Garantias",
+  GARANTIAS: "Garantias",
   OBRIG_CONTRATADA: "Obrigações da Contratada",
   OBRIG_CONTRATANTE: "Obrigações da Contratante",
-  FINANCIAMENTO: "Financiamento",
-  ENERGIA_CONCESSIONARIA: "Energia / Concessionária",
-  GARANTIAS: "Garantias",
-  ADITIVOS: "Aditivos",
-  CANCELAMENTO: "Cancelamento",
-  ASSINATURA: "Assinatura",
+  VINCULO: "Ausência de Vínculo",
+  RESCISAO: "Multa e Rescisão",
   FORO: "Foro",
 };
 
 export type Clausula = {
   id: string;
+  /** posição absoluta na lista (recomputada em renumerar). */
   ordem: number;
-  categoria: ClausulaCategoria;
+  /** "GRUPO" (cabeçalho) ou "ITEM" (subcláusula numerada). */
+  tipo: "GRUPO" | "ITEM";
+  /** Número do grupo (1..N). */
+  grupo: number;
+  /** Subordem dentro do grupo — só para ITEM. */
+  subordem?: number;
+  /** Número exibido: "1.1", "3.2" … (recomputado). */
+  numero?: string;
+  /** Cabeçalho do grupo (ex. "CLÁUSULA PRIMEIRA – DO OBJETO"). */
   titulo: string;
+  /** Ordinal por extenso ("PRIMEIRA", "SEGUNDA" …) — só para GRUPO. */
+  ordinal?: string;
+  categoria: ClausulaCategoria;
   texto: string;
   obrigatoria: boolean;
   oculta: boolean;
   revisada: boolean;
+  /** true se foi adicionada pelo usuário, fora do template padrão. */
   complementar?: boolean;
 };
 
 const uid = () => `cl_${Math.random().toString(36).slice(2, 10)}`;
 
-/** Cláusulas padrão Meta Sun (template base). */
-export function clausulasPadrao(): Clausula[] {
-  const base: Omit<Clausula, "id" | "ordem">[] = [
-    {
-      categoria: "IDENTIFICACAO",
-      titulo: "Identificação das Partes",
-      texto:
-        "CONTRATANTE: {{cliente_nome}}, inscrito(a) sob o documento {{cliente_documento}}, residente/sediado em {{cliente_endereco}}. " +
-        "CONTRATADA: META SUN, prestadora de serviços de instalação de sistemas fotovoltaicos.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "OBJETO",
-      titulo: "Objeto",
-      texto:
-        "O presente contrato tem por objeto o fornecimento e instalação de sistema fotovoltaico de {{potencia_kwp}} kWp, " +
-        "composto por {{quantidade_modulos}} módulos e inversor {{inversor}}, no endereço {{cliente_endereco}}.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "ESCOPO_TECNICO",
-      titulo: "Escopo Técnico",
-      texto:
-        "Estão inclusos: projeto elétrico, homologação junto à concessionária, fornecimento dos equipamentos, " +
-        "estrutura de fixação, cabeamento CC/CA, mão de obra de instalação, comissionamento e ART.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "VALOR_PAGAMENTO",
-      titulo: "Valor e Forma de Pagamento",
-      texto:
-        "O valor total do contrato é de {{valor_total}} ({{valor_total_extenso}}), a ser pago conforme " +
-        "a seguinte forma de pagamento: {{forma_pagamento}}.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "PRAZO",
-      titulo: "Prazo de Execução",
-      texto:
-        "A CONTRATADA executará o objeto no prazo de {{prazo_execucao}} dias úteis, contados a partir do " +
-        "recebimento da homologação pela concessionária e da quitação da parcela de entrada quando houver.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "OBRIG_CONTRATADA",
-      titulo: "Obrigações da Contratada",
-      texto:
-        "Realizar o serviço com técnicos qualificados, fornecer ART, garantir a qualidade dos equipamentos " +
-        "instalados conforme garantias de fábrica e prestar suporte de comissionamento.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "OBRIG_CONTRATANTE",
-      titulo: "Obrigações da Contratante",
-      texto:
-        "Disponibilizar acesso ao local, fornecer informações verídicas para projeto e homologação, manter " +
-        "as condições de pagamento acordadas e providenciar adequações estruturais quando necessárias.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "FINANCIAMENTO",
-      titulo: "Financiamento Bancário",
-      texto:
-        "Quando aplicável, o pagamento será viabilizado por meio de financiamento bancário junto ao banco " +
-        "informado na forma de pagamento, cabendo à CONTRATANTE assinar e cumprir todas as exigências da " +
-        "instituição financeira.",
-      obrigatoria: false, oculta: false, revisada: false,
-    },
-    {
-      categoria: "ENERGIA_CONCESSIONARIA",
-      titulo: "Energia e Concessionária",
-      texto:
-        "A CONTRATADA fica responsável pela elaboração e protocolo do pedido de acesso junto à " +
-        "concessionária local, sendo a CONTRATANTE responsável por estar adimplente com a distribuidora.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "GARANTIAS",
-      titulo: "Garantias",
-      texto:
-        "Módulos: garantia de fábrica conforme fabricante. Inversor: garantia de fábrica conforme fabricante. " +
-        "Instalação e mão de obra: 12 (doze) meses contra defeitos de execução.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "ADITIVOS",
-      titulo: "Aditivos Contratuais",
-      texto:
-        "Qualquer alteração de escopo, prazo ou valor deverá ser formalizada por meio de termo aditivo " +
-        "assinado por ambas as partes, devidamente registrado neste sistema.",
-      obrigatoria: false, oculta: false, revisada: false,
-    },
-    {
-      categoria: "CANCELAMENTO",
-      titulo: "Cancelamento e Rescisão",
-      texto:
-        "O cancelamento por parte da CONTRATANTE após início da execução implicará no ressarcimento dos " +
-        "custos já incorridos pela CONTRATADA, bem como multa contratual de 10% do valor remanescente.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "ASSINATURA",
-      titulo: "Assinatura",
-      texto:
-        "As partes assinam o presente contrato em {{cidade}}, em {{data_contrato}}, em duas vias de igual " +
-        "teor e forma, na presença de testemunhas.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-    {
-      categoria: "FORO",
-      titulo: "Foro",
-      texto:
-        "Fica eleito o foro da comarca de {{cidade}} para dirimir quaisquer questões oriundas do presente " +
-        "contrato, com renúncia a qualquer outro, por mais privilegiado que seja.",
-      obrigatoria: true, oculta: false, revisada: false,
-    },
-  ];
-  return base.map((c, i) => ({ ...c, id: uid(), ordem: i + 1 }));
+const ORDINAIS = [
+  "", "PRIMEIRA", "SEGUNDA", "TERCEIRA", "QUARTA", "QUINTA",
+  "SEXTA", "SÉTIMA", "OITAVA", "NONA", "DÉCIMA",
+];
+
+function ordinalDoGrupo(n: number): string {
+  return ORDINAIS[n] ?? `${n}ª`;
 }
 
+/** Recomputa ordem absoluta + subordem + numero "X.Y". */
+export function renumerar(clausulas: Clausula[]): Clausula[] {
+  // Ordena por grupo, mantendo cabeçalho antes dos itens do grupo
+  const ord = [...clausulas].sort((a, b) => {
+    if (a.grupo !== b.grupo) return a.grupo - b.grupo;
+    if (a.tipo !== b.tipo) return a.tipo === "GRUPO" ? -1 : 1;
+    return (a.subordem ?? 0) - (b.subordem ?? 0);
+  });
+  const contadorGrupo = new Map<number, number>();
+  return ord.map((c, i) => {
+    if (c.tipo === "GRUPO") {
+      contadorGrupo.set(c.grupo, 0);
+      return { ...c, ordem: i + 1, subordem: undefined, numero: undefined };
+    }
+    const next = (contadorGrupo.get(c.grupo) ?? 0) + 1;
+    contadorGrupo.set(c.grupo, next);
+    return { ...c, ordem: i + 1, subordem: next, numero: `${c.grupo}.${next}` };
+  });
+}
+
+/** Insere um novo ITEM antes/depois de uma cláusula de referência. */
+export function inserirItem(
+  clausulas: Clausula[],
+  referenciaId: string,
+  posicao: "antes" | "depois",
+  texto: string,
+  categoria: ClausulaCategoria = "OBRIG_CONTRATADA",
+): Clausula[] {
+  const ref = clausulas.find((c) => c.id === referenciaId);
+  if (!ref) return clausulas;
+  // Determina grupo e subordem-alvo
+  const grupo = ref.grupo;
+  const refSub = ref.tipo === "ITEM" ? (ref.subordem ?? 0) : 0;
+  const alvoSub = posicao === "antes" ? Math.max(refSub, 1) : refSub + 1;
+  // Desloca subordem das cláusulas posteriores no mesmo grupo
+  const next = clausulas.map((c) => {
+    if (c.tipo !== "ITEM" || c.grupo !== grupo) return c;
+    if ((c.subordem ?? 0) >= alvoSub) {
+      return { ...c, subordem: (c.subordem ?? 0) + 1 };
+    }
+    return c;
+  });
+  const novo: Clausula = {
+    id: uid(),
+    ordem: 0,
+    tipo: "ITEM",
+    grupo,
+    subordem: alvoSub,
+    titulo: "",
+    categoria,
+    texto: texto.trim(),
+    obrigatoria: false,
+    oculta: false,
+    revisada: true,
+    complementar: true,
+  };
+  return renumerar([...next, novo]);
+}
+
+/** Remove um ITEM e renumera o grupo. */
+export function removerItem(clausulas: Clausula[], id: string): Clausula[] {
+  const ref = clausulas.find((c) => c.id === id);
+  if (!ref || ref.tipo !== "ITEM") return clausulas;
+  const grupo = ref.grupo;
+  const sub = ref.subordem ?? 0;
+  const next = clausulas
+    .filter((c) => c.id !== id)
+    .map((c) => {
+      if (c.tipo !== "ITEM" || c.grupo !== grupo) return c;
+      if ((c.subordem ?? 0) > sub) {
+        return { ...c, subordem: (c.subordem ?? 0) - 1 };
+      }
+      return c;
+    });
+  return renumerar(next);
+}
+
+/** Substitui o texto de uma cláusula. */
+export function alterarTextoItem(
+  clausulas: Clausula[],
+  id: string,
+  novoTexto: string,
+): Clausula[] {
+  return clausulas.map((c) =>
+    c.id === id ? { ...c, texto: novoTexto, revisada: true } : c,
+  );
+}
+
+// =====================================================================
+// TEMPLATE PADRÃO META SUN (extraído do contrato 120/2026)
+// =====================================================================
+
+type ItemSeed = { texto: string; obrigatoria?: boolean };
+type GrupoSeed = {
+  titulo: string;
+  categoria: ClausulaCategoria;
+  itens: ItemSeed[];
+};
+
+const TEMPLATE_META_SUN: GrupoSeed[] = [
+  {
+    titulo: "DO OBJETO",
+    categoria: "OBJETO",
+    itens: [
+      {
+        texto:
+          "Prestação de serviços de compra e instalação de sistema de energia fotovoltaica On-Grid, " +
+          "composto por {{quantidade_modulos}} módulos fotovoltaicos, totalizando {{potencia_kwp}} kWp, " +
+          "incluindo elaboração de projeto, fornecimento de todos os materiais complementares (cabos solares, " +
+          "estrutura de fixação, demais acessórios aplicáveis) e mão de obra completa de montagem e integração, " +
+          "conforme padrão de entrada do CONTRATANTE.",
+        obrigatoria: true,
+      },
+      {
+        texto: "Os equipamentos serão instalados no endereço indicado pelo CONTRATANTE: {{endereco_instalacao}}.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Caso já exista sistema fotovoltaico previamente instalado no local, a CONTRATADA realizará a devida " +
+          "adequação, integração ou ajuste técnico necessário, de modo a garantir o pleno funcionamento e " +
+          "compatibilidade entre o sistema existente e o novo conjunto de equipamentos, conforme as boas práticas " +
+          "de engenharia e normas aplicáveis.",
+        obrigatoria: false,
+      },
+    ],
+  },
+  {
+    titulo: "DO VALOR E DA FORMA DE PAGAMENTO",
+    categoria: "VALOR_PAGAMENTO",
+    itens: [
+      {
+        texto:
+          "Pelos serviços e equipamentos descritos na Cláusula Primeira, o CONTRATANTE pagará à CONTRATADA o valor " +
+          "total de {{valor_total}} ({{valor_total_extenso}}).",
+        obrigatoria: true,
+      },
+      {
+        texto: "Forma de pagamento ajustada entre as partes: {{forma_pagamento}}.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "O atraso no pagamento de qualquer parcela acarretará multa moratória de 2% (dois por cento) e juros de " +
+          "1% (um por cento) ao mês, calculados sobre o valor em atraso, sem prejuízo das demais sanções previstas " +
+          "neste contrato.",
+        obrigatoria: false,
+      },
+    ],
+  },
+  {
+    titulo: "DO PRAZO, CRONOGRAMA E GARANTIAS",
+    categoria: "PRAZO",
+    itens: [
+      {
+        texto:
+          "A CONTRATADA executará o objeto no prazo de {{prazo_execucao}} dias úteis, contados a partir da " +
+          "homologação junto à concessionária e da quitação da parcela de entrada, quando houver. O prazo " +
+          "poderá ser automaticamente suspenso e prorrogado, sem caracterizar atraso, em caso de: " +
+          "(I) pendências financeiras, atraso de parcelas, falta de liberação bancária; " +
+          "(II) necessidade de documentos, autorizações ou acesso ao local sob responsabilidade do CONTRATANTE; " +
+          "(III) exigências da concessionária Energisa/RO para aprovação, conexão, vistoria ou substituição do " +
+          "medidor, nos termos da Resolução Normativa ANEEL nº 1.000/2021; " +
+          "(IV) caso fortuito ou força maior.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "A instalação está sujeita a variáveis climáticas. Poderão ocorrer ajustes no cronograma em situações " +
+          "de chuva ou condições adversas, ficando a CONTRATADA isenta de multas ou penalidades por atrasos " +
+          "decorrentes dessas condições, com comunicação prévia ao CONTRATANTE.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "A CONTRATADA oferece 180 (cento e oitenta) dias de assistência técnica para problemas relacionados à " +
+          "instalação dos painéis, contados a partir da conclusão. A garantia abrange exclusivamente falhas ou " +
+          "problemas decorrentes do processo de instalação.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Os equipamentos possuem garantia de fábrica conforme datasheet: 12 (doze) anos para os painéis e " +
+          "10 (dez) anos para os inversores, cobrindo exclusivamente defeitos de fabricação.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "A garantia não cobre danos decorrentes de mau uso, anomalias climáticas (granizo, vendaval), roubo, " +
+          "furto, ou modificações/consertos realizados por terceiros não autorizados.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Modificações expressivas na estrutura base solicitadas pelo CONTRATANTE com finalidade estética não " +
+          "estão contempladas no valor acordado, podendo ser executadas mediante aditivo contratual.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "Adequações, reformas, reforços ou desconstruções indicadas pela Engenharia da CONTRATADA como " +
+          "necessários à segurança da instalação e da edificação são de responsabilidade do CONTRATANTE, " +
+          "podendo a CONTRATADA executá-las mediante valor adicional previamente acordado.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "A localização do inversor será indicada em projeto. Alterações solicitadas pelo CONTRATANTE devem " +
+          "respeitar distância máxima de 10 (dez) metros do padrão de entrada e não podem estar em áreas " +
+          "úmidas (lavanderias, banheiros), sob pena de perda da garantia.",
+        obrigatoria: false,
+      },
+    ],
+  },
+  {
+    titulo: "DAS OBRIGAÇÕES",
+    categoria: "OBRIG_CONTRATADA",
+    itens: [
+      {
+        texto:
+          "[CONTRATADA] Executar os serviços em conformidade com as normas dos órgãos públicos competentes e " +
+          "as normas técnicas da ABNT, especialmente a NBR 16274.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATADA] Realizar os serviços dentro dos prazos estabelecidos, mantendo reuniões com o CONTRATANTE " +
+          "sempre que necessárias modificações no projeto ou cronograma.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATADA] Apresentar as devidas Anotações de Responsabilidade Técnica (ARTs) emitidas por " +
+          "profissional habilitado e registrado no CREA/RO, conforme art. 7º da Lei nº 6.496/1977.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATADA] Responsabilizar-se pelo levantamento e cálculo dos quantitativos de materiais a serem " +
+          "utilizados na execução dos serviços.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "[CONTRATADA] Admitir e gerir, sob sua exclusiva responsabilidade penal, cível e fiscal, todo o pessoal " +
+          "necessário, isentando o CONTRATANTE de qualquer responsabilidade trabalhista, previdenciária ou " +
+          "tributária.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATADA] Garantir sigilo absoluto quanto ao conteúdo deste contrato e às informações a que tiver " +
+          "acesso, salvo obrigação legal ou determinação judicial.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "[CONTRATANTE] Utilizar as informações técnicas e os serviços fornecidos pela CONTRATADA exclusivamente " +
+          "para os fins aqui pactuados, sendo vedada a utilização para outro projeto ou finalidade diversa.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATANTE] Realizar o pagamento conforme configurado na Cláusula Segunda do presente contrato.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATANTE] Garantir o acesso ao local de execução dos serviços, fornecer apoio logístico, ponto de " +
+          "energia e espaço adequado para armazenamento de materiais durante a realização dos trabalhos.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "[CONTRATANTE] Realizar a limpeza dos painéis ao menos 2 (duas) vezes por ano, a fim de assegurar o " +
+          "máximo de eficiência energética e evitar perdas de geração pela obstrução da superfície dos módulos.",
+        obrigatoria: false,
+      },
+    ],
+  },
+  {
+    titulo: "DA AUSÊNCIA DE VÍNCULO",
+    categoria: "VINCULO",
+    itens: [
+      {
+        texto:
+          "Não se estabelece, por força deste contrato, qualquer vínculo empregatício ou de outra natureza " +
+          "jurídica entre as partes e os respectivos funcionários, colaboradores, prepostos ou subcontratados.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "A CONTRATADA será integralmente responsável pela contratação, pagamento de salários, encargos " +
+          "trabalhistas, previdenciários e fiscais, incluindo FGTS, INSS e demais tributos incidentes sobre " +
+          "seus empregados ou contratados.",
+        obrigatoria: true,
+      },
+    ],
+  },
+  {
+    titulo: "DA MULTA E RESCISÃO",
+    categoria: "RESCISAO",
+    itens: [
+      {
+        texto:
+          "Este contrato poderá ser rescindido por qualquer das partes em caso de descumprimento de suas " +
+          "disposições, desde que a parte inadimplente seja notificada previamente, com antecedência mínima " +
+          "de 30 (trinta) dias.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Em caso de rescisão por iniciativa do CONTRATANTE, este deverá pagar à CONTRATADA os serviços " +
+          "efetivamente executados e/ou materiais adquiridos até a data da rescisão. Na rescisão por iniciativa " +
+          "da CONTRATADA, esta deverá concluir os serviços equivalentes ao valor recebido ou reembolsar os " +
+          "valores pagos antecipadamente.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "O descumprimento de quaisquer cláusulas deste contrato acarretará multa contratual de 10% (dez por " +
+          "cento) do valor total do contrato à parte infratora, sem prejuízo de eventuais perdas e danos.",
+        obrigatoria: true,
+      },
+    ],
+  },
+  {
+    titulo: "DO FORO",
+    categoria: "FORO",
+    itens: [
+      {
+        texto:
+          "Fica eleito o Foro Central da Comarca de {{cidade}} como o único competente para dirimir quaisquer " +
+          "controvérsias oriundas da execução deste contrato, com renúncia expressa a qualquer outro foro, por " +
+          "mais privilegiado que seja.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "E, por estarem justas e contratadas, as partes assinam o presente contrato em uma via digital ou, " +
+          "preferencialmente, em duas vias de igual teor, forma e para um só efeito, na presença de 2 (duas) " +
+          "testemunhas.",
+        obrigatoria: true,
+      },
+    ],
+  },
+];
+
+/** Cláusulas padrão Meta Sun (template base extraído do PDF oficial). */
+export function clausulasPadrao(): Clausula[] {
+  const arr: Clausula[] = [];
+  TEMPLATE_META_SUN.forEach((g, gi) => {
+    const grupoNum = gi + 1;
+    arr.push({
+      id: uid(),
+      ordem: 0,
+      tipo: "GRUPO",
+      grupo: grupoNum,
+      titulo: `CLÁUSULA ${ordinalDoGrupo(grupoNum)} – ${g.titulo}`,
+      ordinal: ordinalDoGrupo(grupoNum),
+      categoria: g.categoria,
+      texto: "",
+      obrigatoria: true,
+      oculta: false,
+      revisada: true,
+    });
+    g.itens.forEach((it) => {
+      arr.push({
+        id: uid(),
+        ordem: 0,
+        tipo: "ITEM",
+        grupo: grupoNum,
+        titulo: "",
+        categoria: g.categoria,
+        texto: it.texto,
+        obrigatoria: it.obrigatoria ?? false,
+        oculta: false,
+        revisada: true, // template oficial já considerado revisado
+      });
+    });
+  });
+  return renumerar(arr);
+}
+
+/** Cria uma cláusula complementar simples (compat). */
 export function novaClausulaComplementar(ordem: number): Clausula {
   return {
     id: uid(),
     ordem,
+    tipo: "ITEM",
+    grupo: 4,
+    titulo: "",
     categoria: "OBRIG_CONTRATADA",
-    titulo: "Cláusula Complementar",
     texto: "",
     obrigatoria: false,
     oculta: false,
@@ -186,8 +476,50 @@ export function novaClausulaComplementar(ordem: number): Clausula {
   };
 }
 
-// ---------- Variáveis ----------
+// =====================================================================
+// Template salvo pelo usuário (LS)
+// =====================================================================
+const LS_TEMPLATE_KEY = "ui.contratos.template-padrao.v1";
 
+export function salvarTemplateUsuario(clausulas: Clausula[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      LS_TEMPLATE_KEY,
+      JSON.stringify({
+        salvo_em: new Date().toISOString(),
+        clausulas: renumerar(clausulas),
+      }),
+    );
+  } catch { /* ignore quota */ }
+}
+
+export function carregarTemplateUsuario(): Clausula[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LS_TEMPLATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { clausulas?: Clausula[] };
+    if (!parsed?.clausulas?.length) return null;
+    return renumerar(parsed.clausulas);
+  } catch {
+    return null;
+  }
+}
+
+export function existeTemplateUsuario(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!window.localStorage.getItem(LS_TEMPLATE_KEY);
+}
+
+export function limparTemplateUsuario(): void {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(LS_TEMPLATE_KEY); } catch { /* */ }
+}
+
+// =====================================================================
+// Variáveis
+// =====================================================================
 export type Variaveis = Record<string, string | number | null | undefined>;
 
 const NOMES_VAR = [
@@ -195,6 +527,7 @@ const NOMES_VAR = [
   "valor_total", "valor_total_extenso",
   "potencia_kwp", "quantidade_modulos", "inversor",
   "forma_pagamento", "prazo_execucao", "cidade", "data_contrato",
+  "endereco_instalacao",
 ] as const;
 export type NomeVariavel = typeof NOMES_VAR[number];
 export const VARIAVEIS_OBRIGATORIAS: NomeVariavel[] = [
@@ -210,7 +543,6 @@ export function substituirVariaveis(texto: string, vars: Variaveis): string {
   });
 }
 
-/** Detecta variáveis cujo valor está vazio. */
 export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
   return VARIAVEIS_OBRIGATORIAS.filter((k) => {
     const v = vars[k];
@@ -218,8 +550,9 @@ export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
   });
 }
 
-// ---------- Forma de pagamento ----------
-
+// =====================================================================
+// Forma de pagamento
+// =====================================================================
 export type FormaPagamentoTipo =
   | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "MISTO";
 
@@ -300,7 +633,9 @@ export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoCon
   return base;
 }
 
-// ---------- Número por extenso (simplificado) ----------
+// =====================================================================
+// Número por extenso
+// =====================================================================
 const UNI = ["", "um","dois","três","quatro","cinco","seis","sete","oito","nove","dez","onze","doze","treze","catorze","quinze","dezesseis","dezessete","dezoito","dezenove"];
 const DEZ = ["", "", "vinte","trinta","quarenta","cinquenta","sessenta","setenta","oitenta","noventa"];
 const CEN = ["", "cento","duzentos","trezentos","quatrocentos","quinhentos","seiscentos","setecentos","oitocentos","novecentos"];

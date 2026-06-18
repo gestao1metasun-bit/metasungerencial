@@ -200,9 +200,10 @@ function ComercialPage() {
           <PropostasPage embedded />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
-          {/* C-ENT.11.b — Contratos LS deixa de ser canônico. Verdade oficial = Supabase em /comercial/contratos. */}
-          <ContratosRedirectCard />
+          {/* D18.11 — A aba interna foi removida. Hash legado dispara redirect p/ /comercial/contratos no useEffect acima. */}
+          <div className="p-6 text-sm text-muted-foreground">Redirecionando para Contratos…</div>
         </TabsContent>
+
         <TabsContent value="aditivos" className="mt-5">
           <AditivosTab contratos={contratos} />
         </TabsContent>

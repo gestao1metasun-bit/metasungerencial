@@ -238,7 +238,7 @@ export function GerarContratoDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvando}>Cancelar</Button>
           <Button onClick={confirmar} disabled={salvando} className="gap-1">
             <FileText className="h-4 w-4" />
-            {salvando ? "Gerando..." : "Gerar contrato"}
+            {salvando ? "Enviando..." : "Enviar para Contratos"}
           </Button>
         </DialogFooter>
       </DialogContent>

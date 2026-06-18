@@ -202,7 +202,11 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     tabs: [
       { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
       { value: "orcamentos", label: "Propostas", group: "Operação" },
-      { value: "contratos", label: "Contratos", group: "Operação" },
+      // D18.10 — Contratos vive em rota própria (/comercial/contratos).
+      // O ribbon navega cross-route via `to:` para evitar a tela de redirect
+      // dentro de /comercial. Camadas Proposta x Contrato ficam fisicamente
+      // separadas (rota, grid e toolbar próprios).
+      { value: "contratos", label: "Contratos", group: "Operação", to: "/comercial/contratos" },
       { value: "aditivos", label: "Aditivos", group: "Operação" },
       { value: "carteira", label: "Carteira", group: "Operação" },
       { value: "comissoes", label: "Comissões", group: "Controle" },

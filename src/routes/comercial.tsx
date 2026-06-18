@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
@@ -101,8 +101,20 @@ import { notifyUnavailable, notifyDone } from "@/lib/comercial-ux";
 
 export const Route = createFileRoute("/comercial")({
   head: () => ({ meta: [{ title: "Comercial — Meta Sun Gerencial" }] }),
-  component: ComercialPage,
+  component: ComercialRouteRoot,
 });
+
+/**
+ * D18.16 — Fix: comercial.tsx é parent layout de /comercial/{contratos,clientes,...}
+ * Quando a URL é uma rota filha, renderizamos apenas <Outlet /> para evitar que o
+ * dashboard/abas internas de /comercial (PropostasPage default) ofusquem a tela filha.
+ */
+function ComercialRouteRoot() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isChild = pathname !== "/comercial" && pathname !== "/comercial/";
+  if (isChild) return <Outlet />;
+  return <ComercialPage />;
+}
 
 // C-ENT.11.a — CHART_COLORS movido para @/modules/comercial/_shared
 

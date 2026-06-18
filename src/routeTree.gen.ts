@@ -51,6 +51,7 @@ import { Route as DashboardsComercialRouteImport } from './routes/dashboards.com
 import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
 import { Route as ConfiguracoesTestesCargaRouteImport } from './routes/configuracoes.testes-carga'
 import { Route as ConfiguracoesContabilRouteImport } from './routes/configuracoes.contabil'
+import { Route as ComercialPropostasRouteImport } from './routes/comercial.propostas'
 import { Route as AnalyticsSaudeSistemaRouteImport } from './routes/analytics.saude-sistema'
 import { Route as AnalyticsSaudeDadosRouteImport } from './routes/analytics.saude-dados'
 import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
@@ -287,6 +288,11 @@ const ConfiguracoesContabilRoute = ConfiguracoesContabilRouteImport.update({
   path: '/contabil',
   getParentRoute: () => ConfiguracoesRoute,
 } as any)
+const ComercialPropostasRoute = ComercialPropostasRouteImport.update({
+  id: '/propostas',
+  path: '/propostas',
+  getParentRoute: () => ComercialRoute,
+} as any)
 const AnalyticsSaudeSistemaRoute = AnalyticsSaudeSistemaRouteImport.update({
   id: '/saude-sistema',
   path: '/saude-sistema',
@@ -456,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/comercial/propostas': typeof ComercialPropostasRoute
   '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/configuracoes/testes-carga': typeof ConfiguracoesTestesCargaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
@@ -523,6 +530,7 @@ export interface FileRoutesByTo {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/comercial/propostas': typeof ComercialPropostasRoute
   '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/configuracoes/testes-carga': typeof ConfiguracoesTestesCargaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
@@ -591,6 +599,7 @@ export interface FileRoutesById {
   '/analytics/posvenda': typeof AnalyticsPosvendaRoute
   '/analytics/saude-dados': typeof AnalyticsSaudeDadosRoute
   '/analytics/saude-sistema': typeof AnalyticsSaudeSistemaRoute
+  '/comercial/propostas': typeof ComercialPropostasRoute
   '/configuracoes/contabil': typeof ConfiguracoesContabilRoute
   '/configuracoes/testes-carga': typeof ConfiguracoesTestesCargaRoute
   '/dashboards/aprovacoes': typeof DashboardsAprovacoesRoute
@@ -660,6 +669,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/comercial/propostas'
     | '/configuracoes/contabil'
     | '/configuracoes/testes-carga'
     | '/dashboards/aprovacoes'
@@ -727,6 +737,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/comercial/propostas'
     | '/configuracoes/contabil'
     | '/configuracoes/testes-carga'
     | '/dashboards/aprovacoes'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/analytics/posvenda'
     | '/analytics/saude-dados'
     | '/analytics/saude-sistema'
+    | '/comercial/propostas'
     | '/configuracoes/contabil'
     | '/configuracoes/testes-carga'
     | '/dashboards/aprovacoes'
@@ -1148,6 +1160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesContabilRouteImport
       parentRoute: typeof ConfiguracoesRoute
     }
+    '/comercial/propostas': {
+      id: '/comercial/propostas'
+      path: '/propostas'
+      fullPath: '/comercial/propostas'
+      preLoaderRoute: typeof ComercialPropostasRouteImport
+      parentRoute: typeof ComercialRoute
+    }
     '/analytics/saude-sistema': {
       id: '/analytics/saude-sistema'
       path: '/saude-sistema'
@@ -1347,6 +1366,7 @@ const AnalyticsRouteWithChildren = AnalyticsRoute._addFileChildren(
 )
 
 interface ComercialRouteChildren {
+  ComercialPropostasRoute: typeof ComercialPropostasRoute
   ComercialClientesClienteIdRoute: typeof ComercialClientesClienteIdRoute
   ComercialClientesBackfillRoute: typeof ComercialClientesBackfillRoute
   ComercialComissoesComissaoIdRoute: typeof ComercialComissoesComissaoIdRoute
@@ -1358,6 +1378,7 @@ interface ComercialRouteChildren {
 }
 
 const ComercialRouteChildren: ComercialRouteChildren = {
+  ComercialPropostasRoute: ComercialPropostasRoute,
   ComercialClientesClienteIdRoute: ComercialClientesClienteIdRoute,
   ComercialClientesBackfillRoute: ComercialClientesBackfillRoute,
   ComercialComissoesComissaoIdRoute: ComercialComissoesComissaoIdRoute,

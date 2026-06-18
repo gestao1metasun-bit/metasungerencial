@@ -178,20 +178,26 @@ function ContratosListPage() {
     );
   }
 
-  const abrirContrato = (id: string, hash?: string) =>
-    navigate({
+  const abrirContrato = (
+    id: string,
+    destino?: string | { hash?: string; search?: { tab?: string; focus?: string } },
+  ) => {
+    const opts = typeof destino === "string" ? { hash: destino } : destino;
+    return navigate({
       to: "/comercial/contratos/$contratoId",
       params: { contratoId: id },
-      ...(hash ? { hash } : {}),
+      ...(opts?.search ? { search: opts.search as never } : {}),
+      ...(opts?.hash ? { hash: opts.hash } : {}),
     });
+  };
 
-  // D18.19 — focos da minuta navegáveis via hash (#tab=...&minuta=...&focus=...)
+  // D18.19 — focos da minuta navegáveis via hash legado ou query oficial.
   const FOCO_MINUTA = {
     abrir:       "tab=resumo&minuta=contratante",
     contratuais: "tab=resumo&minuta=contratuais",
     clausulas:   "tab=resumo&minuta=clausulas",
     previa:      "tab=resumo&minuta=previa",
-    gerar:       "tab=resumo&minuta=previa&focus=gerar",
+    gerar:       { search: { tab: "previa", focus: "gerar" } },
     documentos:  "tab=documentos",
   } as const;
 
@@ -201,6 +207,13 @@ function ContratosListPage() {
   /* ---------------- statusActions (linha 2 — círculos coloridos por aba) ---------------- */
   const semSel = !selUnico;
   const semSelMsg = "Selecione exatamente 1 contrato.";
+  const gerarContratoDisabledReason = selecionadosList.length === 0
+    ? "Selecione um contrato pendente."
+    : selecionadosList.length > 1
+      ? "Selecione apenas um contrato para gerar."
+      : !permGerar.data
+        ? "Sem permissão (comercial.contrato.criar)."
+        : "Contrato cancelado.";
   const cancelado = selUnico ? (selUnico.status === "CANCELADO" || !!selUnico.cancelado) : false;
 
   const statusActions = (() => {
@@ -208,7 +221,7 @@ function ContratosListPage() {
       return [
         { key: "gerar_contrato", label: "Gerar Contrato", icon: FilePen, tone: "success" as const, wide: true,
           disabled: semSel || !permGerar.data || cancelado,
-          disabledReason: semSel ? semSelMsg : (!permGerar.data ? "Sem permissão (comercial.contrato.criar)." : "Contrato cancelado."),
+          disabledReason: gerarContratoDisabledReason,
           onClick: () => selUnico && abrirContrato(selUnico.id, FOCO_MINUTA.gerar) },
         { key: "editar_minuta", label: "Editar Minuta", icon: PenLine, tone: "info" as const,
           disabled: semSel || !permEditarMinuta.data,

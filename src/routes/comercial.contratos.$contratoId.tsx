@@ -4,7 +4,7 @@
  * Gate: permissão `comercial.contrato.visualizar`.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -35,7 +35,6 @@ import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
 import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
-import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
@@ -106,10 +105,47 @@ function ContratoWorkspacePage() {
   const cliente = useCliente(contrato.data?.cliente_id);
   const consultor = useConsultor(contrato.data?.consultor_id);
   const cancelar = useCancelarContratoSupabase();
-  const [tab, setTab] = useTabFromHash("resumo");
+  const [tab, setWorkspaceTab] = useState(() => {
+    if (typeof window === "undefined") return "resumo";
+    const search = new URLSearchParams(window.location.search);
+    if (search.get("tab") === "previa") return "resumo";
+    const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+    return new URLSearchParams(hash).get("tab") || "resumo";
+  });
   const [cancelOpen, setCancelOpen] = useState(false);
   const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
   const [compensarOrigem, setCompensarOrigem] = useState<import("@/lib/repositories/aditivos-repo").AditivoSupabase | null>(null);
+
+  const setTab = (value: string) => {
+    setWorkspaceTab(value);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tab");
+    url.searchParams.delete("focus");
+    url.hash = `tab=${value}`;
+    window.history.replaceState(null, "", url.toString());
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get("tab") === "previa") {
+        setWorkspaceTab("resumo");
+        return;
+      }
+      const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+      setWorkspaceTab(new URLSearchParams(hash).get("tab") || "resumo");
+    };
+    window.addEventListener("hashchange", sync);
+    window.addEventListener("popstate", sync);
+    window.addEventListener("lovable:hash-sync", sync);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      window.removeEventListener("popstate", sync);
+      window.removeEventListener("lovable:hash-sync", sync);
+    };
+  }, []);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];

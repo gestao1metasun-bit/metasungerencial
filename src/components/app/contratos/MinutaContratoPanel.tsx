@@ -306,9 +306,9 @@ export function MinutaContratoPanel({
   const erros = useMemo(() => {
     const arr: string[] = [];
     if (!state.contratante_nome?.trim()) arr.push("nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push("documento");
+    if (!state.contratante_doc?.trim()) arr.push("documento (CPF/CNPJ)");
     if (!state.contratante_endereco?.trim()) arr.push("endereço contratual");
-    if (!state.assinatura_email?.trim()) arr.push("e-mail de assinatura");
+    if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
     if (!state.forma_pagamento_config) arr.push("forma de pagamento");
     else if (!fpFecha) arr.push(`forma de pagamento não fecha (${brl(somaFP)} ≠ ${brl(valorTotal)})`);
     if (valorTotal <= 0) arr.push("valor total > 0");

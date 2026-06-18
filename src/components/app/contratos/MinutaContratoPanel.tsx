@@ -97,10 +97,15 @@ type DadosContratuais = {
   contratante_telefone?: string;
   contratante_whatsapp?: string;
   contratante_email?: string;
-  contratante_endereco?: string;
+  contratante_cep?: string;
+  contratante_logradouro?: string;
+  contratante_numero?: string;
+  contratante_bairro?: string;
+  contratante_complemento?: string;
   contratante_cidade?: string;
   contratante_uf?: string;
-  contratante_cep?: string;
+  /** Computado a partir de logradouro+numero+bairro+complemento (compat). */
+  contratante_endereco?: string;
   // Dados contratuais
   responsavel_assinatura?: string;
   responsavel_cpf?: string;

@@ -384,8 +384,10 @@ function ContratosListPage() {
         selectedIds={selUnico ? [selUnico.id] : selecionadosList.map((s) => s.id)}
         splitSecondaryActions
         availableActions={[
-          "atualizar", "anexos", "historico", "auditoria",
-          "exportar", "filtroRapido", "filtroAvancado", "colunas",
+          "novo", "editar", "atualizar",
+          "anexos", "historico", "auditoria", "favoritos",
+          "exportar", "enviar",
+          "filtroRapido", "filtroAvancado", "colunas",
         ]}
         availableProcesses={availableProcesses}
         onAction={(a) => handleAction(a)}

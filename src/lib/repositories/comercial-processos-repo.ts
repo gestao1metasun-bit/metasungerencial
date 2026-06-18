@@ -112,6 +112,22 @@ export function useGerarContratoDaProposta() {
   });
 }
 
+// D18.13 — Enviar proposta APROVADA para a esteira de Contratos.
+// Wrapper oficial sobre rpc_proposta_gerar_contrato — cria contrato MINUTA
+// (PENDENTE_REDACAO) e marca a proposta como CONTRATO_PENDENTE.
+export function useEnviarPropostaParaContratos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (i: { propostaId: string }) =>
+      call<string>("rpc_proposta_enviar_para_contratos", { p_proposta_id: i.propostaId }),
+    onSuccess: () => {
+      toast.success("Proposta enviada para Contratos. Minuta criada como pendente de redação.");
+      invalidateComercial(qc);
+    },
+    onError: (e: Error) => toast.error(`Falha ao enviar para Contratos: ${e.message}`),
+  });
+}
+
 // D18.8 — Aprovar contrato em estado de minuta (MINUTA → ATIVO).
 export function useAprovarMinutaContrato() {
   const qc = useQueryClient();

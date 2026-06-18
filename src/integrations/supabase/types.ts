@@ -15684,6 +15684,10 @@ export type Database = {
         Args: { p_aprovacao_id: string; p_decisao: string; p_motivo: string }
         Returns: undefined
       }
+      rpc_proposta_enviar_para_contratos: {
+        Args: { p_proposta_id: string }
+        Returns: string
+      }
       rpc_proposta_gerar_contrato: {
         Args: { p_proposta_id: string }
         Returns: string

@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useGerarContratoDaProposta } from "@/lib/repositories/comercial-processos-repo";
+import { useEnviarPropostaParaContratos } from "@/lib/repositories/comercial-processos-repo";
 import { fmtBRL } from "@/modules/propostas/store";
 
 type FormaPagamento = "A_VISTA" | "PARCELADO" | "FINANCIAMENTO" | "MISTO";
@@ -42,7 +42,7 @@ export type GerarContratoDialogProps = {
 export function GerarContratoDialog({
   open, onOpenChange, propostaId, numeroProposta, clienteNome, valorTotal, onGerado,
 }: GerarContratoDialogProps) {
-  const gerar = useGerarContratoDaProposta();
+  const gerar = useEnviarPropostaParaContratos();
   const [forma, setForma] = useState<FormaPagamento>("A_VISTA");
   const [valorEntrada, setValorEntrada] = useState<string>("");
   const [qtdeParcelas, setQtdeParcelas] = useState<string>("1");
@@ -127,9 +127,9 @@ export function GerarContratoDialog({
         } as never)
         .eq("id", contratoId);
       if (error) {
-        toast.warning(`Contrato gerado, mas dados financeiros não foram salvos: ${error.message}`);
+        toast.warning(`Minuta criada, mas dados financeiros não foram salvos: ${error.message}`);
       } else {
-        toast.success("Contrato gerado e dados financeiros registrados.");
+        toast.success("Proposta enviada para Contratos. Minuta criada como Pendente de Redação.");
       }
       onGerado?.(contratoId);
       onOpenChange(false);
@@ -154,7 +154,7 @@ export function GerarContratoDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-primary" />
-              Gerar contrato {numeroProposta ? `· proposta ${numeroProposta}` : ""}
+              Enviar para Contratos {numeroProposta ? `· proposta ${numeroProposta}` : ""}
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
               {clienteNome ? `Cliente: ${clienteNome} · ` : ""}Valor total: <strong>{fmtBRL(valorTotal)}</strong>
@@ -238,7 +238,7 @@ export function GerarContratoDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvando}>Cancelar</Button>
           <Button onClick={confirmar} disabled={salvando} className="gap-1">
             <FileText className="h-4 w-4" />
-            {salvando ? "Gerando..." : "Gerar contrato"}
+            {salvando ? "Enviando..." : "Enviar para Contratos"}
           </Button>
         </DialogFooter>
       </DialogContent>

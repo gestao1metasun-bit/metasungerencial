@@ -432,16 +432,33 @@ export function MinutaContratoPanel({
 
         {/* CONTRATANTE */}
         <TabsContent value="contratante" className="mt-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} />
-            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} />
-            <Field label="Telefone" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} />
-            <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} />
-            <Field label="E-mail" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} />
-            <Field label="CEP" v={state.contratante_cep} on={(v) => upd("contratante_cep", v)} disabled={!podeEditar} />
-            <Field label="Endereço contratual *" v={state.contratante_endereco} on={(v) => upd("contratante_endereco", v)} disabled={!podeEditar} className="md:col-span-2" />
-            <Field label="Cidade" v={state.contratante_cidade} on={(v) => upd("contratante_cidade", v)} disabled={!podeEditar} />
-            <Field label="UF" v={state.contratante_uf} on={(v) => upd("contratante_uf", v)} disabled={!podeEditar} />
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
+            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
+            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <div className="md:col-span-2">
+              <Label className="text-xs">CEP (autopreenche endereço)</Label>
+              <Input
+                className="mt-1 h-8"
+                value={state.contratante_cep ?? ""}
+                disabled={!podeEditar}
+                placeholder="00000-000"
+                onChange={(e) => upd("contratante_cep", e.target.value)}
+                onBlur={(e) => void aplicarCep(e.target.value)}
+              />
+            </div>
+            <Field label="Logradouro *" v={state.contratante_logradouro} on={(v) => upd("contratante_logradouro", v)} disabled={!podeEditar} className="md:col-span-3" />
+            <Field label="Número *" v={state.contratante_numero} on={(v) => upd("contratante_numero", v)} disabled={!podeEditar} className="md:col-span-1" />
+            <Field label="Bairro *" v={state.contratante_bairro} on={(v) => upd("contratante_bairro", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Complemento" v={state.contratante_complemento} on={(v) => upd("contratante_complemento", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Cidade *" v={state.contratante_cidade} on={(v) => upd("contratante_cidade", v)} disabled={!podeEditar} className="md:col-span-3" />
+            <Field label="UF *" v={state.contratante_uf} on={(v) => upd("contratante_uf", v)} disabled={!podeEditar} className="md:col-span-1" />
+            <div className="md:col-span-6">
+              <Label className="text-xs">Endereço completo (gerado automaticamente)</Label>
+              <Input className="mt-1 h-8 bg-muted/40" readOnly value={enderecoCompleto} />
+            </div>
           </div>
           <p className="text-[11px] text-muted-foreground mt-2">
             Alterações aqui salvam um <strong>snapshot contratual</strong> em <code>contratos.dados</code> e

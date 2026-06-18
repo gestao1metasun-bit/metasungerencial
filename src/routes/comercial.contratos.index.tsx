@@ -315,8 +315,11 @@ function ContratosListPage() {
 
   const handleProcess = (key: string) => {
     if (!selUnico) { toast.info(semSelMsg); return; }
-    if (key === "abrir_workspace" || key === "editar_clausulas") {
-      abrirContrato(selUnico.id); return;
+    if (key === "abrir_workspace") {
+      abrirContrato(selUnico.id, FOCO_MINUTA.abrir); return;
+    }
+    if (key === "editar_clausulas") {
+      abrirContrato(selUnico.id, FOCO_MINUTA.clausulas); return;
     }
     if (key === "abrir_proposta") {
       if (!selUnico.proposta_origem_id) { toast.info("Contrato sem proposta de origem vinculada."); return; }
@@ -324,9 +327,9 @@ function ContratosListPage() {
       return;
     }
     if (key === "anexar_documentos" || key === "anexar_assinado") {
-      setAnexosOpen(true); return;
+      abrirContrato(selUnico.id, FOCO_MINUTA.documentos); return;
     }
-    if (key === "abrir_projetos") { abrirContrato(selUnico.id); return; }
+    if (key === "abrir_projetos") { abrirContrato(selUnico.id, "tab=projetos"); return; }
     acaoNoWS();
   };
 

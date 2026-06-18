@@ -37,14 +37,15 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { logError } from "@/lib/repositories/error-log-repo";
 import {
-  CATEGORIA_LABEL, clausulasPadrao,
+  clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,
+  PIX_COMPLEMENTO_LABEL, TIPOS_ACEITAM_PIX_COMPLEMENTO,
   renumerar, inserirItem, removerItem, alterarTextoItem,
   salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
-  type FormaPagamentoTipo, type Variaveis,
+  type FormaPagamentoTipo, type PixComplementoMomento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
 
 type MinutaContrato = {
@@ -96,10 +97,15 @@ type DadosContratuais = {
   contratante_telefone?: string;
   contratante_whatsapp?: string;
   contratante_email?: string;
-  contratante_endereco?: string;
+  contratante_cep?: string;
+  contratante_logradouro?: string;
+  contratante_numero?: string;
+  contratante_bairro?: string;
+  contratante_complemento?: string;
   contratante_cidade?: string;
   contratante_uf?: string;
-  contratante_cep?: string;
+  /** Computado a partir de logradouro+numero+bairro+complemento (compat). */
+  contratante_endereco?: string;
   // Dados contratuais
   responsavel_assinatura?: string;
   responsavel_cpf?: string;
@@ -145,11 +151,15 @@ export function MinutaContratoPanel({
     contratante_telefone: dadosIni.contratante_telefone ?? cliente?.telefone ?? "",
     contratante_whatsapp: dadosIni.contratante_whatsapp ?? "",
     contratante_email: dadosIni.contratante_email ?? cliente?.email ?? "",
+    contratante_cep: dadosIni.contratante_cep ?? "",
+    contratante_logradouro: dadosIni.contratante_logradouro ?? cliente?.rua ?? "",
+    contratante_numero: dadosIni.contratante_numero ?? cliente?.numero ?? "",
+    contratante_bairro: dadosIni.contratante_bairro ?? cliente?.bairro ?? "",
+    contratante_complemento: dadosIni.contratante_complemento ?? "",
     contratante_endereco: dadosIni.contratante_endereco ??
       [cliente?.rua, cliente?.numero, cliente?.bairro].filter(Boolean).join(", "),
     contratante_cidade: dadosIni.contratante_cidade ?? cliente?.cidade ?? "",
     contratante_uf: dadosIni.contratante_uf ?? cliente?.uf ?? "",
-    contratante_cep: dadosIni.contratante_cep ?? "",
     responsavel_assinatura: dadosIni.responsavel_assinatura ?? "",
     responsavel_cpf: dadosIni.responsavel_cpf ?? "",
     assinatura_email: dadosIni.assinatura_email ?? cliente?.email ?? "",
@@ -209,6 +219,44 @@ export function MinutaContratoPanel({
   function upd<K extends keyof DadosContratuais>(k: K, v: DadosContratuais[K]) {
     setState((s) => ({ ...s, [k]: v }));
     setDirty(true);
+  }
+
+  /** Endereço contratual reconstruído (compatibilidade com PDF/cláusulas). */
+  const enderecoCompleto = useMemo(() => {
+    const log = state.contratante_logradouro?.trim() ?? "";
+    const num = state.contratante_numero?.trim() ?? "";
+    const bairro = state.contratante_bairro?.trim() ?? "";
+    const compl = state.contratante_complemento?.trim() ?? "";
+    const cep = state.contratante_cep?.trim() ?? "";
+    const linha1 = [log, num].filter(Boolean).join(", ");
+    const linha2 = [bairro, compl].filter(Boolean).join(" — ");
+    return [linha1, linha2, cep ? `CEP ${cep}` : ""].filter(Boolean).join(", ");
+  }, [state.contratante_logradouro, state.contratante_numero, state.contratante_bairro, state.contratante_complemento, state.contratante_cep]);
+
+  // mantém contratante_endereco em sincronia (cláusulas legadas referenciam ele)
+  useEffect(() => {
+    setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
+  }, [enderecoCompleto]);
+
+  /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */
+  async function aplicarCep(cepRaw: string) {
+    const cep = cepRaw.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!res.ok) return;
+      const j = await res.json() as { logradouro?: string; bairro?: string; localidade?: string; uf?: string; erro?: boolean };
+      if (j.erro) { toast.error("CEP não encontrado."); return; }
+      setState((s) => ({
+        ...s,
+        contratante_cep: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
+        contratante_logradouro: s.contratante_logradouro || j.logradouro || "",
+        contratante_bairro: s.contratante_bairro || j.bairro || "",
+        contratante_cidade: s.contratante_cidade || j.localidade || "",
+        contratante_uf: s.contratante_uf || j.uf || "",
+      }));
+      setDirty(true);
+    } catch { /* silencia rede */ }
   }
 
   // ---- Variáveis para prévia ----
@@ -384,16 +432,33 @@ export function MinutaContratoPanel({
 
         {/* CONTRATANTE */}
         <TabsContent value="contratante" className="mt-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} />
-            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} />
-            <Field label="Telefone" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} />
-            <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} />
-            <Field label="E-mail" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} />
-            <Field label="CEP" v={state.contratante_cep} on={(v) => upd("contratante_cep", v)} disabled={!podeEditar} />
-            <Field label="Endereço contratual *" v={state.contratante_endereco} on={(v) => upd("contratante_endereco", v)} disabled={!podeEditar} className="md:col-span-2" />
-            <Field label="Cidade" v={state.contratante_cidade} on={(v) => upd("contratante_cidade", v)} disabled={!podeEditar} />
-            <Field label="UF" v={state.contratante_uf} on={(v) => upd("contratante_uf", v)} disabled={!podeEditar} />
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
+            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
+            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <div className="md:col-span-2">
+              <Label className="text-xs">CEP (autopreenche endereço)</Label>
+              <Input
+                className="mt-1 h-8"
+                value={state.contratante_cep ?? ""}
+                disabled={!podeEditar}
+                placeholder="00000-000"
+                onChange={(e) => upd("contratante_cep", e.target.value)}
+                onBlur={(e) => void aplicarCep(e.target.value)}
+              />
+            </div>
+            <Field label="Logradouro *" v={state.contratante_logradouro} on={(v) => upd("contratante_logradouro", v)} disabled={!podeEditar} className="md:col-span-3" />
+            <Field label="Número *" v={state.contratante_numero} on={(v) => upd("contratante_numero", v)} disabled={!podeEditar} className="md:col-span-1" />
+            <Field label="Bairro *" v={state.contratante_bairro} on={(v) => upd("contratante_bairro", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Complemento" v={state.contratante_complemento} on={(v) => upd("contratante_complemento", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="Cidade *" v={state.contratante_cidade} on={(v) => upd("contratante_cidade", v)} disabled={!podeEditar} className="md:col-span-3" />
+            <Field label="UF *" v={state.contratante_uf} on={(v) => upd("contratante_uf", v)} disabled={!podeEditar} className="md:col-span-1" />
+            <div className="md:col-span-6">
+              <Label className="text-xs">Endereço completo (gerado automaticamente)</Label>
+              <Input className="mt-1 h-8 bg-muted/40" readOnly value={enderecoCompleto} />
+            </div>
           </div>
           <p className="text-[11px] text-muted-foreground mt-2">
             Alterações aqui salvam um <strong>snapshot contratual</strong> em <code>contratos.dados</code> e
@@ -596,24 +661,38 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
         </div>
       )}
 
-      {tipo === "BOLETO" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-          <NumField label="Valor total" v={value!.boleto?.valor} on={(v) => patch("boleto", { valor: v })} disabled={disabled} />
-          <NumField label="Qtde parcelas" v={value!.boleto?.parcelas} on={(v) => patch("boleto", { parcelas: v })} disabled={disabled} />
-          <NumField label="Valor da parcela" v={value!.boleto?.valor_parcela} on={(v) => patch("boleto", { valor_parcela: v })} disabled={disabled} />
-          <DateField label="1º vencimento" v={value!.boleto?.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
-          <NumField label="Dia fixo de vencimento" v={value!.boleto?.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
-          <Field label="Observação" v={value!.boleto?.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
-        </div>
-      )}
+      {tipo === "BOLETO" && (() => {
+        const b = value!.boleto!;
+        const parcelaCalc = b.parcelas > 0 ? b.valor / b.parcelas : 0;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v, valor_parcela: b.parcelas > 0 ? v / b.parcelas : 0 })} disabled={disabled} />
+            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v, valor_parcela: v > 0 ? b.valor / v : 0 })} disabled={disabled} />
+            <div>
+              <Label className="text-xs">Valor da parcela (calculado)</Label>
+              <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />
+            </div>
+            <DateField label="1º vencimento" v={b.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
+            <NumField label="Dia fixo de vencimento" v={b.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
+            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
+          </div>
+        );
+      })()}
 
       {tipo === "CARTAO" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.cartao?.valor} on={(v) => patch("cartao", { valor: v })} disabled={disabled} />
           <NumField label="Qtde parcelas" v={value!.cartao?.parcelas} on={(v) => patch("cartao", { parcelas: v })} disabled={disabled} />
           <Field label="Bandeira" v={value!.cartao?.bandeira} on={(v) => patch("cartao", { bandeira: v })} disabled={disabled} />
-          <NumField label="Taxa (%)" v={value!.cartao?.taxa} on={(v) => patch("cartao", { taxa: v })} disabled={disabled} />
-          <Field label="Observação" v={value!.cartao?.observacao} on={(v) => patch("cartao", { observacao: v })} disabled={disabled} className="md:col-span-2" />
+          <div className="flex items-center gap-2 pt-5 md:col-span-2">
+            <input type="checkbox" id="cartao_juros" disabled={disabled}
+              checked={value!.cartao?.com_juros ?? false}
+              onChange={(e) => patch("cartao", { com_juros: e.target.checked })} />
+            <Label htmlFor="cartao_juros" className="text-xs cursor-pointer">
+              Parcelamento <strong>com juros</strong> do cliente (não calcula valor da parcela)
+            </Label>
+          </div>
+          <Field label="Observação" v={value!.cartao?.observacao} on={(v) => patch("cartao", { observacao: v })} disabled={disabled} className="md:col-span-3" />
         </div>
       )}
 
@@ -650,6 +729,17 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
         </div>
       )}
 
+      {tipo === "PERMUTA" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor da permuta" v={value!.permuta?.valor} on={(v) => patch("permuta", { valor: v })} disabled={disabled} />
+          <Field label="Descrição do bem/serviço *" v={value!.permuta?.descricao} on={(v) => patch("permuta", { descricao: v })} disabled={disabled} className="md:col-span-2" />
+          <div className="md:col-span-3">
+            <Label className="text-xs">Condições da permuta (entra no contrato)</Label>
+            <Textarea rows={3} className="mt-1" disabled={disabled} value={value!.permuta?.observacao ?? ""} onChange={(e) => patch("permuta", { observacao: e.target.value })} />
+          </div>
+        </div>
+      )}
+
       {tipo === "MISTO" && value!.misto && (
         <div className="space-y-2 text-sm">
           <p className="text-xs text-muted-foreground">
@@ -667,7 +757,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
                 }} disabled={disabled}>
                   <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(["PIX","BOLETO","CARTAO","FINANCIAMENTO"] as FormaPagamentoTipo[]).map((t) =>
+                    {(["PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
                       <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -694,6 +784,71 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
             const arr = [...value!.misto!.componentes, { tipo: "PIX" as FormaPagamentoTipo, valor: 0, obs: "" }];
             patch("misto", { componentes: arr });
           }}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar componente</Button>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* PIX complementar — entrada / gatilho. Não disponível para      */}
+      {/* FINANCIAMENTO nem PERMUTA.                                     */}
+      {/* ============================================================== */}
+      {tipo && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(tipo) && (
+        <div className="rounded-md border border-sky-300/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="pix_complemento_on"
+              disabled={disabled}
+              checked={!!value!.pix_complemento}
+              onChange={(e) => onChange(
+                e.target.checked
+                  ? { ...value!, pix_complemento: { momento: "ENTRADA", valor: 0, observacao: "" } }
+                  : { ...value!, pix_complemento: null },
+              )}
+            />
+            <Label htmlFor="pix_complemento_on" className="text-xs font-semibold cursor-pointer">
+              Adicionar <strong>PIX complementar</strong> (entrada, aprovação, entrega ou conclusão)
+            </Label>
+          </div>
+          {value!.pix_complemento && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+              <div>
+                <Label className="text-xs">Momento *</Label>
+                <Select
+                  value={value!.pix_complemento.momento}
+                  onValueChange={(v) => onChange({
+                    ...value!,
+                    pix_complemento: { ...value!.pix_complemento!, momento: v as PixComplementoMomento },
+                  })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PIX_COMPLEMENTO_LABEL) as PixComplementoMomento[]).map((m) => (
+                      <SelectItem key={m} value={m}>{PIX_COMPLEMENTO_LABEL[m]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <NumField
+                label="Valor do PIX *"
+                v={value!.pix_complemento.valor}
+                on={(v) => onChange({
+                  ...value!,
+                  pix_complemento: { ...value!.pix_complemento!, valor: v },
+                })}
+                disabled={disabled}
+              />
+              <Field
+                label="Observação"
+                v={value!.pix_complemento.observacao}
+                on={(v) => onChange({
+                  ...value!,
+                  pix_complemento: { ...value!.pix_complemento!, observacao: v },
+                })}
+                disabled={disabled}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1007,7 +1162,27 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
   const visiveis = renumerar(clausulas.filter((c) => !c.oculta));
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      {/* Print CSS: só o contrato sai no PDF. */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
+          #contrato-print-area {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 24px !important;
+            background: #fff !important;
+            color: #000 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          #contrato-print-area .no-print { display: none !important; }
+        }
+      `}</style>
+      <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-semibold">Prévia do contrato</span>
@@ -1023,12 +1198,12 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         </div>
       </div>
       {varsFaltando.length > 0 && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive no-print">
           <strong>Variáveis obrigatórias vazias:</strong> {varsFaltando.join(", ")}.
           A geração do contrato está bloqueada.
         </div>
       )}
-      <Card className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
+      <Card id="contrato-print-area" className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
         <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
           {/* Cabeçalho oficial Meta Sun */}
           <div className="text-center mb-4">

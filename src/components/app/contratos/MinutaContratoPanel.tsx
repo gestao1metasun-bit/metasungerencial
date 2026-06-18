@@ -681,72 +681,51 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
 }
 
 // ===================================================================
-// Cláusulas — editor com 3 operações: Alterar / Retirar / Adicionar
+// Cláusulas — editor INLINE: cada cláusula tem seus próprios botões.
 // ===================================================================
-type ModoOp = null | "ALTERAR" | "RETIRAR" | "ADICIONAR";
-
 function ClausulasEditor({ disabled, clausulas, onChange }: {
   disabled?: boolean; clausulas: Clausula[]; onChange: (v: Clausula[]) => void;
 }) {
-  const [modo, setModo] = useState<ModoOp>(null);
-  const [refId, setRefId] = useState<string>("");
-  const [posicao, setPosicao] = useState<"antes" | "depois">("depois");
-  const [novoTexto, setNovoTexto] = useState("");
-  const [textoEditado, setTextoEditado] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editTexto, setEditTexto] = useState("");
+  const [addId, setAddId] = useState<string | null>(null);
+  const [addPos, setAddPos] = useState<"antes" | "depois">("depois");
+  const [addTexto, setAddTexto] = useState("");
 
-  // Apenas ITEMs entram nas operações
-  const itens = useMemo(
-    () => clausulas.filter((c) => c.tipo === "ITEM" && !c.oculta),
-    [clausulas],
-  );
-
-  function resetModo() {
-    setModo(null);
-    setRefId("");
-    setPosicao("depois");
-    setNovoTexto("");
-    setTextoEditado("");
+  function abrirEdit(c: Clausula) {
+    setEditId(c.id); setEditTexto(c.texto);
+    setAddId(null); setAddTexto("");
+  }
+  function abrirAdd(c: Clausula, pos: "antes" | "depois") {
+    setAddId(c.id); setAddPos(pos); setAddTexto("");
+    setEditId(null); setEditTexto("");
+  }
+  function fechar() {
+    setEditId(null); setEditTexto("");
+    setAddId(null); setAddTexto("");
   }
 
-  function entrar(novoModo: Exclude<ModoOp, null>) {
-    setModo(novoModo);
-    setRefId("");
-    setPosicao("depois");
-    setNovoTexto("");
-    setTextoEditado("");
-  }
-
-  function aoSelecionarRef(id: string) {
-    setRefId(id);
-    const c = clausulas.find((x) => x.id === id);
-    if (modo === "ALTERAR" && c) setTextoEditado(c.texto);
-  }
-
-  function aplicarAlterar() {
-    if (!refId) { toast.error("Selecione qual cláusula alterar."); return; }
-    if (textoEditado.trim().length < 5) { toast.error("Texto novo muito curto."); return; }
-    onChange(alterarTextoItem(clausulas, refId, textoEditado.trim()));
+  function aplicarEdit() {
+    if (!editId) return;
+    if (editTexto.trim().length < 5) { toast.error("Texto muito curto."); return; }
+    onChange(alterarTextoItem(clausulas, editId, editTexto.trim()));
     toast.success("Cláusula alterada.");
-    resetModo();
+    fechar();
   }
-
-  function aplicarRetirar() {
-    if (!refId) { toast.error("Selecione qual cláusula retirar."); return; }
-    const c = clausulas.find((x) => x.id === refId);
-    if (c?.obrigatoria) { toast.error("Cláusula obrigatória não pode ser retirada."); return; }
-    if (!confirm(`Retirar a cláusula ${c?.numero ?? ""}? As cláusulas seguintes do mesmo grupo serão renumeradas.`)) return;
-    onChange(removerItem(clausulas, refId));
-    toast.success(`Cláusula ${c?.numero ?? ""} retirada — grupo renumerado.`);
-    resetModo();
+  function aplicarExcluir(c: Clausula) {
+    if (c.obrigatoria) { toast.error("Cláusula obrigatória não pode ser retirada."); return; }
+    if (!confirm(`Excluir a cláusula ${c.numero}? As seguintes do mesmo grupo serão renumeradas.`)) return;
+    onChange(removerItem(clausulas, c.id));
+    toast.success(`Cláusula ${c.numero} retirada.`);
+    if (editId === c.id || addId === c.id) fechar();
   }
-
-  function aplicarAdicionar() {
-    if (!refId) { toast.error("Selecione a cláusula de referência."); return; }
-    if (novoTexto.trim().length < 5) { toast.error("Texto da nova cláusula muito curto."); return; }
-    const ref = clausulas.find((x) => x.id === refId);
-    onChange(inserirItem(clausulas, refId, posicao, novoTexto.trim(), ref?.categoria ?? "OBRIG_CONTRATADA"));
-    toast.success(`Cláusula inserida ${posicao} de ${ref?.numero ?? ""} — grupo renumerado.`);
-    resetModo();
+  function aplicarAdd() {
+    if (!addId) return;
+    if (addTexto.trim().length < 5) { toast.error("Texto muito curto."); return; }
+    const ref = clausulas.find((x) => x.id === addId);
+    onChange(inserirItem(clausulas, addId, addPos, addTexto.trim(), ref?.categoria ?? "OBRIG_CONTRATADA"));
+    toast.success(`Cláusula inserida ${addPos} de ${ref?.numero ?? ""}.`);
+    fechar();
   }
 
   function salvarComoPadrao() {
@@ -754,21 +733,18 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
     salvarTemplateUsuario(clausulas);
     toast.success("Template padrão atualizado para os próximos contratos.");
   }
-
   function restaurarMetaSun() {
-    if (!confirm("Restaurar o template oficial Meta Sun? Alterações desta minuta serão perdidas (template salvo do usuário permanece).")) return;
+    if (!confirm("Restaurar o template oficial Meta Sun? Alterações desta minuta serão perdidas.")) return;
     onChange(clausulasPadrao());
   }
-
   function recarregarMeuPadrao() {
     const t = carregarTemplateUsuario();
     if (!t) { toast.error("Você ainda não salvou um template padrão pessoal."); return; }
     if (!confirm("Recarregar seu template salvo? Alterações desta minuta serão perdidas.")) return;
     onChange(t);
   }
-
   function apagarMeuPadrao() {
-    if (!confirm("Apagar seu template padrão salvo? O próximo contrato voltará a usar o oficial Meta Sun.")) return;
+    if (!confirm("Apagar seu template padrão salvo?")) return;
     limparTemplateUsuario();
     toast.success("Template padrão pessoal removido.");
   }
@@ -777,184 +753,105 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
 
   return (
     <div className="space-y-3">
-      {/* Toolbar de ações */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs text-muted-foreground">
-          Template oficial Meta Sun — {totalItens} cláusulas numeradas. Use os botões abaixo para
-          <strong> alterar</strong>, <strong>retirar</strong> ou <strong>adicionar</strong> cláusulas.
+      {/* Cabeçalho + toolbar de template */}
+      <div className="flex items-start justify-between gap-2 flex-wrap border-b pb-2">
+        <p className="text-xs text-muted-foreground max-w-md">
+          Template oficial Meta Sun — <strong>{totalItens} cláusulas</strong>.
+          Passe o mouse em cada cláusula para <strong>editar</strong>, <strong>excluir</strong> ou <strong>adicionar</strong> antes/depois dela.
         </p>
         <div className="flex flex-wrap gap-1">
-          <Button size="sm" variant={modo === "ALTERAR" ? "default" : "outline"} disabled={disabled}
-            onClick={() => (modo === "ALTERAR" ? resetModo() : entrar("ALTERAR"))}
-            className={modo === "ALTERAR" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}>
-            <Pencil className="h-3.5 w-3.5 mr-1" /> Alterar cláusula
+          <Button size="sm" variant="outline" disabled={disabled} onClick={salvarComoPadrao}
+            title="Salvar como seu modelo pessoal — usado nas próximas minutas.">
+            <BookmarkPlus className="h-3.5 w-3.5 mr-1" /> Salvar como meu padrão
           </Button>
-          <Button size="sm" variant={modo === "RETIRAR" ? "default" : "outline"} disabled={disabled}
-            onClick={() => (modo === "RETIRAR" ? resetModo() : entrar("RETIRAR"))}
-            className={modo === "RETIRAR" ? "bg-rose-600 hover:bg-rose-700 text-white" : ""}>
-            <MinusCircle className="h-3.5 w-3.5 mr-1" /> Retirar cláusula
+          <Button size="sm" variant="outline" disabled={disabled || !existeTemplateUsuario()} onClick={recarregarMeuPadrao}>
+            Carregar meu padrão
           </Button>
-          <Button size="sm" variant={modo === "ADICIONAR" ? "default" : "outline"} disabled={disabled}
-            onClick={() => (modo === "ADICIONAR" ? resetModo() : entrar("ADICIONAR"))}
-            className={modo === "ADICIONAR" ? "bg-sky-600 hover:bg-sky-700 text-white" : ""}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar cláusula
+          <Button size="sm" variant="outline" disabled={disabled} onClick={restaurarMetaSun}>
+            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Restaurar Meta Sun
+          </Button>
+          <Button size="sm" variant="ghost" disabled={disabled || !existeTemplateUsuario()}
+            onClick={apagarMeuPadrao} className="text-rose-600">
+            Apagar meu padrão
           </Button>
         </div>
       </div>
 
-      {/* Painel da operação ativa */}
-      {modo && (
-        <Card className="p-3 border-dashed bg-muted/30 space-y-2">
-          {modo === "ALTERAR" && (
-            <>
-              <div className="flex items-center gap-2">
-                <Pencil className="h-4 w-4 text-amber-600" />
-                <strong className="text-sm">Alterar cláusula</strong>
-              </div>
-              <SelectorCl itens={itens} value={refId} onChange={aoSelecionarRef} placeholder="Selecione a cláusula a alterar..." />
-              {refId && (
-                <>
-                  <div>
-                    <Label className="text-xs">Texto atual</Label>
-                    <Textarea readOnly rows={4} className="mt-1 text-xs bg-muted/60"
-                      value={clausulas.find((c) => c.id === refId)?.texto ?? ""} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Como deve ficar *</Label>
-                    <Textarea rows={5} className="mt-1 text-xs" value={textoEditado}
-                      onChange={(e) => setTextoEditado(e.target.value)} />
-                  </div>
-                </>
-              )}
-              <div className="flex justify-end gap-1">
-                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={aplicarAlterar}>
-                  Aplicar alteração
-                </Button>
-              </div>
-            </>
-          )}
-
-          {modo === "RETIRAR" && (
-            <>
-              <div className="flex items-center gap-2">
-                <MinusCircle className="h-4 w-4 text-rose-600" />
-                <strong className="text-sm">Retirar cláusula</strong>
-              </div>
-              <SelectorCl itens={itens.filter((c) => !c.obrigatoria)}
-                value={refId} onChange={aoSelecionarRef}
-                placeholder="Selecione a cláusula a retirar..." />
-              {refId && (
-                <div className="rounded-md border bg-white dark:bg-zinc-950 p-2 text-xs">
-                  <strong>{clausulas.find((c) => c.id === refId)?.numero}</strong> — {clausulas.find((c) => c.id === refId)?.texto}
-                </div>
-              )}
-              <p className="text-[11px] text-muted-foreground">
-                Cláusulas obrigatórias não aparecem na lista (não podem ser retiradas).
-              </p>
-              <div className="flex justify-end gap-1">
-                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
-                <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white" onClick={aplicarRetirar}>
-                  Retirar cláusula
-                </Button>
-              </div>
-            </>
-          )}
-
-          {modo === "ADICIONAR" && (
-            <>
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4 text-sky-600" />
-                <strong className="text-sm">Adicionar cláusula</strong>
-              </div>
-              <div>
-                <Label className="text-xs">Texto da nova cláusula *</Label>
-                <Textarea rows={5} className="mt-1 text-xs" value={novoTexto}
-                  onChange={(e) => setNovoTexto(e.target.value)}
-                  placeholder="Digite o texto completo da cláusula..." />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-                <div>
-                  <Label className="text-xs">Posição *</Label>
-                  <Select value={posicao} onValueChange={(v) => setPosicao(v as "antes" | "depois")}>
-                    <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="antes">Antes de</SelectItem>
-                      <SelectItem value="depois">Depois de</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-xs">Cláusula de referência *</Label>
-                  <SelectorCl itens={itens} value={refId} onChange={aoSelecionarRef}
-                    placeholder="Ex.: 3.2 — A instalação está sujeita..." />
-                </div>
-              </div>
-              {refId && (
-                <p className="text-[11px] text-muted-foreground">
-                  A nova cláusula entrará como{" "}
-                  <strong>
-                    {(() => {
-                      const ref = clausulas.find((c) => c.id === refId);
-                      if (!ref) return "";
-                      const sub = (ref.subordem ?? 0) + (posicao === "depois" ? 1 : 0);
-                      return `${ref.grupo}.${Math.max(sub, 1)}`;
-                    })()}
-                  </strong>{" "}
-                  e as seguintes do mesmo grupo serão renumeradas automaticamente.
-                </p>
-              )}
-              <div className="flex justify-end gap-1">
-                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
-                <Button size="sm" className="bg-sky-600 hover:bg-sky-700 text-white" onClick={aplicarAdicionar}>
-                  Adicionar cláusula
-                </Button>
-              </div>
-            </>
-          )}
-        </Card>
-      )}
-
-      {/* Toolbar de template */}
-      <div className="flex items-center justify-end gap-1 flex-wrap border-t pt-2">
-        <Button size="sm" variant="outline" disabled={disabled} onClick={salvarComoPadrao}
-          title="Guarda a versão atual em LS como seu modelo pessoal — usada nas próximas minutas.">
-          <BookmarkPlus className="h-3.5 w-3.5 mr-1" /> Salvar como meu padrão
-        </Button>
-        <Button size="sm" variant="outline" disabled={disabled || !existeTemplateUsuario()} onClick={recarregarMeuPadrao}>
-          Carregar meu padrão
-        </Button>
-        <Button size="sm" variant="outline" disabled={disabled} onClick={restaurarMetaSun}>
-          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Restaurar Meta Sun
-        </Button>
-        <Button size="sm" variant="ghost" disabled={disabled || !existeTemplateUsuario()}
-          onClick={apagarMeuPadrao} className="text-rose-600">
-          Apagar meu padrão
-        </Button>
-      </div>
-
-      {/* Lista renderizada (grupos + itens X.Y) */}
-      <div className="space-y-2">
+      {/* Lista de cláusulas com ações inline */}
+      <div className="space-y-1.5">
         {clausulas.map((c) => {
           if (c.tipo === "GRUPO") {
             return (
-              <div key={c.id} className="mt-3 first:mt-0">
-                <h4 className="text-xs font-bold tracking-wide text-foreground/90 border-b pb-1">
+              <div key={c.id} className="mt-4 first:mt-0">
+                <h4 className="text-xs font-bold tracking-wide text-foreground/90 border-b pb-1 uppercase">
                   {c.titulo}
                 </h4>
               </div>
             );
           }
-          const sel = refId === c.id;
+
+          const emEdicao = editId === c.id;
+          const adicionando = addId === c.id;
+
           return (
-            <div key={c.id}
-              className={`rounded-md border p-2 ${sel ? "ring-2 ring-primary" : ""} ${c.oculta ? "opacity-50" : ""}`}>
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-[10px] tabular-nums shrink-0 mt-0.5">{c.numero}</Badge>
-                {c.obrigatoria && <Badge variant="default" className="text-[10px] shrink-0">Obrigatória</Badge>}
-                {c.complementar && <Badge variant="outline" className="text-[10px] shrink-0 border-sky-500 text-sky-700">Complementar</Badge>}
-                <p className="text-xs flex-1 whitespace-pre-wrap">{c.texto}</p>
+            <div key={c.id} className="space-y-1.5">
+              {adicionando && addPos === "antes" && (
+                <AddInline refNumero={c.numero ?? ""} posicao="antes"
+                  texto={addTexto} onTexto={setAddTexto} onCancel={fechar} onAdd={aplicarAdd} />
+              )}
+
+              <div className={`group rounded-md border p-2 transition hover:bg-muted/40 ${c.oculta ? "opacity-50" : ""} ${emEdicao ? "ring-2 ring-amber-400 bg-amber-50/40" : ""}`}>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-[10px] tabular-nums shrink-0 mt-0.5">{c.numero}</Badge>
+                  {c.obrigatoria && <Badge variant="default" className="text-[10px] shrink-0">Obrig.</Badge>}
+                  {c.complementar && <Badge variant="outline" className="text-[10px] shrink-0 border-sky-500 text-sky-700">Compl.</Badge>}
+
+                  <div className="flex-1 min-w-0">
+                    {!emEdicao ? (
+                      <p className="text-xs whitespace-pre-wrap">{c.texto}</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <Textarea rows={5} className="text-xs" value={editTexto}
+                          onChange={(e) => setEditTexto(e.target.value)} autoFocus />
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={fechar}>Cancelar</Button>
+                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={aplicarEdit}>
+                            Salvar alteração
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {!emEdicao && !disabled && (
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition shrink-0">
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-amber-700 hover:bg-amber-100"
+                        onClick={() => abrirEdit(c)} title="Editar texto desta cláusula">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-sky-700 hover:bg-sky-100"
+                        onClick={() => abrirAdd(c, "antes")} title="Adicionar nova cláusula ANTES desta">
+                        <Plus className="h-3.5 w-3.5 -rotate-90" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-sky-700 hover:bg-sky-100"
+                        onClick={() => abrirAdd(c, "depois")} title="Adicionar nova cláusula DEPOIS desta">
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost"
+                        className={`h-7 px-2 ${c.obrigatoria ? "text-muted-foreground cursor-not-allowed" : "text-rose-700 hover:bg-rose-100"}`}
+                        onClick={() => aplicarExcluir(c)} disabled={c.obrigatoria}
+                        title={c.obrigatoria ? "Cláusula obrigatória — não pode ser excluída" : "Excluir esta cláusula"}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {adicionando && addPos === "depois" && (
+                <AddInline refNumero={c.numero ?? ""} posicao="depois"
+                  texto={addTexto} onTexto={setAddTexto} onCancel={fechar} onAdd={aplicarAdd} />
+              )}
             </div>
           );
         })}
@@ -963,23 +860,29 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
   );
 }
 
-function SelectorCl({ itens, value, onChange, placeholder }: {
-  itens: Clausula[]; value: string; onChange: (v: string) => void; placeholder?: string;
+function AddInline({ refNumero, posicao, texto, onTexto, onCancel, onAdd }: {
+  refNumero: string; posicao: "antes" | "depois";
+  texto: string; onTexto: (v: string) => void;
+  onCancel: () => void; onAdd: () => void;
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={placeholder ?? "Selecione a cláusula..."} /></SelectTrigger>
-      <SelectContent className="max-h-80">
-        {itens.map((c) => (
-          <SelectItem key={c.id} value={c.id} className="text-xs">
-            <span className="font-semibold tabular-nums mr-2">{c.numero}</span>
-            {c.texto.slice(0, 80)}{c.texto.length > 80 ? "…" : ""}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="rounded-md border-2 border-dashed border-sky-400 bg-sky-50/60 dark:bg-sky-950/20 p-2 space-y-1.5">
+      <div className="flex items-center gap-2 text-xs text-sky-800 dark:text-sky-200">
+        <Plus className="h-3.5 w-3.5" />
+        <span>Nova cláusula <strong>{posicao}</strong> de <strong>{refNumero}</strong> — será renumerada automaticamente.</span>
+      </div>
+      <Textarea rows={4} className="text-xs" value={texto} onChange={(e) => onTexto(e.target.value)}
+        placeholder="Digite o texto completo da nova cláusula..." autoFocus />
+      <div className="flex justify-end gap-1">
+        <Button size="sm" variant="ghost" onClick={onCancel}>Cancelar</Button>
+        <Button size="sm" className="bg-sky-600 hover:bg-sky-700 text-white" onClick={onAdd}>
+          Adicionar cláusula
+        </Button>
+      </div>
+    </div>
   );
 }
+
 
 // ===================================================================
 // Prévia

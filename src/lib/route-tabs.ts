@@ -201,7 +201,9 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
     default: "orcamentos",
     tabs: [
       { value: "dashboard", label: "Dashboard", group: "Visão", hidden: true },
-      { value: "orcamentos", label: "Propostas", group: "Operação" },
+      // D18.11 — Propostas tem URL canônica /comercial/propostas (redirect
+      // transparente p/ workspace embarcado). Ribbon navega cross-route.
+      { value: "orcamentos", label: "Propostas", group: "Operação", to: "/comercial/propostas" },
       // D18.10 — Contratos vive em rota própria (/comercial/contratos).
       // O ribbon navega cross-route via `to:` para evitar a tela de redirect
       // dentro de /comercial. Camadas Proposta x Contrato ficam fisicamente
@@ -209,7 +211,8 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "contratos", label: "Contratos", group: "Operação", to: "/comercial/contratos" },
       { value: "aditivos", label: "Aditivos", group: "Operação" },
       { value: "carteira", label: "Carteira", group: "Operação" },
-      { value: "comissoes", label: "Comissões", group: "Controle" },
+      // D18.11 — Comissões em rota própria /comercial/comissoes.
+      { value: "comissoes", label: "Comissões", group: "Controle", to: "/comercial/comissoes" },
       { value: "vendedores", label: "Vendedores", group: "Estrutura" },
     ],
   },

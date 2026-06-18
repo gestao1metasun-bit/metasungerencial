@@ -224,12 +224,20 @@ function ContratoWorkspacePage() {
             financiamento_banco: (c as { financiamento_banco?: string | null }).financiamento_banco ?? null,
             financiamento_valor: (c as { financiamento_valor?: number | null }).financiamento_valor ?? null,
             dados: (c.dados ?? null) as Record<string, unknown> | null,
+            potencia_kwp: c.potencia_kwp,
+            modulos_qtde: c.modulos_qtde,
           }}
+          cliente={cliente.data ?? null}
+          proposta={(propostas.data ?? [])[0] ?? null}
         />
       )}
 
       {ehGerado && (
-        <ContratoGeradoPanel contratoId={c.id} codigo={c.codigo} />
+        <ContratoGeradoPanel
+          contratoId={c.id}
+          codigo={c.codigo}
+          dados={(c.dados ?? null) as Record<string, unknown> | null}
+        />
       )}
 
       {ehAssinado && !cancelado && (

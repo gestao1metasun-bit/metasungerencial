@@ -15294,6 +15294,14 @@ export type Database = {
         Args: { p_proposta_ids: string[] }
         Returns: string
       }
+      rpc_contrato_gerar_final: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: string
+      }
+      rpc_contrato_marcar_assinado: {
+        Args: { p_contrato_id: string; p_observacao?: string }
+        Returns: string
+      }
       rpc_contrato_marcar_engenharia_liberada: {
         Args: { p_contrato_id: string; p_observacao?: string }
         Returns: boolean

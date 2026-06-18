@@ -120,6 +120,8 @@ function ContratoWorkspacePage() {
     setWorkspaceTab(value);
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
+    url.searchParams.delete("tab");
+    url.searchParams.delete("focus");
     url.hash = `tab=${value}`;
     window.history.replaceState(null, "", url.toString());
   };

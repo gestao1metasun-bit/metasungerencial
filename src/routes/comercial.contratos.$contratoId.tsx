@@ -106,18 +106,45 @@ function ContratoWorkspacePage() {
   const cliente = useCliente(contrato.data?.cliente_id);
   const consultor = useConsultor(contrato.data?.consultor_id);
   const cancelar = useCancelarContratoSupabase();
-  const [tab, setTab] = useTabFromHash("resumo");
+  const [tab, setWorkspaceTab] = useState(() => {
+    if (typeof window === "undefined") return "resumo";
+    const search = new URLSearchParams(window.location.search);
+    if (search.get("tab") === "previa") return "resumo";
+    const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+    return new URLSearchParams(hash).get("tab") || "resumo";
+  });
   const [cancelOpen, setCancelOpen] = useState(false);
   const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
   const [compensarOrigem, setCompensarOrigem] = useState<import("@/lib/repositories/aditivos-repo").AditivoSupabase | null>(null);
 
+  const setTab = (value: string) => {
+    setWorkspaceTab(value);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.hash = `tab=${value}`;
+    window.history.replaceState(null, "", url.toString());
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("tab") === "previa") {
-      setTab("resumo");
-    }
-  }, [setTab]);
+    const sync = () => {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get("tab") === "previa") {
+        setWorkspaceTab("resumo");
+        return;
+      }
+      const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+      setWorkspaceTab(new URLSearchParams(hash).get("tab") || "resumo");
+    };
+    window.addEventListener("hashchange", sync);
+    window.addEventListener("popstate", sync);
+    window.addEventListener("lovable:hash-sync", sync);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      window.removeEventListener("popstate", sync);
+      window.removeEventListener("lovable:hash-sync", sync);
+    };
+  }, []);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];

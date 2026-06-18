@@ -681,51 +681,82 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
 }
 
 // ===================================================================
-// Cláusulas — editor INLINE: cada cláusula tem seus próprios botões.
+// Cláusulas — UM botão "Editar contrato" abre dialog com seletores.
+// Alterações afetam SOMENTE este contrato (vivem em contratos.dados).
 // ===================================================================
+type AcaoCl = "ALTERAR" | "EXCLUIR" | "ADICIONAR";
+
 function ClausulasEditor({ disabled, clausulas, onChange }: {
   disabled?: boolean; clausulas: Clausula[]; onChange: (v: Clausula[]) => void;
 }) {
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editTexto, setEditTexto] = useState("");
-  const [addId, setAddId] = useState<string | null>(null);
-  const [addPos, setAddPos] = useState<"antes" | "depois">("depois");
-  const [addTexto, setAddTexto] = useState("");
+  const [open, setOpen] = useState(false);
+  const [acao, setAcao] = useState<AcaoCl>("ALTERAR");
+  const [refId, setRefId] = useState<string>("");
+  const [posicao, setPosicao] = useState<"antes" | "depois">("depois");
+  const [novoTexto, setNovoTexto] = useState("");
 
-  function abrirEdit(c: Clausula) {
-    setEditId(c.id); setEditTexto(c.texto);
-    setAddId(null); setAddTexto("");
-  }
-  function abrirAdd(c: Clausula, pos: "antes" | "depois") {
-    setAddId(c.id); setAddPos(pos); setAddTexto("");
-    setEditId(null); setEditTexto("");
-  }
-  function fechar() {
-    setEditId(null); setEditTexto("");
-    setAddId(null); setAddTexto("");
+  const itens = useMemo(
+    () => clausulas.filter((c) => c.tipo === "ITEM" && !c.oculta),
+    [clausulas],
+  );
+  const itensExcluiveis = useMemo(
+    () => itens.filter((c) => !c.obrigatoria),
+    [itens],
+  );
+
+  const refSel = useMemo(() => clausulas.find((c) => c.id === refId) ?? null, [clausulas, refId]);
+
+  function abrir() {
+    setOpen(true);
+    setAcao("ALTERAR");
+    setRefId("");
+    setPosicao("depois");
+    setNovoTexto("");
   }
 
-  function aplicarEdit() {
-    if (!editId) return;
-    if (editTexto.trim().length < 5) { toast.error("Texto muito curto."); return; }
-    onChange(alterarTextoItem(clausulas, editId, editTexto.trim()));
-    toast.success("Cláusula alterada.");
-    fechar();
+  function trocarAcao(a: AcaoCl) {
+    setAcao(a);
+    setRefId("");
+    setNovoTexto("");
+    setPosicao("depois");
   }
-  function aplicarExcluir(c: Clausula) {
-    if (c.obrigatoria) { toast.error("Cláusula obrigatória não pode ser retirada."); return; }
-    if (!confirm(`Excluir a cláusula ${c.numero}? As seguintes do mesmo grupo serão renumeradas.`)) return;
-    onChange(removerItem(clausulas, c.id));
-    toast.success(`Cláusula ${c.numero} retirada.`);
-    if (editId === c.id || addId === c.id) fechar();
+
+  function aoSelecionarRef(id: string) {
+    setRefId(id);
+    if (acao === "ALTERAR") {
+      const c = clausulas.find((x) => x.id === id);
+      setNovoTexto(c?.texto ?? "");
+    } else {
+      setNovoTexto("");
+    }
   }
-  function aplicarAdd() {
-    if (!addId) return;
-    if (addTexto.trim().length < 5) { toast.error("Texto muito curto."); return; }
-    const ref = clausulas.find((x) => x.id === addId);
-    onChange(inserirItem(clausulas, addId, addPos, addTexto.trim(), ref?.categoria ?? "OBRIG_CONTRATADA"));
-    toast.success(`Cláusula inserida ${addPos} de ${ref?.numero ?? ""}.`);
-    fechar();
+
+  function aplicar() {
+    if (acao === "ALTERAR") {
+      if (!refId) { toast.error("Selecione a cláusula a alterar."); return; }
+      if (novoTexto.trim().length < 5) { toast.error("Novo texto muito curto."); return; }
+      onChange(alterarTextoItem(clausulas, refId, novoTexto.trim()));
+      toast.success(`Cláusula ${refSel?.numero} alterada neste contrato.`);
+      setOpen(false);
+      return;
+    }
+    if (acao === "EXCLUIR") {
+      if (!refId) { toast.error("Selecione a cláusula a excluir."); return; }
+      if (refSel?.obrigatoria) { toast.error("Cláusula obrigatória não pode ser excluída."); return; }
+      if (!confirm(`Excluir a cláusula ${refSel?.numero}? As seguintes do mesmo grupo serão renumeradas.`)) return;
+      onChange(removerItem(clausulas, refId));
+      toast.success(`Cláusula ${refSel?.numero} excluída.`);
+      setOpen(false);
+      return;
+    }
+    if (acao === "ADICIONAR") {
+      if (!refId) { toast.error("Selecione a cláusula de referência."); return; }
+      if (novoTexto.trim().length < 5) { toast.error("Texto da nova cláusula muito curto."); return; }
+      onChange(inserirItem(clausulas, refId, posicao, novoTexto.trim(), refSel?.categoria ?? "OBRIG_CONTRATADA"));
+      toast.success(`Cláusula inserida ${posicao} de ${refSel?.numero}.`);
+      setOpen(false);
+      return;
+    }
   }
 
   function salvarComoPadrao() {
@@ -751,14 +782,22 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
 
   const totalItens = clausulas.filter((c) => c.tipo === "ITEM").length;
 
+  const itensDoSelect = acao === "EXCLUIR" ? itensExcluiveis : itens;
+
   return (
     <div className="space-y-3">
-      {/* Cabeçalho + toolbar de template */}
+      {/* Cabeçalho + botão único Editar contrato + toolbar de template */}
       <div className="flex items-start justify-between gap-2 flex-wrap border-b pb-2">
-        <p className="text-xs text-muted-foreground max-w-md">
-          Template oficial Meta Sun — <strong>{totalItens} cláusulas</strong>.
-          Passe o mouse em cada cláusula para <strong>editar</strong>, <strong>excluir</strong> ou <strong>adicionar</strong> antes/depois dela.
-        </p>
+        <div className="space-y-1 max-w-lg">
+          <p className="text-xs text-muted-foreground">
+            Template oficial Meta Sun — <strong>{totalItens} cláusulas</strong>. As alterações feitas aqui valem
+            <strong> somente para este contrato</strong> (não mudam o modelo base).
+          </p>
+          <Button size="sm" disabled={disabled} onClick={abrir}
+            className="bg-amber-600 hover:bg-amber-700 text-white">
+            <Pencil className="h-3.5 w-3.5 mr-1" /> Editar contrato
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-1">
           <Button size="sm" variant="outline" disabled={disabled} onClick={salvarComoPadrao}
             title="Salvar como seu modelo pessoal — usado nas próximas minutas.">
@@ -777,7 +816,7 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
         </div>
       </div>
 
-      {/* Lista de cláusulas com ações inline */}
+      {/* Lista somente leitura (preview) */}
       <div className="space-y-1.5">
         {clausulas.map((c) => {
           if (c.tipo === "GRUPO") {
@@ -789,99 +828,153 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
               </div>
             );
           }
-
-          const emEdicao = editId === c.id;
-          const adicionando = addId === c.id;
-
           return (
-            <div key={c.id} className="space-y-1.5">
-              {adicionando && addPos === "antes" && (
-                <AddInline refNumero={c.numero ?? ""} posicao="antes"
-                  texto={addTexto} onTexto={setAddTexto} onCancel={fechar} onAdd={aplicarAdd} />
-              )}
-
-              <div className={`group rounded-md border p-2 transition hover:bg-muted/40 ${c.oculta ? "opacity-50" : ""} ${emEdicao ? "ring-2 ring-amber-400 bg-amber-50/40" : ""}`}>
-                <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="text-[10px] tabular-nums shrink-0 mt-0.5">{c.numero}</Badge>
-                  {c.obrigatoria && <Badge variant="default" className="text-[10px] shrink-0">Obrig.</Badge>}
-                  {c.complementar && <Badge variant="outline" className="text-[10px] shrink-0 border-sky-500 text-sky-700">Compl.</Badge>}
-
-                  <div className="flex-1 min-w-0">
-                    {!emEdicao ? (
-                      <p className="text-xs whitespace-pre-wrap">{c.texto}</p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <Textarea rows={5} className="text-xs" value={editTexto}
-                          onChange={(e) => setEditTexto(e.target.value)} autoFocus />
-                        <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={fechar}>Cancelar</Button>
-                          <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={aplicarEdit}>
-                            Salvar alteração
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {!emEdicao && !disabled && (
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition shrink-0">
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-amber-700 hover:bg-amber-100"
-                        onClick={() => abrirEdit(c)} title="Editar texto desta cláusula">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-sky-700 hover:bg-sky-100"
-                        onClick={() => abrirAdd(c, "antes")} title="Adicionar nova cláusula ANTES desta">
-                        <Plus className="h-3.5 w-3.5 -rotate-90" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-sky-700 hover:bg-sky-100"
-                        onClick={() => abrirAdd(c, "depois")} title="Adicionar nova cláusula DEPOIS desta">
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost"
-                        className={`h-7 px-2 ${c.obrigatoria ? "text-muted-foreground cursor-not-allowed" : "text-rose-700 hover:bg-rose-100"}`}
-                        onClick={() => aplicarExcluir(c)} disabled={c.obrigatoria}
-                        title={c.obrigatoria ? "Cláusula obrigatória — não pode ser excluída" : "Excluir esta cláusula"}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+            <div key={c.id} className={`rounded-md border p-2 ${c.oculta ? "opacity-50" : ""}`}>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="text-[10px] tabular-nums shrink-0 mt-0.5">{c.numero}</Badge>
+                {c.obrigatoria && <Badge variant="default" className="text-[10px] shrink-0">Obrig.</Badge>}
+                {c.complementar && <Badge variant="outline" className="text-[10px] shrink-0 border-sky-500 text-sky-700">Compl.</Badge>}
+                <p className="text-xs flex-1 whitespace-pre-wrap">{c.texto}</p>
               </div>
-
-              {adicionando && addPos === "depois" && (
-                <AddInline refNumero={c.numero ?? ""} posicao="depois"
-                  texto={addTexto} onTexto={setAddTexto} onCancel={fechar} onAdd={aplicarAdd} />
-              )}
             </div>
           );
         })}
       </div>
+
+      {/* Dialog: Editar contrato */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-amber-600" /> Editar cláusulas deste contrato
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              As mudanças valem somente para este contrato — o modelo base permanece intacto.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {/* 1) Ação */}
+            <div>
+              <Label className="text-xs">Ação *</Label>
+              <Select value={acao} onValueChange={(v) => trocarAcao(v as AcaoCl)}>
+                <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALTERAR">Alterar cláusula</SelectItem>
+                  <SelectItem value="EXCLUIR">Excluir cláusula</SelectItem>
+                  <SelectItem value="ADICIONAR">Adicionar cláusula</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 2) Posição (somente ADICIONAR) */}
+            {acao === "ADICIONAR" && (
+              <div>
+                <Label className="text-xs">Posição *</Label>
+                <Select value={posicao} onValueChange={(v) => setPosicao(v as "antes" | "depois")}>
+                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="antes">Antes de</SelectItem>
+                    <SelectItem value="depois">Depois de</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* 3) Cláusula */}
+            <div>
+              <Label className="text-xs">
+                {acao === "ADICIONAR" ? "Cláusula de referência *" : "Cláusula *"}
+              </Label>
+              <Select value={refId} onValueChange={aoSelecionarRef}>
+                <SelectTrigger className="mt-1 h-9 text-xs">
+                  <SelectValue placeholder={
+                    acao === "EXCLUIR" ? "Selecione a cláusula a excluir..."
+                    : acao === "ADICIONAR" ? "Ex.: 3.2 — a nova entrará antes/depois desta"
+                    : "Selecione a cláusula a alterar..."
+                  } />
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {itensDoSelect.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      <span className="font-semibold tabular-nums mr-2">{c.numero}</span>
+                      {c.texto.slice(0, 80)}{c.texto.length > 80 ? "…" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {acao === "EXCLUIR" && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Cláusulas obrigatórias não aparecem na lista — não podem ser excluídas.
+                </p>
+              )}
+            </div>
+
+            {/* 4) Texto atual + Novo texto / confirmação de exclusão */}
+            {refSel && acao === "ALTERAR" && (
+              <>
+                <div>
+                  <Label className="text-xs">Texto atual da cláusula {refSel.numero}</Label>
+                  <Textarea readOnly rows={4} className="mt-1 text-xs bg-muted/60" value={refSel.texto} />
+                </div>
+                <div>
+                  <Label className="text-xs">Como deve ficar neste contrato *</Label>
+                  <Textarea rows={5} className="mt-1 text-xs" value={novoTexto}
+                    onChange={(e) => setNovoTexto(e.target.value)} autoFocus />
+                </div>
+              </>
+            )}
+
+            {refSel && acao === "EXCLUIR" && (
+              <div className="rounded-md border bg-rose-50/60 dark:bg-rose-950/20 p-2 text-xs">
+                <strong>{refSel.numero}</strong> — {refSel.texto}
+                <p className="mt-2 text-[11px] text-rose-700">
+                  Esta cláusula será removida deste contrato. As seguintes do mesmo grupo serão renumeradas.
+                </p>
+              </div>
+            )}
+
+            {refSel && acao === "ADICIONAR" && (
+              <>
+                <div className="rounded-md border bg-muted/40 p-2 text-[11px]">
+                  Nova cláusula entrará como{" "}
+                  <strong>
+                    {(() => {
+                      const sub = (refSel.subordem ?? 0) + (posicao === "depois" ? 1 : 0);
+                      return `${refSel.grupo}.${Math.max(sub, 1)}`;
+                    })()}
+                  </strong>{" "}— as seguintes serão renumeradas automaticamente.
+                </div>
+                <div>
+                  <Label className="text-xs">Texto da nova cláusula *</Label>
+                  <Textarea rows={5} className="mt-1 text-xs" value={novoTexto}
+                    onChange={(e) => setNovoTexto(e.target.value)}
+                    placeholder="Digite o texto completo da nova cláusula..." autoFocus />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={aplicar} disabled={!refId}
+              className={
+                acao === "EXCLUIR" ? "bg-rose-600 hover:bg-rose-700 text-white"
+                : acao === "ADICIONAR" ? "bg-sky-600 hover:bg-sky-700 text-white"
+                : "bg-amber-600 hover:bg-amber-700 text-white"
+              }>
+              {acao === "ALTERAR" ? "Aplicar alteração"
+               : acao === "EXCLUIR" ? "Excluir cláusula"
+               : "Adicionar cláusula"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function AddInline({ refNumero, posicao, texto, onTexto, onCancel, onAdd }: {
-  refNumero: string; posicao: "antes" | "depois";
-  texto: string; onTexto: (v: string) => void;
-  onCancel: () => void; onAdd: () => void;
-}) {
-  return (
-    <div className="rounded-md border-2 border-dashed border-sky-400 bg-sky-50/60 dark:bg-sky-950/20 p-2 space-y-1.5">
-      <div className="flex items-center gap-2 text-xs text-sky-800 dark:text-sky-200">
-        <Plus className="h-3.5 w-3.5" />
-        <span>Nova cláusula <strong>{posicao}</strong> de <strong>{refNumero}</strong> — será renumerada automaticamente.</span>
-      </div>
-      <Textarea rows={4} className="text-xs" value={texto} onChange={(e) => onTexto(e.target.value)}
-        placeholder="Digite o texto completo da nova cláusula..." autoFocus />
-      <div className="flex justify-end gap-1">
-        <Button size="sm" variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button size="sm" className="bg-sky-600 hover:bg-sky-700 text-white" onClick={onAdd}>
-          Adicionar cláusula
-        </Button>
-      </div>
-    </div>
-  );
-}
+
 
 
 // ===================================================================

@@ -154,6 +154,7 @@ function fmtDataBR(v?: string | null): string {
 
 function ComercialPage() {
   const [tab, setTab] = useTabFromHash("/comercial");
+  const navigate = useNavigate();
   const contratos = useContratos();
   const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
     const v = typeof next === "function" ? (next as any)(contratos) : next;
@@ -167,6 +168,16 @@ function ComercialPage() {
   useEffect(() => {
     void import("@/lib/perf").then((m) => m.reportFirstListReady("comercial.pipeline"));
   }, []);
+
+  // D18.11 — Hash legado #tab=contratos|comissoes redireciona p/ rota oficial.
+  useEffect(() => {
+    if (tab === "contratos") {
+      void navigate({ to: "/comercial/contratos", replace: true });
+    } else if (tab === "comissoes") {
+      void navigate({ to: "/comercial/comissoes", replace: true });
+    }
+  }, [tab, navigate]);
+
 
   return (
     <>

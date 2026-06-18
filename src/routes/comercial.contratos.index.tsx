@@ -173,7 +173,7 @@ function ContratosListPage() {
                   <TableHead>Consultor</TableHead>
                   <TableHead className="text-right">Valor global</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Proposta origem</TableHead>
+                  <TableHead>Etapa</TableHead>
                   <TableHead>Criado</TableHead>
                   <TableHead>Gerado</TableHead>
                   <TableHead>Assinado</TableHead>

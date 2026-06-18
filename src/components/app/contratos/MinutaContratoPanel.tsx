@@ -37,7 +37,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { logError } from "@/lib/repositories/error-log-repo";
 import {
-  CATEGORIA_LABEL, clausulasPadrao,
+  clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,

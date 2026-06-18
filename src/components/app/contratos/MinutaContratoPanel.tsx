@@ -337,8 +337,9 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
             <DialogTitle>Gerar contrato {contrato.codigo ?? contrato.id.slice(0, 8)}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Esta ação transforma a minuta em contrato <strong>ATIVO</strong> e marca a proposta de origem como
-            <strong> CONTRATADA</strong>. Confirme apenas após revisar cláusulas, valores e dados cadastrais.
+            Esta ação transforma a minuta em <strong>contrato gerado, aguardando assinatura</strong>.
+            A proposta de origem permanece travada como <strong>CONTRATO_PENDENTE</strong> até a assinatura
+            ser registrada (a aba "Contratos Gerados" libera essa etapa).
           </p>
           <div>
             <Label className="text-xs">Observação (opcional)</Label>

@@ -1,16 +1,16 @@
 /**
- * D18.8 — Painel de edição da Minuta do contrato (Supabase).
+ * D18.12 — Painel de edição da Minuta do contrato (Supabase).
  *
  * Visível somente quando `etapa === "minuta"`. Permite ao usuário com
  * permissão `comercial.contrato.editar_minuta` revisar os campos contratuais
- * editáveis (forma de pagamento, valor de entrada, datas, observações,
- * financiamento) e disparar:
+ * editáveis e disparar:
  *
- *   - Aprovar contrato (rpc_contrato_aprovar_minuta)
+ *   - Gerar contrato   (rpc_contrato_gerar_final): MINUTA → GERADO/AGUARDANDO_ASSINATURA
  *   - Cancelar minuta  (rpc_contrato_cancelar_minuta)
  *
  * NÃO toca em valor_total / potencia_kwp / modulos_qtde — essas grandezas
  * vêm da proposta origem e exigem nova proposta ou aditivo para mudar.
+ * NÃO gera financeiro nem envia engenharia (libera só após assinatura).
  */
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -22,12 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { FileSignature, Save, Check, Ban, Loader2, AlertTriangle } from "lucide-react";
+import { FileSignature, Save, FileCheck2, Ban, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import {
-  useAprovarMinutaContrato,
+  useGerarContratoFinal,
   useCancelarMinutaContrato,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useQueryClient } from "@tanstack/react-query";

@@ -157,7 +157,7 @@ function ContratosListPage() {
             <div className="p-6 text-center text-sm text-muted-foreground">
               <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-50" />
               {etapa === "minuta"
-                ? "Nenhum contrato pendente. Aprove uma proposta em /comercial → Propostas para criar uma minuta."
+                ? "Nenhum contrato pendente de redação. Envie uma proposta APROVADA para Contratos a partir de /comercial → Propostas."
                 : etapa === "gerado"
                   ? "Nenhum contrato aguardando assinatura. Gere um contrato a partir de uma minuta."
                   : etapa === "assinado"

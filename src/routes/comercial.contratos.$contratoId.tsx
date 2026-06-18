@@ -35,7 +35,6 @@ import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { NovoAditivoDialog } from "@/components/app/contratos/NovoAditivoDialog";
 import { AditivosListPanel } from "@/components/app/contratos/AditivosListPanel";
-import { useTabFromHash } from "@/lib/route-tabs";
 import { DocumentosObjetoPanel } from "@/components/app/universal/DocumentosObjetoPanel";
 import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPanel";
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";

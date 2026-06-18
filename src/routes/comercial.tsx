@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus, Search, FileText, CheckCircle2, Clock, XCircle,
@@ -154,6 +154,7 @@ function fmtDataBR(v?: string | null): string {
 
 function ComercialPage() {
   const [tab, setTab] = useTabFromHash("/comercial");
+  const navigate = useNavigate();
   const contratos = useContratos();
   const setContratos = (next: Contrato[] | ((p: Contrato[]) => Contrato[])) => {
     const v = typeof next === "function" ? (next as any)(contratos) : next;
@@ -167,6 +168,16 @@ function ComercialPage() {
   useEffect(() => {
     void import("@/lib/perf").then((m) => m.reportFirstListReady("comercial.pipeline"));
   }, []);
+
+  // D18.11 — Hash legado #tab=contratos|comissoes redireciona p/ rota oficial.
+  useEffect(() => {
+    if (tab === "contratos") {
+      void navigate({ to: "/comercial/contratos", replace: true });
+    } else if (tab === "comissoes") {
+      void navigate({ to: "/comercial/comissoes", replace: true });
+    }
+  }, [tab, navigate]);
+
 
   return (
     <>
@@ -189,9 +200,10 @@ function ComercialPage() {
           <PropostasPage embedded />
         </TabsContent>
         <TabsContent value="contratos" className="mt-5">
-          {/* C-ENT.11.b — Contratos LS deixa de ser canônico. Verdade oficial = Supabase em /comercial/contratos. */}
-          <ContratosRedirectCard />
+          {/* D18.11 — A aba interna foi removida. Hash legado dispara redirect p/ /comercial/contratos no useEffect acima. */}
+          <div className="p-6 text-sm text-muted-foreground">Redirecionando para Contratos…</div>
         </TabsContent>
+
         <TabsContent value="aditivos" className="mt-5">
           <AditivosTab contratos={contratos} />
         </TabsContent>

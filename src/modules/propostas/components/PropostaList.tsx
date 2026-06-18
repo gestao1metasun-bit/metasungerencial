@@ -162,11 +162,12 @@ export function propostaAprovavelDoLead(l: { propostas: PropostaFV[] }): Propost
     .find((p) => ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status));
 }
 
-/** Navega para o Comercial → aba Contratos. */
+/** Navega para a tela oficial de Contratos (D18.11). */
 export function irParaContratos() {
   if (typeof window === "undefined") return;
-  window.location.assign("/comercial#tab=contratos");
+  window.location.assign("/comercial/contratos");
 }
+
 
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas

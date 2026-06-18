@@ -1,7 +1,7 @@
 /**
- * C-ENT.5 — Listagem oficial de Contratos Supabase.
- * Fonte: public.contratos + contrato_propostas + projetos.
- * Gate: permissão `comercial.contrato.visualizar`.
+ * D18.12 — Listagem oficial de Contratos com 4 abas da esteira:
+ * Pendentes | Contratos Gerados | Contratos Assinados | Cancelados.
+ * Fonte: public.contratos. Gate: `comercial.contrato.visualizar`.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -23,7 +23,7 @@ import { useContratosSupabase, useCancelarContratoSupabase } from "@/lib/reposit
 import { useHasPermission } from "@/hooks/use-has-permission";
 import { CancelarContratoDialog } from "@/components/app/contratos/CancelarContratoDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { classificarEtapaContrato, type EtapaContrato } from "@/lib/contrato-etapa";
+import { classificarEtapaContrato, badgeEtapaContrato, type EtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/")({
   head: () => ({ meta: [{ title: "Contratos — Meta Sun" }] }),
@@ -33,11 +33,13 @@ export const Route = createFileRoute("/comercial/contratos/")({
 const fmtBRL = (n: number | null | undefined) =>
   (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const fmtDate = (s: string | null | undefined) =>
+  s ? new Date(s).toLocaleDateString("pt-BR") : "—";
+
 const statusBadge = (status: string, cancelado?: boolean) => {
   const etapa = classificarEtapaContrato(status, cancelado);
-  if (etapa === "cancelado") return <Badge variant="destructive">CANCELADO</Badge>;
-  if (etapa === "minuta") return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-950/40">CONTRATO PENDENTE</Badge>;
-  return <Badge>ATIVO</Badge>;
+  const b = badgeEtapaContrato(etapa);
+  return <Badge variant={b.variant} className={b.className}>{b.label}</Badge>;
 };
 
 function ContratosListPage() {
@@ -54,7 +56,8 @@ function ContratosListPage() {
     const rows = data ?? [];
     return {
       minuta: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "minuta").length,
-      ativo: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "ativo").length,
+      gerado: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "gerado").length,
+      assinado: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "assinado").length,
       cancelado: rows.filter((r) => classificarEtapaContrato(r.status, r.cancelado) === "cancelado").length,
     };
   }, [data]);
@@ -98,12 +101,17 @@ function ContratosListPage() {
     );
   }
 
+  const dataGerada = (c: { dados?: Record<string, unknown> | null }): string | null => {
+    const v = (c.dados as Record<string, unknown> | null | undefined)?.["gerado_em"];
+    return typeof v === "string" ? v : null;
+  };
+
   return (
     <TooltipProvider>
       <div className="p-2 space-y-2">
         <PageHeader
           title="Contratos"
-          subtitle="Contratos oficiais gerados a partir de propostas aprovadas"
+          subtitle="Esteira oficial: propostas aprovadas → minuta → gerado → assinado"
           actions={
             <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
               <RefreshCcw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
@@ -115,7 +123,8 @@ function ContratosListPage() {
           <Tabs value={etapa} onValueChange={(v) => setEtapa(v as EtapaContrato)}>
             <TabsList>
               <TabsTrigger value="minuta">Pendentes ({contagem.minuta})</TabsTrigger>
-              <TabsTrigger value="ativo">Ativos ({contagem.ativo})</TabsTrigger>
+              <TabsTrigger value="gerado">Contratos Gerados ({contagem.gerado})</TabsTrigger>
+              <TabsTrigger value="assinado">Contratos Assinados ({contagem.assinado})</TabsTrigger>
               <TabsTrigger value="cancelado">Cancelados ({contagem.cancelado})</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -149,9 +158,11 @@ function ContratosListPage() {
               <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-50" />
               {etapa === "minuta"
                 ? "Nenhum contrato pendente. Aprove uma proposta em /comercial → Propostas para criar uma minuta."
-                : etapa === "ativo"
-                  ? "Nenhum contrato ativo. Aprove uma minuta para movê-la para Ativos."
-                  : "Nenhum contrato cancelado."}
+                : etapa === "gerado"
+                  ? "Nenhum contrato aguardando assinatura. Gere um contrato a partir de uma minuta."
+                  : etapa === "assinado"
+                    ? "Nenhum contrato assinado. Registre a assinatura em um contrato gerado."
+                    : "Nenhum contrato cancelado."}
             </div>
           ) : (
             <Table>
@@ -161,10 +172,11 @@ function ContratosListPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Consultor</TableHead>
                   <TableHead className="text-right">Valor global</TableHead>
-                  <TableHead className="text-right">Potência (kWp)</TableHead>
-                  <TableHead className="text-center">Projetos</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Criado em</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Criado</TableHead>
+                  <TableHead>Gerado</TableHead>
+                  <TableHead>Assinado</TableHead>
                   <TableHead className="text-right w-32">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -181,14 +193,13 @@ function ContratosListPage() {
                         {c.consultor_nome ?? <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmtBRL(c.valor_total)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {c.potencia_kwp != null ? Number(c.potencia_kwp).toFixed(2) : "—"}
-                      </TableCell>
-                      <TableCell className="text-center tabular-nums">{c.projetos_count}</TableCell>
                       <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                      <TableCell className="text-xs uppercase text-muted-foreground">
+                        {classificarEtapaContrato(c.status, c.cancelado)}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{fmtDate(c.created_at)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{fmtDate(dataGerada(c))}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{fmtDate(c.data_assinatura)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Tooltip>
@@ -200,16 +211,18 @@ function ContratosListPage() {
                             </TooltipTrigger>
                             <TooltipContent>Abrir contrato</TooltipContent>
                           </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id }}>
-                                <Button size="icon" variant="ghost" className="h-7 w-7">
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                </Button>
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent>Cliente 360º</TooltipContent>
-                          </Tooltip>
+                          {c.cliente_id && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id }}>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7">
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </Button>
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent>Cliente 360º</TooltipContent>
+                            </Tooltip>
+                          )}
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-7 w-7"
@@ -217,7 +230,7 @@ function ContratosListPage() {
                                 <FileText className="h-3.5 w-3.5" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Propostas origem</TooltipContent>
+                            <TooltipContent>Proposta origem</TooltipContent>
                           </Tooltip>
                           {permCancelar.data === true && !cancelado && (
                             <Tooltip>

@@ -146,6 +146,41 @@ export function useCancelarMinutaContrato() {
   });
 }
 
+// D18.12 — Gerar contrato final (MINUTA → GERADO/AGUARDANDO_ASSINATURA).
+// Não toca proposta, não dispara financeiro nem engenharia.
+export function useGerarContratoFinal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (i: { contratoId: string; observacao?: string }) =>
+      call<string>("rpc_contrato_gerar_final", {
+        p_contrato_id: i.contratoId,
+        p_observacao: i.observacao ?? null,
+      }),
+    onSuccess: () => {
+      toast.success("Contrato gerado. Aguardando assinatura.");
+      invalidateComercial(qc);
+    },
+    onError: (e: Error) => toast.error(`Falha ao gerar contrato: ${e.message}`),
+  });
+}
+
+// D18.12 — Marcar contrato como assinado (GERADO → ATIVO + proposta CONTRATADA).
+export function useMarcarContratoAssinado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (i: { contratoId: string; observacao?: string }) =>
+      call<string>("rpc_contrato_marcar_assinado", {
+        p_contrato_id: i.contratoId,
+        p_observacao: i.observacao ?? null,
+      }),
+    onSuccess: () => {
+      toast.success("Contrato assinado. Proposta marcada como CONTRATADA.");
+      invalidateComercial(qc);
+    },
+    onError: (e: Error) => toast.error(`Falha ao registrar assinatura: ${e.message}`),
+  });
+}
+
 export function useEnviarContratoEngenharia() {
   const qc = useQueryClient();
   return useMutation({

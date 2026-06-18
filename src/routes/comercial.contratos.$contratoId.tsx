@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Loader2, ShieldAlert, FileSignature, FileText, Users, Ban, ExternalLink,
-  Zap, DollarSign, Layers, History, ClipboardList, Plus,
+  Zap, DollarSign, Layers, History, ClipboardList, Plus, DollarSign as DollarSignIcon, HardHat,
 } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   useContratoSupabaseById,
   usePropostasDoContrato,
@@ -38,6 +41,7 @@ import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPa
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
 import { ComissoesContratoPanel } from "@/components/app/comissoes/ComissoesContratoPanel";
 import { MinutaContratoPanel } from "@/components/app/contratos/MinutaContratoPanel";
+import { ContratoGeradoPanel } from "@/components/app/contratos/ContratoGeradoPanel";
 import { classificarEtapaContrato, rotuloEtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({
@@ -161,6 +165,8 @@ function ContratoWorkspacePage() {
   const c = contrato.data;
   const etapa = classificarEtapaContrato(c.status, c.cancelado);
   const ehMinuta = etapa === "minuta";
+  const ehGerado = etapa === "gerado";
+  const ehAssinado = etapa === "assinado";
   const cancelado = etapa === "cancelado";
   const clienteNome = cliente.data?.nome ?? "—";
   const propostaOrigemId = (propostas.data ?? [])[0]?.id ?? null;
@@ -182,19 +188,19 @@ function ContratoWorkspacePage() {
                 </Button>
               </Link>
             )}
-            {ehMinuta && propostaOrigemId && (
-              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id ?? "" }} hash={`tab=propostas&proposta=${propostaOrigemId}`}>
+            {propostaOrigemId && c.cliente_id && (
+              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id }} hash={`tab=propostas&proposta=${propostaOrigemId}`}>
                 <Button size="sm" variant="outline">
                   <FileText className="h-4 w-4 mr-1" /> Proposta origem
                 </Button>
               </Link>
             )}
-            {!ehMinuta && permAditivoCriar.data === true && !cancelado && (
+            {ehAssinado && permAditivoCriar.data === true && !cancelado && (
               <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
               </Button>
             )}
-            {!ehMinuta && permCancelar.data === true && !cancelado && (
+            {!ehMinuta && !ehGerado && permCancelar.data === true && !cancelado && (
               <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar contrato
               </Button>
@@ -220,6 +226,14 @@ function ContratoWorkspacePage() {
             dados: (c.dados ?? null) as Record<string, unknown> | null,
           }}
         />
+      )}
+
+      {ehGerado && (
+        <ContratoGeradoPanel contratoId={c.id} codigo={c.codigo} />
+      )}
+
+      {ehAssinado && !cancelado && (
+        <ContratoAssinadoActions />
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -458,5 +472,53 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
       <span className="text-muted-foreground">{label}</span>
       <span className={mono ? "font-mono text-xs" : "text-right"}>{value}</span>
     </div>
+  );
+}
+
+/**
+ * D18.12 — Painel de ações do contrato assinado/ativo.
+ * Apresenta os botões liberados após assinatura. Financeiro e Engenharia
+ * dependem de integrações específicas; quando ainda não habilitadas, ficam
+ * desabilitados com tooltip explicativo — nunca toast genérico.
+ */
+function ContratoAssinadoActions() {
+  return (
+    <TooltipProvider>
+      <Card className="p-3 space-y-2 border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/20">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FileSignature className="h-4 w-4 text-emerald-600" />
+            <h3 className="font-semibold text-sm">Contrato Assinado — Operação liberada</h3>
+            <Badge variant="default">ATIVO</Badge>
+          </div>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    <DollarSignIcon className="h-3.5 w-3.5 mr-1" /> Gerar financeiro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Disponível após integração financeira.</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    <HardHat className="h-3.5 w-3.5 mr-1" /> Enviar engenharia
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Disponível após integração de engenharia.</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Use as abas <strong>Projetos</strong>, <strong>Aditivos</strong> e <strong>Comissões</strong> para
+          continuar a operação deste contrato.
+        </p>
+      </Card>
+    </TooltipProvider>
   );
 }

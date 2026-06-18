@@ -1,16 +1,16 @@
 /**
- * D18.8 — Painel de edição da Minuta do contrato (Supabase).
+ * D18.12 — Painel de edição da Minuta do contrato (Supabase).
  *
  * Visível somente quando `etapa === "minuta"`. Permite ao usuário com
  * permissão `comercial.contrato.editar_minuta` revisar os campos contratuais
- * editáveis (forma de pagamento, valor de entrada, datas, observações,
- * financiamento) e disparar:
+ * editáveis e disparar:
  *
- *   - Aprovar contrato (rpc_contrato_aprovar_minuta)
+ *   - Gerar contrato   (rpc_contrato_gerar_final): MINUTA → GERADO/AGUARDANDO_ASSINATURA
  *   - Cancelar minuta  (rpc_contrato_cancelar_minuta)
  *
  * NÃO toca em valor_total / potencia_kwp / modulos_qtde — essas grandezas
  * vêm da proposta origem e exigem nova proposta ou aditivo para mudar.
+ * NÃO gera financeiro nem envia engenharia (libera só após assinatura).
  */
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -22,12 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { FileSignature, Save, Check, Ban, Loader2, AlertTriangle } from "lucide-react";
+import { FileSignature, Save, FileCheck2, Ban, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useHasPermission } from "@/hooks/use-has-permission";
 import {
-  useAprovarMinutaContrato,
+  useGerarContratoFinal,
   useCancelarMinutaContrato,
 } from "@/lib/repositories/comercial-processos-repo";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,9 +53,9 @@ type MinutaContrato = {
 export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) {
   const qc = useQueryClient();
   const permEditar = useHasPermission("comercial.contrato.editar_minuta");
-  const permAprovar = useHasPermission("comercial.contrato.aprovar_minuta");
+  const permGerar = useHasPermission("comercial.contrato.gerar_minuta");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
-  const aprovar = useAprovarMinutaContrato();
+  const gerar = useGerarContratoFinal();
   const cancelarMinuta = useCancelarMinutaContrato();
 
   const d = (contrato.dados ?? {}) as Record<string, unknown>;
@@ -88,8 +88,8 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
   const [prazoExec, setPrazoExec] = useState<string>(String(d["prazo_execucao_dias"] ?? ""));
   const [salvando, setSalvando] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [aprovarOpen, setAprovarOpen] = useState(false);
-  const [aprovarObs, setAprovarObs] = useState("");
+  const [gerarOpen, setGerarOpen] = useState(false);
+  const [gerarObs, setGerarObs] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [motivoCancelar, setMotivoCancelar] = useState("");
 
@@ -162,20 +162,20 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
     }
   }
 
-  async function aprovar_() {
+  async function gerar_() {
     if (erros.length) {
       toast.error("Preencha: " + erros.join(", "));
       return;
     }
-    // Salva antes de aprovar se houver alterações
+    // Salva antes de gerar se houver alterações
     if (dirty) {
       const ok = await salvar();
       if (!ok) return;
     }
     try {
-      await aprovar.mutateAsync({ contratoId: contrato.id, observacao: aprovarObs.trim() || undefined });
-      setAprovarOpen(false);
-      setAprovarObs("");
+      await gerar.mutateAsync({ contratoId: contrato.id, observacao: gerarObs.trim() || undefined });
+      setGerarOpen(false);
+      setGerarObs("");
     } catch {
       // toast já tratado no hook
     }
@@ -196,7 +196,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
   }
 
   const podeEditar = permEditar.data === true;
-  const podeAprovar = permAprovar.data === true;
+  const podeGerar = permGerar.data === true;
   const podeCancelar = permCancelar.data === true;
 
   return (
@@ -224,11 +224,11 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
           </Button>
           <Button
             size="sm"
-            disabled={!podeAprovar || erros.length > 0}
-            onClick={() => setAprovarOpen(true)}
+            disabled={!podeGerar || erros.length > 0}
+            onClick={() => setGerarOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            <Check className="h-3.5 w-3.5 mr-1" /> Aprovar contrato
+            <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Gerar contrato
           </Button>
         </div>
       </div>
@@ -236,7 +236,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
       {erros.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-2 py-1.5 text-xs">
           <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5" />
-          <div>Para aprovar a minuta, preencha: <strong>{erros.join(", ")}</strong>.</div>
+          <div>Para gerar a minuta, preencha: <strong>{erros.join(", ")}</strong>.</div>
         </div>
       )}
 
@@ -327,28 +327,29 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
 
       <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
         <strong>Travado:</strong> valor total ({valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}),
-        potência, módulos e inversor vêm da proposta origem. Para alterar, gere uma nova proposta ou um aditivo após aprovar.
+        potência, módulos e inversor vêm da proposta origem. Para alterar, gere uma nova proposta ou um aditivo após gerar.
       </div>
 
       {/* Diálogo de aprovação */}
-      <Dialog open={aprovarOpen} onOpenChange={setAprovarOpen}>
+      <Dialog open={gerarOpen} onOpenChange={setGerarOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Aprovar contrato {contrato.codigo ?? contrato.id.slice(0, 8)}</DialogTitle>
+            <DialogTitle>Gerar contrato {contrato.codigo ?? contrato.id.slice(0, 8)}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Esta ação transforma a minuta em contrato <strong>ATIVO</strong> e marca a proposta de origem como
-            <strong> CONTRATADA</strong>. Confirme apenas após revisar cláusulas, valores e dados cadastrais.
+            Esta ação transforma a minuta em <strong>contrato gerado, aguardando assinatura</strong>.
+            A proposta de origem permanece travada como <strong>CONTRATO_PENDENTE</strong> até a assinatura
+            ser registrada (a aba "Contratos Gerados" libera essa etapa).
           </p>
           <div>
             <Label className="text-xs">Observação (opcional)</Label>
-            <Textarea className="mt-1" rows={2} value={aprovarObs} onChange={(e) => setAprovarObs(e.target.value)} />
+            <Textarea className="mt-1" rows={2} value={gerarObs} onChange={(e) => setGerarObs(e.target.value)} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAprovarOpen(false)} disabled={aprovar.isPending}>Cancelar</Button>
-            <Button onClick={() => void aprovar_()} disabled={aprovar.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              {aprovar.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />}
-              Aprovar contrato
+            <Button variant="outline" onClick={() => setGerarOpen(false)} disabled={gerar.isPending}>Cancelar</Button>
+            <Button onClick={() => void gerar_()} disabled={gerar.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              {gerar.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileCheck2 className="h-3.5 w-3.5 mr-1" />}
+              Gerar contrato
             </Button>
           </DialogFooter>
         </DialogContent>

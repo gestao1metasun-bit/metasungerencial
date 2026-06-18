@@ -25,7 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   FileSignature, Save, FileCheck2, Ban, Loader2, AlertTriangle,
-  Plus, Trash2, ArrowUp, ArrowDown, RotateCcw, Eye, FileText,
+  Plus, Trash2, RotateCcw, Eye, FileText, Pencil, MinusCircle, BookmarkPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,10 +37,12 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { logError } from "@/lib/repositories/error-log-repo";
 import {
-  CATEGORIA_LABEL, clausulasPadrao, novaClausulaComplementar,
+  CATEGORIA_LABEL, clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,
+  renumerar, inserirItem, removerItem, alterarTextoItem,
+  salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
   type FormaPagamentoTipo, type Variaveis,
 } from "@/lib/contrato-clausulas-template";

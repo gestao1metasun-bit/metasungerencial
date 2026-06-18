@@ -114,18 +114,19 @@ export async function listarContratos(): Promise<ContratoSupabaseListItem[]> {
   );
   const contratoIds = rows.map((r) => r.id);
 
-  const [clientesRes, consultoresRes, projetosRes] = await Promise.all([
+  const [clientesRes, consultoresRes, projetosRes, vinculosRes] = await Promise.all([
     clienteIds.length
-      ? supabase.from("clientes").select("id,nome").in("id", clienteIds)
-      : Promise.resolve({ data: [], error: null } as { data: { id: string; nome: string | null }[] | null; error: unknown }),
+      ? supabase.from("clientes").select("id,nome,doc,cidade,uf").in("id", clienteIds)
+      : Promise.resolve({ data: [], error: null } as { data: { id: string; nome: string | null; doc: string | null; cidade: string | null; uf: string | null }[] | null; error: unknown }),
     consultorIds.length
       ? supabase.from("profiles").select("user_id,nome,email").in("user_id", consultorIds)
       : Promise.resolve({ data: [] as { user_id: string; nome: string | null; email: string | null }[], error: null }),
     supabase.from("projetos").select("contrato_id").in("contrato_id", contratoIds).is("deleted_at", null),
+    supabase.from("contrato_propostas").select("contrato_id,proposta_id").in("contrato_id", contratoIds),
   ]);
 
-  const clienteMap = new Map<string, string | null>(
-    (clientesRes.data ?? []).map((c) => [c.id, c.nome ?? null]),
+  const clienteMap = new Map<string, { nome: string | null; doc: string | null; cidade: string | null; uf: string | null }>(
+    (clientesRes.data ?? []).map((c) => [c.id, { nome: c.nome ?? null, doc: c.doc ?? null, cidade: c.cidade ?? null, uf: c.uf ?? null }]),
   );
   const consultorMap = new Map<string, string | null>(
     ((consultoresRes.data ?? []) as { user_id: string; nome: string | null; email: string | null }[]).map(
@@ -137,13 +138,37 @@ export async function listarContratos(): Promise<ContratoSupabaseListItem[]> {
     if (!p.contrato_id) continue;
     projetosCount.set(p.contrato_id, (projetosCount.get(p.contrato_id) ?? 0) + 1);
   }
+  const vinculoPorContrato = new Map<string, string>();
+  for (const v of (vinculosRes.data ?? []) as { contrato_id: string; proposta_id: string }[]) {
+    if (!vinculoPorContrato.has(v.contrato_id)) vinculoPorContrato.set(v.contrato_id, v.proposta_id);
+  }
+  const propostaIds = Array.from(new Set(vinculoPorContrato.values()));
+  const propostaMap = new Map<string, string | null>();
+  if (propostaIds.length) {
+    const { data: pData } = await supabase
+      .from("propostas")
+      .select("id,numero")
+      .in("id", propostaIds);
+    for (const p of (pData ?? []) as { id: string; numero: string | null }[]) {
+      propostaMap.set(p.id, p.numero ?? null);
+    }
+  }
 
-  return rows.map((r) => ({
-    ...r,
-    cliente_nome: clienteMap.get(r.cliente_id) ?? null,
-    consultor_nome: r.consultor_id ? consultorMap.get(r.consultor_id) ?? null : null,
-    projetos_count: projetosCount.get(r.id) ?? 0,
-  }));
+  return rows.map((r) => {
+    const cli = clienteMap.get(r.cliente_id);
+    const propId = vinculoPorContrato.get(r.id) ?? null;
+    return {
+      ...r,
+      cliente_nome: cli?.nome ?? null,
+      cliente_doc: cli?.doc ?? null,
+      cliente_cidade: cli?.cidade ?? null,
+      cliente_uf: cli?.uf ?? null,
+      consultor_nome: r.consultor_id ? consultorMap.get(r.consultor_id) ?? null : null,
+      projetos_count: projetosCount.get(r.id) ?? 0,
+      proposta_origem_id: propId,
+      proposta_origem_numero: propId ? propostaMap.get(propId) ?? null : null,
+    };
+  });
 }
 
 export async function obterContratoPorId(id: string): Promise<ContratoSupabase | null> {

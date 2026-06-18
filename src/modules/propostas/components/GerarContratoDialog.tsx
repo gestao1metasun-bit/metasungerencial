@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useGerarContratoDaProposta } from "@/lib/repositories/comercial-processos-repo";
+import { useEnviarPropostaParaContratos } from "@/lib/repositories/comercial-processos-repo";
 import { fmtBRL } from "@/modules/propostas/store";
 
 type FormaPagamento = "A_VISTA" | "PARCELADO" | "FINANCIAMENTO" | "MISTO";

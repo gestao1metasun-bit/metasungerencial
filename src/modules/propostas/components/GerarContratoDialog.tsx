@@ -154,7 +154,7 @@ export function GerarContratoDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-primary" />
-              Gerar contrato {numeroProposta ? `· proposta ${numeroProposta}` : ""}
+              Enviar para Contratos {numeroProposta ? `· proposta ${numeroProposta}` : ""}
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
               {clienteNome ? `Cliente: ${clienteNome} · ` : ""}Valor total: <strong>{fmtBRL(valorTotal)}</strong>

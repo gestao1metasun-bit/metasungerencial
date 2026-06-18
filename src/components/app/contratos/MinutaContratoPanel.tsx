@@ -221,6 +221,44 @@ export function MinutaContratoPanel({
     setDirty(true);
   }
 
+  /** Endereço contratual reconstruído (compatibilidade com PDF/cláusulas). */
+  const enderecoCompleto = useMemo(() => {
+    const log = state.contratante_logradouro?.trim() ?? "";
+    const num = state.contratante_numero?.trim() ?? "";
+    const bairro = state.contratante_bairro?.trim() ?? "";
+    const compl = state.contratante_complemento?.trim() ?? "";
+    const cep = state.contratante_cep?.trim() ?? "";
+    const linha1 = [log, num].filter(Boolean).join(", ");
+    const linha2 = [bairro, compl].filter(Boolean).join(" — ");
+    return [linha1, linha2, cep ? `CEP ${cep}` : ""].filter(Boolean).join(", ");
+  }, [state.contratante_logradouro, state.contratante_numero, state.contratante_bairro, state.contratante_complemento, state.contratante_cep]);
+
+  // mantém contratante_endereco em sincronia (cláusulas legadas referenciam ele)
+  useEffect(() => {
+    setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
+  }, [enderecoCompleto]);
+
+  /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */
+  async function aplicarCep(cepRaw: string) {
+    const cep = cepRaw.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!res.ok) return;
+      const j = await res.json() as { logradouro?: string; bairro?: string; localidade?: string; uf?: string; erro?: boolean };
+      if (j.erro) { toast.error("CEP não encontrado."); return; }
+      setState((s) => ({
+        ...s,
+        contratante_cep: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
+        contratante_logradouro: s.contratante_logradouro || j.logradouro || "",
+        contratante_bairro: s.contratante_bairro || j.bairro || "",
+        contratante_cidade: s.contratante_cidade || j.localidade || "",
+        contratante_uf: s.contratante_uf || j.uf || "",
+      }));
+      setDirty(true);
+    } catch { /* silencia rede */ }
+  }
+
   // ---- Variáveis para prévia ----
   const variaveis: Variaveis = useMemo(() => {
     // numero_contrato / ano_contrato derivados do código (ex.: "CT-120/2026" ou "120/2026")

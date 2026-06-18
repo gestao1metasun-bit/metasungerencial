@@ -32,16 +32,17 @@ A mesma estratégia foi aplicada aos demais botões da aba Pendentes:
 - Aparece somente na aba `minuta` (Pendentes de Redação).
 
 ## Workspace
-`MinutaContratoPanel` agora escuta `hashchange` / `popstate` /
-`lovable:hash-sync`, lê `minuta` (uma das abas internas
-`contratante|contratuais|pagamento|clausulas|previa`) e `focus=gerar`,
-trocando a sub-aba e ativando o highlight do botão verde.
+`MinutaContratoPanel` agora lê `?tab=previa&focus=gerar` na entrada da rota,
+mantém compatibilidade com o hash legado (`minuta=previa&focus=gerar`) e troca
+a sub-aba interna para **Prévia**, ativando o highlight do botão verde.
 
 ## Arquivos alterados
-- `src/routes/comercial.contratos.index.tsx` — handlers de status/process
-  passam hash de foco para `abrirContrato`.
-- `src/components/app/contratos/MinutaContratoPanel.tsx` — leitura de hash
-  para `minuta` e `focus=gerar`, highlight no botão.
+- `src/routes/comercial.contratos.index.tsx` — ação **Gerar Contrato** navega
+  com search params oficiais e tooltips específicos de seleção.
+- `src/routes/comercial.contratos.$contratoId.tsx` — workspace trata
+  `tab=previa` como entrada direta no painel de minuta.
+- `src/components/app/contratos/MinutaContratoPanel.tsx` — leitura de query/hash
+  para abrir Prévia e destacar `focus=gerar`.
 
 ## Critério de aceite
 - ✅ Clicar "Gerar Contrato" abre o workspace do contrato.

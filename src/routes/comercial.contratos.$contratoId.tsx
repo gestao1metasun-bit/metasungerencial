@@ -162,6 +162,8 @@ function ContratoWorkspacePage() {
   const c = contrato.data;
   const etapa = classificarEtapaContrato(c.status, c.cancelado);
   const ehMinuta = etapa === "minuta";
+  const ehGerado = etapa === "gerado";
+  const ehAssinado = etapa === "assinado";
   const cancelado = etapa === "cancelado";
   const clienteNome = cliente.data?.nome ?? "—";
   const propostaOrigemId = (propostas.data ?? [])[0]?.id ?? null;
@@ -183,19 +185,19 @@ function ContratoWorkspacePage() {
                 </Button>
               </Link>
             )}
-            {ehMinuta && propostaOrigemId && (
-              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id ?? "" }} hash={`tab=propostas&proposta=${propostaOrigemId}`}>
+            {propostaOrigemId && c.cliente_id && (
+              <Link to="/comercial/clientes/$clienteId" params={{ clienteId: c.cliente_id }} hash={`tab=propostas&proposta=${propostaOrigemId}`}>
                 <Button size="sm" variant="outline">
                   <FileText className="h-4 w-4 mr-1" /> Proposta origem
                 </Button>
               </Link>
             )}
-            {!ehMinuta && permAditivoCriar.data === true && !cancelado && (
+            {ehAssinado && permAditivoCriar.data === true && !cancelado && (
               <Button size="sm" onClick={() => setNovoAditivoOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
               </Button>
             )}
-            {!ehMinuta && permCancelar.data === true && !cancelado && (
+            {!ehMinuta && !ehGerado && permCancelar.data === true && !cancelado && (
               <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
                 <Ban className="h-4 w-4 mr-1" /> Cancelar contrato
               </Button>
@@ -221,6 +223,14 @@ function ContratoWorkspacePage() {
             dados: (c.dados ?? null) as Record<string, unknown> | null,
           }}
         />
+      )}
+
+      {ehGerado && (
+        <ContratoGeradoPanel contratoId={c.id} codigo={c.codigo} />
+      )}
+
+      {ehAssinado && !cancelado && (
+        <ContratoAssinadoActions />
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

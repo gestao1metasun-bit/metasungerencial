@@ -1162,7 +1162,27 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
   const visiveis = renumerar(clausulas.filter((c) => !c.oculta));
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      {/* Print CSS: só o contrato sai no PDF. */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
+          #contrato-print-area {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 24px !important;
+            background: #fff !important;
+            color: #000 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          #contrato-print-area .no-print { display: none !important; }
+        }
+      `}</style>
+      <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-semibold">Prévia do contrato</span>
@@ -1178,12 +1198,12 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         </div>
       </div>
       {varsFaltando.length > 0 && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive no-print">
           <strong>Variáveis obrigatórias vazias:</strong> {varsFaltando.join(", ")}.
           A geração do contrato está bloqueada.
         </div>
       )}
-      <Card className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
+      <Card id="contrato-print-area" className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
         <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
           {/* Cabeçalho oficial Meta Sun */}
           <div className="text-center mb-4">

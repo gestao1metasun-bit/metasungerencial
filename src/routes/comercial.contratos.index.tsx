@@ -1,13 +1,14 @@
 /**
- * D18.15 — Listagem oficial de Contratos com 5 abas separadas da esteira:
- * Pendentes de Redação | Contratos Gerados | Aguardando Assinatura |
- * Contratos Assinados | Cancelados.
+ * D18.17 — Listagem oficial de Contratos no padrão ERP:
+ *  - SEM coluna "Ações" (removida)
+ *  - Checkbox por linha + checkbox no header (select-all da aba/página)
+ *  - Toolbar contextual acima da grade muda conforme aba/seleção
+ *  - Ações operacionais ficam SEMPRE na toolbar, não na linha
+ *  - Linha: clique no código abre workspace; duplo-clique em qualquer célula também
  *
  * Tela é EXCLUSIVA de contratos:
  *  - não importa PropostasPage / toolbar de proposta
- *  - não renderiza botão "Gerar nova proposta", "Aprovar/Reprovar proposta"
- *  - colunas, ações e dados são todos de contrato
- * Fonte oficial: public.contratos (via contratos-supabase-repo).
+ *  - não renderiza "Gerar nova proposta", "Aprovar/Reprovar proposta"
  * Gate: `comercial.contrato.visualizar`.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -15,13 +16,16 @@ import { useMemo, useState } from "react";
 import {
   Search, ShieldAlert, Loader2, RefreshCcw, FileSignature, ExternalLink, Ban,
   FileText, Eye, Paperclip, History as HistoryIcon, PenLine, Send, CheckCircle2,
-  Download, FilePlus2, Briefcase,
+  Download, FilePlus2, Briefcase, X, Filter, Layout as LayoutIcon, ScrollText,
+  FilePen, Banknote, Wrench, Coins,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -91,11 +95,17 @@ function ContratosListPage() {
   const navigate = useNavigate();
   const perm = useHasPermission("comercial.contrato.visualizar");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
+  const permEditarMinuta = useHasPermission("comercial.contrato.editar_minuta");
+  const permGerar = useHasPermission("comercial.contrato.criar");
+  const permEnviarAss = useHasPermission("comercial.contrato.enviar_assinatura");
+  const permAssinar = useHasPermission("comercial.contrato.assinar");
   const { data, isLoading, isError, error, refetch, isFetching } = useContratosSupabase();
   const cancelar = useCancelarContratoSupabase();
   const [busca, setBusca] = useState("");
   const [tab, setTab] = useState<TabKey>("minuta");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; codigo: string | null } | null>(null);
+  // Seleção por aba (limpa ao trocar de aba)
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
   const contagem = useMemo(() => {
     const rows = data ?? [];
@@ -114,6 +124,35 @@ function ContratosListPage() {
         .some((v) => String(v).toLowerCase().includes(q)),
     );
   }, [data, busca, tab]);
+
+  const trocarTab = (v: string) => {
+    setTab(v as TabKey);
+    setSelecionados(new Set());
+  };
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleAll = (checked: boolean) => {
+    if (!checked) { setSelecionados(new Set()); return; }
+    setSelecionados(new Set(filtrados.map((r) => r.id)));
+  };
+
+  const limparSelecao = () => setSelecionados(new Set());
+
+  const selecionadosList = useMemo(
+    () => filtrados.filter((r) => selecionados.has(r.id)),
+    [filtrados, selecionados],
+  );
+  const selCount = selecionadosList.length;
+  const selUnico = selCount === 1 ? selecionadosList[0] : null;
+  const allChecked = filtrados.length > 0 && selCount === filtrados.length;
+  const someChecked = selCount > 0 && !allChecked;
 
   if (perm.isLoading) {
     return (
@@ -149,8 +188,8 @@ function ContratosListPage() {
   const abrirPropostaOrigem = (c: ContratoSupabaseListItem) =>
     navigate({ to: "/comercial/contratos/$contratoId", params: { contratoId: c.id }, hash: "tab=propostas" });
 
-  const acaoIndisponivel = () =>
-    toast.info("Ação disponível dentro do workspace do contrato.");
+  const acaoNoWorkspace = (msg = "Ação disponível dentro do workspace do contrato.") =>
+    toast.info(msg);
 
   return (
     <TooltipProvider>
@@ -158,15 +197,10 @@ function ContratosListPage() {
         <PageHeader
           title="Contratos"
           subtitle="Esteira oficial: propostas aprovadas → minuta → gerado → assinatura → assinado"
-          actions={
-            <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
-              <RefreshCcw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-            </Button>
-          }
         />
 
         <Card className="p-2">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+          <Tabs value={tab} onValueChange={trocarTab}>
             <TabsList>
               {TABS.map((t) => (
                 <TabsTrigger key={t.key} value={t.key}>
@@ -191,6 +225,27 @@ function ContratosListPage() {
           </div>
         </Card>
 
+        {/* Toolbar contextual oficial */}
+        <ContextualToolbar
+          tab={tab}
+          selCount={selCount}
+          selUnico={selUnico}
+          isFetching={isFetching}
+          onRefresh={() => void refetch()}
+          onClearSel={limparSelecao}
+          perms={{
+            cancelar: permCancelar.data === true,
+            editarMinuta: permEditarMinuta.data === true,
+            gerar: permGerar.data === true,
+            enviarAss: permEnviarAss.data === true,
+            assinar: permAssinar.data === true,
+          }}
+          onAbrir={(id) => abrirContrato(id)}
+          onAbrirProposta={(c) => abrirPropostaOrigem(c)}
+          onCancelar={(c) => setCancelTarget({ id: c.id, codigo: c.codigo })}
+          onWS={acaoNoWorkspace}
+        />
+
         <Card className="p-2">
           {isLoading ? (
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
@@ -205,7 +260,12 @@ function ContratosListPage() {
           ) : (
             <Table>
               <TableHeader>
-                <ColumnsHeader tab={tab} />
+                <ColumnsHeader
+                  tab={tab}
+                  allChecked={allChecked}
+                  someChecked={someChecked}
+                  onToggleAll={toggleAll}
+                />
               </TableHeader>
               <TableBody>
                 {filtrados.map((c) => (
@@ -213,11 +273,9 @@ function ContratosListPage() {
                     key={c.id}
                     c={c}
                     tab={tab}
-                    permCancelar={permCancelar.data === true}
-                    onAbrir={() => abrirContrato(c.id)}
-                    onAbrirProposta={() => abrirPropostaOrigem(c)}
-                    onCancelar={() => setCancelTarget({ id: c.id, codigo: c.codigo })}
-                    onAcaoNoWorkspace={acaoIndisponivel}
+                    selected={selecionados.has(c.id)}
+                    onToggle={(v) => toggleOne(c.id, v)}
+                    onOpen={() => abrirContrato(c.id)}
                   />
                 ))}
               </TableBody>
@@ -242,9 +300,249 @@ function ContratosListPage() {
   );
 }
 
+/* ---------------- Toolbar contextual ---------------- */
+
+type Perms = {
+  cancelar: boolean;
+  editarMinuta: boolean;
+  gerar: boolean;
+  enviarAss: boolean;
+  assinar: boolean;
+};
+
+function ContextualToolbar({
+  tab, selCount, selUnico, isFetching, onRefresh, onClearSel, perms,
+  onAbrir, onAbrirProposta, onCancelar, onWS,
+}: {
+  tab: TabKey;
+  selCount: number;
+  selUnico: ContratoSupabaseListItem | null;
+  isFetching: boolean;
+  onRefresh: () => void;
+  onClearSel: () => void;
+  perms: Perms;
+  onAbrir: (id: string) => void;
+  onAbrirProposta: (c: ContratoSupabaseListItem) => void;
+  onCancelar: (c: ContratoSupabaseListItem) => void;
+  onWS: (msg?: string) => void;
+}) {
+  const acoesGlobais = (
+    <>
+      <ToolbarBtn icon={RefreshCcw} label="Atualizar" onClick={onRefresh} loading={isFetching} />
+      <ToolbarBtn icon={Filter} label="Filtros" onClick={() => onWS("Filtros avançados em breve.")} />
+      <ToolbarBtn icon={Download} label="Exportar" onClick={() => onWS("Exportação em breve.")} />
+      <ToolbarBtn icon={LayoutIcon} label="Layout" onClick={() => onWS("Customização de layout em breve.")} />
+    </>
+  );
+
+  // Sem seleção → só globais
+  if (selCount === 0) {
+    return (
+      <Card className="p-2">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-xs text-muted-foreground mr-2">Nenhum contrato selecionado</span>
+          <Separator orientation="vertical" className="h-6 mx-1" />
+          {acoesGlobais}
+        </div>
+      </Card>
+    );
+  }
+
+  // Múltipla seleção → só ações em lote SEGURAS (lote ainda não habilitado)
+  if (selCount > 1) {
+    return (
+      <Card className="p-2">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-xs font-medium">{selCount} contratos selecionados</span>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSel}>
+            <X className="h-3.5 w-3.5 mr-1" /> Limpar seleção
+          </Button>
+          <Separator orientation="vertical" className="h-6 mx-1" />
+          <ToolbarBtn icon={Download} label="Exportar selecionados" onClick={() => onWS("Exportação em breve.")} />
+          <span className="text-xs text-muted-foreground ml-2">
+            Ações em lote indisponíveis para esta seleção.
+          </span>
+        </div>
+      </Card>
+    );
+  }
+
+  // Seleção única → ações por aba
+  const c = selUnico!;
+  const cancelado = c.status === "CANCELADO" || c.cancelado;
+
+  let acoes: React.ReactNode = null;
+  if (tab === "minuta") {
+    acoes = (
+      <>
+        <ToolbarBtn icon={Eye} label="Abrir minuta" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={PenLine} label="Editar minuta" onClick={() => onAbrir(c.id)} disabled={!perms.editarMinuta} disabledTip="Sem permissão (comercial.contrato.editar_minuta)." />
+        <ToolbarBtn icon={ScrollText} label="Editar cláusulas" onClick={() => onAbrir(c.id)} disabled={!perms.editarMinuta} disabledTip="Sem permissão (comercial.contrato.editar_minuta)." />
+        <ToolbarBtn icon={Paperclip} label="Anexar documentos" onClick={() => onWS()} />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <ToolbarBtn icon={FilePen} label="Gerar contrato" onClick={() => onWS()} disabled={!perms.gerar} disabledTip="Sem permissão (comercial.contrato.criar)." />
+        <ToolbarBtn icon={Ban} label="Cancelar minuta" onClick={() => onCancelar(c)} danger disabled={!perms.cancelar || cancelado} disabledTip="Sem permissão (comercial.contrato.cancelar)." />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <PropostaOrigemBtn c={c} onClick={() => onAbrirProposta(c)} />
+        <Cliente360Btn clienteId={c.cliente_id} />
+      </>
+    );
+  } else if (tab === "gerado") {
+    acoes = (
+      <>
+        <ToolbarBtn icon={Eye} label="Abrir contrato gerado" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={FileText} label="Visualizar PDF" onClick={() => onWS()} />
+        <ToolbarBtn icon={Download} label="Baixar PDF" onClick={() => onWS()} />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <ToolbarBtn icon={Send} label="Enviar p/ assinatura" onClick={() => onWS()} disabled={!perms.enviarAss} disabledTip="Sem permissão (comercial.contrato.enviar_assinatura)." />
+        <ToolbarBtn icon={Paperclip} label="Anexar contrato assinado" onClick={() => onWS()} />
+        <ToolbarBtn icon={CheckCircle2} label="Marcar como aguardando assinatura" onClick={() => onWS()} />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <PropostaOrigemBtn c={c} onClick={() => onAbrirProposta(c)} />
+        <Cliente360Btn clienteId={c.cliente_id} />
+      </>
+    );
+  } else if (tab === "aguardando") {
+    acoes = (
+      <>
+        <ToolbarBtn icon={Eye} label="Abrir contrato" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={Send} label="Reenviar assinatura" onClick={() => onWS()} disabled={!perms.enviarAss} disabledTip="Sem permissão (comercial.contrato.enviar_assinatura)." />
+        <ToolbarBtn icon={Paperclip} label="Anexar contrato assinado" onClick={() => onWS()} />
+        <ToolbarBtn icon={CheckCircle2} label="Marcar como assinado" onClick={() => onAbrir(c.id)} disabled={!perms.assinar} disabledTip="Sem permissão (comercial.contrato.assinar)." />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <PropostaOrigemBtn c={c} onClick={() => onAbrirProposta(c)} />
+        <Cliente360Btn clienteId={c.cliente_id} />
+      </>
+    );
+  } else if (tab === "assinado") {
+    acoes = (
+      <>
+        <ToolbarBtn icon={Eye} label="Abrir contrato" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={Briefcase} label="Abrir projetos" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={FilePlus2} label="Criar aditivo" onClick={() => onWS()} />
+        <ToolbarBtn icon={Coins} label="Ver comissões" onClick={() => onWS()} />
+        <ToolbarBtn icon={Paperclip} label="Ver documentos" onClick={() => onWS()} />
+        <ToolbarBtn icon={HistoryIcon} label="Ver timeline" onClick={() => onWS()} />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <ToolbarBtn icon={Banknote} label="Gerar financeiro" onClick={() => onWS()} disabled disabledTip="Disponível após integração do módulo financeiro." />
+        <ToolbarBtn icon={Wrench} label="Enviar engenharia" onClick={() => onWS()} disabled disabledTip="Disponível após integração do módulo de engenharia." />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <PropostaOrigemBtn c={c} onClick={() => onAbrirProposta(c)} />
+        <Cliente360Btn clienteId={c.cliente_id} />
+      </>
+    );
+  } else {
+    // cancelado — somente leitura
+    acoes = (
+      <>
+        <ToolbarBtn icon={Eye} label="Visualizar contrato" onClick={() => onAbrir(c.id)} />
+        <ToolbarBtn icon={Paperclip} label="Ver documentos" onClick={() => onWS()} />
+        <ToolbarBtn icon={HistoryIcon} label="Ver timeline" onClick={() => onWS()} />
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        <PropostaOrigemBtn c={c} onClick={() => onAbrirProposta(c)} />
+        <Cliente360Btn clienteId={c.cliente_id} />
+      </>
+    );
+  }
+
+  return (
+    <Card className="p-2">
+      <div className="flex items-center gap-1 flex-wrap">
+        <span className="text-xs font-medium">1 contrato selecionado</span>
+        <span className="text-xs text-muted-foreground font-mono ml-1">
+          {c.codigo ?? c.id.slice(0, 8)}
+        </span>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSel}>
+          <X className="h-3.5 w-3.5 mr-1" /> Limpar seleção
+        </Button>
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        {acoes}
+      </div>
+    </Card>
+  );
+}
+
+function ToolbarBtn({
+  icon: Icon, label, onClick, disabled, danger, loading, disabledTip,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  loading?: boolean;
+  disabledTip?: string;
+}) {
+  const btn = (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={`h-7 px-2 text-xs ${danger ? "text-destructive hover:text-destructive" : ""}`}
+      onClick={onClick}
+      disabled={disabled || loading}
+    >
+      <Icon className={`h-3.5 w-3.5 mr-1 ${loading ? "animate-spin" : ""}`} />
+      {label}
+    </Button>
+  );
+  const tip = disabled && disabledTip ? disabledTip : label;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>{btn}</span>
+      </TooltipTrigger>
+      <TooltipContent>{tip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function PropostaOrigemBtn({ c, onClick }: { c: ContratoSupabaseListItem; onClick: () => void }) {
+  return (
+    <ToolbarBtn
+      icon={FileText}
+      label="Proposta origem"
+      onClick={onClick}
+      disabled={!c.proposta_origem_id}
+      disabledTip="Contrato sem proposta de origem vinculada."
+    />
+  );
+}
+
+function Cliente360Btn({ clienteId }: { clienteId: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link to="/comercial/clientes/$clienteId" params={{ clienteId }}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+            <ExternalLink className="h-3.5 w-3.5 mr-1" />
+            Cliente 360º
+          </Button>
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent>Abrir cliente 360º</TooltipContent>
+    </Tooltip>
+  );
+}
+
 /* ---------------- Header por aba ---------------- */
 
-function ColumnsHeader({ tab }: { tab: TabKey }) {
+function ColumnsHeader({
+  tab, allChecked, someChecked, onToggleAll,
+}: {
+  tab: TabKey;
+  allChecked: boolean;
+  someChecked: boolean;
+  onToggleAll: (v: boolean) => void;
+}) {
+  const checkbox = (
+    <TableHead className="w-8">
+      <Checkbox
+        checked={allChecked ? true : someChecked ? "indeterminate" : false}
+        onCheckedChange={(v) => onToggleAll(v === true)}
+        aria-label="Selecionar todos"
+      />
+    </TableHead>
+  );
   const common = (
     <>
       <TableHead>Código</TableHead>
@@ -258,6 +556,7 @@ function ColumnsHeader({ tab }: { tab: TabKey }) {
   if (tab === "minuta") {
     return (
       <TableRow>
+        {checkbox}
         {common}
         <TableHead className="text-right">Potência (kWp)</TableHead>
         <TableHead className="text-right">Módulos</TableHead>
@@ -266,54 +565,53 @@ function ColumnsHeader({ tab }: { tab: TabKey }) {
         <TableHead className="text-right">Dias</TableHead>
         <TableHead>Status</TableHead>
         <TableHead>Etapa</TableHead>
-        <TableHead className="text-right w-44">Ações</TableHead>
       </TableRow>
     );
   }
   if (tab === "gerado") {
     return (
       <TableRow>
+        {checkbox}
         {common}
         <TableHead>Proposta origem</TableHead>
         <TableHead>Geração</TableHead>
         <TableHead className="text-right">Dias</TableHead>
         <TableHead>Status</TableHead>
-        <TableHead className="text-right w-44">Ações</TableHead>
       </TableRow>
     );
   }
   if (tab === "aguardando") {
     return (
       <TableRow>
+        {checkbox}
         {common}
         <TableHead>Proposta origem</TableHead>
         <TableHead>Envio assinatura</TableHead>
         <TableHead className="text-right">Dias aguard.</TableHead>
         <TableHead>Status</TableHead>
-        <TableHead className="text-right w-44">Ações</TableHead>
       </TableRow>
     );
   }
   if (tab === "assinado") {
     return (
       <TableRow>
+        {checkbox}
         {common}
         <TableHead className="text-right">Potência (kWp)</TableHead>
         <TableHead className="text-right">Projetos</TableHead>
         <TableHead>Assinatura</TableHead>
         <TableHead>Proposta origem</TableHead>
         <TableHead>Status</TableHead>
-        <TableHead className="text-right w-44">Ações</TableHead>
       </TableRow>
     );
   }
   return (
     <TableRow>
+      {checkbox}
       {common}
       <TableHead>Proposta origem</TableHead>
       <TableHead>Cancelado em</TableHead>
       <TableHead>Motivo</TableHead>
-      <TableHead className="text-right w-32">Ações</TableHead>
     </TableRow>
   );
 }
@@ -321,17 +619,14 @@ function ColumnsHeader({ tab }: { tab: TabKey }) {
 /* ---------------- Linha ---------------- */
 
 function ContratoRow({
-  c, tab, permCancelar, onAbrir, onAbrirProposta, onCancelar, onAcaoNoWorkspace,
+  c, tab, selected, onToggle, onOpen,
 }: {
   c: ContratoSupabaseListItem;
   tab: TabKey;
-  permCancelar: boolean;
-  onAbrir: () => void;
-  onAbrirProposta: () => void;
-  onCancelar: () => void;
-  onAcaoNoWorkspace: () => void;
+  selected: boolean;
+  onToggle: (v: boolean) => void;
+  onOpen: () => void;
 }) {
-  const cancelado = c.status === "CANCELADO" || c.cancelado;
   const codigo = c.codigo ?? c.id.slice(0, 8);
   const propostaOrigem = c.proposta_origem_numero
     ? <span className="text-xs font-mono">{c.proposta_origem_numero}</span>
@@ -341,9 +636,24 @@ function ContratoRow({
       ? `${c.cliente_cidade ?? "—"}${c.cliente_uf ? ` / ${c.cliente_uf}` : ""}`
       : "—";
 
+  const checkCell = (
+    <TableCell className="w-8" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+      <Checkbox
+        checked={selected}
+        onCheckedChange={(v) => onToggle(v === true)}
+        aria-label={`Selecionar contrato ${codigo}`}
+      />
+    </TableCell>
+  );
+
   const commonCells = (
     <>
-      <TableCell className="font-mono text-xs">{codigo}</TableCell>
+      <TableCell
+        className="font-mono text-xs text-primary cursor-pointer hover:underline"
+        onClick={onOpen}
+      >
+        {codigo}
+      </TableCell>
       <TableCell className="font-medium">
         {c.cliente_nome ?? <span className="text-muted-foreground">—</span>}
       </TableCell>
@@ -356,10 +666,16 @@ function ContratoRow({
     </>
   );
 
+  const rowProps = {
+    className: `hover:bg-muted/40 cursor-default ${tab === "cancelado" ? "opacity-80" : ""} ${selected ? "bg-muted/30" : ""}`,
+    onDoubleClick: onOpen,
+  };
+
   if (tab === "minuta") {
     const dias = diasDesde(c.created_at);
     return (
-      <TableRow className="hover:bg-muted/40">
+      <TableRow {...rowProps}>
+        {checkCell}
         {commonCells}
         <TableCell className="text-right tabular-nums text-xs">{(c.potencia_kwp ?? 0).toFixed(2)}</TableCell>
         <TableCell className="text-right tabular-nums text-xs">{c.modulos_qtde ?? 0}</TableCell>
@@ -367,18 +683,8 @@ function ContratoRow({
         <TableCell className="text-xs text-muted-foreground">{fmtDate(c.created_at)}</TableCell>
         <TableCell className="text-right tabular-nums text-xs">{dias ?? "—"}</TableCell>
         <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-        <TableCell className="text-xs uppercase text-muted-foreground">{classificarEtapaContrato(c.status, c.cancelado)}</TableCell>
-        <TableCell className="text-right">
-          <RowActions
-            actions={[
-              { icon: Eye,         tip: "Abrir minuta",         onClick: onAbrir },
-              { icon: PenLine,     tip: "Editar minuta",        onClick: onAbrir },
-              { icon: Paperclip,   tip: "Anexar documentos",    onClick: onAcaoNoWorkspace },
-              { icon: FileText,    tip: "Proposta origem",      onClick: onAbrirProposta, show: !!c.proposta_origem_id },
-              { icon: ExternalLink,tip: "Cliente 360º",         to: { path: "/comercial/clientes/$clienteId", clienteId: c.cliente_id } },
-              { icon: Ban,         tip: "Cancelar minuta",      onClick: onCancelar, danger: true, show: permCancelar && !cancelado },
-            ]}
-          />
+        <TableCell className="text-xs uppercase text-muted-foreground">
+          {classificarEtapaContrato(c.status, c.cancelado)}
         </TableCell>
       </TableRow>
     );
@@ -387,25 +693,13 @@ function ContratoRow({
   if (tab === "gerado") {
     const ger = dataGerada(c);
     return (
-      <TableRow className="hover:bg-muted/40">
+      <TableRow {...rowProps}>
+        {checkCell}
         {commonCells}
         <TableCell>{propostaOrigem}</TableCell>
         <TableCell className="text-xs text-muted-foreground">{fmtDate(ger)}</TableCell>
         <TableCell className="text-right tabular-nums text-xs">{diasDesde(ger) ?? "—"}</TableCell>
         <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-        <TableCell className="text-right">
-          <RowActions
-            actions={[
-              { icon: Eye,         tip: "Abrir contrato gerado", onClick: onAbrir },
-              { icon: FileText,    tip: "Visualizar PDF",        onClick: onAcaoNoWorkspace },
-              { icon: Download,    tip: "Baixar PDF",            onClick: onAcaoNoWorkspace },
-              { icon: Send,        tip: "Enviar p/ assinatura",  onClick: onAcaoNoWorkspace },
-              { icon: FileText,    tip: "Proposta origem",       onClick: onAbrirProposta, show: !!c.proposta_origem_id },
-              { icon: ExternalLink,tip: "Cliente 360º",          to: { path: "/comercial/clientes/$clienteId", clienteId: c.cliente_id } },
-              { icon: Ban,         tip: "Cancelar contrato",     onClick: onCancelar, danger: true, show: permCancelar && !cancelado },
-            ]}
-          />
-        </TableCell>
       </TableRow>
     );
   }
@@ -413,71 +707,40 @@ function ContratoRow({
   if (tab === "aguardando") {
     const env = dataEnvioAssinatura(c) ?? dataGerada(c);
     return (
-      <TableRow className="hover:bg-muted/40">
+      <TableRow {...rowProps}>
+        {checkCell}
         {commonCells}
         <TableCell>{propostaOrigem}</TableCell>
         <TableCell className="text-xs text-muted-foreground">{fmtDate(env)}</TableCell>
         <TableCell className="text-right tabular-nums text-xs">{diasDesde(env) ?? "—"}</TableCell>
         <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-        <TableCell className="text-right">
-          <RowActions
-            actions={[
-              { icon: Eye,         tip: "Abrir contrato",        onClick: onAbrir },
-              { icon: Send,        tip: "Reenviar assinatura",   onClick: onAcaoNoWorkspace },
-              { icon: Paperclip,   tip: "Anexar contrato assinado", onClick: onAcaoNoWorkspace },
-              { icon: CheckCircle2,tip: "Marcar como assinado",  onClick: onAbrir },
-              { icon: FileText,    tip: "Proposta origem",       onClick: onAbrirProposta, show: !!c.proposta_origem_id },
-              { icon: ExternalLink,tip: "Cliente 360º",          to: { path: "/comercial/clientes/$clienteId", clienteId: c.cliente_id } },
-              { icon: Ban,         tip: "Cancelar contrato",     onClick: onCancelar, danger: true, show: permCancelar && !cancelado },
-            ]}
-          />
-        </TableCell>
       </TableRow>
     );
   }
 
   if (tab === "assinado") {
     return (
-      <TableRow className="hover:bg-muted/40">
+      <TableRow {...rowProps}>
+        {checkCell}
         {commonCells}
         <TableCell className="text-right tabular-nums text-xs">{(c.potencia_kwp ?? 0).toFixed(2)}</TableCell>
         <TableCell className="text-right tabular-nums text-xs">{c.projetos_count}</TableCell>
         <TableCell className="text-xs text-muted-foreground">{fmtDate(c.data_assinatura)}</TableCell>
         <TableCell>{propostaOrigem}</TableCell>
         <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-        <TableCell className="text-right">
-          <RowActions
-            actions={[
-              { icon: Eye,         tip: "Abrir contrato",  onClick: onAbrir },
-              { icon: Briefcase,   tip: "Abrir projetos",  onClick: onAbrir },
-              { icon: FilePlus2,   tip: "Criar aditivo",   onClick: onAcaoNoWorkspace },
-              { icon: HistoryIcon, tip: "Ver comissões",   onClick: onAcaoNoWorkspace },
-              { icon: FileText,    tip: "Proposta origem", onClick: onAbrirProposta, show: !!c.proposta_origem_id },
-              { icon: ExternalLink,tip: "Cliente 360º",    to: { path: "/comercial/clientes/$clienteId", clienteId: c.cliente_id } },
-            ]}
-          />
-        </TableCell>
       </TableRow>
     );
   }
 
-  // cancelado — somente leitura
+  // cancelado
   return (
-    <TableRow className="hover:bg-muted/40 opacity-80">
+    <TableRow {...rowProps}>
+      {checkCell}
       {commonCells}
       <TableCell>{propostaOrigem}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{fmtDate(c.updated_at)}</TableCell>
       <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
         {c.motivo_cancelamento ?? "—"}
-      </TableCell>
-      <TableCell className="text-right">
-        <RowActions
-          actions={[
-            { icon: Eye,         tip: "Visualizar contrato", onClick: onAbrir },
-            { icon: FileText,    tip: "Proposta origem",     onClick: onAbrirProposta, show: !!c.proposta_origem_id },
-            { icon: ExternalLink,tip: "Cliente 360º",        to: { path: "/comercial/clientes/$clienteId", clienteId: c.cliente_id } },
-          ]}
-        />
       </TableCell>
     </TableRow>
   );
@@ -496,46 +759,6 @@ function EmptyState({ tab }: { tab: TabKey }) {
     <div className="p-6 text-center text-sm text-muted-foreground">
       <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-50" />
       {msg}
-    </div>
-  );
-}
-
-/* ---------------- RowActions canônico ---------------- */
-
-type ActionItem = {
-  icon: React.ComponentType<{ className?: string }>;
-  tip: string;
-  onClick?: () => void;
-  to?: { path: "/comercial/clientes/$clienteId"; clienteId: string };
-  show?: boolean;
-  danger?: boolean;
-};
-
-function RowActions({ actions }: { actions: ActionItem[] }) {
-  return (
-    <div className="flex items-center justify-end gap-1">
-      {actions.filter((a) => a.show !== false).map((a, i) => {
-        const Icon = a.icon;
-        const btn = (
-          <Button
-            size="icon"
-            variant="ghost"
-            className={`h-7 w-7 ${a.danger ? "text-destructive" : ""}`}
-            onClick={a.onClick}
-          >
-            <Icon className="h-3.5 w-3.5" />
-          </Button>
-        );
-        const wrapped = a.to ? (
-          <Link to={a.to.path} params={{ clienteId: a.to.clienteId }}>{btn}</Link>
-        ) : btn;
-        return (
-          <Tooltip key={i}>
-            <TooltipTrigger asChild>{wrapped}</TooltipTrigger>
-            <TooltipContent>{a.tip}</TooltipContent>
-          </Tooltip>
-        );
-      })}
     </div>
   );
 }

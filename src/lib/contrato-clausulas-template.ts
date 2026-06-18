@@ -182,10 +182,11 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
       {
         texto:
           "Prestação de serviços de compra e instalação de sistema de energia fotovoltaica On-Grid, " +
-          "composto por {{quantidade_modulos}} módulos fotovoltaicos, totalizando {{potencia_kwp}} kWp, " +
-          "incluindo elaboração de projeto, fornecimento de todos os materiais complementares (cabos solares, " +
-          "estrutura de fixação, demais acessórios aplicáveis) e mão de obra completa de montagem e integração, " +
-          "conforme padrão de entrada do CONTRATANTE.",
+          "composto por {{quantidade_modulos}} ({{quantidade_modulos_extenso}}) módulos fotovoltaicos de " +
+          "{{potencia_modulo_w}} W, marca {{marca_modulos}}. O serviço inclui a elaboração de projeto " +
+          "fotovoltaico, bem como o fornecimento de todos os materiais complementares necessários, cabos " +
+          "solares preto e vermelho, estrutura de fixação, demais acessórios aplicáveis e mão de obra " +
+          "completa para montagem e integração ao padrão de entrada do CONTRATANTE.",
         obrigatoria: true,
       },
       {
@@ -208,8 +209,8 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
     itens: [
       {
         texto:
-          "Pelos serviços e equipamentos descritos na Cláusula Primeira, o CONTRATANTE pagará à CONTRATADA o valor " +
-          "total de {{valor_total}} ({{valor_total_extenso}}).",
+          "Pelos serviços e equipamentos descritos na Cláusula Primeira, o CONTRATANTE pagará à CONTRATADA o " +
+          "valor total de {{valor_total}} ({{valor_total_extenso}}).",
         obrigatoria: true,
       },
       {
@@ -218,9 +219,9 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
       },
       {
         texto:
-          "O atraso no pagamento de qualquer parcela acarretará multa moratória de 2% (dois por cento) e juros de " +
-          "1% (um por cento) ao mês, calculados sobre o valor em atraso, sem prejuízo das demais sanções previstas " +
-          "neste contrato.",
+          "O atraso no pagamento de qualquer parcela acarretará multa moratória de 2% (dois por cento) e juros " +
+          "de 1% (um por cento) ao mês, calculados sobre o valor em atraso, sem prejuízo das demais sanções " +
+          "previstas neste contrato.",
         obrigatoria: false,
       },
     ],
@@ -232,59 +233,141 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
       {
         texto:
           "A CONTRATADA executará o objeto no prazo de {{prazo_execucao}} dias úteis, contados a partir da " +
-          "homologação junto à concessionária e da quitação da parcela de entrada, quando houver. O prazo " +
-          "poderá ser automaticamente suspenso e prorrogado, sem caracterizar atraso, em caso de: " +
-          "(I) pendências financeiras, atraso de parcelas, falta de liberação bancária; " +
-          "(II) necessidade de documentos, autorizações ou acesso ao local sob responsabilidade do CONTRATANTE; " +
-          "(III) exigências da concessionária Energisa/RO para aprovação, conexão, vistoria ou substituição do " +
-          "medidor, nos termos da Resolução Normativa ANEEL nº 1.000/2021; " +
-          "(IV) caso fortuito ou força maior.",
+          "homologação junto à concessionária e da quitação da parcela de entrada, quando houver.\n\n" +
+          "Parágrafo primeiro. O prazo previsto no caput poderá ser automaticamente suspenso e prorrogado, sem " +
+          "caracterizar atraso da CONTRATADA, pelo período correspondente a:\n" +
+          "I) pendências financeiras, inadimplemento, atraso de parcelas, falta de liberação bancária, retenções, " +
+          "exigências da instituição financeira ou ausência de repasse de valores;\n" +
+          "II) necessidade de documentos, informações, assinaturas, autorizações, acesso ao local ou demais " +
+          "providências sob responsabilidade do CONTRATANTE;\n" +
+          "III) na hipótese de a concessionária Energisa/RO exigir ou determinar a realização de obras/adequações " +
+          "como condição para aprovação, conexão, vistoria ou substituição do medidor, o prazo contratual ficará " +
+          "automaticamente prorrogado pelo tempo necessário ao cumprimento das exigências e à emissão da " +
+          "aprovação/liberação final pela concessionária, sem caracterizar atraso da CONTRATADA, retomando-se o " +
+          "cronograma a partir da efetiva liberação, nos termos da Resolução Normativa ANEEL nº 1.000, de 7 de " +
+          "dezembro de 2021;\n" +
+          "IV) na hipótese de o financiamento bancário já ter sido aprovado, com liberação/repasse e/ou início do " +
+          "pagamento das parcelas pelo CONTRATANTE, e, no mesmo período, a concessionária Energisa/RO determinar " +
+          "a realização de obra, adequação, reforço, substituição de padrão, ajustes de rede, medição ou qualquer " +
+          "intervenção como condição para aprovação/conexão/substituição do medidor, o CONTRATANTE declara estar " +
+          "ciente de que poderá haver, concomitantemente, (i) pagamento das parcelas do financiamento e (ii) " +
+          "pagamento da fatura de energia elétrica da unidade consumidora até a efetiva liberação do sistema, " +
+          "não constituindo tal circunstância atraso imputável à CONTRATADA;\n" +
+          "V) caso fortuito ou força maior.\n\n" +
+          "Parágrafo segundo. Em qualquer das hipóteses descritas no inciso III, a CONTRATADA não se " +
+          "responsabiliza por quaisquer custos financeiros suportados pelo CONTRATANTE, incluindo, mas não se " +
+          "limitando a: valores de energia elétrica consumida, juros, encargos, tarifas bancárias, seguros, " +
+          "despesas do financiamento, multas, correção, bem como quaisquer perdas ou lucros cessantes decorrentes " +
+          "de prazos, exigências e/ou obras determinadas pela concessionária ou pela instituição financeira, " +
+          "salvo se comprovada falha exclusiva da CONTRATADA.",
         obrigatoria: true,
       },
       {
         texto:
-          "A instalação está sujeita a variáveis climáticas. Poderão ocorrer ajustes no cronograma em situações " +
-          "de chuva ou condições adversas, ficando a CONTRATADA isenta de multas ou penalidades por atrasos " +
-          "decorrentes dessas condições, com comunicação prévia ao CONTRATANTE.",
+          "A instalação do sistema fotovoltaico está sujeita a variáveis climáticas que podem impactar o " +
+          "andamento dos trabalhos. Dessa forma, poderão ocorrer ajustes no cronograma inicialmente acordado " +
+          "entre as partes, especialmente em situações de condições climáticas adversas, como chuva, visando " +
+          "garantir qualidade e segurança, ficando a CONTRATADA isenta de multas ou penalidades por atrasos " +
+          "decorrentes dessas condições. O CONTRATANTE será informado prontamente sobre quaisquer alterações " +
+          "necessárias no cronograma.",
         obrigatoria: false,
       },
       {
         texto:
-          "A CONTRATADA oferece 180 (cento e oitenta) dias de assistência técnica para problemas relacionados à " +
-          "instalação dos painéis, contados a partir da conclusão. A garantia abrange exclusivamente falhas ou " +
-          "problemas decorrentes do processo de instalação.",
+          "A CONTRATADA oferece ao CONTRATANTE um período de 180 (cento e oitenta) dias de assistência técnica " +
+          "para quaisquer problemas relacionados à instalação dos painéis fotovoltaicos, contados a partir da " +
+          "data de conclusão da instalação. Essa garantia abrange exclusivamente eventuais falhas ou problemas " +
+          "decorrentes do processo de instalação, assegurando que serão solucionados prontamente e sem custos " +
+          "adicionais para o CONTRATANTE.\n\n" +
+          "Vícios ocultos: Caso sejam identificados vícios ocultos relacionados à instalação (defeitos não " +
+          "aparentes no momento da entrega e que se manifestem posteriormente), a CONTRATADA realizará a " +
+          "avaliação técnica e, confirmada a responsabilidade pela instalação, promoverá a correção sem custo " +
+          "de mão de obra, desde que (i) não tenha havido intervenção de terceiros, modificações no sistema, " +
+          "mau uso ou eventos externos; e (ii) o CONTRATANTE comunique o fato por escrito em prazo razoável " +
+          "após a constatação. Caso, após a avaliação técnica, não seja constatada responsabilidade da " +
+          "CONTRATADA, esta não ficará obrigada a realizar manutenção, reparo ou substituição.\n\n" +
+          "Reforma de telhado executada pela CONTRATADA (garantia adicional): Na hipótese de o CONTRATANTE " +
+          "contratar a CONTRATADA, por meio de aditivo e mediante valor adicional, para execução de reforma, " +
+          "adequação, reforço ou substituição do telhado/estrutura de cobertura (troca de telhas, madeiramento, " +
+          "estrutura metálica, impermeabilização, cumeeira, reforços estruturais, correção de infiltrações, " +
+          "calhas e rufos), a garantia/assistência técnica prevista nesta cláusula será acrescida de mais 180 " +
+          "(cento e oitenta) dias, exclusivamente em relação aos serviços de reforma/adequação executados e aos " +
+          "pontos de fixação/instalação diretamente impactados.\n\n" +
+          "Parágrafo único. A garantia adicional não abrangerá defeitos ou danos decorrentes de intervenções de " +
+          "terceiros, mau uso, eventos externos (incluindo intempéries severas), ausência de manutenção " +
+          "adequada, ou alterações posteriores na cobertura/estrutura realizadas após a conclusão dos serviços " +
+          "pela CONTRATADA.",
         obrigatoria: true,
       },
       {
         texto:
-          "Os equipamentos possuem garantia de fábrica conforme datasheet: 12 (doze) anos para os painéis e " +
-          "10 (dez) anos para os inversores, cobrindo exclusivamente defeitos de fabricação.",
+          "Adicionalmente, os equipamentos fotovoltaicos instalados possuem garantia de fábrica conforme " +
+          "especificado no datasheet anexo: 12 (doze) anos para os painéis e 10 (dez) anos para os inversores. " +
+          "Essa garantia de fábrica cobre exclusivamente defeitos de fabricação, oferecendo ao CONTRATANTE " +
+          "segurança adicional quanto à qualidade dos equipamentos.",
         obrigatoria: true,
       },
       {
         texto:
-          "A garantia não cobre danos decorrentes de mau uso, anomalias climáticas (granizo, vendaval), roubo, " +
-          "furto, ou modificações/consertos realizados por terceiros não autorizados.",
+          "É importante ressaltar que a garantia não cobre danos decorrentes de mau uso ou utilização " +
+          "inadequada dos equipamentos. A CONTRATADA compromete-se a fornecer todas as orientações necessárias " +
+          "para o uso correto dos sistemas fotovoltaicos, garantindo ao CONTRATANTE o pleno aproveitamento dos " +
+          "benefícios da instalação.",
         obrigatoria: true,
       },
       {
         texto:
-          "Modificações expressivas na estrutura base solicitadas pelo CONTRATANTE com finalidade estética não " +
-          "estão contempladas no valor acordado, podendo ser executadas mediante aditivo contratual.",
+          "Ressalta-se que qualquer modificação expressiva na estrutura base do sistema fotovoltaico, " +
+          "solicitada pelo CONTRATANTE e que vise exclusivamente benefícios estéticos ao projeto, não estará " +
+          "contemplada no valor acordado na Cláusula Segunda. No entanto, é possível a realização de aditivos " +
+          "contratuais para incluir o custo adicional desses serviços.",
         obrigatoria: false,
       },
       {
         texto:
-          "Adequações, reformas, reforços ou desconstruções indicadas pela Engenharia da CONTRATADA como " +
-          "necessários à segurança da instalação e da edificação são de responsabilidade do CONTRATANTE, " +
-          "podendo a CONTRATADA executá-las mediante valor adicional previamente acordado.",
+          "Fica acordado entre as partes que quaisquer adequações, reformas, reforços ou desconstruções " +
+          "indicadas como necessários pela equipe de Engenharia da CONTRATADA, a fim de garantir a segurança da " +
+          "instalação e da edificação, são de exclusiva responsabilidade do CONTRATANTE. Ressalta-se que a " +
+          "CONTRATADA poderá ser contratada para realizar o reforço estrutural da superfície onde serão " +
+          "instalados os painéis, mediante valor adicional previamente acordado. Em caso de determinação " +
+          "unilateral em que qualquer serviço ou atividade seja realizada sem a aprovação da CONTRATADA, ou em " +
+          "contrariedade às NDUs e NBRs aplicáveis, a CONTRATADA emitirá Termo de Ciência e Responsabilidade " +
+          "Técnica, isentando-a de toda e qualquer responsabilidade técnica e garantias pela execução de tais " +
+          "serviços.",
         obrigatoria: false,
       },
       {
         texto:
-          "A localização do inversor será indicada em projeto. Alterações solicitadas pelo CONTRATANTE devem " +
-          "respeitar distância máxima de 10 (dez) metros do padrão de entrada e não podem estar em áreas " +
-          "úmidas (lavanderias, banheiros), sob pena de perda da garantia.",
+          "A localização do inversor fotovoltaico será indicada em projeto elaborado pela equipe da CONTRATADA. " +
+          "Contudo, o CONTRATANTE poderá solicitar alteração desse local, desde que a nova área não ultrapasse " +
+          "a distância máxima de 10 (dez) metros do relógio ou padrão, e não esteja situada em áreas " +
+          "consideradas \"úmidas\" — tais como lavanderias, banheiros ou quaisquer locais que possam expor o " +
+          "equipamento à umidade ou contato com água —, condições estas que contrariariam o manual de " +
+          "instalação do equipamento e poderão comprometer a garantia do mesmo.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "As garantias não cobrem danos decorrentes de anomalias climáticas, tais como granizo, bem como " +
+          "prejuízos resultantes de roubos, furtos ou mau uso dos equipamentos. Também ficam excluídos da " +
+          "cobertura defeitos ou danos ocasionados por modificações ou consertos realizados pelo CONTRATANTE ou " +
+          "por terceiros não autorizados.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "A garantia oferecida pela CONTRATADA não inclui a manutenção preventiva nem a limpeza das placas do " +
+          "sistema fotovoltaico. No entanto, reconhecendo a importância da manutenção regular para o desempenho " +
+          "ideal do sistema, a CONTRATADA disponibiliza esses serviços como opcionais, podendo ser contratados " +
+          "separadamente, de acordo com o interesse do CONTRATANTE.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "Considerando que se trata de um investimento de valor expressivo, e visando garantir a segurança e " +
+          "o conforto do CONTRATANTE, a CONTRATADA trabalha exclusivamente com fornecedor de reconhecida " +
+          "credibilidade no mercado. Para atendimento direto com a fabricante, o CONTRATANTE poderá entrar em " +
+          "contato pelos canais oficiais informados no datasheet anexo.",
         obrigatoria: false,
       },
     ],
@@ -295,63 +378,118 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
     itens: [
       {
         texto:
-          "[CONTRATADA] Executar os serviços em conformidade com as normas dos órgãos públicos competentes e " +
-          "as normas técnicas da ABNT, especialmente a NBR 16274.",
+          "A CONTRATADA obriga-se a executar os serviços em conformidade com as normas e especificações " +
+          "estabelecidas pelos órgãos públicos competentes, bem como seguir rigorosamente as normas técnicas da " +
+          "Associação Brasileira de Normas Técnicas (ABNT), especialmente a NBR 16274, que regulamenta os " +
+          "sistemas fotovoltaicos.",
         obrigatoria: true,
       },
       {
         texto:
-          "[CONTRATADA] Realizar os serviços dentro dos prazos estabelecidos, mantendo reuniões com o CONTRATANTE " +
-          "sempre que necessárias modificações no projeto ou cronograma.",
+          "Realizar os serviços dentro dos prazos estabelecidos neste contrato, bem como manter reuniões com o " +
+          "CONTRATANTE sempre que forem necessárias eventuais modificações no projeto ou no cronograma.",
         obrigatoria: true,
       },
       {
         texto:
-          "[CONTRATADA] Apresentar as devidas Anotações de Responsabilidade Técnica (ARTs) emitidas por " +
-          "profissional habilitado e registrado no CREA/RO, conforme art. 7º da Lei nº 6.496/1977.",
+          "Fornecer, sempre que solicitado pelo CONTRATANTE, informações atualizadas sobre a etapa e o " +
+          "andamento dos serviços contratados.",
         obrigatoria: true,
       },
       {
         texto:
-          "[CONTRATADA] Responsabilizar-se pelo levantamento e cálculo dos quantitativos de materiais a serem " +
-          "utilizados na execução dos serviços.",
+          "Comprometer-se a ser integralmente responsável pela execução dos serviços contratados, apresentando " +
+          "as devidas Anotações de Responsabilidade Técnica (ARTs) devidamente recolhidas, emitidas por " +
+          "profissional habilitado e registrado no Conselho Regional de Engenharia e Agronomia de Rondônia " +
+          "(CREA/RO), conforme determina o artigo 7º da Lei nº 6.496/1977.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Responsabilizar-se pelo levantamento e cálculo dos quantitativos de materiais a serem utilizados na " +
+          "execução dos serviços objeto deste contrato.",
         obrigatoria: false,
       },
       {
         texto:
-          "[CONTRATADA] Admitir e gerir, sob sua exclusiva responsabilidade penal, cível e fiscal, todo o pessoal " +
-          "necessário, isentando o CONTRATANTE de qualquer responsabilidade trabalhista, previdenciária ou " +
-          "tributária.",
+          "Admitir e gerir, sob sua inteira e exclusiva responsabilidade penal, cível e fiscal, todo o pessoal " +
+          "necessário à execução do objeto deste contrato, isentando o CONTRATANTE de qualquer responsabilidade " +
+          "trabalhista, previdenciária ou tributária decorrente da relação entre a CONTRATADA e seus " +
+          "empregados, prepostos ou subcontratados.",
         obrigatoria: true,
       },
       {
         texto:
-          "[CONTRATADA] Garantir sigilo absoluto quanto ao conteúdo deste contrato e às informações a que tiver " +
-          "acesso, salvo obrigação legal ou determinação judicial.",
+          "Garantir o sigilo absoluto quanto ao conteúdo deste contrato, aos serviços dele decorrentes, bem " +
+          "como às informações, dados e documentos a que tiver acesso durante ou após a execução do presente " +
+          "instrumento, comprometendo-se a não divulgar tais informações sob qualquer pretexto, salvo em caso " +
+          "de obrigação legal ou determinação judicial.",
         obrigatoria: false,
       },
       {
         texto:
-          "[CONTRATANTE] Utilizar as informações técnicas e os serviços fornecidos pela CONTRATADA exclusivamente " +
-          "para os fins aqui pactuados, sendo vedada a utilização para outro projeto ou finalidade diversa.",
-        obrigatoria: true,
-      },
-      {
-        texto:
-          "[CONTRATANTE] Realizar o pagamento conforme configurado na Cláusula Segunda do presente contrato.",
-        obrigatoria: true,
-      },
-      {
-        texto:
-          "[CONTRATANTE] Garantir o acesso ao local de execução dos serviços, fornecer apoio logístico, ponto de " +
-          "energia e espaço adequado para armazenamento de materiais durante a realização dos trabalhos.",
-        obrigatoria: true,
-      },
-      {
-        texto:
-          "[CONTRATANTE] Realizar a limpeza dos painéis ao menos 2 (duas) vezes por ano, a fim de assegurar o " +
-          "máximo de eficiência energética e evitar perdas de geração pela obstrução da superfície dos módulos.",
+          "A CONTRATADA compromete-se a adotar todas as medidas necessárias para proteger as informações " +
+          "confidenciais do CONTRATANTE, incluindo, mas não se limitando a restringir o acesso a tais " +
+          "informações exclusivamente a funcionários e subcontratados que necessitem delas para a execução dos " +
+          "serviços contratados.",
         obrigatoria: false,
+      },
+      {
+        texto:
+          "Permitir ao CONTRATANTE acesso irrestrito ao local de execução dos serviços, desde que sejam " +
+          "respeitadas todas as normas de segurança aplicáveis, bem como a obrigatória utilização de " +
+          "Equipamentos de Proteção Individual (EPIs).",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "O CONTRATANTE obriga-se a utilizar as informações técnicas e os serviços fornecidos pela CONTRATADA " +
+          "exclusivamente para os fins aqui pactuados, sendo expressamente vedada a utilização dessas " +
+          "informações ou serviços para qualquer outro projeto ou finalidade diversa da contratada. O " +
+          "descumprimento desta obrigação sujeitará o CONTRATANTE às sanções legais e contratuais aplicáveis.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "O período necessário para que o CONTRATANTE obtenha informações, documentos ou autorizações de sua " +
+          "responsabilidade, indispensáveis à continuidade ou conclusão das etapas do projeto, será " +
+          "automaticamente acrescido ao prazo de execução dos serviços pela CONTRATADA.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "Tal prorrogação será considerada plenamente justificada, não acarretando a aplicação de penalidades, " +
+          "multas ou quaisquer encargos adicionais à CONTRATADA, de modo a garantir a adequada e segura " +
+          "finalização dos serviços contratados.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "A CONTRATADA não poderá ser responsabilizada pelos custos de energia elétrica suportados pelo " +
+          "CONTRATANTE durante os períodos em que o sistema fotovoltaico não estiver operacional, exceto nos " +
+          "casos em que ficar comprovado que a inoperância está diretamente relacionada a falhas nos serviços " +
+          "prestados pela CONTRATADA. Situações como falhas na rede da concessionária, desligamento acidental " +
+          "ou eventos naturais que causem danos aos equipamentos não são de responsabilidade da CONTRATADA.",
+        obrigatoria: false,
+      },
+      {
+        texto:
+          "A manutenção preventiva é fundamental para garantir o pleno funcionamento e a longevidade do sistema " +
+          "de geração de energia solar fotovoltaica. Recomenda-se ao CONTRATANTE realizar a limpeza dos painéis " +
+          "ao menos 2 (duas) vezes por ano, a fim de assegurar o máximo de eficiência energética e evitar " +
+          "possíveis perdas de geração ocasionadas pela obstrução da superfície dos módulos.",
+        obrigatoria: false,
+      },
+      {
+        texto: "Realizar o pagamento conforme configurado na Cláusula Segunda do presente contrato.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "Garantir o acesso ao local de execução dos serviços, bem como fornecer o apoio logístico necessário, " +
+          "incluindo o fornecimento de ponto de energia e espaço adequado para o armazenamento de materiais " +
+          "durante a realização dos trabalhos.",
+        obrigatoria: true,
       },
     ],
   },
@@ -368,8 +506,16 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
       {
         texto:
           "A CONTRATADA será integralmente responsável pela contratação, pagamento de salários, encargos " +
-          "trabalhistas, previdenciários e fiscais, incluindo FGTS, INSS e demais tributos incidentes sobre " +
-          "seus empregados ou contratados.",
+          "trabalhistas, previdenciários e fiscais, incluindo o devido recolhimento de FGTS, INSS e demais " +
+          "tributos incidentes sobre seus empregados ou contratados, por meio das guias apropriadas.",
+        obrigatoria: true,
+      },
+      {
+        texto:
+          "A CONTRATADA também será exclusivamente responsável por quaisquer reclamações trabalhistas, ações " +
+          "judiciais ou administrativas, ou outras demandas oriundas das relações de trabalho constituídas para " +
+          "a execução dos serviços objeto deste contrato, isentando o CONTRATANTE de qualquer responsabilidade " +
+          "solidária ou subsidiária.",
         obrigatoria: true,
       },
     ],
@@ -381,23 +527,32 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
       {
         texto:
           "Este contrato poderá ser rescindido por qualquer das partes em caso de descumprimento de suas " +
-          "disposições, desde que a parte inadimplente seja notificada previamente, com antecedência mínima " +
-          "de 30 (trinta) dias.",
+          "disposições, desde que a parte inadimplente seja notificada previamente, com antecedência mínima de " +
+          "30 (trinta) dias.",
         obrigatoria: true,
       },
       {
         texto:
-          "Em caso de rescisão por iniciativa do CONTRATANTE, este deverá pagar à CONTRATADA os serviços " +
-          "efetivamente executados e/ou materiais adquiridos até a data da rescisão. Na rescisão por iniciativa " +
-          "da CONTRATADA, esta deverá concluir os serviços equivalentes ao valor recebido ou reembolsar os " +
-          "valores pagos antecipadamente.",
+          "Em caso de rescisão por iniciativa do CONTRATANTE, este deverá efetuar o pagamento à CONTRATADA dos " +
+          "serviços efetivamente executados e/ou materiais adquiridos até a data da rescisão. No caso de " +
+          "rescisão por iniciativa da CONTRATADA, esta deverá concluir os serviços equivalentes ao valor já " +
+          "recebido ou, alternativamente, reembolsar ao CONTRATANTE os valores pagos antecipadamente.",
         obrigatoria: true,
       },
       {
         texto:
-          "O descumprimento de quaisquer cláusulas deste contrato acarretará multa contratual de 10% (dez por " +
-          "cento) do valor total do contrato à parte infratora, sem prejuízo de eventuais perdas e danos.",
+          "O descumprimento de quaisquer cláusulas deste contrato acarretará a aplicação de multa contratual à " +
+          "parte infratora, no valor correspondente a 10% (dez por cento) do valor total do contrato, sem " +
+          "prejuízo de eventuais perdas e danos.",
         obrigatoria: true,
+      },
+      {
+        texto:
+          "Ambas as partes se comprometem a agir de boa-fé, cooperando mutuamente e adotando medidas razoáveis " +
+          "para minimizar eventuais prejuízos decorrentes da rescisão contratual, incluindo, mas não se " +
+          "limitando a garantir o acesso às instalações e o fornecimento das informações necessárias para " +
+          "viabilizar a continuidade ou a adequada conclusão dos serviços contratados.",
+        obrigatoria: false,
       },
     ],
   },
@@ -407,17 +562,25 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
     itens: [
       {
         texto:
-          "Fica eleito o Foro Central da Comarca de {{cidade}} como o único competente para dirimir quaisquer " +
-          "controvérsias oriundas da execução deste contrato, com renúncia expressa a qualquer outro foro, por " +
-          "mais privilegiado que seja.",
+          "Fica eleito o Foro Central da Comarca de {{cidade_foro}} como o único competente para dirimir " +
+          "quaisquer controvérsias oriundas da execução deste contrato, com renúncia expressa a qualquer outro " +
+          "foro, por mais privilegiado que seja. As partes concordam que este foro será exclusivo para a " +
+          "solução de eventuais litígios, garantindo celeridade e eficácia na resolução dos conflitos.",
         obrigatoria: true,
       },
       {
         texto:
           "E, por estarem justas e contratadas, as partes assinam o presente contrato em uma via digital ou, " +
           "preferencialmente, em duas vias de igual teor, forma e para um só efeito, na presença de 2 (duas) " +
-          "testemunhas.",
+          "testemunhas, as quais também firmam este instrumento como forma de ratificação de seu conteúdo e " +
+          "validade jurídica.",
         obrigatoria: true,
+      },
+      {
+        texto:
+          "As partes declaram que as cláusulas deste contrato foram livremente pactuadas e que estão cientes " +
+          "de seus direitos e obrigações, conforme disposto no Código de Defesa do Consumidor (Lei nº 8.078/90).",
+        obrigatoria: false,
       },
     ],
   },

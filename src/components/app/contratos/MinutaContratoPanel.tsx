@@ -212,23 +212,43 @@ export function MinutaContratoPanel({
   }
 
   // ---- Variáveis para prévia ----
-  const variaveis: Variaveis = useMemo(() => ({
-    cliente_nome: state.contratante_nome || "",
-    cliente_documento: state.contratante_doc || "",
-    cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
-      .filter(Boolean).join(", "),
-    valor_total: brl(valorTotal),
-    valor_total_extenso: valorPorExtenso(valorTotal),
-    potencia_kwp: contrato.potencia_kwp != null
-      ? Number(contrato.potencia_kwp).toFixed(2)
-      : (proposta?.potencia_kwp != null ? Number(proposta.potencia_kwp).toFixed(2) : ""),
-    quantidade_modulos: contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "",
-    inversor: proposta?.inversor ?? "",
-    forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
-    prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
-    cidade: state.local_assinatura || state.contratante_cidade || "",
-    data_contrato: state.data_base_contrato || "",
-  }), [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, proposta]);
+  const variaveis: Variaveis = useMemo(() => {
+    // numero_contrato / ano_contrato derivados do código (ex.: "CT-120/2026" ou "120/2026")
+    const code = contrato.codigo ?? "";
+    const m = code.match(/(\d+)\s*[/-]\s*(\d{2,4})/);
+    const numero_contrato = m?.[1] ?? code;
+    const ano_contrato = m?.[2] ?? new Date().getFullYear().toString();
+    const qtde = contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "";
+    return {
+      cliente_nome: state.contratante_nome || "",
+      cliente_documento: state.contratante_doc || "",
+      cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
+        .filter(Boolean).join(", "),
+      cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",
+      cliente_rg: "",
+      valor_total: brl(valorTotal),
+      valor_total_extenso: valorPorExtenso(valorTotal),
+      potencia_kwp: contrato.potencia_kwp != null
+        ? Number(contrato.potencia_kwp).toFixed(2)
+        : (proposta?.potencia_kwp != null ? Number(proposta.potencia_kwp).toFixed(2) : ""),
+      quantidade_modulos: qtde,
+      quantidade_modulos_extenso: typeof qtde === "number" && qtde > 0 ? valorPorExtenso(qtde).replace(/ reais?$/, "") : "",
+      marca_modulos: "",
+      potencia_modulo_w: "",
+      inversor: proposta?.inversor ?? "",
+      forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
+      prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
+      cidade: state.local_assinatura || state.contratante_cidade || "",
+      cidade_foro: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
+      data_contrato: state.data_base_contrato || "",
+      endereco_instalacao: state.endereco_instalacao || state.contratante_endereco || "",
+      numero_contrato,
+      ano_contrato,
+      representante_contratada: "Vitor Sirioli Ribeiro",
+      representante_cpf: "007.084.922-66",
+      representante_rg: "998.679 - SESDEC/RO",
+    };
+  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta]);
 
   const varsFaltando = useMemo(() => variaveisFaltando(variaveis), [variaveis]);
   const somaFP = useMemo(() => somaFormaPagamento(state.forma_pagamento_config), [state.forma_pagamento_config]);
@@ -1008,13 +1028,48 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           A geração do contrato está bloqueada.
         </div>
       )}
-      <Card className="p-4 bg-white dark:bg-zinc-950 max-h-[640px] overflow-auto">
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <h2 className="text-center">CONTRATO DE FORNECIMENTO E INSTALAÇÃO DE SISTEMA FOTOVOLTAICO ON-GRID</h2>
+      <Card className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
+        <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
+          {/* Cabeçalho oficial Meta Sun */}
+          <div className="text-center mb-4">
+            <div className="text-xs font-bold tracking-widest text-amber-600">META SUN ENERGIA SOLAR</div>
+            <h2 className="mt-3 underline text-base font-bold">
+              CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
+            </h2>
+            <h3 className="mt-1 underline text-sm font-bold">
+              AQUISIÇÃO E INSTALAÇÃO DO SISTEMA DE ENERGIA FOTOVOLTAICA ON – GRID
+            </h3>
+          </div>
+
+          <p className="text-justify">
+            Pelo presente instrumento e na melhor forma de direito, as partes, a saber:
+          </p>
+
+          <p className="text-justify">
+            <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
+            {" "}portador(a) do documento <strong>{variaveis.cliente_documento || "______________"}</strong>
+            {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null},
+            residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
+            {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
+          </p>
+
+          <p className="text-justify">
+            <strong>CONTRATADA:</strong> Meta Sun Instalações Elétricas LTDA, pessoa jurídica de direito privado,
+            inscrita no <strong>CNPJ sob o nº 41.452.412/0001-40</strong>, com sede na Av. Engº Anysio da Rocha
+            Compasso, nº 5055, Bairro Rio Madeira, CEP 76.821-381, na cidade de Porto Velho/RO, telefone (69)
+            99289-7292, neste ato representada pelo Sr. {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"},
+            inscrito no <strong>CPF sob o nº {variaveis.representante_cpf || "007.084.922-66"}</strong> e no{" "}
+            <strong>RG nº {variaveis.representante_rg || "998.679 - SESDEC/RO"}</strong>.
+          </p>
+
+          <p className="text-justify">
+            Têm, entre si, justo e acordado o que dispõem as cláusulas abaixo e às quais se obrigam mutuamente:
+          </p>
+
           {visiveis.map((c) => {
             if (c.tipo === "GRUPO") {
               return (
-                <h3 key={c.id} className="mt-6 font-bold uppercase text-sm tracking-wide">
+                <h3 key={c.id} className="mt-5 mb-2 font-bold uppercase text-[13px] tracking-wide">
                   {c.titulo}
                 </h3>
               );
@@ -1022,25 +1077,36 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             const rendered = substituirVariaveis(c.texto, variaveis);
             const hasMissing = /\{\{(\w+)\}\}/.test(rendered);
             return (
-              <p key={c.id} className={`my-2 text-justify ${hasMissing ? "text-destructive" : ""}`}>
+              <p
+                key={c.id}
+                className={`my-2 text-justify whitespace-pre-line ${hasMissing ? "text-destructive" : ""}`}
+              >
                 <strong className="mr-1 tabular-nums">{c.numero}</strong>
                 {rendered}
               </p>
             );
           })}
-          <div className="mt-8 text-xs">
-            <p>{variaveis.cidade || "______________"}, {variaveis.data_contrato || "____/____/______"}.</p>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-8 text-center text-xs">
+
+          <p className="mt-8">
+            {variaveis.cidade || "______________"}, {variaveis.data_contrato || "____/____/______"}.
+          </p>
+
+          <div className="mt-12 grid grid-cols-2 gap-8 text-center text-[12px]">
             <div>
-              <div className="border-t mt-12 pt-1">CONTRATANTE</div>
-              <div>{variaveis.cliente_nome}</div>
-              <div className="text-[10px] text-muted-foreground">{variaveis.cliente_documento}</div>
+              <div className="border-t border-foreground/60 pt-1">
+                <strong>{variaveis.cliente_nome || "______________"}</strong>
+              </div>
+              <div className="text-muted-foreground">{variaveis.cliente_documento}</div>
+              <div className="mt-1 font-semibold">CONTRATANTE</div>
             </div>
             <div>
-              <div className="border-t mt-12 pt-1">CONTRATADA</div>
-              <div>META SUN INSTALAÇÕES ELÉTRICAS LTDA</div>
-              <div className="text-[10px] text-muted-foreground">CNPJ 41.452.412/0001-40</div>
+              <div className="border-t border-foreground/60 pt-1">
+                <strong>Meta Sun Instalações Elétricas LTDA</strong>
+              </div>
+              <div className="text-muted-foreground">
+                {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"} — CNPJ 41.452.412/0001-40
+              </div>
+              <div className="mt-1 font-semibold">CONTRATADA</div>
             </div>
           </div>
         </div>

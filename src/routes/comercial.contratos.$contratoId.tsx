@@ -38,6 +38,7 @@ import { TimelineObjetoPanel } from "@/components/app/universal/TimelineObjetoPa
 import { ConsumoContratoCard } from "@/components/app/contratos/ConsumoContratoCard";
 import { ComissoesContratoPanel } from "@/components/app/comissoes/ComissoesContratoPanel";
 import { MinutaContratoPanel } from "@/components/app/contratos/MinutaContratoPanel";
+import { ContratoGeradoPanel } from "@/components/app/contratos/ContratoGeradoPanel";
 import { classificarEtapaContrato, rotuloEtapaContrato } from "@/lib/contrato-etapa";
 
 export const Route = createFileRoute("/comercial/contratos/$contratoId")({

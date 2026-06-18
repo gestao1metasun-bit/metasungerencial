@@ -245,7 +245,7 @@ export function MinutaContratoPanel({
     else if (!fpFecha) arr.push(`forma de pagamento não fecha (${brl(somaFP)} ≠ ${brl(valorTotal)})`);
     if (valorTotal <= 0) arr.push("valor total > 0");
     const obrigSemRevisar = (state.clausulas ?? [])
-      .filter((c) => c.obrigatoria && !c.oculta && !c.revisada).length;
+      .filter((c) => c.tipo !== "GRUPO" && c.obrigatoria && !c.oculta && !c.revisada).length;
     if (obrigSemRevisar > 0) arr.push(`${obrigSemRevisar} cláusula(s) obrigatória(s) sem revisão`);
     if (varsFaltando.length) arr.push(`variáveis: ${varsFaltando.join(", ")}`);
     return arr;

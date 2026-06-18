@@ -212,23 +212,43 @@ export function MinutaContratoPanel({
   }
 
   // ---- Variáveis para prévia ----
-  const variaveis: Variaveis = useMemo(() => ({
-    cliente_nome: state.contratante_nome || "",
-    cliente_documento: state.contratante_doc || "",
-    cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
-      .filter(Boolean).join(", "),
-    valor_total: brl(valorTotal),
-    valor_total_extenso: valorPorExtenso(valorTotal),
-    potencia_kwp: contrato.potencia_kwp != null
-      ? Number(contrato.potencia_kwp).toFixed(2)
-      : (proposta?.potencia_kwp != null ? Number(proposta.potencia_kwp).toFixed(2) : ""),
-    quantidade_modulos: contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "",
-    inversor: proposta?.inversor ?? "",
-    forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
-    prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
-    cidade: state.local_assinatura || state.contratante_cidade || "",
-    data_contrato: state.data_base_contrato || "",
-  }), [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, proposta]);
+  const variaveis: Variaveis = useMemo(() => {
+    // numero_contrato / ano_contrato derivados do código (ex.: "CT-120/2026" ou "120/2026")
+    const code = contrato.codigo ?? "";
+    const m = code.match(/(\d+)\s*[/-]\s*(\d{2,4})/);
+    const numero_contrato = m?.[1] ?? code;
+    const ano_contrato = m?.[2] ?? new Date().getFullYear().toString();
+    const qtde = contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "";
+    return {
+      cliente_nome: state.contratante_nome || "",
+      cliente_documento: state.contratante_doc || "",
+      cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
+        .filter(Boolean).join(", "),
+      cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",
+      cliente_rg: "",
+      valor_total: brl(valorTotal),
+      valor_total_extenso: valorPorExtenso(valorTotal),
+      potencia_kwp: contrato.potencia_kwp != null
+        ? Number(contrato.potencia_kwp).toFixed(2)
+        : (proposta?.potencia_kwp != null ? Number(proposta.potencia_kwp).toFixed(2) : ""),
+      quantidade_modulos: qtde,
+      quantidade_modulos_extenso: typeof qtde === "number" && qtde > 0 ? valorPorExtenso(qtde).replace(/ reais?$/, "") : "",
+      marca_modulos: "",
+      potencia_modulo_w: "",
+      inversor: proposta?.inversor ?? "",
+      forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
+      prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
+      cidade: state.local_assinatura || state.contratante_cidade || "",
+      cidade_foro: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
+      data_contrato: state.data_base_contrato || "",
+      endereco_instalacao: state.endereco_instalacao || state.contratante_endereco || "",
+      numero_contrato,
+      ano_contrato,
+      representante_contratada: "Vitor Sirioli Ribeiro",
+      representante_cpf: "007.084.922-66",
+      representante_rg: "998.679 - SESDEC/RO",
+    };
+  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta]);
 
   const varsFaltando = useMemo(() => variaveisFaltando(variaveis), [variaveis]);
   const somaFP = useMemo(() => somaFormaPagamento(state.forma_pagamento_config), [state.forma_pagamento_config]);

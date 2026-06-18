@@ -343,7 +343,7 @@ function ContratosListPage() {
     if (a === "editar") {
       if (!selUnico) { toast.info(semSelMsg); return; }
       if (!permEditarMinuta.data) { toast.error("Sem permissão (comercial.contrato.editar_minuta)."); return; }
-      abrirContrato(selUnico.id);
+      abrirContrato(selUnico.id, FOCO_MINUTA.contratuais);
       return;
     }
     if (a === "favoritos") {

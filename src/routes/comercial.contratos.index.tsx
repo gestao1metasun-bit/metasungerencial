@@ -318,6 +318,32 @@ function ContratosListPage() {
 
   /* ---------------- onAction (ações básicas) ---------------- */
   const handleAction = (a: string) => {
+    if (a === "novo") {
+      toast.info("Contratos nascem de propostas aprovadas. Abra Comercial → Propostas e use 'Enviar para Contratos'.");
+      navigate({ to: "/comercial/propostas" });
+      return;
+    }
+    if (a === "editar") {
+      if (!selUnico) { toast.info(semSelMsg); return; }
+      if (!permEditarMinuta.data) { toast.error("Sem permissão (comercial.contrato.editar_minuta)."); return; }
+      abrirContrato(selUnico.id);
+      return;
+    }
+    if (a === "favoritos") {
+      if (!selUnico) { toast.info(semSelMsg); return; }
+      toast.info("Favoritos do contrato disponíveis no workspace.");
+      return;
+    }
+    if (a === "enviar") {
+      if (!selUnico) { toast.info(semSelMsg); return; }
+      if (tab === "gerado" || tab === "aguardando") {
+        if (!permEnviarAss.data) { toast.error("Sem permissão (comercial.contrato.enviar_assinatura)."); return; }
+        acaoNoWS("Enviar para assinatura: ação executada dentro do workspace do contrato.");
+        return;
+      }
+      acaoNoWS("Use o workspace do contrato para envios específicos da etapa atual.");
+      return;
+    }
     if (a === "atualizar") { void refetch(); toast.info("Lista de contratos atualizada."); return; }
     if (a === "anexos") {
       if (!selUnico) { toast.info(semSelMsg); return; }

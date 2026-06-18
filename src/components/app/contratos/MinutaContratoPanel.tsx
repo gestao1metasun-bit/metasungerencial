@@ -418,7 +418,6 @@ export function MinutaContratoPanel({
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="contratante">Contratante</TabsTrigger>
-          <TabsTrigger value="contratuais">Dados Contratuais</TabsTrigger>
           <TabsTrigger value="pagamento">
             Forma de Pagamento {state.forma_pagamento_config && (
               <Badge variant={fpFecha ? "default" : "destructive"} className="ml-2 text-[10px] h-4">

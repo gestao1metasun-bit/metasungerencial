@@ -170,8 +170,38 @@ export function MinutaContratoPanel({
   const [gerarObs, setGerarObs] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [motivoCancelar, setMotivoCancelar] = useState("");
+  const [focoGerar, setFocoGerar] = useState(false);
 
   useEffect(() => { setDirty(false); }, [contrato.id]);
+
+  // D18.19 — lê hash (#tab=...&minuta=<sub>&focus=gerar) e dirige aba/foco
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const apply = () => {
+      const raw = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+      const params = new URLSearchParams(raw);
+      const sub = params.get("minuta");
+      const focus = params.get("focus");
+      const ABAS = ["contratante", "contratuais", "pagamento", "clausulas", "previa"];
+      if (sub && ABAS.includes(sub)) setTab(sub);
+      if (focus === "gerar") {
+        setTab((t) => (t === "previa" ? t : "previa"));
+        setFocoGerar(true);
+        // limpa o highlight depois de alguns segundos
+        window.setTimeout(() => setFocoGerar(false), 4000);
+      }
+    };
+    apply();
+    const onHash = () => apply();
+    window.addEventListener("hashchange", onHash);
+    window.addEventListener("lovable:hash-sync", onHash);
+    window.addEventListener("popstate", onHash);
+    return () => {
+      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("lovable:hash-sync", onHash);
+      window.removeEventListener("popstate", onHash);
+    };
+  }, [contrato.id]);
 
   function upd<K extends keyof DadosContratuais>(k: K, v: DadosContratuais[K]) {
     setState((s) => ({ ...s, [k]: v }));
@@ -301,7 +331,7 @@ export function MinutaContratoPanel({
             <Ban className="h-3.5 w-3.5 mr-1" /> Cancelar minuta
           </Button>
           <Button size="sm" disabled={!podeGerar || erros.length > 0} onClick={() => setGerarOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            className={`bg-emerald-600 hover:bg-emerald-700 text-white ${focoGerar ? "ring-2 ring-emerald-400 ring-offset-2 animate-pulse" : ""}`}>
             <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Gerar contrato
           </Button>
         </div>

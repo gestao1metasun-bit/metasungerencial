@@ -178,8 +178,22 @@ function ContratosListPage() {
     );
   }
 
-  const abrirContrato = (id: string) =>
-    navigate({ to: "/comercial/contratos/$contratoId", params: { contratoId: id } });
+  const abrirContrato = (id: string, hash?: string) =>
+    navigate({
+      to: "/comercial/contratos/$contratoId",
+      params: { contratoId: id },
+      ...(hash ? { hash } : {}),
+    });
+
+  // D18.19 — focos da minuta navegáveis via hash (#tab=...&minuta=...&focus=...)
+  const FOCO_MINUTA = {
+    abrir:       "tab=resumo&minuta=contratante",
+    contratuais: "tab=resumo&minuta=contratuais",
+    clausulas:   "tab=resumo&minuta=clausulas",
+    previa:      "tab=resumo&minuta=previa",
+    gerar:       "tab=resumo&minuta=previa&focus=gerar",
+    documentos:  "tab=documentos",
+  } as const;
 
   const acaoNoWS = (msg = "Ação disponível dentro do workspace do contrato.") =>
     toast.info(msg);
@@ -195,11 +209,11 @@ function ContratosListPage() {
         { key: "gerar_contrato", label: "Gerar Contrato", icon: FilePen, tone: "success" as const, wide: true,
           disabled: semSel || !permGerar.data || cancelado,
           disabledReason: semSel ? semSelMsg : (!permGerar.data ? "Sem permissão (comercial.contrato.criar)." : "Contrato cancelado."),
-          onClick: () => acaoNoWS("Gerar contrato: abra o workspace para revisar a minuta e gerar o PDF.") },
+          onClick: () => selUnico && abrirContrato(selUnico.id, FOCO_MINUTA.gerar) },
         { key: "editar_minuta", label: "Editar Minuta", icon: PenLine, tone: "info" as const,
           disabled: semSel || !permEditarMinuta.data,
           disabledReason: semSel ? semSelMsg : "Sem permissão (comercial.contrato.editar_minuta).",
-          onClick: () => selUnico && abrirContrato(selUnico.id) },
+          onClick: () => selUnico && abrirContrato(selUnico.id, FOCO_MINUTA.contratuais) },
         { key: "cancelar_minuta", label: "Cancelar Minuta", icon: Ban, tone: "danger" as const,
           disabled: semSel || !permCancelar.data || cancelado,
           disabledReason: semSel ? semSelMsg : "Sem permissão (comercial.contrato.cancelar).",
@@ -301,8 +315,11 @@ function ContratosListPage() {
 
   const handleProcess = (key: string) => {
     if (!selUnico) { toast.info(semSelMsg); return; }
-    if (key === "abrir_workspace" || key === "editar_clausulas") {
-      abrirContrato(selUnico.id); return;
+    if (key === "abrir_workspace") {
+      abrirContrato(selUnico.id, FOCO_MINUTA.abrir); return;
+    }
+    if (key === "editar_clausulas") {
+      abrirContrato(selUnico.id, FOCO_MINUTA.clausulas); return;
     }
     if (key === "abrir_proposta") {
       if (!selUnico.proposta_origem_id) { toast.info("Contrato sem proposta de origem vinculada."); return; }
@@ -310,9 +327,9 @@ function ContratosListPage() {
       return;
     }
     if (key === "anexar_documentos" || key === "anexar_assinado") {
-      setAnexosOpen(true); return;
+      abrirContrato(selUnico.id, FOCO_MINUTA.documentos); return;
     }
-    if (key === "abrir_projetos") { abrirContrato(selUnico.id); return; }
+    if (key === "abrir_projetos") { abrirContrato(selUnico.id, "tab=projetos"); return; }
     acaoNoWS();
   };
 
@@ -326,7 +343,7 @@ function ContratosListPage() {
     if (a === "editar") {
       if (!selUnico) { toast.info(semSelMsg); return; }
       if (!permEditarMinuta.data) { toast.error("Sem permissão (comercial.contrato.editar_minuta)."); return; }
-      abrirContrato(selUnico.id);
+      abrirContrato(selUnico.id, FOCO_MINUTA.contratuais);
       return;
     }
     if (a === "favoritos") {

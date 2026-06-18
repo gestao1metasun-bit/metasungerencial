@@ -465,37 +465,11 @@ export function MinutaContratoPanel({
           </p>
         </TabsContent>
 
-        {/* DADOS CONTRATUAIS */}
-        <TabsContent value="contratuais" className="mt-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <Field label="Responsável pela assinatura" v={state.responsavel_assinatura} on={(v) => upd("responsavel_assinatura", v)} disabled={!podeEditar} />
-            <Field label="CPF do responsável (se PJ)" v={state.responsavel_cpf} on={(v) => upd("responsavel_cpf", v)} disabled={!podeEditar} />
-            <Field label="E-mail de assinatura *" v={state.assinatura_email} on={(v) => upd("assinatura_email", v)} disabled={!podeEditar} />
-            <Field label="Telefone de assinatura" v={state.assinatura_telefone} on={(v) => upd("assinatura_telefone", v)} disabled={!podeEditar} />
-            <NumField label="Prazo contratual (dias)" v={state.prazo_contratual_dias} on={(v) => upd("prazo_contratual_dias", v)} disabled={!podeEditar} />
-            <DateField label="Data prevista de assinatura" v={state.data_prevista_assinatura} on={(v) => upd("data_prevista_assinatura", v)} disabled={!podeEditar} />
-            <Field label="Local de assinatura" v={state.local_assinatura} on={(v) => upd("local_assinatura", v)} disabled={!podeEditar} />
-            <DateField label="Data base do contrato" v={state.data_base_contrato} on={(v) => upd("data_base_contrato", v)} disabled={!podeEditar} />
-            <NumField label="Prazo execução (dias)" v={state.prazo_execucao_dias} on={(v) => upd("prazo_execucao_dias", v)} disabled={!podeEditar} />
-            <Field label="Endereço de instalação" v={state.endereco_instalacao} on={(v) => upd("endereco_instalacao", v)} disabled={!podeEditar} className="md:col-span-2" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm">
-            <div>
-              <Label className="text-xs">Observações internas</Label>
-              <Textarea className="mt-1" rows={3} disabled={!podeEditar}
-                value={state.observacoes_internas ?? ""} onChange={(e) => upd("observacoes_internas", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Observações que entram no contrato</Label>
-              <Textarea className="mt-1" rows={3} disabled={!podeEditar}
-                value={state.observacoes_contrato ?? ""} onChange={(e) => upd("observacoes_contrato", e.target.value)} />
-            </div>
-          </div>
-          <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground mt-3">
-            <strong>Travado pela proposta origem:</strong> valor total ({brl(valorTotal)}), potência,
-            módulos, inversor e consumo. Alterar exige nova proposta ou aditivo após a assinatura.
-          </div>
-        </TabsContent>
+        {/* DADOS CONTRATUAIS — removidos do UI a pedido. Defaults silenciosos:
+            data_base_contrato = hoje, prazo_execucao_dias = 60,
+            cidade/cidade_foro/local_assinatura = "Porto Velho/RO" (sede Meta Sun),
+            endereco_instalacao = endereço do contratante,
+            assinatura_email = e-mail do contratante. */}
 
         {/* FORMA DE PAGAMENTO */}
         <TabsContent value="pagamento" className="mt-3">

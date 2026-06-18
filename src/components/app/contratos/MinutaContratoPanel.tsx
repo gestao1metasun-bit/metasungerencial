@@ -161,7 +161,7 @@ export function MinutaContratoPanel({
     local_assinatura: dadosIni.local_assinatura ?? (cliente?.cidade ?? ""),
     data_base_contrato: dadosIni.data_base_contrato ?? new Date().toISOString().slice(0, 10),
     forma_pagamento_config: dadosIni.forma_pagamento_config ?? null,
-    clausulas: dadosIni.clausulas ?? clausulasPadrao(),
+    clausulas: dadosIni.clausulas ?? carregarTemplateUsuario() ?? clausulasPadrao(),
     endereco_instalacao: dadosIni.endereco_instalacao ?? "",
     prazo_execucao_dias: dadosIni.prazo_execucao_dias ?? 60,
   }));

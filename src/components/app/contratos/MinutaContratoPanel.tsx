@@ -1135,9 +1135,20 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
   const visiveis = renumerar(clausulas.filter((c) => !c.oculta));
   return (
     <div className="space-y-2">
-      {/* Print CSS: só o contrato sai no PDF. */}
+      {/* Print CSS oficial Meta Sun: A4, margens 3-2-2-3 cm, Times New Roman 12pt,
+          espaçamento 1,5 e numeração de folhas no rodapé. */}
       <style>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 3cm 2cm 2cm 3cm;
+            @bottom-right {
+              content: "Folha " counter(page) " de " counter(pages);
+              font-family: "Times New Roman", Times, serif;
+              font-size: 10pt;
+              color: #000;
+            }
+          }
           body * { visibility: hidden !important; }
           #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
           #contrato-print-area {
@@ -1146,11 +1157,18 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             width: 100% !important;
             max-height: none !important;
             overflow: visible !important;
-            padding: 24px !important;
+            padding: 0 !important;
             background: #fff !important;
             color: #000 !important;
             box-shadow: none !important;
             border: none !important;
+            font-family: "Times New Roman", Times, serif !important;
+            font-size: 12pt !important;
+            line-height: 1.5 !important;
+          }
+          #contrato-print-area h2, #contrato-print-area h3 {
+            font-family: "Times New Roman", Times, serif !important;
+            font-size: 12pt !important;
           }
           #contrato-print-area .no-print { display: none !important; }
         }

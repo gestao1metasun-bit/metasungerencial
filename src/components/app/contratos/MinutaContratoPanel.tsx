@@ -41,10 +41,11 @@ import {
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,
+  PIX_COMPLEMENTO_LABEL, TIPOS_ACEITAM_PIX_COMPLEMENTO,
   renumerar, inserirItem, removerItem, alterarTextoItem,
   salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
-  type FormaPagamentoTipo, type Variaveis,
+  type FormaPagamentoTipo, type PixComplementoMomento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
 
 type MinutaContrato = {

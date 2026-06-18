@@ -974,10 +974,7 @@ function ClausulasEditor({ disabled, clausulas, onChange }: {
   );
 }
 
-      </div>
-    </div>
-  );
-}
+
 
 
 // ===================================================================

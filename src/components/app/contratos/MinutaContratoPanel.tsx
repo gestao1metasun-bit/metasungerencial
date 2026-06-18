@@ -681,95 +681,303 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
 }
 
 // ===================================================================
-// Cláusulas
+// Cláusulas — editor com 3 operações: Alterar / Retirar / Adicionar
 // ===================================================================
+type ModoOp = null | "ALTERAR" | "RETIRAR" | "ADICIONAR";
+
 function ClausulasEditor({ disabled, clausulas, onChange }: {
   disabled?: boolean; clausulas: Clausula[]; onChange: (v: Clausula[]) => void;
 }) {
-  function patch(id: string, p: Partial<Clausula>) {
-    onChange(clausulas.map((c) => (c.id === id ? { ...c, ...p } : c)));
+  const [modo, setModo] = useState<ModoOp>(null);
+  const [refId, setRefId] = useState<string>("");
+  const [posicao, setPosicao] = useState<"antes" | "depois">("depois");
+  const [novoTexto, setNovoTexto] = useState("");
+  const [textoEditado, setTextoEditado] = useState("");
+
+  // Apenas ITEMs entram nas operações
+  const itens = useMemo(
+    () => clausulas.filter((c) => c.tipo === "ITEM" && !c.oculta),
+    [clausulas],
+  );
+
+  function resetModo() {
+    setModo(null);
+    setRefId("");
+    setPosicao("depois");
+    setNovoTexto("");
+    setTextoEditado("");
   }
-  function mover(id: string, dir: -1 | 1) {
-    const idx = clausulas.findIndex((c) => c.id === id);
-    if (idx < 0) return;
-    const novo = [...clausulas];
-    const j = idx + dir;
-    if (j < 0 || j >= novo.length) return;
-    [novo[idx], novo[j]] = [novo[j], novo[idx]];
-    onChange(novo.map((c, i) => ({ ...c, ordem: i + 1 })));
+
+  function entrar(novoModo: Exclude<ModoOp, null>) {
+    setModo(novoModo);
+    setRefId("");
+    setPosicao("depois");
+    setNovoTexto("");
+    setTextoEditado("");
   }
-  function remover(id: string) {
+
+  function aoSelecionarRef(id: string) {
+    setRefId(id);
     const c = clausulas.find((x) => x.id === id);
-    if (!c) return;
-    if (c.obrigatoria) {
-      toast.error("Cláusula obrigatória não pode ser removida — use 'Ocultar'.");
-      return;
-    }
-    onChange(clausulas.filter((x) => x.id !== id).map((x, i) => ({ ...x, ordem: i + 1 })));
+    if (modo === "ALTERAR" && c) setTextoEditado(c.texto);
   }
-  function adicionar() {
-    const arr = [...clausulas, novaClausulaComplementar(clausulas.length + 1)];
-    onChange(arr);
+
+  function aplicarAlterar() {
+    if (!refId) { toast.error("Selecione qual cláusula alterar."); return; }
+    if (textoEditado.trim().length < 5) { toast.error("Texto novo muito curto."); return; }
+    onChange(alterarTextoItem(clausulas, refId, textoEditado.trim()));
+    toast.success("Cláusula alterada.");
+    resetModo();
   }
-  function restaurar() {
-    if (!confirm("Restaurar template padrão? Cláusulas customizadas serão perdidas.")) return;
+
+  function aplicarRetirar() {
+    if (!refId) { toast.error("Selecione qual cláusula retirar."); return; }
+    const c = clausulas.find((x) => x.id === refId);
+    if (c?.obrigatoria) { toast.error("Cláusula obrigatória não pode ser retirada."); return; }
+    if (!confirm(`Retirar a cláusula ${c?.numero ?? ""}? As cláusulas seguintes do mesmo grupo serão renumeradas.`)) return;
+    onChange(removerItem(clausulas, refId));
+    toast.success(`Cláusula ${c?.numero ?? ""} retirada — grupo renumerado.`);
+    resetModo();
+  }
+
+  function aplicarAdicionar() {
+    if (!refId) { toast.error("Selecione a cláusula de referência."); return; }
+    if (novoTexto.trim().length < 5) { toast.error("Texto da nova cláusula muito curto."); return; }
+    const ref = clausulas.find((x) => x.id === refId);
+    onChange(inserirItem(clausulas, refId, posicao, novoTexto.trim(), ref?.categoria ?? "OBRIG_CONTRATADA"));
+    toast.success(`Cláusula inserida ${posicao} de ${ref?.numero ?? ""} — grupo renumerado.`);
+    resetModo();
+  }
+
+  function salvarComoPadrao() {
+    if (!confirm("Salvar a versão atual como seu novo template padrão? Sempre que criar uma nova minuta, este modelo será carregado.")) return;
+    salvarTemplateUsuario(clausulas);
+    toast.success("Template padrão atualizado para os próximos contratos.");
+  }
+
+  function restaurarMetaSun() {
+    if (!confirm("Restaurar o template oficial Meta Sun? Alterações desta minuta serão perdidas (template salvo do usuário permanece).")) return;
     onChange(clausulasPadrao());
   }
+
+  function recarregarMeuPadrao() {
+    const t = carregarTemplateUsuario();
+    if (!t) { toast.error("Você ainda não salvou um template padrão pessoal."); return; }
+    if (!confirm("Recarregar seu template salvo? Alterações desta minuta serão perdidas.")) return;
+    onChange(t);
+  }
+
+  function apagarMeuPadrao() {
+    if (!confirm("Apagar seu template padrão salvo? O próximo contrato voltará a usar o oficial Meta Sun.")) return;
+    limparTemplateUsuario();
+    toast.success("Template padrão pessoal removido.");
+  }
+
+  const totalItens = clausulas.filter((c) => c.tipo === "ITEM").length;
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3">
+      {/* Toolbar de ações */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-muted-foreground">
-          Cláusulas obrigatórias não podem ser removidas (somente ocultas).
-          Reordene com as setas. Marque "Revisada" antes de gerar.
+          Template oficial Meta Sun — {totalItens} cláusulas numeradas. Use os botões abaixo para
+          <strong> alterar</strong>, <strong>retirar</strong> ou <strong>adicionar</strong> cláusulas.
         </p>
-        <div className="flex gap-1">
-          <Button size="sm" variant="outline" disabled={disabled} onClick={restaurar}>
-            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Restaurar padrão
+        <div className="flex flex-wrap gap-1">
+          <Button size="sm" variant={modo === "ALTERAR" ? "default" : "outline"} disabled={disabled}
+            onClick={() => (modo === "ALTERAR" ? resetModo() : entrar("ALTERAR"))}
+            className={modo === "ALTERAR" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}>
+            <Pencil className="h-3.5 w-3.5 mr-1" /> Alterar cláusula
           </Button>
-          <Button size="sm" variant="outline" disabled={disabled} onClick={adicionar}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Nova cláusula
+          <Button size="sm" variant={modo === "RETIRAR" ? "default" : "outline"} disabled={disabled}
+            onClick={() => (modo === "RETIRAR" ? resetModo() : entrar("RETIRAR"))}
+            className={modo === "RETIRAR" ? "bg-rose-600 hover:bg-rose-700 text-white" : ""}>
+            <MinusCircle className="h-3.5 w-3.5 mr-1" /> Retirar cláusula
+          </Button>
+          <Button size="sm" variant={modo === "ADICIONAR" ? "default" : "outline"} disabled={disabled}
+            onClick={() => (modo === "ADICIONAR" ? resetModo() : entrar("ADICIONAR"))}
+            className={modo === "ADICIONAR" ? "bg-sky-600 hover:bg-sky-700 text-white" : ""}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar cláusula
           </Button>
         </div>
       </div>
-      <div className="space-y-2">
-        {clausulas.map((c, i) => (
-          <Card key={c.id} className={`p-2 ${c.oculta ? "opacity-50" : ""}`}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-[10px]">#{c.ordem}</Badge>
-              <Select value={c.categoria} onValueChange={(v) => patch(c.id, { categoria: v as ClausulaCategoria })} disabled={disabled}>
-                <SelectTrigger className="h-7 w-56 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(CATEGORIA_LABEL) as ClausulaCategoria[]).map((k) =>
-                    <SelectItem key={k} value={k}>{CATEGORIA_LABEL[k]}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Input className="h-7 flex-1 min-w-[200px] text-xs" value={c.titulo} disabled={disabled}
-                onChange={(e) => patch(c.id, { titulo: e.target.value })} />
-              {c.obrigatoria
-                ? <Badge variant="default" className="text-[10px]">Obrigatória</Badge>
-                : <Badge variant="outline" className="text-[10px]">Opcional</Badge>}
-              {c.revisada && <Badge className="text-[10px] bg-emerald-600">Revisada</Badge>}
-              {c.oculta && <Badge variant="destructive" className="text-[10px]">Oculta</Badge>}
-              <div className="ml-auto flex items-center gap-0.5">
-                <Button size="icon" variant="ghost" disabled={disabled || i === 0} onClick={() => mover(c.id, -1)}><ArrowUp className="h-3.5 w-3.5" /></Button>
-                <Button size="icon" variant="ghost" disabled={disabled || i === clausulas.length - 1} onClick={() => mover(c.id, 1)}><ArrowDown className="h-3.5 w-3.5" /></Button>
-                <Button size="sm" variant="ghost" disabled={disabled} onClick={() => patch(c.id, { revisada: !c.revisada })}>
-                  {c.revisada ? "Desmarcar" : "Revisar"}
-                </Button>
-                <Button size="sm" variant="ghost" disabled={disabled} onClick={() => patch(c.id, { oculta: !c.oculta })}>
-                  {c.oculta ? "Mostrar" : "Ocultar"}
-                </Button>
-                <Button size="icon" variant="ghost" disabled={disabled || c.obrigatoria} onClick={() => remover(c.id)}>
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+
+      {/* Painel da operação ativa */}
+      {modo && (
+        <Card className="p-3 border-dashed bg-muted/30 space-y-2">
+          {modo === "ALTERAR" && (
+            <>
+              <div className="flex items-center gap-2">
+                <Pencil className="h-4 w-4 text-amber-600" />
+                <strong className="text-sm">Alterar cláusula</strong>
+              </div>
+              <SelectorCl itens={itens} value={refId} onChange={aoSelecionarRef} placeholder="Selecione a cláusula a alterar..." />
+              {refId && (
+                <>
+                  <div>
+                    <Label className="text-xs">Texto atual</Label>
+                    <Textarea readOnly rows={4} className="mt-1 text-xs bg-muted/60"
+                      value={clausulas.find((c) => c.id === refId)?.texto ?? ""} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Como deve ficar *</Label>
+                    <Textarea rows={5} className="mt-1 text-xs" value={textoEditado}
+                      onChange={(e) => setTextoEditado(e.target.value)} />
+                  </div>
+                </>
+              )}
+              <div className="flex justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
+                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" onClick={aplicarAlterar}>
+                  Aplicar alteração
                 </Button>
               </div>
+            </>
+          )}
+
+          {modo === "RETIRAR" && (
+            <>
+              <div className="flex items-center gap-2">
+                <MinusCircle className="h-4 w-4 text-rose-600" />
+                <strong className="text-sm">Retirar cláusula</strong>
+              </div>
+              <SelectorCl itens={itens.filter((c) => !c.obrigatoria)}
+                value={refId} onChange={aoSelecionarRef}
+                placeholder="Selecione a cláusula a retirar..." />
+              {refId && (
+                <div className="rounded-md border bg-white dark:bg-zinc-950 p-2 text-xs">
+                  <strong>{clausulas.find((c) => c.id === refId)?.numero}</strong> — {clausulas.find((c) => c.id === refId)?.texto}
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Cláusulas obrigatórias não aparecem na lista (não podem ser retiradas).
+              </p>
+              <div className="flex justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
+                <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white" onClick={aplicarRetirar}>
+                  Retirar cláusula
+                </Button>
+              </div>
+            </>
+          )}
+
+          {modo === "ADICIONAR" && (
+            <>
+              <div className="flex items-center gap-2">
+                <Plus className="h-4 w-4 text-sky-600" />
+                <strong className="text-sm">Adicionar cláusula</strong>
+              </div>
+              <div>
+                <Label className="text-xs">Texto da nova cláusula *</Label>
+                <Textarea rows={5} className="mt-1 text-xs" value={novoTexto}
+                  onChange={(e) => setNovoTexto(e.target.value)}
+                  placeholder="Digite o texto completo da cláusula..." />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                <div>
+                  <Label className="text-xs">Posição *</Label>
+                  <Select value={posicao} onValueChange={(v) => setPosicao(v as "antes" | "depois")}>
+                    <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="antes">Antes de</SelectItem>
+                      <SelectItem value="depois">Depois de</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Cláusula de referência *</Label>
+                  <SelectorCl itens={itens} value={refId} onChange={aoSelecionarRef}
+                    placeholder="Ex.: 3.2 — A instalação está sujeita..." />
+                </div>
+              </div>
+              {refId && (
+                <p className="text-[11px] text-muted-foreground">
+                  A nova cláusula entrará como{" "}
+                  <strong>
+                    {(() => {
+                      const ref = clausulas.find((c) => c.id === refId);
+                      if (!ref) return "";
+                      const sub = (ref.subordem ?? 0) + (posicao === "depois" ? 1 : 0);
+                      return `${ref.grupo}.${Math.max(sub, 1)}`;
+                    })()}
+                  </strong>{" "}
+                  e as seguintes do mesmo grupo serão renumeradas automaticamente.
+                </p>
+              )}
+              <div className="flex justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={resetModo}>Cancelar</Button>
+                <Button size="sm" className="bg-sky-600 hover:bg-sky-700 text-white" onClick={aplicarAdicionar}>
+                  Adicionar cláusula
+                </Button>
+              </div>
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* Toolbar de template */}
+      <div className="flex items-center justify-end gap-1 flex-wrap border-t pt-2">
+        <Button size="sm" variant="outline" disabled={disabled} onClick={salvarComoPadrao}
+          title="Guarda a versão atual em LS como seu modelo pessoal — usada nas próximas minutas.">
+          <BookmarkPlus className="h-3.5 w-3.5 mr-1" /> Salvar como meu padrão
+        </Button>
+        <Button size="sm" variant="outline" disabled={disabled || !existeTemplateUsuario()} onClick={recarregarMeuPadrao}>
+          Carregar meu padrão
+        </Button>
+        <Button size="sm" variant="outline" disabled={disabled} onClick={restaurarMetaSun}>
+          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Restaurar Meta Sun
+        </Button>
+        <Button size="sm" variant="ghost" disabled={disabled || !existeTemplateUsuario()}
+          onClick={apagarMeuPadrao} className="text-rose-600">
+          Apagar meu padrão
+        </Button>
+      </div>
+
+      {/* Lista renderizada (grupos + itens X.Y) */}
+      <div className="space-y-2">
+        {clausulas.map((c) => {
+          if (c.tipo === "GRUPO") {
+            return (
+              <div key={c.id} className="mt-3 first:mt-0">
+                <h4 className="text-xs font-bold tracking-wide text-foreground/90 border-b pb-1">
+                  {c.titulo}
+                </h4>
+              </div>
+            );
+          }
+          const sel = refId === c.id;
+          return (
+            <div key={c.id}
+              className={`rounded-md border p-2 ${sel ? "ring-2 ring-primary" : ""} ${c.oculta ? "opacity-50" : ""}`}>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="text-[10px] tabular-nums shrink-0 mt-0.5">{c.numero}</Badge>
+                {c.obrigatoria && <Badge variant="default" className="text-[10px] shrink-0">Obrigatória</Badge>}
+                {c.complementar && <Badge variant="outline" className="text-[10px] shrink-0 border-sky-500 text-sky-700">Complementar</Badge>}
+                <p className="text-xs flex-1 whitespace-pre-wrap">{c.texto}</p>
+              </div>
             </div>
-            <Textarea className="mt-2 text-xs" rows={3} value={c.texto} disabled={disabled}
-              onChange={(e) => patch(c.id, { texto: e.target.value })} />
-          </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function SelectorCl({ itens, value, onChange, placeholder }: {
+  itens: Clausula[]; value: string; onChange: (v: string) => void; placeholder?: string;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={placeholder ?? "Selecione a cláusula..."} /></SelectTrigger>
+      <SelectContent className="max-h-80">
+        {itens.map((c) => (
+          <SelectItem key={c.id} value={c.id} className="text-xs">
+            <span className="font-semibold tabular-nums mr-2">{c.numero}</span>
+            {c.texto.slice(0, 80)}{c.texto.length > 80 ? "…" : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -780,7 +988,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
   variaveis: Variaveis; clausulas: Clausula[];
   varsFaltando: string[]; podeGerar: boolean; onGerar: () => void;
 }) {
-  const visiveis = clausulas.filter((c) => !c.oculta);
+  const visiveis = renumerar(clausulas.filter((c) => !c.oculta));
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -806,28 +1014,37 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
       )}
       <Card className="p-4 bg-white dark:bg-zinc-950 max-h-[640px] overflow-auto">
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <h2 className="text-center">CONTRATO DE FORNECIMENTO E INSTALAÇÃO DE SISTEMA FOTOVOLTAICO</h2>
+          <h2 className="text-center">CONTRATO DE FORNECIMENTO E INSTALAÇÃO DE SISTEMA FOTOVOLTAICO ON-GRID</h2>
           {visiveis.map((c) => {
+            if (c.tipo === "GRUPO") {
+              return (
+                <h3 key={c.id} className="mt-6 font-bold uppercase text-sm tracking-wide">
+                  {c.titulo}
+                </h3>
+              );
+            }
             const rendered = substituirVariaveis(c.texto, variaveis);
             const hasMissing = /\{\{(\w+)\}\}/.test(rendered);
             return (
-              <div key={c.id} className="mb-4">
-                <h4 className="font-semibold">
-                  Cláusula {c.ordem} — {c.titulo}{" "}
-                  <span className="text-[10px] text-muted-foreground">[{CATEGORIA_LABEL[c.categoria]}]</span>
-                </h4>
-                <p className={hasMissing ? "text-destructive" : ""}>{rendered}</p>
-              </div>
+              <p key={c.id} className={`my-2 text-justify ${hasMissing ? "text-destructive" : ""}`}>
+                <strong className="mr-1 tabular-nums">{c.numero}</strong>
+                {rendered}
+              </p>
             );
           })}
+          <div className="mt-8 text-xs">
+            <p>{variaveis.cidade || "______________"}, {variaveis.data_contrato || "____/____/______"}.</p>
+          </div>
           <div className="mt-8 grid grid-cols-2 gap-8 text-center text-xs">
             <div>
               <div className="border-t mt-12 pt-1">CONTRATANTE</div>
               <div>{variaveis.cliente_nome}</div>
+              <div className="text-[10px] text-muted-foreground">{variaveis.cliente_documento}</div>
             </div>
             <div>
               <div className="border-t mt-12 pt-1">CONTRATADA</div>
-              <div>META SUN</div>
+              <div>META SUN INSTALAÇÕES ELÉTRICAS LTDA</div>
+              <div className="text-[10px] text-muted-foreground">CNPJ 41.452.412/0001-40</div>
             </div>
           </div>
         </div>

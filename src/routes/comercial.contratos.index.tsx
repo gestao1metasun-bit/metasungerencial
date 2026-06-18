@@ -194,8 +194,8 @@ function ContratosListPage() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmtBRL(c.valor_total)}</TableCell>
                       <TableCell>{statusBadge(c.status, c.cancelado)}</TableCell>
-                      <TableCell className="text-xs font-mono">
-                        {c.proposta_codigo ?? <span className="text-muted-foreground">—</span>}
+                      <TableCell className="text-xs uppercase text-muted-foreground">
+                        {classificarEtapaContrato(c.status, c.cancelado)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{fmtDate(c.created_at)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{fmtDate(dataGerada(c))}</TableCell>

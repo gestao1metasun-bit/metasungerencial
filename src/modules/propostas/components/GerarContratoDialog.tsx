@@ -42,7 +42,7 @@ export type GerarContratoDialogProps = {
 export function GerarContratoDialog({
   open, onOpenChange, propostaId, numeroProposta, clienteNome, valorTotal, onGerado,
 }: GerarContratoDialogProps) {
-  const gerar = useGerarContratoDaProposta();
+  const gerar = useEnviarPropostaParaContratos();
   const [forma, setForma] = useState<FormaPagamento>("A_VISTA");
   const [valorEntrada, setValorEntrada] = useState<string>("");
   const [qtdeParcelas, setQtdeParcelas] = useState<string>("1");

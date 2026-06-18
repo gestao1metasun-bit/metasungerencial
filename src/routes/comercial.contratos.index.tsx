@@ -524,7 +524,7 @@ function ContratosListPage() {
         <ModuloHistoricoDrawer
           open={historicoOpen}
           onOpenChange={setHistoricoOpen}
-          entidade="contratos"
+          entidade="contrato"
           entidadeId={selUnico.id}
           titulo={`Histórico · Contrato ${selUnico.codigo ?? selUnico.id.slice(0, 8)}`}
         />

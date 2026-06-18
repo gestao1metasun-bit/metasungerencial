@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Loader2, ShieldAlert, FileSignature, FileText, Users, Ban, ExternalLink,
-  Zap, DollarSign, Layers, History, ClipboardList, Plus,
+  Zap, DollarSign, Layers, History, ClipboardList, Plus, DollarSign as DollarSignIcon, HardHat,
 } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   useContratoSupabaseById,
   usePropostasDoContrato,

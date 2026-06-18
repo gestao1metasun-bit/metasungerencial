@@ -53,7 +53,7 @@ type MinutaContrato = {
 export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) {
   const qc = useQueryClient();
   const permEditar = useHasPermission("comercial.contrato.editar_minuta");
-  const permGerar = useHasPermission("comercial.contrato.aprovar_minuta");
+  const permGerar = useHasPermission("comercial.contrato.gerar_minuta");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
   const gerar = useGerarContratoFinal();
   const cancelarMinuta = useCancelarMinutaContrato();
@@ -162,7 +162,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
     }
   }
 
-  async function aprovar_() {
+  async function gerar_() {
     if (erros.length) {
       toast.error("Preencha: " + erros.join(", "));
       return;
@@ -346,7 +346,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGerarOpen(false)} disabled={gerar.isPending}>Cancelar</Button>
-            <Button onClick={() => void aprovar_()} disabled={gerar.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button onClick={() => void gerar_()} disabled={gerar.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
               {gerar.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileCheck2 className="h-3.5 w-3.5 mr-1" />}
               Gerar contrato
             </Button>

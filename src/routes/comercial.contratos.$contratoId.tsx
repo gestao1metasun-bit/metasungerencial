@@ -474,3 +474,51 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
     </div>
   );
 }
+
+/**
+ * D18.12 — Painel de ações do contrato assinado/ativo.
+ * Apresenta os botões liberados após assinatura. Financeiro e Engenharia
+ * dependem de integrações específicas; quando ainda não habilitadas, ficam
+ * desabilitados com tooltip explicativo — nunca toast genérico.
+ */
+function ContratoAssinadoActions() {
+  return (
+    <TooltipProvider>
+      <Card className="p-3 space-y-2 border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/20">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FileSignature className="h-4 w-4 text-emerald-600" />
+            <h3 className="font-semibold text-sm">Contrato Assinado — Operação liberada</h3>
+            <Badge variant="default">ATIVO</Badge>
+          </div>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    <DollarSignIcon className="h-3.5 w-3.5 mr-1" /> Gerar financeiro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Disponível após integração financeira.</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    <HardHat className="h-3.5 w-3.5 mr-1" /> Enviar engenharia
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Disponível após integração de engenharia.</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Use as abas <strong>Projetos</strong>, <strong>Aditivos</strong> e <strong>Comissões</strong> para
+          continuar a operação deste contrato.
+        </p>
+      </Card>
+    </TooltipProvider>
+  );
+}

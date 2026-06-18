@@ -195,7 +195,7 @@ export function MinutaContratoPanel({
       const hashParams = new URLSearchParams(raw);
       const sub = searchParams.get("tab") === "previa" ? "previa" : hashParams.get("minuta");
       const focus = searchParams.get("focus") ?? hashParams.get("focus");
-      const ABAS = ["contratante", "contratuais", "pagamento", "clausulas", "previa"];
+      const ABAS = ["contratante", "pagamento", "clausulas", "previa"];
       if (sub && ABAS.includes(sub)) setTab(sub);
       if (focus === "gerar") {
         setTab((t) => (t === "previa" ? t : "previa"));

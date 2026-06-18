@@ -687,10 +687,14 @@ export type Variaveis = Record<string, string | number | null | undefined>;
 
 const NOMES_VAR = [
   "cliente_nome", "cliente_documento", "cliente_endereco",
+  "cliente_rg", "cliente_telefone",
   "valor_total", "valor_total_extenso",
-  "potencia_kwp", "quantidade_modulos", "inversor",
-  "forma_pagamento", "prazo_execucao", "cidade", "data_contrato",
-  "endereco_instalacao",
+  "potencia_kwp", "quantidade_modulos", "quantidade_modulos_extenso",
+  "marca_modulos", "potencia_modulo_w", "inversor",
+  "forma_pagamento", "prazo_execucao",
+  "cidade", "cidade_foro", "data_contrato", "endereco_instalacao",
+  "numero_contrato", "ano_contrato",
+  "representante_contratada", "representante_cpf", "representante_rg",
 ] as const;
 export type NomeVariavel = typeof NOMES_VAR[number];
 export const VARIAVEIS_OBRIGATORIAS: NomeVariavel[] = [

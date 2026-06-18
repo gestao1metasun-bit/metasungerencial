@@ -178,8 +178,22 @@ function ContratosListPage() {
     );
   }
 
-  const abrirContrato = (id: string) =>
-    navigate({ to: "/comercial/contratos/$contratoId", params: { contratoId: id } });
+  const abrirContrato = (id: string, hash?: string) =>
+    navigate({
+      to: "/comercial/contratos/$contratoId",
+      params: { contratoId: id },
+      ...(hash ? { hash } : {}),
+    });
+
+  // D18.19 — focos da minuta navegáveis via hash (#tab=...&minuta=...&focus=...)
+  const FOCO_MINUTA = {
+    abrir:       "tab=resumo&minuta=contratante",
+    contratuais: "tab=resumo&minuta=contratuais",
+    clausulas:   "tab=resumo&minuta=clausulas",
+    previa:      "tab=resumo&minuta=previa",
+    gerar:       "tab=resumo&minuta=previa&focus=gerar",
+    documentos:  "tab=documentos",
+  } as const;
 
   const acaoNoWS = (msg = "Ação disponível dentro do workspace do contrato.") =>
     toast.info(msg);
@@ -195,11 +209,11 @@ function ContratosListPage() {
         { key: "gerar_contrato", label: "Gerar Contrato", icon: FilePen, tone: "success" as const, wide: true,
           disabled: semSel || !permGerar.data || cancelado,
           disabledReason: semSel ? semSelMsg : (!permGerar.data ? "Sem permissão (comercial.contrato.criar)." : "Contrato cancelado."),
-          onClick: () => acaoNoWS("Gerar contrato: abra o workspace para revisar a minuta e gerar o PDF.") },
+          onClick: () => selUnico && abrirContrato(selUnico.id, FOCO_MINUTA.gerar) },
         { key: "editar_minuta", label: "Editar Minuta", icon: PenLine, tone: "info" as const,
           disabled: semSel || !permEditarMinuta.data,
           disabledReason: semSel ? semSelMsg : "Sem permissão (comercial.contrato.editar_minuta).",
-          onClick: () => selUnico && abrirContrato(selUnico.id) },
+          onClick: () => selUnico && abrirContrato(selUnico.id, FOCO_MINUTA.contratuais) },
         { key: "cancelar_minuta", label: "Cancelar Minuta", icon: Ban, tone: "danger" as const,
           disabled: semSel || !permCancelar.data || cancelado,
           disabledReason: semSel ? semSelMsg : "Sem permissão (comercial.contrato.cancelar).",

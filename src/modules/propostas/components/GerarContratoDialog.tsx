@@ -127,9 +127,9 @@ export function GerarContratoDialog({
         } as never)
         .eq("id", contratoId);
       if (error) {
-        toast.warning(`Contrato gerado, mas dados financeiros não foram salvos: ${error.message}`);
+        toast.warning(`Minuta criada, mas dados financeiros não foram salvos: ${error.message}`);
       } else {
-        toast.success("Contrato gerado e dados financeiros registrados.");
+        toast.success("Proposta enviada para Contratos. Minuta criada como Pendente de Redação.");
       }
       onGerado?.(contratoId);
       onOpenChange(false);

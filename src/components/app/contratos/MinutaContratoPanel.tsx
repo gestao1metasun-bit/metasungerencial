@@ -55,7 +55,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
   const permEditar = useHasPermission("comercial.contrato.editar_minuta");
   const permAprovar = useHasPermission("comercial.contrato.aprovar_minuta");
   const permCancelar = useHasPermission("comercial.contrato.cancelar");
-  const aprovar = useAprovarMinutaContrato();
+  const gerar = useGerarContratoFinal();
   const cancelarMinuta = useCancelarMinutaContrato();
 
   const d = (contrato.dados ?? {}) as Record<string, unknown>;
@@ -228,7 +228,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
             onClick={() => setAprovarOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            <Check className="h-3.5 w-3.5 mr-1" /> Aprovar contrato
+            <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Aprovar contrato
           </Button>
         </div>
       </div>
@@ -347,7 +347,7 @@ export function MinutaContratoPanel({ contrato }: { contrato: MinutaContrato }) 
           <DialogFooter>
             <Button variant="outline" onClick={() => setAprovarOpen(false)} disabled={aprovar.isPending}>Cancelar</Button>
             <Button onClick={() => void aprovar_()} disabled={aprovar.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              {aprovar.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />}
+              {aprovar.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileCheck2 className="h-3.5 w-3.5 mr-1" />}
               Aprovar contrato
             </Button>
           </DialogFooter>

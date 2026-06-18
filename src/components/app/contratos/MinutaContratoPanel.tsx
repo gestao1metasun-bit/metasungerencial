@@ -331,7 +331,7 @@ export function MinutaContratoPanel({
             <Ban className="h-3.5 w-3.5 mr-1" /> Cancelar minuta
           </Button>
           <Button size="sm" disabled={!podeGerar || erros.length > 0} onClick={() => setGerarOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            className={`bg-emerald-600 hover:bg-emerald-700 text-white ${focoGerar ? "ring-2 ring-emerald-400 ring-offset-2 animate-pulse" : ""}`}>
             <FileCheck2 className="h-3.5 w-3.5 mr-1" /> Gerar contrato
           </Button>
         </div>

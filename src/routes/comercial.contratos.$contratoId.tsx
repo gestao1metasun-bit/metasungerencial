@@ -4,7 +4,7 @@
  * Gate: permissão `comercial.contrato.visualizar`.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -110,6 +110,14 @@ function ContratoWorkspacePage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
   const [compensarOrigem, setCompensarOrigem] = useState<import("@/lib/repositories/aditivos-repo").AditivoSupabase | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "previa") {
+      setTab("resumo");
+    }
+  }, [setTab]);
 
   const totais = useMemo(() => {
     const rows = propostas.data ?? [];

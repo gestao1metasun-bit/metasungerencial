@@ -174,14 +174,15 @@ export function MinutaContratoPanel({
 
   useEffect(() => { setDirty(false); }, [contrato.id]);
 
-  // D18.19 — lê hash (#tab=...&minuta=<sub>&focus=gerar) e dirige aba/foco
+  // D18.19 — lê query oficial (?tab=previa&focus=gerar) e hash legado.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const apply = () => {
+      const searchParams = new URLSearchParams(window.location.search);
       const raw = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
-      const params = new URLSearchParams(raw);
-      const sub = params.get("minuta");
-      const focus = params.get("focus");
+      const hashParams = new URLSearchParams(raw);
+      const sub = searchParams.get("tab") === "previa" ? "previa" : hashParams.get("minuta");
+      const focus = searchParams.get("focus") ?? hashParams.get("focus");
       const ABAS = ["contratante", "contratuais", "pagamento", "clausulas", "previa"];
       if (sub && ABAS.includes(sub)) setTab(sub);
       if (focus === "gerar") {

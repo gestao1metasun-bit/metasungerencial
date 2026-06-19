@@ -599,7 +599,77 @@ function DateField({ label, v, on, disabled }: { label: string; v: string | unde
 
 // ===================================================================
 // Forma de pagamento
-// ===================================================================
+
+const SUB_KEY: Record<Exclude<FormaPagamentoTipo, "MISTO">, keyof FormaPagamentoConfig> = {
+  PIX: "pix",
+  BOLETO: "boleto",
+  CARTAO: "cartao",
+  FINANCIAMENTO: "financiamento",
+  ENTRADA_PARCELAS: "entrada_parcelas",
+  PERMUTA: "permuta",
+};
+function getMomento(v: FormaPagamentoConfig, t: FormaPagamentoTipo): MomentoPagamento | undefined {
+  if (t === "MISTO") return undefined;
+  const sub = v[SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">]] as { momento?: MomentoPagamento } | undefined;
+  return sub?.momento;
+}
+function getMomentoData(v: FormaPagamentoConfig, t: FormaPagamentoTipo): string | undefined {
+  if (t === "MISTO") return undefined;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  const sub = v[k] as { data?: string; entrada_data?: string } | undefined;
+  return sub?.data ?? sub?.entrada_data;
+}
+function setMomento(
+  v: FormaPagamentoConfig, t: FormaPagamentoTipo, m: MomentoPagamento,
+  onChange: (v: FormaPagamentoConfig) => void,
+  patch: <K extends keyof FormaPagamentoConfig>(k: K, p: Partial<NonNullable<FormaPagamentoConfig[K]>>) => void,
+) {
+  if (t === "MISTO") return;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  patch(k, { momento: m } as never);
+  void v; void onChange;
+}
+function setMomentoData(
+  v: FormaPagamentoConfig, t: FormaPagamentoTipo, d: string,
+  onChange: (v: FormaPagamentoConfig) => void,
+  patch: <K extends keyof FormaPagamentoConfig>(k: K, p: Partial<NonNullable<FormaPagamentoConfig[K]>>) => void,
+) {
+  if (t === "MISTO") return;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  patch(k, { data: d } as never);
+  void v; void onChange;
+}
+
+function MomentoBlock({ disabled, momento, data, onMomento, onData }: {
+  disabled?: boolean;
+  momento: MomentoPagamento | undefined;
+  data: string | undefined;
+  onMomento: (m: MomentoPagamento) => void;
+  onData: (d: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm rounded-md border border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-2">
+      <div>
+        <Label className="text-xs">Momento do pagamento *</Label>
+        <Select value={momento ?? "ASSINATURA"} onValueChange={(v) => onMomento(v as MomentoPagamento)} disabled={disabled}>
+          <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {MOMENTO_OPCOES.map((m) => (
+              <SelectItem key={m} value={m}>{MOMENTO_LABEL[m]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {momento === "DATA_ESPECIFICA" && (
+        <div>
+          <Label className="text-xs">Data *</Label>
+          <Input type="date" className="mt-1 h-8" value={data ?? ""} disabled={disabled} onChange={(e) => onData(e.target.value)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
   valorTotal: number; disabled?: boolean; value: FormaPagamentoConfig | null | undefined;
   onChange: (v: FormaPagamentoConfig | null) => void;

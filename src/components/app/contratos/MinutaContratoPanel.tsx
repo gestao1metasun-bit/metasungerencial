@@ -1717,8 +1717,8 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           </div>
         </div>
 
-        {/* Rodapé oficial Meta Sun */}
-        <div style={{ marginTop: "12mm", textAlign: "center" }}>
+        {/* Rodapé oficial Meta Sun (apenas na tela; na impressão, o footer fixo se repete em todas as folhas) */}
+        <div className="screen-only" style={{ marginTop: "12mm", textAlign: "center" }}>
           <img
             src={metaSunRodape.url}
             alt="Meta Sun — Av. Eng. Anysio da Rocha Compasso 5055, Rio Madeira, Porto Velho - RO, 76821-381 | 69 9.9341-2188 | www.metasun.com.br"

@@ -915,6 +915,11 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
   if (!fp) return "—";
   let desc = "";
   switch (fp.tipo) {
+    case "DINHEIRO": {
+      const d = fp.dinheiro!;
+      desc = linhaPagamento("Dinheiro", d.momento, d.data, d.valor ?? 0, undefined, d.observacao || undefined);
+      break;
+    }
     case "PIX": {
       const p = fp.pix!;
       desc = linhaPagamento("PIX", p.momento, p.data, p.valor ?? 0);
@@ -927,7 +932,7 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
     }
     case "CARTAO": {
       const c = fp.cartao!;
-      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "com juros do cliente" : "sem juros"}`;
+      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "juros por conta do cliente" : "juros por conta da Meta (sem juros ao cliente)"}`;
       desc = linhaPagamento("Cartão", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
       break;
     }

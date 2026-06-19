@@ -787,6 +787,9 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
           <Field label="Banco emissor" v={value!.cheque?.banco} on={(v) => patch("cheque", { banco: v })} disabled={disabled} />
           <Field label="Observação" v={value!.cheque?.observacao} on={(v) => patch("cheque", { observacao: v })} disabled={disabled} className="md:col-span-3" />
         </div>
+      )}
+
+
 
 
       {tipo === "FINANCIAMENTO" && (

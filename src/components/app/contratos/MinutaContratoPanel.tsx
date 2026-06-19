@@ -348,7 +348,7 @@ export function MinutaContratoPanel({
     return {
       contratante_tipo: state.contratante_tipo_pessoa ?? "PF",
       cliente_nome: state.contratante_nome || "",
-      cliente_documento: state.contratante_doc || "",
+      cliente_documento: state.contratante_doc || state.contratante_rg || state.contratante_doc_extra || "",
       cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
         .filter(Boolean).join(", "),
       cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",
@@ -392,13 +392,21 @@ export function MinutaContratoPanel({
     const tipoPJ = state.contratante_tipo_pessoa === "PJ";
     const docDig = (state.contratante_doc ?? "").replace(/\D/g, "");
     if (!state.contratante_nome?.trim()) arr.push(tipoPJ ? "razão social" : "nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push(tipoPJ ? "CNPJ" : "CPF");
-    else if (tipoPJ && docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
-    else if (!tipoPJ && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    if (tipoPJ) {
+      if (!state.contratante_doc?.trim()) arr.push("CNPJ");
+      else if (docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
+    } else {
+      // PF: aceita CPF OU RG OU CNH/OAB (campo doc extra). Basta 1 dos 4.
+      const temCpf = !!state.contratante_doc?.trim();
+      const temRg = !!state.contratante_rg?.trim();
+      const temExtra = !!state.contratante_doc_extra?.trim();
+      if (!temCpf && !temRg && !temExtra) arr.push("documento do contratante (CPF, RG, CNH ou OAB)");
+      else if (temCpf && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    }
     if (!state.contratante_logradouro?.trim() || !state.contratante_numero?.trim()
         || !state.contratante_bairro?.trim() || !state.contratante_cidade?.trim()
         || !state.contratante_uf?.trim()) arr.push("endereço completo do contratante");
-    if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
+    // e-mail do contratante: opcional (regra de negócio 2026-06-19)
     if (tipoPJ) {
       const reprDoc = (state.repr_cpf ?? "").replace(/\D/g, "");
       if (!state.repr_nome?.trim()) arr.push("nome completo do representante");
@@ -557,7 +565,7 @@ export function MinutaContratoPanel({
             )}
             <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
-            <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="E-mail (opcional)" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
             <div className="md:col-span-2">
               <Label className="text-xs">CEP (autopreenche endereço)</Label>
               <Input
@@ -948,7 +956,6 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
           <NumField label="Valor financiado" v={value!.financiamento?.valor} on={(v) => patch("financiamento", { valor: v })} disabled={disabled} />
           <NumField label="Entrada (se houver)" v={value!.financiamento?.entrada} on={(v) => patch("financiamento", { entrada: v })} disabled={disabled} />
           
-          <Field label="Status financiamento" v={value!.financiamento?.status} on={(v) => patch("financiamento", { status: v })} disabled={disabled} />
           <Field label="Observação" v={value!.financiamento?.observacao} on={(v) => patch("financiamento", { observacao: v })} disabled={disabled} />
           <div className="md:col-span-3">
             <Label className="text-xs">Cláusula específica de financiamento</Label>

@@ -964,7 +964,8 @@ function coletarItensPagamento(fp: FormaPagamentoConfig | null | undefined): Ite
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
       if ((f.entrada ?? 0) > 0) push({ tipo: "PIX", momento: "ASSINATURA", valor: f.entrada, extra: "entrada do financiamento" });
-      push({ tipo: "FINANCIAMENTO", momento: f.momento, data: f.data, valor: f.valor ?? 0, extra: `junto ao ${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses` });
+      const bancoExtra = f.banco?.trim() ? `junto ao ${f.banco.trim()}` : undefined;
+      push({ tipo: "FINANCIAMENTO", momento: f.momento, data: f.data, valor: f.valor ?? 0, extra: bancoExtra });
       break;
     }
     case "ENTRADA_PARCELAS": {

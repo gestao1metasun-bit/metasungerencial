@@ -414,6 +414,8 @@ export function MinutaContratoPanel({
       marca_modulos: marcaMod,
       potencia_modulo_w: potMod != null && Number(potMod) > 0 ? String(Math.round(Number(potMod))) : "",
       inversor: inversorDescricao || (proposta?.inversor ?? ""),
+      modulo_descricao: moduloDescricao,
+      inversor_descricao: inversorDescricao,
       forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
       prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
       cidade: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",

@@ -946,6 +946,10 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
     const pc = fp.pix_complemento;
     desc += ` | ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
   }
+  for (const extra of (fp.formas_extras ?? [])) {
+    const extraDesc = descricaoFormaPagamento({ ...extra, formas_extras: [], pix_complemento: null });
+    if (extraDesc && extraDesc !== "—") desc += ` | ${extraDesc}`;
+  }
   return desc;
 }
 

@@ -772,6 +772,23 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         </div>
       )}
 
+      {tipo === "CARTAO_DEBITO" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor total" v={value!.cartao_debito?.valor} on={(v) => patch("cartao_debito", { valor: v })} disabled={disabled} />
+          <Field label="Bandeira" v={value!.cartao_debito?.bandeira} on={(v) => patch("cartao_debito", { bandeira: v })} disabled={disabled} />
+          <Field label="Observação" v={value!.cartao_debito?.observacao} on={(v) => patch("cartao_debito", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+        </div>
+      )}
+
+      {tipo === "CHEQUE" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor total" v={value!.cheque?.valor} on={(v) => patch("cheque", { valor: v })} disabled={disabled} />
+          <NumField label="Qtde de cheques" v={value!.cheque?.parcelas} on={(v) => patch("cheque", { parcelas: Math.max(1, Math.floor(v || 1)) })} disabled={disabled} />
+          <Field label="Banco emissor" v={value!.cheque?.banco} on={(v) => patch("cheque", { banco: v })} disabled={disabled} />
+          <Field label="Observação" v={value!.cheque?.observacao} on={(v) => patch("cheque", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+        </div>
+
+
       {tipo === "FINANCIAMENTO" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <div>

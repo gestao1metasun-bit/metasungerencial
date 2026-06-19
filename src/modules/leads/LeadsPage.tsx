@@ -415,13 +415,13 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     if (!Number.isFinite(consumoNum) || consumoNum <= 0) {
       toast.error("Consumo desejado inválido."); return;
     }
-    // CPF/CNPJ obrigatório e válido
-    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
-    if (!isDocValido(doc)) {
+    // CPF/CNPJ é OPCIONAL na criação do lead. Só valida se foi preenchido.
+    // O cadastro definitivo (CPF/CNPJ, endereço) é exigido no contrato.
+    if (doc.trim() && !isDocValido(doc)) {
       toast.error(tipoPessoa === "PF" ? "CPF inválido — confira os dígitos." : "CNPJ inválido — confira os dígitos.");
       return;
     }
-    if (leadExistenteNumero) {
+    if (doc.trim() && leadExistenteNumero) {
       toast.error(`Já existe lead ${leadExistenteNumero} com este CPF/CNPJ. Abra o lead existente.`);
       return;
     }

@@ -77,6 +77,10 @@ export type EnterpriseProcessItem = {
   requerMotivo?: boolean;
   /** Grupo lógico para sub-cabeçalho no dropdown (ex.: "Propostas", "Contratos"). */
   group?: string;
+  /** Desabilita o item (mantém visível com tooltip explicativo). */
+  disabled?: boolean;
+  /** Tooltip mostrado quando `disabled=true`. */
+  disabledReason?: string;
 };
 
 export type EnterpriseRecordToolbarProps = {
@@ -458,15 +462,21 @@ export function EnterpriseRecordToolbar({
                     return (
                       <DropdownMenuItem
                         key={p.key}
-                        onClick={() => onProcess?.(p.key, { selectedIds })}
+                        disabled={p.disabled}
+                        onSelect={(e) => {
+                          if (p.disabled) { e.preventDefault(); return; }
+                          onProcess?.(p.key, { selectedIds });
+                        }}
+                        title={p.disabled ? p.disabledReason : undefined}
                         className={cn(
                           "text-[12px] gap-2",
-                          p.destructive && "text-destructive focus:text-destructive",
+                          p.destructive && !p.disabled && "text-destructive focus:text-destructive",
+                          p.disabled && "opacity-50 cursor-not-allowed",
                         )}
                       >
                         <Icon className="h-3.5 w-3.5" />
                         <span className="flex-1">{p.label}</span>
-                        {p.requerMotivo && (
+                        {p.requerMotivo && !p.disabled && (
                           <span className="text-[9.5px] uppercase tracking-wider text-muted-foreground">
                             motivo
                           </span>

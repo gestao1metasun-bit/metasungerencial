@@ -580,23 +580,59 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               else toast.info("Use a busca/filtro da lista abaixo.");
             }
           }}
-          availableActions={[
-            "editar", "atualizar",
-            "anexos", "historico", "auditoria", "favoritos",
-            "exportar", "enviar",
-            "filtroRapido", "filtroAvancado", "colunas",
-          ]}
-          availableProcesses={[
-            // ▼ Proposta
-            { key: "aprovar_proposta",     label: "Aprovar Proposta",          group: "Proposta" },
-            { key: "reprovar_proposta",    label: "Reprovar Proposta",         group: "Proposta", destructive: true, requerMotivo: true },
-            { key: "editar_cliente",       label: "Corrigir Dados Cadastrais", group: "Proposta", requerMotivo: true },
-            // ▼ Nova Proposta
-            { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta",     group: "Nova Proposta" },
-            // ▼ Encerramento
-            { key: "cancelar_proposta",    label: "Cancelar Proposta",       group: "Encerramento", destructive: true, requerMotivo: true },
-            { key: "reabrir_proposta",     label: "Reabrir Proposta",        group: "Encerramento", requerMotivo: true },
-          ]}
+          availableActions={(() => {
+            const base = [
+              "editar", "atualizar",
+              "anexos", "historico", "auditoria", "favoritos",
+              "exportar", "enviar",
+              "filtroRapido", "filtroAvancado", "colunas",
+            ] as const;
+            const s = String(propostaSelecionada?.status ?? "").toUpperCase();
+            const terminalAprovado = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","ASSINADA"].includes(s);
+            const terminalEncerrado = ["CANCELADA","RECUSADA","REPROVADA","VENCIDA"].includes(s);
+            // Editar inviável quando a proposta está aprovada/contratada/assinada
+            // ou encerrada — única forma é "Gerar nova proposta" (ou reabrir).
+            return (terminalAprovado || terminalEncerrado)
+              ? base.filter((a) => a !== "editar")
+              : [...base];
+          })()}
+          availableProcesses={(() => {
+            const s = String(propostaSelecionada?.status ?? "").toUpperCase();
+            const aprovado = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","ASSINADA"].includes(s);
+            const encerrado = ["CANCELADA","RECUSADA","REPROVADA","VENCIDA"].includes(s);
+            const semSelecao = !propostaSelecionada;
+            const reasonAprovado =
+              s === "ASSINADA" ? "Proposta já assinada."
+              : s === "CONTRATADA" ? "Proposta já contratada."
+              : s === "CONTRATO_PENDENTE" ? "Proposta já enviada para contrato."
+              : "Proposta já aprovada — gere uma nova versão para alterar.";
+            const reasonEncerrado =
+              s === "CANCELADA" ? "Proposta cancelada — reabra antes."
+              : s === "VENCIDA" ? "Proposta vencida — reabra ou gere nova."
+              : "Proposta encerrada — reabra antes.";
+            return [
+              { key: "aprovar_proposta",     label: "Aprovar Proposta",          group: "Proposta",
+                disabled: semSelecao || aprovado || encerrado,
+                disabledReason: semSelecao ? "Selecione uma proposta." : aprovado ? reasonAprovado : encerrado ? reasonEncerrado : undefined },
+              { key: "reprovar_proposta",    label: "Reprovar Proposta",         group: "Proposta", destructive: true, requerMotivo: true,
+                disabled: semSelecao || aprovado || encerrado,
+                disabledReason: semSelecao ? "Selecione uma proposta." : aprovado ? reasonAprovado : encerrado ? reasonEncerrado : undefined },
+              { key: "editar_cliente",       label: "Corrigir Dados Cadastrais", group: "Proposta", requerMotivo: true,
+                disabled: semSelecao || aprovado,
+                disabledReason: semSelecao ? "Selecione uma proposta." : aprovado ? reasonAprovado : undefined },
+              // ▼ Nova Proposta — sempre disponível com seleção (única via de "edição" pós-aprovação)
+              { key: "gerar_nova_proposta",  label: "Gerar Nova Proposta",       group: "Nova Proposta",
+                disabled: semSelecao,
+                disabledReason: semSelecao ? "Selecione uma proposta." : undefined },
+              // ▼ Encerramento
+              { key: "cancelar_proposta",    label: "Cancelar Proposta",         group: "Encerramento", destructive: true, requerMotivo: true,
+                disabled: semSelecao || aprovado || s === "CANCELADA",
+                disabledReason: semSelecao ? "Selecione uma proposta." : s === "CANCELADA" ? "Proposta já cancelada." : aprovado ? reasonAprovado : undefined },
+              { key: "reabrir_proposta",     label: "Reabrir Proposta",          group: "Encerramento", requerMotivo: true,
+                disabled: semSelecao || !encerrado,
+                disabledReason: semSelecao ? "Selecione uma proposta." : !encerrado ? "Apenas propostas canceladas, recusadas ou vencidas podem ser reabertas." : undefined },
+            ];
+          })()}
           onProcess={async (key) => {
             // Confirmação padronizada: ação + destino + novo status.
             const confirmarProcesso = (titulo: string, destino: string, novoStatus: string) =>

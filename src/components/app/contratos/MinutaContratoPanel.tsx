@@ -240,20 +240,14 @@ export function MinutaContratoPanel({
     setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
   }, [enderecoCompleto]);
 
-  // Sincroniza cláusulas auto-geradas de FINANCIAMENTO (2.3 e 2.4) sempre que
-  // a forma de pagamento mudar. Cláusulas manuais ficam intactas.
-  useEffect(() => {
-    const hasFin = temFinanciamento(state.forma_pagamento_config);
-    setState((s) => {
-      const atuais = s.clausulas ?? [];
-      const proximas = sincronizarClausulasFinanciamento(atuais, hasFin);
-      // Evita loop: só atualiza se realmente mudou a lista de IDs/textos.
-      const same =
-        atuais.length === proximas.length &&
-        atuais.every((c, i) => c.id === proximas[i].id && c.texto === proximas[i].texto);
-      return same ? s : { ...s, clausulas: proximas };
-    });
-  }, [state.forma_pagamento_config]);
+  // Cláusulas auto-geradas de FINANCIAMENTO (renegociação / liberação dos recursos)
+  // são DERIVADAS — recomputadas a cada render conforme a forma de pagamento atual,
+  // garantindo que apareçam imediatamente na prévia e sejam persistidas na geração.
+  const hasFinanciamento = temFinanciamento(state.forma_pagamento_config);
+  const clausulasEfetivas = useMemo(
+    () => sincronizarClausulasFinanciamento(state.clausulas ?? [], hasFinanciamento),
+    [state.clausulas, hasFinanciamento],
+  );
 
 
   /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */
@@ -348,6 +342,7 @@ export function MinutaContratoPanel({
       const novoDados = {
         ...(contrato.dados ?? {}),
         ...state,
+        clausulas: clausulasEfetivas,
         editado_em: new Date().toISOString(),
       };
       const fp = state.forma_pagamento_config;
@@ -444,7 +439,7 @@ export function MinutaContratoPanel({
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="clausulas">Cláusulas ({(state.clausulas ?? []).filter((c) => !c.oculta).length})</TabsTrigger>
+          <TabsTrigger value="clausulas">Cláusulas ({clausulasEfetivas.filter((c) => !c.oculta).length})</TabsTrigger>
           <TabsTrigger value="previa">Prévia</TabsTrigger>
         </TabsList>
 
@@ -529,7 +524,7 @@ export function MinutaContratoPanel({
         <TabsContent value="previa" className="mt-3">
           <PreviaContrato
             variaveis={variaveis}
-            clausulas={state.clausulas ?? []}
+            clausulas={clausulasEfetivas}
             varsFaltando={varsFaltando}
             podeGerar={erros.length === 0 && podeGerar}
             onGerar={() => setGerarOpen(true)}
@@ -923,50 +918,57 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
 
 
       {/* ============================================================== */}
-      {/* Formas de pagamento adicionais — mesmo padrão Tipo/Momento/Valor */}
+      {/* Formas de pagamento adicionais — UI compacta, sem ruído visual */}
       {/* ============================================================== */}
       {!nested && value && (
-        <div className="space-y-2">
-          {(value.formas_extras ?? []).map((extra, idx) => (
-            <div key={idx} className="rounded-md border border-sky-300/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-sky-700 dark:text-sky-300">
-                  Forma de pagamento adicional #{idx + 2}
-                </span>
-                <Button
-                  size="sm" variant="ghost" disabled={disabled}
-                  onClick={() => {
-                    const arr = [...(value.formas_extras ?? [])];
-                    arr.splice(idx, 1);
-                    onChange({ ...value, formas_extras: arr });
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </Button>
-              </div>
-              <FormaPagamentoEditor
-                valorTotal={valorTotal}
-                disabled={disabled}
-                value={extra}
-                nested
-                onChange={(v) => {
-                  if (!v) return;
-                  const arr = [...(value.formas_extras ?? [])];
-                  arr[idx] = v;
-                  onChange({ ...value, formas_extras: arr });
-                }}
-              />
+        <div className="space-y-2 pt-1">
+          {(value.formas_extras ?? []).length > 0 && (
+            <div className="space-y-2 border-l-2 border-muted pl-3">
+              {(value.formas_extras ?? []).map((extra, idx) => (
+                <div key={idx} className="rounded-md border bg-muted/30 p-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                      Forma adicional {idx + 2} — {FP_LABEL[extra.tipo] ?? extra.tipo}
+                    </span>
+                    <Button
+                      size="sm" variant="ghost" disabled={disabled}
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        const arr = [...(value.formas_extras ?? [])];
+                        arr.splice(idx, 1);
+                        onChange({ ...value, formas_extras: arr });
+                      }}
+                      title="Remover esta forma"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <FormaPagamentoEditor
+                    valorTotal={valorTotal}
+                    disabled={disabled}
+                    value={extra}
+                    nested
+                    onChange={(v) => {
+                      if (!v) return;
+                      const arr = [...(value.formas_extras ?? [])];
+                      arr[idx] = v;
+                      onChange({ ...value, formas_extras: arr });
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          )}
           <Button
-            size="sm" variant="outline" disabled={disabled}
+            size="sm" variant="ghost" disabled={disabled}
+            className="h-7 text-xs text-primary hover:text-primary"
             onClick={() => {
               const arr = [...(value.formas_extras ?? []), formaPagamentoVazia("PIX")];
               onChange({ ...value, formas_extras: arr });
             }}
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
-            Adicionar nova forma de pagamento
+            Adicionar outra forma de pagamento
           </Button>
         </div>
       )}

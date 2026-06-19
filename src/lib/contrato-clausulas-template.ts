@@ -987,11 +987,13 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
   }
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
     const pc = fp.pix_complemento;
-    desc += ` | ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
+    desc += `; ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
   }
-  for (const extra of (fp.formas_extras ?? [])) {
-    const extraDesc = descricaoFormaPagamento({ ...extra, formas_extras: [], pix_complemento: null });
-    if (extraDesc && extraDesc !== "—") desc += ` | ${extraDesc}`;
+  const extras = (fp.formas_extras ?? [])
+    .map((extra) => descricaoFormaPagamento({ ...extra, formas_extras: [], pix_complemento: null }))
+    .filter((d) => d && d !== "—");
+  if (extras.length) {
+    desc += (desc && desc !== "—" ? "; " : "") + extras.join("; ");
   }
   return desc;
 }

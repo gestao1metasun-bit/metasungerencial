@@ -884,7 +884,11 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
       desc = (fp.misto?.componentes ?? []).map((c) => `${FP_LABEL[c.tipo]} ${brl(c.valor)}`).join(" + ") || "—"; break;
   }
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
-    desc += ` Acrescido de PIX complementar de ${brl(fp.pix_complemento.valor)} — ${PIX_COMPLEMENTO_LABEL[fp.pix_complemento.momento]}.`;
+    const pc = fp.pix_complemento;
+    const momentoTxt = pc.momento === "DATA_ESPECIFICA"
+      ? (pc.data ? `Em ${pc.data}` : PIX_COMPLEMENTO_LABEL[pc.momento])
+      : PIX_COMPLEMENTO_LABEL[pc.momento];
+    desc += ` | PIX – ${momentoTxt.toUpperCase()} – ${brl(pc.valor)}.`;
   }
   return desc;
 }

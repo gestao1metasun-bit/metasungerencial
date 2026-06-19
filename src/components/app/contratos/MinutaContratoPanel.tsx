@@ -392,13 +392,21 @@ export function MinutaContratoPanel({
     const tipoPJ = state.contratante_tipo_pessoa === "PJ";
     const docDig = (state.contratante_doc ?? "").replace(/\D/g, "");
     if (!state.contratante_nome?.trim()) arr.push(tipoPJ ? "razão social" : "nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push(tipoPJ ? "CNPJ" : "CPF");
-    else if (tipoPJ && docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
-    else if (!tipoPJ && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    if (tipoPJ) {
+      if (!state.contratante_doc?.trim()) arr.push("CNPJ");
+      else if (docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
+    } else {
+      // PF: aceita CPF OU RG OU CNH/OAB (campo doc extra). Basta 1 dos 4.
+      const temCpf = !!state.contratante_doc?.trim();
+      const temRg = !!state.contratante_rg?.trim();
+      const temExtra = !!state.contratante_doc_extra?.trim();
+      if (!temCpf && !temRg && !temExtra) arr.push("documento do contratante (CPF, RG, CNH ou OAB)");
+      else if (temCpf && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    }
     if (!state.contratante_logradouro?.trim() || !state.contratante_numero?.trim()
         || !state.contratante_bairro?.trim() || !state.contratante_cidade?.trim()
         || !state.contratante_uf?.trim()) arr.push("endereço completo do contratante");
-    if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
+    // e-mail do contratante: opcional (regra de negócio 2026-06-19)
     if (tipoPJ) {
       const reprDoc = (state.repr_cpf ?? "").replace(/\D/g, "");
       if (!state.repr_nome?.trim()) arr.push("nome completo do representante");

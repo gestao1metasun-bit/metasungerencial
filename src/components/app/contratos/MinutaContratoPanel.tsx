@@ -320,7 +320,15 @@ export function MinutaContratoPanel({
         ids.push(inv?.modelo ?? e.inversorId);
       }
     }
-    const numeros = fmtInversoresListaLocal(ids);
+    const counts = new Map<string, number>();
+    for (const id of ids) {
+      const n = fmtInversorNumero(id);
+      if (!n) continue;
+      counts.set(n, (counts.get(n) ?? 0) + 1);
+    }
+    const numeros = counts.size === 0
+      ? ""
+      : [...counts.entries()].map(([n, q]) => (q > 1 ? `${q}x ${n}` : n)).join(" + ");
     const marca = propostaLS?.inversorMarca?.trim();
     if (!numeros || numeros === "—") return proposta?.inversor ?? "";
     return marca ? `${marca} ${numeros}` : numeros;

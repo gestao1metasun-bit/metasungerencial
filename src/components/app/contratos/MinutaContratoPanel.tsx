@@ -1584,8 +1584,8 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           overflow: "hidden",
         }}
       >
-        {/* Cabeçalho oficial Meta Sun */}
-        <div className="text-center" style={{ marginBottom: "8mm" }}>
+        {/* Cabeçalho oficial Meta Sun (apenas na tela; na impressão, o header fixo se repete em todas as folhas) */}
+        <div className="text-center screen-only" style={{ marginBottom: "8mm" }}>
           <img src={metaSunLogo.url} alt="Meta Sun Energia Solar"
             style={{ display: "block", margin: "0 auto", height: "72px", width: "auto" }} />
           <p style={{

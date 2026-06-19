@@ -346,10 +346,23 @@ export function MinutaContratoPanel({
   // Validações p/ Gerar
   const erros = useMemo(() => {
     const arr: string[] = [];
-    if (!state.contratante_nome?.trim()) arr.push("nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push("documento (CPF/CNPJ)");
-    if (!state.contratante_endereco?.trim()) arr.push("endereço contratual");
+    const tipoPJ = state.contratante_tipo_pessoa === "PJ";
+    const docDig = (state.contratante_doc ?? "").replace(/\D/g, "");
+    if (!state.contratante_nome?.trim()) arr.push(tipoPJ ? "razão social" : "nome do contratante");
+    if (!state.contratante_doc?.trim()) arr.push(tipoPJ ? "CNPJ" : "CPF");
+    else if (tipoPJ && docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
+    else if (!tipoPJ && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    if (!state.contratante_logradouro?.trim() || !state.contratante_numero?.trim()
+        || !state.contratante_bairro?.trim() || !state.contratante_cidade?.trim()
+        || !state.contratante_uf?.trim()) arr.push("endereço completo do contratante");
     if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
+    if (tipoPJ) {
+      const reprDoc = (state.repr_cpf ?? "").replace(/\D/g, "");
+      if (!state.repr_nome?.trim()) arr.push("nome completo do representante");
+      if (!state.repr_cpf?.trim()) arr.push("CPF do representante");
+      else if (reprDoc.length !== 11) arr.push("CPF do representante inválido");
+      if (!state.repr_telefone?.trim()) arr.push("telefone do representante");
+    }
     if (!state.forma_pagamento_config) arr.push("forma de pagamento");
     else if (!fpFecha) arr.push(`forma de pagamento não fecha (${brl(somaFP)} ≠ ${brl(valorTotal)})`);
     if (valorTotal <= 0) arr.push("valor total > 0");

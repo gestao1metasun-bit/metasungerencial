@@ -972,10 +972,11 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
 export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoConfig {
   const base: FormaPagamentoConfig = { tipo, pix_complemento: null };
   switch (tipo) {
+    case "DINHEIRO": base.dinheiro = { valor: 0, observacao: "", momento: "ASSINATURA" }; break;
     case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "", momento: "ASSINATURA" }; break;
     case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "", momento: "ASSINATURA" }; break;
     case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "", momento: "ASSINATURA" }; break;
-    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_PROJETO" }; break;
+    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_FINANCIAMENTO" }; break;
     case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "", momento: "ASSINATURA" }; break;
     case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "", momento: "ASSINATURA" }; break;
     case "MISTO": base.misto = { componentes: [{ tipo: "PIX", momento: "ASSINATURA", valor: 0, parcelas: 1, obs: "" }] }; break;

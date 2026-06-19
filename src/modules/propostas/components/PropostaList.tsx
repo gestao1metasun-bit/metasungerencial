@@ -48,6 +48,7 @@ import { findClienteByDoc } from "@/lib/clientes-store";
 import { supabase } from "@/integrations/supabase/client";
 
 const UUID_RE_LOCAL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const aprovacoesEmAndamento = new Set<string>();
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
@@ -169,6 +170,29 @@ export function propostaAprovavelDoLead(l: { propostas: PropostaFV[] }): Propost
 export function irParaContratos() {
   if (typeof window === "undefined") return;
   window.location.assign("/comercial/contratos");
+}
+
+function patchVinculoLeadSupabaseLocal(
+  p: PropostaFV,
+  leadUuid: string | null,
+  clienteIdSb: string | null,
+  contratoGeradoId?: string,
+) {
+  if (!leadUuid && !clienteIdSb && !contratoGeradoId) return;
+  const antigoLeadId = p.leadId;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const lista = usePropostasSync();
+  writeLS("ms.fv.propostas.v1", lista.map((item) => {
+    const mesmoLead = item.id === p.id || (!!antigoLeadId && item.leadId === antigoLeadId);
+    if (!mesmoLead) return item;
+    return {
+      ...item,
+      leadId: leadUuid ?? item.leadId,
+      clienteId: clienteIdSb ?? item.clienteId,
+      contratoGeradoId: contratoGeradoId ?? item.contratoGeradoId,
+      atualizadoEm: hoje,
+    };
+  }));
 }
 
 

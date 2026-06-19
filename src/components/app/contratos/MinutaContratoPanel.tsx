@@ -1602,12 +1602,13 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           </p>
           <p style={{
             fontFamily: '"Times New Roman", Times, serif',
-            fontSize: "12pt",
+            fontSize: "11pt",
             fontWeight: "bold",
             textDecoration: "underline",
             textAlign: "center",
             marginBottom: "4mm",
             letterSpacing: "0.3px",
+            whiteSpace: "nowrap",
           }}>
             AQUISIÇÃO E INSTALAÇÃO DO SISTEMA DE ENERGIA FOTOVOLTAICA ON – GRID
           </p>

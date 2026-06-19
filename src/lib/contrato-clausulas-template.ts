@@ -857,6 +857,7 @@ export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
 
 function somaBase(fp: FormaPagamentoConfig): number {
   switch (fp.tipo) {
+    case "DINHEIRO": return Number(fp.dinheiro?.valor) || 0;
     case "PIX": return Number(fp.pix?.valor) || 0;
     case "BOLETO": return Number(fp.boleto?.valor) || 0;
     case "CARTAO": return Number(fp.cartao?.valor) || 0;

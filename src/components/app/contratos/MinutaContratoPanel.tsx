@@ -342,6 +342,7 @@ export function MinutaContratoPanel({
       const novoDados = {
         ...(contrato.dados ?? {}),
         ...state,
+        clausulas: clausulasEfetivas,
         editado_em: new Date().toISOString(),
       };
       const fp = state.forma_pagamento_config;

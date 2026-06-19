@@ -903,99 +903,110 @@ function momentoTxt(m: MomentoPagamento | undefined, data?: string): string {
   return MOMENTO_LABEL[m];
 }
 
-/** "Tipo – Momento – Valor [parcelado em Nx de R$..]" */
-function linhaPagamento(
-  tipoLabel: string,
+/**
+ * Frase narrativa por pagamento, no padrão:
+ * "R$ X em <modalidade>, <momento>[, parcelado em Nx de R$Y][, <extra>]"
+ * Usada para compor alíneas a), b), c) na cláusula de forma de pagamento.
+ */
+function frasePagamento(
+  tipo: FormaPagamentoTipo,
   momento: MomentoPagamento | undefined,
   data: string | undefined,
   valor: number,
   parcelas?: number,
   extra?: string,
 ): string {
-  const partes: string[] = [tipoLabel];
+  const modalidade: Record<FormaPagamentoTipo, string> = {
+    DINHEIRO: "em dinheiro",
+    PIX: "via PIX",
+    BOLETO: "em boleto bancário",
+    CARTAO: "no cartão de crédito",
+    CARTAO_DEBITO: "no cartão de débito",
+    CHEQUE: "em cheque",
+    FINANCIAMENTO: "via financiamento bancário",
+    ENTRADA_PARCELAS: "como entrada + parcelas",
+    PERMUTA: "em permuta",
+    MISTO: "de forma mista",
+  };
+  const partes: string[] = [`${brlFmt(valor)} ${modalidade[tipo]}`];
   const mt = momentoTxt(momento, data);
-  if (mt) partes.push(mt);
-  partes.push(brlFmt(valor));
-  let s = partes.join(" – ");
+  if (mt) partes.push(mt.toLowerCase());
   if (parcelas && parcelas > 1) {
     const vp = valor / parcelas;
-    s += ` (parcelado em ${parcelas}x de ${brlFmt(vp)})`;
+    partes.push(`parcelado em ${parcelas}x de ${brlFmt(vp)}`);
   }
-  if (extra) s += ` — ${extra}`;
-  return s;
+  if (extra) partes.push(extra);
+  return partes.join(", ");
 }
 
-export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefined): string {
-  if (!fp) return "—";
-  let desc = "";
-  switch (fp.tipo) {
-    case "DINHEIRO": {
-      const d = fp.dinheiro!;
-      desc = linhaPagamento("Dinheiro", d.momento, d.data, d.valor ?? 0, undefined, d.observacao || undefined);
-      break;
-    }
-    case "PIX": {
-      const p = fp.pix!;
-      desc = linhaPagamento("PIX", p.momento, p.data, p.valor ?? 0);
-      break;
-    }
-    case "BOLETO": {
-      const b = fp.boleto!;
-      desc = linhaPagamento("Boleto", b.momento, b.data || b.primeiro_venc, b.valor ?? 0, b.parcelas);
-      break;
-    }
-    case "CARTAO": {
-      const c = fp.cartao!;
-      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "juros por conta do cliente" : "juros por conta da Meta (sem juros ao cliente)"}`;
-      desc = linhaPagamento("Cartão de crédito", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
-      break;
-    }
-    case "CARTAO_DEBITO": {
-      const c = fp.cartao_debito!;
-      const extra = c.bandeira || undefined;
-      desc = linhaPagamento("Cartão de débito", c.momento, c.data, c.valor ?? 0, undefined, extra);
-      break;
-    }
-    case "CHEQUE": {
-      const c = fp.cheque!;
-      const extra = `${c.banco ? c.banco : "banco a definir"}${c.observacao ? `, ${c.observacao}` : ""}`;
-      desc = linhaPagamento("Cheque", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
-      break;
-    }
+type ItemPagamento = {
+  tipo: FormaPagamentoTipo;
+  momento?: MomentoPagamento;
+  data?: string;
+  valor: number;
+  parcelas?: number;
+  extra?: string;
+};
 
+/** Achata a FormaPagamentoConfig (misto, pix_complemento, formas_extras) em itens individuais. */
+function coletarItensPagamento(fp: FormaPagamentoConfig | null | undefined): ItemPagamento[] {
+  if (!fp) return [];
+  const itens: ItemPagamento[] = [];
+  const push = (i: ItemPagamento) => { if ((i.valor ?? 0) > 0) itens.push(i); };
+
+  switch (fp.tipo) {
+    case "DINHEIRO": { const d = fp.dinheiro!; push({ tipo: "DINHEIRO", momento: d.momento, data: d.data, valor: d.valor ?? 0, extra: d.observacao || undefined }); break; }
+    case "PIX": { const p = fp.pix!; push({ tipo: "PIX", momento: p.momento, data: p.data, valor: p.valor ?? 0 }); break; }
+    case "BOLETO": { const b = fp.boleto!; push({ tipo: "BOLETO", momento: b.momento, data: b.data || b.primeiro_venc, valor: b.valor ?? 0, parcelas: b.parcelas }); break; }
+    case "CARTAO": { const c = fp.cartao!; const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "com juros por conta do cliente" : "sem juros ao cliente (juros por conta da Meta)"}`; push({ tipo: "CARTAO", momento: c.momento, data: c.data, valor: c.valor ?? 0, parcelas: c.parcelas, extra }); break; }
+    case "CARTAO_DEBITO": { const c = fp.cartao_debito!; push({ tipo: "CARTAO_DEBITO", momento: c.momento, data: c.data, valor: c.valor ?? 0, extra: c.bandeira || undefined }); break; }
+    case "CHEQUE": { const c = fp.cheque!; const extra = `${c.banco ? c.banco : "banco a definir"}${c.observacao ? `, ${c.observacao}` : ""}`; push({ tipo: "CHEQUE", momento: c.momento, data: c.data, valor: c.valor ?? 0, parcelas: c.parcelas, extra }); break; }
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
-      const extra = `${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses${f.entrada > 0 ? `, entrada ${brlFmt(f.entrada)}` : ""}`;
-      desc = linhaPagamento("Financiamento", f.momento, f.data, f.valor ?? 0, undefined, extra);
+      if ((f.entrada ?? 0) > 0) push({ tipo: "PIX", momento: "ASSINATURA", valor: f.entrada, extra: "entrada do financiamento" });
+      push({ tipo: "FINANCIAMENTO", momento: f.momento, data: f.data, valor: f.valor ?? 0, extra: `junto ao ${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses` });
       break;
     }
     case "ENTRADA_PARCELAS": {
       const e = fp.entrada_parcelas!;
-      desc = `${linhaPagamento("Entrada", e.momento, e.entrada_data, e.entrada ?? 0)} + ${linhaPagamento("Saldo", undefined, e.primeiro_venc, e.saldo ?? 0, e.parcelas)}`;
+      push({ tipo: "PIX", momento: e.momento, data: e.entrada_data, valor: e.entrada ?? 0, extra: "entrada" });
+      push({ tipo: "BOLETO", data: e.primeiro_venc, valor: e.saldo ?? 0, parcelas: e.parcelas, extra: "saldo" });
       break;
     }
-    case "PERMUTA": {
-      const p = fp.permuta!;
-      desc = linhaPagamento("Permuta", p.momento, p.data, p.valor ?? 0, undefined, p.descricao || "descrição da permuta a definir");
-      break;
-    }
+    case "PERMUTA": { const p = fp.permuta!; push({ tipo: "PERMUTA", momento: p.momento, data: p.data, valor: p.valor ?? 0, extra: p.descricao || "descrição da permuta a definir" }); break; }
     case "MISTO":
-      desc = (fp.misto?.componentes ?? [])
-        .map((c) => linhaPagamento(FP_LABEL[c.tipo], c.momento, c.data, c.valor ?? 0, c.parcelas, c.obs))
-        .join("; ") || "—";
+      for (const c of (fp.misto?.componentes ?? [])) {
+        push({ tipo: c.tipo, momento: c.momento, data: c.data, valor: c.valor ?? 0, parcelas: c.parcelas, extra: c.obs || undefined });
+      }
       break;
   }
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
     const pc = fp.pix_complemento;
-    desc += `; ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
+    push({ tipo: "PIX", momento: pc.momento, data: pc.data, valor: pc.valor ?? 0 });
   }
-  const extras = (fp.formas_extras ?? [])
-    .map((extra) => descricaoFormaPagamento({ ...extra, formas_extras: [], pix_complemento: null }))
-    .filter((d) => d && d !== "—");
-  if (extras.length) {
-    desc += (desc && desc !== "—" ? "; " : "") + extras.join("; ");
+  for (const extra of (fp.formas_extras ?? [])) {
+    itens.push(...coletarItensPagamento({ ...extra, formas_extras: [], pix_complemento: null }));
   }
-  return desc;
+  return itens;
+}
+
+const ALINEAS = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"];
+
+export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefined): string {
+  if (!fp) return "—";
+  const itens = coletarItensPagamento(fp);
+  if (itens.length === 0) return "—";
+  if (itens.length === 1) {
+    const i = itens[0];
+    return frasePagamento(i.tipo, i.momento, i.data, i.valor, i.parcelas, i.extra);
+  }
+  const linhas = itens.map((i, idx) => {
+    const letra = ALINEAS[idx] ?? `${idx + 1}`;
+    const frase = frasePagamento(i.tipo, i.momento, i.data, i.valor, i.parcelas, i.extra);
+    const term = idx === itens.length - 1 ? "." : ";";
+    return `${letra}) ${frase}${term}`;
+  });
+  return "\n" + linhas.join("\n");
 }
 
 export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoConfig {

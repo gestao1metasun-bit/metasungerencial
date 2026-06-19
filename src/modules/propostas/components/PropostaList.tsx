@@ -339,7 +339,7 @@ export function AprovarPropostaDialog({
     } finally { setBuscandoCep(false); }
   }
 
-  function aprovar() {
+  async function aprovar() {
     if (!nome.trim()) { toast.error("Informe o nome do cliente."); return; }
     // CPF/CNPJ opcional — só valida se foi preenchido.
     if (doc.trim() && !isDocValido(doc, tipoPessoa)) {

@@ -514,7 +514,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
             </Select>
           </div>
           <div className="sm:col-span-4">
-            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-destructive">*</span></Label>
+            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Input value={doc} onChange={(e) => onDocChange(e.target.value)} placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} />
             {docInvalido && <p className="mt-1 text-[11px] text-destructive">Dígitos verificadores inválidos.</p>}
             {leadExistenteNumero && (

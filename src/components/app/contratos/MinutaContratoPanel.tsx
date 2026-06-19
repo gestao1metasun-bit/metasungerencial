@@ -712,8 +712,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
       {tipo === "PIX" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.pix?.valor} on={(v) => patch("pix", { valor: v })} disabled={disabled} />
-          <DateField label="Data prevista" v={value!.pix?.data} on={(v) => patch("pix", { data: v })} disabled={disabled} />
-          <Field label="Chave/observação" v={value!.pix?.chave} on={(v) => patch("pix", { chave: v })} disabled={disabled} />
+          <Field label="Chave/observação" v={value!.pix?.chave} on={(v) => patch("pix", { chave: v })} disabled={disabled} className="md:col-span-2" />
           <div className="md:col-span-3">
             <Label className="text-xs">Condição textual para o contrato</Label>
             <Textarea rows={2} className="mt-1" disabled={disabled} value={value!.pix?.observacao ?? ""} onChange={(e) => patch("pix", { observacao: e.target.value })} />
@@ -732,9 +731,8 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
               <Label className="text-xs">Valor da parcela (calculado)</Label>
               <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />
             </div>
-            <DateField label="1º vencimento" v={b.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
-            <NumField label="Dia fixo de vencimento" v={b.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
-            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
+            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+
           </div>
         );
       })()}
@@ -782,10 +780,8 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
       {tipo === "ENTRADA_PARCELAS" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor de entrada" v={value!.entrada_parcelas?.entrada} on={(v) => patch("entrada_parcelas", { entrada: v })} disabled={disabled} />
-          <DateField label="Data da entrada" v={value!.entrada_parcelas?.entrada_data} on={(v) => patch("entrada_parcelas", { entrada_data: v })} disabled={disabled} />
           <NumField label="Saldo parcelado" v={value!.entrada_parcelas?.saldo} on={(v) => patch("entrada_parcelas", { saldo: v })} disabled={disabled} />
           <NumField label="Qtde parcelas" v={value!.entrada_parcelas?.parcelas} on={(v) => patch("entrada_parcelas", { parcelas: v })} disabled={disabled} />
-          <DateField label="1º vencimento" v={value!.entrada_parcelas?.primeiro_venc} on={(v) => patch("entrada_parcelas", { primeiro_venc: v })} disabled={disabled} />
         </div>
       )}
 

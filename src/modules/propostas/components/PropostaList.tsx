@@ -416,11 +416,6 @@ export async function aprovarProposta(p: PropostaFV) {
         })
         .eq("id", propostaId);
       if (eUpd) throw eUpd;
-      const { error: e2 } = await supabase.rpc(
-        "rpc_proposta_aprovar" as never,
-        { p_proposta_id: propostaId, p_observacao: null } as never,
-      );
-      if (e2) throw e2;
       const { error: e3 } = await supabase.rpc(
         "rpc_proposta_enviar_para_contratos" as never,
         { p_proposta_id: propostaId } as never,

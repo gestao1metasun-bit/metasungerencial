@@ -731,9 +731,8 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
               <Label className="text-xs">Valor da parcela (calculado)</Label>
               <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />
             </div>
-            <DateField label="1º vencimento" v={b.primeiro_venc} on={(v) => patch("boleto", { primeiro_venc: v })} disabled={disabled} />
-            <NumField label="Dia fixo de vencimento" v={b.dia_fixo} on={(v) => patch("boleto", { dia_fixo: v })} disabled={disabled} />
-            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} />
+            <Field label="Observação" v={b.observacao} on={(v) => patch("boleto", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+
           </div>
         );
       })()}

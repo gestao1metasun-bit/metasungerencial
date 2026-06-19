@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Loader2, ShieldAlert, FileSignature, FileText, Users, Ban, ExternalLink,
-  Zap, DollarSign, Layers, History, ClipboardList, Plus, DollarSign as DollarSignIcon, HardHat,
+  Zap, DollarSign, Layers, History, ClipboardList, Plus, DollarSign as DollarSignIcon, HardHat, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";

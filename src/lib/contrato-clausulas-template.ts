@@ -863,7 +863,7 @@ export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasi
 
 /** Tipos que ACEITAM um PIX complementar (entrada/gatilho). */
 export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
-  "PIX", "BOLETO", "CARTAO", "ENTRADA_PARCELAS", "MISTO",
+  "PIX", "BOLETO", "CARTAO", "CARTAO_DEBITO", "CHEQUE", "ENTRADA_PARCELAS", "MISTO",
 ];
 
 function somaBase(fp: FormaPagamentoConfig): number {
@@ -872,6 +872,8 @@ function somaBase(fp: FormaPagamentoConfig): number {
     case "PIX": return Number(fp.pix?.valor) || 0;
     case "BOLETO": return Number(fp.boleto?.valor) || 0;
     case "CARTAO": return Number(fp.cartao?.valor) || 0;
+    case "CARTAO_DEBITO": return Number(fp.cartao_debito?.valor) || 0;
+    case "CHEQUE": return Number(fp.cheque?.valor) || 0;
     case "FINANCIAMENTO": return (Number(fp.financiamento?.valor) || 0) + (Number(fp.financiamento?.entrada) || 0);
     case "ENTRADA_PARCELAS": return (Number(fp.entrada_parcelas?.entrada) || 0) + (Number(fp.entrada_parcelas?.saldo) || 0);
     case "PERMUTA": return Number(fp.permuta?.valor) || 0;
@@ -879,6 +881,7 @@ function somaBase(fp: FormaPagamentoConfig): number {
   }
   return 0;
 }
+
 
 export function somaFormaPagamento(fp: FormaPagamentoConfig | null | undefined): number {
   if (!fp) return 0;

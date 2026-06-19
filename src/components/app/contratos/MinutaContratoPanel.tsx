@@ -40,6 +40,7 @@ import {
   clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
+  temFinanciamento, sincronizarClausulasFinanciamento,
   FP_LABEL, FP_TIPOS_SELECIONAVEIS, BANCOS_FINANCIAMENTO,
   MOMENTO_LABEL, MOMENTO_OPCOES,
   renumerar, inserirItem, removerItem, alterarTextoItem,
@@ -47,6 +48,7 @@ import {
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
   type FormaPagamentoTipo, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
+
 
 type MinutaContrato = {
   id: string;

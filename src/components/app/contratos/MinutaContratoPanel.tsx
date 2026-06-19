@@ -497,18 +497,12 @@ export function MinutaContratoPanel({
             value={state.forma_pagamento_config}
             onChange={(v) => upd("forma_pagamento_config", v)}
           />
-          <div className="mt-3 flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <span>Soma das formas: <strong className="tabular-nums">{brl(somaFP)}</strong></span>
-            <span>Valor do contrato: <strong className="tabular-nums">{brl(valorTotal)}</strong></span>
-            {fpFecha
-              ? <Badge className="bg-emerald-600">Fecha</Badge>
-              : <Badge variant="destructive">Diferença: {brl(somaFP - valorTotal)}</Badge>}
-          </div>
           {!fpFecha && state.forma_pagamento_config && (
             <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
               Forma de pagamento não fecha com o valor total do contrato.
             </div>
           )}
+
         </TabsContent>
 
         {/* CLÁUSULAS */}

@@ -444,7 +444,11 @@ export function MinutaContratoPanel({
                 value={state.contratante_cep ?? ""}
                 disabled={!podeEditar}
                 placeholder="00000-000"
-                onChange={(e) => upd("contratante_cep", e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  upd("contratante_cep", raw);
+                  if (raw.replace(/\D/g, "").length === 8) void aplicarCep(raw);
+                }}
                 onBlur={(e) => void aplicarCep(e.target.value)}
               />
             </div>

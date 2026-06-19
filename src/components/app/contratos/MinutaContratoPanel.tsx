@@ -627,6 +627,17 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
         </Select>
       </div>
 
+      {tipo && tipo !== "MISTO" && (
+        <MomentoBlock
+          disabled={disabled}
+          momento={getMomento(value!, tipo)}
+          data={getMomentoData(value!, tipo)}
+          onMomento={(m) => setMomento(value!, tipo, m, onChange, patch)}
+          onData={(d) => setMomentoData(value!, tipo, d, onChange, patch)}
+        />
+      )}
+
+
       {tipo === "PIX" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.pix?.valor} on={(v) => patch("pix", { valor: v })} disabled={disabled} />

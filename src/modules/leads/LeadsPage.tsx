@@ -472,7 +472,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
         <DialogHeader>
           <DialogTitle>Novo Lead</DialogTitle>
           <DialogDescription>
-            Campos com <span className="text-destructive">*</span> são obrigatórios. O CPF/CNPJ é a chave do cliente — não permite duplicidade.
+            Campos com <span className="text-destructive">*</span> são obrigatórios. CPF/CNPJ é opcional aqui — o cadastro completo é exigido ao gerar o contrato.
           </DialogDescription>
         </DialogHeader>
 

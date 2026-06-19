@@ -1015,6 +1015,81 @@ export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoCon
 }
 
 // =====================================================================
+// Auto-cláusulas de Financiamento (geradas/sincronizadas automaticamente)
+// =====================================================================
+
+/** Retorna true se a forma de pagamento contém qualquer financiamento (direto, em "misto" ou em "formas_extras"). */
+export function temFinanciamento(fp: FormaPagamentoConfig | null | undefined): boolean {
+  if (!fp) return false;
+  if (fp.tipo === "FINANCIAMENTO") return true;
+  if (fp.tipo === "MISTO" && (fp.misto?.componentes ?? []).some((c) => c.tipo === "FINANCIAMENTO")) return true;
+  for (const e of (fp.formas_extras ?? [])) {
+    if (temFinanciamento(e)) return true;
+  }
+  return false;
+}
+
+const FIN_CLAUSULA_1 =
+  "A execução dos serviços objeto deste contrato fica condicionada à aprovação do financiamento. " +
+  "Na hipótese de não aprovação do crédito por motivos alheios à CONTRATADA, as partes poderão, de comum " +
+  "acordo, renegociar as condições de pagamento e demais cláusulas comerciais, mediante termo aditivo, " +
+  "ou, não havendo consenso, o presente contrato será rescindido sem qualquer ônus ou penalidade para " +
+  "ambas as partes, ressalvadas eventuais despesas já expressamente autorizadas e comprovadamente " +
+  "realizadas pela CONTRATADA.";
+
+const FIN_CLAUSULA_2 =
+  "Após a aprovação do financiamento e a efetiva liberação dos recursos pela instituição financeira, " +
+  "a CONTRATADA dará início aos procedimentos de fornecimento dos equipamentos, elaboração do projeto " +
+  "e execução dos serviços contratados.";
+
+/**
+ * Sincroniza as cláusulas auto-geradas de financiamento dentro do grupo "DO VALOR E
+ * CONDIÇÕES DE PAGAMENTO". Remove as existentes (marcadas auto_origem=FINANCIAMENTO) e,
+ * se `hasFin=true`, recria após os itens manuais. Mantém demais cláusulas intactas.
+ */
+export function sincronizarClausulasFinanciamento(
+  clausulas: Clausula[],
+  hasFin: boolean,
+): Clausula[] {
+  const semAuto = clausulas.filter((c) => c.auto_origem !== "FINANCIAMENTO");
+  if (!hasFin) return renumerar(semAuto);
+
+  const grupoVP = semAuto.find((c) => c.tipo === "GRUPO" && c.categoria === "VALOR_PAGAMENTO");
+  if (!grupoVP) return renumerar(semAuto);
+
+  const novos: Clausula[] = [
+    {
+      id: uid(),
+      ordem: 0,
+      tipo: "ITEM",
+      grupo: grupoVP.grupo,
+      titulo: "",
+      categoria: "VALOR_PAGAMENTO",
+      texto: FIN_CLAUSULA_1,
+      obrigatoria: true,
+      oculta: false,
+      revisada: true,
+      auto_origem: "FINANCIAMENTO",
+    },
+    {
+      id: uid(),
+      ordem: 0,
+      tipo: "ITEM",
+      grupo: grupoVP.grupo,
+      titulo: "",
+      categoria: "VALOR_PAGAMENTO",
+      texto: FIN_CLAUSULA_2,
+      obrigatoria: true,
+      oculta: false,
+      revisada: true,
+      auto_origem: "FINANCIAMENTO",
+    },
+  ];
+  return renumerar([...semAuto, ...novos]);
+}
+
+
+// =====================================================================
 // Número por extenso
 // =====================================================================
 const UNI = ["", "um","dois","três","quatro","cinco","seis","sete","oito","nove","dez","onze","doze","treze","catorze","quinze","dezesseis","dezessete","dezoito","dezenove"];

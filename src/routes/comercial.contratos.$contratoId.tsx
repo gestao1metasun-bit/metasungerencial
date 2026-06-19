@@ -245,49 +245,111 @@ function ContratoWorkspacePage() {
                 <Plus className="h-4 w-4 mr-1" /> Novo Aditivo
               </Button>
             )}
-            {!ehMinuta && !ehGerado && permCancelar.data === true && !cancelado && (
-              <Button size="sm" variant="destructive" onClick={() => setCancelOpen(true)}>
-                <Ban className="h-4 w-4 mr-1" /> Cancelar contrato
-              </Button>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Settings2 className="h-4 w-4 mr-1" /> Processos <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-xs">Processos do contrato</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {ehMinuta && (
+                  <DropdownMenuItem onSelect={() => setMinutaOpen(true)}>
+                    <Pencil className="h-3.5 w-3.5 mr-2 text-amber-600" />
+                    Editar minuta do contrato
+                  </DropdownMenuItem>
+                )}
+                {ehGerado && (
+                  <DropdownMenuItem onSelect={() => setGeradoOpen(true)}>
+                    <FileText className="h-3.5 w-3.5 mr-2 text-blue-600" />
+                    Ver contrato gerado
+                  </DropdownMenuItem>
+                )}
+                {!ehMinuta && !ehGerado && permCancelar.data === true && !cancelado && (
+                  <DropdownMenuItem onSelect={() => setCancelOpen(true)} className="text-destructive focus:text-destructive">
+                    <Ban className="h-3.5 w-3.5 mr-2" />
+                    Cancelar contrato
+                  </DropdownMenuItem>
+                )}
+                {ehMinuta && !cancelado && permCancelar.data === true && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setCancelOpen(true)} className="text-destructive focus:text-destructive">
+                      <Ban className="h-3.5 w-3.5 mr-2" />
+                      Cancelar contrato
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
 
-      {ehMinuta && (
-        <MinutaContratoPanel
-          contrato={{
-            id: c.id,
-            codigo: c.codigo,
-            status: c.status,
-            valor_total: Number(c.valor_total) || 0,
-            valor_entrada: (c as { valor_entrada?: number | null }).valor_entrada ?? null,
-            observacoes: (c as { observacoes?: string | null }).observacoes ?? null,
-            data_assinatura: (c as { data_assinatura?: string | null }).data_assinatura ?? null,
-            forma_pagamento: (c as { forma_pagamento?: string | null }).forma_pagamento ?? null,
-            possui_financiamento: !!(c as { possui_financiamento?: boolean }).possui_financiamento,
-            financiamento_banco: (c as { financiamento_banco?: string | null }).financiamento_banco ?? null,
-            financiamento_valor: (c as { financiamento_valor?: number | null }).financiamento_valor ?? null,
-            dados: (c.dados ?? null) as Record<string, unknown> | null,
-            potencia_kwp: c.potencia_kwp,
-            modulos_qtde: c.modulos_qtde,
-          }}
-          cliente={cliente.data ?? null}
-          proposta={(propostas.data ?? [])[0] ?? null}
-        />
-      )}
-
-      {ehGerado && (
-        <ContratoGeradoPanel
-          contratoId={c.id}
-          codigo={c.codigo}
-          dados={(c.dados ?? null) as Record<string, unknown> | null}
-        />
-      )}
-
       {ehAssinado && !cancelado && (
         <ContratoAssinadoActions />
       )}
+
+      <Sheet open={ehMinuta && minutaOpen} onOpenChange={setMinutaOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-5xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-amber-600" /> Editar minuta do contrato
+            </SheetTitle>
+            <SheetDescription>
+              Cliente: <strong>{clienteNome}</strong> · Contrato {c.codigo ?? c.id.slice(0, 8)}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-3">
+            {ehMinuta && (
+              <MinutaContratoPanel
+                contrato={{
+                  id: c.id,
+                  codigo: c.codigo,
+                  status: c.status,
+                  valor_total: Number(c.valor_total) || 0,
+                  valor_entrada: (c as { valor_entrada?: number | null }).valor_entrada ?? null,
+                  observacoes: (c as { observacoes?: string | null }).observacoes ?? null,
+                  data_assinatura: (c as { data_assinatura?: string | null }).data_assinatura ?? null,
+                  forma_pagamento: (c as { forma_pagamento?: string | null }).forma_pagamento ?? null,
+                  possui_financiamento: !!(c as { possui_financiamento?: boolean }).possui_financiamento,
+                  financiamento_banco: (c as { financiamento_banco?: string | null }).financiamento_banco ?? null,
+                  financiamento_valor: (c as { financiamento_valor?: number | null }).financiamento_valor ?? null,
+                  dados: (c.dados ?? null) as Record<string, unknown> | null,
+                  potencia_kwp: c.potencia_kwp,
+                  modulos_qtde: c.modulos_qtde,
+                }}
+                cliente={cliente.data ?? null}
+                proposta={(propostas.data ?? [])[0] ?? null}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={ehGerado && geradoOpen} onOpenChange={setGeradoOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-5xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-600" /> Contrato gerado
+            </SheetTitle>
+            <SheetDescription>
+              Cliente: <strong>{clienteNome}</strong> · Contrato {c.codigo ?? c.id.slice(0, 8)}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-3">
+            {ehGerado && (
+              <ContratoGeradoPanel
+                contratoId={c.id}
+                codigo={c.codigo}
+                dados={(c.dados ?? null) as Record<string, unknown> | null}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <StatCard label="Valor global" value={fmtBRL(c.valor_total)} icon={DollarSign} />

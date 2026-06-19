@@ -231,29 +231,39 @@ export async function aprovarProposta(p: PropostaFV) {
       if (eLead) throw eLead;
       if (!leadRow) throw new Error("Lead não encontrado no Supabase.");
       let clienteIdSb = leadRow.cliente_id as string | null;
+      const docDig = (p.clienteDoc ?? leadRow.doc ?? "").replace(/\D/g, "");
+      const dadosCliente = {
+        nome: (p.clienteNome || leadRow.nome || "Cliente").trim(),
+        doc: docDig || undefined,
+        telefone: p.clienteTelefone ?? leadRow.telefone ?? undefined,
+        email: p.clienteEmail ?? undefined,
+        cep: p.clienteCep ?? undefined,
+        rua: p.clienteRua ?? undefined,
+        numero: p.clienteNumero ?? undefined,
+        bairro: p.clienteBairro ?? undefined,
+        complemento: p.clienteComplemento ?? undefined,
+        cidade: (p.clienteCidade ?? p.cidade) || undefined,
+        uf: (p.clienteUf ?? p.estado) || undefined,
+        tipo_pessoa: p.tipoPessoa ?? (docDig.length === 14 ? "PJ" : "PF"),
+      };
       if (!clienteIdSb) {
         const { criarClienteSupabase } = await import("@/lib/repositories/clientes-supabase-repo");
-        const docDig = (p.clienteDoc ?? leadRow.doc ?? "").replace(/\D/g, "");
-        const novo = await criarClienteSupabase({
-          nome: (p.clienteNome || leadRow.nome || "Cliente").trim(),
-          doc: docDig || undefined,
-          telefone: p.clienteTelefone ?? leadRow.telefone ?? undefined,
-          email: p.clienteEmail ?? undefined,
-          cep: p.clienteCep ?? undefined,
-          rua: p.clienteRua ?? undefined,
-          numero: p.clienteNumero ?? undefined,
-          bairro: p.clienteBairro ?? undefined,
-          complemento: p.clienteComplemento ?? undefined,
-          cidade: (p.clienteCidade ?? p.cidade) || undefined,
-          uf: (p.clienteUf ?? p.estado) || undefined,
-          tipo_pessoa: p.tipoPessoa ?? (docDig.length === 14 ? "PJ" : "PF"),
-        });
+        const novo = await criarClienteSupabase(dadosCliente);
         clienteIdSb = novo.id;
         const { error: eVinc } = await supabase
           .from("leads")
           .update({ cliente_id: clienteIdSb })
           .eq("id", p.leadId);
         if (eVinc) throw eVinc;
+      } else {
+        // SEMPRE sincroniza dados editados no dialog com o cliente Supabase
+        // (para testes e correções repetidas no mesmo lead).
+        try {
+          const { atualizarClienteSupabase } = await import("@/lib/repositories/clientes-supabase-repo");
+          await atualizarClienteSupabase(clienteIdSb, dadosCliente);
+        } catch {
+          // Não bloqueia aprovação se a atualização falhar.
+        }
       }
 
       // 2) Cria proposta a partir do lead (agora com cliente vinculado).

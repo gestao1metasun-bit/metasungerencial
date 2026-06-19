@@ -290,40 +290,67 @@ export async function aprovarProposta(p: PropostaFV) {
       await supabase.from("leads").update({ cliente_id: clienteIdSb }).eq("id", leadUuid);
     }
 
-    // 4) Cria proposta oficial a partir do lead.
-    const { data: propId, error: e1 } = await supabase.rpc(
-      "rpc_proposta_criar_do_lead" as never,
-      { _lead_id: leadUuid, _observacao: `Aprovada a partir de ${p.numero}` } as never,
-    );
-    if (e1) throw e1;
-    const propostaId = propId as unknown as string;
-    const { error: eUpd } = await supabase
-      .from("propostas")
-      .update({
-        valor_final: valor,
-        potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
-        modulos_qtd: p.modulosQtd,
-        dados: {
-          inversores: p.inversores,
-          inversorMarca: p.inversorMarca,
-          consultor: p.consultor ?? p.criadoPor ?? "",
-          cidade: p.cidade,
-          estado: p.estado,
-          origem_ls: { propostaIdLs: p.id, numeroLs: p.numero },
-        } as never,
-      })
-      .eq("id", propostaId);
-    if (eUpd) throw eUpd;
-    const { error: e2 } = await supabase.rpc(
-      "rpc_proposta_aprovar" as never,
-      { p_proposta_id: propostaId, p_observacao: null } as never,
-    );
-    if (e2) throw e2;
-    const { error: e3 } = await supabase.rpc(
-      "rpc_proposta_enviar_para_contratos" as never,
-      { p_proposta_id: propostaId } as never,
-    );
-    if (e3) throw e3;
+    // 4) Idempotência — se já existe proposta Supabase para este lead, reaproveita
+    //    (evita duplicar proposta/contrato a cada clique em "Aprovar").
+    let propostaId: string | null = null;
+    let contratoJaExiste = false;
+    if (leadUuid) {
+      const { data: existProps } = await supabase
+        .from("propostas")
+        .select("id, contrato_id, status")
+        .eq("lead_id", leadUuid)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      const comContrato = existProps?.find((x) => x.contrato_id);
+      if (comContrato?.contrato_id) {
+        propostaId = comContrato.id as string;
+        contratoJaExiste = true;
+      } else if (existProps && existProps.length > 0) {
+        const reaproveitavel = existProps.find(
+          (x) => !["CANCELADA", "ASSINADA"].includes(String(x.status)),
+        );
+        if (reaproveitavel) propostaId = reaproveitavel.id as string;
+      }
+    }
+
+    if (!propostaId) {
+      const { data: propId, error: e1 } = await supabase.rpc(
+        "rpc_proposta_criar_do_lead" as never,
+        { _lead_id: leadUuid, _observacao: `Aprovada a partir de ${p.numero}` } as never,
+      );
+      if (e1) throw e1;
+      propostaId = propId as unknown as string;
+    }
+
+    if (!contratoJaExiste) {
+      const { error: eUpd } = await supabase
+        .from("propostas")
+        .update({
+          valor_final: valor,
+          potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
+          modulos_qtd: p.modulosQtd,
+          dados: {
+            inversores: p.inversores,
+            inversorMarca: p.inversorMarca,
+            consultor: p.consultor ?? p.criadoPor ?? "",
+            cidade: p.cidade,
+            estado: p.estado,
+            origem_ls: { propostaIdLs: p.id, numeroLs: p.numero },
+          } as never,
+        })
+        .eq("id", propostaId);
+      if (eUpd) throw eUpd;
+      const { error: e2 } = await supabase.rpc(
+        "rpc_proposta_aprovar" as never,
+        { p_proposta_id: propostaId, p_observacao: null } as never,
+      );
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.rpc(
+        "rpc_proposta_enviar_para_contratos" as never,
+        { p_proposta_id: propostaId } as never,
+      );
+      if (e3) throw e3;
+    }
     supabaseOk = true;
   } catch (err) {
     supabaseErr = (err as Error)?.message ?? String(err);

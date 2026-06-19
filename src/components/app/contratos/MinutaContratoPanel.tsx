@@ -1474,6 +1474,11 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           @page {
             size: A4;
             margin: 3cm 2cm 2cm 3cm;
+            @top-left { content: ""; }
+            @top-center { content: ""; }
+            @top-right { content: ""; }
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
             @bottom-right {
               content: "Folha " counter(page) " de " counter(pages);
               font-family: "Times New Roman", Times, serif;
@@ -1481,6 +1486,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
               color: #000;
             }
           }
+
           body * { visibility: hidden !important; }
           #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
           #contrato-print-area {

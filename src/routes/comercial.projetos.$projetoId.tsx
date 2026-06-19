@@ -165,7 +165,7 @@ export function ProjetoWorkspacePage() {
           )}
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="resumo" className="mt-3">

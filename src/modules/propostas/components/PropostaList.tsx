@@ -35,13 +35,12 @@ import {
   type PropostaFV, type StatusProposta,
   upsertProposta, removeProposta, proximoNumeroProposta,
   calcPrecificacao, calcDimensionamento, fmtBRL,
-  aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
+  cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
   expirarPropostasVencidasAuto, refreshPropostas,
 } from "@/modules/propostas/store";
 import {
-  useContratos, type ContratoFull, criarContratoPendenteDeProposta,
-  propostaTemContratoVinculado,
+  useContratos, type ContratoFull, propostaTemContratoVinculado,
 } from "@/lib/contratos-store";
 // LEGADO LS — check de existência sincrônico. Migrar com PropostasPage.
 import { findClienteByDoc } from "@/lib/clientes-store";
@@ -192,54 +191,16 @@ export async function aprovarProposta(p: PropostaFV) {
     return;
   }
   aprovacoesEmAndamento.add(lockKey);
-  const usuario = p.criadoPor || "Operador";
   let deveNavegar = true;
   try {
-  aprovarPropostaDoLead(p.id, usuario, "Aprovada em Orçamentos");
-  const clienteFull = (p.clienteDoc || p.clienteTelefone || p.clienteCidade) ? {
-    nome: p.clienteNome,
-    doc: p.clienteDoc ?? "",
-    telefone: p.clienteTelefone ?? "",
-    email: p.clienteEmail ?? "",
-    cep: p.clienteCep ?? "",
-    rua: p.clienteRua ?? "",
-    numero: p.clienteNumero ?? "",
-    bairro: p.clienteBairro ?? "",
-    complemento: p.clienteComplemento ?? "",
-    cidade: p.clienteCidade ?? p.cidade ?? "",
-    uf: p.clienteUf ?? p.estado ?? "",
-  } : undefined;
   const valorCalc = calcPrecificacao(p).valorFinal || 0;
   const valor = (p.valorFinalManual ?? 0) > 0
     ? (p.valorFinalManual as number)
     : (valorCalc > 0 ? valorCalc : (p.valorKit ?? 0));
-  const inv1 = p.inversores?.[0]?.inversorId ?? p.inversorMarca ?? "";
-  const res = criarContratoPendenteDeProposta({
-    propostaId: p.id,
-    propostaNumero: p.numero,
-    leadId: p.leadId,
-    leadNumero: p.leadNumero,
-    cliente: p.clienteNome,
-    clienteId: p.clienteId,
-    clienteFull,
-    vendedor: p.consultor ?? p.criadoPor ?? "",
-    valor,
-    kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
-    modulos: p.modulosQtd,
-    potencia: p.moduloPotenciaWp,
-    inv1,
-    parametro: String(p.parametroPorKwp ?? ""),
-    obs: p.obsInternas,
-    usuario,
-  });
-
   // D27.COM — Cria o contrato MINUTA oficial no Supabase para aparecer em
   // /comercial/contratos → "Pendentes de Redação". Se o lead/cliente ainda
   // não existir no Supabase (lead nascido no LS de Propostas), criamos aqui
   // com os dados disponíveis. CPF/CNPJ é opcional nesta etapa.
-  let supabaseOk = false;
-  let supabaseErr: string | null = null;
-  try {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw new Error("Sessão expirada — faça login novamente.");
     const ownerUuid = u.user.id;
@@ -323,6 +284,26 @@ export async function aprovarProposta(p: PropostaFV) {
       }
     }
 
+    if (!propostaIdPreexistente && clienteIdSb) {
+      const { data: propCliente, error: ePropCliente } = await supabase
+        .from("propostas")
+        .select("id,lead_id,cliente_id,contrato_id,status,numero")
+        .eq("cliente_id", clienteIdSb)
+        .is("deleted_at", null)
+        .not("status", "in", "(CANCELADA,ASSINADA)")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (ePropCliente) throw ePropCliente;
+      const reaproveitavel = propCliente?.find((x) => x.numero === p.numero)
+        ?? propCliente?.find((x) => !x.lead_id)
+        ?? propCliente?.[0];
+      if (reaproveitavel) {
+        propostaIdPreexistente = reaproveitavel.id as string;
+        contratoIdPreexistente = (reaproveitavel.contrato_id as string | null) ?? null;
+        if (!leadUuid && reaproveitavel.lead_id) leadUuid = reaproveitavel.lead_id as string;
+      }
+    }
+
     // 2) Garante cliente Supabase (cria sem CPF se necessário).
     const { criarClienteSupabase, atualizarClienteSupabase } = await import(
       "@/lib/repositories/clientes-supabase-repo"
@@ -384,18 +365,43 @@ export async function aprovarProposta(p: PropostaFV) {
     }
 
     if (!propostaId) {
-      const { data: propId, error: e1 } = await supabase.rpc(
-        "rpc_proposta_criar_do_lead" as never,
-        { _lead_id: leadUuid, _observacao: `Aprovada a partir de ${p.numero}` } as never,
-      );
-      if (e1) throw e1;
-      propostaId = propId as unknown as string;
+      if (UUID_RE_LOCAL.test(p.id)) {
+        const { error: eInsProp } = await supabase
+          .from("propostas")
+          .upsert({
+            id: p.id,
+            numero: p.numero,
+            status: "RASCUNHO",
+            consultor_id: ownerUuid,
+            cliente_id: clienteIdSb,
+            lead_id: leadUuid,
+            cliente_nome: p.clienteNome,
+            cliente_doc: docDig || null,
+            valor_final: valor,
+            potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
+            modulos_qtd: p.modulosQtd,
+            validade: p.validade || null,
+            versao: p.versao || "P01",
+            dados: { ...p, origem_ls: { propostaIdLs: p.id, numeroLs: p.numero } } as never,
+          } as never, { onConflict: "id" });
+        if (eInsProp) throw eInsProp;
+        propostaId = p.id;
+      } else {
+        const { data: propId, error: e1 } = await supabase.rpc(
+          "rpc_proposta_criar_do_lead" as never,
+          { _lead_id: leadUuid, _observacao: `Aprovada a partir de ${p.numero}` } as never,
+        );
+        if (e1) throw e1;
+        propostaId = propId as unknown as string;
+      }
     }
 
     if (!contratoJaExiste) {
       const { error: eUpd } = await supabase
         .from("propostas")
         .update({
+          cliente_id: clienteIdSb,
+          lead_id: leadUuid,
           valor_final: valor,
           potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
           modulos_qtd: p.modulosQtd,
@@ -428,22 +434,15 @@ export async function aprovarProposta(p: PropostaFV) {
       contratoIdFinal = (propContrato?.contrato_id as string | null) ?? contratoIdFinal;
     }
     patchVinculoLeadSupabaseLocal(p, leadUuid, clienteIdSb, contratoIdFinal ?? undefined);
-    supabaseOk = true;
-  } catch (err) {
-    supabaseErr = (err as Error)?.message ?? String(err);
-  }
 
-  if (supabaseOk) {
     toast.success(
       `Proposta ${p.numero} aprovada — contrato pendente criado em Comercial → Contratos → Pendentes de Redação.`,
     );
-  } else {
-    toast.warning(
-      `Proposta ${p.numero} aprovada no LS (contrato ${res.contratoId}). Não foi possível criar minuta oficial: ${supabaseErr}`,
-    );
-  }
   // Leva o operador direto para Contratos → Pendentes de Redação
   if (deveNavegar) setTimeout(() => irParaContratos(), 400);
+  } catch (err) {
+    deveNavegar = false;
+    toast.error(`Não foi possível aprovar/enviar a proposta: ${(err as Error)?.message ?? String(err)}`);
   } finally {
     aprovacoesEmAndamento.delete(lockKey);
   }

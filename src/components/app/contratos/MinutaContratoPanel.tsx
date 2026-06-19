@@ -523,7 +523,7 @@ export function MinutaContratoPanel({
         <TabsContent value="previa" className="mt-3">
           <PreviaContrato
             variaveis={variaveis}
-            clausulas={state.clausulas ?? []}
+            clausulas={clausulasEfetivas}
             varsFaltando={varsFaltando}
             podeGerar={erros.length === 0 && podeGerar}
             onGerar={() => setGerarOpen(true)}

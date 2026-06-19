@@ -49,6 +49,8 @@ import {
   type FormaPagamentoTipo, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
 import { usePropostas, useInversoresFV, type PropostaFV } from "@/modules/propostas/store";
+import metaSunLogo from "@/assets/meta-sun-logo.png.asset.json";
+
 
 
 
@@ -1536,7 +1538,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
           {/* Cabeçalho oficial Meta Sun */}
           <div className="text-center mb-4">
-            <div className="text-xs font-bold tracking-widest text-amber-600">META SUN ENERGIA SOLAR</div>
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" className="mx-auto h-16 w-auto mb-2" />
             <h2 className="mt-3 underline text-base font-bold">
               CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
             </h2>

@@ -240,20 +240,14 @@ export function MinutaContratoPanel({
     setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
   }, [enderecoCompleto]);
 
-  // Sincroniza cláusulas auto-geradas de FINANCIAMENTO (2.3 e 2.4) sempre que
-  // a forma de pagamento mudar. Cláusulas manuais ficam intactas.
-  useEffect(() => {
-    const hasFin = temFinanciamento(state.forma_pagamento_config);
-    setState((s) => {
-      const atuais = s.clausulas ?? [];
-      const proximas = sincronizarClausulasFinanciamento(atuais, hasFin);
-      // Evita loop: só atualiza se realmente mudou a lista de IDs/textos.
-      const same =
-        atuais.length === proximas.length &&
-        atuais.every((c, i) => c.id === proximas[i].id && c.texto === proximas[i].texto);
-      return same ? s : { ...s, clausulas: proximas };
-    });
-  }, [state.forma_pagamento_config]);
+  // Cláusulas auto-geradas de FINANCIAMENTO (renegociação / liberação dos recursos)
+  // são DERIVADAS — recomputadas a cada render conforme a forma de pagamento atual,
+  // garantindo que apareçam imediatamente na prévia e sejam persistidas na geração.
+  const hasFinanciamento = temFinanciamento(state.forma_pagamento_config);
+  const clausulasEfetivas = useMemo(
+    () => sincronizarClausulasFinanciamento(state.clausulas ?? [], hasFinanciamento),
+    [state.clausulas, hasFinanciamento],
+  );
 
 
   /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */

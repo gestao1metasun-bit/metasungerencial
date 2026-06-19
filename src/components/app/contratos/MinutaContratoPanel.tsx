@@ -780,10 +780,8 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
       {tipo === "ENTRADA_PARCELAS" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor de entrada" v={value!.entrada_parcelas?.entrada} on={(v) => patch("entrada_parcelas", { entrada: v })} disabled={disabled} />
-          <DateField label="Data da entrada" v={value!.entrada_parcelas?.entrada_data} on={(v) => patch("entrada_parcelas", { entrada_data: v })} disabled={disabled} />
           <NumField label="Saldo parcelado" v={value!.entrada_parcelas?.saldo} on={(v) => patch("entrada_parcelas", { saldo: v })} disabled={disabled} />
           <NumField label="Qtde parcelas" v={value!.entrada_parcelas?.parcelas} on={(v) => patch("entrada_parcelas", { parcelas: v })} disabled={disabled} />
-          <DateField label="1º vencimento" v={value!.entrada_parcelas?.primeiro_venc} on={(v) => patch("entrada_parcelas", { primeiro_venc: v })} disabled={disabled} />
         </div>
       )}
 

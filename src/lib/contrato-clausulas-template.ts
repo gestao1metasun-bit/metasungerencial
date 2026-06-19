@@ -184,12 +184,11 @@ const TEMPLATE_META_SUN: GrupoSeed[] = [
     itens: [
       {
         texto:
-          "Prestação de serviços de compra e instalação de sistema de energia fotovoltaica On-Grid, " +
-          "composto por {{quantidade_modulos}} ({{quantidade_modulos_extenso}}) módulos fotovoltaicos de " +
-          "{{potencia_modulo_w}} W, marca {{marca_modulos}}. O serviço inclui a elaboração de projeto " +
-          "fotovoltaico, bem como o fornecimento de todos os materiais complementares necessários, cabos " +
-          "solares preto e vermelho, estrutura de fixação, demais acessórios aplicáveis e mão de obra " +
-          "completa para montagem e integração ao padrão de entrada do CONTRATANTE.",
+          "Prestação de serviços de compra e instalação de sistema de energia fotovoltaica On-Grid de " +
+          "{{potencia_kwp}} kWp, composto por {{modulo_descricao}}, e {{inversor_descricao}}. " +
+          "O serviço inclui a elaboração de projeto fotovoltaico, bem como o fornecimento de todos os materiais " +
+          "complementares necessários, cabos solares preto e vermelho, estrutura de fixação, demais acessórios " +
+          "aplicáveis e mão de obra completa para montagem e integração ao padrão de entrada do CONTRATANTE.",
         obrigatoria: true,
       },
       {

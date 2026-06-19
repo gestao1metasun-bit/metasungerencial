@@ -339,30 +339,13 @@ export async function aprovarProposta(p: PropostaFV) {
       await supabase.from("leads").update({ cliente_id: clienteIdSb }).eq("id", leadUuid);
     }
 
-    // 4) Idempotência — se já existe proposta Supabase para este lead, reaproveita
-    //    (evita duplicar proposta/contrato a cada clique em "Aprovar").
+    // 4) Idempotência — cada proposta LS mapeia 1:1 para sua própria linha
+    //    no Supabase (chave: id local = id Supabase via upsert). NÃO mescla
+    //    com outras propostas do mesmo lead — um lead pode ter N propostas
+    //    e cada uma é aprovada/enviada para contratos de forma independente.
     let propostaId: string | null = propostaIdPreexistente;
     let contratoJaExiste = !!contratoIdPreexistente;
     let contratoIdFinal: string | null = contratoIdPreexistente;
-    if (leadUuid) {
-      const { data: existProps } = await supabase
-        .from("propostas")
-        .select("id, contrato_id, status")
-        .eq("lead_id", leadUuid)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      const comContrato = existProps?.find((x) => x.contrato_id);
-      if (comContrato?.contrato_id) {
-        propostaId = comContrato.id as string;
-        contratoJaExiste = true;
-        contratoIdFinal = comContrato.contrato_id as string;
-      } else if (existProps && existProps.length > 0) {
-        const reaproveitavel = existProps.find(
-          (x) => !["CANCELADA", "ASSINADA"].includes(String(x.status)),
-        );
-        if (reaproveitavel) propostaId = reaproveitavel.id as string;
-      }
-    }
 
     if (!propostaId) {
       if (UUID_RE_LOCAL.test(p.id)) {
@@ -393,6 +376,18 @@ export async function aprovarProposta(p: PropostaFV) {
         );
         if (e1) throw e1;
         propostaId = propId as unknown as string;
+      }
+    } else {
+      // Já existe linha Supabase para esta proposta LS — confere se já tem
+      // contrato vinculado para evitar duplicação no envio para contratos.
+      const { data: jaCom } = await supabase
+        .from("propostas")
+        .select("contrato_id")
+        .eq("id", propostaId)
+        .maybeSingle();
+      if (jaCom?.contrato_id) {
+        contratoJaExiste = true;
+        contratoIdFinal = jaCom.contrato_id as string;
       }
     }
 

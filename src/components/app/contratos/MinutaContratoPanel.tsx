@@ -240,6 +240,22 @@ export function MinutaContratoPanel({
     setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
   }, [enderecoCompleto]);
 
+  // Sincroniza cláusulas auto-geradas de FINANCIAMENTO (2.3 e 2.4) sempre que
+  // a forma de pagamento mudar. Cláusulas manuais ficam intactas.
+  useEffect(() => {
+    const hasFin = temFinanciamento(state.forma_pagamento_config);
+    setState((s) => {
+      const atuais = s.clausulas ?? [];
+      const proximas = sincronizarClausulasFinanciamento(atuais, hasFin);
+      // Evita loop: só atualiza se realmente mudou a lista de IDs/textos.
+      const same =
+        atuais.length === proximas.length &&
+        atuais.every((c, i) => c.id === proximas[i].id && c.texto === proximas[i].texto);
+      return same ? s : { ...s, clausulas: proximas };
+    });
+  }, [state.forma_pagamento_config]);
+
+
   /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */
   async function aplicarCep(cepRaw: string) {
     const cep = cepRaw.replace(/\D/g, "");

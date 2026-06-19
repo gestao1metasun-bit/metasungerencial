@@ -947,9 +947,22 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
     case "CARTAO": {
       const c = fp.cartao!;
       const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "juros por conta do cliente" : "juros por conta da Meta (sem juros ao cliente)"}`;
-      desc = linhaPagamento("Cartão", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
+      desc = linhaPagamento("Cartão de crédito", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
       break;
     }
+    case "CARTAO_DEBITO": {
+      const c = fp.cartao_debito!;
+      const extra = c.bandeira || undefined;
+      desc = linhaPagamento("Cartão de débito", c.momento, c.data, c.valor ?? 0, undefined, extra);
+      break;
+    }
+    case "CHEQUE": {
+      const c = fp.cheque!;
+      const extra = `${c.banco ? c.banco : "banco a definir"}${c.observacao ? `, ${c.observacao}` : ""}`;
+      desc = linhaPagamento("Cheque", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
+      break;
+    }
+
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
       const extra = `${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses${f.entrada > 0 ? `, entrada ${brlFmt(f.entrada)}` : ""}`;

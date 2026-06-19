@@ -692,7 +692,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         <Select value={tipo ?? ""} onValueChange={(v) => setTipo(v as FormaPagamentoTipo)} disabled={disabled}>
           <SelectTrigger className="mt-1 h-8 w-full md:w-72"><SelectValue placeholder="Selecione..." /></SelectTrigger>
           <SelectContent>
-            {(Object.keys(FP_LABEL) as FormaPagamentoTipo[]).map((t) => (
+            {FP_TIPOS_SELECIONAVEIS.map((t) => (
               <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>
             ))}
           </SelectContent>

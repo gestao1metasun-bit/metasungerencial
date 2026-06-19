@@ -485,10 +485,33 @@ export function MinutaContratoPanel({
         </TabsList>
 
         {/* CONTRATANTE */}
-        <TabsContent value="contratante" className="mt-3">
+        <TabsContent value="contratante" className="mt-3 space-y-3">
+          {/* Toggle PF / PJ */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Tipo do contratante:</Label>
+            <div className="inline-flex rounded-md border overflow-hidden">
+              <button type="button" disabled={!podeEditar}
+                className={`px-3 py-1 text-xs ${(state.contratante_tipo_pessoa ?? "PF") === "PF" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                onClick={() => upd("contratante_tipo_pessoa", "PF")}>Pessoa Física</button>
+              <button type="button" disabled={!podeEditar}
+                className={`px-3 py-1 text-xs ${state.contratante_tipo_pessoa === "PJ" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                onClick={() => upd("contratante_tipo_pessoa", "PJ")}>Pessoa Jurídica</button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
-            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
-            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field
+              label={(state.contratante_tipo_pessoa === "PJ" ? "Razão social *" : "Nome completo *")}
+              v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
+            <Field
+              label={(state.contratante_tipo_pessoa === "PJ" ? "CNPJ *" : "CPF *")}
+              v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            {state.contratante_tipo_pessoa !== "PJ" && (
+              <>
+                <Field label="RG (opcional)" v={state.contratante_rg} on={(v) => upd("contratante_rg", v)} disabled={!podeEditar} className="md:col-span-2" />
+                <Field label="CNH / OAB / outro doc. (opcional)" v={state.contratante_doc_extra} on={(v) => upd("contratante_doc_extra", v)} disabled={!podeEditar} className="md:col-span-4" />
+              </>
+            )}
             <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
@@ -518,7 +541,22 @@ export function MinutaContratoPanel({
               <Input className="mt-1 h-8 bg-muted/40" readOnly value={enderecoCompleto} />
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2">
+
+          {state.contratante_tipo_pessoa === "PJ" && (
+            <div className="rounded-md border border-blue-500/40 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-2">
+              <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                Representante legal (obrigatório para PJ)
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
+                <Field label="Nome completo *" v={state.repr_nome} on={(v) => upd("repr_nome", v)} disabled={!podeEditar} className="md:col-span-3" />
+                <Field label="CPF *" v={state.repr_cpf} on={(v) => upd("repr_cpf", v)} disabled={!podeEditar} className="md:col-span-1" />
+                <Field label="Telefone *" v={state.repr_telefone} on={(v) => upd("repr_telefone", v)} disabled={!podeEditar} className="md:col-span-1" />
+                <Field label="RG (opcional)" v={state.repr_rg} on={(v) => upd("repr_rg", v)} disabled={!podeEditar} className="md:col-span-1" />
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-muted-foreground">
             Alterações aqui salvam um <strong>snapshot contratual</strong> em <code>contratos.dados</code> e
             <strong> não sobrescrevem o Cliente 360°</strong>.
           </p>

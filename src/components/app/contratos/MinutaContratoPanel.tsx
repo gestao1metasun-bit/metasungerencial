@@ -1477,7 +1477,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         @media print {
           @page {
             size: A4;
-            margin: 35mm 20mm 30mm 20mm;
+            margin: 30mm 20mm 20mm 30mm;
             @bottom-right {
               content: "Folha " counter(page) " de " counter(pages);
               font-family: "Times New Roman", Times, serif;
@@ -1516,29 +1516,29 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             display: block !important;
             position: fixed !important;
             top: 0; left: 0; right: 0;
-            height: 30mm;
+            height: 22mm;
             text-align: center;
-            padding-top: 5mm;
+            padding-top: 3mm;
             background: #fff;
             z-index: 9999;
           }
           .print-only.print-header img {
             display: block; margin: 0 auto;
-            height: 22mm; width: auto;
+            height: 18mm; width: auto;
           }
           .print-only.print-footer {
             display: block !important;
             position: fixed !important;
             bottom: 0; left: 0; right: 0;
-            height: 25mm;
+            height: 16mm;
             text-align: center;
-            padding-bottom: 3mm;
+            padding-bottom: 1mm;
             background: #fff;
             z-index: 9999;
           }
           .print-only.print-footer img {
             display: block; margin: 0 auto;
-            width: 100%; max-width: 190mm; height: auto;
+            width: 100%; max-width: 160mm; height: auto;
           }
         }
       `}</style>
@@ -1575,7 +1575,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         style={{
           width: "210mm",
           minHeight: "297mm",
-          padding: "20mm 25mm 25mm 25mm",
+          padding: "30mm 20mm 20mm 30mm",
           fontFamily: '"Times New Roman", Times, serif',
           fontSize: "12pt",
           lineHeight: 1.5,

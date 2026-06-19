@@ -94,8 +94,13 @@ const num = (v: string | number | null | undefined): number => {
 
 type DadosContratuais = {
   // Contratante editáveis (snapshot contratual, não cliente 360)
+  contratante_tipo_pessoa?: "PF" | "PJ";
   contratante_nome?: string;
   contratante_doc?: string;
+  /** RG do contratante PF (opcional). */
+  contratante_rg?: string;
+  /** Documento adicional opcional do PF: CNH, OAB, etc. (texto livre, ex.: "OAB/RO 12345"). */
+  contratante_doc_extra?: string;
   contratante_telefone?: string;
   contratante_whatsapp?: string;
   contratante_email?: string;
@@ -108,6 +113,11 @@ type DadosContratuais = {
   contratante_uf?: string;
   /** Computado a partir de logradouro+numero+bairro+complemento (compat). */
   contratante_endereco?: string;
+  // Representante legal (apenas quando contratante_tipo_pessoa = "PJ")
+  repr_nome?: string;
+  repr_cpf?: string;
+  repr_rg?: string;
+  repr_telefone?: string;
   // Dados contratuais
   responsavel_assinatura?: string;
   responsavel_cpf?: string;

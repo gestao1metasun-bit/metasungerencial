@@ -751,13 +751,19 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
           <NumField label="Valor total" v={value!.cartao?.valor} on={(v) => patch("cartao", { valor: v })} disabled={disabled} />
           <NumField label="Qtde parcelas" v={value!.cartao?.parcelas} on={(v) => patch("cartao", { parcelas: v })} disabled={disabled} />
           <Field label="Bandeira" v={value!.cartao?.bandeira} on={(v) => patch("cartao", { bandeira: v })} disabled={disabled} />
-          <div className="flex items-center gap-2 pt-5 md:col-span-2">
-            <input type="checkbox" id="cartao_juros" disabled={disabled}
-              checked={value!.cartao?.com_juros ?? false}
-              onChange={(e) => patch("cartao", { com_juros: e.target.checked })} />
-            <Label htmlFor="cartao_juros" className="text-xs cursor-pointer">
-              Parcelamento <strong>com juros</strong> do cliente (não calcula valor da parcela)
-            </Label>
+          <div className="md:col-span-2">
+            <Label className="text-xs">Juros do parcelamento *</Label>
+            <Select
+              value={(value!.cartao?.com_juros ?? false) ? "CLIENTE" : "META"}
+              onValueChange={(v) => patch("cartao", { com_juros: v === "CLIENTE" })}
+              disabled={disabled}
+            >
+              <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CLIENTE">Juros por conta do cliente</SelectItem>
+                <SelectItem value="META">Juros por conta da Meta (sem juros ao cliente)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Field label="Observação" v={value!.cartao?.observacao} on={(v) => patch("cartao", { observacao: v })} disabled={disabled} className="md:col-span-3" />
         </div>
@@ -786,13 +792,6 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         </div>
       )}
 
-      {tipo === "ENTRADA_PARCELAS" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-          <NumField label="Valor de entrada" v={value!.entrada_parcelas?.entrada} on={(v) => patch("entrada_parcelas", { entrada: v })} disabled={disabled} />
-          <NumField label="Saldo parcelado" v={value!.entrada_parcelas?.saldo} on={(v) => patch("entrada_parcelas", { saldo: v })} disabled={disabled} />
-          <NumField label="Qtde parcelas" v={value!.entrada_parcelas?.parcelas} on={(v) => patch("entrada_parcelas", { parcelas: v })} disabled={disabled} />
-        </div>
-      )}
 
       {tipo === "PERMUTA" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">

@@ -48,7 +48,6 @@ import {
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
   type FormaPagamentoTipo, type PixComplementoMomento, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
-} from "@/lib/contrato-clausulas-template";
 
 type MinutaContrato = {
   id: string;

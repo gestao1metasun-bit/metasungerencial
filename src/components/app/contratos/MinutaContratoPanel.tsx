@@ -593,11 +593,23 @@ function Field({ label, v, on, disabled, className }: {
     </div>
   );
 }
-function NumField({ label, v, on, disabled }: { label: string; v: number | undefined; on: (v: number) => void; disabled?: boolean }) {
+function NumField({ label, v, on, disabled }: { label: string; v: number | undefined; on: (v: number | undefined) => void; disabled?: boolean }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input className="mt-1 h-8" type="number" value={v ?? ""} onChange={(e) => on(Number(e.target.value))} disabled={disabled} />
+      <Input
+        className="mt-1 h-8"
+        type="number"
+        inputMode="decimal"
+        value={v === undefined || Number.isNaN(v) ? "" : String(v)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") { on(undefined); return; }
+          const n = Number(raw);
+          on(Number.isNaN(n) ? undefined : n);
+        }}
+        disabled={disabled}
+      />
     </div>
   );
 }
@@ -750,8 +762,9 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         const parcelaCalc = b.parcelas > 0 ? b.valor / b.parcelas : 0;
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v, valor_parcela: b.parcelas > 0 ? v / b.parcelas : 0 })} disabled={disabled} />
-            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v, valor_parcela: v > 0 ? b.valor / v : 0 })} disabled={disabled} />
+            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v ?? 0, valor_parcela: b.parcelas > 0 ? (v ?? 0) / b.parcelas : 0 })} disabled={disabled} />
+            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v ?? 0, valor_parcela: (v ?? 0) > 0 ? b.valor / (v ?? 1) : 0 })} disabled={disabled} />
+
             <div>
               <Label className="text-xs">Valor da parcela (calculado)</Label>
               <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />
@@ -818,7 +831,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
           </div>
           <NumField label="Valor financiado" v={value!.financiamento?.valor} on={(v) => patch("financiamento", { valor: v })} disabled={disabled} />
           <NumField label="Entrada (se houver)" v={value!.financiamento?.entrada} on={(v) => patch("financiamento", { entrada: v })} disabled={disabled} />
-          <NumField label="Prazo (meses)" v={value!.financiamento?.prazo_meses} on={(v) => patch("financiamento", { prazo_meses: v })} disabled={disabled} />
+          
           <Field label="Status financiamento" v={value!.financiamento?.status} on={(v) => patch("financiamento", { status: v })} disabled={disabled} />
           <Field label="Observação" v={value!.financiamento?.observacao} on={(v) => patch("financiamento", { observacao: v })} disabled={disabled} />
           <div className="md:col-span-3">

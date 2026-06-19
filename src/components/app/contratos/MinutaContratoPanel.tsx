@@ -97,6 +97,31 @@ const num = (v: string | number | null | undefined): number => {
   return Number.isFinite(x) ? x : 0;
 };
 
+// Numeral por extenso PT-BR (0..199 cobre uso real de módulos/inversores).
+const _UN = ["zero","um","dois","três","quatro","cinco","seis","sete","oito","nove","dez","onze","doze","treze","catorze","quinze","dezesseis","dezessete","dezoito","dezenove"];
+const _DZ = ["","","vinte","trinta","quarenta","cinquenta","sessenta","setenta","oitenta","noventa"];
+function numeroExtensoPt(n: number): string {
+  const x = Math.max(0, Math.floor(Number(n) || 0));
+  if (x < 20) return _UN[x];
+  if (x < 100) {
+    const d = Math.floor(x / 10); const u = x % 10;
+    return u === 0 ? _DZ[d] : `${_DZ[d]} e ${_UN[u]}`;
+  }
+  if (x === 100) return "cem";
+  if (x < 200) {
+    const resto = x - 100;
+    return resto === 0 ? "cem" : `cento e ${numeroExtensoPt(resto)}`;
+  }
+  return String(x);
+}
+// Formata kWp em PT-BR (sem zeros sobrando: 9.3 -> "9,30"; 5 -> "5"; 6.5 -> "6,5").
+function formatKwpPt(kw: number): string {
+  const v = Number(kw);
+  if (!Number.isFinite(v)) return "";
+  if (Number.isInteger(v)) return String(v);
+  return v.toFixed(2).replace(/0$/, "").replace(".", ",");
+}
+
 type DadosContratuais = {
   // Contratante editáveis (snapshot contratual, não cliente 360)
   contratante_tipo_pessoa?: "PF" | "PJ";

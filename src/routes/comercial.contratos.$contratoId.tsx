@@ -300,7 +300,7 @@ function ContratoWorkspacePage() {
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="comissoes">Comissões</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="resumo" className="mt-3">
@@ -480,12 +480,7 @@ function ContratoWorkspacePage() {
           <ComissoesContratoPanel contratoId={c.id} />
         </TabsContent>
 
-        <TabsContent value="auditoria" className="mt-3">
-          <Card className="p-4 text-sm text-muted-foreground">
-            <Users className="h-5 w-5 inline mr-1" />
-            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais já aparecem na aba <strong>Timeline</strong>.
-          </Card>
-        </TabsContent>
+
       </Tabs>
 
       <CancelarContratoDialog

@@ -42,10 +42,11 @@ import {
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,
   PIX_COMPLEMENTO_LABEL, PIX_COMPLEMENTO_OPCOES, TIPOS_ACEITAM_PIX_COMPLEMENTO,
+  MOMENTO_LABEL, MOMENTO_OPCOES,
   renumerar, inserirItem, removerItem, alterarTextoItem,
   salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
-  type FormaPagamentoTipo, type PixComplementoMomento, type Variaveis,
+  type FormaPagamentoTipo, type PixComplementoMomento, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
 
 type MinutaContrato = {
@@ -598,7 +599,77 @@ function DateField({ label, v, on, disabled }: { label: string; v: string | unde
 
 // ===================================================================
 // Forma de pagamento
-// ===================================================================
+
+const SUB_KEY: Record<Exclude<FormaPagamentoTipo, "MISTO">, keyof FormaPagamentoConfig> = {
+  PIX: "pix",
+  BOLETO: "boleto",
+  CARTAO: "cartao",
+  FINANCIAMENTO: "financiamento",
+  ENTRADA_PARCELAS: "entrada_parcelas",
+  PERMUTA: "permuta",
+};
+function getMomento(v: FormaPagamentoConfig, t: FormaPagamentoTipo): MomentoPagamento | undefined {
+  if (t === "MISTO") return undefined;
+  const sub = v[SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">]] as { momento?: MomentoPagamento } | undefined;
+  return sub?.momento;
+}
+function getMomentoData(v: FormaPagamentoConfig, t: FormaPagamentoTipo): string | undefined {
+  if (t === "MISTO") return undefined;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  const sub = v[k] as { data?: string; entrada_data?: string } | undefined;
+  return sub?.data ?? sub?.entrada_data;
+}
+function setMomento(
+  v: FormaPagamentoConfig, t: FormaPagamentoTipo, m: MomentoPagamento,
+  onChange: (v: FormaPagamentoConfig) => void,
+  patch: <K extends keyof FormaPagamentoConfig>(k: K, p: Partial<NonNullable<FormaPagamentoConfig[K]>>) => void,
+) {
+  if (t === "MISTO") return;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  patch(k, { momento: m } as never);
+  void v; void onChange;
+}
+function setMomentoData(
+  v: FormaPagamentoConfig, t: FormaPagamentoTipo, d: string,
+  onChange: (v: FormaPagamentoConfig) => void,
+  patch: <K extends keyof FormaPagamentoConfig>(k: K, p: Partial<NonNullable<FormaPagamentoConfig[K]>>) => void,
+) {
+  if (t === "MISTO") return;
+  const k = SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">];
+  patch(k, { data: d } as never);
+  void v; void onChange;
+}
+
+function MomentoBlock({ disabled, momento, data, onMomento, onData }: {
+  disabled?: boolean;
+  momento: MomentoPagamento | undefined;
+  data: string | undefined;
+  onMomento: (m: MomentoPagamento) => void;
+  onData: (d: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm rounded-md border border-emerald-300/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-2">
+      <div>
+        <Label className="text-xs">Momento do pagamento *</Label>
+        <Select value={momento ?? "ASSINATURA"} onValueChange={(v) => onMomento(v as MomentoPagamento)} disabled={disabled}>
+          <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {MOMENTO_OPCOES.map((m) => (
+              <SelectItem key={m} value={m}>{MOMENTO_LABEL[m]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {momento === "DATA_ESPECIFICA" && (
+        <div>
+          <Label className="text-xs">Data *</Label>
+          <Input type="date" className="mt-1 h-8" value={data ?? ""} disabled={disabled} onChange={(e) => onData(e.target.value)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
   valorTotal: number; disabled?: boolean; value: FormaPagamentoConfig | null | undefined;
   onChange: (v: FormaPagamentoConfig | null) => void;
@@ -625,6 +696,17 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
           </SelectContent>
         </Select>
       </div>
+
+      {tipo && tipo !== "MISTO" && (
+        <MomentoBlock
+          disabled={disabled}
+          momento={getMomento(value!, tipo)}
+          data={getMomentoData(value!, tipo)}
+          onMomento={(m) => setMomento(value!, tipo, m, onChange, patch)}
+          onData={(d) => setMomentoData(value!, tipo, d, onChange, patch)}
+        />
+      )}
+
 
       {tipo === "PIX" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
@@ -720,49 +802,79 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
       {tipo === "MISTO" && value!.misto && (
         <div className="space-y-2 text-sm">
           <p className="text-xs text-muted-foreground">
-            Compõe combinações: financiamento + PIX, financiamento + boleto, PIX + boleto, cartão + PIX, etc.
-            A soma dos componentes deve igualar o valor total do contrato ({brl(valorTotal)}).
+            Cada componente: <strong>Tipo – Momento – Valor</strong> (e parcelas, se houver).
+            Soma deve igualar o total do contrato ({brl(valorTotal)}).
           </p>
-          {value!.misto.componentes.map((c, i) => (
-            <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-2 rounded-md border p-2">
-              <div>
-                <Label className="text-xs">Tipo</Label>
-                <Select value={c.tipo} onValueChange={(v) => {
-                  const arr = [...value!.misto!.componentes];
-                  arr[i] = { ...arr[i], tipo: v as FormaPagamentoTipo };
-                  patch("misto", { componentes: arr });
-                }} disabled={disabled}>
-                  <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(["PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
-                      <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+          {value!.misto.componentes.map((c, i) => {
+            const updateComp = (patchC: Partial<typeof c>) => {
+              const arr = [...value!.misto!.componentes];
+              arr[i] = { ...arr[i], ...patchC };
+              patch("misto", { componentes: arr });
+            };
+            const parcelas = c.parcelas ?? 1;
+            const vp = parcelas > 1 ? (c.valor || 0) / parcelas : 0;
+            return (
+              <div key={i} className="rounded-md border p-2 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                  <div className="md:col-span-3">
+                    <Label className="text-xs">Tipo</Label>
+                    <Select value={c.tipo} onValueChange={(v) => updateComp({ tipo: v as FormaPagamentoTipo })} disabled={disabled}>
+                      <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {(["PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
+                          <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-4">
+                    <Label className="text-xs">Momento</Label>
+                    <Select value={c.momento ?? "ASSINATURA"} onValueChange={(v) => updateComp({ momento: v as MomentoPagamento })} disabled={disabled}>
+                      <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {MOMENTO_OPCOES.map((m) => <SelectItem key={m} value={m}>{MOMENTO_LABEL[m]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <NumField label="Valor" v={c.valor} on={(v) => updateComp({ valor: v })} disabled={disabled} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <NumField label="Parcelas" v={parcelas} on={(v) => updateComp({ parcelas: Math.max(1, Math.floor(v || 1)) })} disabled={disabled} />
+                  </div>
+                  <div className="md:col-span-1 flex items-end">
+                    <Button size="sm" variant="ghost" disabled={disabled} onClick={() => {
+                      const arr = value!.misto!.componentes.filter((_, idx) => idx !== i);
+                      patch("misto", { componentes: arr });
+                    }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                  {c.momento === "DATA_ESPECIFICA" && (
+                    <div className="md:col-span-3">
+                      <Label className="text-xs">Data específica</Label>
+                      <Input type="date" className="mt-1 h-8" value={c.data ?? ""} disabled={disabled} onChange={(e) => updateComp({ data: e.target.value })} />
+                    </div>
+                  )}
+                  <div className={c.momento === "DATA_ESPECIFICA" ? "md:col-span-6" : "md:col-span-9"}>
+                    <Field label="Observação" v={c.obs ?? ""} on={(v) => updateComp({ obs: v })} disabled={disabled} />
+                  </div>
+                  {parcelas > 1 && (
+                    <div className="md:col-span-3">
+                      <Label className="text-xs">Valor da parcela</Label>
+                      <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(vp)} />
+                    </div>
+                  )}
+                </div>
               </div>
-              <NumField label="Valor" v={c.valor} on={(v) => {
-                const arr = [...value!.misto!.componentes];
-                arr[i] = { ...arr[i], valor: v };
-                patch("misto", { componentes: arr });
-              }} disabled={disabled} />
-              <Field label="Observação" v={c.obs} on={(v) => {
-                const arr = [...value!.misto!.componentes];
-                arr[i] = { ...arr[i], obs: v };
-                patch("misto", { componentes: arr });
-              }} disabled={disabled} />
-              <div className="flex items-end">
-                <Button size="sm" variant="ghost" disabled={disabled} onClick={() => {
-                  const arr = value!.misto!.componentes.filter((_, idx) => idx !== i);
-                  patch("misto", { componentes: arr });
-                }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           <Button size="sm" variant="outline" disabled={disabled} onClick={() => {
-            const arr = [...value!.misto!.componentes, { tipo: "PIX" as FormaPagamentoTipo, valor: 0, obs: "" }];
+            const arr = [...value!.misto!.componentes, { tipo: "PIX" as FormaPagamentoTipo, momento: "ASSINATURA" as MomentoPagamento, valor: 0, parcelas: 1, obs: "" }];
             patch("misto", { componentes: arr });
           }}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar componente</Button>
         </div>
       )}
+
 
       {/* ============================================================== */}
       {/* PIX complementar — entrada / gatilho. Não disponível para      */}

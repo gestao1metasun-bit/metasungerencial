@@ -810,15 +810,28 @@ export const PIX_COMPLEMENTO_OPCOES: PixComplementoMomento[] = [
   "DATA_ESPECIFICA",
 ];
 
+export type MomentoPagamento = PixComplementoMomento;
+export const MOMENTO_LABEL = PIX_COMPLEMENTO_LABEL;
+export const MOMENTO_OPCOES = PIX_COMPLEMENTO_OPCOES;
+
+export type MistoComponente = {
+  tipo: FormaPagamentoTipo;
+  momento?: MomentoPagamento;
+  data?: string;
+  valor: number;
+  parcelas?: number;
+  obs?: string;
+};
+
 export type FormaPagamentoConfig = {
   tipo: FormaPagamentoTipo;
-  pix?: { valor: number; data: string; chave: string; observacao: string };
-  boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string };
-  cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string };
-  financiamento?: { banco: string; valor: number; entrada: number; prazo_meses: number; status: string; observacao: string; clausula: string };
-  entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string };
-  permuta?: { valor: number; descricao: string; observacao: string };
-  misto?: { componentes: Array<{ tipo: FormaPagamentoTipo; valor: number; obs: string }> };
+  pix?: { valor: number; data: string; chave: string; observacao: string; momento?: MomentoPagamento };
+  boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string; momento?: MomentoPagamento; data?: string };
+  cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string; momento?: MomentoPagamento; data?: string };
+  financiamento?: { banco: string; valor: number; entrada: number; prazo_meses: number; status: string; observacao: string; clausula: string; momento?: MomentoPagamento; data?: string };
+  entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string; momento?: MomentoPagamento };
+  permuta?: { valor: number; descricao: string; observacao: string; momento?: MomentoPagamento; data?: string };
+  misto?: { componentes: MistoComponente[] };
   /** PIX complementar opcional — não disponível para FINANCIAMENTO/PERMUTA. */
   pix_complemento?: { momento: PixComplementoMomento; valor: number; data?: string; observacao: string } | null;
 };
@@ -852,43 +865,81 @@ export function somaFormaPagamento(fp: FormaPagamentoConfig | null | undefined):
   return base;
 }
 
+const brlFmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function momentoTxt(m: MomentoPagamento | undefined, data?: string): string {
+  if (!m) return "";
+  if (m === "DATA_ESPECIFICA") return data ? `Em ${data}` : MOMENTO_LABEL[m];
+  return MOMENTO_LABEL[m];
+}
+
+/** "Tipo – Momento – Valor [parcelado em Nx de R$..]" */
+function linhaPagamento(
+  tipoLabel: string,
+  momento: MomentoPagamento | undefined,
+  data: string | undefined,
+  valor: number,
+  parcelas?: number,
+  extra?: string,
+): string {
+  const partes: string[] = [tipoLabel];
+  const mt = momentoTxt(momento, data);
+  if (mt) partes.push(mt);
+  partes.push(brlFmt(valor));
+  let s = partes.join(" – ");
+  if (parcelas && parcelas > 1) {
+    const vp = valor / parcelas;
+    s += ` (parcelado em ${parcelas}x de ${brlFmt(vp)})`;
+  }
+  if (extra) s += ` — ${extra}`;
+  return s;
+}
+
 export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefined): string {
   if (!fp) return "—";
-  const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   let desc = "";
   switch (fp.tipo) {
-    case "PIX":
-      desc = `PIX no valor de ${brl(fp.pix?.valor ?? 0)}${fp.pix?.data ? ` previsto para ${fp.pix.data}` : ""}.`; break;
+    case "PIX": {
+      const p = fp.pix!;
+      desc = linhaPagamento("PIX", p.momento, p.data, p.valor ?? 0);
+      break;
+    }
     case "BOLETO": {
       const b = fp.boleto!;
-      const vp = b.parcelas > 0 ? (b.valor / b.parcelas) : 0;
-      desc = `Boleto: ${b.parcelas}x de ${brl(vp)} (total ${brl(b.valor)}), 1º venc. em ${b.primeiro_venc || "—"}, dia fixo ${b.dia_fixo || "—"}.`; break;
+      desc = linhaPagamento("Boleto", b.momento, b.data || b.primeiro_venc, b.valor ?? 0, b.parcelas);
+      break;
     }
     case "CARTAO": {
       const c = fp.cartao!;
-      desc = `Cartão ${c.bandeira || ""}: ${c.parcelas}x (total ${brl(c.valor)})${c.com_juros ? " com juros do cliente" : " sem juros"}.`.trim(); break;
+      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "com juros do cliente" : "sem juros"}`;
+      desc = linhaPagamento("Cartão", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
+      break;
     }
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
-      desc = `Financiamento ${f.banco || ""}, valor financiado ${brl(f.valor)}${f.entrada > 0 ? `, entrada ${brl(f.entrada)}` : ""}, prazo ${f.prazo_meses || "—"} meses.`; break;
+      const extra = `${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses${f.entrada > 0 ? `, entrada ${brlFmt(f.entrada)}` : ""}`;
+      desc = linhaPagamento("Financiamento", f.momento, f.data, f.valor ?? 0, undefined, extra);
+      break;
     }
     case "ENTRADA_PARCELAS": {
       const e = fp.entrada_parcelas!;
-      desc = `Entrada de ${brl(e.entrada)} em ${e.entrada_data || "—"} + ${e.parcelas}x do saldo ${brl(e.saldo)}, 1º venc. ${e.primeiro_venc || "—"}.`; break;
+      desc = `${linhaPagamento("Entrada", e.momento, e.entrada_data, e.entrada ?? 0)} + ${linhaPagamento("Saldo", undefined, e.primeiro_venc, e.saldo ?? 0, e.parcelas)}`;
+      break;
     }
     case "PERMUTA": {
       const p = fp.permuta!;
-      desc = `Permuta no valor de ${brl(p.valor)} — ${p.descricao || "descrição da permuta a definir"}.`; break;
+      desc = linhaPagamento("Permuta", p.momento, p.data, p.valor ?? 0, undefined, p.descricao || "descrição da permuta a definir");
+      break;
     }
     case "MISTO":
-      desc = (fp.misto?.componentes ?? []).map((c) => `${FP_LABEL[c.tipo]} ${brl(c.valor)}`).join(" + ") || "—"; break;
+      desc = (fp.misto?.componentes ?? [])
+        .map((c) => linhaPagamento(FP_LABEL[c.tipo], c.momento, c.data, c.valor ?? 0, c.parcelas, c.obs))
+        .join("; ") || "—";
+      break;
   }
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
     const pc = fp.pix_complemento;
-    const momentoTxt = pc.momento === "DATA_ESPECIFICA"
-      ? (pc.data ? `Em ${pc.data}` : PIX_COMPLEMENTO_LABEL[pc.momento])
-      : PIX_COMPLEMENTO_LABEL[pc.momento];
-    desc += ` | PIX – ${momentoTxt.toUpperCase()} – ${brl(pc.valor)}.`;
+    desc += ` | ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
   }
   return desc;
 }
@@ -896,13 +947,13 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
 export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoConfig {
   const base: FormaPagamentoConfig = { tipo, pix_complemento: null };
   switch (tipo) {
-    case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "" }; break;
-    case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "" }; break;
-    case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "" }; break;
-    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "" }; break;
-    case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "" }; break;
-    case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "" }; break;
-    case "MISTO": base.misto = { componentes: [{ tipo: "PIX", valor: 0, obs: "" }] }; break;
+    case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "", momento: "ASSINATURA" }; break;
+    case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "", momento: "ASSINATURA" }; break;
+    case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "", momento: "ASSINATURA" }; break;
+    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_PROJETO" }; break;
+    case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "", momento: "ASSINATURA" }; break;
+    case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "", momento: "ASSINATURA" }; break;
+    case "MISTO": base.misto = { componentes: [{ tipo: "PIX", momento: "ASSINATURA", valor: 0, parcelas: 1, obs: "" }] }; break;
   }
   return base;
 }

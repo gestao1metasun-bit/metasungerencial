@@ -428,7 +428,7 @@ export function MinutaContratoPanel({
       representante_cpf: "007.084.922-66",
       representante_rg: "998.679 - SESDEC/RO",
     };
-  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta, propostaLS, inversorDescricao]);
+  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta, propostaLS, inversorDescricao, moduloDescricao]);
 
   const varsFaltando = useMemo(() => variaveisFaltando(variaveis), [variaveis]);
   const somaFP = useMemo(() => somaFormaPagamento(state.forma_pagamento_config), [state.forma_pagamento_config]);

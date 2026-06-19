@@ -94,8 +94,13 @@ const num = (v: string | number | null | undefined): number => {
 
 type DadosContratuais = {
   // Contratante editáveis (snapshot contratual, não cliente 360)
+  contratante_tipo_pessoa?: "PF" | "PJ";
   contratante_nome?: string;
   contratante_doc?: string;
+  /** RG do contratante PF (opcional). */
+  contratante_rg?: string;
+  /** Documento adicional opcional do PF: CNH, OAB, etc. (texto livre, ex.: "OAB/RO 12345"). */
+  contratante_doc_extra?: string;
   contratante_telefone?: string;
   contratante_whatsapp?: string;
   contratante_email?: string;
@@ -108,6 +113,11 @@ type DadosContratuais = {
   contratante_uf?: string;
   /** Computado a partir de logradouro+numero+bairro+complemento (compat). */
   contratante_endereco?: string;
+  // Representante legal (apenas quando contratante_tipo_pessoa = "PJ")
+  repr_nome?: string;
+  repr_cpf?: string;
+  repr_rg?: string;
+  repr_telefone?: string;
   // Dados contratuais
   responsavel_assinatura?: string;
   responsavel_cpf?: string;
@@ -147,36 +157,48 @@ export function MinutaContratoPanel({
   }, [contrato.dados]);
 
   // ---- Estado completo do formulário ----
-  const [state, setState] = useState<DadosContratuais>(() => ({
-    contratante_nome: dadosIni.contratante_nome ?? cliente?.nome ?? "",
-    contratante_doc: dadosIni.contratante_doc ?? cliente?.doc ?? "",
-    contratante_telefone: dadosIni.contratante_telefone ?? cliente?.telefone ?? "",
-    contratante_whatsapp: dadosIni.contratante_whatsapp ?? "",
-    contratante_email: dadosIni.contratante_email ?? cliente?.email ?? "",
-    contratante_cep: dadosIni.contratante_cep ?? "",
-    contratante_logradouro: dadosIni.contratante_logradouro ?? cliente?.rua ?? "",
-    contratante_numero: dadosIni.contratante_numero ?? cliente?.numero ?? "",
-    contratante_bairro: dadosIni.contratante_bairro ?? cliente?.bairro ?? "",
-    contratante_complemento: dadosIni.contratante_complemento ?? "",
-    contratante_endereco: dadosIni.contratante_endereco ??
-      [cliente?.rua, cliente?.numero, cliente?.bairro].filter(Boolean).join(", "),
-    contratante_cidade: dadosIni.contratante_cidade ?? cliente?.cidade ?? "",
-    contratante_uf: dadosIni.contratante_uf ?? cliente?.uf ?? "",
-    responsavel_assinatura: dadosIni.responsavel_assinatura ?? "",
-    responsavel_cpf: dadosIni.responsavel_cpf ?? "",
-    assinatura_email: dadosIni.assinatura_email ?? cliente?.email ?? "",
-    assinatura_telefone: dadosIni.assinatura_telefone ?? cliente?.telefone ?? "",
-    prazo_contratual_dias: dadosIni.prazo_contratual_dias ?? 90,
-    data_prevista_assinatura: dadosIni.data_prevista_assinatura ?? (contrato.data_assinatura ?? ""),
-    observacoes_internas: dadosIni.observacoes_internas ?? "",
-    observacoes_contrato: dadosIni.observacoes_contrato ?? (contrato.observacoes ?? ""),
-    local_assinatura: dadosIni.local_assinatura ?? (cliente?.cidade ?? ""),
-    data_base_contrato: dadosIni.data_base_contrato ?? new Date().toISOString().slice(0, 10),
-    forma_pagamento_config: dadosIni.forma_pagamento_config ?? null,
-    clausulas: dadosIni.clausulas ?? carregarTemplateUsuario() ?? clausulasPadrao(),
-    endereco_instalacao: dadosIni.endereco_instalacao ?? "",
-    prazo_execucao_dias: dadosIni.prazo_execucao_dias ?? 60,
-  }));
+  const [state, setState] = useState<DadosContratuais>(() => {
+    const docDig = (dadosIni.contratante_doc ?? cliente?.doc ?? "").replace(/\D/g, "");
+    const tipoInferido: "PF" | "PJ" =
+      dadosIni.contratante_tipo_pessoa ?? (docDig.length === 14 ? "PJ" : "PF");
+    return {
+      contratante_tipo_pessoa: tipoInferido,
+      contratante_nome: dadosIni.contratante_nome ?? cliente?.nome ?? "",
+      contratante_doc: dadosIni.contratante_doc ?? cliente?.doc ?? "",
+      contratante_rg: dadosIni.contratante_rg ?? "",
+      contratante_doc_extra: dadosIni.contratante_doc_extra ?? "",
+      contratante_telefone: dadosIni.contratante_telefone ?? cliente?.telefone ?? "",
+      contratante_whatsapp: dadosIni.contratante_whatsapp ?? "",
+      contratante_email: dadosIni.contratante_email ?? cliente?.email ?? "",
+      contratante_cep: dadosIni.contratante_cep ?? "",
+      contratante_logradouro: dadosIni.contratante_logradouro ?? cliente?.rua ?? "",
+      contratante_numero: dadosIni.contratante_numero ?? cliente?.numero ?? "",
+      contratante_bairro: dadosIni.contratante_bairro ?? cliente?.bairro ?? "",
+      contratante_complemento: dadosIni.contratante_complemento ?? "",
+      contratante_endereco: dadosIni.contratante_endereco ??
+        [cliente?.rua, cliente?.numero, cliente?.bairro].filter(Boolean).join(", "),
+      contratante_cidade: dadosIni.contratante_cidade ?? cliente?.cidade ?? "",
+      contratante_uf: dadosIni.contratante_uf ?? cliente?.uf ?? "",
+      repr_nome: dadosIni.repr_nome ?? "",
+      repr_cpf: dadosIni.repr_cpf ?? "",
+      repr_rg: dadosIni.repr_rg ?? "",
+      repr_telefone: dadosIni.repr_telefone ?? "",
+      responsavel_assinatura: dadosIni.responsavel_assinatura ?? "",
+      responsavel_cpf: dadosIni.responsavel_cpf ?? "",
+      assinatura_email: dadosIni.assinatura_email ?? cliente?.email ?? "",
+      assinatura_telefone: dadosIni.assinatura_telefone ?? cliente?.telefone ?? "",
+      prazo_contratual_dias: dadosIni.prazo_contratual_dias ?? 90,
+      data_prevista_assinatura: dadosIni.data_prevista_assinatura ?? (contrato.data_assinatura ?? ""),
+      observacoes_internas: dadosIni.observacoes_internas ?? "",
+      observacoes_contrato: dadosIni.observacoes_contrato ?? (contrato.observacoes ?? ""),
+      local_assinatura: dadosIni.local_assinatura ?? (cliente?.cidade ?? ""),
+      data_base_contrato: dadosIni.data_base_contrato ?? new Date().toISOString().slice(0, 10),
+      forma_pagamento_config: dadosIni.forma_pagamento_config ?? null,
+      clausulas: dadosIni.clausulas ?? carregarTemplateUsuario() ?? clausulasPadrao(),
+      endereco_instalacao: dadosIni.endereco_instalacao ?? "",
+      prazo_execucao_dias: dadosIni.prazo_execucao_dias ?? 60,
+    };
+  });
   const [tab, setTab] = useState("contratante");
   const [salvando, setSalvando] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -281,12 +303,18 @@ export function MinutaContratoPanel({
     const ano_contrato = m?.[2] ?? new Date().getFullYear().toString();
     const qtde = contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "";
     return {
+      contratante_tipo: state.contratante_tipo_pessoa ?? "PF",
       cliente_nome: state.contratante_nome || "",
       cliente_documento: state.contratante_doc || "",
       cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
         .filter(Boolean).join(", "),
       cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",
-      cliente_rg: "",
+      cliente_rg: state.contratante_rg || "",
+      cliente_doc_extra: state.contratante_doc_extra || "",
+      repr_contratante_nome: state.repr_nome || "",
+      repr_contratante_cpf: state.repr_cpf || "",
+      repr_contratante_rg: state.repr_rg || "",
+      repr_contratante_telefone: state.repr_telefone || "",
       valor_total: brl(valorTotal),
       valor_total_extenso: valorPorExtenso(valorTotal),
       potencia_kwp: contrato.potencia_kwp != null
@@ -318,10 +346,23 @@ export function MinutaContratoPanel({
   // Validações p/ Gerar
   const erros = useMemo(() => {
     const arr: string[] = [];
-    if (!state.contratante_nome?.trim()) arr.push("nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push("documento (CPF/CNPJ)");
-    if (!state.contratante_endereco?.trim()) arr.push("endereço contratual");
+    const tipoPJ = state.contratante_tipo_pessoa === "PJ";
+    const docDig = (state.contratante_doc ?? "").replace(/\D/g, "");
+    if (!state.contratante_nome?.trim()) arr.push(tipoPJ ? "razão social" : "nome do contratante");
+    if (!state.contratante_doc?.trim()) arr.push(tipoPJ ? "CNPJ" : "CPF");
+    else if (tipoPJ && docDig.length !== 14) arr.push("CNPJ inválido (14 dígitos)");
+    else if (!tipoPJ && docDig.length !== 11) arr.push("CPF inválido (11 dígitos)");
+    if (!state.contratante_logradouro?.trim() || !state.contratante_numero?.trim()
+        || !state.contratante_bairro?.trim() || !state.contratante_cidade?.trim()
+        || !state.contratante_uf?.trim()) arr.push("endereço completo do contratante");
     if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
+    if (tipoPJ) {
+      const reprDoc = (state.repr_cpf ?? "").replace(/\D/g, "");
+      if (!state.repr_nome?.trim()) arr.push("nome completo do representante");
+      if (!state.repr_cpf?.trim()) arr.push("CPF do representante");
+      else if (reprDoc.length !== 11) arr.push("CPF do representante inválido");
+      if (!state.repr_telefone?.trim()) arr.push("telefone do representante");
+    }
     if (!state.forma_pagamento_config) arr.push("forma de pagamento");
     else if (!fpFecha) arr.push(`forma de pagamento não fecha (${brl(somaFP)} ≠ ${brl(valorTotal)})`);
     if (valorTotal <= 0) arr.push("valor total > 0");
@@ -444,10 +485,33 @@ export function MinutaContratoPanel({
         </TabsList>
 
         {/* CONTRATANTE */}
-        <TabsContent value="contratante" className="mt-3">
+        <TabsContent value="contratante" className="mt-3 space-y-3">
+          {/* Toggle PF / PJ */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Tipo do contratante:</Label>
+            <div className="inline-flex rounded-md border overflow-hidden">
+              <button type="button" disabled={!podeEditar}
+                className={`px-3 py-1 text-xs ${(state.contratante_tipo_pessoa ?? "PF") === "PF" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                onClick={() => upd("contratante_tipo_pessoa", "PF")}>Pessoa Física</button>
+              <button type="button" disabled={!podeEditar}
+                className={`px-3 py-1 text-xs ${state.contratante_tipo_pessoa === "PJ" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                onClick={() => upd("contratante_tipo_pessoa", "PJ")}>Pessoa Jurídica</button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
-            <Field label="Nome / Razão social *" v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
-            <Field label="CPF / CNPJ *" v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field
+              label={(state.contratante_tipo_pessoa === "PJ" ? "Razão social *" : "Nome completo *")}
+              v={state.contratante_nome} on={(v) => upd("contratante_nome", v)} disabled={!podeEditar} className="md:col-span-4" />
+            <Field
+              label={(state.contratante_tipo_pessoa === "PJ" ? "CNPJ *" : "CPF *")}
+              v={state.contratante_doc} on={(v) => upd("contratante_doc", v)} disabled={!podeEditar} className="md:col-span-2" />
+            {state.contratante_tipo_pessoa !== "PJ" && (
+              <>
+                <Field label="RG (opcional)" v={state.contratante_rg} on={(v) => upd("contratante_rg", v)} disabled={!podeEditar} className="md:col-span-2" />
+                <Field label="CNH / OAB / outro doc. (opcional)" v={state.contratante_doc_extra} on={(v) => upd("contratante_doc_extra", v)} disabled={!podeEditar} className="md:col-span-4" />
+              </>
+            )}
             <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
@@ -477,7 +541,22 @@ export function MinutaContratoPanel({
               <Input className="mt-1 h-8 bg-muted/40" readOnly value={enderecoCompleto} />
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2">
+
+          {state.contratante_tipo_pessoa === "PJ" && (
+            <div className="rounded-md border border-blue-500/40 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-2">
+              <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                Representante legal (obrigatório para PJ)
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-3 text-sm">
+                <Field label="Nome completo *" v={state.repr_nome} on={(v) => upd("repr_nome", v)} disabled={!podeEditar} className="md:col-span-3" />
+                <Field label="CPF *" v={state.repr_cpf} on={(v) => upd("repr_cpf", v)} disabled={!podeEditar} className="md:col-span-1" />
+                <Field label="Telefone *" v={state.repr_telefone} on={(v) => upd("repr_telefone", v)} disabled={!podeEditar} className="md:col-span-1" />
+                <Field label="RG (opcional)" v={state.repr_rg} on={(v) => upd("repr_rg", v)} disabled={!podeEditar} className="md:col-span-1" />
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-muted-foreground">
             Alterações aqui salvam um <strong>snapshot contratual</strong> em <code>contratos.dados</code> e
             <strong> não sobrescrevem o Cliente 360°</strong>.
           </p>
@@ -1366,13 +1445,27 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             Pelo presente instrumento e na melhor forma de direito, as partes, a saber:
           </p>
 
-          <p className="text-justify">
-            <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
-            {" "}portador(a) do documento <strong>{variaveis.cliente_documento || "______________"}</strong>
-            {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null},
-            residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
-            {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
-          </p>
+          {variaveis.contratante_tipo === "PJ" ? (
+            <p className="text-justify">
+              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"}, pessoa jurídica de
+              direito privado, inscrita no <strong>CNPJ sob o nº {variaveis.cliente_documento || "______________"}</strong>,
+              com sede em {variaveis.cliente_endereco || "______________"}
+              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null},
+              neste ato representada por <strong>{variaveis.repr_contratante_nome || "______________"}</strong>,
+              inscrito no <strong>CPF sob o nº {variaveis.repr_contratante_cpf || "______________"}</strong>
+              {variaveis.repr_contratante_rg ? <>, <strong>RG nº {variaveis.repr_contratante_rg}</strong></> : null}
+              {variaveis.repr_contratante_telefone ? <>, telefone <strong>{variaveis.repr_contratante_telefone}</strong></> : null}.
+            </p>
+          ) : (
+            <p className="text-justify">
+              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
+              {" "}portador(a) do <strong>CPF nº {variaveis.cliente_documento || "______________"}</strong>
+              {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null}
+              {variaveis.cliente_doc_extra ? <>, <strong>{variaveis.cliente_doc_extra}</strong></> : null},
+              residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
+              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
+            </p>
+          )}
 
           <p className="text-justify">
             <strong>CONTRATADA:</strong> Meta Sun Instalações Elétricas LTDA, pessoa jurídica de direito privado,

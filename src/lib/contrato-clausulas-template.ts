@@ -760,13 +760,16 @@ export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
 // Forma de pagamento
 // =====================================================================
 export type FormaPagamentoTipo =
-  | "DINHEIRO" | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
+  | "DINHEIRO" | "PIX" | "BOLETO" | "CARTAO" | "CARTAO_DEBITO" | "CHEQUE"
+  | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
 
 export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
   DINHEIRO: "Dinheiro",
   PIX: "PIX",
   BOLETO: "Boleto",
-  CARTAO: "Cartão",
+  CARTAO: "Cartão de crédito",
+  CARTAO_DEBITO: "Cartão de débito",
+  CHEQUE: "Cheque",
   FINANCIAMENTO: "Financiamento",
   ENTRADA_PARCELAS: "Entrada + Parcelas",
   PERMUTA: "Permuta",
@@ -775,8 +778,10 @@ export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
 
 /** Tipos selecionáveis na UI (ENTRADA_PARCELAS descontinuado — use MISTO). */
 export const FP_TIPOS_SELECIONAVEIS: FormaPagamentoTipo[] = [
-  "DINHEIRO", "PIX", "BOLETO", "CARTAO", "FINANCIAMENTO", "PERMUTA", "MISTO",
+  "DINHEIRO", "PIX", "BOLETO", "CARTAO", "CARTAO_DEBITO", "CHEQUE",
+  "FINANCIAMENTO", "PERMUTA", "MISTO",
 ];
+
 
 /** Momento do PIX complementar (entrada/gatilho). */
 export type PixComplementoMomento =

@@ -846,6 +846,8 @@ export type FormaPagamentoConfig = {
   pix?: { valor: number; data: string; chave: string; observacao: string; momento?: MomentoPagamento };
   boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string; momento?: MomentoPagamento; data?: string };
   cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string; momento?: MomentoPagamento; data?: string };
+  cartao_debito?: { valor: number; bandeira: string; observacao: string; momento?: MomentoPagamento; data?: string };
+  cheque?: { valor: number; parcelas: number; banco: string; observacao: string; momento?: MomentoPagamento; data?: string };
   financiamento?: { banco: string; valor: number; entrada: number; prazo_meses: number; status: string; observacao: string; clausula: string; momento?: MomentoPagamento; data?: string };
   entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string; momento?: MomentoPagamento };
   permuta?: { valor: number; descricao: string; observacao: string; momento?: MomentoPagamento; data?: string };
@@ -855,6 +857,7 @@ export type FormaPagamentoConfig = {
   /** Formas de pagamento adicionais — cada item segue o mesmo padrão Tipo/Momento/Valor. */
   formas_extras?: FormaPagamentoConfig[];
 };
+
 
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];
 

@@ -200,7 +200,15 @@ function patchVinculoLeadSupabaseLocal(
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas
  *  e cria um Contrato em status "Pendente" no Comercial → Cadastrar Contrato. */
 export async function aprovarProposta(p: PropostaFV) {
+  const lockKey = p.id;
+  if (aprovacoesEmAndamento.has(lockKey)) {
+    toast.info("A aprovação desta proposta já está em andamento.");
+    return;
+  }
+  aprovacoesEmAndamento.add(lockKey);
   const usuario = p.criadoPor || "Operador";
+  let deveNavegar = true;
+  try {
   aprovarPropostaDoLead(p.id, usuario, "Aprovada em Orçamentos");
   const clienteFull = (p.clienteDoc || p.clienteTelefone || p.clienteCidade) ? {
     nome: p.clienteNome,
@@ -269,6 +277,8 @@ export async function aprovarProposta(p: PropostaFV) {
     // 1) Lead UUID no Supabase — busca o existente ou cria um novo.
     let leadUuid: string | null = null;
     let clienteIdSb: string | null = null;
+    let propostaIdPreexistente: string | null = null;
+    let contratoIdPreexistente: string | null = null;
     if (p.leadId && UUID_RE_LOCAL.test(p.leadId)) {
       const { data: leadRow, error: eLead } = await supabase
         .from("leads").select("id,cliente_id").eq("id", p.leadId).maybeSingle();
@@ -276,6 +286,39 @@ export async function aprovarProposta(p: PropostaFV) {
       if (leadRow) {
         leadUuid = leadRow.id as string;
         clienteIdSb = (leadRow.cliente_id as string | null) ?? null;
+      }
+    }
+
+    if (!leadUuid) {
+      const { data: propLs, error: ePropLs } = await supabase
+        .from("propostas")
+        .select("id,lead_id,cliente_id,contrato_id,status")
+        .eq("dados->origem_ls->>propostaIdLs", p.id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (ePropLs) throw ePropLs;
+      if (propLs) {
+        propostaIdPreexistente = propLs.id as string;
+        leadUuid = (propLs.lead_id as string | null) ?? null;
+        clienteIdSb = (propLs.cliente_id as string | null) ?? null;
+        contratoIdPreexistente = (propLs.contrato_id as string | null) ?? null;
+      }
+    }
+
+    if (!leadUuid) {
+      const { data: leadLs, error: eLeadLs } = await supabase
+        .from("leads")
+        .select("id,cliente_id")
+        .eq("dados->>propostaLsId", p.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (eLeadLs) throw eLeadLs;
+      if (leadLs) {
+        leadUuid = leadLs.id as string;
+        clienteIdSb = (leadLs.cliente_id as string | null) ?? clienteIdSb;
       }
     }
 
@@ -316,8 +359,9 @@ export async function aprovarProposta(p: PropostaFV) {
 
     // 4) Idempotência — se já existe proposta Supabase para este lead, reaproveita
     //    (evita duplicar proposta/contrato a cada clique em "Aprovar").
-    let propostaId: string | null = null;
-    let contratoJaExiste = false;
+    let propostaId: string | null = propostaIdPreexistente;
+    let contratoJaExiste = !!contratoIdPreexistente;
+    let contratoIdFinal: string | null = contratoIdPreexistente;
     if (leadUuid) {
       const { data: existProps } = await supabase
         .from("propostas")
@@ -329,6 +373,7 @@ export async function aprovarProposta(p: PropostaFV) {
       if (comContrato?.contrato_id) {
         propostaId = comContrato.id as string;
         contratoJaExiste = true;
+        contratoIdFinal = comContrato.contrato_id as string;
       } else if (existProps && existProps.length > 0) {
         const reaproveitavel = existProps.find(
           (x) => !["CANCELADA", "ASSINADA"].includes(String(x.status)),
@@ -374,7 +419,14 @@ export async function aprovarProposta(p: PropostaFV) {
         { p_proposta_id: propostaId } as never,
       );
       if (e3) throw e3;
+      const { data: propContrato } = await supabase
+        .from("propostas")
+        .select("contrato_id")
+        .eq("id", propostaId)
+        .maybeSingle();
+      contratoIdFinal = (propContrato?.contrato_id as string | null) ?? contratoIdFinal;
     }
+    patchVinculoLeadSupabaseLocal(p, leadUuid, clienteIdSb, contratoIdFinal ?? undefined);
     supabaseOk = true;
   } catch (err) {
     supabaseErr = (err as Error)?.message ?? String(err);
@@ -390,7 +442,10 @@ export async function aprovarProposta(p: PropostaFV) {
     );
   }
   // Leva o operador direto para Contratos → Pendentes de Redação
-  setTimeout(() => irParaContratos(), 400);
+  if (deveNavegar) setTimeout(() => irParaContratos(), 400);
+  } finally {
+    aprovacoesEmAndamento.delete(lockKey);
+  }
 }
 
 /* ============= Diálogo de Aprovação (CPF e endereço opcionais) ============= */

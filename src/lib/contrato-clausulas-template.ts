@@ -62,7 +62,10 @@ export type Clausula = {
   revisada: boolean;
   /** true se foi adicionada pelo usuário, fora do template padrão. */
   complementar?: boolean;
+  /** Marca cláusulas geradas/gerenciadas automaticamente (financiamento, etc). */
+  auto_origem?: "FINANCIAMENTO";
 };
+
 
 const uid = () => `cl_${Math.random().toString(36).slice(2, 10)}`;
 

@@ -49,7 +49,7 @@ import {
   type FormaPagamentoTipo, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
 import { usePropostas, useInversoresFV, type PropostaFV } from "@/modules/propostas/store";
-import { fmtInversorNumero } from "@/lib/inversor-fmt";
+
 
 
 

@@ -348,7 +348,7 @@ export function MinutaContratoPanel({
     return {
       contratante_tipo: state.contratante_tipo_pessoa ?? "PF",
       cliente_nome: state.contratante_nome || "",
-      cliente_documento: state.contratante_doc || "",
+      cliente_documento: state.contratante_doc || state.contratante_rg || state.contratante_doc_extra || "",
       cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
         .filter(Boolean).join(", "),
       cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",

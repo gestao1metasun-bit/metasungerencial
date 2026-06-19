@@ -601,6 +601,7 @@ function DateField({ label, v, on, disabled }: { label: string; v: string | unde
 // Forma de pagamento
 
 const SUB_KEY: Record<Exclude<FormaPagamentoTipo, "MISTO">, keyof FormaPagamentoConfig> = {
+  DINHEIRO: "dinheiro",
   PIX: "pix",
   BOLETO: "boleto",
   CARTAO: "cartao",

@@ -208,7 +208,7 @@ function WorkspaceClientePage() {
           <TabsTrigger value="leads">Leads ({leads.data?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="resumo" className="mt-3">

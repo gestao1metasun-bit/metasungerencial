@@ -671,9 +671,10 @@ function MomentoBlock({ disabled, momento, data, onMomento, onData }: {
   );
 }
 
-function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
+function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }: {
   valorTotal: number; disabled?: boolean; value: FormaPagamentoConfig | null | undefined;
   onChange: (v: FormaPagamentoConfig | null) => void;
+  nested?: boolean;
 }) {
   const tipo = value?.tipo;
   function setTipo(t: FormaPagamentoTipo) {

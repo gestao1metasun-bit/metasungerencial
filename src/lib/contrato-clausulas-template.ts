@@ -62,7 +62,10 @@ export type Clausula = {
   revisada: boolean;
   /** true se foi adicionada pelo usuário, fora do template padrão. */
   complementar?: boolean;
+  /** Marca cláusulas geradas/gerenciadas automaticamente (financiamento, etc). */
+  auto_origem?: "FINANCIAMENTO";
 };
+
 
 const uid = () => `cl_${Math.random().toString(36).slice(2, 10)}`;
 
@@ -757,13 +760,16 @@ export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
 // Forma de pagamento
 // =====================================================================
 export type FormaPagamentoTipo =
-  | "DINHEIRO" | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
+  | "DINHEIRO" | "PIX" | "BOLETO" | "CARTAO" | "CARTAO_DEBITO" | "CHEQUE"
+  | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
 
 export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
   DINHEIRO: "Dinheiro",
   PIX: "PIX",
   BOLETO: "Boleto",
-  CARTAO: "Cartão",
+  CARTAO: "Cartão de crédito",
+  CARTAO_DEBITO: "Cartão de débito",
+  CHEQUE: "Cheque",
   FINANCIAMENTO: "Financiamento",
   ENTRADA_PARCELAS: "Entrada + Parcelas",
   PERMUTA: "Permuta",
@@ -772,8 +778,10 @@ export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
 
 /** Tipos selecionáveis na UI (ENTRADA_PARCELAS descontinuado — use MISTO). */
 export const FP_TIPOS_SELECIONAVEIS: FormaPagamentoTipo[] = [
-  "DINHEIRO", "PIX", "BOLETO", "CARTAO", "FINANCIAMENTO", "PERMUTA", "MISTO",
+  "DINHEIRO", "PIX", "BOLETO", "CARTAO", "CARTAO_DEBITO", "CHEQUE",
+  "FINANCIAMENTO", "PERMUTA", "MISTO",
 ];
+
 
 /** Momento do PIX complementar (entrada/gatilho). */
 export type PixComplementoMomento =
@@ -838,6 +846,8 @@ export type FormaPagamentoConfig = {
   pix?: { valor: number; data: string; chave: string; observacao: string; momento?: MomentoPagamento };
   boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string; momento?: MomentoPagamento; data?: string };
   cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string; momento?: MomentoPagamento; data?: string };
+  cartao_debito?: { valor: number; bandeira: string; observacao: string; momento?: MomentoPagamento; data?: string };
+  cheque?: { valor: number; parcelas: number; banco: string; observacao: string; momento?: MomentoPagamento; data?: string };
   financiamento?: { banco: string; valor: number; entrada: number; prazo_meses: number; status: string; observacao: string; clausula: string; momento?: MomentoPagamento; data?: string };
   entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string; momento?: MomentoPagamento };
   permuta?: { valor: number; descricao: string; observacao: string; momento?: MomentoPagamento; data?: string };
@@ -848,11 +858,12 @@ export type FormaPagamentoConfig = {
   formas_extras?: FormaPagamentoConfig[];
 };
 
+
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];
 
 /** Tipos que ACEITAM um PIX complementar (entrada/gatilho). */
 export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
-  "PIX", "BOLETO", "CARTAO", "ENTRADA_PARCELAS", "MISTO",
+  "PIX", "BOLETO", "CARTAO", "CARTAO_DEBITO", "CHEQUE", "ENTRADA_PARCELAS", "MISTO",
 ];
 
 function somaBase(fp: FormaPagamentoConfig): number {
@@ -861,6 +872,8 @@ function somaBase(fp: FormaPagamentoConfig): number {
     case "PIX": return Number(fp.pix?.valor) || 0;
     case "BOLETO": return Number(fp.boleto?.valor) || 0;
     case "CARTAO": return Number(fp.cartao?.valor) || 0;
+    case "CARTAO_DEBITO": return Number(fp.cartao_debito?.valor) || 0;
+    case "CHEQUE": return Number(fp.cheque?.valor) || 0;
     case "FINANCIAMENTO": return (Number(fp.financiamento?.valor) || 0) + (Number(fp.financiamento?.entrada) || 0);
     case "ENTRADA_PARCELAS": return (Number(fp.entrada_parcelas?.entrada) || 0) + (Number(fp.entrada_parcelas?.saldo) || 0);
     case "PERMUTA": return Number(fp.permuta?.valor) || 0;
@@ -868,6 +881,7 @@ function somaBase(fp: FormaPagamentoConfig): number {
   }
   return 0;
 }
+
 
 export function somaFormaPagamento(fp: FormaPagamentoConfig | null | undefined): number {
   if (!fp) return 0;
@@ -933,9 +947,22 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
     case "CARTAO": {
       const c = fp.cartao!;
       const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "juros por conta do cliente" : "juros por conta da Meta (sem juros ao cliente)"}`;
-      desc = linhaPagamento("Cartão", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
+      desc = linhaPagamento("Cartão de crédito", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
       break;
     }
+    case "CARTAO_DEBITO": {
+      const c = fp.cartao_debito!;
+      const extra = c.bandeira || undefined;
+      desc = linhaPagamento("Cartão de débito", c.momento, c.data, c.valor ?? 0, undefined, extra);
+      break;
+    }
+    case "CHEQUE": {
+      const c = fp.cheque!;
+      const extra = `${c.banco ? c.banco : "banco a definir"}${c.observacao ? `, ${c.observacao}` : ""}`;
+      desc = linhaPagamento("Cheque", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
+      break;
+    }
+
     case "FINANCIAMENTO": {
       const f = fp.financiamento!;
       const extra = `${f.banco || "banco a definir"}, prazo ${f.prazo_meses || "—"} meses${f.entrada > 0 ? `, entrada ${brlFmt(f.entrada)}` : ""}`;
@@ -976,13 +1003,91 @@ export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoCon
     case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "", momento: "ASSINATURA" }; break;
     case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "", momento: "ASSINATURA" }; break;
     case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "", momento: "ASSINATURA" }; break;
+    case "CARTAO_DEBITO": base.cartao_debito = { valor: 0, bandeira: "", observacao: "", momento: "ASSINATURA" }; break;
+    case "CHEQUE": base.cheque = { valor: 0, parcelas: 1, banco: "", observacao: "", momento: "ASSINATURA" }; break;
     case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_FINANCIAMENTO" }; break;
     case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "", momento: "ASSINATURA" }; break;
     case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "", momento: "ASSINATURA" }; break;
     case "MISTO": base.misto = { componentes: [{ tipo: "PIX", momento: "ASSINATURA", valor: 0, parcelas: 1, obs: "" }] }; break;
   }
   return base;
+
 }
+
+// =====================================================================
+// Auto-cláusulas de Financiamento (geradas/sincronizadas automaticamente)
+// =====================================================================
+
+/** Retorna true se a forma de pagamento contém qualquer financiamento (direto, em "misto" ou em "formas_extras"). */
+export function temFinanciamento(fp: FormaPagamentoConfig | null | undefined): boolean {
+  if (!fp) return false;
+  if (fp.tipo === "FINANCIAMENTO") return true;
+  if (fp.tipo === "MISTO" && (fp.misto?.componentes ?? []).some((c) => c.tipo === "FINANCIAMENTO")) return true;
+  for (const e of (fp.formas_extras ?? [])) {
+    if (temFinanciamento(e)) return true;
+  }
+  return false;
+}
+
+const FIN_CLAUSULA_1 =
+  "A execução dos serviços objeto deste contrato fica condicionada à aprovação do financiamento. " +
+  "Na hipótese de não aprovação do crédito por motivos alheios à CONTRATADA, as partes poderão, de comum " +
+  "acordo, renegociar as condições de pagamento e demais cláusulas comerciais, mediante termo aditivo, " +
+  "ou, não havendo consenso, o presente contrato será rescindido sem qualquer ônus ou penalidade para " +
+  "ambas as partes, ressalvadas eventuais despesas já expressamente autorizadas e comprovadamente " +
+  "realizadas pela CONTRATADA.";
+
+const FIN_CLAUSULA_2 =
+  "Após a aprovação do financiamento e a efetiva liberação dos recursos pela instituição financeira, " +
+  "a CONTRATADA dará início aos procedimentos de fornecimento dos equipamentos, elaboração do projeto " +
+  "e execução dos serviços contratados.";
+
+/**
+ * Sincroniza as cláusulas auto-geradas de financiamento dentro do grupo "DO VALOR E
+ * CONDIÇÕES DE PAGAMENTO". Remove as existentes (marcadas auto_origem=FINANCIAMENTO) e,
+ * se `hasFin=true`, recria após os itens manuais. Mantém demais cláusulas intactas.
+ */
+export function sincronizarClausulasFinanciamento(
+  clausulas: Clausula[],
+  hasFin: boolean,
+): Clausula[] {
+  const semAuto = clausulas.filter((c) => c.auto_origem !== "FINANCIAMENTO");
+  if (!hasFin) return renumerar(semAuto);
+
+  const grupoVP = semAuto.find((c) => c.tipo === "GRUPO" && c.categoria === "VALOR_PAGAMENTO");
+  if (!grupoVP) return renumerar(semAuto);
+
+  const novos: Clausula[] = [
+    {
+      id: uid(),
+      ordem: 0,
+      tipo: "ITEM",
+      grupo: grupoVP.grupo,
+      titulo: "",
+      categoria: "VALOR_PAGAMENTO",
+      texto: FIN_CLAUSULA_1,
+      obrigatoria: true,
+      oculta: false,
+      revisada: true,
+      auto_origem: "FINANCIAMENTO",
+    },
+    {
+      id: uid(),
+      ordem: 0,
+      tipo: "ITEM",
+      grupo: grupoVP.grupo,
+      titulo: "",
+      categoria: "VALOR_PAGAMENTO",
+      texto: FIN_CLAUSULA_2,
+      obrigatoria: true,
+      oculta: false,
+      revisada: true,
+      auto_origem: "FINANCIAMENTO",
+    },
+  ];
+  return renumerar([...semAuto, ...novos]);
+}
+
 
 // =====================================================================
 // Número por extenso

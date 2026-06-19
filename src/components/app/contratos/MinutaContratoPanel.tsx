@@ -40,6 +40,7 @@ import {
   clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
+  temFinanciamento, sincronizarClausulasFinanciamento,
   FP_LABEL, FP_TIPOS_SELECIONAVEIS, BANCOS_FINANCIAMENTO,
   MOMENTO_LABEL, MOMENTO_OPCOES,
   renumerar, inserirItem, removerItem, alterarTextoItem,
@@ -47,6 +48,7 @@ import {
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
   type FormaPagamentoTipo, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
+
 
 type MinutaContrato = {
   id: string;
@@ -237,6 +239,22 @@ export function MinutaContratoPanel({
   useEffect(() => {
     setState((s) => (s.contratante_endereco === enderecoCompleto ? s : { ...s, contratante_endereco: enderecoCompleto }));
   }, [enderecoCompleto]);
+
+  // Sincroniza cláusulas auto-geradas de FINANCIAMENTO (2.3 e 2.4) sempre que
+  // a forma de pagamento mudar. Cláusulas manuais ficam intactas.
+  useEffect(() => {
+    const hasFin = temFinanciamento(state.forma_pagamento_config);
+    setState((s) => {
+      const atuais = s.clausulas ?? [];
+      const proximas = sincronizarClausulasFinanciamento(atuais, hasFin);
+      // Evita loop: só atualiza se realmente mudou a lista de IDs/textos.
+      const same =
+        atuais.length === proximas.length &&
+        atuais.every((c, i) => c.id === proximas[i].id && c.texto === proximas[i].texto);
+      return same ? s : { ...s, clausulas: proximas };
+    });
+  }, [state.forma_pagamento_config]);
+
 
   /** Busca endereço via ViaCEP e preenche logradouro/bairro/cidade/UF. */
   async function aplicarCep(cepRaw: string) {
@@ -605,10 +623,13 @@ const SUB_KEY: Record<Exclude<FormaPagamentoTipo, "MISTO">, keyof FormaPagamento
   PIX: "pix",
   BOLETO: "boleto",
   CARTAO: "cartao",
+  CARTAO_DEBITO: "cartao_debito",
+  CHEQUE: "cheque",
   FINANCIAMENTO: "financiamento",
   ENTRADA_PARCELAS: "entrada_parcelas",
   PERMUTA: "permuta",
 };
+
 function getMomento(v: FormaPagamentoConfig, t: FormaPagamentoTipo): MomentoPagamento | undefined {
   if (t === "MISTO") return undefined;
   const sub = v[SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">]] as { momento?: MomentoPagamento } | undefined;
@@ -769,6 +790,26 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         </div>
       )}
 
+      {tipo === "CARTAO_DEBITO" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor total" v={value!.cartao_debito?.valor} on={(v) => patch("cartao_debito", { valor: v })} disabled={disabled} />
+          <Field label="Bandeira" v={value!.cartao_debito?.bandeira} on={(v) => patch("cartao_debito", { bandeira: v })} disabled={disabled} />
+          <Field label="Observação" v={value!.cartao_debito?.observacao} on={(v) => patch("cartao_debito", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+        </div>
+      )}
+
+      {tipo === "CHEQUE" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor total" v={value!.cheque?.valor} on={(v) => patch("cheque", { valor: v })} disabled={disabled} />
+          <NumField label="Qtde de cheques" v={value!.cheque?.parcelas} on={(v) => patch("cheque", { parcelas: Math.max(1, Math.floor(v || 1)) })} disabled={disabled} />
+          <Field label="Banco emissor" v={value!.cheque?.banco} on={(v) => patch("cheque", { banco: v })} disabled={disabled} />
+          <Field label="Observação" v={value!.cheque?.observacao} on={(v) => patch("cheque", { observacao: v })} disabled={disabled} className="md:col-span-3" />
+        </div>
+      )}
+
+
+
+
       {tipo === "FINANCIAMENTO" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <div>
@@ -826,7 +867,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
                     <Select value={c.tipo} onValueChange={(v) => updateComp({ tipo: v as FormaPagamentoTipo })} disabled={disabled}>
                       <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {(["DINHEIRO","PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
+                        {(["DINHEIRO","PIX","BOLETO","CARTAO","CARTAO_DEBITO","CHEQUE","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
                           <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
                       </SelectContent>
                     </Select>

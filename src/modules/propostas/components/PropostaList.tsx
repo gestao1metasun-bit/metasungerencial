@@ -45,6 +45,9 @@ import {
 } from "@/lib/contratos-store";
 // LEGADO LS — check de existência sincrônico. Migrar com PropostasPage.
 import { findClienteByDoc } from "@/lib/clientes-store";
+import { supabase } from "@/integrations/supabase/client";
+
+const UUID_RE_LOCAL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {

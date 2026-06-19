@@ -303,12 +303,18 @@ export function MinutaContratoPanel({
     const ano_contrato = m?.[2] ?? new Date().getFullYear().toString();
     const qtde = contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "";
     return {
+      contratante_tipo: state.contratante_tipo_pessoa ?? "PF",
       cliente_nome: state.contratante_nome || "",
       cliente_documento: state.contratante_doc || "",
       cliente_endereco: [state.contratante_endereco, state.contratante_cidade, state.contratante_uf]
         .filter(Boolean).join(", "),
       cliente_telefone: state.contratante_telefone || state.contratante_whatsapp || "",
-      cliente_rg: "",
+      cliente_rg: state.contratante_rg || "",
+      cliente_doc_extra: state.contratante_doc_extra || "",
+      repr_contratante_nome: state.repr_nome || "",
+      repr_contratante_cpf: state.repr_cpf || "",
+      repr_contratante_rg: state.repr_rg || "",
+      repr_contratante_telefone: state.repr_telefone || "",
       valor_total: brl(valorTotal),
       valor_total_extenso: valorPorExtenso(valorTotal),
       potencia_kwp: contrato.potencia_kwp != null

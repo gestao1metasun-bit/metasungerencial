@@ -40,7 +40,7 @@ import {
   clausulasPadrao,
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
-  FP_LABEL, BANCOS_FINANCIAMENTO,
+  FP_LABEL, FP_TIPOS_SELECIONAVEIS, BANCOS_FINANCIAMENTO,
   MOMENTO_LABEL, MOMENTO_OPCOES,
   renumerar, inserirItem, removerItem, alterarTextoItem,
   salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,

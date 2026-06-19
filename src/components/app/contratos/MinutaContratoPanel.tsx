@@ -605,10 +605,13 @@ const SUB_KEY: Record<Exclude<FormaPagamentoTipo, "MISTO">, keyof FormaPagamento
   PIX: "pix",
   BOLETO: "boleto",
   CARTAO: "cartao",
+  CARTAO_DEBITO: "cartao_debito",
+  CHEQUE: "cheque",
   FINANCIAMENTO: "financiamento",
   ENTRADA_PARCELAS: "entrada_parcelas",
   PERMUTA: "permuta",
 };
+
 function getMomento(v: FormaPagamentoConfig, t: FormaPagamentoTipo): MomentoPagamento | undefined {
   if (t === "MISTO") return undefined;
   const sub = v[SUB_KEY[t as Exclude<FormaPagamentoTipo, "MISTO">]] as { momento?: MomentoPagamento } | undefined;

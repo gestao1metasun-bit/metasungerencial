@@ -48,6 +48,9 @@ import {
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
   type FormaPagamentoTipo, type MomentoPagamento, type Variaveis,
 } from "@/lib/contrato-clausulas-template";
+import { usePropostas, useInversoresFV, type PropostaFV } from "@/modules/propostas/store";
+import { fmtInversorNumero } from "@/lib/inversor-fmt";
+
 
 
 type MinutaContrato = {
@@ -80,9 +83,11 @@ type ClienteSnap = {
 };
 
 type PropostaSnap = {
+  id?: string | null;
   inversor?: string | null;
   potencia_kwp?: number | null;
   modulos_qtd?: number | null;
+  dados?: Record<string, unknown> | null;
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -294,6 +299,41 @@ export function MinutaContratoPanel({
     } catch { /* silencia rede */ }
   }
 
+  // ---- Lookup da proposta original (LS) para puxar marca/potência módulo + inversores
+  const propostasLS = usePropostas();
+  const inversoresLS = useInversoresFV();
+  const propostaLS = useMemo<PropostaFV | undefined>(() => {
+    const lsId =
+      (proposta?.dados as { origem_ls?: { propostaIdLs?: string } } | null | undefined)
+        ?.origem_ls?.propostaIdLs ?? proposta?.id ?? null;
+    if (!lsId) return undefined;
+    return propostasLS.find((p) => p.id === lsId);
+  }, [propostasLS, proposta?.id, proposta?.dados]);
+
+  const inversorDescricao = useMemo(() => {
+    const lista = propostaLS?.inversores ?? [];
+    const ids: string[] = [];
+    for (const e of lista) {
+      const qtd = Math.max(0, Number(e.quantidade) || 0);
+      for (let i = 0; i < qtd; i++) {
+        const inv = inversoresLS.find((x) => x.id === e.inversorId);
+        ids.push(inv?.modelo ?? e.inversorId);
+      }
+    }
+    const counts = new Map<string, number>();
+    for (const id of ids) {
+      const n = fmtInversorNumero(id);
+      if (!n) continue;
+      counts.set(n, (counts.get(n) ?? 0) + 1);
+    }
+    const numeros = counts.size === 0
+      ? ""
+      : [...counts.entries()].map(([n, q]) => (q > 1 ? `${q}x ${n}` : n)).join(" + ");
+    const marca = propostaLS?.inversorMarca?.trim();
+    if (!numeros || numeros === "—") return proposta?.inversor ?? "";
+    return marca ? `${marca} ${numeros}` : numeros;
+  }, [propostaLS, inversoresLS, proposta?.inversor]);
+
   // ---- Variáveis para prévia ----
   const variaveis: Variaveis = useMemo(() => {
     // numero_contrato / ano_contrato derivados do código (ex.: "CT-120/2026" ou "120/2026")
@@ -301,7 +341,10 @@ export function MinutaContratoPanel({
     const m = code.match(/(\d+)\s*[/-]\s*(\d{2,4})/);
     const numero_contrato = m?.[1] ?? code;
     const ano_contrato = m?.[2] ?? new Date().getFullYear().toString();
-    const qtde = contrato.modulos_qtde ?? proposta?.modulos_qtd ?? "";
+    const qtde =
+      contrato.modulos_qtde ?? proposta?.modulos_qtd ?? propostaLS?.modulosQtd ?? "";
+    const marcaMod = propostaLS?.moduloMarca?.trim() ?? "";
+    const potMod = propostaLS?.moduloPotenciaWp;
     return {
       contratante_tipo: state.contratante_tipo_pessoa ?? "PF",
       cliente_nome: state.contratante_nome || "",
@@ -322,9 +365,9 @@ export function MinutaContratoPanel({
         : (proposta?.potencia_kwp != null ? Number(proposta.potencia_kwp).toFixed(2) : ""),
       quantidade_modulos: qtde,
       quantidade_modulos_extenso: typeof qtde === "number" && qtde > 0 ? valorPorExtenso(qtde).replace(/ reais?$/, "") : "",
-      marca_modulos: "",
-      potencia_modulo_w: "",
-      inversor: proposta?.inversor ?? "",
+      marca_modulos: marcaMod,
+      potencia_modulo_w: potMod != null && Number(potMod) > 0 ? String(Math.round(Number(potMod))) : "",
+      inversor: inversorDescricao || (proposta?.inversor ?? ""),
       forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
       prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
       cidade: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
@@ -337,7 +380,7 @@ export function MinutaContratoPanel({
       representante_cpf: "007.084.922-66",
       representante_rg: "998.679 - SESDEC/RO",
     };
-  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta]);
+  }, [state, valorTotal, contrato.potencia_kwp, contrato.modulos_qtde, contrato.codigo, proposta, propostaLS, inversorDescricao]);
 
   const varsFaltando = useMemo(() => variaveisFaltando(variaveis), [variaveis]);
   const somaFP = useMemo(() => somaFormaPagamento(state.forma_pagamento_config), [state.forma_pagamento_config]);

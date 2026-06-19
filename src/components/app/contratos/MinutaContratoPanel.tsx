@@ -1630,6 +1630,15 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
               <div className="mt-1 font-semibold">CONTRATADA</div>
             </div>
           </div>
+
+          {/* Rodapé oficial Meta Sun */}
+          <div className="mt-8 text-center">
+            <img
+              src={metaSunRodape.url}
+              alt="Meta Sun — Av. Eng. Anysio da Rocha Compasso 5055, Rio Madeira, Porto Velho - RO, 76821-381 | 69 9.9341-2188 | www.metasun.com.br"
+              className="mx-auto w-full max-w-[680px] h-auto"
+            />
+          </div>
         </div>
       </Card>
     </div>

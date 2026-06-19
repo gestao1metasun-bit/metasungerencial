@@ -195,7 +195,7 @@ export function MinutaContratoPanel({
       const hashParams = new URLSearchParams(raw);
       const sub = searchParams.get("tab") === "previa" ? "previa" : hashParams.get("minuta");
       const focus = searchParams.get("focus") ?? hashParams.get("focus");
-      const ABAS = ["contratante", "contratuais", "pagamento", "clausulas", "previa"];
+      const ABAS = ["contratante", "pagamento", "clausulas", "previa"];
       if (sub && ABAS.includes(sub)) setTab(sub);
       if (focus === "gerar") {
         setTab((t) => (t === "previa" ? t : "previa"));
@@ -286,7 +286,7 @@ export function MinutaContratoPanel({
       inversor: proposta?.inversor ?? "",
       forma_pagamento: descricaoFormaPagamento(state.forma_pagamento_config),
       prazo_execucao: state.prazo_execucao_dias != null ? String(state.prazo_execucao_dias) : "",
-      cidade: state.local_assinatura || state.contratante_cidade || "",
+      cidade: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
       cidade_foro: state.local_assinatura || state.contratante_cidade || "Porto Velho/RO",
       data_contrato: state.data_base_contrato || "",
       endereco_instalacao: state.endereco_instalacao || state.contratante_endereco || "",
@@ -306,9 +306,9 @@ export function MinutaContratoPanel({
   const erros = useMemo(() => {
     const arr: string[] = [];
     if (!state.contratante_nome?.trim()) arr.push("nome do contratante");
-    if (!state.contratante_doc?.trim()) arr.push("documento");
+    if (!state.contratante_doc?.trim()) arr.push("documento (CPF/CNPJ)");
     if (!state.contratante_endereco?.trim()) arr.push("endereço contratual");
-    if (!state.assinatura_email?.trim()) arr.push("e-mail de assinatura");
+    if (!(state.assinatura_email?.trim() || state.contratante_email?.trim())) arr.push("e-mail do contratante");
     if (!state.forma_pagamento_config) arr.push("forma de pagamento");
     else if (!fpFecha) arr.push(`forma de pagamento não fecha (${brl(somaFP)} ≠ ${brl(valorTotal)})`);
     if (valorTotal <= 0) arr.push("valor total > 0");
@@ -418,7 +418,6 @@ export function MinutaContratoPanel({
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="contratante">Contratante</TabsTrigger>
-          <TabsTrigger value="contratuais">Dados Contratuais</TabsTrigger>
           <TabsTrigger value="pagamento">
             Forma de Pagamento {state.forma_pagamento_config && (
               <Badge variant={fpFecha ? "default" : "destructive"} className="ml-2 text-[10px] h-4">
@@ -466,37 +465,11 @@ export function MinutaContratoPanel({
           </p>
         </TabsContent>
 
-        {/* DADOS CONTRATUAIS */}
-        <TabsContent value="contratuais" className="mt-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <Field label="Responsável pela assinatura" v={state.responsavel_assinatura} on={(v) => upd("responsavel_assinatura", v)} disabled={!podeEditar} />
-            <Field label="CPF do responsável (se PJ)" v={state.responsavel_cpf} on={(v) => upd("responsavel_cpf", v)} disabled={!podeEditar} />
-            <Field label="E-mail de assinatura *" v={state.assinatura_email} on={(v) => upd("assinatura_email", v)} disabled={!podeEditar} />
-            <Field label="Telefone de assinatura" v={state.assinatura_telefone} on={(v) => upd("assinatura_telefone", v)} disabled={!podeEditar} />
-            <NumField label="Prazo contratual (dias)" v={state.prazo_contratual_dias} on={(v) => upd("prazo_contratual_dias", v)} disabled={!podeEditar} />
-            <DateField label="Data prevista de assinatura" v={state.data_prevista_assinatura} on={(v) => upd("data_prevista_assinatura", v)} disabled={!podeEditar} />
-            <Field label="Local de assinatura" v={state.local_assinatura} on={(v) => upd("local_assinatura", v)} disabled={!podeEditar} />
-            <DateField label="Data base do contrato" v={state.data_base_contrato} on={(v) => upd("data_base_contrato", v)} disabled={!podeEditar} />
-            <NumField label="Prazo execução (dias)" v={state.prazo_execucao_dias} on={(v) => upd("prazo_execucao_dias", v)} disabled={!podeEditar} />
-            <Field label="Endereço de instalação" v={state.endereco_instalacao} on={(v) => upd("endereco_instalacao", v)} disabled={!podeEditar} className="md:col-span-2" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm">
-            <div>
-              <Label className="text-xs">Observações internas</Label>
-              <Textarea className="mt-1" rows={3} disabled={!podeEditar}
-                value={state.observacoes_internas ?? ""} onChange={(e) => upd("observacoes_internas", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Observações que entram no contrato</Label>
-              <Textarea className="mt-1" rows={3} disabled={!podeEditar}
-                value={state.observacoes_contrato ?? ""} onChange={(e) => upd("observacoes_contrato", e.target.value)} />
-            </div>
-          </div>
-          <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground mt-3">
-            <strong>Travado pela proposta origem:</strong> valor total ({brl(valorTotal)}), potência,
-            módulos, inversor e consumo. Alterar exige nova proposta ou aditivo após a assinatura.
-          </div>
-        </TabsContent>
+        {/* DADOS CONTRATUAIS — removidos do UI a pedido. Defaults silenciosos:
+            data_base_contrato = hoje, prazo_execucao_dias = 60,
+            cidade/cidade_foro/local_assinatura = "Porto Velho/RO" (sede Meta Sun),
+            endereco_instalacao = endereço do contratante,
+            assinatura_email = e-mail do contratante. */}
 
         {/* FORMA DE PAGAMENTO */}
         <TabsContent value="pagamento" className="mt-3">
@@ -1162,9 +1135,20 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
   const visiveis = renumerar(clausulas.filter((c) => !c.oculta));
   return (
     <div className="space-y-2">
-      {/* Print CSS: só o contrato sai no PDF. */}
+      {/* Print CSS oficial Meta Sun: A4, margens 3-2-2-3 cm, Times New Roman 12pt,
+          espaçamento 1,5 e numeração de folhas no rodapé. */}
       <style>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 3cm 2cm 2cm 3cm;
+            @bottom-right {
+              content: "Folha " counter(page) " de " counter(pages);
+              font-family: "Times New Roman", Times, serif;
+              font-size: 10pt;
+              color: #000;
+            }
+          }
           body * { visibility: hidden !important; }
           #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
           #contrato-print-area {
@@ -1173,11 +1157,18 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             width: 100% !important;
             max-height: none !important;
             overflow: visible !important;
-            padding: 24px !important;
+            padding: 0 !important;
             background: #fff !important;
             color: #000 !important;
             box-shadow: none !important;
             border: none !important;
+            font-family: "Times New Roman", Times, serif !important;
+            font-size: 12pt !important;
+            line-height: 1.5 !important;
+          }
+          #contrato-print-area h2, #contrato-print-area h3 {
+            font-family: "Times New Roman", Times, serif !important;
+            font-size: 12pt !important;
           }
           #contrato-print-area .no-print { display: none !important; }
         }

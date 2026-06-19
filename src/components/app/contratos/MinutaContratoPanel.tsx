@@ -879,83 +879,51 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
 
 
       {/* ============================================================== */}
-      {/* PIX complementar — entrada / gatilho. Não disponível para      */}
-      {/* FINANCIAMENTO nem PERMUTA.                                     */}
+      {/* Formas de pagamento adicionais — mesmo padrão Tipo/Momento/Valor */}
       {/* ============================================================== */}
-      {tipo && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(tipo) && (
-        <div className="rounded-md border border-sky-300/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="pix_complemento_on"
-              disabled={disabled}
-              checked={!!value!.pix_complemento}
-              onChange={(e) => onChange(
-                e.target.checked
-                  ? { ...value!, pix_complemento: { momento: "ASSINATURA", valor: 0, data: "", observacao: "" } }
-                  : { ...value!, pix_complemento: null },
-              )}
-            />
-            <Label htmlFor="pix_complemento_on" className="text-xs font-semibold cursor-pointer">
-              Adicionar <strong>PIX complementar</strong> (assinatura, entrega, conclusão, Energisa, 30/60/90 dias, data específica…)
-            </Label>
-          </div>
-          {value!.pix_complemento && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
-              <div className="md:col-span-2">
-                <Label className="text-xs">Momento *</Label>
-                <Select
-                  value={value!.pix_complemento.momento}
-                  onValueChange={(v) => onChange({
-                    ...value!,
-                    pix_complemento: { ...value!.pix_complemento!, momento: v as PixComplementoMomento },
-                  })}
-                  disabled={disabled}
+      {!nested && value && (
+        <div className="space-y-2">
+          {(value.formas_extras ?? []).map((extra, idx) => (
+            <div key={idx} className="rounded-md border border-sky-300/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-sky-700 dark:text-sky-300">
+                  Forma de pagamento adicional #{idx + 2}
+                </span>
+                <Button
+                  size="sm" variant="ghost" disabled={disabled}
+                  onClick={() => {
+                    const arr = [...(value.formas_extras ?? [])];
+                    arr.splice(idx, 1);
+                    onChange({ ...value, formas_extras: arr });
+                  }}
                 >
-                  <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PIX_COMPLEMENTO_OPCOES.map((m) => (
-                      <SelectItem key={m} value={m}>{PIX_COMPLEMENTO_LABEL[m]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
               </div>
-              <NumField
-                label="Valor do PIX *"
-                v={value!.pix_complemento.valor}
-                on={(v) => onChange({
-                  ...value!,
-                  pix_complemento: { ...value!.pix_complemento!, valor: v },
-                })}
+              <FormaPagamentoEditor
+                valorTotal={valorTotal}
                 disabled={disabled}
+                value={extra}
+                nested
+                onChange={(v) => {
+                  if (!v) return;
+                  const arr = [...(value.formas_extras ?? [])];
+                  arr[idx] = v;
+                  onChange({ ...value, formas_extras: arr });
+                }}
               />
-              {value!.pix_complemento.momento === "DATA_ESPECIFICA" ? (
-                <div>
-                  <Label className="text-xs">Data do PIX *</Label>
-                  <Input
-                    type="date"
-                    className="mt-1 h-8"
-                    value={value!.pix_complemento.data ?? ""}
-                    disabled={disabled}
-                    onChange={(e) => onChange({
-                      ...value!,
-                      pix_complemento: { ...value!.pix_complemento!, data: e.target.value },
-                    })}
-                  />
-                </div>
-              ) : (
-                <Field
-                  label="Observação"
-                  v={value!.pix_complemento.observacao}
-                  on={(v) => onChange({
-                    ...value!,
-                    pix_complemento: { ...value!.pix_complemento!, observacao: v },
-                  })}
-                  disabled={disabled}
-                />
-              )}
             </div>
-          )}
+          ))}
+          <Button
+            size="sm" variant="outline" disabled={disabled}
+            onClick={() => {
+              const arr = [...(value.formas_extras ?? []), formaPagamentoVazia("PIX")];
+              onChange({ ...value, formas_extras: arr });
+            }}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Adicionar nova forma de pagamento
+          </Button>
         </div>
       )}
     </div>

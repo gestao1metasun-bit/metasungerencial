@@ -834,6 +834,7 @@ export type MistoComponente = {
 
 export type FormaPagamentoConfig = {
   tipo: FormaPagamentoTipo;
+  dinheiro?: { valor: number; observacao: string; momento?: MomentoPagamento; data?: string };
   pix?: { valor: number; data: string; chave: string; observacao: string; momento?: MomentoPagamento };
   boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string; momento?: MomentoPagamento; data?: string };
   cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string; momento?: MomentoPagamento; data?: string };

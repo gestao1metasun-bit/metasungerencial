@@ -710,6 +710,14 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
       )}
 
 
+
+      {tipo === "DINHEIRO" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <NumField label="Valor total" v={value!.dinheiro?.valor} on={(v) => patch("dinheiro", { valor: v })} disabled={disabled} />
+          <Field label="Observação" v={value!.dinheiro?.observacao} on={(v) => patch("dinheiro", { observacao: v })} disabled={disabled} className="md:col-span-2" />
+        </div>
+      )}
+
       {tipo === "PIX" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.pix?.valor} on={(v) => patch("pix", { valor: v })} disabled={disabled} />

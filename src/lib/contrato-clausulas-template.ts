@@ -730,6 +730,7 @@ const NOMES_VAR = [
   "valor_total", "valor_total_extenso",
   "potencia_kwp", "quantidade_modulos", "quantidade_modulos_extenso",
   "marca_modulos", "potencia_modulo_w", "inversor",
+  "modulo_descricao", "inversor_descricao",
   "forma_pagamento", "prazo_execucao",
   "cidade", "cidade_foro", "data_contrato", "endereco_instalacao",
   "numero_contrato", "ano_contrato",

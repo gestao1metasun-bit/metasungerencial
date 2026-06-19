@@ -712,8 +712,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
       {tipo === "PIX" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <NumField label="Valor total" v={value!.pix?.valor} on={(v) => patch("pix", { valor: v })} disabled={disabled} />
-          <DateField label="Data prevista" v={value!.pix?.data} on={(v) => patch("pix", { data: v })} disabled={disabled} />
-          <Field label="Chave/observação" v={value!.pix?.chave} on={(v) => patch("pix", { chave: v })} disabled={disabled} />
+          <Field label="Chave/observação" v={value!.pix?.chave} on={(v) => patch("pix", { chave: v })} disabled={disabled} className="md:col-span-2" />
           <div className="md:col-span-3">
             <Label className="text-xs">Condição textual para o contrato</Label>
             <Textarea rows={2} className="mt-1" disabled={disabled} value={value!.pix?.observacao ?? ""} onChange={(e) => patch("pix", { observacao: e.target.value })} />

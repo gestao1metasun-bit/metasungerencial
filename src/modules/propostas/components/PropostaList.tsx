@@ -378,7 +378,7 @@ export function AprovarPropostaDialog({
           clienteCidade: endereco.cidade, clienteUf: endereco.uf,
         } : {}),
       };
-      aprovarProposta(atualizada);
+      await aprovarProposta(atualizada);
       onOpenChange(false);
       onAprovado?.();
     } finally {

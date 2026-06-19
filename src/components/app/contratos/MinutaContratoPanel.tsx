@@ -157,36 +157,48 @@ export function MinutaContratoPanel({
   }, [contrato.dados]);
 
   // ---- Estado completo do formulário ----
-  const [state, setState] = useState<DadosContratuais>(() => ({
-    contratante_nome: dadosIni.contratante_nome ?? cliente?.nome ?? "",
-    contratante_doc: dadosIni.contratante_doc ?? cliente?.doc ?? "",
-    contratante_telefone: dadosIni.contratante_telefone ?? cliente?.telefone ?? "",
-    contratante_whatsapp: dadosIni.contratante_whatsapp ?? "",
-    contratante_email: dadosIni.contratante_email ?? cliente?.email ?? "",
-    contratante_cep: dadosIni.contratante_cep ?? "",
-    contratante_logradouro: dadosIni.contratante_logradouro ?? cliente?.rua ?? "",
-    contratante_numero: dadosIni.contratante_numero ?? cliente?.numero ?? "",
-    contratante_bairro: dadosIni.contratante_bairro ?? cliente?.bairro ?? "",
-    contratante_complemento: dadosIni.contratante_complemento ?? "",
-    contratante_endereco: dadosIni.contratante_endereco ??
-      [cliente?.rua, cliente?.numero, cliente?.bairro].filter(Boolean).join(", "),
-    contratante_cidade: dadosIni.contratante_cidade ?? cliente?.cidade ?? "",
-    contratante_uf: dadosIni.contratante_uf ?? cliente?.uf ?? "",
-    responsavel_assinatura: dadosIni.responsavel_assinatura ?? "",
-    responsavel_cpf: dadosIni.responsavel_cpf ?? "",
-    assinatura_email: dadosIni.assinatura_email ?? cliente?.email ?? "",
-    assinatura_telefone: dadosIni.assinatura_telefone ?? cliente?.telefone ?? "",
-    prazo_contratual_dias: dadosIni.prazo_contratual_dias ?? 90,
-    data_prevista_assinatura: dadosIni.data_prevista_assinatura ?? (contrato.data_assinatura ?? ""),
-    observacoes_internas: dadosIni.observacoes_internas ?? "",
-    observacoes_contrato: dadosIni.observacoes_contrato ?? (contrato.observacoes ?? ""),
-    local_assinatura: dadosIni.local_assinatura ?? (cliente?.cidade ?? ""),
-    data_base_contrato: dadosIni.data_base_contrato ?? new Date().toISOString().slice(0, 10),
-    forma_pagamento_config: dadosIni.forma_pagamento_config ?? null,
-    clausulas: dadosIni.clausulas ?? carregarTemplateUsuario() ?? clausulasPadrao(),
-    endereco_instalacao: dadosIni.endereco_instalacao ?? "",
-    prazo_execucao_dias: dadosIni.prazo_execucao_dias ?? 60,
-  }));
+  const [state, setState] = useState<DadosContratuais>(() => {
+    const docDig = (dadosIni.contratante_doc ?? cliente?.doc ?? "").replace(/\D/g, "");
+    const tipoInferido: "PF" | "PJ" =
+      dadosIni.contratante_tipo_pessoa ?? (docDig.length === 14 ? "PJ" : "PF");
+    return {
+      contratante_tipo_pessoa: tipoInferido,
+      contratante_nome: dadosIni.contratante_nome ?? cliente?.nome ?? "",
+      contratante_doc: dadosIni.contratante_doc ?? cliente?.doc ?? "",
+      contratante_rg: dadosIni.contratante_rg ?? "",
+      contratante_doc_extra: dadosIni.contratante_doc_extra ?? "",
+      contratante_telefone: dadosIni.contratante_telefone ?? cliente?.telefone ?? "",
+      contratante_whatsapp: dadosIni.contratante_whatsapp ?? "",
+      contratante_email: dadosIni.contratante_email ?? cliente?.email ?? "",
+      contratante_cep: dadosIni.contratante_cep ?? "",
+      contratante_logradouro: dadosIni.contratante_logradouro ?? cliente?.rua ?? "",
+      contratante_numero: dadosIni.contratante_numero ?? cliente?.numero ?? "",
+      contratante_bairro: dadosIni.contratante_bairro ?? cliente?.bairro ?? "",
+      contratante_complemento: dadosIni.contratante_complemento ?? "",
+      contratante_endereco: dadosIni.contratante_endereco ??
+        [cliente?.rua, cliente?.numero, cliente?.bairro].filter(Boolean).join(", "),
+      contratante_cidade: dadosIni.contratante_cidade ?? cliente?.cidade ?? "",
+      contratante_uf: dadosIni.contratante_uf ?? cliente?.uf ?? "",
+      repr_nome: dadosIni.repr_nome ?? "",
+      repr_cpf: dadosIni.repr_cpf ?? "",
+      repr_rg: dadosIni.repr_rg ?? "",
+      repr_telefone: dadosIni.repr_telefone ?? "",
+      responsavel_assinatura: dadosIni.responsavel_assinatura ?? "",
+      responsavel_cpf: dadosIni.responsavel_cpf ?? "",
+      assinatura_email: dadosIni.assinatura_email ?? cliente?.email ?? "",
+      assinatura_telefone: dadosIni.assinatura_telefone ?? cliente?.telefone ?? "",
+      prazo_contratual_dias: dadosIni.prazo_contratual_dias ?? 90,
+      data_prevista_assinatura: dadosIni.data_prevista_assinatura ?? (contrato.data_assinatura ?? ""),
+      observacoes_internas: dadosIni.observacoes_internas ?? "",
+      observacoes_contrato: dadosIni.observacoes_contrato ?? (contrato.observacoes ?? ""),
+      local_assinatura: dadosIni.local_assinatura ?? (cliente?.cidade ?? ""),
+      data_base_contrato: dadosIni.data_base_contrato ?? new Date().toISOString().slice(0, 10),
+      forma_pagamento_config: dadosIni.forma_pagamento_config ?? null,
+      clausulas: dadosIni.clausulas ?? carregarTemplateUsuario() ?? clausulasPadrao(),
+      endereco_instalacao: dadosIni.endereco_instalacao ?? "",
+      prazo_execucao_dias: dadosIni.prazo_execucao_dias ?? 60,
+    };
+  });
   const [tab, setTab] = useState("contratante");
   const [salvando, setSalvando] = useState(false);
   const [dirty, setDirty] = useState(false);

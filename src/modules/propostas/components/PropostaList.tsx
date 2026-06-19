@@ -37,7 +37,7 @@ import {
   calcPrecificacao, calcDimensionamento, fmtBRL,
   aprovarPropostaDoLead, cancelarPropostaComMotivo, reativarProposta as storeReativarProposta,
   formatDoc, isDocValido, formatCEP, buscarCEPViaCEP, atualizarCadastroCliente,
-  expirarPropostasVencidasAuto,
+  expirarPropostasVencidasAuto, refreshPropostas,
 } from "@/modules/propostas/store";
 import {
   useContratos, type ContratoFull, criarContratoPendenteDeProposta,
@@ -178,21 +178,7 @@ function patchVinculoLeadSupabaseLocal(
   clienteIdSb: string | null,
   contratoGeradoId?: string,
 ) {
-  if (!leadUuid && !clienteIdSb && !contratoGeradoId) return;
-  const antigoLeadId = p.leadId;
-  const hoje = new Date().toISOString().slice(0, 10);
-  const lista = usePropostasSync();
-  writeLS("ms.fv.propostas.v1", lista.map((item) => {
-    const mesmoLead = item.id === p.id || (!!antigoLeadId && item.leadId === antigoLeadId);
-    if (!mesmoLead) return item;
-    return {
-      ...item,
-      leadId: leadUuid ?? item.leadId,
-      clienteId: clienteIdSb ?? item.clienteId,
-      contratoGeradoId: contratoGeradoId ?? item.contratoGeradoId,
-      atualizadoEm: hoje,
-    };
-  }));
+  void refreshPropostas();
 }
 
 

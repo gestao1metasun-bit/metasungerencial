@@ -762,8 +762,9 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
         const parcelaCalc = b.parcelas > 0 ? b.valor / b.parcelas : 0;
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v, valor_parcela: b.parcelas > 0 ? v / b.parcelas : 0 })} disabled={disabled} />
-            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v, valor_parcela: v > 0 ? b.valor / v : 0 })} disabled={disabled} />
+            <NumField label="Valor total" v={b.valor} on={(v) => patch("boleto", { valor: v ?? 0, valor_parcela: b.parcelas > 0 ? (v ?? 0) / b.parcelas : 0 })} disabled={disabled} />
+            <NumField label="Qtde parcelas (editável)" v={b.parcelas} on={(v) => patch("boleto", { parcelas: v ?? 0, valor_parcela: (v ?? 0) > 0 ? b.valor / (v ?? 1) : 0 })} disabled={disabled} />
+
             <div>
               <Label className="text-xs">Valor da parcela (calculado)</Label>
               <Input className="mt-1 h-8 bg-muted/40 tabular-nums" readOnly value={brl(parcelaCalc)} />

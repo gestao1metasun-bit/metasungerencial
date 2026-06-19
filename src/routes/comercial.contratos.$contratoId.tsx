@@ -121,6 +121,8 @@ function ContratoWorkspacePage() {
   });
   const [cancelOpen, setCancelOpen] = useState(false);
   const [novoAditivoOpen, setNovoAditivoOpen] = useState(false);
+  const [minutaOpen, setMinutaOpen] = useState(false);
+  const [geradoOpen, setGeradoOpen] = useState(false);
   const [compensarOrigem, setCompensarOrigem] = useState<import("@/lib/repositories/aditivos-repo").AditivoSupabase | null>(null);
 
   const setTab = (value: string) => {

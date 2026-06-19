@@ -341,40 +341,11 @@ function ContratoWorkspacePage() {
 
 
         <TabsContent value="resumo" className="mt-3">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            <Card className="p-3 space-y-2 text-sm">
-              <h3 className="font-semibold flex items-center gap-1.5">
-                <FileSignature className="h-4 w-4" /> Dados do contrato
-              </h3>
-              <Field label="Código" value={c.codigo ?? "—"} mono />
-              <Field label="Cliente" value={clienteNome} />
-              <Field label="Documento" value={cliente.data?.doc ?? "—"} />
-              <Field label="Endereço" value={[cliente.data?.rua, cliente.data?.numero, cliente.data?.bairro, cliente.data?.cidade, cliente.data?.uf].filter(Boolean).join(", ") || "—"} />
-              <Field label="Consultor" value={consultor.data?.nome ?? consultor.data?.email ?? "—"} />
-              <Field label="Status" value={c.status} />
-              <Field label="Etapa" value={String(((c.dados ?? {}) as Record<string, unknown>)["etapa"] ?? "—")} />
-              <Field label="Criado em" value={new Date(c.created_at).toLocaleString("pt-BR")} />
-              <Field label="Última atualização" value={new Date(c.updated_at).toLocaleString("pt-BR")} />
-              {cancelado && (
-                <Field label="Motivo cancelamento" value={c.motivo_cancelamento ?? "—"} />
-              )}
-            </Card>
-
-            <Card className="p-3 space-y-2 text-sm">
-              <h3 className="font-semibold flex items-center gap-1.5">
-                <Layers className="h-4 w-4" /> Composição do contrato
-              </h3>
-              <Field label="Total de propostas" value={String(propostas.data?.length ?? 0)} />
-              <Field label="Total de projetos" value={String(projetos.data?.length ?? 0)} />
-              <Field label="Valor global (contrato)" value={fmtBRL(c.valor_total)} />
-              <Field label="Valor consolidado (propostas)" value={fmtBRL(totais.valor)} />
-              <Field label="Potência global (contrato)" value={`${(Number(c.potencia_kwp) || 0).toFixed(2)} kWp`} />
-              <Field label="Potência consolidada (propostas)" value={`${totais.potencia.toFixed(2)} kWp`} />
-              <Field label="Módulos globais" value={String(c.modulos_qtde ?? 0)} />
-              <Field label="Módulos consolidados (propostas)" value={String(totais.modulos)} />
-            </Card>
+          <div className="text-sm text-muted-foreground">
+            Use as abas acima para navegar pelas informações do contrato.
           </div>
         </TabsContent>
+
 
 
         <TabsContent value="propostas" className="mt-3">

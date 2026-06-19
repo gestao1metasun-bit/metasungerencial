@@ -831,7 +831,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
           </div>
           <NumField label="Valor financiado" v={value!.financiamento?.valor} on={(v) => patch("financiamento", { valor: v })} disabled={disabled} />
           <NumField label="Entrada (se houver)" v={value!.financiamento?.entrada} on={(v) => patch("financiamento", { entrada: v })} disabled={disabled} />
-          <NumField label="Prazo (meses)" v={value!.financiamento?.prazo_meses} on={(v) => patch("financiamento", { prazo_meses: v })} disabled={disabled} />
+          
           <Field label="Status financiamento" v={value!.financiamento?.status} on={(v) => patch("financiamento", { status: v })} disabled={disabled} />
           <Field label="Observação" v={value!.financiamento?.observacao} on={(v) => patch("financiamento", { observacao: v })} disabled={disabled} />
           <div className="md:col-span-3">

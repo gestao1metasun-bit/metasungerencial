@@ -438,7 +438,7 @@ export function MinutaContratoPanel({
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="clausulas">Cláusulas ({(state.clausulas ?? []).filter((c) => !c.oculta).length})</TabsTrigger>
+          <TabsTrigger value="clausulas">Cláusulas ({clausulasEfetivas.filter((c) => !c.oculta).length})</TabsTrigger>
           <TabsTrigger value="previa">Prévia</TabsTrigger>
         </TabsList>
 

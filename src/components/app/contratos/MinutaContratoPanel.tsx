@@ -80,9 +80,11 @@ type ClienteSnap = {
 };
 
 type PropostaSnap = {
+  id?: string | null;
   inversor?: string | null;
   potencia_kwp?: number | null;
   modulos_qtd?: number | null;
+  dados?: Record<string, unknown> | null;
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

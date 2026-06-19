@@ -832,8 +832,10 @@ export type FormaPagamentoConfig = {
   entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string; momento?: MomentoPagamento };
   permuta?: { valor: number; descricao: string; observacao: string; momento?: MomentoPagamento; data?: string };
   misto?: { componentes: MistoComponente[] };
-  /** PIX complementar opcional — não disponível para FINANCIAMENTO/PERMUTA. */
+  /** @deprecated Mantido por compat. Novos contratos usam `formas_extras`. */
   pix_complemento?: { momento: PixComplementoMomento; valor: number; data?: string; observacao: string } | null;
+  /** Formas de pagamento adicionais — cada item segue o mesmo padrão Tipo/Momento/Valor. */
+  formas_extras?: FormaPagamentoConfig[];
 };
 
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];

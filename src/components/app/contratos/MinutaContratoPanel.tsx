@@ -1473,15 +1473,11 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
       {/* Print CSS oficial Meta Sun: A4, margens 3-2-2-3 cm, Times New Roman 12pt,
           espaçamento 1,5 e numeração de folhas no rodapé. */}
       <style>{`
+        .print-only { display: none; }
         @media print {
           @page {
             size: A4;
-            margin: 3cm 2cm 2cm 3cm;
-            @top-left { content: ""; }
-            @top-center { content: ""; }
-            @top-right { content: ""; }
-            @bottom-left { content: ""; }
-            @bottom-center { content: ""; }
+            margin: 35mm 20mm 30mm 20mm;
             @bottom-right {
               content: "Folha " counter(page) " de " counter(pages);
               font-family: "Times New Roman", Times, serif;
@@ -1492,6 +1488,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
 
           body * { visibility: hidden !important; }
           #contrato-print-area, #contrato-print-area * { visibility: visible !important; }
+          .print-only, .print-only * { visibility: visible !important; }
           #contrato-print-area {
             position: absolute !important;
             inset: 0 !important;
@@ -1499,6 +1496,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             max-height: none !important;
             overflow: visible !important;
             padding: 0 !important;
+            margin: 0 !important;
             background: #fff !important;
             color: #000 !important;
             box-shadow: none !important;
@@ -1511,9 +1509,46 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             font-family: "Times New Roman", Times, serif !important;
             font-size: 12pt !important;
           }
-          #contrato-print-area .no-print { display: none !important; }
+          #contrato-print-area .no-print,
+          #contrato-print-area .screen-only { display: none !important; }
+
+          .print-only.print-header {
+            display: block !important;
+            position: fixed !important;
+            top: 0; left: 0; right: 0;
+            height: 30mm;
+            text-align: center;
+            padding-top: 5mm;
+            background: #fff;
+            z-index: 9999;
+          }
+          .print-only.print-header img {
+            display: block; margin: 0 auto;
+            height: 22mm; width: auto;
+          }
+          .print-only.print-footer {
+            display: block !important;
+            position: fixed !important;
+            bottom: 0; left: 0; right: 0;
+            height: 25mm;
+            text-align: center;
+            padding-bottom: 3mm;
+            background: #fff;
+            z-index: 9999;
+          }
+          .print-only.print-footer img {
+            display: block; margin: 0 auto;
+            width: 100%; max-width: 190mm; height: auto;
+          }
         }
       `}</style>
+      {/* Cabeçalho e rodapé fixos: repetem em TODAS as folhas impressas */}
+      <div className="print-only print-header" aria-hidden>
+        <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" />
+      </div>
+      <div className="print-only print-footer" aria-hidden>
+        <img src={metaSunRodape.url} alt="Meta Sun rodapé" />
+      </div>
       <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4 text-muted-foreground" />
@@ -1549,8 +1584,8 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           overflow: "hidden",
         }}
       >
-        {/* Cabeçalho oficial Meta Sun */}
-        <div className="text-center" style={{ marginBottom: "8mm" }}>
+        {/* Cabeçalho oficial Meta Sun (apenas na tela; na impressão, o header fixo se repete em todas as folhas) */}
+        <div className="text-center screen-only" style={{ marginBottom: "8mm" }}>
           <img src={metaSunLogo.url} alt="Meta Sun Energia Solar"
             style={{ display: "block", margin: "0 auto", height: "72px", width: "auto" }} />
           <p style={{
@@ -1682,8 +1717,8 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           </div>
         </div>
 
-        {/* Rodapé oficial Meta Sun */}
-        <div style={{ marginTop: "12mm", textAlign: "center" }}>
+        {/* Rodapé oficial Meta Sun (apenas na tela; na impressão, o footer fixo se repete em todas as folhas) */}
+        <div className="screen-only" style={{ marginTop: "12mm", textAlign: "center" }}>
           <img
             src={metaSunRodape.url}
             alt="Meta Sun — Av. Eng. Anysio da Rocha Compasso 5055, Rio Madeira, Porto Velho - RO, 76821-381 | 69 9.9341-2188 | www.metasun.com.br"

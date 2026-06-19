@@ -279,6 +279,21 @@ export async function aprovarProposta(p: PropostaFV) {
     let clienteIdSb: string | null = null;
     let propostaIdPreexistente: string | null = null;
     let contratoIdPreexistente: string | null = null;
+    if (UUID_RE_LOCAL.test(p.id)) {
+      const { data: propDireta, error: ePropDireta } = await supabase
+        .from("propostas")
+        .select("id,lead_id,cliente_id,contrato_id,status")
+        .eq("id", p.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (ePropDireta) throw ePropDireta;
+      if (propDireta) {
+        propostaIdPreexistente = propDireta.id as string;
+        leadUuid = (propDireta.lead_id as string | null) ?? null;
+        clienteIdSb = (propDireta.cliente_id as string | null) ?? null;
+        contratoIdPreexistente = (propDireta.contrato_id as string | null) ?? null;
+      }
+    }
     if (p.leadId && UUID_RE_LOCAL.test(p.leadId)) {
       const { data: leadRow, error: eLead } = await supabase
         .from("leads").select("id,cliente_id").eq("id", p.leadId).maybeSingle();

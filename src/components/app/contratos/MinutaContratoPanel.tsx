@@ -565,7 +565,7 @@ export function MinutaContratoPanel({
             )}
             <Field label="Telefone *" v={state.contratante_telefone} on={(v) => upd("contratante_telefone", v)} disabled={!podeEditar} className="md:col-span-2" />
             <Field label="WhatsApp" v={state.contratante_whatsapp} on={(v) => upd("contratante_whatsapp", v)} disabled={!podeEditar} className="md:col-span-2" />
-            <Field label="E-mail *" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
+            <Field label="E-mail (opcional)" v={state.contratante_email} on={(v) => upd("contratante_email", v)} disabled={!podeEditar} className="md:col-span-2" />
             <div className="md:col-span-2">
               <Label className="text-xs">CEP (autopreenche endereço)</Label>
               <Input

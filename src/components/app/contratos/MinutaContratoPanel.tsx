@@ -1598,7 +1598,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             textAlign: "center",
             letterSpacing: "0.5px",
           }}>
-            CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
+            CONTRATO {String(variaveis.numero_contrato || "0").padStart(3, "0")}/{variaveis.ano_contrato || "2026"}
           </p>
           <p style={{
             fontFamily: '"Times New Roman", Times, serif',

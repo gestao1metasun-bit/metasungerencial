@@ -1445,13 +1445,27 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             Pelo presente instrumento e na melhor forma de direito, as partes, a saber:
           </p>
 
-          <p className="text-justify">
-            <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
-            {" "}portador(a) do documento <strong>{variaveis.cliente_documento || "______________"}</strong>
-            {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null},
-            residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
-            {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
-          </p>
+          {variaveis.contratante_tipo === "PJ" ? (
+            <p className="text-justify">
+              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"}, pessoa jurídica de
+              direito privado, inscrita no <strong>CNPJ sob o nº {variaveis.cliente_documento || "______________"}</strong>,
+              com sede em {variaveis.cliente_endereco || "______________"}
+              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null},
+              neste ato representada por <strong>{variaveis.repr_contratante_nome || "______________"}</strong>,
+              inscrito no <strong>CPF sob o nº {variaveis.repr_contratante_cpf || "______________"}</strong>
+              {variaveis.repr_contratante_rg ? <>, <strong>RG nº {variaveis.repr_contratante_rg}</strong></> : null}
+              {variaveis.repr_contratante_telefone ? <>, telefone <strong>{variaveis.repr_contratante_telefone}</strong></> : null}.
+            </p>
+          ) : (
+            <p className="text-justify">
+              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
+              {" "}portador(a) do <strong>CPF nº {variaveis.cliente_documento || "______________"}</strong>
+              {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null}
+              {variaveis.cliente_doc_extra ? <>, <strong>{variaveis.cliente_doc_extra}</strong></> : null},
+              residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
+              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
+            </p>
+          )}
 
           <p className="text-justify">
             <strong>CONTRATADA:</strong> Meta Sun Instalações Elétricas LTDA, pessoa jurídica de direito privado,

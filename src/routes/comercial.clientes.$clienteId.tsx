@@ -469,12 +469,7 @@ function WorkspaceClientePage() {
           <TimelineObjetoPanel objetoTipo="cliente" objetoId={c.id} />
         </TabsContent>
 
-        {/* C-ENT.11.e — Auditoria honesta: motor universal vem em onda futura. */}
-        <TabsContent value="auditoria" className="mt-3">
-          <Card className="p-6 text-sm text-muted-foreground">
-            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais já aparecem na aba <strong>Timeline</strong>.
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   );

@@ -45,6 +45,9 @@ import {
 } from "@/lib/contratos-store";
 // LEGADO LS — check de existência sincrônico. Migrar com PropostasPage.
 import { findClienteByDoc } from "@/lib/clientes-store";
+import { supabase } from "@/integrations/supabase/client";
+
+const UUID_RE_LOCAL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function statusVariant(s: StatusProposta): "default" | "secondary" | "destructive" | "outline" {
   switch (s) {
@@ -172,7 +175,7 @@ export function irParaContratos() {
 /** Aprova efetivamente uma proposta após validação de cadastro:
  *  muda status para APROVADA, marca outras versões do mesmo lead como obsoletas
  *  e cria um Contrato em status "Pendente" no Comercial → Cadastrar Contrato. */
-export function aprovarProposta(p: PropostaFV) {
+export async function aprovarProposta(p: PropostaFV) {
   const usuario = p.criadoPor || "Operador";
   aprovarPropostaDoLead(p.id, usuario, "Aprovada em Orçamentos");
   const clienteFull = (p.clienteDoc || p.clienteTelefone || p.clienteCidade) ? {
@@ -211,13 +214,67 @@ export function aprovarProposta(p: PropostaFV) {
     obs: p.obsInternas,
     usuario,
   });
-  toast.success(
-    res.jaExistia
-      ? `Proposta ${p.numero} aprovada — contrato ${res.contratoId} já existia em Contratos → Pendentes.`
-      : `Proposta ${p.numero} aprovada — contrato ${res.contratoId} criado em Contratos → Pendentes.`,
-  );
-  // Leva o operador direto para Contratos → Pendentes
-  setTimeout(() => irParaContratos(), 300);
+
+  // D27.COM — Cria também o contrato MINUTA oficial no Supabase para
+  // aparecer em /comercial/contratos → "Pendentes de Redação".
+  // Requer leadId UUID válido e lead Supabase com cliente_id vinculado.
+  let supabaseOk = false;
+  let supabaseErr: string | null = null;
+  if (p.leadId && UUID_RE_LOCAL.test(p.leadId)) {
+    try {
+      const { data: propId, error: e1 } = await supabase.rpc(
+        "rpc_proposta_criar_do_lead" as never,
+        { _lead_id: p.leadId, _observacao: `Aprovada a partir de ${p.numero}` } as never,
+      );
+      if (e1) throw e1;
+      const propostaId = propId as unknown as string;
+      // Atualiza dados mínimos exigidos por rpc_proposta_gerar_contrato (valor_final > 0).
+      const { error: eUpd } = await supabase
+        .from("propostas")
+        .update({
+          valor_final: valor,
+          potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
+          modulos_qtd: p.modulosQtd,
+          dados: {
+            inversores: p.inversores,
+            inversorMarca: p.inversorMarca,
+            consultor: p.consultor ?? p.criadoPor ?? "",
+            cidade: p.cidade,
+            estado: p.estado,
+            origem_ls: { propostaIdLs: p.id, numeroLs: p.numero },
+          } as never,
+        })
+        .eq("id", propostaId);
+      if (eUpd) throw eUpd;
+      const { error: e2 } = await supabase.rpc(
+        "rpc_proposta_aprovar" as never,
+        { p_proposta_id: propostaId, p_observacao: null } as never,
+      );
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.rpc(
+        "rpc_proposta_enviar_para_contratos" as never,
+        { p_proposta_id: propostaId } as never,
+      );
+      if (e3) throw e3;
+      supabaseOk = true;
+    } catch (err) {
+      supabaseErr = (err as Error)?.message ?? String(err);
+    }
+  } else {
+    supabaseErr = "Lead sem vínculo Supabase (leadId UUID ausente).";
+  }
+
+  if (supabaseOk) {
+    toast.success(
+      `Proposta ${p.numero} aprovada — contrato pendente criado em Comercial → Contratos → Pendentes de Redação.`,
+    );
+  } else {
+    toast.warning(
+      `Proposta ${p.numero} aprovada no LS (contrato ${res.contratoId}). Não foi possível criar minuta oficial: ${supabaseErr}`,
+    );
+  }
+  // Leva o operador direto para Contratos → Pendentes de Redação
+  setTimeout(() => irParaContratos(), 400);
 }
 
 /* ============= Diálogo de Aprovação (CPF e endereço opcionais) ============= */
@@ -282,7 +339,7 @@ export function AprovarPropostaDialog({
     } finally { setBuscandoCep(false); }
   }
 
-  function aprovar() {
+  async function aprovar() {
     if (!nome.trim()) { toast.error("Informe o nome do cliente."); return; }
     // CPF/CNPJ opcional — só valida se foi preenchido.
     if (doc.trim() && !isDocValido(doc, tipoPessoa)) {
@@ -321,7 +378,7 @@ export function AprovarPropostaDialog({
           clienteCidade: endereco.cidade, clienteUf: endereco.uf,
         } : {}),
       };
-      aprovarProposta(atualizada);
+      await aprovarProposta(atualizada);
       onOpenChange(false);
       onAprovado?.();
     } finally {

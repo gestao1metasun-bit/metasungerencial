@@ -480,12 +480,7 @@ function ContratoWorkspacePage() {
           <ComissoesContratoPanel contratoId={c.id} />
         </TabsContent>
 
-        <TabsContent value="auditoria" className="mt-3">
-          <Card className="p-4 text-sm text-muted-foreground">
-            <Users className="h-5 w-5 inline mr-1" />
-            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais já aparecem na aba <strong>Timeline</strong>.
-          </Card>
-        </TabsContent>
+
       </Tabs>
 
       <CancelarContratoDialog

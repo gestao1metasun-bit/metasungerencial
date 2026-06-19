@@ -326,13 +326,15 @@ function ContratoWorkspacePage() {
         <ContratoAssinadoActions />
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-        <StatCard label="Valor global" value={fmtBRL(c.valor_total)} icon={DollarSign} />
-        <StatCard label="Potência (kWp)" value={(Number(c.potencia_kwp) || 0).toFixed(2)} icon={Zap} />
-        <StatCard label="Módulos" value={String(c.modulos_qtde ?? 0)} icon={Layers} />
-        <StatCard label="Propostas" value={String(propostas.data?.length ?? 0)} icon={FileText} />
-        <StatCard label="Projetos" value={String(projetos.data?.length ?? 0)} icon={ClipboardList} />
-      </div>
+      {!ehMinuta && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <StatCard label="Valor global" value={fmtBRL(c.valor_total)} icon={DollarSign} />
+          <StatCard label="Potência (kWp)" value={(Number(c.potencia_kwp) || 0).toFixed(2)} icon={Zap} />
+          <StatCard label="Módulos" value={String(c.modulos_qtde ?? 0)} icon={Layers} />
+          <StatCard label="Propostas" value={String(propostas.data?.length ?? 0)} icon={FileText} />
+          <StatCard label="Projetos" value={String(projetos.data?.length ?? 0)} icon={ClipboardList} />
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
 

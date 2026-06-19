@@ -757,9 +757,10 @@ export function variaveisFaltando(vars: Variaveis): NomeVariavel[] {
 // Forma de pagamento
 // =====================================================================
 export type FormaPagamentoTipo =
-  | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
+  | "DINHEIRO" | "PIX" | "BOLETO" | "CARTAO" | "FINANCIAMENTO" | "ENTRADA_PARCELAS" | "PERMUTA" | "MISTO";
 
 export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
+  DINHEIRO: "Dinheiro",
   PIX: "PIX",
   BOLETO: "Boleto",
   CARTAO: "Cartão",
@@ -769,11 +770,17 @@ export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
   MISTO: "Misto (combinado)",
 };
 
+/** Tipos selecionáveis na UI (ENTRADA_PARCELAS descontinuado — use MISTO). */
+export const FP_TIPOS_SELECIONAVEIS: FormaPagamentoTipo[] = [
+  "DINHEIRO", "PIX", "BOLETO", "CARTAO", "FINANCIAMENTO", "PERMUTA", "MISTO",
+];
+
 /** Momento do PIX complementar (entrada/gatilho). */
 export type PixComplementoMomento =
   | "ASSINATURA"
   | "ENTRADA"               // legacy alias → ASSINATURA
   | "APROVACAO_PROJETO"
+  | "APROVACAO_FINANCIAMENTO"
   | "ENTREGA_MATERIAL"
   | "CONCLUSAO_INSTALACAO"
   | "CONCLUSAO_PROJETO"     // legacy alias → CONCLUSAO_INSTALACAO
@@ -787,6 +794,7 @@ export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
   ASSINATURA: "No ato da assinatura",
   ENTRADA: "No ato da assinatura",
   APROVACAO_PROJETO: "Na aprovação do projeto",
+  APROVACAO_FINANCIAMENTO: "Na aprovação do financiamento",
   ENTREGA_MATERIAL: "Na entrega do material",
   CONCLUSAO_INSTALACAO: "Na conclusão da instalação",
   CONCLUSAO_PROJETO: "Na conclusão da instalação",
@@ -801,6 +809,7 @@ export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
 export const PIX_COMPLEMENTO_OPCOES: PixComplementoMomento[] = [
   "ASSINATURA",
   "APROVACAO_PROJETO",
+  "APROVACAO_FINANCIAMENTO",
   "ENTREGA_MATERIAL",
   "CONCLUSAO_INSTALACAO",
   "APROVACAO_ENERGISA",
@@ -825,6 +834,7 @@ export type MistoComponente = {
 
 export type FormaPagamentoConfig = {
   tipo: FormaPagamentoTipo;
+  dinheiro?: { valor: number; observacao: string; momento?: MomentoPagamento; data?: string };
   pix?: { valor: number; data: string; chave: string; observacao: string; momento?: MomentoPagamento };
   boleto?: { valor: number; parcelas: number; valor_parcela: number; primeiro_venc: string; dia_fixo: number; observacao: string; momento?: MomentoPagamento; data?: string };
   cartao?: { valor: number; parcelas: number; bandeira: string; taxa: number; com_juros: boolean; observacao: string; momento?: MomentoPagamento; data?: string };
@@ -847,6 +857,7 @@ export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
 
 function somaBase(fp: FormaPagamentoConfig): number {
   switch (fp.tipo) {
+    case "DINHEIRO": return Number(fp.dinheiro?.valor) || 0;
     case "PIX": return Number(fp.pix?.valor) || 0;
     case "BOLETO": return Number(fp.boleto?.valor) || 0;
     case "CARTAO": return Number(fp.cartao?.valor) || 0;
@@ -904,6 +915,11 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
   if (!fp) return "—";
   let desc = "";
   switch (fp.tipo) {
+    case "DINHEIRO": {
+      const d = fp.dinheiro!;
+      desc = linhaPagamento("Dinheiro", d.momento, d.data, d.valor ?? 0, undefined, d.observacao || undefined);
+      break;
+    }
     case "PIX": {
       const p = fp.pix!;
       desc = linhaPagamento("PIX", p.momento, p.data, p.valor ?? 0);
@@ -916,7 +932,7 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
     }
     case "CARTAO": {
       const c = fp.cartao!;
-      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "com juros do cliente" : "sem juros"}`;
+      const extra = `${c.bandeira ? c.bandeira + ", " : ""}${c.com_juros ? "juros por conta do cliente" : "juros por conta da Meta (sem juros ao cliente)"}`;
       desc = linhaPagamento("Cartão", c.momento, c.data, c.valor ?? 0, c.parcelas, extra);
       break;
     }
@@ -956,10 +972,11 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
 export function formaPagamentoVazia(tipo: FormaPagamentoTipo): FormaPagamentoConfig {
   const base: FormaPagamentoConfig = { tipo, pix_complemento: null };
   switch (tipo) {
+    case "DINHEIRO": base.dinheiro = { valor: 0, observacao: "", momento: "ASSINATURA" }; break;
     case "PIX": base.pix = { valor: 0, data: "", chave: "", observacao: "", momento: "ASSINATURA" }; break;
     case "BOLETO": base.boleto = { valor: 0, parcelas: 1, valor_parcela: 0, primeiro_venc: "", dia_fixo: 10, observacao: "", momento: "ASSINATURA" }; break;
     case "CARTAO": base.cartao = { valor: 0, parcelas: 1, bandeira: "", taxa: 0, com_juros: false, observacao: "", momento: "ASSINATURA" }; break;
-    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_PROJETO" }; break;
+    case "FINANCIAMENTO": base.financiamento = { banco: "", valor: 0, entrada: 0, prazo_meses: 60, status: "EM_ANALISE", observacao: "", clausula: "", momento: "APROVACAO_FINANCIAMENTO" }; break;
     case "ENTRADA_PARCELAS": base.entrada_parcelas = { entrada: 0, entrada_data: "", saldo: 0, parcelas: 1, primeiro_venc: "", momento: "ASSINATURA" }; break;
     case "PERMUTA": base.permuta = { valor: 0, descricao: "", observacao: "", momento: "ASSINATURA" }; break;
     case "MISTO": base.misto = { componentes: [{ tipo: "PIX", momento: "ASSINATURA", valor: 0, parcelas: 1, obs: "" }] }; break;

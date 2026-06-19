@@ -1598,16 +1598,17 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
             textAlign: "center",
             letterSpacing: "0.5px",
           }}>
-            CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
+            CONTRATO {String(variaveis.numero_contrato || "0").padStart(3, "0")}/{variaveis.ano_contrato || "2026"}
           </p>
           <p style={{
             fontFamily: '"Times New Roman", Times, serif',
-            fontSize: "12pt",
+            fontSize: "11pt",
             fontWeight: "bold",
             textDecoration: "underline",
             textAlign: "center",
             marginBottom: "4mm",
             letterSpacing: "0.3px",
+            whiteSpace: "nowrap",
           }}>
             AQUISIÇÃO E INSTALAÇÃO DO SISTEMA DE ENERGIA FOTOVOLTAICA ON – GRID
           </p>

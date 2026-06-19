@@ -593,11 +593,23 @@ function Field({ label, v, on, disabled, className }: {
     </div>
   );
 }
-function NumField({ label, v, on, disabled }: { label: string; v: number | undefined; on: (v: number) => void; disabled?: boolean }) {
+function NumField({ label, v, on, disabled }: { label: string; v: number | undefined; on: (v: number | undefined) => void; disabled?: boolean }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input className="mt-1 h-8" type="number" value={v ?? ""} onChange={(e) => on(Number(e.target.value))} disabled={disabled} />
+      <Input
+        className="mt-1 h-8"
+        type="number"
+        inputMode="decimal"
+        value={v === undefined || Number.isNaN(v) ? "" : String(v)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") { on(undefined); return; }
+          const n = Number(raw);
+          on(Number.isNaN(n) ? undefined : n);
+        }}
+        disabled={disabled}
+      />
     </div>
   );
 }

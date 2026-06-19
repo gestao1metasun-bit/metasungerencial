@@ -77,6 +77,10 @@ export type EnterpriseProcessItem = {
   requerMotivo?: boolean;
   /** Grupo lógico para sub-cabeçalho no dropdown (ex.: "Propostas", "Contratos"). */
   group?: string;
+  /** Desabilita o item (mantém visível com tooltip explicativo). */
+  disabled?: boolean;
+  /** Tooltip mostrado quando `disabled=true`. */
+  disabledReason?: string;
 };
 
 export type EnterpriseRecordToolbarProps = {

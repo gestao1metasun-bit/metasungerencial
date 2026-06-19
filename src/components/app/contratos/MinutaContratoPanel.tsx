@@ -41,7 +41,7 @@ import {
   substituirVariaveis, variaveisFaltando, valorPorExtenso,
   somaFormaPagamento, descricaoFormaPagamento, formaPagamentoVazia,
   FP_LABEL, BANCOS_FINANCIAMENTO,
-  PIX_COMPLEMENTO_LABEL, TIPOS_ACEITAM_PIX_COMPLEMENTO,
+  PIX_COMPLEMENTO_LABEL, PIX_COMPLEMENTO_OPCOES, TIPOS_ACEITAM_PIX_COMPLEMENTO,
   renumerar, inserirItem, removerItem, alterarTextoItem,
   salvarTemplateUsuario, carregarTemplateUsuario, existeTemplateUsuario, limparTemplateUsuario,
   type Clausula, type ClausulaCategoria, type FormaPagamentoConfig,
@@ -444,7 +444,11 @@ export function MinutaContratoPanel({
                 value={state.contratante_cep ?? ""}
                 disabled={!podeEditar}
                 placeholder="00000-000"
-                onChange={(e) => upd("contratante_cep", e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  upd("contratante_cep", raw);
+                  if (raw.replace(/\D/g, "").length === 8) void aplicarCep(raw);
+                }}
                 onBlur={(e) => void aplicarCep(e.target.value)}
               />
             </div>
@@ -774,17 +778,17 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
               checked={!!value!.pix_complemento}
               onChange={(e) => onChange(
                 e.target.checked
-                  ? { ...value!, pix_complemento: { momento: "ENTRADA", valor: 0, observacao: "" } }
+                  ? { ...value!, pix_complemento: { momento: "ASSINATURA", valor: 0, data: "", observacao: "" } }
                   : { ...value!, pix_complemento: null },
               )}
             />
             <Label htmlFor="pix_complemento_on" className="text-xs font-semibold cursor-pointer">
-              Adicionar <strong>PIX complementar</strong> (entrada, aprovação, entrega ou conclusão)
+              Adicionar <strong>PIX complementar</strong> (assinatura, entrega, conclusão, Energisa, 30/60/90 dias, data específica…)
             </Label>
           </div>
           {value!.pix_complemento && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+              <div className="md:col-span-2">
                 <Label className="text-xs">Momento *</Label>
                 <Select
                   value={value!.pix_complemento.momento}
@@ -796,7 +800,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
                 >
                   <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(PIX_COMPLEMENTO_LABEL) as PixComplementoMomento[]).map((m) => (
+                    {PIX_COMPLEMENTO_OPCOES.map((m) => (
                       <SelectItem key={m} value={m}>{PIX_COMPLEMENTO_LABEL[m]}</SelectItem>
                     ))}
                   </SelectContent>
@@ -811,15 +815,31 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange }: {
                 })}
                 disabled={disabled}
               />
-              <Field
-                label="Observação"
-                v={value!.pix_complemento.observacao}
-                on={(v) => onChange({
-                  ...value!,
-                  pix_complemento: { ...value!.pix_complemento!, observacao: v },
-                })}
-                disabled={disabled}
-              />
+              {value!.pix_complemento.momento === "DATA_ESPECIFICA" ? (
+                <div>
+                  <Label className="text-xs">Data do PIX *</Label>
+                  <Input
+                    type="date"
+                    className="mt-1 h-8"
+                    value={value!.pix_complemento.data ?? ""}
+                    disabled={disabled}
+                    onChange={(e) => onChange({
+                      ...value!,
+                      pix_complemento: { ...value!.pix_complemento!, data: e.target.value },
+                    })}
+                  />
+                </div>
+              ) : (
+                <Field
+                  label="Observação"
+                  v={value!.pix_complemento.observacao}
+                  on={(v) => onChange({
+                    ...value!,
+                    pix_complemento: { ...value!.pix_complemento!, observacao: v },
+                  })}
+                  disabled={disabled}
+                />
+              )}
             </div>
           )}
         </div>

@@ -832,8 +832,10 @@ export type FormaPagamentoConfig = {
   entrada_parcelas?: { entrada: number; entrada_data: string; saldo: number; parcelas: number; primeiro_venc: string; momento?: MomentoPagamento };
   permuta?: { valor: number; descricao: string; observacao: string; momento?: MomentoPagamento; data?: string };
   misto?: { componentes: MistoComponente[] };
-  /** PIX complementar opcional — não disponível para FINANCIAMENTO/PERMUTA. */
+  /** @deprecated Mantido por compat. Novos contratos usam `formas_extras`. */
   pix_complemento?: { momento: PixComplementoMomento; valor: number; data?: string; observacao: string } | null;
+  /** Formas de pagamento adicionais — cada item segue o mesmo padrão Tipo/Momento/Valor. */
+  formas_extras?: FormaPagamentoConfig[];
 };
 
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];
@@ -843,26 +845,29 @@ export const TIPOS_ACEITAM_PIX_COMPLEMENTO: FormaPagamentoTipo[] = [
   "PIX", "BOLETO", "CARTAO", "ENTRADA_PARCELAS", "MISTO",
 ];
 
+function somaBase(fp: FormaPagamentoConfig): number {
+  switch (fp.tipo) {
+    case "PIX": return Number(fp.pix?.valor) || 0;
+    case "BOLETO": return Number(fp.boleto?.valor) || 0;
+    case "CARTAO": return Number(fp.cartao?.valor) || 0;
+    case "FINANCIAMENTO": return (Number(fp.financiamento?.valor) || 0) + (Number(fp.financiamento?.entrada) || 0);
+    case "ENTRADA_PARCELAS": return (Number(fp.entrada_parcelas?.entrada) || 0) + (Number(fp.entrada_parcelas?.saldo) || 0);
+    case "PERMUTA": return Number(fp.permuta?.valor) || 0;
+    case "MISTO": return (fp.misto?.componentes ?? []).reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  }
+  return 0;
+}
+
 export function somaFormaPagamento(fp: FormaPagamentoConfig | null | undefined): number {
   if (!fp) return 0;
-  let base = 0;
-  switch (fp.tipo) {
-    case "PIX": base = Number(fp.pix?.valor) || 0; break;
-    case "BOLETO": base = Number(fp.boleto?.valor) || 0; break;
-    case "CARTAO": base = Number(fp.cartao?.valor) || 0; break;
-    case "FINANCIAMENTO": {
-      const f = fp.financiamento; base = (Number(f?.valor) || 0) + (Number(f?.entrada) || 0); break;
-    }
-    case "ENTRADA_PARCELAS": {
-      const e = fp.entrada_parcelas; base = (Number(e?.entrada) || 0) + (Number(e?.saldo) || 0); break;
-    }
-    case "PERMUTA": base = Number(fp.permuta?.valor) || 0; break;
-    case "MISTO": base = (fp.misto?.componentes ?? []).reduce((s, c) => s + (Number(c.valor) || 0), 0); break;
-  }
+  let total = somaBase(fp);
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
-    base += Number(fp.pix_complemento.valor) || 0;
+    total += Number(fp.pix_complemento.valor) || 0;
   }
-  return base;
+  for (const e of (fp.formas_extras ?? [])) {
+    total += somaBase(e);
+  }
+  return total;
 }
 
 const brlFmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -940,6 +945,10 @@ export function descricaoFormaPagamento(fp: FormaPagamentoConfig | null | undefi
   if (fp.pix_complemento && TIPOS_ACEITAM_PIX_COMPLEMENTO.includes(fp.tipo)) {
     const pc = fp.pix_complemento;
     desc += ` | ${linhaPagamento("PIX", pc.momento, pc.data, pc.valor ?? 0)}`;
+  }
+  for (const extra of (fp.formas_extras ?? [])) {
+    const extraDesc = descricaoFormaPagamento({ ...extra, formas_extras: [], pix_complemento: null });
+    if (extraDesc && extraDesc !== "—") desc += ` | ${extraDesc}`;
   }
   return desc;
 }

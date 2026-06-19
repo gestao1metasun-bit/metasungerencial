@@ -290,18 +290,45 @@ function ContratoWorkspacePage() {
 
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="propostas">Propostas origem ({propostas.data?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="projetos">Projetos ({projetos.data?.length ?? 0})</TabsTrigger>
-          {permAditivoVer.data !== false && (
-            <TabsTrigger value="aditivos">Aditivos ({aditivos.data?.length ?? 0})</TabsTrigger>
-          )}
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="comissoes">Comissões</TabsTrigger>
+        {(() => {
+          const sections: Array<{ value: string; label: string }> = [
+            { value: "resumo", label: "Resumo" },
+            { value: "propostas", label: `Propostas origem (${propostas.data?.length ?? 0})` },
+            { value: "projetos", label: `Projetos (${projetos.data?.length ?? 0})` },
+            ...(permAditivoVer.data !== false
+              ? [{ value: "aditivos", label: `Aditivos (${aditivos.data?.length ?? 0})` }]
+              : []),
+            { value: "documentos", label: "Documentos" },
+            { value: "timeline", label: "Timeline" },
+            { value: "comissoes", label: "Comissões" },
+          ];
+          const atual = sections.find((s) => s.value === tab) ?? sections[0];
+          return (
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-2">
+                    <Layers className="h-3.5 w-3.5" />
+                    <span className="font-medium">{atual.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {sections.map((s) => (
+                    <DropdownMenuItem
+                      key={s.value}
+                      onSelect={() => setTab(s.value)}
+                      className={s.value === tab ? "font-semibold bg-accent" : ""}
+                    >
+                      {s.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        })()}
 
-        </TabsList>
 
         <TabsContent value="resumo" className="mt-3">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">

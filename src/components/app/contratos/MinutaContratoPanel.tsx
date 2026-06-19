@@ -1535,112 +1535,162 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
           A geração do contrato está bloqueada.
         </div>
       )}
-      <Card id="contrato-print-area" className="p-6 bg-white dark:bg-zinc-950 max-h-[720px] overflow-auto">
-        <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
-          {/* Cabeçalho oficial Meta Sun */}
-          <div className="text-center mb-4">
-            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" className="mx-auto h-16 w-auto mb-2" />
-            <h2 className="mt-3 underline text-base font-bold">
-              CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
-            </h2>
-            <h3 className="mt-1 underline text-sm font-bold">
-              AQUISIÇÃO E INSTALAÇÃO DO SISTEMA DE ENERGIA FOTOVOLTAICA ON – GRID
-            </h3>
-          </div>
-
-          <p className="text-justify">
-            Pelo presente instrumento e na melhor forma de direito, as partes, a saber:
+      <div id="contrato-print-area"
+        className="mx-auto bg-white text-black shadow-lg"
+        style={{
+          width: "210mm",
+          minHeight: "297mm",
+          padding: "20mm 25mm 25mm 25mm",
+          fontFamily: '"Times New Roman", Times, serif',
+          fontSize: "12pt",
+          lineHeight: 1.5,
+          color: "#000",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Cabeçalho oficial Meta Sun */}
+        <div className="text-center" style={{ marginBottom: "8mm" }}>
+          <img src={metaSunLogo.url} alt="Meta Sun Energia Solar"
+            style={{ display: "block", margin: "0 auto", height: "72px", width: "auto" }} />
+          <p style={{
+            fontFamily: '"Times New Roman", Times, serif',
+            fontSize: "12pt",
+            fontWeight: "bold",
+            textDecoration: "underline",
+            marginTop: "6mm",
+            marginBottom: "2mm",
+            textAlign: "center",
+            letterSpacing: "0.5px",
+          }}>
+            CONTRATO {variaveis.numero_contrato || "___"}/{variaveis.ano_contrato || "____"}
           </p>
-
-          {variaveis.contratante_tipo === "PJ" ? (
-            <p className="text-justify">
-              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"}, pessoa jurídica de
-              direito privado, inscrita no <strong>CNPJ sob o nº {variaveis.cliente_documento || "______________"}</strong>,
-              com sede em {variaveis.cliente_endereco || "______________"}
-              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null},
-              neste ato representada por <strong>{variaveis.repr_contratante_nome || "______________"}</strong>,
-              inscrito no <strong>CPF sob o nº {variaveis.repr_contratante_cpf || "______________"}</strong>
-              {variaveis.repr_contratante_rg ? <>, <strong>RG nº {variaveis.repr_contratante_rg}</strong></> : null}
-              {variaveis.repr_contratante_telefone ? <>, telefone <strong>{variaveis.repr_contratante_telefone}</strong></> : null}.
-            </p>
-          ) : (
-            <p className="text-justify">
-              <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
-              {" "}portador(a) do <strong>CPF nº {variaveis.cliente_documento || "______________"}</strong>
-              {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null}
-              {variaveis.cliente_doc_extra ? <>, <strong>{variaveis.cliente_doc_extra}</strong></> : null},
-              residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
-              {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
-            </p>
-          )}
-
-          <p className="text-justify">
-            <strong>CONTRATADA:</strong> Meta Sun Instalações Elétricas LTDA, pessoa jurídica de direito privado,
-            inscrita no <strong>CNPJ sob o nº 41.452.412/0001-40</strong>, com sede na Av. Engº Anysio da Rocha
-            Compasso, nº 5055, Bairro Rio Madeira, CEP 76.821-381, na cidade de Porto Velho/RO, telefone (69)
-            99289-7292, neste ato representada pelo Sr. {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"},
-            inscrito no <strong>CPF sob o nº {variaveis.representante_cpf || "007.084.922-66"}</strong> e no{" "}
-            <strong>RG nº {variaveis.representante_rg || "998.679 - SESDEC/RO"}</strong>.
+          <p style={{
+            fontFamily: '"Times New Roman", Times, serif',
+            fontSize: "12pt",
+            fontWeight: "bold",
+            textDecoration: "underline",
+            textAlign: "center",
+            marginBottom: "4mm",
+            letterSpacing: "0.3px",
+          }}>
+            AQUISIÇÃO E INSTALAÇÃO DO SISTEMA DE ENERGIA FOTOVOLTAICA ON – GRID
           </p>
+        </div>
 
-          <p className="text-justify">
-            Têm, entre si, justo e acordado o que dispõem as cláusulas abaixo e às quais se obrigam mutuamente:
+        <p style={{ textAlign: "justify", marginBottom: "4mm", textIndent: "0" }}>
+          Pelo presente instrumento e na melhor forma de direito, as partes, a saber:
+        </p>
+
+        {variaveis.contratante_tipo === "PJ" ? (
+          <p style={{ textAlign: "justify", marginBottom: "4mm" }}>
+            <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"}, pessoa jurídica de
+            direito privado, inscrita no <strong>CNPJ sob o nº {variaveis.cliente_documento || "______________"}</strong>,
+            com sede em {variaveis.cliente_endereco || "______________"}
+            {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null},
+            neste ato representada por <strong>{variaveis.repr_contratante_nome || "______________"}</strong>,
+            inscrito no <strong>CPF sob o nº {variaveis.repr_contratante_cpf || "______________"}</strong>
+            {variaveis.repr_contratante_rg ? <>, <strong>RG nº {variaveis.repr_contratante_rg}</strong></> : null}
+            {variaveis.repr_contratante_telefone ? <>, telefone <strong>{variaveis.repr_contratante_telefone}</strong></> : null}.
           </p>
+        ) : (
+          <p style={{ textAlign: "justify", marginBottom: "4mm" }}>
+            <strong>CONTRATANTE:</strong> {variaveis.cliente_nome || "______________"},
+            {" "}portador(a) do <strong>CPF nº {variaveis.cliente_documento || "______________"}</strong>
+            {variaveis.cliente_rg ? <>, <strong>RG nº {variaveis.cliente_rg}</strong></> : null}
+            {variaveis.cliente_doc_extra ? <>, <strong>{variaveis.cliente_doc_extra}</strong></> : null},
+            residente e domiciliado(a) em {variaveis.cliente_endereco || "______________"}
+            {variaveis.cliente_telefone ? <>, telefone para contato <strong>{variaveis.cliente_telefone}</strong></> : null}.
+          </p>
+        )}
 
-          {visiveis.map((c) => {
-            if (c.tipo === "GRUPO") {
-              return (
-                <h3 key={c.id} className="mt-5 mb-2 font-bold uppercase text-[13px] tracking-wide">
-                  {c.titulo}
-                </h3>
-              );
-            }
-            const rendered = substituirVariaveis(c.texto, variaveis);
-            const hasMissing = /\{\{(\w+)\}\}/.test(rendered);
+        <p style={{ textAlign: "justify", marginBottom: "4mm" }}>
+          <strong>CONTRATADA:</strong> Meta Sun Instalações Elétricas LTDA, pessoa jurídica de direito privado,
+          inscrita no <strong>CNPJ sob o nº 41.452.412/0001-40</strong>, com sede na Av. Engº Anysio da Rocha
+          Compasso, nº 5055, Bairro Rio Madeira, CEP 76.821-381, na cidade de Porto Velho/RO, telefone (69)
+          99289-7292, neste ato representada pelo Sr. {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"},
+          inscrito no <strong>CPF sob o nº {variaveis.representante_cpf || "007.084.922-66"}</strong> e no{" "}
+          <strong>RG nº {variaveis.representante_rg || "998.679 - SESDEC/RO"}</strong>.
+        </p>
+
+        <p style={{ textAlign: "justify", marginBottom: "6mm" }}>
+          Têm, entre si, justo e acordado o que dispõem as cláusulas abaixo e às quais se obrigam mutuamente:
+        </p>
+
+        {visiveis.map((c) => {
+          if (c.tipo === "GRUPO") {
             return (
-              <p
-                key={c.id}
-                className={`my-2 text-justify whitespace-pre-line ${hasMissing ? "text-destructive" : ""}`}
-              >
-                <strong className="mr-1 tabular-nums">{c.numero}</strong>
-                {rendered}
+              <p key={c.id} style={{
+                fontFamily: '"Times New Roman", Times, serif',
+                fontSize: "12pt",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                marginTop: "6mm",
+                marginBottom: "3mm",
+                textAlign: "justify",
+                letterSpacing: "0.3px",
+              }}>
+                {c.titulo}
               </p>
             );
-          })}
+          }
+          const rendered = substituirVariaveis(c.texto, variaveis);
+          const hasMissing = /\{\{(\w+)\}\}/.test(rendered);
+          return (
+            <p
+              key={c.id}
+              style={{
+                textAlign: "justify",
+                marginBottom: "3mm",
+                textIndent: "0",
+                color: hasMissing ? "#b91c1c" : "#000",
+              }}
+            >
+              <strong style={{ marginRight: "2mm" }}>{c.numero}</strong>
+              {rendered}
+            </p>
+          );
+        })}
 
-          <p className="mt-8">
-            {variaveis.cidade || "______________"}, {variaveis.data_contrato || "____/____/______"}.
-          </p>
+        <p style={{ marginTop: "10mm", textAlign: "justify" }}>
+          {variaveis.cidade || "______________"}, {variaveis.data_contrato || "____/____/______"}.
+        </p>
 
-          <div className="mt-12 grid grid-cols-2 gap-8 text-center text-[12px]">
-            <div>
-              <div className="border-t border-foreground/60 pt-1">
-                <strong>{variaveis.cliente_nome || "______________"}</strong>
-              </div>
-              <div className="text-muted-foreground">{variaveis.cliente_documento}</div>
-              <div className="mt-1 font-semibold">CONTRATANTE</div>
+        <div style={{
+          marginTop: "20mm",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "16mm",
+          textAlign: "center",
+          fontSize: "11pt",
+        }}>
+          <div>
+            <div style={{ borderTop: "1px solid #000", paddingTop: "2mm" }}>
+              <strong>{variaveis.cliente_nome || "______________"}</strong>
             </div>
-            <div>
-              <div className="border-t border-foreground/60 pt-1">
-                <strong>Meta Sun Instalações Elétricas LTDA</strong>
-              </div>
-              <div className="text-muted-foreground">
-                {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"} — CNPJ 41.452.412/0001-40
-              </div>
-              <div className="mt-1 font-semibold">CONTRATADA</div>
-            </div>
+            <div style={{ fontSize: "10pt", color: "#333" }}>{variaveis.cliente_documento}</div>
+            <div style={{ fontWeight: "bold", marginTop: "1mm" }}>CONTRATANTE</div>
           </div>
-
-          {/* Rodapé oficial Meta Sun */}
-          <div className="mt-8 text-center">
-            <img
-              src={metaSunRodape.url}
-              alt="Meta Sun — Av. Eng. Anysio da Rocha Compasso 5055, Rio Madeira, Porto Velho - RO, 76821-381 | 69 9.9341-2188 | www.metasun.com.br"
-              className="mx-auto w-full max-w-[680px] h-auto"
-            />
+          <div>
+            <div style={{ borderTop: "1px solid #000", paddingTop: "2mm" }}>
+              <strong>Meta Sun Instalações Elétricas LTDA</strong>
+            </div>
+            <div style={{ fontSize: "10pt", color: "#333" }}>
+              {variaveis.representante_contratada || "Vitor Sirioli Ribeiro"} — CNPJ 41.452.412/0001-40
+            </div>
+            <div style={{ fontWeight: "bold", marginTop: "1mm" }}>CONTRATADA</div>
           </div>
         </div>
-      </Card>
+
+        {/* Rodapé oficial Meta Sun */}
+        <div style={{ marginTop: "12mm", textAlign: "center" }}>
+          <img
+            src={metaSunRodape.url}
+            alt="Meta Sun — Av. Eng. Anysio da Rocha Compasso 5055, Rio Madeira, Porto Velho - RO, 76821-381 | 69 9.9341-2188 | www.metasun.com.br"
+            style={{ display: "block", margin: "0 auto", width: "100%", maxWidth: "680px", height: "auto" }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

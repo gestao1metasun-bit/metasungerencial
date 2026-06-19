@@ -243,12 +243,7 @@ export function ProjetoWorkspacePage() {
           <TimelineObjetoPanel objetoTipo="projeto" objetoId={p.id} />
         </TabsContent>
 
-        <TabsContent value="auditoria" className="mt-3">
-          <Card className="p-4 text-sm text-muted-foreground">
-            Auditoria técnica completa será consolidada em onda futura. Eventos operacionais
-            aparecem na aba <strong>Timeline</strong>.
-          </Card>
-        </TabsContent>
+
       </Tabs>
 
       {c && compensarOrigem && (

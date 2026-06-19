@@ -780,6 +780,7 @@ export type PixComplementoMomento =
   | "ASSINATURA"
   | "ENTRADA"               // legacy alias → ASSINATURA
   | "APROVACAO_PROJETO"
+  | "APROVACAO_FINANCIAMENTO"
   | "ENTREGA_MATERIAL"
   | "CONCLUSAO_INSTALACAO"
   | "CONCLUSAO_PROJETO"     // legacy alias → CONCLUSAO_INSTALACAO
@@ -793,6 +794,7 @@ export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
   ASSINATURA: "No ato da assinatura",
   ENTRADA: "No ato da assinatura",
   APROVACAO_PROJETO: "Na aprovação do projeto",
+  APROVACAO_FINANCIAMENTO: "Na aprovação do financiamento",
   ENTREGA_MATERIAL: "Na entrega do material",
   CONCLUSAO_INSTALACAO: "Na conclusão da instalação",
   CONCLUSAO_PROJETO: "Na conclusão da instalação",
@@ -807,6 +809,7 @@ export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
 export const PIX_COMPLEMENTO_OPCOES: PixComplementoMomento[] = [
   "ASSINATURA",
   "APROVACAO_PROJETO",
+  "APROVACAO_FINANCIAMENTO",
   "ENTREGA_MATERIAL",
   "CONCLUSAO_INSTALACAO",
   "APROVACAO_ENERGISA",

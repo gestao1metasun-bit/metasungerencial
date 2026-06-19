@@ -50,6 +50,7 @@ import {
 } from "@/lib/contrato-clausulas-template";
 import { usePropostas, useInversoresFV, type PropostaFV } from "@/modules/propostas/store";
 import metaSunLogo from "@/assets/meta-sun-logo.png.asset.json";
+import metaSunRodape from "@/assets/meta-sun-rodape.png.asset.json";
 
 
 

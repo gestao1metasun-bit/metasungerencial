@@ -311,28 +311,49 @@ export function MinutaContratoPanel({
   }, [propostasLS, proposta?.id, proposta?.dados]);
 
   const inversorDescricao = useMemo(() => {
+    // Agrupa por potenciaKw (kWp) e produz frase:
+    // "total de 3 inversores, sendo 01 (um) de 5 kWp e 02 (dois) de 6 kWp, todos marca PADRÃO"
     const lista = propostaLS?.inversores ?? [];
-    const ids: string[] = [];
+    const porPotencia = new Map<number, number>();
+    let totalUnidades = 0;
     for (const e of lista) {
       const qtd = Math.max(0, Number(e.quantidade) || 0);
-      for (let i = 0; i < qtd; i++) {
-        const inv = inversoresLS.find((x) => x.id === e.inversorId);
-        ids.push(inv?.modelo ?? e.inversorId);
-      }
+      if (qtd === 0) continue;
+      const inv = inversoresLS.find((x) => x.id === e.inversorId);
+      const potKw = Number(inv?.potenciaKw ?? 0);
+      if (potKw <= 0) continue;
+      porPotencia.set(potKw, (porPotencia.get(potKw) ?? 0) + qtd);
+      totalUnidades += qtd;
     }
-    const counts = new Map<string, number>();
-    for (const id of ids) {
-      const n = fmtInversorNumero(id);
-      if (!n) continue;
-      counts.set(n, (counts.get(n) ?? 0) + 1);
-    }
-    const numeros = counts.size === 0
-      ? ""
-      : [...counts.entries()].map(([n, q]) => (q > 1 ? `${q}x ${n}` : n)).join(" + ");
-    const marca = propostaLS?.inversorMarca?.trim();
-    if (!numeros || numeros === "—") return proposta?.inversor ?? "";
-    return marca ? `${marca} ${numeros}` : numeros;
+    if (totalUnidades === 0) return proposta?.inversor ?? "";
+    const marca = propostaLS?.inversorMarca?.trim() || "";
+    const entradas = [...porPotencia.entries()].sort((a, b) => a[0] - b[0]);
+    const partes = entradas.map(([kw, q]) => {
+      const qStr = String(q).padStart(2, "0");
+      const ext = numeroExtensoPt(q);
+      const kwStr = formatKwpPt(kw);
+      return `${qStr} (${ext}) de ${kwStr} kWp`;
+    });
+    const sentencaPartes = partes.length <= 1
+      ? partes[0] ?? ""
+      : `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
+    const sufixoMarca = marca ? `, todos marca ${marca}` : "";
+    const totalExt = numeroExtensoPt(totalUnidades);
+    return `total de ${totalUnidades} (${totalExt}) inversor${totalUnidades > 1 ? "es" : ""}, sendo ${sentencaPartes}${sufixoMarca}`;
   }, [propostaLS, inversoresLS, proposta?.inversor]);
+
+  const moduloDescricao = useMemo(() => {
+    const qtde = Number(contrato.modulos_qtde ?? proposta?.modulos_qtd ?? propostaLS?.modulosQtd ?? 0);
+    const potMod = Number(propostaLS?.moduloPotenciaWp ?? 0);
+    const marca = propostaLS?.moduloMarca?.trim() || "";
+    const kwp = Number(contrato.potencia_kwp ?? proposta?.potencia_kwp ?? 0);
+    if (qtde <= 0 || potMod <= 0) return "";
+    const qStr = String(qtde).padStart(2, "0");
+    const qExt = numeroExtensoPt(qtde);
+    const kwpTxt = kwp > 0 ? `, totalizando ${formatKwpPt(kwp)} kWp` : "";
+    const marcaTxt = marca ? `, marca ${marca}` : "";
+    return `${qStr} (${qExt}) módulos de ${Math.round(potMod)} Wp${marcaTxt}${kwpTxt}`;
+  }, [contrato.modulos_qtde, contrato.potencia_kwp, proposta?.modulos_qtd, proposta?.potencia_kwp, propostaLS]);
 
   // ---- Variáveis para prévia ----
   const variaveis: Variaveis = useMemo(() => {

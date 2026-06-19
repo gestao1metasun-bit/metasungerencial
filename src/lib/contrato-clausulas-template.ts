@@ -771,17 +771,44 @@ export const FP_LABEL: Record<FormaPagamentoTipo, string> = {
 
 /** Momento do PIX complementar (entrada/gatilho). */
 export type PixComplementoMomento =
-  | "ENTRADA"
+  | "ASSINATURA"
+  | "ENTRADA"               // legacy alias → ASSINATURA
   | "APROVACAO_PROJETO"
   | "ENTREGA_MATERIAL"
-  | "CONCLUSAO_PROJETO";
+  | "CONCLUSAO_INSTALACAO"
+  | "CONCLUSAO_PROJETO"     // legacy alias → CONCLUSAO_INSTALACAO
+  | "APROVACAO_ENERGISA"
+  | "DIAS_30_APOS_CONCLUSAO"
+  | "DIAS_60_APOS_CONCLUSAO"
+  | "DIAS_90_APOS_CONCLUSAO"
+  | "DATA_ESPECIFICA";
 
 export const PIX_COMPLEMENTO_LABEL: Record<PixComplementoMomento, string> = {
-  ENTRADA: "PIX de entrada (assinatura)",
-  APROVACAO_PROJETO: "PIX na aprovação do projeto",
-  ENTREGA_MATERIAL: "PIX na entrega do material",
-  CONCLUSAO_PROJETO: "PIX na conclusão do projeto",
+  ASSINATURA: "No ato da assinatura",
+  ENTRADA: "No ato da assinatura",
+  APROVACAO_PROJETO: "Na aprovação do projeto",
+  ENTREGA_MATERIAL: "Na entrega do material",
+  CONCLUSAO_INSTALACAO: "Na conclusão da instalação",
+  CONCLUSAO_PROJETO: "Na conclusão da instalação",
+  APROVACAO_ENERGISA: "Na aprovação da Energisa",
+  DIAS_30_APOS_CONCLUSAO: "30 dias após a conclusão",
+  DIAS_60_APOS_CONCLUSAO: "60 dias após a conclusão",
+  DIAS_90_APOS_CONCLUSAO: "90 dias após a conclusão",
+  DATA_ESPECIFICA: "Em data específica",
 };
+
+/** Momentos exibidos no select (sem aliases legados). */
+export const PIX_COMPLEMENTO_OPCOES: PixComplementoMomento[] = [
+  "ASSINATURA",
+  "APROVACAO_PROJETO",
+  "ENTREGA_MATERIAL",
+  "CONCLUSAO_INSTALACAO",
+  "APROVACAO_ENERGISA",
+  "DIAS_30_APOS_CONCLUSAO",
+  "DIAS_60_APOS_CONCLUSAO",
+  "DIAS_90_APOS_CONCLUSAO",
+  "DATA_ESPECIFICA",
+];
 
 export type FormaPagamentoConfig = {
   tipo: FormaPagamentoTipo;
@@ -793,7 +820,7 @@ export type FormaPagamentoConfig = {
   permuta?: { valor: number; descricao: string; observacao: string };
   misto?: { componentes: Array<{ tipo: FormaPagamentoTipo; valor: number; obs: string }> };
   /** PIX complementar opcional — não disponível para FINANCIAMENTO/PERMUTA. */
-  pix_complemento?: { momento: PixComplementoMomento; valor: number; observacao: string } | null;
+  pix_complemento?: { momento: PixComplementoMomento; valor: number; data?: string; observacao: string } | null;
 };
 
 export const BANCOS_FINANCIAMENTO = ["Sicredi", "Caixa", "BASA", "Banco do Brasil", "Outro"];

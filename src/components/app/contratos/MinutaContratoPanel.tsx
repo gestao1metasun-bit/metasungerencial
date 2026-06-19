@@ -251,12 +251,13 @@ export function MinutaContratoPanel({
       setState((s) => ({
         ...s,
         contratante_cep: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
-        contratante_logradouro: s.contratante_logradouro || j.logradouro || "",
-        contratante_bairro: s.contratante_bairro || j.bairro || "",
-        contratante_cidade: s.contratante_cidade || j.localidade || "",
-        contratante_uf: s.contratante_uf || j.uf || "",
+        contratante_logradouro: j.logradouro || s.contratante_logradouro || "",
+        contratante_bairro: j.bairro || s.contratante_bairro || "",
+        contratante_cidade: j.localidade || s.contratante_cidade || "",
+        contratante_uf: j.uf || s.contratante_uf || "",
       }));
       setDirty(true);
+      toast.success(`Endereço preenchido: ${j.logradouro || ""}${j.bairro ? `, ${j.bairro}` : ""} — ${j.localidade || ""}/${j.uf || ""}`);
     } catch { /* silencia rede */ }
   }
 

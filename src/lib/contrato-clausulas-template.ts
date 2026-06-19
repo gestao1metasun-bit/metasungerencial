@@ -1070,12 +1070,15 @@ export function sincronizarClausulasFinanciamento(
   const grupoVP = semAuto.find((c) => c.tipo === "GRUPO" && c.categoria === "VALOR_PAGAMENTO");
   if (!grupoVP) return renumerar(semAuto);
 
+  // Subordem alta garante que as auto-cláusulas fiquem APÓS os itens manuais
+  // (2.1 valor total / 2.2 forma de pagamento), virando 2.3 e 2.4 após renumerar.
   const novos: Clausula[] = [
     {
       id: uid(),
       ordem: 0,
       tipo: "ITEM",
       grupo: grupoVP.grupo,
+      subordem: 9000,
       titulo: "",
       categoria: "VALOR_PAGAMENTO",
       texto: FIN_CLAUSULA_1,
@@ -1089,6 +1092,7 @@ export function sincronizarClausulasFinanciamento(
       ordem: 0,
       tipo: "ITEM",
       grupo: grupoVP.grupo,
+      subordem: 9001,
       titulo: "",
       categoria: "VALOR_PAGAMENTO",
       texto: FIN_CLAUSULA_2,

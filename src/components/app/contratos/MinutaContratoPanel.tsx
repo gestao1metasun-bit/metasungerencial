@@ -1575,7 +1575,7 @@ function PreviaContrato({ variaveis, clausulas, varsFaltando, podeGerar, onGerar
         style={{
           width: "210mm",
           minHeight: "297mm",
-          padding: "20mm 25mm 25mm 25mm",
+          padding: "30mm 20mm 20mm 30mm",
           fontFamily: '"Times New Roman", Times, serif',
           fontSize: "12pt",
           lineHeight: 1.5,

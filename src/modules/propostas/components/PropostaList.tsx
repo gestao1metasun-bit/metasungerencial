@@ -215,98 +215,118 @@ export async function aprovarProposta(p: PropostaFV) {
     usuario,
   });
 
-  // D27.COM — Cria também o contrato MINUTA oficial no Supabase para
-  // aparecer em /comercial/contratos → "Pendentes de Redação".
-  // Requer leadId UUID válido e lead Supabase com cliente_id vinculado.
+  // D27.COM — Cria o contrato MINUTA oficial no Supabase para aparecer em
+  // /comercial/contratos → "Pendentes de Redação". Se o lead/cliente ainda
+  // não existir no Supabase (lead nascido no LS de Propostas), criamos aqui
+  // com os dados disponíveis. CPF/CNPJ é opcional nesta etapa.
   let supabaseOk = false;
   let supabaseErr: string | null = null;
-  if (p.leadId && UUID_RE_LOCAL.test(p.leadId)) {
-    try {
-      // 1) Garante que o lead tenha cliente Supabase vinculado.
-      const { data: leadRow, error: eLead } = await supabase
-        .from("leads")
-        .select("id,cliente_id,nome,doc,telefone")
-        .eq("id", p.leadId)
-        .maybeSingle();
-      if (eLead) throw eLead;
-      if (!leadRow) throw new Error("Lead não encontrado no Supabase.");
-      let clienteIdSb = leadRow.cliente_id as string | null;
-      const docDig = (p.clienteDoc ?? leadRow.doc ?? "").replace(/\D/g, "");
-      const dadosCliente = {
-        nome: (p.clienteNome || leadRow.nome || "Cliente").trim(),
-        doc: docDig || undefined,
-        telefone: p.clienteTelefone ?? leadRow.telefone ?? undefined,
-        email: p.clienteEmail ?? undefined,
-        cep: p.clienteCep ?? undefined,
-        rua: p.clienteRua ?? undefined,
-        numero: p.clienteNumero ?? undefined,
-        bairro: p.clienteBairro ?? undefined,
-        complemento: p.clienteComplemento ?? undefined,
-        cidade: (p.clienteCidade ?? p.cidade) || undefined,
-        uf: (p.clienteUf ?? p.estado) || undefined,
-        tipo_pessoa: p.tipoPessoa ?? (docDig.length === 14 ? "PJ" : "PF"),
-      };
-      if (!clienteIdSb) {
-        const { criarClienteSupabase } = await import("@/lib/repositories/clientes-supabase-repo");
-        const novo = await criarClienteSupabase(dadosCliente);
-        clienteIdSb = novo.id;
-        const { error: eVinc } = await supabase
-          .from("leads")
-          .update({ cliente_id: clienteIdSb })
-          .eq("id", p.leadId);
-        if (eVinc) throw eVinc;
-      } else {
-        // SEMPRE sincroniza dados editados no dialog com o cliente Supabase
-        // (para testes e correções repetidas no mesmo lead).
-        try {
-          const { atualizarClienteSupabase } = await import("@/lib/repositories/clientes-supabase-repo");
-          await atualizarClienteSupabase(clienteIdSb, dadosCliente);
-        } catch {
-          // Não bloqueia aprovação se a atualização falhar.
-        }
-      }
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) throw new Error("Sessão expirada — faça login novamente.");
+    const ownerUuid = u.user.id;
 
-      // 2) Cria proposta a partir do lead (agora com cliente vinculado).
-      const { data: propId, error: e1 } = await supabase.rpc(
-        "rpc_proposta_criar_do_lead" as never,
-        { _lead_id: p.leadId, _observacao: `Aprovada a partir de ${p.numero}` } as never,
-      );
-      if (e1) throw e1;
-      const propostaId = propId as unknown as string;
-      // Atualiza dados mínimos exigidos por rpc_proposta_gerar_contrato (valor_final > 0).
-      const { error: eUpd } = await supabase
-        .from("propostas")
-        .update({
-          valor_final: valor,
-          potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
-          modulos_qtd: p.modulosQtd,
-          dados: {
-            inversores: p.inversores,
-            inversorMarca: p.inversorMarca,
-            consultor: p.consultor ?? p.criadoPor ?? "",
-            cidade: p.cidade,
-            estado: p.estado,
-            origem_ls: { propostaIdLs: p.id, numeroLs: p.numero },
-          } as never,
-        })
-        .eq("id", propostaId);
-      if (eUpd) throw eUpd;
-      const { error: e2 } = await supabase.rpc(
-        "rpc_proposta_aprovar" as never,
-        { p_proposta_id: propostaId, p_observacao: null } as never,
-      );
-      if (e2) throw e2;
-      const { error: e3 } = await supabase.rpc(
-        "rpc_proposta_enviar_para_contratos" as never,
-        { p_proposta_id: propostaId } as never,
-      );
-      if (e3) throw e3;
-      supabaseOk = true;
-    } catch (err) {
-      supabaseErr = (err as Error)?.message ?? String(err);
+    const docDig = (p.clienteDoc ?? "").replace(/\D/g, "");
+    const dadosCliente = {
+      nome: (p.clienteNome || "Cliente").trim(),
+      doc: docDig || undefined,
+      telefone: p.clienteTelefone ?? undefined,
+      email: p.clienteEmail ?? undefined,
+      cep: p.clienteCep ?? undefined,
+      rua: p.clienteRua ?? undefined,
+      numero: p.clienteNumero ?? undefined,
+      bairro: p.clienteBairro ?? undefined,
+      complemento: p.clienteComplemento ?? undefined,
+      cidade: (p.clienteCidade ?? p.cidade) || undefined,
+      uf: (p.clienteUf ?? p.estado) || undefined,
+      tipo_pessoa: p.tipoPessoa ?? (docDig.length === 14 ? "PJ" : "PF"),
+    };
+
+    // 1) Lead UUID no Supabase — busca o existente ou cria um novo.
+    let leadUuid: string | null = null;
+    let clienteIdSb: string | null = null;
+    if (p.leadId && UUID_RE_LOCAL.test(p.leadId)) {
+      const { data: leadRow, error: eLead } = await supabase
+        .from("leads").select("id,cliente_id").eq("id", p.leadId).maybeSingle();
+      if (eLead) throw eLead;
+      if (leadRow) {
+        leadUuid = leadRow.id as string;
+        clienteIdSb = (leadRow.cliente_id as string | null) ?? null;
+      }
     }
-  } else {
-    supabaseErr = "Lead sem vínculo Supabase (leadId UUID ausente).";
+
+    // 2) Garante cliente Supabase (cria sem CPF se necessário).
+    const { criarClienteSupabase, atualizarClienteSupabase } = await import(
+      "@/lib/repositories/clientes-supabase-repo"
+    );
+    if (clienteIdSb) {
+      try { await atualizarClienteSupabase(clienteIdSb, dadosCliente); } catch { /* não bloqueia */ }
+    } else {
+      const novo = await criarClienteSupabase(dadosCliente);
+      clienteIdSb = novo.id;
+    }
+
+    // 3) Cria lead no Supabase se ainda não existir; ou apenas garante o vínculo.
+    if (!leadUuid) {
+      const { data: novoLead, error: eIns } = await supabase
+        .from("leads")
+        .insert({
+          nome: dadosCliente.nome,
+          telefone: dadosCliente.telefone ?? null,
+          doc: docDig || null,
+          consumo_kwh: Math.max(0, Math.round(p.consumoMedio || 0)),
+          consultor_id: ownerUuid,
+          origem: (p.origemCaptacao || "OUTROS").toUpperCase().slice(0, 30),
+          observacao: `Lead criado na aprovação da proposta ${p.numero}.`,
+          status: "LEAD_CADASTRADO",
+          cliente_id: clienteIdSb,
+          dados: { criadoPor: p.criadoPor, propostaLsId: p.id, propostaLsNumero: p.numero } as never,
+        } as never)
+        .select("id")
+        .single();
+      if (eIns) throw eIns;
+      leadUuid = (novoLead as { id: string }).id;
+    } else {
+      await supabase.from("leads").update({ cliente_id: clienteIdSb }).eq("id", leadUuid);
+    }
+
+    // 4) Cria proposta oficial a partir do lead.
+    const { data: propId, error: e1 } = await supabase.rpc(
+      "rpc_proposta_criar_do_lead" as never,
+      { _lead_id: leadUuid, _observacao: `Aprovada a partir de ${p.numero}` } as never,
+    );
+    if (e1) throw e1;
+    const propostaId = propId as unknown as string;
+    const { error: eUpd } = await supabase
+      .from("propostas")
+      .update({
+        valor_final: valor,
+        potencia_kwp: p.modulosQtd * (p.moduloPotenciaWp / 1000),
+        modulos_qtd: p.modulosQtd,
+        dados: {
+          inversores: p.inversores,
+          inversorMarca: p.inversorMarca,
+          consultor: p.consultor ?? p.criadoPor ?? "",
+          cidade: p.cidade,
+          estado: p.estado,
+          origem_ls: { propostaIdLs: p.id, numeroLs: p.numero },
+        } as never,
+      })
+      .eq("id", propostaId);
+    if (eUpd) throw eUpd;
+    const { error: e2 } = await supabase.rpc(
+      "rpc_proposta_aprovar" as never,
+      { p_proposta_id: propostaId, p_observacao: null } as never,
+    );
+    if (e2) throw e2;
+    const { error: e3 } = await supabase.rpc(
+      "rpc_proposta_enviar_para_contratos" as never,
+      { p_proposta_id: propostaId } as never,
+    );
+    if (e3) throw e3;
+    supabaseOk = true;
+  } catch (err) {
+    supabaseErr = (err as Error)?.message ?? String(err);
   }
 
   if (supabaseOk) {

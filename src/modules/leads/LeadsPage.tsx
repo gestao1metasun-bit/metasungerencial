@@ -415,13 +415,13 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
     if (!Number.isFinite(consumoNum) || consumoNum <= 0) {
       toast.error("Consumo desejado inválido."); return;
     }
-    // CPF/CNPJ obrigatório e válido
-    if (!doc.trim()) { toast.error("Informe o CPF/CNPJ do cliente."); return; }
-    if (!isDocValido(doc)) {
+    // CPF/CNPJ é OPCIONAL na criação do lead. Só valida se foi preenchido.
+    // O cadastro definitivo (CPF/CNPJ, endereço) é exigido no contrato.
+    if (doc.trim() && !isDocValido(doc)) {
       toast.error(tipoPessoa === "PF" ? "CPF inválido — confira os dígitos." : "CNPJ inválido — confira os dígitos.");
       return;
     }
-    if (leadExistenteNumero) {
+    if (doc.trim() && leadExistenteNumero) {
       toast.error(`Já existe lead ${leadExistenteNumero} com este CPF/CNPJ. Abra o lead existente.`);
       return;
     }
@@ -472,7 +472,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
         <DialogHeader>
           <DialogTitle>Novo Lead</DialogTitle>
           <DialogDescription>
-            Campos com <span className="text-destructive">*</span> são obrigatórios. O CPF/CNPJ é a chave do cliente — não permite duplicidade.
+            Campos com <span className="text-destructive">*</span> são obrigatórios. CPF/CNPJ é opcional aqui — o cadastro completo é exigido ao gerar o contrato.
           </DialogDescription>
         </DialogHeader>
 
@@ -514,7 +514,7 @@ function NovoLeadDialog({ open, onClose }: { open: boolean; onClose: () => void 
             </Select>
           </div>
           <div className="sm:col-span-4">
-            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-destructive">*</span></Label>
+            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Input value={doc} onChange={(e) => onDocChange(e.target.value)} placeholder={tipoPessoa === "PF" ? "000.000.000-00" : "00.000.000/0000-00"} />
             {docInvalido && <p className="mt-1 text-[11px] text-destructive">Dígitos verificadores inválidos.</p>}
             {leadExistenteNumero && (

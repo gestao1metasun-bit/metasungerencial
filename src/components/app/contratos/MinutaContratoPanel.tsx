@@ -826,7 +826,7 @@ function FormaPagamentoEditor({ valorTotal, disabled, value, onChange, nested }:
                     <Select value={c.tipo} onValueChange={(v) => updateComp({ tipo: v as FormaPagamentoTipo })} disabled={disabled}>
                       <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {(["PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
+                        {(["DINHEIRO","PIX","BOLETO","CARTAO","FINANCIAMENTO","PERMUTA"] as FormaPagamentoTipo[]).map((t) =>
                           <SelectItem key={t} value={t}>{FP_LABEL[t]}</SelectItem>)}
                       </SelectContent>
                     </Select>

@@ -2089,28 +2089,16 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="graficos" className="space-y-4">
-          {/* BLOCO 9 — Gráficos */}
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="9. Gráficos da Proposta">
-            <PropostaGraficos
-              custoTotal={res.custoTotal}
-              lucroBruto={res.lucroBruto}
-              valorFinal={res.valorFinal}
-              comissaoValor={comissao.valor}
-              bonusValor={comissao.bonus}
-              custos={p.custos}
-            />
-          </Bloco>
-          </TabsContent>
-
           <TabsContent value="validade" className="space-y-4">
-          {/* BLOCO 10 — Validade */}
-          <Bloco icon={<FileText className="h-4 w-4" />} title="10. Validade da Proposta">
+          {/* BLOCO 9 — Validade */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="9. Validade da Proposta">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Validade da proposta">
                 <Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} />
               </Field>
             </div>
+          </Bloco>
+
           </Bloco>
           </TabsContent>
 

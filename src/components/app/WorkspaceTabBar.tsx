@@ -150,7 +150,7 @@ export function WorkspaceTabBar() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-stretch gap-0 border-t border-border bg-muted/60 backdrop-blur px-2 overflow-x-auto h-8">
+    <div className="sticky top-0 z-30 flex w-full items-stretch gap-0 border-b border-border bg-muted/60 backdrop-blur px-2 overflow-x-auto h-8">
       {tabs.map((t) => {
         const Icon = iconForRoute(t.to);
         const isActive = t.id === activeId;

@@ -2068,9 +2068,8 @@ function PropostaSheet({
           </TabsContent>
 
           <TabsContent value="graficos" className="space-y-4">
-          {/* BLOCO 9.1 — Gráficos */}
-
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="9.1 Gráficos da Proposta">
+          {/* BLOCO 9 — Gráficos */}
+          <Bloco icon={<Calculator className="h-4 w-4" />} title="9. Gráficos da Proposta">
             <PropostaGraficos
               custoTotal={res.custoTotal}
               lucroBruto={res.lucroBruto}

@@ -68,17 +68,28 @@ export function AppSidebar() {
     return (window.localStorage.getItem(LS_MODULO) as MacroKey) || null;
   });
 
+  /** Rota de entrada do sistema — sidebar abre em modo "Início" (enxuto). */
+  const rotaInicial = path === "/" || path === "/dashboard";
+
   // Navegou para outro módulo → o seletor acompanha a rota.
   useEffect(() => {
+    if (rotaInicial) return;
     if (macroAtivo && macroAtivo.key !== moduloSel) {
       setModuloSel(macroAtivo.key);
       try { window.localStorage.setItem(LS_MODULO, macroAtivo.key); } catch { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [macroAtivo?.key]);
+  }, [macroAtivo?.key, rotaInicial]);
 
-  const moduloAtual =
-    modulos.find((m) => m.key === moduloSel) ?? modulos.find((m) => m.key === macroAtivo?.key) ?? modulos[0];
+  // Voltou para a home → volta ao menu inicial enxuto.
+  useEffect(() => {
+    if (!rotaInicial) return;
+    setModuloSel(null);
+    try { window.localStorage.removeItem(LS_MODULO); } catch { /* ignore */ }
+  }, [rotaInicial]);
+
+  const moduloAtual = moduloSel ? modulos.find((m) => m.key === moduloSel) ?? null : null;
+  const modoInicio = !moduloAtual;
 
   /** item (2º nível) expandido — accordion */
   const [subAberto, setSubAberto] = useState<string | null>(null);
@@ -88,6 +99,12 @@ export function AppSidebar() {
     setModuloSel(key);
     setSubAberto(null);
     try { window.localStorage.setItem(LS_MODULO, key); } catch { /* ignore */ }
+  }
+
+  function voltarInicio() {
+    setModuloSel(null);
+    setSubAberto(null);
+    try { window.localStorage.removeItem(LS_MODULO); } catch { /* ignore */ }
   }
 
   function toggleCollapsed() {
@@ -109,7 +126,8 @@ export function AppSidebar() {
       )
     : [];
 
-  const ModuloIcon = moduloAtual?.icon;
+  const ModuloIcon = moduloAtual?.icon ?? Home;
+
 
   return (
     <aside

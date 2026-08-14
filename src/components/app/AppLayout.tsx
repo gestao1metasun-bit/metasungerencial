@@ -13,6 +13,7 @@ import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
 import { TopNav, MacroNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
+import { AppSidebar } from "@/components/app/AppSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
 import { WorkspaceTabBar } from "@/components/app/WorkspaceTabBar";
 import { featureFlags } from "@/lib/feature-flags";
@@ -126,9 +127,12 @@ export function AppLayout() {
       <TopNav />
       <WorkspaceTabBar />
 
-      <main className="flex-1 overflow-x-hidden p-2">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 items-start">
+        <AppSidebar />
+        <main className="min-w-0 flex-1 overflow-x-hidden p-2">
+          <Outlet />
+        </main>
+      </div>
 
       {/* Painel contextual sob demanda — drawer lateral direita */}
       <Sheet open={contextOpen} onOpenChange={setContextOpen}>

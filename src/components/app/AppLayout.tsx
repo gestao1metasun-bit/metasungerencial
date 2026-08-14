@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
 import { NotificacoesBell } from "@/components/app/NotificacoesBell";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { signOut } from "@/lib/auth-store";

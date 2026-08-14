@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
 import { NotificacoesBell } from "@/components/app/NotificacoesBell";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { signOut } from "@/lib/auth-store";
@@ -62,6 +62,34 @@ export function AppLayout() {
   void featureFlags.ENTERPRISE_SHELL_FULL;
 
   const [contextOpen, setContextOpen] = useState(false);
+
+  // D27.UI — publica a geometria da área de conteúdo para que diálogos
+  // (cliente, proposta, contrato, aditivo…) abram como página nessa região.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || typeof window === "undefined") return;
+    const root = document.documentElement;
+    const sync = () => {
+      const r = el.getBoundingClientRect();
+      root.style.setProperty("--app-content-top", `${Math.max(0, r.top)}px`);
+      root.style.setProperty("--app-content-left", `${Math.max(0, r.left)}px`);
+      root.style.setProperty("--app-content-width", `${r.width}px`);
+      root.style.setProperty("--app-content-height", `${window.innerHeight - Math.max(0, r.top)}px`);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    window.addEventListener("resize", sync);
+    window.addEventListener("scroll", sync, true);
+    const id = window.setInterval(sync, 500);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", sync);
+      window.removeEventListener("scroll", sync, true);
+      window.clearInterval(id);
+    };
+  }, []);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -125,7 +153,7 @@ export function AppLayout() {
 
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div ref={contentRef} className="flex min-w-0 flex-1 flex-col">
           <MaintenanceBanner />
 
           <main className="min-w-0 flex-1 overflow-x-hidden p-3 pb-10">

@@ -153,7 +153,7 @@ export function AppLayout() {
 
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div ref={contentRef} className="flex min-w-0 flex-1 flex-col">
           <MaintenanceBanner />
 
           <main className="min-w-0 flex-1 overflow-x-hidden p-3 pb-10">

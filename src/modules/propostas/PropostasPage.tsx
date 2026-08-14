@@ -1709,9 +1709,11 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 3 — Fatura */}
-          <Bloco icon={<Receipt className="h-4 w-4" />} title="3. Dados da Fatura">
+          <TabsContent value="fatura" className="space-y-4">
+          {/* BLOCO 2 — Fatura */}
+          <Bloco icon={<Receipt className="h-4 w-4" />} title="2. Dados da Fatura">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Tipo de instalação">
                 <Select value={p.tipoInstalacao} onValueChange={(v) => update("tipoInstalacao", v as PropostaFV["tipoInstalacao"])}>

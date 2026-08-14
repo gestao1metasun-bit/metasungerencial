@@ -761,8 +761,6 @@ function PropostasPage({ embedded = false }: { embedded?: boolean } = {}) {
               const p = getPropostaAtiva();
               if (p) {
                 setVendoId(p.id);
-                // dispara print após o sheet montar
-                setTimeout(() => { try { window.print(); } catch { /* noop */ } }, 700);
               } else {
                 toast.info("Selecione uma proposta para imprimir.");
               }

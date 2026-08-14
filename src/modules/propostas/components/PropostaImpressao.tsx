@@ -70,10 +70,64 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
   const areaRef = useRef<HTMLDivElement>(null);
   const [gerando, setGerando] = useState(false);
 
-  function imprimir() {
-    document.body.classList.add("print-proposta");
-    window.print();
-    setTimeout(() => document.body.classList.remove("print-proposta"), 500);
+  async function imprimir() {
+    const raiz = areaRef.current;
+    if (!raiz) return;
+
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.position = "fixed";
+    frame.style.right = "0";
+    frame.style.bottom = "0";
+    frame.style.width = "0";
+    frame.style.height = "0";
+    frame.style.border = "0";
+    document.body.appendChild(frame);
+
+    const printWindow = frame.contentWindow;
+    const printDocument = frame.contentDocument;
+    if (!printWindow || !printDocument) {
+      frame.remove();
+      toast.error("Não foi possível abrir a impressão.");
+      return;
+    }
+
+    printDocument.open();
+    printDocument.write(`<!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <base href="${window.location.origin}/" />
+          <title>Proposta ${proposta.numero || "Meta Sun"}</title>
+          <style>
+            @page { size: A4 portrait; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .proposta-print { margin: 0 !important; padding: 0 !important; width: 210mm !important; }
+            .proposta-modelo .mp-page { margin: 0 !important; box-shadow: none !important; break-after: page !important; page-break-after: always !important; }
+            .proposta-modelo .mp-page:last-child { break-after: auto !important; page-break-after: auto !important; }
+          </style>
+        </head>
+        <body><main class="proposta-print">${raiz.innerHTML}</main></body>
+      </html>`);
+    printDocument.close();
+
+    try {
+      await printDocument.fonts?.ready;
+      const imagens = Array.from(printDocument.images);
+      await Promise.all(imagens.map((img) => img.complete
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => {
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+          })));
+      printWindow.focus();
+      printWindow.print();
+    } catch (erro) {
+      console.error(erro);
+      toast.error("Não foi possível imprimir a proposta.");
+    } finally {
+      window.setTimeout(() => frame.remove(), 1_000);
+    }
   }
 
   async function baixarPdf() {
@@ -123,16 +177,6 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
         <DialogHeader className="no-print">
           <DialogTitle>Proposta {proposta.numero}</DialogTitle>
         </DialogHeader>
-
-        <style>{`
-          @media print {
-            @page { size: A4; margin: 12mm 10mm 12mm 10mm; }
-            body.print-proposta * { visibility: hidden !important; }
-            body.print-proposta .proposta-print, body.print-proposta .proposta-print * { visibility: visible !important; }
-            body.print-proposta .proposta-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
-            body.print-proposta .no-print { display: none !important; }
-          }
-        `}</style>
 
         <div ref={areaRef} className="proposta-print px-2">
           <PropostaModeloPadrao proposta={proposta} />

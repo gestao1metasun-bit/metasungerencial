@@ -92,7 +92,11 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
   }
 
   const maxBarra = Math.max(consumo, ...SAZONALIDADE.map((f) => dim.geracaoMensalKwh * f), 1);
-  const anoCapa = (p.validade || p.criadoEm || "").slice(-4) || String(new Date().getFullYear());
+  const dataRef = (p.validade || p.criadoEm || "").slice(0, 10);
+  const [ay, am, ad] = dataRef.split("-");
+  const anoCapa = ay && ay.length === 4 ? ay : String(new Date().getFullYear());
+  const validadeBR = ay && am && ad ? `${ad}/${am}/${ay}` : "—";
+  const numeroCapa = (p.numero || "").replace(/^PROPOSTA\s*/i, "");
 
   return (
     <div className="proposta-modelo">

@@ -1108,20 +1108,39 @@ function LeadDetail({
     lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : "",
   ].filter(Boolean).join(" — ");
 
+  const u = lead.ultima;
+  const dimU = calcDimensionamento(u);
+  const valores = lead.propostas.map((p) => calcPrecificacao(p).valorFinal || 0);
+  const valorTotal = valores.reduce((a, b) => a + b, 0);
+  const ticket = valores.length ? valorTotal / valores.length : 0;
+  const maiorValor = valores.length ? Math.max(...valores) : 0;
+  const iniciais = (lead.clienteNome || "?")
+    .split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
+  const telDigits = (lead.clienteTelefone || "").replace(/\D/g, "");
+
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="truncate">{lead.clienteNome}</span>
+          <DialogTitle className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+              {iniciais || "?"}
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-base leading-tight">{lead.clienteNome}</span>
+              <span className="truncate text-[11px] font-normal text-muted-foreground">
+                {formatDoc(lead.clienteDoc || "") || "Sem documento"} · {lead.consultor || "Sem consultor"} · Lead há {lead.diasCriacao} dia(s)
+              </span>
+            </span>
+            <Badge variant={statusVariant(lead.status)} className="ml-1 shrink-0">{lead.status}</Badge>
             {lead.bloqueado && (
-              <Badge variant="default" className="gap-1"><Lock className="h-3 w-3" /> Assinado</Badge>
+              <Badge variant="default" className="gap-1 shrink-0"><Lock className="h-3 w-3" /> Assinado</Badge>
             )}
             {!lead.bloqueado && (
               <Button
                 size="sm"
                 onClick={() => onNova(presetFromLead(lead))}
-                className="ml-auto h-8 gap-1"
+                className="ml-auto h-8 shrink-0 gap-1"
                 title="Gerar nova proposta para este cliente"
               >
                 <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
@@ -1130,8 +1149,9 @@ function LeadDetail({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="dados" className="mt-2">
+        <Tabs defaultValue="visao" className="mt-2">
           <TabsList>
+            <TabsTrigger value="visao">Visão geral</TabsTrigger>
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="propostas">Propostas ({lead.propostas.length})</TabsTrigger>
             <TabsTrigger value="aprovar" disabled={lead.bloqueado}>
@@ -1139,9 +1159,88 @@ function LeadDetail({
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="visao" className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              {[
+                ["Propostas", String(lead.propostas.length)],
+                ["Em aberto", String(lead.emAberto)],
+                ["Valor da última", fmtBRL(lead.valor)],
+                ["Ticket médio", fmtBRL(ticket)],
+                ["Maior proposta", fmtBRL(maiorValor)],
+              ].map(([t, v]) => (
+                <div key={t} className="rounded-md border bg-muted/30 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{t}</div>
+                  <div className="mt-1 text-sm font-semibold">{v}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-md border p-4">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contato</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Telefone" value={lead.clienteTelefone} />
+                  <Field label="E-mail" value={lead.clienteEmail} />
+                  <Field label="Endereço" value={enderecoLinha} className="col-span-2" />
+                  <Field label="Cidade / UF" value={lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : ""} />
+                  <Field label="Documento" value={formatDoc(lead.clienteDoc || "")} />
+                </div>
+                {telDigits.length >= 10 && (
+                  <div className="mt-3 flex gap-2">
+                    <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                      <a href={`tel:+55${telDigits}`}>Ligar</a>
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                      <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                    </Button>
+                    {lead.clienteEmail && (
+                      <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                        <a href={`mailto:${lead.clienteEmail}`}>E-mail</a>
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-md border p-4">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Técnico — última proposta ({u.numero})
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Potência" value={`${dimU.potenciaFinalKwp.toFixed(2)} kWp`} />
+                  <Field label="Módulos" value={`${dimU.qtdFinal} × ${u.moduloPotenciaWp || 0} W`} />
+                  <Field label="Marca dos módulos" value={u.moduloMarca} />
+                  <Field label="Geração média" value={`${dimU.geracaoMensalKwh.toFixed(0)} kWh/mês`} />
+                  <Field label="Área estimada" value={`${dimU.areaTotal.toFixed(1)} m²`} />
+                  <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-md border p-4">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Linha do tempo</div>
+              <div className="space-y-2">
+                {[...lead.propostas]
+                  .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
+                  .map((p) => (
+                    <div key={p.id} className="flex items-center gap-3 border-l-2 border-primary/40 pl-3 text-xs">
+                      <span className="w-24 shrink-0 text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
+                      <span className="font-medium">{p.numero}</span>
+                      <Badge variant={statusVariant(p.status)} className="h-5">{p.status}</Badge>
+                      <span className="ml-auto font-medium">{fmtBRL(calcPrecificacao(p).valorFinal || 0)}</span>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => onVisualizar(p.id)}>
+                        Visualizar
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="dados" className="mt-4">
             <DadosEditaveis lead={lead} />
           </TabsContent>
+
 
           <TabsContent value="propostas" className="mt-4 space-y-3">
             <div className="flex items-center justify-between">

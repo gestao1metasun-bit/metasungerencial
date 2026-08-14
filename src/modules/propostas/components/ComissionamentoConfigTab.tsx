@@ -73,6 +73,7 @@ export function ComissionamentoConfigTab() {
             value={acima}
             onChange={(e) => setAcima(+e.target.value)}
           />
+        </div>
         <div>
           <Label>Parâmetro base do bônus (R$/kWp)</Label>
           <Input
@@ -95,7 +96,6 @@ export function ComissionamentoConfigTab() {
         </div>
       </div>
 
-      </div>
 
       <div className="mt-5 overflow-x-auto">
         <Table>

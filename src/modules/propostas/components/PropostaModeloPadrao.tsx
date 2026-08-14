@@ -7,6 +7,7 @@ import {
 } from "@/modules/propostas/store";
 import metaSunLogo from "@/assets/meta-sun-logo-v2.png.asset.json";
 import metaSunRodape from "@/assets/meta-sun-rodape.png.asset.json";
+import capaPaineis from "@/assets/capa-paineis.jpg";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 /** Sazonalidade média (fator sobre a geração média mensal). */
@@ -91,7 +92,11 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
   }
 
   const maxBarra = Math.max(consumo, ...SAZONALIDADE.map((f) => dim.geracaoMensalKwh * f), 1);
-  const anoCapa = (p.validade || p.criadoEm || "").slice(-4) || String(new Date().getFullYear());
+  const dataRef = (p.validade || p.criadoEm || "").slice(0, 10);
+  const [ay, am, ad] = dataRef.split("-");
+  const anoCapa = ay && ay.length === 4 ? ay : String(new Date().getFullYear());
+  const validadeBR = ay && am && ad ? `${ad}/${am}/${ay}` : "—";
+  const numeroCapa = (p.numero || "").replace(/^PROPOSTA\s*/i, "");
 
   return (
     <div className="proposta-modelo">
@@ -136,10 +141,16 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
         .proposta-modelo .mp-kpi span { display:block; font-size:8pt; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
         .proposta-modelo .mp-kpi strong { font-size:11pt; color:var(--navy); }
 
-        .proposta-modelo .mp-capa { position:relative; padding:0; }
-        .proposta-modelo .mp-capa-inner { padding:22mm 18mm; position:relative; z-index:2; }
-        .proposta-modelo .mp-capa-diag { position:absolute; right:-10%; bottom:-5%; width:95%; height:58%; background:linear-gradient(135deg,var(--orange),#ffd07a); transform:skewY(-18deg); z-index:1; }
-        .proposta-modelo .mp-capa-ano { position:absolute; right:18mm; bottom:66mm; z-index:3; font-size:46pt; font-weight:800; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.15); }
+        .proposta-modelo .mp-capa { position:relative; padding:0; overflow:hidden; background:#fff; }
+        .proposta-modelo .mp-capa-inner { padding:18mm 16mm; position:relative; z-index:4; }
+        .proposta-modelo .mp-capa-foto { position:absolute; right:0; bottom:0; width:78%; height:46%; object-fit:cover; z-index:1;
+          clip-path:polygon(18% 100%, 100% 26%, 100% 100%); }
+        .proposta-modelo .mp-capa-diag { position:absolute; right:0; bottom:34%; width:76%; height:26%; background:var(--orange); z-index:2;
+          clip-path:polygon(0 46%, 100% 0, 100% 72%, 0 100%); }
+        .proposta-modelo .mp-capa-diag2 { position:absolute; right:0; top:0; width:52%; height:100%; background:linear-gradient(135deg,#f2f4f7 0%,#ffffff 70%); z-index:0;
+          clip-path:polygon(38% 0, 100% 0, 100% 100%, 0 100%); }
+        .proposta-modelo .mp-capa-ano { position:absolute; right:14mm; bottom:40%; z-index:3; font-size:40pt; font-weight:800; color:#1b2430; line-height:1; }
+
 
         @media print {
           .proposta-modelo { font-size:10pt; }
@@ -153,32 +164,36 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
 
       {/* ---------- Página 1 — capa ---------- */}
       <div className="mp-page mp-capa">
+        <div className="mp-capa-diag2" />
+        <img src={capaPaineis} alt="Painéis solares" className="mp-capa-foto" width={1024} height={768} />
         <div className="mp-capa-diag" />
         <div className="mp-capa-ano">{anoCapa}</div>
         <div className="mp-capa-inner">
           <div style={{ textAlign: "center" }}>
-            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 80, objectFit: "contain", display: "inline-block" }} />
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 78, objectFit: "contain", display: "inline-block" }} />
           </div>
 
-          <div style={{ marginTop: "26mm" }}>
-            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#1b2430" }}>PROPOSTA</div>
-            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#0d2a56" }}>COMERCIAL</div>
-            <div style={{ fontSize: "14pt", color: "#5b6672", marginTop: 8, letterSpacing: ".04em" }}>Sistema Fotovoltaico</div>
+          <div style={{ marginTop: "18mm" }}>
+            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-.02em", color: "#1b2430" }}>PROPOSTA</div>
+            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-.02em", color: "#0d2a56" }}>COMERCIAL</div>
+            <div style={{ fontSize: "15pt", color: "#3d4854", marginTop: 4 }}>Sistema Fotovoltaico</div>
           </div>
 
-          <div style={{ marginTop: "20mm", fontSize: "12pt", lineHeight: 1.9 }}>
+          <div style={{ marginTop: "14mm", fontSize: "12.5pt", lineHeight: 1.55, color: "#1b2430" }}>
             <div>Cliente: {p.clienteNome || "—"}</div>
             <div>Geração média mensal: {fmtNum(dim.geracaoMensalKwh, 2)} kWh</div>
             <div>Potência do Sistema: {fmtNum(dim.potenciaFinalKwp, 2)} kWp</div>
             <div>Consultor: {p.consultor || "—"}</div>
           </div>
 
-          <div style={{ marginTop: "12mm", fontSize: "10pt", color: "#5b6672" }}>
-            <div>Proposta válida até: {p.validade || "—"}</div>
-            <div>Número da Proposta: <strong>{p.numero}</strong></div>
+          <div style={{ marginTop: "8mm", fontSize: "9.5pt", color: "#3d4854", lineHeight: 1.6 }}>
+            <div>Proposta válida até: {validadeBR}</div>
+            <div>Número da Proposta: <strong>{numeroCapa}</strong></div>
           </div>
         </div>
       </div>
+
+
 
       {/* ---------- Página 2 — institucional ---------- */}
       <Pagina numero="01">

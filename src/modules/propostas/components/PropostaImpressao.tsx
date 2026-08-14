@@ -75,7 +75,7 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
           }
         `}</style>
 
-        <div className="proposta-print px-2">
+        <div ref={areaRef} className="proposta-print px-2">
           <PropostaModeloPadrao proposta={proposta} />
         </div>
 
@@ -84,8 +84,9 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
           <Button variant="outline" onClick={imprimir} className="gap-2">
             <Printer className="h-4 w-4" /> Imprimir
           </Button>
-          <Button onClick={imprimir} className="gap-2">
-            <Download className="h-4 w-4" /> Baixar PDF
+          <Button onClick={baixarPdf} disabled={gerando} className="gap-2">
+            {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {gerando ? "Gerando PDF..." : "Baixar PDF"}
           </Button>
         </DialogFooter>
       </DialogContent>

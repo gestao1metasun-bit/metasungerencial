@@ -1102,6 +1102,7 @@ function LeadDetail({
   onEditar: (p: PropostaFV) => void;
 }) {
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
+  const [verCadastro, setVerCadastro] = useState(false);
   if (!lead) return null;
   const enderecoLinha = [
     lead.clienteEndereco,

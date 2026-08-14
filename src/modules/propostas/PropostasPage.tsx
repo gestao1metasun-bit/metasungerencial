@@ -1836,8 +1836,11 @@ function PropostaSheet({
             </div>
           </Bloco>
 
-          {/* BLOCO 6.1 — Inversores (sugestão automática) */}
-          <Bloco icon={<Wrench className="h-4 w-4" />} title="6.1 Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
+          </TabsContent>
+
+          <TabsContent value="inversores" className="space-y-4">
+          {/* BLOCO 6 — Inversores (sugestão automática) */}
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="6. Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
             <div className="mb-3 grid gap-3 md:grid-cols-2">
               <Field label="Marca dos inversores">
                 <MarcaCombobox

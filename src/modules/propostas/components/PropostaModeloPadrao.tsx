@@ -149,7 +149,7 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
           clip-path:polygon(0 52%, 100% 0, 100% 60%, 0 100%); }
         .proposta-modelo .mp-capa-diag2 { position:absolute; right:0; top:0; width:58%; height:100%; background:linear-gradient(150deg,#eef1f5 0%,#ffffff 65%); z-index:0;
           clip-path:polygon(42% 0, 100% 0, 100% 100%, 0 100%); }
-        .proposta-modelo .mp-capa-ano { position:absolute; right:16mm; bottom:31%; z-index:3; font-size:34pt; font-weight:800; color:#1b2430; line-height:1; }
+        .proposta-modelo .mp-capa-ano { position:absolute; right:22mm; bottom:30%; z-index:5; font-size:32pt; font-weight:800; color:#1b2430; line-height:1; letter-spacing:.01em; white-space:nowrap; }
 
 
         @media print {

@@ -1919,8 +1919,11 @@ function PropostaSheet({
               })}
             </div>
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="financeiro" className="space-y-4">
           {/* BLOCO 7 — Precificação */}
+
           <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
             <div className="rounded-md border bg-muted/30 p-3">
               <div className="flex items-end justify-between gap-3">

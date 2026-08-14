@@ -1615,20 +1615,21 @@ function PropostaSheet({
   const erros = validarParaGeracao(p);
 
   return (
-    <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-5xl">
-        <SheetHeader className="sticky top-0 z-10 -mx-6 -mt-6 border-b bg-background px-6 py-4">
-          <SheetTitle className="flex items-center justify-between">
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-h-[92vh] w-[96vw] max-w-6xl overflow-y-auto px-6">
+        <DialogHeader className="sticky top-0 z-10 -mx-6 -mt-6 border-b bg-background px-6 py-4">
+          <DialogTitle className="flex items-center justify-between">
             <span>Proposta {p.numero}</span>
             <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
-          </SheetTitle>
+          </DialogTitle>
           {erros.length > 0 && (
             <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
               <div><strong>Faltam:</strong> {erros.join(", ")}.</div>
             </div>
           )}
-        </SheetHeader>
+        </DialogHeader>
+
 
         <div className="space-y-4 pt-4">
           {/* BLOCO 2 — Localização */}

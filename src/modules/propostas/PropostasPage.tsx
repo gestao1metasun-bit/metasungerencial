@@ -1811,9 +1811,11 @@ function PropostaSheet({
               <ReadOnlyField label="Potência do sistema (kWp)" value={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 6 — Módulo */}
-          <Bloco icon={<Sun className="h-4 w-4" />} title="6. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
+          <TabsContent value="modulo" className="space-y-4">
+          {/* BLOCO 5 — Módulo */}
+          <Bloco icon={<Sun className="h-4 w-4" />} title="5. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Potência (Wp)"><Input type="number" value={p.moduloPotenciaWp} onChange={(e) => update("moduloPotenciaWp", +e.target.value)} /></Field>
               <Field label="Marca">

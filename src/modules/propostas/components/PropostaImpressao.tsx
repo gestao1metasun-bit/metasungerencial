@@ -1,12 +1,17 @@
 // PropostaImpressao — visualização imprimível (PDF via window.print).
-import { Printer } from "lucide-react";
+import { Printer, LayoutTemplate, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   type PropostaFV,
   useInversoresFV, calcDimensionamento, calcPrecificacao,
   consumoEfetivo, fmtBRL, fmtNum,
 } from "@/modules/propostas/store";
+import { MODELOS_PROPOSTA, setModeloProposta, useModeloProposta } from "@/modules/propostas/proposta-modelo-store";
+import { PropostaModeloPadrao } from "./PropostaModeloPadrao";
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
@@ -21,6 +26,7 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
   const inversores = useInversoresFV();
   const dim = calcDimensionamento(proposta);
   const pre = calcPrecificacao(proposta);
+  const modelo = useModeloProposta();
 
   function imprimir() {
     document.body.classList.add("print-proposta");
@@ -37,12 +43,20 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
 
         <style>{`
           @media print {
+            @page { size: A4; margin: 12mm 10mm 12mm 10mm; }
             body.print-proposta * { visibility: hidden !important; }
             body.print-proposta .proposta-print, body.print-proposta .proposta-print * { visibility: visible !important; }
-            body.print-proposta .proposta-print { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            body.print-proposta .proposta-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
             body.print-proposta .no-print { display: none !important; }
           }
         `}</style>
+
+        {modelo === "META_SUN_2026" ? (
+          <div className="proposta-print px-2">
+            <PropostaModeloPadrao proposta={proposta} />
+          </div>
+        ) : (
+
 
         <div className="proposta-print space-y-6 px-2 text-sm text-foreground">
           <header className="flex items-start justify-between border-b pb-4">
@@ -154,11 +168,30 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
             Telefone de contato: {proposta.clienteTelefone || "(__) _____-____"}
           </section>
         </div>
+        )}
 
         <DialogFooter className="no-print">
           <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2"><LayoutTemplate className="h-4 w-4" /> Modelo da proposta</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel>Modelo usado ao gerar</DropdownMenuLabel>
+              {MODELOS_PROPOSTA.map((m) => (
+                <DropdownMenuItem key={m.id} onSelect={() => setModeloProposta(m.id)} className="flex items-start gap-2">
+                  <Check className={`mt-0.5 h-4 w-4 ${modelo === m.id ? "opacity-100" : "opacity-0"}`} />
+                  <span>
+                    <span className="block text-xs font-medium">{m.nome}</span>
+                    <span className="block text-[11px] text-muted-foreground">{m.descricao}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={imprimir} className="gap-2"><Printer className="h-4 w-4" /> Imprimir / Salvar PDF</Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

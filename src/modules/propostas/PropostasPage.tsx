@@ -1996,7 +1996,59 @@ function PropostaSheet({
               </div>
             </div>
 
+            {precisaAutorizacao && (
+              <div className={`mt-3 rounded-md border p-3 text-xs ${p.excecaoParametroAutorizada ? "border-success/40 bg-success/10" : "border-warning/40 bg-warning/10"}`}>
+                {p.excecaoParametroAutorizada ? (
+                  <div>
+                    <strong>Exceção autorizada</strong> por {p.excecaoParametroPor || "superior"} em {p.excecaoParametroEm || "—"}.
+                    {p.excecaoParametroMotivo ? <> Motivo: {p.excecaoParametroMotivo}</> : null}
+                    {ehAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 h-6 text-destructive"
+                        onClick={() => setP((cur) => ({ ...cur, excecaoParametroAutorizada: false, excecaoParametroPor: undefined, excecaoParametroMotivo: undefined, excecaoParametroEm: undefined }))}
+                      >
+                        Revogar
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <AlertTriangle className="mr-1 inline h-3 w-3 text-warning" />
+                      Parâmetro <strong>{fmtBRL(p.parametroPorKwp || 0)}/kWp</strong> está abaixo do mínimo de{" "}
+                      <strong>{fmtBRL(paramMinimo)}/kWp</strong>. É necessária autorização de um superior para gerar a proposta.
+                    </div>
+                    {ehAdmin ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const motivo = window.prompt("Motivo da autorização (mín. 5 caracteres):") || "";
+                          if (motivo.trim().length < 5) { toast.error("Informe um motivo com pelo menos 5 caracteres."); return; }
+                          setP((cur) => ({
+                            ...cur,
+                            excecaoParametroAutorizada: true,
+                            excecaoParametroPor: perfil?.nome || perfil?.email || "Admin",
+                            excecaoParametroMotivo: motivo.trim(),
+                            excecaoParametroEm: new Date().toISOString().slice(0, 16).replace("T", " "),
+                          }));
+                          toast.success("Exceção de parâmetro autorizada.");
+                        }}
+                      >
+                        Autorizar exceção
+                      </Button>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">Solicite a autorização ao seu superior (Admin).</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
           </Bloco>
+
 
           </TabsContent>
 

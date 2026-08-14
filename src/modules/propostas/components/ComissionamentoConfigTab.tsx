@@ -37,6 +37,7 @@ export function ComissionamentoConfigTab() {
       base,
       parametroBase,
       bonusExcedentePct: bonusPct,
+      parametroMinimoSemAutorizacao: paramMin,
     });
     setFaixas(limpas);
     toast.success("Política de comissionamento atualizada.");

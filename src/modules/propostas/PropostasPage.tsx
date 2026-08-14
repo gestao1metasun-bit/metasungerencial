@@ -2106,8 +2106,9 @@ function PropostaSheet({
             <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
+
   );
 }
 

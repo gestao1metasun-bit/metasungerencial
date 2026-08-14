@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronsLeft, ChevronsRight, Check } from "lucide-react";
+import { ChevronDown, ChevronsLeft, ChevronsRight, Check, Home } from "lucide-react";
 import { MACRO_MODULES, NAV_ITEMS, macroAtivoPorRota, type MacroKey } from "@/lib/nav-structure";
 import { ROUTE_TABS } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
@@ -68,17 +68,28 @@ export function AppSidebar() {
     return (window.localStorage.getItem(LS_MODULO) as MacroKey) || null;
   });
 
+  /** Rota de entrada do sistema — sidebar abre em modo "Início" (enxuto). */
+  const rotaInicial = path === "/" || path === "/dashboard";
+
   // Navegou para outro módulo → o seletor acompanha a rota.
   useEffect(() => {
+    if (rotaInicial) return;
     if (macroAtivo && macroAtivo.key !== moduloSel) {
       setModuloSel(macroAtivo.key);
       try { window.localStorage.setItem(LS_MODULO, macroAtivo.key); } catch { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [macroAtivo?.key]);
+  }, [macroAtivo?.key, rotaInicial]);
 
-  const moduloAtual =
-    modulos.find((m) => m.key === moduloSel) ?? modulos.find((m) => m.key === macroAtivo?.key) ?? modulos[0];
+  // Voltou para a home → volta ao menu inicial enxuto.
+  useEffect(() => {
+    if (!rotaInicial) return;
+    setModuloSel(null);
+    try { window.localStorage.removeItem(LS_MODULO); } catch { /* ignore */ }
+  }, [rotaInicial]);
+
+  const moduloAtual = moduloSel ? modulos.find((m) => m.key === moduloSel) ?? null : null;
+  const modoInicio = !moduloAtual;
 
   /** item (2º nível) expandido — accordion */
   const [subAberto, setSubAberto] = useState<string | null>(null);
@@ -88,6 +99,12 @@ export function AppSidebar() {
     setModuloSel(key);
     setSubAberto(null);
     try { window.localStorage.setItem(LS_MODULO, key); } catch { /* ignore */ }
+  }
+
+  function voltarInicio() {
+    setModuloSel(null);
+    setSubAberto(null);
+    try { window.localStorage.removeItem(LS_MODULO); } catch { /* ignore */ }
   }
 
   function toggleCollapsed() {
@@ -109,7 +126,8 @@ export function AppSidebar() {
       )
     : [];
 
-  const ModuloIcon = moduloAtual?.icon;
+  const ModuloIcon = moduloAtual?.icon ?? Home;
+
 
   return (
     <aside
@@ -123,7 +141,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              title={moduloAtual ? `Módulo: ${moduloAtual.label}` : "Selecionar módulo"}
+              title={moduloAtual ? `Módulo: ${moduloAtual.label}` : "Início — selecionar módulo"}
               className={`flex w-full items-center gap-2 rounded-md border bg-muted/40 text-left text-[12px] font-semibold text-foreground transition-colors hover:bg-muted ${
                 collapsed ? "justify-center px-0 py-2" : "px-2.5 py-2"
               }`}
@@ -131,13 +149,20 @@ export function AppSidebar() {
               {ModuloIcon && <ModuloIcon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />}
               {!collapsed && (
                 <>
-                  <span className="min-w-0 flex-1 truncate">{moduloAtual?.label ?? "Módulo"}</span>
+                  <span className="min-w-0 flex-1 truncate">{moduloAtual?.label ?? "Início"}</span>
                   <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </>
               )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuItem onSelect={voltarInicio} className="gap-2 text-[12px]">
+              <Home className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="flex-1 truncate">Início</span>
+              {modoInicio && <Check className="h-3.5 w-3.5 text-primary" />}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
             {SECOES.map((sec, i) => {
               const itens = sec.macros
                 .map((k) => modulos.find((m) => m.key === k))
@@ -173,7 +198,61 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+        {/* Modo Início — menu enxuto: Dashboard + módulos */}
+        {modoInicio && (
+          <>
+            <Link
+              to="/dashboard"
+              title="Dashboard"
+              className={`flex items-center gap-2 rounded-md py-1.5 text-[12px] transition-colors ${
+                collapsed ? "justify-center px-0" : "pl-3 pr-1"
+              } ${
+                rotaInicial
+                  ? "bg-primary/10 font-semibold text-primary"
+                  : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground"
+              }`}
+            >
+              <Home className="h-4 w-4 shrink-0" strokeWidth={2} />
+              {!collapsed && <span className="truncate">Dashboard</span>}
+            </Link>
+
+            {SECOES.map((sec) => {
+              const itens = sec.macros
+                .map((k) => modulos.find((m) => m.key === k))
+                .filter(Boolean) as typeof MACRO_MODULES;
+              if (itens.length === 0) return null;
+              return (
+                <div key={`inicio-${sec.id}`} className="pt-2">
+                  {!collapsed && (
+                    <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
+                      {sec.label}
+                    </div>
+                  )}
+                  {itens.map((m) => {
+                    const Icon = m.icon;
+                    return (
+                      <button
+                        key={`inicio-${m.key}`}
+                        type="button"
+                        title={m.label}
+                        onClick={() => selecionarModulo(m.key)}
+                        className={`flex w-full items-center gap-2 rounded-md py-1.5 text-left text-[12px] text-foreground/90 transition-colors hover:bg-meta-bar hover:text-meta-bar-foreground [&_svg]:hover:text-meta-bar-foreground ${
+                          collapsed ? "justify-center px-0" : "pl-3 pr-1"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.9} />
+                        {!collapsed && <span className="truncate">{m.label}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </>
+        )}
+
         {/* Abas do módulo selecionado aparecem direto, sem repetir o nome do módulo */}
+
         {!collapsed &&
           abasDoModulo.map((t) => {
             const destino = t.to ?? moduloAtual!.to;

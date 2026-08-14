@@ -75,6 +75,7 @@ import { PropostaList, statusVariant, duplicarProposta, excluirProposta, Aprovar
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
 import { PropostaGraficos } from "./components/PropostaGraficos";
+
 import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
 
@@ -1407,6 +1408,9 @@ function PropostaSheet({
   const potTotalInv = potenciaInversores(p, inversores);
   const comissaoPolicy = useComissaoPolicy();
   const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy, dim.potenciaFinalKwp);
+  const paramMinimo = comissaoPolicy.parametroMinimoSemAutorizacao ?? comissaoPolicy.parametroBase;
+  const precisaAutorizacao = (p.parametroPorKwp || 0) < paramMinimo;
+  const bloqueadoPorParametro = precisaAutorizacao && !p.excecaoParametroAutorizada;
 
   // sincroniza qtd final em modulosQtd
   useEffect(() => {
@@ -1631,19 +1635,24 @@ function PropostaSheet({
         </DialogHeader>
 
 
-        <Tabs defaultValue="dados" className="pt-4">
-          <TabsList className="sticky top-[68px] z-10 grid w-full grid-cols-5">
-            <TabsTrigger value="dados">Dados</TabsTrigger>
-            <TabsTrigger value="tecnico">Técnico</TabsTrigger>
-            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-            <TabsTrigger value="graficos">Gráficos</TabsTrigger>
-            <TabsTrigger value="final">Finalização</TabsTrigger>
+        <Tabs defaultValue="localizacao" className="pt-4">
+          <TabsList className="sticky top-[68px] z-10 flex w-full flex-wrap justify-start gap-1">
+            <TabsTrigger value="localizacao">1. Localização</TabsTrigger>
+            <TabsTrigger value="fatura">2. Fatura</TabsTrigger>
+            <TabsTrigger value="consumo">3. Consumo</TabsTrigger>
+            <TabsTrigger value="dimensionamento">4. Dimensionamento</TabsTrigger>
+            <TabsTrigger value="modulo">5. Módulo</TabsTrigger>
+            <TabsTrigger value="inversores">6. Inversores</TabsTrigger>
+            <TabsTrigger value="precificacao">7. Precificação</TabsTrigger>
+            <TabsTrigger value="resultado">8. Resultado</TabsTrigger>
+            <TabsTrigger value="graficos">9. Gráficos</TabsTrigger>
+            <TabsTrigger value="validade">10. Validade</TabsTrigger>
+            <TabsTrigger value="produtos">Produtos</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dados" className="space-y-4">
-
-          {/* BLOCO 2 — Localização */}
-          <Bloco icon={<MapPin className="h-4 w-4" />} title="2. Localização">
+          <TabsContent value="localizacao" className="space-y-4">
+          {/* BLOCO 1 — Localização */}
+          <Bloco icon={<MapPin className="h-4 w-4" />} title="1. Localização">
             <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <Label>Cidade cadastrada</Label>
@@ -1701,9 +1710,11 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 3 — Fatura */}
-          <Bloco icon={<Receipt className="h-4 w-4" />} title="3. Dados da Fatura">
+          <TabsContent value="fatura" className="space-y-4">
+          {/* BLOCO 2 — Fatura */}
+          <Bloco icon={<Receipt className="h-4 w-4" />} title="2. Dados da Fatura">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Tipo de instalação">
                 <Select value={p.tipoInstalacao} onValueChange={(v) => update("tipoInstalacao", v as PropostaFV["tipoInstalacao"])}>
@@ -1741,9 +1752,11 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 4 — Consumo */}
-          <Bloco icon={<Zap className="h-4 w-4" />} title="4. Consumo">
+          <TabsContent value="consumo" className="space-y-4">
+          {/* BLOCO 3 — Consumo */}
+          <Bloco icon={<Zap className="h-4 w-4" />} title="3. Consumo">
             <div className="mb-3 flex items-center gap-3">
               <Switch checked={p.modoConsumo === "MENSAL"}
                 onCheckedChange={(v) => update("modoConsumo", v ? "MENSAL" : "MEDIA")} />
@@ -1782,10 +1795,9 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="tecnico" className="space-y-4">
-          {/* BLOCO 5 — Dimensionamento */}
-
-          <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
+          <TabsContent value="dimensionamento" className="space-y-4">
+          {/* BLOCO 4 — Dimensionamento */}
+          <Bloco icon={<Sun className="h-4 w-4" />} title="4. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />
               <ReadOnlyField label="Quantidade calculada (arred.)" value={String(dim.qtdCalc)} />
@@ -1800,9 +1812,11 @@ function PropostaSheet({
               <ReadOnlyField label="Potência do sistema (kWp)" value={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 6 — Módulo */}
-          <Bloco icon={<Sun className="h-4 w-4" />} title="6. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
+          <TabsContent value="modulo" className="space-y-4">
+          {/* BLOCO 5 — Módulo */}
+          <Bloco icon={<Sun className="h-4 w-4" />} title="5. Módulo Fotovoltaico" badge={`${fmtNum(dim.areaTotal,2)} m²`}>
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Potência (Wp)"><Input type="number" value={p.moduloPotenciaWp} onChange={(e) => update("moduloPotenciaWp", +e.target.value)} /></Field>
               <Field label="Marca">
@@ -1833,8 +1847,11 @@ function PropostaSheet({
             </div>
           </Bloco>
 
-          {/* BLOCO 6.1 — Inversores (sugestão automática) */}
-          <Bloco icon={<Wrench className="h-4 w-4" />} title="6.1 Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
+          </TabsContent>
+
+          <TabsContent value="inversores" className="space-y-4">
+          {/* BLOCO 6 — Inversores (sugestão automática) */}
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="6. Inversores (sugestão automática)" badge={`${fmtNum(potTotalInv,1)} kW`}>
             <div className="mb-3 grid gap-3 md:grid-cols-2">
               <Field label="Marca dos inversores">
                 <MarcaCombobox
@@ -1934,9 +1951,8 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="financeiro" className="space-y-4">
+          <TabsContent value="precificacao" className="space-y-4">
           {/* BLOCO 7 — Precificação */}
-
           <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
             <div className="rounded-md border bg-muted/30 p-3">
               <div className="flex items-end justify-between gap-3">
@@ -1993,56 +2009,65 @@ function PropostaSheet({
               </div>
             </div>
 
+            {precisaAutorizacao && (
+              <div className={`mt-3 rounded-md border p-3 text-xs ${p.excecaoParametroAutorizada ? "border-success/40 bg-success/10" : "border-warning/40 bg-warning/10"}`}>
+                {p.excecaoParametroAutorizada ? (
+                  <div>
+                    <strong>Exceção autorizada</strong> por {p.excecaoParametroPor || "superior"} em {p.excecaoParametroEm || "—"}.
+                    {p.excecaoParametroMotivo ? <> Motivo: {p.excecaoParametroMotivo}</> : null}
+                    {ehAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 h-6 text-destructive"
+                        onClick={() => setP((cur) => ({ ...cur, excecaoParametroAutorizada: false, excecaoParametroPor: undefined, excecaoParametroMotivo: undefined, excecaoParametroEm: undefined }))}
+                      >
+                        Revogar
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <AlertTriangle className="mr-1 inline h-3 w-3 text-warning" />
+                      Parâmetro <strong>{fmtBRL(p.parametroPorKwp || 0)}/kWp</strong> está abaixo do mínimo de{" "}
+                      <strong>{fmtBRL(paramMinimo)}/kWp</strong>. É necessária autorização de um superior para gerar a proposta.
+                    </div>
+                    {ehAdmin ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const motivo = window.prompt("Motivo da autorização (mín. 5 caracteres):") || "";
+                          if (motivo.trim().length < 5) { toast.error("Informe um motivo com pelo menos 5 caracteres."); return; }
+                          setP((cur) => ({
+                            ...cur,
+                            excecaoParametroAutorizada: true,
+                            excecaoParametroPor: perfil?.nome || "Admin",
+                            excecaoParametroMotivo: motivo.trim(),
+                            excecaoParametroEm: new Date().toISOString().slice(0, 16).replace("T", " "),
+                          }));
+                          toast.success("Exceção de parâmetro autorizada.");
+                        }}
+                      >
+                        Autorizar exceção
+                      </Button>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">Solicite a autorização ao seu superior (Admin).</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
           </Bloco>
 
-          {/* BLOCO 8 — Custos */}
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="8. Composição de Custos" badge={fmtBRL(res.custoTotal)}>
-            <div className="mb-2 flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={regenerarCustos}><Calculator className="mr-1 h-3 w-3" /> Recalcular sugeridos</Button>
-              <Button variant="outline" size="sm" onClick={addLinhaCustoVazia}><Plus className="mr-1 h-3 w-3" /> Adicionar linha</Button>
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead className="text-right">Sugerido</TableHead>
-                    <TableHead className="text-right">Qtd real</TableHead>
-                    <TableHead className="text-right">Valor unit.</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {p.custos.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground">Sem custos. Clique em <em>Recalcular sugeridos</em>.</TableCell></TableRow>
-                  )}
-                  {p.custos.map((l, i) => (
-                    <TableRow key={l.id + i}>
-                      <TableCell><Input value={l.nome} onChange={(e) => setLinhaCusto(i, { nome: e.target.value })} className="h-8" /></TableCell>
-                      <TableCell>
-                        <Select value={l.tipo} onValueChange={(v) => setLinhaCusto(i, { tipo: v as LinhaCusto["tipo"] })}>
-                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {["MATERIAL","SERVICO","OUTRO"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">{fmtNum(l.qtdSugerida, 2)}</TableCell>
-                      <TableCell><Input type="number" step="0.01" value={l.qtdReal} onChange={(e) => setLinhaCusto(i, { qtdReal: +e.target.value })} className="h-8 text-right" /></TableCell>
-                      <TableCell><Input type="number" step="0.01" value={l.valorUnit} onChange={(e) => setLinhaCusto(i, { valorUnit: +e.target.value })} className="h-8 text-right" /></TableCell>
-                      <TableCell className="text-right font-medium">{fmtBRL(l.total)}</TableCell>
-                      <TableCell><Button variant="ghost" size="icon" onClick={() => delLinhaCusto(i)} className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Bloco>
 
-          {/* BLOCO 9 — Resultado */}
-          <Bloco icon={<DollarSign className="h-4 w-4" />} title="9. Resultado e Margem">
+          </TabsContent>
+
+          <TabsContent value="resultado" className="space-y-4">
+          {/* BLOCO 8 — Resultado */}
+          <Bloco icon={<DollarSign className="h-4 w-4" />} title="8. Resultado e Margem">
             <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
               <ResultCard label="Valor final" value={fmtBRL(res.valorFinal)} />
               <ResultCard label="Custo total" value={fmtBRL(res.custoTotal)} />
@@ -2065,9 +2090,8 @@ function PropostaSheet({
           </TabsContent>
 
           <TabsContent value="graficos" className="space-y-4">
-          {/* BLOCO 9.1 — Gráficos */}
-
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="9.1 Gráficos da Proposta">
+          {/* BLOCO 9 — Gráficos */}
+          <Bloco icon={<Calculator className="h-4 w-4" />} title="9. Gráficos da Proposta">
             <PropostaGraficos
               custoTotal={res.custoTotal}
               lucroBruto={res.lucroBruto}
@@ -2079,10 +2103,9 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="final" className="space-y-4">
-
-          {/* BLOCO 11 — Validade */}
-          <Bloco icon={<FileText className="h-4 w-4" />} title="11. Validade da Proposta">
+          <TabsContent value="validade" className="space-y-4">
+          {/* BLOCO 10 — Validade */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="10. Validade da Proposta">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Validade da proposta">
                 <Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} />
@@ -2090,10 +2113,25 @@ function PropostaSheet({
             </div>
           </Bloco>
           </TabsContent>
+
+          <TabsContent value="produtos" className="space-y-4">
+          <Bloco icon={<Sun className="h-4 w-4" />} title="Cadastro de módulos fotovoltaicos">
+            <CrudModulos />
+          </Bloco>
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="Cadastro de inversores">
+            <CrudInversores />
+          </Bloco>
+          </TabsContent>
+
         </Tabs>
 
 
         <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-end gap-2 border-t bg-background px-6 py-3">
+          {bloqueadoPorParametro && (
+            <span className="mr-auto text-[11px] text-warning-foreground">
+              Parâmetro abaixo de {fmtBRL(paramMinimo)}/kWp — requer autorização do superior.
+            </span>
+          )}
           <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>
             <XCircle className="h-4 w-4" /> Cancelar
           </Button>
@@ -2103,6 +2141,10 @@ function PropostaSheet({
             onClick={() => {
               const errs = validarParaGeracao(p);
               if (errs.length) { toast.error("Preencha: " + errs.join(", ")); return; }
+              if (bloqueadoPorParametro) {
+                toast.error("Parâmetro abaixo do mínimo. Solicite autorização do superior na aba Precificação.");
+                return;
+              }
               const final: PropostaFV = {
                 ...p,
                 status: "GERADA",
@@ -2110,14 +2152,16 @@ function PropostaSheet({
                 custos: p.custos.length ? p.custos : gerarCustosSugeridos(p, custos),
               };
               upsertProposta(final);
-              toast.success(`${final.numero} gerada com sucesso.`);
+              toast.success(`${final.numero} gerada. Abrindo para impressão/download.`);
               onGerada?.();
+              onVisualizar(final.id);
             }}
-            disabled={erros.length > 0}
+            disabled={erros.length > 0 || bloqueadoPorParametro}
           >
             <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
 

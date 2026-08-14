@@ -21,6 +21,7 @@ export function ComissionamentoConfigTab() {
   const [base, setBase] = useState<typeof pol.base>(pol.base);
   const [parametroBase, setParametroBase] = useState<number>(pol.parametroBase);
   const [bonusPct, setBonusPct] = useState<number>(pol.bonusExcedentePct);
+  const [paramMin, setParamMin] = useState<number>(pol.parametroMinimoSemAutorizacao ?? pol.parametroBase);
 
   function setFaixa(i: number, patch: Partial<FaixaComissao>) {
     setFaixas((cur) => cur.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
@@ -36,6 +37,7 @@ export function ComissionamentoConfigTab() {
       base,
       parametroBase,
       bonusExcedentePct: bonusPct,
+      parametroMinimoSemAutorizacao: paramMin,
     });
     setFaixas(limpas);
     toast.success("Política de comissionamento atualizada.");
@@ -94,6 +96,20 @@ export function ComissionamentoConfigTab() {
             onChange={(e) => setBonusPct(+e.target.value)}
           />
         </div>
+        <div>
+          <Label>Parâmetro mínimo sem autorização (R$/kWp)</Label>
+          <Input
+            className="mt-1"
+            type="number"
+            step="10"
+            value={paramMin}
+            onChange={(e) => setParamMin(+e.target.value)}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Abaixo deste valor a proposta só pode ser gerada com autorização de um superior (Admin).
+          </p>
+        </div>
+
       </div>
 
 

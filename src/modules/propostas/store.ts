@@ -292,6 +292,13 @@ export type PropostaFV = {
   // Integração
   contratoGeradoId?: string;
 
+  // Exceção de parâmetro abaixo do mínimo (exige autorização de superior)
+  excecaoParametroAutorizada?: boolean;
+  excecaoParametroPor?: string;
+  excecaoParametroMotivo?: string;
+  excecaoParametroEm?: string;
+
+
   // Vínculo com Lead (Entrega 2 — cadeia comercial)
   leadId?: string;
   leadNumero?: string;

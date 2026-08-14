@@ -25,6 +25,7 @@ import {
 } from "@/lib/perfis-store";
 import { usePropostaConfig, setPropostaConfig } from "@/modules/propostas/proposta-config-store";
 import { CadastrosFV } from "@/modules/propostas/PropostasPage";
+import { ComissionamentoConfigTab } from "@/modules/propostas/components/ComissionamentoConfigTab";
 import { useConsultores, upsertConsultor, removeConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { FileText } from "lucide-react";
 import { PermissoesTab } from "@/components/app/PermissoesTab";
@@ -110,6 +111,7 @@ function ConfigPage() {
         </TabsContent>
 
         <TabsContent value="proposta" className="mt-5"><PropostaConfigTab /></TabsContent>
+        <TabsContent value="comissionamento" className="mt-5"><ComissionamentoConfigTab /></TabsContent>
         <TabsContent value="orcamentos-cad" className="mt-5"><CadastrosFV /></TabsContent>
         <TabsContent value="cfg-dashboard" className="mt-5"><PlaceholderModuleConfig nome="Dashboard" /></TabsContent>
         <TabsContent value="cfg-comercial" className="mt-5"><PlaceholderModuleConfig nome="Comercial" /></TabsContent>

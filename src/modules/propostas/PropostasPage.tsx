@@ -65,6 +65,8 @@ import {
   formatDoc, isDocValido, buscarClienteExistente, type ClienteSnapshot,
 } from "@/modules/propostas/store";
 import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
+import { Slider } from "@/components/ui/slider";
+import { useComissaoPolicy, calcularComissao } from "@/modules/propostas/comissao-policy-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";
@@ -1402,6 +1404,8 @@ function PropostaSheet({
   const pre = calcPrecificacao(p);
   const res = calcResultado(p);
   const potTotalInv = potenciaInversores(p, inversores);
+  const comissaoPolicy = useComissaoPolicy();
+  const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy);
 
   // sincroniza qtd final em modulosQtd
   useEffect(() => {
@@ -1626,41 +1630,6 @@ function PropostaSheet({
         </SheetHeader>
 
         <div className="space-y-4 pt-4">
-          {/* BLOCO 1 — Cliente */}
-          <Bloco icon={<Users className="h-4 w-4" />} title="1. Dados do Cliente">
-            <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Nome do cliente" hint="Travado. Edite o cliente em Cadastros para alterar.">
-                <Input value={p.clienteNome} readOnly className="bg-muted/50" />
-              </Field>
-              <Field label="CPF/CNPJ"><Input value={p.clienteDoc ?? ""} onChange={(e) => update("clienteDoc", e.target.value)} /></Field>
-              <Field label="Telefone"><Input value={p.clienteTelefone ?? ""} onChange={(e) => update("clienteTelefone", e.target.value)} /></Field>
-              <Field label="E-mail"><Input type="email" value={p.clienteEmail ?? ""} onChange={(e) => update("clienteEmail", e.target.value)} /></Field>
-              <Field label="Consultor de venda">
-                <Input value={p.consultor ?? ""} readOnly className="bg-muted/50" />
-              </Field>
-              <Field label="CEP" hint="Digite os 8 dígitos. O endereço será preenchido automaticamente.">
-                <Input
-                  value={p.clienteCep ?? ""}
-                  inputMode="numeric"
-                  maxLength={9}
-                  placeholder="00000-000"
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
-                    const fmt = raw.length > 5 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
-                    update("clienteCep", fmt);
-                    if (raw.length === 8) buscarCep(raw);
-                  }}
-                />
-              </Field>
-              <Field label="Rua/Logradouro"><Input value={p.clienteRua ?? ""} onChange={(e) => update("clienteRua", e.target.value.toUpperCase())} /></Field>
-              <Field label="Número"><Input value={p.clienteNumero ?? ""} onChange={(e) => update("clienteNumero", e.target.value)} /></Field>
-              <Field label="Complemento"><Input value={p.clienteComplemento ?? ""} onChange={(e) => update("clienteComplemento", e.target.value.toUpperCase())} /></Field>
-              <Field label="Bairro"><Input value={p.clienteBairro ?? ""} onChange={(e) => update("clienteBairro", e.target.value.toUpperCase())} /></Field>
-              <Field label="Cidade do cliente"><Input value={p.clienteCidade ?? ""} onChange={(e) => update("clienteCidade", e.target.value.toUpperCase())} /></Field>
-              <Field label="UF"><Input maxLength={2} value={p.clienteUf ?? ""} onChange={(e) => update("clienteUf", e.target.value.toUpperCase())} /></Field>
-            </div>
-          </Bloco>
-
           {/* BLOCO 2 — Localização */}
           <Bloco icon={<MapPin className="h-4 w-4" />} title="2. Localização">
             <div className="grid gap-3 md:grid-cols-3">
@@ -1951,13 +1920,56 @@ function PropostaSheet({
 
           {/* BLOCO 7 — Precificação */}
           <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Parâmetro (R$/kWp)" hint="Preço de venda por kWp.">
-                <Input type="number" step="0.01" value={p.parametroPorKwp} onChange={(e) => update("parametroPorKwp", +e.target.value)} />
-              </Field>
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="flex items-end justify-between gap-3">
+                <Label className="text-xs">Parâmetro (R$/kWp)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="10"
+                    className="h-8 w-32 text-right"
+                    value={p.parametroPorKwp}
+                    onChange={(e) => update("parametroPorKwp", +e.target.value)}
+                  />
+                  <span className="text-xs text-muted-foreground">R$/kWp</span>
+                </div>
+              </div>
+              <Slider
+                className="mt-3"
+                min={1500}
+                max={6000}
+                step={10}
+                value={[Math.min(6000, Math.max(1500, p.parametroPorKwp || 1500))]}
+                onValueChange={(v) => update("parametroPorKwp", v[0])}
+              />
+              <div className="mt-1 flex justify-between text-[10.5px] text-muted-foreground">
+                <span>R$ 1.500</span>
+                <span>Arraste para ajustar o preço por kWp</span>
+                <span>R$ 6.000</span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
               <Field label="Desconto (R$)"><Input type="number" step="0.01" value={p.descontoValor} onChange={(e) => update("descontoValor", +e.target.value)} /></Field>
               <ReadOnlyField label="Valor bruto" value={fmtBRL(pre.valorBruto)} />
               <ReadOnlyField label="Parâmetro real (R$/kWp)" value={fmtBRL(pre.parametroReal)} />
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-success/30 bg-success/10 p-3">
+              <div className="text-xs">
+                <div className="font-semibold text-foreground">Comissão prevista do consultor</div>
+                <div className="text-muted-foreground">
+                  Faixa aplicada: até {fmtBRL(comissao.percentual === comissaoPolicy.percentualAcima
+                    ? (comissaoPolicy.faixas[comissaoPolicy.faixas.length - 1]?.ateParametro ?? 0)
+                    : (comissaoPolicy.faixas.find((f) => (p.parametroPorKwp || 0) <= f.ateParametro)?.ateParametro ?? 0))} R$/kWp
+                  {" · "}base {comissaoPolicy.base === "VALOR_BRUTO" ? "valor bruto" : "valor final"}
+                  {" · "}<Link to="/configuracoes" hash="tab=comissionamento" className="underline">editar política</Link>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-base font-semibold text-success">{fmtBRL(comissao.valor)}</div>
+                <div className="text-[11px] text-muted-foreground">{fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}</div>
+              </div>
             </div>
           </Bloco>
 

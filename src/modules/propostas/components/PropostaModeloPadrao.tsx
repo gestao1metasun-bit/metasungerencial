@@ -1,4 +1,4 @@
-// Modelo padrão de proposta "Meta Sun 2026" — layout comercial A4.
+// Modelo oficial de proposta "Meta Sun 2026" — réplica visual do padrão comercial impresso.
 // Renderiza somente apresentação; todos os números vêm dos cálculos oficiais do store.
 import {
   type PropostaFV,
@@ -23,20 +23,31 @@ function pmt(pv: number, i: number, n: number) {
   return (pv * i) / (1 - Math.pow(1 + i, -n));
 }
 
-function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+/** Título de seção com a barra navy à esquerda (padrão Meta Sun). */
+function Titulo({ children }: { children: React.ReactNode }) {
+  return <h2 className="mp-title">{children}</h2>;
+}
+
+/** Linha "pílula": rótulo navy à esquerda + valor destacado com borda laranja. */
+function Pilula({ label, valor }: { label: string; valor: string }) {
   return (
-    <section className="mp-bloco">
-      <h2 className="mp-h2">| {titulo}</h2>
-      {children}
-    </section>
+    <div className="mp-pill">
+      <div className="mp-pill-label">{label}</div>
+      <div className="mp-pill-value">{valor}</div>
+    </div>
   );
 }
 
-function Linha({ label, valor }: { label: string; valor: string }) {
+function Pagina({ numero, children }: { numero?: string; children: React.ReactNode }) {
   return (
-    <div className="mp-linha">
-      <span>{label}</span>
-      <strong>{valor}</strong>
+    <div className="mp-page">
+      <div className="mp-page-body">{children}</div>
+      {numero && (
+        <div className="mp-page-foot">
+          <img src={metaSunLogo.url} alt="Meta Sun" className="mp-foot-logo" />
+          <span className="mp-page-num">{numero}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -61,13 +72,13 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
     .filter(Boolean) as string[];
 
   const pagamentos = [
-    { forma: "Pix / Transferência", parcelas: 1, valor: investimento },
+    { forma: "Pix", parcelas: 1, valor: investimento },
     { forma: "Cartão até 21x", parcelas: 21, valor: pmt(investimento, TAXA_CARTAO_AM, 21) },
-    { forma: "Financiamento bancário 48x", parcelas: 48, valor: pmt(investimento, TAXA_BANCO_AM, 48) },
-    { forma: "Financiamento bancário 60x", parcelas: 60, valor: pmt(investimento, TAXA_BANCO_AM, 60) },
-    { forma: "Financiamento bancário 72x", parcelas: 72, valor: pmt(investimento, TAXA_BANCO_AM, 72) },
-    { forma: "Financiamento bancário 84x", parcelas: 84, valor: pmt(investimento, TAXA_BANCO_AM, 84) },
-    { forma: "Financiamento bancário 96x", parcelas: 96, valor: pmt(investimento, TAXA_BANCO_AM, 96) },
+    { forma: "Financiamento BASA 48x", parcelas: 48, valor: pmt(investimento, TAXA_BANCO_AM, 48) },
+    { forma: "Financiamento BASA 60x", parcelas: 60, valor: pmt(investimento, TAXA_BANCO_AM, 60) },
+    { forma: "Financiamento BASA 72x", parcelas: 72, valor: pmt(investimento, TAXA_BANCO_AM, 72) },
+    { forma: "Financiamento BASA 84x", parcelas: 84, valor: pmt(investimento, TAXA_BANCO_AM, 84) },
+    { forma: "Financiamento BASA 96x", parcelas: 96, valor: pmt(investimento, TAXA_BANCO_AM, 96) },
   ];
 
   const projecao: { ano: number; tarifa: number; geracao: number; acumulada: number; resultado: number }[] = [];
@@ -79,120 +90,201 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
     projecao.push({ ano, tarifa: tar, geracao: ger, acumulada, resultado: acumulada - investimento });
   }
 
+  const maxBarra = Math.max(consumo, ...SAZONALIDADE.map((f) => dim.geracaoMensalKwh * f), 1);
+  const anoCapa = (p.validade || p.criadoEm || "").slice(-4) || String(new Date().getFullYear());
+
   return (
-    <div className="proposta-modelo text-[11px] leading-snug text-foreground">
+    <div className="proposta-modelo">
       <style>{`
-        .proposta-modelo .mp-page { break-after: page; padding-bottom: 8mm; }
-        .proposta-modelo .mp-page:last-child { break-after: auto; }
-        .proposta-modelo .mp-h2 { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; color: hsl(var(--primary)); margin: 14px 0 6px; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 3px; }
-        .proposta-modelo .mp-linha { display: flex; justify-content: space-between; gap: 12px; padding: 5px 8px; border-bottom: 1px dotted hsl(var(--border)); }
-        .proposta-modelo table { width: 100%; border-collapse: collapse; }
-        .proposta-modelo th, .proposta-modelo td { border: 1px solid hsl(var(--border)); padding: 3px 5px; text-align: center; font-size: 10px; }
-        .proposta-modelo th { background: hsl(var(--muted)); font-weight: 600; }
-        @media print { .proposta-modelo { font-size: 10.5px; } }
+        .proposta-modelo { --navy:#0d2a56; --orange:#f5a11b; color:#1a1a1a; font-family:'Segoe UI',Arial,Helvetica,sans-serif; font-size:11px; line-height:1.45; }
+        .proposta-modelo .mp-page { position:relative; width:210mm; min-height:297mm; margin:0 auto 8mm; background:#fff; box-shadow:0 0 0 1px #e5e7eb; overflow:hidden; break-after:page; display:flex; flex-direction:column; }
+        .proposta-modelo .mp-page:last-child { break-after:auto; }
+        .proposta-modelo .mp-page-body { flex:1; padding:16mm 14mm 8mm; }
+        .proposta-modelo .mp-page-foot { display:flex; align-items:center; justify-content:space-between; padding:0 14mm 10mm; }
+        .proposta-modelo .mp-foot-logo { height:34px; object-fit:contain; }
+        .proposta-modelo .mp-page-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:999px; background:var(--navy); color:#fff; font-size:10px; font-weight:700; }
+
+        .proposta-modelo .mp-title { display:flex; align-items:center; gap:10px; font-size:24px; font-weight:800; color:var(--navy); text-transform:uppercase; letter-spacing:-.01em; margin:0 0 14px; }
+        .proposta-modelo .mp-title::before { content:""; width:7px; height:26px; background:var(--navy); display:block; }
+        .proposta-modelo .mp-sec { margin-bottom:22px; }
+
+        .proposta-modelo .mp-pill { display:flex; gap:8px; margin-bottom:8px; align-items:stretch; }
+        .proposta-modelo .mp-pill-label { flex:0 0 44%; background:var(--navy); color:#fff; font-weight:700; font-size:11.5px; text-transform:uppercase; padding:8px 12px; border-radius:6px; display:flex; align-items:center; }
+        .proposta-modelo .mp-pill-value { flex:1; background:#eceff3; border:2px solid var(--orange); border-radius:6px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
+
+        .proposta-modelo .mp-strip { background:var(--navy); color:#fff; border-radius:6px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px 10px; text-align:center; font-size:11px; }
+        .proposta-modelo .mp-card { background:#f6f7f9; border-radius:6px; padding:12px; }
+        .proposta-modelo .mp-card h4 { color:var(--orange); font-size:11px; font-weight:800; text-transform:uppercase; margin:0 0 4px; }
+        .proposta-modelo .mp-card p { margin:0; text-align:justify; }
+
+        .proposta-modelo table { width:100%; border-collapse:collapse; }
+        .proposta-modelo thead th { background:var(--navy); color:#fff; font-weight:700; font-size:11px; padding:7px 4px; text-align:center; }
+        .proposta-modelo tbody td { border:1px solid #d7dbe0; padding:5px 4px; text-align:center; font-size:10.5px; }
+        .proposta-modelo .mp-mini td, .proposta-modelo .mp-mini th { font-size:8.5px; padding:3px 2px; }
+        .proposta-modelo .mp-tag { display:inline-block; border-radius:3px; padding:1px 6px; font-weight:700; font-size:8.5px; color:#fff; }
+
+        .proposta-modelo .mp-chart { display:flex; align-items:flex-end; gap:6px; height:150px; margin-bottom:6px; }
+        .proposta-modelo .mp-chart .g { flex:1; display:flex; align-items:flex-end; gap:2px; height:100%; }
+        .proposta-modelo .mp-chart .b { flex:1; border-radius:2px 2px 0 0; }
+
+        .proposta-modelo .mp-kpi { background:#f6f7f9; border-radius:6px; padding:10px; text-align:center; }
+        .proposta-modelo .mp-kpi span { display:block; font-size:10px; color:#5b6672; }
+        .proposta-modelo .mp-kpi strong { font-size:12.5px; color:var(--navy); }
+
+        .proposta-modelo .mp-capa { position:relative; padding:0; }
+        .proposta-modelo .mp-capa-inner { padding:18mm 16mm; position:relative; z-index:2; }
+        .proposta-modelo .mp-capa-diag { position:absolute; right:-10%; bottom:-5%; width:95%; height:60%; background:linear-gradient(135deg,var(--orange),#ffcb6b); transform:skewY(-18deg); z-index:1; opacity:.95; }
+        .proposta-modelo .mp-capa-ano { position:absolute; right:16mm; bottom:70mm; z-index:3; font-size:52px; font-weight:800; color:#111; }
+
+        @media print {
+          .proposta-modelo .mp-page { box-shadow:none; margin:0; width:auto; min-height:0; }
+          .proposta-modelo .mp-page-body { padding:10mm 12mm 4mm; }
+        }
       `}</style>
 
-      {/* ---------- Página 1 — capa / identificação ---------- */}
-      <div className="mp-page">
-        <div className="flex flex-col items-center gap-1 border-b pb-3 text-center">
-          <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" className="h-16 object-contain" />
-          <div className="text-[13px] font-semibold uppercase tracking-widest">Proposta comercial fotovoltaica</div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-x-8">
-          <Linha label="Cliente" valor={p.clienteNome || "—"} />
-          <Linha label="Número da proposta" valor={p.numero} />
-          <Linha label="Consultor" valor={p.consultor || "—"} />
-          <Linha label="Emitida em" valor={p.criadoEm || "—"} />
-          <Linha label="Cidade / UF" valor={`${p.cidade || "—"}/${p.estado || "—"}`} />
-          <Linha label="Proposta válida até" valor={p.validade || "—"} />
-          <Linha label="Potência do sistema" valor={`${fmtNum(dim.potenciaFinalKwp, 2)} kWp`} />
-          <Linha label="Geração média mensal" valor={`${fmtNum(dim.geracaoMensalKwh, 2)} kWh`} />
-        </div>
-
-        <Bloco titulo="Quem somos">
-          <p className="text-justify">
-            Somos a Meta Sun, e iniciamos nossa trajetória em 2020. Em 2023 nos tornamos uma empresa independente, o que nos
-            permitiu ampliar marcas e produtos para oferecer ainda mais economia e sustentabilidade aos nossos clientes. Desde
-            então, já realizamos mais de 750 projetos de energia solar, sempre com foco em inovação, eficiência e impacto positivo
-            no meio ambiente. Com uma equipe qualificada e parcerias estratégicas, nos destacamos pela qualidade, transparência e
-            confiabilidade.
-          </p>
-          <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-            {["+ de 750 projetos realizados", "Atuamos em todo o Brasil", "Equipe de engenharia própria", "+ de 8 MW em operação"].map((t) => (
-              <div key={t} className="rounded-md border bg-card p-2 text-[10px] font-medium">{t}</div>
-            ))}
+      {/* ---------- Página 1 — capa ---------- */}
+      <div className="mp-page mp-capa">
+        <div className="mp-capa-diag" />
+        <div className="mp-capa-ano">{anoCapa}</div>
+        <div className="mp-capa-inner">
+          <div style={{ textAlign: "center" }}>
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 90, objectFit: "contain", display: "inline-block" }} />
           </div>
-        </Bloco>
 
-        <Bloco titulo="Por que nos escolher">
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ marginTop: "26mm" }}>
+            <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1, color: "#111" }}>PROPOSTA</div>
+            <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1, color: "#0d2a56" }}>COMERCIAL</div>
+            <div style={{ fontSize: 22, color: "#333", marginTop: 4 }}>Sistema Fotovoltaico</div>
+          </div>
+
+          <div style={{ marginTop: "22mm", fontSize: 18, lineHeight: 1.6 }}>
+            <div>Cliente: {p.clienteNome || "—"}</div>
+            <div>Geração média mensal: {fmtNum(dim.geracaoMensalKwh, 2)} kWh</div>
+            <div>Potência do Sistema: {fmtNum(dim.potenciaFinalKwp, 2)} kWp</div>
+            <div>Consultor: {p.consultor || "—"}</div>
+          </div>
+
+          <div style={{ marginTop: "14mm", fontSize: 12 }}>
+            <div>Proposta válida até: {p.validade || "—"}</div>
+            <div>Número da Proposta: <strong>{p.numero}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------- Página 2 — institucional ---------- */}
+      <Pagina numero="01">
+        <section className="mp-sec">
+          <Titulo>Quem somos</Titulo>
+          <p style={{ textAlign: "justify" }}>
+            Somos a Meta Sun, e iniciamos nossa trajetória em 2020. Em 2023 nos tornamos uma empresa independente, o que nos
+            permitiu ampliar marcas e produtos para oferecer ainda mais economia e sustentabilidade aos nossos clientes.
+          </p>
+          <p style={{ textAlign: "justify" }}>
+            Desde então, já realizamos mais de 750 projetos de energia solar, sempre com foco em inovação, eficiência e impacto
+            positivo no meio ambiente.
+          </p>
+          <p style={{ textAlign: "justify" }}>
+            Com uma equipe qualificada e parcerias estratégicas, nos destacamos pela qualidade, transparência e confiabilidade,
+            reafirmando todos os dias nosso compromisso de construir um futuro mais sustentável.
+          </p>
+          <div className="mp-strip" style={{ marginTop: 14 }}>
+            <div>+ de 750 projetos<br />realizados</div>
+            <div>Atuamos em todo<br />o Brasil.</div>
+            <div>Equipe de Engenharia<br />própria</div>
+            <div>+ de 8 MW<br />em operação</div>
+          </div>
+        </section>
+
+        <section className="mp-sec">
+          <Titulo>Porque nos escolher</Titulo>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-              ["Soluções assertivas", "Analisamos a viabilização de projetos financeiros para trazer as melhores condições técnico-comerciais do seu projeto solar."],
-              ["Atendimento personalizado", "Muito mais que uma proposta comercial: nosso time é capacitado para realizar toda a consultoria da fatura de energia."],
-              ["Análise de eficiência", "Atuamos em toda a interface de execução do projeto fotovoltaico, do início à entrega da usina."],
-              ["Retorno garantido em contrato", "Asseguramos em contrato a geração do sistema fotovoltaico, sem surpresas para o cliente."],
+              ["Soluções assertivas", "Analisamos a viabilização de projetos financeiros (project finance) para trazer as melhores condições técnica-comercial do seu projeto solar."],
+              ["Atendimento personalizado", "Muito mais que apenas uma proposta comercial, nosso time de consultores é capacitado e orientado a realizar toda consultoria de fatura de energia."],
+              ["Análise de eficiência", "Trabalhamos em toda interface de execução de projetos fotovoltaicos, com a premissa de que nossos clientes não precisam se preocupar com nada dentro do processo de instalação e entrega das usinas."],
+              ["Retorno garantido em contrato", "Asseguramos em contrato a geração do sistema fotovoltaico, para 100% de segurança e garantia do cliente."],
             ].map(([t, d]) => (
-              <div key={t} className="rounded-md border bg-card p-2">
-                <div className="text-[11px] font-semibold uppercase">{t}</div>
-                <div className="text-[10px] text-muted-foreground">{d}</div>
+              <div key={t} className="mp-card">
+                <h4>{t}</h4>
+                <p>{d}</p>
               </div>
             ))}
           </div>
-        </Bloco>
-      </div>
+        </section>
+      </Pagina>
 
-      {/* ---------- Página 2 — projeto ---------- */}
-      <div className="mp-page">
-        <Bloco titulo="Seu projeto">
-          <Linha label="Consumo médio mensal" valor={`${fmtNum(consumo, 2)} kWh`} />
-          <Linha label="Produção média do sistema" valor={`${fmtNum(dim.geracaoMensalKwh, 2)} kWh`} />
-          <Linha label="Área necessária para o sistema" valor={`${fmtNum(dim.areaTotal, 2)} m²`} />
-          <Linha label="Tipo de instalação / telhado" valor={`${p.tipoInstalacao} · ${p.tipoTelhado || "—"}`} />
-          <Linha label="Concessionária" valor={p.concessionaria || "—"} />
-        </Bloco>
+      {/* ---------- Página 3 — projeto ---------- */}
+      <Pagina numero="02">
+        <section className="mp-sec">
+          <Titulo>Seu projeto</Titulo>
+          <Pilula label="Consumo médio mensal" valor={`${fmtNum(consumo, 2)} kWh`} />
+          <Pilula label="Produção média do sistema" valor={`${fmtNum(dim.geracaoMensalKwh, 2)} kWh`} />
+          <Pilula label="Área necessária para o sistema" valor={`${fmtNum(dim.areaTotal, 2)} m²`} />
+        </section>
 
-        <Bloco titulo="Descrição dos itens">
-          <ul className="list-disc pl-5">
-            <li>{dim.qtdFinal} módulos fotovoltaicos de {p.moduloPotenciaWp} W {p.moduloMarca ? `| ${p.moduloMarca}` : ""} {p.moduloModelo || ""}</li>
+        <section className="mp-sec">
+          <Titulo>Descrição dos itens</Titulo>
+          <ul style={{ listStyle: "disc", paddingLeft: 22, fontSize: 12, lineHeight: 1.9 }}>
+            <li>{dim.qtdFinal} Módulos Fotovoltaicos de {p.moduloPotenciaWp} W {p.moduloMarca ? `| ${p.moduloMarca}` : ""} {p.moduloModelo || ""}</li>
             {invLinhas.map((t) => <li key={t}>{t}</li>)}
-            <li>Cabo solar preto e vermelho.</li>
-            <li>Estrutura de fixação solar.</li>
-            <li>Mão de obra de instalação.</li>
-            <li>Projeto, homologação e ART junto à concessionária.</li>
+            <li>Cabo Solar Preto.</li>
+            <li>Cabo Solar Vermelho.</li>
+            <li>Estrutura Solar.</li>
+            <li>Mão de obra.</li>
           </ul>
-        </Bloco>
+        </section>
 
-        <Bloco titulo="Consumo × geração">
-          <div className="mb-2 grid grid-cols-4 gap-2 text-center">
-            <div className="rounded-md border bg-card p-2"><div className="text-[9px] uppercase text-muted-foreground">Consumo médio mensal</div><div className="font-semibold">{fmtNum(consumo, 2)} kWh</div></div>
-            <div className="rounded-md border bg-card p-2"><div className="text-[9px] uppercase text-muted-foreground">Geração média mensal</div><div className="font-semibold">{fmtNum(dim.geracaoMensalKwh, 2)} kWh</div></div>
-            <div className="rounded-md border bg-card p-2"><div className="text-[9px] uppercase text-muted-foreground">Geração média anual</div><div className="font-semibold">{fmtNum(dim.geracaoAnualKwh, 2)} kWh</div></div>
-            <div className="rounded-md border bg-card p-2"><div className="text-[9px] uppercase text-muted-foreground">Irradiação local</div><div className="font-semibold">{fmtNum(p.irradiacaoMedia / 30, 2)} kWh/m²</div></div>
+        <section className="mp-sec">
+          <Titulo>Consumo x geração</Titulo>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+            <div className="mp-kpi"><span>Consumo médio mensal</span><strong>{fmtNum(consumo, 2)} kWh</strong></div>
+            <div className="mp-kpi"><span>Geração média mensal</span><strong>{fmtNum(dim.geracaoMensalKwh, 2)} kWh</strong></div>
+            <div className="mp-kpi"><span>Geração média anual</span><strong>{fmtNum(dim.geracaoAnualKwh, 2)} kWh/ano</strong></div>
+            <div className="mp-kpi"><span>Irradiação Local</span><strong>{fmtNum(p.irradiacaoMedia / 30, 2)} kWh/m²</strong></div>
           </div>
-          <table>
+
+          <div className="mp-chart">
+            {SAZONALIDADE.map((f, i) => (
+              <div className="g" key={i}>
+                <div className="b" style={{ background: "#0d2a56", height: `${(consumo / maxBarra) * 100}%` }} />
+                <div className="b" style={{ background: "#f5a11b", height: `${((dim.geracaoMensalKwh * f) / maxBarra) * 100}%` }} />
+              </div>
+            ))}
+          </div>
+
+          <table className="mp-mini">
             <thead>
-              <tr><th>Detalhamento</th>{MESES.map((m) => <th key={m}>{m.slice(0, 3)}</th>)}</tr>
+              <tr><th>Detalhamento</th>{MESES.map((m) => <th key={m}>{m}</th>)}</tr>
             </thead>
             <tbody>
-              <tr><td>Geração</td>{SAZONALIDADE.map((f, i) => <td key={i}>{fmtNum(dim.geracaoMensalKwh * f, 0)}</td>)}</tr>
-              <tr><td>Consumo</td>{MESES.map((_, i) => <td key={i}>{fmtNum(consumo, 0)}</td>)}</tr>
-              <tr><td>Excedente</td>{SAZONALIDADE.map((f, i) => <td key={i}>{fmtNum(dim.geracaoMensalKwh * f - consumo, 0)}</td>)}</tr>
+              <tr>
+                <td><span className="mp-tag" style={{ background: "#f5a11b" }}>Geração</span></td>
+                {SAZONALIDADE.map((f, i) => <td key={i}>{fmtNum(dim.geracaoMensalKwh * f, 2)}</td>)}
+              </tr>
+              <tr>
+                <td><span className="mp-tag" style={{ background: "#0d2a56" }}>Consumo</span></td>
+                {MESES.map((_, i) => <td key={i}>{fmtNum(consumo, 0)}</td>)}
+              </tr>
+              <tr>
+                <td><span className="mp-tag" style={{ background: "#1f9d55" }}>Excedente</span></td>
+                {SAZONALIDADE.map((f, i) => <td key={i}>{fmtNum(dim.geracaoMensalKwh * f - consumo, 2)}</td>)}
+              </tr>
             </tbody>
           </table>
-        </Bloco>
-      </div>
+        </section>
+      </Pagina>
 
-      {/* ---------- Página 3 — investimento ---------- */}
-      <div className="mp-page">
-        <Bloco titulo="Retorno do investimento">
-          <Linha label="Valor do investimento" valor={fmtBRL(investimento)} />
-          <Linha label="Retorno do investimento" valor={`${Math.floor(paybackMeses / 12)} anos e ${paybackMeses % 12} meses`} />
-          <Linha label="Economia estimada no 1º ano" valor={fmtBRL(economiaAnual)} />
-          <Linha label="Prazo de entrega do sistema" valor="90 dias" />
-        </Bloco>
+      {/* ---------- Página 4 — investimento ---------- */}
+      <Pagina numero="03">
+        <section className="mp-sec">
+          <Titulo>Retorno do investimento</Titulo>
+          <Pilula label="Valor do investimento" valor={fmtBRL(investimento)} />
+          <Pilula label="Retorno do investimento" valor={`${Math.floor(paybackMeses / 12)} anos e ${paybackMeses % 12} meses`} />
+          <Pilula label="Prazo de entrega do sistema" valor="90 dias" />
+        </section>
 
-        <Bloco titulo="Opções de pagamento">
+        <section className="mp-sec">
+          <Titulo>Opções de <strong>pagamento</strong></Titulo>
           <table>
             <thead><tr><th>Forma de pagamento</th><th>Parcelas</th><th>Valor da parcela</th></tr></thead>
             <tbody>
@@ -201,37 +293,41 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
               ))}
             </tbody>
           </table>
-          <div className="mt-1 text-center text-[9px] text-muted-foreground">*Valores estimativos, sujeitos à confirmação junto à instituição financeira.</div>
-        </Bloco>
+          <div style={{ textAlign: "center", fontSize: 10, marginTop: 6, color: "#5b6672" }}>*Valores estimativos, sujeitos à confirmação.</div>
+        </section>
 
-        <Bloco titulo="Garantias">
-          <div className="grid grid-cols-4 gap-2 text-center">
+        <section className="mp-sec">
+          <Titulo>Garantias</Titulo>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, background: "#f6f7f9", borderRadius: 6, padding: 14 }}>
             {[
               ["Módulos", "Garantia do fabricante de 10 anos contra queda de eficiência em 20%."],
-              ["Inversor(es)", "Garantia de 12 anos padrão, de acordo com o fabricante."],
+              ["Inversor(es)", "Garantia de 12 anos padrão de acordo com o fabricante."],
               ["Infraestrutura", "Garantia de 1 ano para materiais elétricos e outros."],
               ["Mão de obra", "Garantia de 1 ano para todos os clientes."],
             ].map(([t, d]) => (
-              <div key={t} className="rounded-md border bg-card p-2">
-                <div className="text-[10px] font-semibold uppercase">{t}</div>
-                <div className="text-[9px] text-muted-foreground">{d}</div>
+              <div key={t} style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 800, textTransform: "uppercase", color: "#0d2a56", fontSize: 11, marginBottom: 8 }}>{t}</div>
+                <div style={{ fontSize: 10.5 }}>{d}</div>
               </div>
             ))}
           </div>
-        </Bloco>
-      </div>
+        </section>
+      </Pagina>
 
-      {/* ---------- Página 4 — projeção ---------- */}
-      <div className="mp-page">
-        <Bloco titulo="Tabela de projeção">
-          <table>
+      {/* ---------- Página 5 — projeção ---------- */}
+      <Pagina numero="04">
+        <section className="mp-sec">
+          <Titulo>Tabela de projeção</Titulo>
+          <table className="mp-mini">
             <thead>
-              <tr><th>Situação</th><th>Ano</th><th>Valor da tarifa (R$)</th><th>Geração (kWh/ano)</th><th>Economia acumulada (R$)</th><th>Resultado (R$)</th></tr>
+              <tr><th>Situação</th><th>Ano</th><th>Valor da tarifa (R$)</th><th>Geração (kWh/Ano)</th><th>Economia (R$)</th><th>Resultado (R$)</th></tr>
             </thead>
             <tbody>
               {projecao.map((l) => (
                 <tr key={l.ano}>
-                  <td>{l.resultado < 0 ? "Investimento" : "Lucro"}</td>
+                  <td style={{ background: l.resultado < 0 ? "#c7d2fe" : "#bbf7d0", fontWeight: 700, color: l.resultado < 0 ? "#3730a3" : "#166534" }}>
+                    {l.resultado < 0 ? "Investimento" : "Lucro"}
+                  </td>
                   <td>{l.ano}</td>
                   <td>{fmtBRL(l.tarifa)}</td>
                   <td>{fmtNum(l.geracao, 2)}</td>
@@ -241,22 +337,58 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
               ))}
             </tbody>
           </table>
-          <div className="mt-1 text-center text-[9px] text-muted-foreground">*Considerando uma inflação energética de 8,0% ao ano.</div>
-        </Bloco>
+          <div style={{ textAlign: "center", fontSize: 11, fontWeight: 700, marginTop: 14 }}>*Considerando uma inflação energética de 8,0% ao ano.</div>
+        </section>
+      </Pagina>
 
-        {p.obsCliente && (
-          <Bloco titulo="Observações">
-            <p className="whitespace-pre-line text-justify">{p.obsCliente}</p>
-          </Bloco>
-        )}
+      {/* ---------- Página 6 — aceite ---------- */}
+      <div className="mp-page">
+        <div className="mp-page-body">
+          <div style={{ textAlign: "center", fontSize: 34, fontWeight: 800, letterSpacing: ".18em", color: "#0d2a56" }}>PARCEIROS</div>
+          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 8 }}>BANCOS FINANCIADORES</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
+            <div>BASA</div><div>SOL AGORA</div><div>SICREDI</div><div>BRADESCO</div>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 18 }}>PARCEIROS COMERCIAIS</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
+            <div>SOFAR SOLAR</div><div>SUNGROW</div><div>OUROLUX SOLAR</div><div>EDELTEC</div>
+          </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-10 text-center text-[10px]">
-          <div className="border-t border-foreground pt-1">{p.clienteNome || "Cliente"}</div>
-          <div className="border-t border-foreground pt-1">Meta Sun · Energia Solar</div>
+          <div style={{ textAlign: "center", fontSize: 24, marginTop: 26 }}>ACEITE DA <strong>PROPOSTA</strong></div>
+
+          <div style={{ marginTop: 18, fontSize: 13 }}>
+            {[
+              ["NOME COMPLETO:", p.clienteNome || ""],
+              ["CPF/ CNPJ:", p.clienteDoc || ""],
+              ["TELEFONE:", p.clienteTelefone || ""],
+              ["POTÊNCIA DA USINA:", `${fmtNum(dim.potenciaFinalKwp, 3)} kWp`],
+              ["VALOR DA PROPOSTA:", fmtBRL(investimento)],
+            ].map(([l, v]) => (
+              <div key={l} style={{ borderBottom: "1px solid #6b5bb5", padding: "10px 0 4px" }}>
+                <strong>{l}</strong> {v}
+              </div>
+            ))}
+          </div>
+
+          <p style={{ textAlign: "justify", marginTop: 22, fontSize: 12 }}>
+            Declaro estar ciente da proposta e confirmo que através deste aceite estou de acordo com os termos propostos, e após
+            visita técnica, confirmando as condições e valores descritos, concordo com a execução da obra.
+          </p>
+
+          <div style={{ textAlign: "center", fontWeight: 700, marginTop: 20 }}>{p.criadoEm || ""}</div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, marginTop: 40, textAlign: "center", fontSize: 12 }}>
+            <div style={{ borderTop: "1px solid #4b5563", paddingTop: 6, fontWeight: 700 }}>
+              ASSINATURA DO CLIENTE<div style={{ fontWeight: 400, marginTop: 6 }}>{p.clienteNome || ""}</div>
+            </div>
+            <div style={{ borderTop: "1px solid #4b5563", paddingTop: 6, fontWeight: 700 }}>
+              META SUN ENERGIA SOLAR<div style={{ fontWeight: 400, marginTop: 6 }}>41.452.412/0001-40</div>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <img src={metaSunRodape.url} alt="Contato Meta Sun" className="h-14 object-contain" />
+        <div style={{ marginTop: "auto" }}>
+          <img src={metaSunRodape.url} alt="Entre em contato — Meta Sun" style={{ width: "100%", objectFit: "cover", display: "block" }} />
         </div>
       </div>
     </div>

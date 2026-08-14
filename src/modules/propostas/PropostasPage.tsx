@@ -1631,7 +1631,17 @@ function PropostaSheet({
         </DialogHeader>
 
 
-        <div className="space-y-4 pt-4">
+        <Tabs defaultValue="dados" className="pt-4">
+          <TabsList className="sticky top-[68px] z-10 grid w-full grid-cols-5">
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="tecnico">Técnico</TabsTrigger>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="graficos">Gráficos</TabsTrigger>
+            <TabsTrigger value="final">Finalização</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="space-y-4">
+
           {/* BLOCO 2 — Localização */}
           <Bloco icon={<MapPin className="h-4 w-4" />} title="2. Localização">
             <div className="grid gap-3 md:grid-cols-3">
@@ -1770,8 +1780,11 @@ function PropostaSheet({
               </>
             )}
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="tecnico" className="space-y-4">
           {/* BLOCO 5 — Dimensionamento */}
+
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />
@@ -1919,8 +1932,11 @@ function PropostaSheet({
               })}
             </div>
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="financeiro" className="space-y-4">
           {/* BLOCO 7 — Precificação */}
+
           <Bloco icon={<DollarSign className="h-4 w-4" />} title="7. Precificação" badge={fmtBRL(pre.valorFinal)}>
             <div className="rounded-md border bg-muted/30 p-3">
               <div className="flex items-end justify-between gap-3">
@@ -1961,10 +1977,11 @@ function PropostaSheet({
               <div className="text-xs">
                 <div className="font-semibold text-foreground">Ganho previsto do consultor</div>
                 <div className="text-muted-foreground">
-                  Comissão {fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}
+                  {fmtNum(comissao.percentual, 2)}% sobre o valor no parâmetro base ({fmtBRL(comissaoPolicy.parametroBase)}/kWp = {fmtBRL(comissao.base)})
                   {comissao.excedente > 0 && (
-                    <> {" · "}bônus {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% sobre o valor a maior ({fmtBRL(comissao.excedente)}) acima de {fmtBRL(comissaoPolicy.parametroBase)}/kWp</>
+                    <> {" · "}+ {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% da diferença vendida a maior ({fmtBRL(comissao.excedente)})</>
                   )}
+
                   {" · "}<Link to="/configuracoes" hash="tab=comissionamento" className="underline">editar política</Link>
                 </div>
               </div>
@@ -2045,8 +2062,11 @@ function PropostaSheet({
               </div>
             )}
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="graficos" className="space-y-4">
           {/* BLOCO 9.1 — Gráficos */}
+
           <Bloco icon={<Calculator className="h-4 w-4" />} title="9.1 Gráficos da Proposta">
             <PropostaGraficos
               custoTotal={res.custoTotal}
@@ -2057,8 +2077,11 @@ function PropostaSheet({
               custos={p.custos}
             />
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="final" className="space-y-4">
           {/* BLOCO 10 — Observações */}
+
 
           <Bloco icon={<FileText className="h-4 w-4" />} title="10. Observações">
             <div className="grid gap-3 md:grid-cols-2">
@@ -2079,7 +2102,9 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
-        </div>
+          </TabsContent>
+        </Tabs>
+
 
         <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-end gap-2 border-t bg-background px-6 py-3">
           <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>

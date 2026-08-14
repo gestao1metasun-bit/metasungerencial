@@ -7,6 +7,7 @@ import {
 } from "@/modules/propostas/store";
 import metaSunLogo from "@/assets/meta-sun-logo-v2.png.asset.json";
 import metaSunRodape from "@/assets/meta-sun-rodape.png.asset.json";
+import capaPaineis from "@/assets/capa-paineis.jpg";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 /** Sazonalidade média (fator sobre a geração média mensal). */

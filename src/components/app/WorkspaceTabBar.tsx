@@ -156,7 +156,7 @@ export function WorkspaceTabBar() {
   };
 
   return (
-    <div className="sticky top-0 z-30 flex w-full items-stretch gap-0 border-b border-border bg-muted/60 backdrop-blur px-2 overflow-x-auto h-8">
+    <div className="sticky top-0 z-30 flex h-9 w-full items-center gap-1 overflow-x-auto border-b border-border bg-background px-2">
       {tabs.map((t) => {
         const Icon = iconForRoute(t.to);
         const isActive = t.id === activeId;
@@ -170,14 +170,14 @@ export function WorkspaceTabBar() {
                 onAuxClick={(e) => {
                   if (e.button === 1 && !t.pinned) handleClose(e, t.id);
                 }}
-                className={`group inline-flex items-center gap-1.5 shrink-0 cursor-pointer select-none px-2.5 text-[11.5px] border-r border-border/60 transition-colors ${
+                className={`group inline-flex h-7 shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-md px-2.5 text-[11.5px] transition-colors ${
                   isActive
-                    ? "bg-background text-foreground font-semibold border-b-2 border-b-primary -mb-px"
-                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 }`}
                 title={t.to}
               >
-                {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" /> : null}
+                {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" /> : null}
                 <span className="max-w-[160px] truncate">{t.label}</span>
                 {t.pinned ? (
                   <Pin className="h-3 w-3 text-muted-foreground/60" />
@@ -186,7 +186,7 @@ export function WorkspaceTabBar() {
                     type="button"
                     onClick={(e) => handleClose(e, t.id)}
                     aria-label={`Fechar ${t.label}`}
-                    className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded hover:bg-destructive/15 hover:text-destructive"
+                    className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded text-muted-foreground/70 opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 aria-[selected=true]:opacity-100"
                   >
                     <X className="h-3 w-3" />
                   </button>

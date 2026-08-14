@@ -96,51 +96,60 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
   return (
     <div className="proposta-modelo">
       <style>{`
-        .proposta-modelo { --navy:#0d2a56; --orange:#f5a11b; color:#1a1a1a; font-family:'Segoe UI',Arial,Helvetica,sans-serif; font-size:11px; line-height:1.45; }
-        .proposta-modelo .mp-page { position:relative; width:210mm; min-height:297mm; margin:0 auto 8mm; background:#fff; box-shadow:0 0 0 1px #e5e7eb; overflow:hidden; break-after:page; display:flex; flex-direction:column; }
+        @page { size:A4 portrait; margin:0; }
+        .proposta-modelo { --navy:#0d2a56; --orange:#f5a11b; --ink:#1b2430; --muted:#5b6672; --line:#dfe3e8;
+          color:var(--ink); font-family:'Inter','Segoe UI',Arial,Helvetica,sans-serif; font-size:10.5pt; line-height:1.55;
+          -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums; }
+        .proposta-modelo p { margin:0 0 8px; }
+        .proposta-modelo .mp-page { position:relative; width:210mm; min-height:297mm; margin:0 auto 8mm; background:#fff; box-shadow:0 2px 14px rgba(13,42,86,.10); overflow:hidden; break-after:page; display:flex; flex-direction:column; }
         .proposta-modelo .mp-page:last-child { break-after:auto; }
-        .proposta-modelo .mp-page-body { flex:1; padding:16mm 14mm 8mm; }
-        .proposta-modelo .mp-page-foot { display:flex; align-items:center; justify-content:space-between; padding:0 14mm 10mm; }
-        .proposta-modelo .mp-foot-logo { height:34px; object-fit:contain; }
-        .proposta-modelo .mp-page-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:999px; background:var(--navy); color:#fff; font-size:10px; font-weight:700; }
+        .proposta-modelo .mp-page-body { flex:1; padding:20mm 18mm 10mm; }
+        .proposta-modelo .mp-page-foot { display:flex; align-items:center; justify-content:space-between; padding:0 18mm 12mm; border-top:1px solid var(--line); margin:0 18mm; padding-left:0; padding-right:0; padding-top:6px; }
+        .proposta-modelo .mp-foot-logo { height:30px; object-fit:contain; }
+        .proposta-modelo .mp-page-num { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:999px; background:var(--navy); color:#fff; font-size:9pt; font-weight:700; }
 
-        .proposta-modelo .mp-title { display:flex; align-items:center; gap:10px; font-size:24px; font-weight:800; color:var(--navy); text-transform:uppercase; letter-spacing:-.01em; margin:0 0 14px; }
-        .proposta-modelo .mp-title::before { content:""; width:7px; height:26px; background:var(--navy); display:block; }
-        .proposta-modelo .mp-sec { margin-bottom:22px; }
+        .proposta-modelo .mp-title { display:flex; align-items:center; gap:10px; font-size:17pt; font-weight:800; color:var(--navy); text-transform:uppercase; letter-spacing:.005em; margin:0 0 12px; line-height:1.15; }
+        .proposta-modelo .mp-title::before { content:""; width:6px; height:20px; background:var(--orange); border-radius:2px; display:block; }
+        .proposta-modelo .mp-sec { margin-bottom:18px; break-inside:avoid; }
 
-        .proposta-modelo .mp-pill { display:flex; gap:8px; margin-bottom:8px; align-items:stretch; }
-        .proposta-modelo .mp-pill-label { flex:0 0 44%; background:var(--navy); color:#fff; font-weight:700; font-size:11.5px; text-transform:uppercase; padding:8px 12px; border-radius:6px; display:flex; align-items:center; }
-        .proposta-modelo .mp-pill-value { flex:1; background:#eceff3; border:2px solid var(--orange); border-radius:6px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
+        .proposta-modelo .mp-pill { display:flex; gap:8px; margin-bottom:7px; align-items:stretch; }
+        .proposta-modelo .mp-pill-label { flex:0 0 46%; background:var(--navy); color:#fff; font-weight:600; font-size:9.5pt; letter-spacing:.02em; text-transform:uppercase; padding:9px 14px; border-radius:5px; display:flex; align-items:center; }
+        .proposta-modelo .mp-pill-value { flex:1; background:#f3f5f8; border:1.5px solid var(--orange); border-radius:5px; font-weight:700; font-size:11pt; color:var(--navy); display:flex; align-items:center; justify-content:center; }
 
-        .proposta-modelo .mp-strip { background:var(--navy); color:#fff; border-radius:6px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px 10px; text-align:center; font-size:11px; }
-        .proposta-modelo .mp-card { background:#f6f7f9; border-radius:6px; padding:12px; }
-        .proposta-modelo .mp-card h4 { color:var(--orange); font-size:11px; font-weight:800; text-transform:uppercase; margin:0 0 4px; }
-        .proposta-modelo .mp-card p { margin:0; text-align:justify; }
+        .proposta-modelo .mp-strip { background:var(--navy); color:#fff; border-radius:6px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px 10px; text-align:center; font-size:9.5pt; line-height:1.4; font-weight:600; }
+        .proposta-modelo .mp-card { background:#f5f7fa; border:1px solid var(--line); border-left:3px solid var(--orange); border-radius:5px; padding:12px 14px; }
+        .proposta-modelo .mp-card h4 { color:var(--navy); font-size:9.5pt; font-weight:800; text-transform:uppercase; letter-spacing:.03em; margin:0 0 5px; }
+        .proposta-modelo .mp-card p { margin:0; text-align:justify; font-size:9pt; line-height:1.5; color:var(--muted); }
 
-        .proposta-modelo table { width:100%; border-collapse:collapse; }
-        .proposta-modelo thead th { background:var(--navy); color:#fff; font-weight:700; font-size:11px; padding:7px 4px; text-align:center; }
-        .proposta-modelo tbody td { border:1px solid #d7dbe0; padding:5px 4px; text-align:center; font-size:10.5px; }
-        .proposta-modelo .mp-mini td, .proposta-modelo .mp-mini th { font-size:8.5px; padding:3px 2px; }
-        .proposta-modelo .mp-tag { display:inline-block; border-radius:3px; padding:1px 6px; font-weight:700; font-size:8.5px; color:#fff; }
+        .proposta-modelo table { width:100%; border-collapse:collapse; break-inside:avoid; }
+        .proposta-modelo thead th { background:var(--navy); color:#fff; font-weight:700; font-size:9pt; letter-spacing:.02em; padding:8px 5px; text-align:center; }
+        .proposta-modelo tbody td { border:1px solid var(--line); padding:6px 5px; text-align:center; font-size:9pt; }
+        .proposta-modelo tbody tr:nth-child(even) td { background:#fafbfc; }
+        .proposta-modelo .mp-mini td, .proposta-modelo .mp-mini th { font-size:7.2pt; padding:3px 2px; }
+        .proposta-modelo .mp-tag { display:inline-block; border-radius:3px; padding:2px 7px; font-weight:700; font-size:7pt; letter-spacing:.03em; color:#fff; }
 
-        .proposta-modelo .mp-chart { display:flex; align-items:flex-end; gap:6px; height:150px; margin-bottom:6px; }
+        .proposta-modelo .mp-chart { display:flex; align-items:flex-end; gap:6px; height:140px; margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid var(--line); }
         .proposta-modelo .mp-chart .g { flex:1; display:flex; align-items:flex-end; gap:2px; height:100%; }
         .proposta-modelo .mp-chart .b { flex:1; border-radius:2px 2px 0 0; }
 
-        .proposta-modelo .mp-kpi { background:#f6f7f9; border-radius:6px; padding:10px; text-align:center; }
-        .proposta-modelo .mp-kpi span { display:block; font-size:10px; color:#5b6672; }
-        .proposta-modelo .mp-kpi strong { font-size:12.5px; color:var(--navy); }
+        .proposta-modelo .mp-kpi { background:#f5f7fa; border:1px solid var(--line); border-radius:5px; padding:10px 8px; text-align:center; }
+        .proposta-modelo .mp-kpi span { display:block; font-size:8pt; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
+        .proposta-modelo .mp-kpi strong { font-size:11pt; color:var(--navy); }
 
         .proposta-modelo .mp-capa { position:relative; padding:0; }
-        .proposta-modelo .mp-capa-inner { padding:18mm 16mm; position:relative; z-index:2; }
-        .proposta-modelo .mp-capa-diag { position:absolute; right:-10%; bottom:-5%; width:95%; height:60%; background:linear-gradient(135deg,var(--orange),#ffcb6b); transform:skewY(-18deg); z-index:1; opacity:.95; }
-        .proposta-modelo .mp-capa-ano { position:absolute; right:16mm; bottom:70mm; z-index:3; font-size:52px; font-weight:800; color:#111; }
+        .proposta-modelo .mp-capa-inner { padding:22mm 18mm; position:relative; z-index:2; }
+        .proposta-modelo .mp-capa-diag { position:absolute; right:-10%; bottom:-5%; width:95%; height:58%; background:linear-gradient(135deg,var(--orange),#ffd07a); transform:skewY(-18deg); z-index:1; }
+        .proposta-modelo .mp-capa-ano { position:absolute; right:18mm; bottom:66mm; z-index:3; font-size:46pt; font-weight:800; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.15); }
 
         @media print {
-          .proposta-modelo .mp-page { box-shadow:none; margin:0; width:auto; min-height:0; }
-          .proposta-modelo .mp-page-body { padding:10mm 12mm 4mm; }
+          .proposta-modelo { font-size:10pt; }
+          .proposta-modelo .mp-page { box-shadow:none; margin:0; width:210mm; height:297mm; min-height:0; }
+          .proposta-modelo .mp-page-body { padding:16mm 16mm 6mm; }
+          .proposta-modelo .mp-page-foot { padding-bottom:8mm; }
+          .proposta-modelo * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
         }
       `}</style>
+
 
       {/* ---------- Página 1 — capa ---------- */}
       <div className="mp-page mp-capa">
@@ -148,23 +157,23 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
         <div className="mp-capa-ano">{anoCapa}</div>
         <div className="mp-capa-inner">
           <div style={{ textAlign: "center" }}>
-            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 90, objectFit: "contain", display: "inline-block" }} />
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 80, objectFit: "contain", display: "inline-block" }} />
           </div>
 
           <div style={{ marginTop: "26mm" }}>
-            <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1, color: "#111" }}>PROPOSTA</div>
-            <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1, color: "#0d2a56" }}>COMERCIAL</div>
-            <div style={{ fontSize: 22, color: "#333", marginTop: 4 }}>Sistema Fotovoltaico</div>
+            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#1b2430" }}>PROPOSTA</div>
+            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#0d2a56" }}>COMERCIAL</div>
+            <div style={{ fontSize: "14pt", color: "#5b6672", marginTop: 8, letterSpacing: ".04em" }}>Sistema Fotovoltaico</div>
           </div>
 
-          <div style={{ marginTop: "22mm", fontSize: 18, lineHeight: 1.6 }}>
+          <div style={{ marginTop: "20mm", fontSize: "12pt", lineHeight: 1.9 }}>
             <div>Cliente: {p.clienteNome || "—"}</div>
             <div>Geração média mensal: {fmtNum(dim.geracaoMensalKwh, 2)} kWh</div>
             <div>Potência do Sistema: {fmtNum(dim.potenciaFinalKwp, 2)} kWp</div>
             <div>Consultor: {p.consultor || "—"}</div>
           </div>
 
-          <div style={{ marginTop: "14mm", fontSize: 12 }}>
+          <div style={{ marginTop: "12mm", fontSize: "10pt", color: "#5b6672" }}>
             <div>Proposta válida até: {p.validade || "—"}</div>
             <div>Número da Proposta: <strong>{p.numero}</strong></div>
           </div>
@@ -224,7 +233,7 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
 
         <section className="mp-sec">
           <Titulo>Descrição dos itens</Titulo>
-          <ul style={{ listStyle: "disc", paddingLeft: 22, fontSize: 12, lineHeight: 1.9 }}>
+          <ul style={{ listStyle: "disc", paddingLeft: 22, fontSize: "10.5pt", lineHeight: 1.9 }}>
             <li>{dim.qtdFinal} Módulos Fotovoltaicos de {p.moduloPotenciaWp} W {p.moduloMarca ? `| ${p.moduloMarca}` : ""} {p.moduloModelo || ""}</li>
             {invLinhas.map((t) => <li key={t}>{t}</li>)}
             <li>Cabo Solar Preto.</li>
@@ -344,17 +353,17 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
       {/* ---------- Página 6 — aceite ---------- */}
       <div className="mp-page">
         <div className="mp-page-body">
-          <div style={{ textAlign: "center", fontSize: 34, fontWeight: 800, letterSpacing: ".18em", color: "#0d2a56" }}>PARCEIROS</div>
-          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 8 }}>BANCOS FINANCIADORES</div>
+          <div style={{ textAlign: "center", fontSize: "24pt", fontWeight: 800, letterSpacing: ".18em", color: "#0d2a56" }}>PARCEIROS</div>
+          <div style={{ textAlign: "center", fontSize: "13pt", fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 8 }}>BANCOS FINANCIADORES</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
             <div>BASA</div><div>SOL AGORA</div><div>SICREDI</div><div>BRADESCO</div>
           </div>
-          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 18 }}>PARCEIROS COMERCIAIS</div>
+          <div style={{ textAlign: "center", fontSize: "13pt", fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 18 }}>PARCEIROS COMERCIAIS</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
             <div>SOFAR SOLAR</div><div>SUNGROW</div><div>OUROLUX SOLAR</div><div>EDELTEC</div>
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 24, marginTop: 26 }}>ACEITE DA <strong>PROPOSTA</strong></div>
+          <div style={{ textAlign: "center", fontSize: "17pt", marginTop: 26, color: "#0d2a56" }}>ACEITE DA <strong>PROPOSTA</strong></div>
 
           <div style={{ marginTop: 18, fontSize: 13 }}>
             {[

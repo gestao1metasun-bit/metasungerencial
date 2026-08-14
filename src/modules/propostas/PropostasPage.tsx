@@ -2079,7 +2079,9 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
-        </div>
+          </TabsContent>
+        </Tabs>
+
 
         <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-end gap-2 border-t bg-background px-6 py-3">
           <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>

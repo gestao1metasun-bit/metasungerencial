@@ -2098,9 +2098,8 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
-
-          </Bloco>
           </TabsContent>
+
 
           <TabsContent value="produtos" className="space-y-4">
           <Bloco icon={<Sun className="h-4 w-4" />} title="Cadastro de módulos fotovoltaicos">

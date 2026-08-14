@@ -1149,33 +1149,137 @@ function LeadDetail({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="visao" className="mt-2">
-          <TabsList>
-            <TabsTrigger value="visao">Visão geral</TabsTrigger>
-            <TabsTrigger value="dados">Dados</TabsTrigger>
-            <TabsTrigger value="propostas">Propostas ({lead.propostas.length})</TabsTrigger>
-            <TabsTrigger value="aprovar" disabled={lead.bloqueado}>
-              {lead.bloqueado ? "Aprovada ✓" : "Aprovar proposta"}
-            </TabsTrigger>
-          </TabsList>
+        <div className="mt-2 space-y-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {[
+              ["Propostas", String(lead.propostas.length)],
+              ["Em aberto", String(lead.emAberto)],
+              ["Valor da última", fmtBRL(lead.valor)],
+              ["Ticket médio", fmtBRL(ticket)],
+              ["Maior proposta", fmtBRL(maiorValor)],
+            ].map(([t, v]) => (
+              <div key={t} className="rounded-md border bg-muted/30 p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{t}</div>
+                <div className="mt-1 text-sm font-semibold">{v}</div>
+              </div>
+            ))}
+          </div>
 
-          <TabsContent value="visao" className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              {[
-                ["Propostas", String(lead.propostas.length)],
-                ["Em aberto", String(lead.emAberto)],
-                ["Valor da última", fmtBRL(lead.valor)],
-                ["Ticket médio", fmtBRL(ticket)],
-                ["Maior proposta", fmtBRL(maiorValor)],
-              ].map(([t, v]) => (
-                <div key={t} className="rounded-md border bg-muted/30 p-3">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{t}</div>
-                  <div className="mt-1 text-sm font-semibold">{v}</div>
+          <div className="grid gap-4 lg:grid-cols-12">
+            {/* Coluna principal: propostas + aprovação + linha do tempo */}
+            <div className="space-y-4 lg:col-span-8">
+              <div className="rounded-md border">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Propostas ({lead.propostas.length}) — última: <strong className="text-foreground">{lead.ultima.numero}</strong>
+                  </div>
+                  {!lead.bloqueado && (
+                    <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-7 gap-1 text-xs">
+                      <FilePlus2 className="h-3.5 w-3.5" /> Gerar nova proposta
+                    </Button>
+                  )}
                 </div>
-              ))}
+
+                {lead.bloqueado ? (
+                  <div className="border-b border-success/40 bg-success/5 px-3 py-2 text-xs">
+                    <span className="inline-flex items-center gap-1 font-medium text-success">
+                      <Lock className="h-3.5 w-3.5" /> Card bloqueado — proposta aprovada
+                    </span>
+                    <span className="ml-2 text-muted-foreground">
+                      Este lead já foi enviado ao Comercial.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="border-b bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground">
+                    Selecione <strong>uma</strong> proposta para aprovar. Ela será enviada ao{" "}
+                    <strong>Comercial</strong> e o card ficará bloqueado. A geração do contrato
+                    (e indicação de financiamento) acontece no Comercial.
+                  </div>
+                )}
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nº</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Criada</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="w-[200px] text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lead.propostas.map((p) => {
+                      const v = calcPrecificacao(p).valorFinal || 0;
+                      const ehRascunho = p.status === "RASCUNHO";
+                      // Regra: proposta NÃO pode ser editada depois de criada.
+                      const podeExcluir = ehRascunho && !lead.bloqueado;
+                      const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
+                      const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
+                      const podeReativar = p.status === "CANCELADA";
+                      const podeAprovar = !lead.bloqueado && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+                      const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
+                      if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
+                      if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
+                      if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium">{p.numero}</TableCell>
+                          <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                          <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
+                          <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-1">
+                              {podeAprovar && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => setAprovando(p)}
+                                  className="h-7 gap-1 text-xs"
+                                >
+                                  <Check className="h-3.5 w-3.5" /> Aprovar
+                                </Button>
+                              )}
+                              <RowActions
+                                rowId={p.id}
+                                actions={actions}
+                                onAction={(kind) => {
+                                  if (kind === "visualizar") onVisualizar(p.id);
+                                  else if (kind === "aprovar") reativarProposta(p);
+                                  else if (kind === "cancelar") cancelarProposta(p);
+                                  else if (kind === "excluir") excluirProposta(p);
+                                }}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="rounded-md border p-4">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Linha do tempo</div>
+                <div className="space-y-2">
+                  {[...lead.propostas]
+                    .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
+                    .map((p) => (
+                      <div key={p.id} className="flex items-center gap-3 border-l-2 border-primary/40 pl-3 text-xs">
+                        <span className="w-24 shrink-0 text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
+                        <span className="font-medium">{p.numero}</span>
+                        <Badge variant={statusVariant(p.status)} className="h-5">{p.status}</Badge>
+                        <span className="ml-auto font-medium">{fmtBRL(calcPrecificacao(p).valorFinal || 0)}</span>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => onVisualizar(p.id)}>
+                          Visualizar
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            {/* Coluna lateral: contato + técnico */}
+            <div className="space-y-4 lg:col-span-4">
               <div className="rounded-md border p-4">
                 <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contato</div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1186,7 +1290,7 @@ function LeadDetail({
                   <Field label="Documento" value={formatDoc(lead.clienteDoc || "")} />
                 </div>
                 {telDigits.length >= 10 && (
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <Button asChild size="sm" variant="outline" className="h-7 text-xs">
                       <a href={`tel:+55${telDigits}`}>Ligar</a>
                     </Button>
@@ -1216,150 +1320,14 @@ function LeadDetail({
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="rounded-md border p-4">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Linha do tempo</div>
-              <div className="space-y-2">
-                {[...lead.propostas]
-                  .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
-                  .map((p) => (
-                    <div key={p.id} className="flex items-center gap-3 border-l-2 border-primary/40 pl-3 text-xs">
-                      <span className="w-24 shrink-0 text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
-                      <span className="font-medium">{p.numero}</span>
-                      <Badge variant={statusVariant(p.status)} className="h-5">{p.status}</Badge>
-                      <span className="ml-auto font-medium">{fmtBRL(calcPrecificacao(p).valorFinal || 0)}</span>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => onVisualizar(p.id)}>
-                        Visualizar
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="dados" className="mt-4">
+          {/* Dados cadastrais */}
+          <div className="rounded-md border p-4">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dados cadastrais</div>
             <DadosEditaveis lead={lead} />
-          </TabsContent>
-
-
-          <TabsContent value="propostas" className="mt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-muted-foreground">
-                {lead.propostas.length} proposta(s) — última: <strong>{lead.ultima.numero}</strong>
-              </div>
-              {!lead.bloqueado && (
-                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="gap-1">
-                  <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
-                </Button>
-              )}
-            </div>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Criada</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="w-[110px] text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {lead.propostas.map((p) => {
-                    const v = calcPrecificacao(p).valorFinal || 0;
-                    const ehRascunho = p.status === "RASCUNHO";
-                    // Regra: proposta NÃO pode ser editada depois de criada.
-                    // Para alterar valores/condições, o operador gera uma nova proposta no mesmo card.
-                    const podeExcluir = ehRascunho && !lead.bloqueado;
-                    const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
-                    const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
-                    const podeReativar = p.status === "CANCELADA";
-                    const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
-                    if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
-                    if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
-                    if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
-                    return (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.numero}</TableCell>
-                        <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                        <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
-                        <TableCell className="text-right">{fmtBRL(v)}</TableCell>
-                        <TableCell>
-                          <RowActions
-                            rowId={p.id}
-                            actions={actions}
-                            onAction={(kind) => {
-                              if (kind === "visualizar") onVisualizar(p.id);
-                              else if (kind === "aprovar") reativarProposta(p);
-                              else if (kind === "cancelar") cancelarProposta(p);
-                              else if (kind === "excluir") excluirProposta(p);
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-          <TabsContent value="aprovar" className="mt-4 space-y-3">
-            {lead.bloqueado ? (
-              <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
-                <div className="flex items-center gap-2 font-medium text-success">
-                  <Lock className="h-4 w-4" /> Card bloqueado — proposta aprovada
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Este lead já foi enviado ao Comercial. Não é possível aprovar outra proposta.
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Selecione <strong>uma</strong> proposta para aprovar. Ela será
-                  enviada ao <strong>Comercial</strong> e o card ficará bloqueado.
-                  A geração do contrato (e indicação de financiamento) acontece no Comercial.
-                </div>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nº</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead className="text-right">Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lead.propostas.map((p) => {
-                        const v = calcPrecificacao(p).valorFinal || 0;
-                        const podeAprovar = ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
-                        return (
-                          <TableRow key={p.id}>
-                            <TableCell className="font-medium">{p.numero}</TableCell>
-                            <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                            <TableCell className="text-right">{fmtBRL(v)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant={podeAprovar ? "default" : "outline"}
-                                disabled={!podeAprovar}
-                                onClick={() => setAprovando(p)}
-                                className="gap-1"
-                              >
-                                <Check className="h-4 w-4" /> Aprovar
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Fechar</Button>

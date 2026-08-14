@@ -120,6 +120,9 @@ export function AppLayout() {
         </div>
       </header>
 
+      {/* Barra de páginas abertas — topo, logo abaixo do header */}
+      <WorkspaceTabBar />
+
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -130,9 +133,6 @@ export function AppLayout() {
           </main>
         </div>
       </div>
-
-      {/* Barra de páginas abertas — rodapé fixo */}
-      <WorkspaceTabBar />
 
 
 

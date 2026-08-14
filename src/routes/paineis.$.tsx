@@ -6,8 +6,9 @@ export const Route = createFileRoute("/paineis/$")({
   beforeLoad: ({ params }) => {
     const rest = (params as { _splat?: string })._splat ?? "";
     throw redirect({
-      to: rest ? `/analytics/${rest}` : "/analytics",
+      to: (rest ? `/analytics/${rest}` : "/analytics") as string,
       replace: true,
     });
+
   },
 });

@@ -78,8 +78,14 @@ export function percentualParaParametro(parametro: number, pol: ComissaoPolicy =
 
 /**
  * Calcula a comissão prevista da proposta.
- * Além do percentual da faixa, o consultor recebe `bonusExcedentePct`% do
- * valor a maior — o que passar do parâmetro base (padrão R$ 2.500/kWp).
+ *
+ * Regra oficial:
+ * - percentual da faixa aplicado sobre o valor do sistema NO PARÂMETRO BASE
+ *   (parametroBase × potência, padrão R$ 2.500/kWp);
+ * - mais `bonusExcedentePct`% (padrão 50%) de tudo que for vendido acima
+ *   desse valor base.
+ *
+ * Ex.: base R$ 10.000 → 6% = R$ 600. Vendido por R$ 12.000 → R$ 600 + R$ 1.000.
  */
 export function calcularComissao(
   parametro: number,
@@ -89,10 +95,12 @@ export function calcularComissao(
   potenciaKwp = 0,
 ): { percentual: number; base: number; valor: number; excedente: number; bonus: number; total: number } {
   const percentual = percentualParaParametro(parametro, pol);
-  const base = pol.base === "VALOR_BRUTO" ? valorBruto : valorFinal;
+  const referencia = pol.base === "VALOR_BRUTO" ? valorBruto : valorFinal;
+  const base = potenciaKwp > 0 ? pol.parametroBase * potenciaKwp : referencia;
   const valor = (base * percentual) / 100;
-  const excedente = Math.max(0, (parametro - pol.parametroBase) * (potenciaKwp || 0));
+  const excedente = Math.max(0, referencia - base);
   const bonus = (excedente * pol.bonusExcedentePct) / 100;
   return { percentual, base, valor, excedente, bonus, total: valor + bonus };
 }
+
 

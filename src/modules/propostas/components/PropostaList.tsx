@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Eye, Copy, Trash2, Sparkles, LayoutGrid, Table as TableIcon,
   Lock, Search, FilterX, Columns3, GripVertical, ArrowUp, ArrowDown,
-  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw, FileText, ArrowRight,
+  X, Check, Pencil, FilePlus2, MoreVertical, Ban, RotateCcw, FileText, ArrowRight, ArrowLeft,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1125,6 +1125,14 @@ function LeadDetail({
         {/* Faixa de identificação */}
         <DialogHeader className="space-y-0 bg-meta-bar px-5 py-4 text-meta-bar-foreground">
           <DialogTitle className="flex flex-wrap items-center gap-3 text-left">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onClose}
+              className="h-9 gap-1 bg-red-500 text-xs font-semibold text-white hover:bg-red-600"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </Button>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
               {iniciais || "?"}
             </span>
@@ -1296,7 +1304,12 @@ function LeadDetail({
         </div>
 
         <DialogFooter className="border-t px-5 py-3">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button
+            onClick={onClose}
+            className="gap-1 bg-red-500 font-semibold text-white hover:bg-red-600"
+          >
+            <X className="h-4 w-4" /> Fechar
+          </Button>
         </DialogFooter>
       </DialogContent>
       <AprovarPropostaDialog

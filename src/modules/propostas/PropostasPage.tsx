@@ -1957,20 +1957,23 @@ function PropostaSheet({
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-success/30 bg-success/10 p-3">
               <div className="text-xs">
-                <div className="font-semibold text-foreground">Comissão prevista do consultor</div>
+                <div className="font-semibold text-foreground">Ganho previsto do consultor</div>
                 <div className="text-muted-foreground">
-                  Faixa aplicada: até {fmtBRL(comissao.percentual === comissaoPolicy.percentualAcima
-                    ? (comissaoPolicy.faixas[comissaoPolicy.faixas.length - 1]?.ateParametro ?? 0)
-                    : (comissaoPolicy.faixas.find((f) => (p.parametroPorKwp || 0) <= f.ateParametro)?.ateParametro ?? 0))} R$/kWp
-                  {" · "}base {comissaoPolicy.base === "VALOR_BRUTO" ? "valor bruto" : "valor final"}
+                  Comissão {fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}
+                  {comissao.excedente > 0 && (
+                    <> {" · "}bônus {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% sobre o valor a maior ({fmtBRL(comissao.excedente)}) acima de {fmtBRL(comissaoPolicy.parametroBase)}/kWp</>
+                  )}
                   {" · "}<Link to="/configuracoes" hash="tab=comissionamento" className="underline">editar política</Link>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-base font-semibold text-success">{fmtBRL(comissao.valor)}</div>
-                <div className="text-[11px] text-muted-foreground">{fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}</div>
+                <div className="text-base font-semibold text-success">{fmtBRL(comissao.total)}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  comissão {fmtBRL(comissao.valor)}{comissao.bonus > 0 ? ` + bônus ${fmtBRL(comissao.bonus)}` : ""}
+                </div>
               </div>
             </div>
+
           </Bloco>
 
           {/* BLOCO 8 — Custos */}

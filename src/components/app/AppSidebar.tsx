@@ -141,7 +141,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              title={moduloAtual ? `Módulo: ${moduloAtual.label}` : "Selecionar módulo"}
+              title={moduloAtual ? `Módulo: ${moduloAtual.label}` : "Início — selecionar módulo"}
               className={`flex w-full items-center gap-2 rounded-md border bg-muted/40 text-left text-[12px] font-semibold text-foreground transition-colors hover:bg-muted ${
                 collapsed ? "justify-center px-0 py-2" : "px-2.5 py-2"
               }`}
@@ -149,13 +149,20 @@ export function AppSidebar() {
               {ModuloIcon && <ModuloIcon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />}
               {!collapsed && (
                 <>
-                  <span className="min-w-0 flex-1 truncate">{moduloAtual?.label ?? "Módulo"}</span>
+                  <span className="min-w-0 flex-1 truncate">{moduloAtual?.label ?? "Início"}</span>
                   <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </>
               )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuItem onSelect={voltarInicio} className="gap-2 text-[12px]">
+              <Home className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="flex-1 truncate">Início</span>
+              {modoInicio && <Check className="h-3.5 w-3.5 text-primary" />}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
             {SECOES.map((sec, i) => {
               const itens = sec.macros
                 .map((k) => modulos.find((m) => m.key === k))

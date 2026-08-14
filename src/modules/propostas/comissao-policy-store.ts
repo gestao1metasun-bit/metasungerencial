@@ -21,6 +21,8 @@ export type ComissaoPolicy = {
   parametroBase: number;
   /** % do valor a maior (acima do parâmetro base) pago ao consultor, além da comissão. */
   bonusExcedentePct: number;
+  /** Parâmetro mínimo (R$/kWp) que o consultor pode aplicar sem autorização do superior. */
+  parametroMinimoSemAutorizacao: number;
 };
 
 const KEY = "ms.fv.comissao_policy.v2";
@@ -30,6 +32,7 @@ const DEFAULT: ComissaoPolicy = {
   percentualAcima: 6,
   parametroBase: 2500,
   bonusExcedentePct: 50,
+  parametroMinimoSemAutorizacao: 2500,
   faixas: [
     { id: "f1", ateParametro: 2100, percentual: 3 },
     { id: "f2", ateParametro: 2300, percentual: 4 },

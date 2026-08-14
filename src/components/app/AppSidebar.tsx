@@ -188,7 +188,7 @@ export function AppSidebar() {
                 className={`block truncate rounded py-1.5 pl-3 pr-1.5 text-[12px] transition-colors ${
                   abaAtiva
                     ? "bg-primary/10 font-semibold text-primary"
-                    : "text-foreground/90 hover:bg-muted/70"
+                    : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground"
                 }`}
               >
                 {t.label}
@@ -206,7 +206,9 @@ export function AppSidebar() {
             <div key={`${n.to}-${n.ordem}`}>
               <div
                 className={`group relative flex items-center rounded-md transition-colors ${
-                  active ? "bg-primary/10 font-semibold text-primary" : "text-foreground/90 hover:bg-muted/70"
+                  active
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground [&_svg]:hover:text-meta-bar-foreground"
                 }`}
               >
                 {active && (
@@ -254,7 +256,7 @@ export function AppSidebar() {
                         className={`block truncate rounded py-1 pl-2 pr-1.5 text-[11.5px] transition-colors ${
                           abaAtiva
                             ? "bg-primary/10 font-semibold text-primary"
-                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                            : "text-muted-foreground hover:bg-meta-bar hover:text-meta-bar-foreground"
                         }`}
                       >
                         {t.label}

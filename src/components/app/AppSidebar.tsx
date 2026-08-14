@@ -163,18 +163,11 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r bg-card md:flex ${
+      className={`sticky top-11 z-30 hidden h-[calc(100vh-2.75rem)] shrink-0 flex-col border-r bg-card md:flex ${
         collapsed ? "w-14" : "w-60"
       } transition-[width] duration-150`}
     >
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar px-3 text-meta-bar-foreground">
-        <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
-        {!collapsed && (
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-meta-bar-foreground/70">
-            Gerencial
-          </span>
-        )}
-      </div>
+
 
       <nav className="flex-1 space-y-3 overflow-y-auto py-3">
         {SECOES.map((sec) => {

@@ -1977,10 +1977,11 @@ function PropostaSheet({
               <div className="text-xs">
                 <div className="font-semibold text-foreground">Ganho previsto do consultor</div>
                 <div className="text-muted-foreground">
-                  Comissão {fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}
+                  {fmtNum(comissao.percentual, 2)}% sobre o valor no parâmetro base ({fmtBRL(comissaoPolicy.parametroBase)}/kWp = {fmtBRL(comissao.base)})
                   {comissao.excedente > 0 && (
-                    <> {" · "}bônus {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% sobre o valor a maior ({fmtBRL(comissao.excedente)}) acima de {fmtBRL(comissaoPolicy.parametroBase)}/kWp</>
+                    <> {" · "}+ {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% da diferença vendida a maior ({fmtBRL(comissao.excedente)})</>
                   )}
+
                   {" · "}<Link to="/configuracoes" hash="tab=comissionamento" className="underline">editar política</Link>
                 </div>
               </div>

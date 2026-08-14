@@ -2057,8 +2057,11 @@ function PropostaSheet({
               custos={p.custos}
             />
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="final" className="space-y-4">
           {/* BLOCO 10 — Observações */}
+
 
           <Bloco icon={<FileText className="h-4 w-4" />} title="10. Observações">
             <div className="grid gap-3 md:grid-cols-2">

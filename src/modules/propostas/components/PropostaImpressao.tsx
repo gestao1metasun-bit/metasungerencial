@@ -40,6 +40,7 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
           backgroundColor: "#ffffff",
           useCORS: true,
           logging: false,
+          onclone: (doc) => normalizarCores(doc),
         });
         const img = canvas.toDataURL("image/jpeg", 0.92);
         const altura = Math.min((canvas.height * larguraA4) / canvas.width, alturaA4);

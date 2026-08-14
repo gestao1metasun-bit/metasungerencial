@@ -121,6 +121,11 @@ export function WorkspaceTabBar() {
     if (next && id === activeId) void navigate({ to: next.to });
   };
 
+  const handleCloseAll = () => {
+    closeAll();
+    void navigate({ to: "/dashboard" });
+  };
+
   const onReload = () => {
     void router.invalidate();
   };

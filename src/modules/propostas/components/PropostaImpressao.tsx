@@ -1,6 +1,8 @@
-// PropostaImpressao — visualização imprimível (PDF via window.print).
+// PropostaImpressao — visualização imprimível (impressão + download real de PDF).
 // Modelo oficial único: Meta Sun 2026.
-import { Printer, Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { Printer, Download, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { type PropostaFV } from "@/modules/propostas/store";

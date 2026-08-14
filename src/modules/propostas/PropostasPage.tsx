@@ -1635,7 +1635,8 @@ function PropostaSheet({
 
 
         <Tabs defaultValue="localizacao" className="pt-4">
-          <TabsList className="sticky top-0 z-20 flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-md border bg-muted/60 p-1 shadow-sm [scrollbar-width:thin]">
+          <TabsList className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-md border bg-muted/60 p-1 shadow-sm [scrollbar-width:thin]">
+
             <TabsTrigger value="localizacao" className="shrink-0 whitespace-nowrap">1. Localização</TabsTrigger>
             <TabsTrigger value="fatura" className="shrink-0 whitespace-nowrap">2. Fatura</TabsTrigger>
             <TabsTrigger value="consumo" className="shrink-0 whitespace-nowrap">3. Consumo</TabsTrigger>

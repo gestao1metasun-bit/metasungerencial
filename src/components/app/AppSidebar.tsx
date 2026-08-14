@@ -163,17 +163,32 @@ export function AppSidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {!collapsed && moduloAtual && (
-          <Link
-            to={moduloAtual.to}
-            className="mt-1 block truncate rounded px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-          >
-            Abrir {moduloAtual.label}
-          </Link>
-        )}
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+        {/* Abas do módulo selecionado aparecem direto, sem repetir o nome do módulo */}
+        {!collapsed &&
+          abasDoModulo.map((t) => {
+            const destino = t.to ?? moduloAtual!.to;
+            const abaAtiva = t.to
+              ? path === t.to
+              : path === moduloAtual!.to && (tabAtiva || ROUTE_TABS[moduloAtual!.to]?.default) === t.value;
+            return (
+              <Link
+                key={`mod-${t.value}`}
+                to={destino}
+                hash={t.to ? undefined : `tab=${t.value}`}
+                className={`block truncate rounded py-1.5 pl-3 pr-1.5 text-[12px] transition-colors ${
+                  abaAtiva
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-foreground/90 hover:bg-muted/70"
+                }`}
+              >
+                {t.label}
+              </Link>
+            );
+          })}
+
         {filhos.map((n) => {
           const active = path === n.to;
           const ItemIcon = n.icon;

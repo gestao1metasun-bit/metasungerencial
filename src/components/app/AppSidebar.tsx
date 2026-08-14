@@ -98,8 +98,15 @@ export function AppSidebar() {
     });
   }
 
+  /** abas da rota principal do módulo — exibidas direto, sem repetir o nome do módulo */
+  const abasDoModulo = moduloAtual
+    ? (ROUTE_TABS[moduloAtual.to]?.tabs ?? []).filter((t) => !t.hidden)
+    : [];
+
   const filhos = moduloAtual
-    ? NAV_ITEMS.filter((n) => n.macro === moduloAtual.key).sort((a, b) => a.ordem - b.ordem)
+    ? NAV_ITEMS.filter((n) => n.macro === moduloAtual.key && n.to !== moduloAtual.to).sort(
+        (a, b) => a.ordem - b.ordem,
+      )
     : [];
 
   const ModuloIcon = moduloAtual?.icon;

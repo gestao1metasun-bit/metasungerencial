@@ -1,33 +1,40 @@
 /**
  * AppSidebar — menu lateral corporativo (Meta Sun).
  *
- * Navegação mestra por macro módulo, com submenus em accordion.
- * Mudança apenas visual/estrutural: rotas e permissões seguem vindo de
- * `nav-structure.ts` + `identidade.ts`.
+ * Seletor de módulo no topo: a sidebar exibe apenas o módulo selecionado
+ * (Financeiro, Comercial, Engenharia, Suprimentos...), com seus itens e
+ * as respectivas abas como subitens.
+ * Rotas e permissões seguem vindo de `nav-structure.ts` + `identidade.ts`.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronDown, ChevronsLeft, ChevronsRight, Check } from "lucide-react";
 import { MACRO_MODULES, NAV_ITEMS, macroAtivoPorRota, type MacroKey } from "@/lib/nav-structure";
 import { ROUTE_TABS } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const LS_KEY = "ui.sidebar.collapsed.v1";
-const LS_SECOES = "ui.sidebar.secoes.v1";
+const LS_MODULO = "ui.sidebar.modulo.v1";
 
-/** Agrupamento visual dos macros (não altera rotas). */
-type Secao = { id: string; label: string; macros: MacroKey[]; defaultOpen: boolean };
+/** Agrupamento visual dos macros no seletor (não altera rotas). */
+type Secao = { id: string; label: string; macros: MacroKey[] };
 
 const SECOES: Secao[] = [
   {
     id: "operacao",
     label: "Operação",
     macros: ["comercial", "financeiro", "financiamentos", "suprimentos", "engenharia", "posvenda", "aprovacoes"],
-    defaultOpen: true,
   },
-  { id: "gestao", label: "Gestão & Análise", macros: ["analytics"], defaultOpen: true },
-  { id: "estrutura", label: "Estrutura", macros: ["cadastros", "configuracoes"], defaultOpen: false },
+  { id: "gestao", label: "Gestão & Análise", macros: ["analytics"] },
+  { id: "estrutura", label: "Estrutura", macros: ["cadastros", "configuracoes"] },
 ];
 
 export function AppSidebar() {
@@ -48,33 +55,6 @@ export function AppSidebar() {
   });
 
   const macroAtivo = macroAtivoPorRota(path);
-  const [aberto, setAberto] = useState<MacroKey | null>(macroAtivo?.key ?? null);
-  const macroAberto = aberto ?? macroAtivo?.key ?? null;
-
-  /** item (3º nível) expandido — accordion também aqui */
-  const [subAberto, setSubAberto] = useState<string | null>(null);
-  const itemAberto = subAberto ?? (ROUTE_TABS[path] ? path : null);
-
-  const [secoesAbertas, setSecoesAbertas] = useState<Record<string, boolean>>(() => {
-    const base = Object.fromEntries(SECOES.map((s) => [s.id, s.defaultOpen]));
-    if (typeof window === "undefined") return base;
-    try {
-      const raw = window.localStorage.getItem(LS_SECOES);
-      return raw ? { ...base, ...JSON.parse(raw) } : base;
-    } catch {
-      return base;
-    }
-  });
-
-  // Seção que contém a rota atual sempre abre.
-  useEffect(() => {
-    if (!macroAtivo) return;
-    const sec = SECOES.find((s) => s.macros.includes(macroAtivo.key));
-    if (sec && !secoesAbertas[sec.id]) {
-      setSecoesAbertas((prev) => ({ ...prev, [sec.id]: true }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [macroAtivo?.key]);
 
   const modulos = useMemo(() => {
     if (!identidade.sessionLoading && identidade.isAuthenticated && identidade.role === "usuario") {
@@ -82,6 +62,33 @@ export function AppSidebar() {
     }
     return MACRO_MODULES;
   }, [identidade.sessionLoading, identidade.isAuthenticated, identidade.role]);
+
+  const [moduloSel, setModuloSel] = useState<MacroKey | null>(() => {
+    if (typeof window === "undefined") return null;
+    return (window.localStorage.getItem(LS_MODULO) as MacroKey) || null;
+  });
+
+  // Navegou para outro módulo → o seletor acompanha a rota.
+  useEffect(() => {
+    if (macroAtivo && macroAtivo.key !== moduloSel) {
+      setModuloSel(macroAtivo.key);
+      try { window.localStorage.setItem(LS_MODULO, macroAtivo.key); } catch { /* ignore */ }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [macroAtivo?.key]);
+
+  const moduloAtual =
+    modulos.find((m) => m.key === moduloSel) ?? modulos.find((m) => m.key === macroAtivo?.key) ?? modulos[0];
+
+  /** item (2º nível) expandido — accordion */
+  const [subAberto, setSubAberto] = useState<string | null>(null);
+  const itemAberto = subAberto ?? (ROUTE_TABS[path] ? path : null);
+
+  function selecionarModulo(key: MacroKey) {
+    setModuloSel(key);
+    setSubAberto(null);
+    try { window.localStorage.setItem(LS_MODULO, key); } catch { /* ignore */ }
+  }
 
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -91,133 +98,11 @@ export function AppSidebar() {
     });
   }
 
-  function toggleSecao(id: string) {
-    setSecoesAbertas((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try { window.localStorage.setItem(LS_SECOES, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  }
+  const filhos = moduloAtual
+    ? NAV_ITEMS.filter((n) => n.macro === moduloAtual.key).sort((a, b) => a.ordem - b.ordem)
+    : [];
 
-  function renderMacro(m: (typeof MACRO_MODULES)[number]) {
-    const Icon = m.icon;
-    const isActiveMacro = macroAtivo?.key === m.key;
-    const isOpen = !collapsed && macroAberto === m.key;
-    const filhos = NAV_ITEMS.filter((n) => n.macro === m.key).sort((a, b) => a.ordem - b.ordem);
-
-    return (
-      <div key={m.key} className="px-2">
-        <div
-          className={`group relative flex items-center rounded-md transition-colors ${
-            isActiveMacro
-              ? "bg-primary/10 text-primary"
-              : "text-foreground/90 hover:bg-muted/70"
-          }`}
-        >
-          {isActiveMacro && (
-            <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-primary" aria-hidden />
-          )}
-          <Link
-            to={m.to}
-            title={m.label}
-            className={`flex min-w-0 flex-1 items-center gap-2.5 py-2 text-[12.5px] font-medium ${
-              collapsed ? "justify-center px-0" : "pl-3 pr-2"
-            }`}
-          >
-            <Icon
-              className={`h-[17px] w-[17px] shrink-0 ${
-                isActiveMacro ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              }`}
-              strokeWidth={isActiveMacro ? 2.4 : 1.9}
-            />
-            {!collapsed && <span className="truncate">{m.label}</span>}
-          </Link>
-          {!collapsed && filhos.length > 0 && (
-            <button
-              type="button"
-              aria-label={`${isOpen ? "Recolher" : "Expandir"} ${m.label}`}
-              aria-expanded={isOpen}
-              onClick={() => setAberto(isOpen ? null : m.key)}
-              className="mr-1.5 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${isOpen ? "" : "-rotate-90"}`} />
-            </button>
-          )}
-        </div>
-
-        {isOpen && (
-          <div className="relative my-1 ml-[18px] space-y-0.5 border-l border-border/70 pl-3">
-            {filhos.map((n) => {
-              const active = path === n.to;
-              const ItemIcon = n.icon;
-              const abas = (ROUTE_TABS[n.to]?.tabs ?? []).filter((t) => !t.hidden);
-              const subOpen = itemAberto === n.to && abas.length > 0;
-              return (
-                <div key={`${m.key}-${n.to}-${n.ordem}`}>
-                  <div
-                    className={`flex items-center rounded-md transition-colors ${
-                      active
-                        ? "bg-primary/10 font-semibold text-primary"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                    }`}
-                  >
-                    <Link
-                      to={n.to}
-                      onClick={() => abas.length > 0 && setSubAberto(n.to)}
-                      className="flex min-w-0 flex-1 items-center gap-2 truncate py-1.5 pl-2 pr-1 text-[11.5px]"
-                    >
-                      <ItemIcon
-                        className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : "text-muted-foreground/70"}`}
-                        strokeWidth={1.9}
-                      />
-                      <span className="truncate">{n.label}</span>
-                    </Link>
-                    {abas.length > 0 && (
-                      <button
-                        type="button"
-                        aria-label={`${subOpen ? "Recolher" : "Expandir"} ${n.label}`}
-                        aria-expanded={subOpen}
-                        onClick={() => setSubAberto(subOpen ? "" : n.to)}
-                        className="mr-1 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${subOpen ? "" : "-rotate-90"}`} />
-                      </button>
-                    )}
-                  </div>
-
-                  {subOpen && (
-                    <div className="my-0.5 ml-[14px] space-y-px border-l border-border/60 pl-2.5">
-                      {abas.map((t) => {
-                        const destino = t.to ?? n.to;
-                        const abaAtiva = t.to
-                          ? path === t.to
-                          : path === n.to && (tabAtiva || ROUTE_TABS[n.to]?.default) === t.value;
-                        return (
-                          <Link
-                            key={`${n.to}-${t.value}`}
-                            to={destino}
-                            hash={t.to ? undefined : `tab=${t.value}`}
-                            className={`block truncate rounded py-1 pl-2 pr-1.5 text-[11px] transition-colors ${
-                              abaAtiva
-                                ? "bg-primary/10 font-semibold text-primary"
-                                : "text-muted-foreground/90 hover:bg-muted/60 hover:text-foreground"
-                            }`}
-                          >
-                            {t.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-      </div>
-    );
-  }
+  const ModuloIcon = moduloAtual?.icon;
 
   return (
     <aside
@@ -225,33 +110,137 @@ export function AppSidebar() {
         collapsed ? "w-14" : "w-60"
       } transition-[width] duration-150`}
     >
+      {/* Seletor de módulo */}
+      <div className={`border-b ${collapsed ? "px-1.5 py-2" : "px-2 py-2"}`}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              title={moduloAtual ? `Módulo: ${moduloAtual.label}` : "Selecionar módulo"}
+              className={`flex w-full items-center gap-2 rounded-md border bg-muted/40 text-left text-[12px] font-semibold text-foreground transition-colors hover:bg-muted ${
+                collapsed ? "justify-center px-0 py-2" : "px-2.5 py-2"
+              }`}
+            >
+              {ModuloIcon && <ModuloIcon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />}
+              {!collapsed && (
+                <>
+                  <span className="min-w-0 flex-1 truncate">{moduloAtual?.label ?? "Módulo"}</span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            {SECOES.map((sec, i) => {
+              const itens = sec.macros
+                .map((k) => modulos.find((m) => m.key === k))
+                .filter(Boolean) as typeof MACRO_MODULES;
+              if (itens.length === 0) return null;
+              return (
+                <div key={sec.id}>
+                  {i > 0 && <DropdownMenuSeparator />}
+                  <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
+                    {sec.label}
+                  </DropdownMenuLabel>
+                  {itens.map((m) => {
+                    const Icon = m.icon;
+                    const sel = moduloAtual?.key === m.key;
+                    return (
+                      <DropdownMenuItem
+                        key={m.key}
+                        onSelect={() => selecionarModulo(m.key)}
+                        className="gap-2 text-[12px]"
+                      >
+                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="flex-1 truncate">{m.label}</span>
+                        {sel && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
+        {!collapsed && moduloAtual && (
+          <Link
+            to={moduloAtual.to}
+            className="mt-1 block truncate rounded px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          >
+            Abrir {moduloAtual.label}
+          </Link>
+        )}
+      </div>
 
-      <nav className="flex-1 space-y-3 overflow-y-auto py-3">
-        {SECOES.map((sec) => {
-          const macrosSecao = sec.macros
-            .map((k) => modulos.find((m) => m.key === k))
-            .filter(Boolean) as typeof MACRO_MODULES;
-          if (macrosSecao.length === 0) return null;
-          const aberta = collapsed ? true : secoesAbertas[sec.id];
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+        {filhos.map((n) => {
+          const active = path === n.to;
+          const ItemIcon = n.icon;
+          const abas = (ROUTE_TABS[n.to]?.tabs ?? []).filter((t) => !t.hidden);
+          const subOpen = !collapsed && itemAberto === n.to && abas.length > 0;
 
           return (
-            <div key={sec.id}>
-              {!collapsed ? (
-                <button
-                  type="button"
-                  onClick={() => toggleSecao(sec.id)}
-                  aria-expanded={aberta}
-                  className="mb-1 flex w-full items-center justify-between px-4 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70 hover:text-foreground"
+            <div key={`${n.to}-${n.ordem}`}>
+              <div
+                className={`group relative flex items-center rounded-md transition-colors ${
+                  active ? "bg-primary/10 font-semibold text-primary" : "text-foreground/90 hover:bg-muted/70"
+                }`}
+              >
+                {active && (
+                  <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-primary" aria-hidden />
+                )}
+                <Link
+                  to={n.to}
+                  title={n.label}
+                  onClick={() => abas.length > 0 && setSubAberto(n.to)}
+                  className={`flex min-w-0 flex-1 items-center gap-2 truncate py-1.5 text-[12px] ${
+                    collapsed ? "justify-center px-0" : "pl-3 pr-1"
+                  }`}
                 >
-                  <span>{sec.label}</span>
-                  <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${aberta ? "" : "-rotate-90"}`} />
-                </button>
-              ) : (
-                <div className="mx-3 mb-2 border-t border-border/60" aria-hidden />
-              )}
+                  <ItemIcon
+                    className={`h-4 w-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`}
+                    strokeWidth={active ? 2.3 : 1.9}
+                  />
+                  {!collapsed && <span className="truncate">{n.label}</span>}
+                </Link>
+                {!collapsed && abas.length > 0 && (
+                  <button
+                    type="button"
+                    aria-label={`${subOpen ? "Recolher" : "Expandir"} ${n.label}`}
+                    aria-expanded={subOpen}
+                    onClick={() => setSubAberto(subOpen ? "" : n.to)}
+                    className="mr-1 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${subOpen ? "" : "-rotate-90"}`} />
+                  </button>
+                )}
+              </div>
 
-              {aberta && <div className="space-y-0.5">{macrosSecao.map(renderMacro)}</div>}
+              {subOpen && (
+                <div className="my-0.5 ml-[19px] space-y-px border-l border-border/70 pl-2.5">
+                  {abas.map((t) => {
+                    const destino = t.to ?? n.to;
+                    const abaAtiva = t.to
+                      ? path === t.to
+                      : path === n.to && (tabAtiva || ROUTE_TABS[n.to]?.default) === t.value;
+                    return (
+                      <Link
+                        key={`${n.to}-${t.value}`}
+                        to={destino}
+                        hash={t.to ? undefined : `tab=${t.value}`}
+                        className={`block truncate rounded py-1 pl-2 pr-1.5 text-[11.5px] transition-colors ${
+                          abaAtiva
+                            ? "bg-primary/10 font-semibold text-primary"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        }`}
+                      >
+                        {t.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}

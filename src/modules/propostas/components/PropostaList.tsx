@@ -1102,6 +1102,7 @@ function LeadDetail({
   onEditar: (p: PropostaFV) => void;
 }) {
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
+  const [verCadastro, setVerCadastro] = useState(false);
   if (!lead) return null;
   const enderecoLinha = [
     lead.clienteEndereco,
@@ -1120,83 +1121,74 @@ function LeadDetail({
 
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-0">
+        {/* Faixa de identificação */}
+        <DialogHeader className="space-y-0 bg-meta-bar px-5 py-4 text-meta-bar-foreground">
+          <DialogTitle className="flex flex-wrap items-center gap-3 text-left">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
               {iniciais || "?"}
             </span>
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-base leading-tight">{lead.clienteNome}</span>
-              <span className="truncate text-[11px] font-normal text-muted-foreground">
-                {formatDoc(lead.clienteDoc || "") || "Sem documento"} · {lead.consultor || "Sem consultor"} · Lead há {lead.diasCriacao} dia(s)
+              <span className="truncate text-lg font-semibold leading-tight">{lead.clienteNome}</span>
+              <span className="truncate text-[11px] font-normal opacity-80">
+                {lead.consultor || "Sem consultor"} · {formatDoc(lead.clienteDoc || "") || "Sem documento"} · há {lead.diasCriacao} dia(s)
               </span>
             </span>
-            <Badge variant={statusVariant(lead.status)} className="ml-1 shrink-0">{lead.status}</Badge>
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+              {lead.status}
+            </span>
             {lead.bloqueado && (
-              <Badge variant="default" className="gap-1 shrink-0"><Lock className="h-3 w-3" /> Assinado</Badge>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/25 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+                <Lock className="h-3 w-3" /> Assinado
+              </span>
             )}
-            {!lead.bloqueado && (
-              <Button
-                size="sm"
-                onClick={() => onNova(presetFromLead(lead))}
-                className="ml-auto h-8 shrink-0 gap-1"
-                title="Gerar nova proposta para este cliente"
-              >
-                <FilePlus2 className="h-4 w-4" /> Gerar nova proposta
-              </Button>
-            )}
+            <span className="ml-auto flex items-center gap-2">
+              {telDigits.length >= 10 && (
+                <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
+                  <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                </Button>
+              )}
+              {!lead.bloqueado && (
+                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-8 gap-1 bg-white text-[color:var(--meta-bar)] hover:bg-white/90">
+                  <FilePlus2 className="h-4 w-4" /> Nova proposta
+                </Button>
+              )}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-4">
-          {/* KPIs */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div className="space-y-5 px-5 pb-5">
+          {/* KPIs coloridos */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
-              ["Propostas", String(lead.propostas.length)],
-              ["Em aberto", String(lead.emAberto)],
-              ["Valor da última", fmtBRL(lead.valor)],
-              ["Ticket médio", fmtBRL(ticket)],
-              ["Maior proposta", fmtBRL(maiorValor)],
-            ].map(([t, v]) => (
-              <div key={t} className="rounded-md border bg-muted/30 p-3">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{t}</div>
-                <div className="mt-1 text-sm font-semibold">{v}</div>
+              { t: "Propostas", v: String(lead.propostas.length), c: "border-l-primary" },
+              { t: "Em aberto", v: String(lead.emAberto), c: "border-l-amber-500" },
+              { t: "Valor da última", v: fmtBRL(lead.valor), c: "border-l-emerald-500" },
+              { t: "Maior proposta", v: fmtBRL(maiorValor), c: "border-l-sky-500" },
+            ].map((k) => (
+              <div key={k.t} className={`rounded-md border border-l-4 bg-card p-3 ${k.c}`}>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.t}</div>
+                <div className="mt-1 text-base font-semibold tabular-nums">{k.v}</div>
               </div>
             ))}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-12">
-            {/* Coluna principal: propostas + aprovação + linha do tempo */}
+            {/* Propostas */}
             <div className="space-y-4 lg:col-span-8">
-              <div className="rounded-md border">
-                <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Propostas ({lead.propostas.length}) — última: <strong className="text-foreground">{lead.ultima.numero}</strong>
+              <div className="overflow-hidden rounded-md border">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide">
+                    Propostas <span className="text-muted-foreground">({lead.propostas.length})</span>
                   </div>
-                  {!lead.bloqueado && (
-                    <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-7 gap-1 text-xs">
-                      <FilePlus2 className="h-3.5 w-3.5" /> Gerar nova proposta
-                    </Button>
+                  {lead.bloqueado ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                      <Lock className="h-3.5 w-3.5" /> Aprovada — card bloqueado
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">Aprove uma proposta para enviá-la ao Comercial</span>
                   )}
                 </div>
-
-                {lead.bloqueado ? (
-                  <div className="border-b border-success/40 bg-success/5 px-3 py-2 text-xs">
-                    <span className="inline-flex items-center gap-1 font-medium text-success">
-                      <Lock className="h-3.5 w-3.5" /> Card bloqueado — proposta aprovada
-                    </span>
-                    <span className="ml-2 text-muted-foreground">
-                      Este lead já foi enviado ao Comercial.
-                    </span>
-                  </div>
-                ) : (
-                  <div className="border-b bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground">
-                    Selecione <strong>uma</strong> proposta para aprovar. Ela será enviada ao{" "}
-                    <strong>Comercial</strong> e o card ficará bloqueado. A geração do contrato
-                    (e indicação de financiamento) acontece no Comercial.
-                  </div>
-                )}
 
                 <Table>
                   <TableHeader>
@@ -1205,14 +1197,13 @@ function LeadDetail({
                       <TableHead>Status</TableHead>
                       <TableHead>Criada</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
-                      <TableHead className="w-[200px] text-right">Ações</TableHead>
+                      <TableHead className="w-[180px] text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {lead.propostas.map((p) => {
                       const v = calcPrecificacao(p).valorFinal || 0;
                       const ehRascunho = p.status === "RASCUNHO";
-                      // Regra: proposta NÃO pode ser editada depois de criada.
                       const podeExcluir = ehRascunho && !lead.bloqueado;
                       const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
                       const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
@@ -1226,15 +1217,15 @@ function LeadDetail({
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.numero}</TableCell>
                           <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                          <TableCell>{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
-                          <TableCell className="text-right">{fmtBRL(v)}</TableCell>
+                          <TableCell className="text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">{fmtBRL(v)}</TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-1">
                               {podeAprovar && (
                                 <Button
                                   size="sm"
                                   onClick={() => setAprovando(p)}
-                                  className="h-7 gap-1 text-xs"
+                                  className="h-7 gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
                                 >
                                   <Check className="h-3.5 w-3.5" /> Aprovar
                                 </Button>
@@ -1257,79 +1248,54 @@ function LeadDetail({
                   </TableBody>
                 </Table>
               </div>
-
-              <div className="rounded-md border p-4">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Linha do tempo</div>
-                <div className="space-y-2">
-                  {[...lead.propostas]
-                    .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
-                    .map((p) => (
-                      <div key={p.id} className="flex items-center gap-3 border-l-2 border-primary/40 pl-3 text-xs">
-                        <span className="w-24 shrink-0 text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
-                        <span className="font-medium">{p.numero}</span>
-                        <Badge variant={statusVariant(p.status)} className="h-5">{p.status}</Badge>
-                        <span className="ml-auto font-medium">{fmtBRL(calcPrecificacao(p).valorFinal || 0)}</span>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => onVisualizar(p.id)}>
-                          Visualizar
-                        </Button>
-                      </div>
-                    ))}
-                </div>
-              </div>
             </div>
 
-            {/* Coluna lateral: contato + técnico */}
+            {/* Lateral: contato + técnico */}
             <div className="space-y-4 lg:col-span-4">
-              <div className="rounded-md border p-4">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contato</div>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-md border">
+                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">Contato</div>
+                <div className="grid grid-cols-2 gap-3 p-3">
                   <Field label="Telefone" value={lead.clienteTelefone} />
                   <Field label="E-mail" value={lead.clienteEmail} />
                   <Field label="Endereço" value={enderecoLinha} className="col-span-2" />
-                  <Field label="Cidade / UF" value={lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : ""} />
-                  <Field label="Documento" value={formatDoc(lead.clienteDoc || "")} />
                 </div>
-                {telDigits.length >= 10 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button asChild size="sm" variant="outline" className="h-7 text-xs">
-                      <a href={`tel:+55${telDigits}`}>Ligar</a>
-                    </Button>
-                    <Button asChild size="sm" variant="outline" className="h-7 text-xs">
-                      <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                    </Button>
-                    {lead.clienteEmail && (
-                      <Button asChild size="sm" variant="outline" className="h-7 text-xs">
-                        <a href={`mailto:${lead.clienteEmail}`}>E-mail</a>
-                      </Button>
-                    )}
-                  </div>
-                )}
               </div>
 
-              <div className="rounded-md border p-4">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Técnico — última proposta ({u.numero})
+              <div className="rounded-md border">
+                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                  Técnico — {u.numero}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 p-3">
                   <Field label="Potência" value={`${dimU.potenciaFinalKwp.toFixed(2)} kWp`} />
                   <Field label="Módulos" value={`${dimU.qtdFinal} × ${u.moduloPotenciaWp || 0} W`} />
-                  <Field label="Marca dos módulos" value={u.moduloMarca} />
                   <Field label="Geração média" value={`${dimU.geracaoMensalKwh.toFixed(0)} kWh/mês`} />
-                  <Field label="Área estimada" value={`${dimU.areaTotal.toFixed(1)} m²`} />
                   <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Dados cadastrais */}
-          <div className="rounded-md border p-4">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dados cadastrais</div>
-            <DadosEditaveis lead={lead} />
+          {/* Dados cadastrais — recolhido por padrão */}
+          <div className="rounded-md border">
+            <button
+              type="button"
+              onClick={() => setVerCadastro((s) => !s)}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-muted/40"
+            >
+              Dados cadastrais
+              <span className="text-[11px] font-normal normal-case text-muted-foreground">
+                {verCadastro ? "Ocultar" : "Editar"}
+              </span>
+            </button>
+            {verCadastro && (
+              <div className="border-t p-4">
+                <DadosEditaveis lead={lead} />
+              </div>
+            )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t px-5 py-3">
           <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>

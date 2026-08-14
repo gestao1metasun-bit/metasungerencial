@@ -1304,7 +1304,12 @@ function LeadDetail({
         </div>
 
         <DialogFooter className="border-t px-5 py-3">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button
+            onClick={onClose}
+            className="gap-1 bg-red-500 font-semibold text-white hover:bg-red-600"
+          >
+            <X className="h-4 w-4" /> Fechar
+          </Button>
         </DialogFooter>
       </DialogContent>
       <AprovarPropostaDialog

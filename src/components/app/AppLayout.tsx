@@ -2,7 +2,6 @@ import { Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { LogOut, ChevronDown, LogIn, PanelRight } from "lucide-react";
 import { NotificacoesBell } from "@/components/app/NotificacoesBell";
-import logoMetaSun from "@/assets/logo-metasun.png";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -11,7 +10,7 @@ import { useIdentidade } from "@/lib/identidade";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
-import { TopNav, MacroNav } from "@/components/app/TopNav";
+import { TopNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
@@ -65,18 +64,14 @@ export function AppLayout() {
   const [contextOpen, setContextOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+    <div className="flex min-h-screen w-full bg-background text-foreground">
+      <AppSidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
       {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
       <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
-        <div className="flex shrink-0 items-center gap-2 pr-3 mr-1 border-r border-white/15">
-          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70 hidden xl:inline">
-            Gerencial
-          </span>
+        <div className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight text-white/90">
+          Meta Sun Gerencial
         </div>
-
-        {/* Macro módulos ERP — sempre visíveis (TOTVS RM/Sankhya/SAP) */}
-        <MacroNav />
 
         <div className="flex shrink-0 items-center gap-1.5 pl-2 ml-1 border-l border-white/15">
           <FavoritosMenu />
@@ -127,12 +122,9 @@ export function AppLayout() {
       <TopNav />
       <WorkspaceTabBar />
 
-      <div className="flex flex-1 items-start">
-        <AppSidebar />
-        <main className="min-w-0 flex-1 overflow-x-hidden p-2">
-          <Outlet />
-        </main>
-      </div>
+      <main className="min-w-0 flex-1 overflow-x-hidden p-3">
+        <Outlet />
+      </main>
 
       {/* Painel contextual sob demanda — drawer lateral direita */}
       <Sheet open={contextOpen} onOpenChange={setContextOpen}>
@@ -145,6 +137,7 @@ export function AppLayout() {
       </Sheet>
 
       <CommandPalette />
+      </div>
     </div>
   );
 }

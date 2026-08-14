@@ -145,7 +145,6 @@ export function AppLayout() {
       </Sheet>
 
       <CommandPalette />
-      </div>
     </div>
   );
 }

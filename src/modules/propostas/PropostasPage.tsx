@@ -1998,54 +1998,11 @@ function PropostaSheet({
 
           </Bloco>
 
-          {/* BLOCO 8 — Custos */}
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="8. Composição de Custos" badge={fmtBRL(res.custoTotal)}>
-            <div className="mb-2 flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={regenerarCustos}><Calculator className="mr-1 h-3 w-3" /> Recalcular sugeridos</Button>
-              <Button variant="outline" size="sm" onClick={addLinhaCustoVazia}><Plus className="mr-1 h-3 w-3" /> Adicionar linha</Button>
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead className="text-right">Sugerido</TableHead>
-                    <TableHead className="text-right">Qtd real</TableHead>
-                    <TableHead className="text-right">Valor unit.</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {p.custos.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground">Sem custos. Clique em <em>Recalcular sugeridos</em>.</TableCell></TableRow>
-                  )}
-                  {p.custos.map((l, i) => (
-                    <TableRow key={l.id + i}>
-                      <TableCell><Input value={l.nome} onChange={(e) => setLinhaCusto(i, { nome: e.target.value })} className="h-8" /></TableCell>
-                      <TableCell>
-                        <Select value={l.tipo} onValueChange={(v) => setLinhaCusto(i, { tipo: v as LinhaCusto["tipo"] })}>
-                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {["MATERIAL","SERVICO","OUTRO"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">{fmtNum(l.qtdSugerida, 2)}</TableCell>
-                      <TableCell><Input type="number" step="0.01" value={l.qtdReal} onChange={(e) => setLinhaCusto(i, { qtdReal: +e.target.value })} className="h-8 text-right" /></TableCell>
-                      <TableCell><Input type="number" step="0.01" value={l.valorUnit} onChange={(e) => setLinhaCusto(i, { valorUnit: +e.target.value })} className="h-8 text-right" /></TableCell>
-                      <TableCell className="text-right font-medium">{fmtBRL(l.total)}</TableCell>
-                      <TableCell><Button variant="ghost" size="icon" onClick={() => delLinhaCusto(i)} className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 9 — Resultado */}
-          <Bloco icon={<DollarSign className="h-4 w-4" />} title="9. Resultado e Margem">
+          <TabsContent value="resultado" className="space-y-4">
+          {/* BLOCO 8 — Resultado */}
+          <Bloco icon={<DollarSign className="h-4 w-4" />} title="8. Resultado e Margem">
             <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
               <ResultCard label="Valor final" value={fmtBRL(res.valorFinal)} />
               <ResultCard label="Custo total" value={fmtBRL(res.custoTotal)} />

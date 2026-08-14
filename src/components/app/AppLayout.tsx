@@ -124,13 +124,16 @@ export function AppLayout() {
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <MaintenanceBanner />
-          <WorkspaceTabBar />
 
-          <main className="min-w-0 flex-1 overflow-x-hidden p-3">
+          <main className="min-w-0 flex-1 overflow-x-hidden p-3 pb-10">
             <Outlet />
           </main>
         </div>
       </div>
+
+      {/* Barra de páginas abertas — rodapé fixo */}
+      <WorkspaceTabBar />
+
 
 
       {/* Painel contextual sob demanda — drawer lateral direita */}

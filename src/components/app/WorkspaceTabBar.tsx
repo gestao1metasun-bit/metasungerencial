@@ -21,6 +21,7 @@ import {
   closeOthers,
   closeToRight,
   closeToLeft,
+  closeAll,
   togglePin,
   reopenLast,
   setActive,

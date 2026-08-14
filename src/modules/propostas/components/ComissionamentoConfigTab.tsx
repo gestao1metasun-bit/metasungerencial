@@ -19,6 +19,8 @@ export function ComissionamentoConfigTab() {
   const [faixas, setFaixas] = useState<FaixaComissao[]>(pol.faixas);
   const [acima, setAcima] = useState<number>(pol.percentualAcima);
   const [base, setBase] = useState<typeof pol.base>(pol.base);
+  const [parametroBase, setParametroBase] = useState<number>(pol.parametroBase);
+  const [bonusPct, setBonusPct] = useState<number>(pol.bonusExcedentePct);
 
   function setFaixa(i: number, patch: Partial<FaixaComissao>) {
     setFaixas((cur) => cur.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
@@ -28,10 +30,17 @@ export function ComissionamentoConfigTab() {
     const limpas = faixas
       .filter((f) => f.ateParametro > 0)
       .sort((a, b) => a.ateParametro - b.ateParametro);
-    setComissaoPolicy({ faixas: limpas, percentualAcima: acima, base });
+    setComissaoPolicy({
+      faixas: limpas,
+      percentualAcima: acima,
+      base,
+      parametroBase,
+      bonusExcedentePct: bonusPct,
+    });
     setFaixas(limpas);
     toast.success("Política de comissionamento atualizada.");
   }
+
 
   return (
     <Card className="bg-[image:var(--gradient-card)] p-6">
@@ -65,7 +74,28 @@ export function ComissionamentoConfigTab() {
             onChange={(e) => setAcima(+e.target.value)}
           />
         </div>
+        <div>
+          <Label>Parâmetro base do bônus (R$/kWp)</Label>
+          <Input
+            className="mt-1"
+            type="number"
+            step="10"
+            value={parametroBase}
+            onChange={(e) => setParametroBase(+e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Bônus sobre o valor a maior (%)</Label>
+          <Input
+            className="mt-1"
+            type="number"
+            step="1"
+            value={bonusPct}
+            onChange={(e) => setBonusPct(+e.target.value)}
+          />
+        </div>
       </div>
+
 
       <div className="mt-5 overflow-x-auto">
         <Table>

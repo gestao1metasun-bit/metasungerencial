@@ -74,6 +74,7 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
+import { PropostaGraficos } from "./components/PropostaGraficos";
 import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
 
@@ -1405,7 +1406,7 @@ function PropostaSheet({
   const res = calcResultado(p);
   const potTotalInv = potenciaInversores(p, inversores);
   const comissaoPolicy = useComissaoPolicy();
-  const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy);
+  const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy, dim.potenciaFinalKwp);
 
   // sincroniza qtd final em modulosQtd
   useEffect(() => {
@@ -1614,20 +1615,21 @@ function PropostaSheet({
   const erros = validarParaGeracao(p);
 
   return (
-    <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-5xl">
-        <SheetHeader className="sticky top-0 z-10 -mx-6 -mt-6 border-b bg-background px-6 py-4">
-          <SheetTitle className="flex items-center justify-between">
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-h-[92vh] w-[96vw] max-w-6xl overflow-y-auto px-6">
+        <DialogHeader className="sticky top-0 z-10 -mx-6 -mt-6 border-b bg-background px-6 py-4">
+          <DialogTitle className="flex items-center justify-between">
             <span>Proposta {p.numero}</span>
             <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
-          </SheetTitle>
+          </DialogTitle>
           {erros.length > 0 && (
             <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
               <div><strong>Faltam:</strong> {erros.join(", ")}.</div>
             </div>
           )}
-        </SheetHeader>
+        </DialogHeader>
+
 
         <div className="space-y-4 pt-4">
           {/* BLOCO 2 — Localização */}
@@ -1957,20 +1959,23 @@ function PropostaSheet({
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-success/30 bg-success/10 p-3">
               <div className="text-xs">
-                <div className="font-semibold text-foreground">Comissão prevista do consultor</div>
+                <div className="font-semibold text-foreground">Ganho previsto do consultor</div>
                 <div className="text-muted-foreground">
-                  Faixa aplicada: até {fmtBRL(comissao.percentual === comissaoPolicy.percentualAcima
-                    ? (comissaoPolicy.faixas[comissaoPolicy.faixas.length - 1]?.ateParametro ?? 0)
-                    : (comissaoPolicy.faixas.find((f) => (p.parametroPorKwp || 0) <= f.ateParametro)?.ateParametro ?? 0))} R$/kWp
-                  {" · "}base {comissaoPolicy.base === "VALOR_BRUTO" ? "valor bruto" : "valor final"}
+                  Comissão {fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}
+                  {comissao.excedente > 0 && (
+                    <> {" · "}bônus {fmtNum(comissaoPolicy.bonusExcedentePct, 0)}% sobre o valor a maior ({fmtBRL(comissao.excedente)}) acima de {fmtBRL(comissaoPolicy.parametroBase)}/kWp</>
+                  )}
                   {" · "}<Link to="/configuracoes" hash="tab=comissionamento" className="underline">editar política</Link>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-base font-semibold text-success">{fmtBRL(comissao.valor)}</div>
-                <div className="text-[11px] text-muted-foreground">{fmtNum(comissao.percentual, 2)}% sobre {fmtBRL(comissao.base)}</div>
+                <div className="text-base font-semibold text-success">{fmtBRL(comissao.total)}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  comissão {fmtBRL(comissao.valor)}{comissao.bonus > 0 ? ` + bônus ${fmtBRL(comissao.bonus)}` : ""}
+                </div>
               </div>
             </div>
+
           </Bloco>
 
           {/* BLOCO 8 — Custos */}
@@ -2041,7 +2046,20 @@ function PropostaSheet({
             )}
           </Bloco>
 
+          {/* BLOCO 9.1 — Gráficos */}
+          <Bloco icon={<Calculator className="h-4 w-4" />} title="9.1 Gráficos da Proposta">
+            <PropostaGraficos
+              custoTotal={res.custoTotal}
+              lucroBruto={res.lucroBruto}
+              valorFinal={res.valorFinal}
+              comissaoValor={comissao.valor}
+              bonusValor={comissao.bonus}
+              custos={p.custos}
+            />
+          </Bloco>
+
           {/* BLOCO 10 — Observações */}
+
           <Bloco icon={<FileText className="h-4 w-4" />} title="10. Observações">
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Observações internas (não aparecem na proposta)">
@@ -2088,8 +2106,9 @@ function PropostaSheet({
             <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
+
   );
 }
 

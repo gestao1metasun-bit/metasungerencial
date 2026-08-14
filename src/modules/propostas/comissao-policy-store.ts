@@ -17,18 +17,23 @@ export type ComissaoPolicy = {
   percentualAcima: number;
   /** Base de cálculo da comissão. */
   base: "VALOR_FINAL" | "VALOR_BRUTO";
+  /** Parâmetro de referência (R$/kWp) a partir do qual há bônus sobre o excedente. */
+  parametroBase: number;
+  /** % do valor a maior (acima do parâmetro base) pago ao consultor, além da comissão. */
+  bonusExcedentePct: number;
 };
 
-const KEY = "ms.fv.comissao_policy.v1";
+const KEY = "ms.fv.comissao_policy.v2";
 
 const DEFAULT: ComissaoPolicy = {
   base: "VALOR_FINAL",
-  percentualAcima: 5,
+  percentualAcima: 6,
+  parametroBase: 2500,
+  bonusExcedentePct: 50,
   faixas: [
-    { id: "f1", ateParametro: 2200, percentual: 1 },
-    { id: "f2", ateParametro: 2500, percentual: 2 },
-    { id: "f3", ateParametro: 2800, percentual: 3 },
-    { id: "f4", ateParametro: 3200, percentual: 4 },
+    { id: "f1", ateParametro: 2100, percentual: 3 },
+    { id: "f2", ateParametro: 2300, percentual: 4 },
+    { id: "f3", ateParametro: 2440, percentual: 5 },
   ],
 };
 
@@ -71,14 +76,23 @@ export function percentualParaParametro(parametro: number, pol: ComissaoPolicy =
   return pol.percentualAcima;
 }
 
-/** Calcula a comissão prevista da proposta. */
+/**
+ * Calcula a comissão prevista da proposta.
+ * Além do percentual da faixa, o consultor recebe `bonusExcedentePct`% do
+ * valor a maior — o que passar do parâmetro base (padrão R$ 2.500/kWp).
+ */
 export function calcularComissao(
   parametro: number,
   valorFinal: number,
   valorBruto: number,
   pol: ComissaoPolicy = read(),
-): { percentual: number; base: number; valor: number } {
+  potenciaKwp = 0,
+): { percentual: number; base: number; valor: number; excedente: number; bonus: number; total: number } {
   const percentual = percentualParaParametro(parametro, pol);
   const base = pol.base === "VALOR_BRUTO" ? valorBruto : valorFinal;
-  return { percentual, base, valor: (base * percentual) / 100 };
+  const valor = (base * percentual) / 100;
+  const excedente = Math.max(0, (parametro - pol.parametroBase) * (potenciaKwp || 0));
+  const bonus = (excedente * pol.bonusExcedentePct) / 100;
+  return { percentual, base, valor, excedente, bonus, total: valor + bonus };
 }
+

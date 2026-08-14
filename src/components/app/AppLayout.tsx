@@ -64,11 +64,12 @@ export function AppLayout() {
   const [contextOpen, setContextOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-      {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
-      <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+      {/* Topbar corporativo full-width: logo + identidade */}
+      <header className="sticky top-0 z-40 flex h-11 w-full items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
+        <Link to="/dashboard" className="flex shrink-0 items-center gap-2">
+          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
+        </Link>
         <div className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight text-white/90">
           Meta Sun Gerencial
         </div>

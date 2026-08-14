@@ -1631,7 +1631,17 @@ function PropostaSheet({
         </DialogHeader>
 
 
-        <div className="space-y-4 pt-4">
+        <Tabs defaultValue="dados" className="pt-4">
+          <TabsList className="sticky top-[68px] z-10 grid w-full grid-cols-5">
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="tecnico">Técnico</TabsTrigger>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="graficos">Gráficos</TabsTrigger>
+            <TabsTrigger value="final">Finalização</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="space-y-4">
+
           {/* BLOCO 2 — Localização */}
           <Bloco icon={<MapPin className="h-4 w-4" />} title="2. Localização">
             <div className="grid gap-3 md:grid-cols-3">

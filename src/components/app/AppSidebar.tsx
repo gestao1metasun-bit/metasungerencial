@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronsLeft, ChevronsRight, Check } from "lucide-react";
+import { ChevronDown, ChevronsLeft, ChevronsRight, Check, Home } from "lucide-react";
 import { MACRO_MODULES, NAV_ITEMS, macroAtivoPorRota, type MacroKey } from "@/lib/nav-structure";
 import { ROUTE_TABS } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";

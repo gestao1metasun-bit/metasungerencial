@@ -8,6 +8,64 @@ import { Button } from "@/components/ui/button";
 import { type PropostaFV } from "@/modules/propostas/store";
 import { PropostaModeloPadrao } from "./PropostaModeloPadrao";
 
+// html2canvas não entende cores modernas (lab/oklch/color-mix) usadas pelos tokens do tema.
+// Convertemos toda cor computada para rgb() no clone antes da captura.
+const PROPS_COR = [
+  "color",
+  "backgroundColor",
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor",
+  "outlineColor",
+  "textDecorationColor",
+  "caretColor",
+  "columnRuleColor",
+] as const;
+
+function criarConversor() {
+  const cache = new Map<string, string>();
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 1;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  return (valor: string): string | null => {
+    if (!valor || !/lab\(|lch\(|oklab\(|oklch\(|color\(|color-mix\(/i.test(valor)) return null;
+    const emCache = cache.get(valor);
+    if (emCache) return emCache;
+    if (!ctx) return "rgb(0, 0, 0)";
+    try {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = "#000000";
+      ctx.fillStyle = valor;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+      const rgb = a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`;
+      cache.set(valor, rgb);
+      return rgb;
+    } catch {
+      return "rgb(0, 0, 0)";
+    }
+  };
+}
+
+function normalizarCores(doc: Document) {
+  const converter = criarConversor();
+  const alvos = [doc.documentElement, doc.body, ...Array.from(doc.querySelectorAll<HTMLElement>("*"))];
+  for (const el of alvos) {
+    if (!el || !(el instanceof (el.ownerDocument.defaultView?.HTMLElement ?? HTMLElement))) continue;
+    const cs = el.ownerDocument.defaultView?.getComputedStyle(el);
+    if (!cs) continue;
+    for (const prop of PROPS_COR) {
+      const rgb = converter(cs[prop] as string);
+      if (rgb) el.style.setProperty(prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`), rgb, "important");
+    }
+    const bgImg = cs.backgroundImage;
+    if (bgImg && /lab\(|lch\(|oklch\(|color-mix\(/i.test(bgImg)) {
+      el.style.setProperty("background-image", "none", "important");
+    }
+  }
+}
+
 export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV; onClose: () => void }) {
   const areaRef = useRef<HTMLDivElement>(null);
   const [gerando, setGerando] = useState(false);

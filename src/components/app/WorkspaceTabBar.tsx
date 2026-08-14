@@ -192,8 +192,6 @@ export function WorkspaceTabBar() {
                   </button>
                 )}
               </div>
-
-              </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-56 text-[12px]">
               <ContextMenuItem onSelect={() => goTo(t.to)}>

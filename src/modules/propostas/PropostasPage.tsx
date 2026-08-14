@@ -1770,8 +1770,11 @@ function PropostaSheet({
               </>
             )}
           </Bloco>
+          </TabsContent>
 
+          <TabsContent value="tecnico" className="space-y-4">
           {/* BLOCO 5 — Dimensionamento */}
+
           <Bloco icon={<Sun className="h-4 w-4" />} title="5. Dimensionamento" badge={`${fmtNum(dim.potenciaFinalKwp,2)} kWp`}>
             <div className="grid gap-3 md:grid-cols-3">
               <ReadOnlyField label="kWp necessário" value={fmtNum(dim.potenciaNecKwp, 2)} />

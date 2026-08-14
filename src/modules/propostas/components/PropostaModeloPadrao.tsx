@@ -157,23 +157,23 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
         <div className="mp-capa-ano">{anoCapa}</div>
         <div className="mp-capa-inner">
           <div style={{ textAlign: "center" }}>
-            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 90, objectFit: "contain", display: "inline-block" }} />
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 80, objectFit: "contain", display: "inline-block" }} />
           </div>
 
           <div style={{ marginTop: "26mm" }}>
-            <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1, color: "#111" }}>PROPOSTA</div>
-            <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1, color: "#0d2a56" }}>COMERCIAL</div>
-            <div style={{ fontSize: 22, color: "#333", marginTop: 4 }}>Sistema Fotovoltaico</div>
+            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#1b2430" }}>PROPOSTA</div>
+            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#0d2a56" }}>COMERCIAL</div>
+            <div style={{ fontSize: "14pt", color: "#5b6672", marginTop: 8, letterSpacing: ".04em" }}>Sistema Fotovoltaico</div>
           </div>
 
-          <div style={{ marginTop: "22mm", fontSize: 18, lineHeight: 1.6 }}>
+          <div style={{ marginTop: "20mm", fontSize: "12pt", lineHeight: 1.9 }}>
             <div>Cliente: {p.clienteNome || "—"}</div>
             <div>Geração média mensal: {fmtNum(dim.geracaoMensalKwh, 2)} kWh</div>
             <div>Potência do Sistema: {fmtNum(dim.potenciaFinalKwp, 2)} kWp</div>
             <div>Consultor: {p.consultor || "—"}</div>
           </div>
 
-          <div style={{ marginTop: "14mm", fontSize: 12 }}>
+          <div style={{ marginTop: "12mm", fontSize: "10pt", color: "#5b6672" }}>
             <div>Proposta válida até: {p.validade || "—"}</div>
             <div>Número da Proposta: <strong>{p.numero}</strong></div>
           </div>
@@ -233,7 +233,7 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
 
         <section className="mp-sec">
           <Titulo>Descrição dos itens</Titulo>
-          <ul style={{ listStyle: "disc", paddingLeft: 22, fontSize: 12, lineHeight: 1.9 }}>
+          <ul style={{ listStyle: "disc", paddingLeft: 22, fontSize: "10.5pt", lineHeight: 1.9 }}>
             <li>{dim.qtdFinal} Módulos Fotovoltaicos de {p.moduloPotenciaWp} W {p.moduloMarca ? `| ${p.moduloMarca}` : ""} {p.moduloModelo || ""}</li>
             {invLinhas.map((t) => <li key={t}>{t}</li>)}
             <li>Cabo Solar Preto.</li>
@@ -353,17 +353,17 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
       {/* ---------- Página 6 — aceite ---------- */}
       <div className="mp-page">
         <div className="mp-page-body">
-          <div style={{ textAlign: "center", fontSize: 34, fontWeight: 800, letterSpacing: ".18em", color: "#0d2a56" }}>PARCEIROS</div>
-          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 8 }}>BANCOS FINANCIADORES</div>
+          <div style={{ textAlign: "center", fontSize: "24pt", fontWeight: 800, letterSpacing: ".18em", color: "#0d2a56" }}>PARCEIROS</div>
+          <div style={{ textAlign: "center", fontSize: "13pt", fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 8 }}>BANCOS FINANCIADORES</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
             <div>BASA</div><div>SOL AGORA</div><div>SICREDI</div><div>BRADESCO</div>
           </div>
-          <div style={{ textAlign: "center", fontSize: 20, fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 18 }}>PARCEIROS COMERCIAIS</div>
+          <div style={{ textAlign: "center", fontSize: "13pt", fontWeight: 800, letterSpacing: ".08em", color: "#f5a11b", marginTop: 18 }}>PARCEIROS COMERCIAIS</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 10, textAlign: "center", fontWeight: 800, color: "#0d2a56" }}>
             <div>SOFAR SOLAR</div><div>SUNGROW</div><div>OUROLUX SOLAR</div><div>EDELTEC</div>
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 24, marginTop: 26 }}>ACEITE DA <strong>PROPOSTA</strong></div>
+          <div style={{ textAlign: "center", fontSize: "17pt", marginTop: 26, color: "#0d2a56" }}>ACEITE DA <strong>PROPOSTA</strong></div>
 
           <div style={{ marginTop: 18, fontSize: 13 }}>
             {[

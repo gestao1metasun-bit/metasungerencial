@@ -1,12 +1,17 @@
 // PropostaImpressao — visualização imprimível (PDF via window.print).
-import { Printer } from "lucide-react";
+import { Printer, LayoutTemplate, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   type PropostaFV,
   useInversoresFV, calcDimensionamento, calcPrecificacao,
   consumoEfetivo, fmtBRL, fmtNum,
 } from "@/modules/propostas/store";
+import { MODELOS_PROPOSTA, setModeloProposta, useModeloProposta } from "@/modules/propostas/proposta-modelo-store";
+import { PropostaModeloPadrao } from "./PropostaModeloPadrao";
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
@@ -21,6 +26,7 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
   const inversores = useInversoresFV();
   const dim = calcDimensionamento(proposta);
   const pre = calcPrecificacao(proposta);
+  const modelo = useModeloProposta();
 
   function imprimir() {
     document.body.classList.add("print-proposta");
@@ -37,12 +43,20 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
 
         <style>{`
           @media print {
+            @page { size: A4; margin: 12mm 10mm 12mm 10mm; }
             body.print-proposta * { visibility: hidden !important; }
             body.print-proposta .proposta-print, body.print-proposta .proposta-print * { visibility: visible !important; }
-            body.print-proposta .proposta-print { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            body.print-proposta .proposta-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
             body.print-proposta .no-print { display: none !important; }
           }
         `}</style>
+
+        {modelo === "META_SUN_2026" ? (
+          <div className="proposta-print px-2">
+            <PropostaModeloPadrao proposta={proposta} />
+          </div>
+        ) : (
+
 
         <div className="proposta-print space-y-6 px-2 text-sm text-foreground">
           <header className="flex items-start justify-between border-b pb-4">

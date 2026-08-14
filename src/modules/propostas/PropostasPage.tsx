@@ -1751,9 +1751,11 @@ function PropostaSheet({
               </Field>
             </div>
           </Bloco>
+          </TabsContent>
 
-          {/* BLOCO 4 — Consumo */}
-          <Bloco icon={<Zap className="h-4 w-4" />} title="4. Consumo">
+          <TabsContent value="consumo" className="space-y-4">
+          {/* BLOCO 3 — Consumo */}
+          <Bloco icon={<Zap className="h-4 w-4" />} title="3. Consumo">
             <div className="mb-3 flex items-center gap-3">
               <Switch checked={p.modoConsumo === "MENSAL"}
                 onCheckedChange={(v) => update("modoConsumo", v ? "MENSAL" : "MEDIA")} />

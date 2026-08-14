@@ -65,6 +65,8 @@ import {
   formatDoc, isDocValido, buscarClienteExistente, type ClienteSnapshot,
 } from "@/modules/propostas/store";
 import { usePropostaConfig } from "@/modules/propostas/proposta-config-store";
+import { Slider } from "@/components/ui/slider";
+import { useComissaoPolicy, calcularComissao } from "@/modules/propostas/comissao-policy-store";
 import { useUsuarioAtual } from "@/lib/perfis-store";
 import { useConsultoresAtivos, upsertConsultor, novoConsultorVazio, formatTelefoneBR, type Consultor } from "@/lib/consultores-store";
 import { X as XIcon } from "lucide-react";

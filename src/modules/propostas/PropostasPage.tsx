@@ -75,7 +75,7 @@ import { PropostaList, statusVariant, duplicarProposta, excluirProposta, Aprovar
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
 import { PropostaGraficos } from "./components/PropostaGraficos";
-import { CrudModulos, CrudInversores } from "./components/CadastroProdutosFV";
+
 import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
 

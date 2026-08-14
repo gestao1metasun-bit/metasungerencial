@@ -249,6 +249,10 @@ export function WorkspaceTabBar() {
                 <ChevronsRight className="mr-2 h-3.5 w-3.5" />
                 Fechar à direita
               </ContextMenuItem>
+              <ContextMenuItem onSelect={handleCloseAll}>
+                <XCircle className="mr-2 h-3.5 w-3.5" />
+                Fechar todas
+              </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem onSelect={onReopen}>
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />

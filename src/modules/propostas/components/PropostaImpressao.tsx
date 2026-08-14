@@ -9,10 +9,53 @@ import { type PropostaFV } from "@/modules/propostas/store";
 import { PropostaModeloPadrao } from "./PropostaModeloPadrao";
 
 export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV; onClose: () => void }) {
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [gerando, setGerando] = useState(false);
+
   function imprimir() {
     document.body.classList.add("print-proposta");
     window.print();
     setTimeout(() => document.body.classList.remove("print-proposta"), 500);
+  }
+
+  async function baixarPdf() {
+    const raiz = areaRef.current;
+    if (!raiz || gerando) return;
+    setGerando(true);
+    try {
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+      const paginas = Array.from(raiz.querySelectorAll<HTMLElement>(".mp-page"));
+      if (!paginas.length) throw new Error("Nada para exportar");
+
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const larguraA4 = 210;
+      const alturaA4 = 297;
+
+      for (let i = 0; i < paginas.length; i++) {
+        const canvas = await html2canvas(paginas[i], {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          logging: false,
+        });
+        const img = canvas.toDataURL("image/jpeg", 0.92);
+        const altura = Math.min((canvas.height * larguraA4) / canvas.width, alturaA4);
+        if (i > 0) pdf.addPage();
+        pdf.addImage(img, "JPEG", 0, 0, larguraA4, altura);
+      }
+
+      const nome = `Proposta_${(proposta.numero || "").replace(/[^\w-]+/g, "_")}_${(proposta.clienteNome || "cliente").replace(/[^\w-]+/g, "_")}.pdf`;
+      pdf.save(nome);
+      toast.success("PDF gerado com sucesso");
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o PDF. Use Imprimir > Salvar como PDF.");
+    } finally {
+      setGerando(false);
+    }
   }
 
   return (

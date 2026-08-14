@@ -2030,7 +2030,7 @@ function PropostaSheet({
                           setP((cur) => ({
                             ...cur,
                             excecaoParametroAutorizada: true,
-                            excecaoParametroPor: perfil?.nome || perfil?.email || "Admin",
+                            excecaoParametroPor: perfil?.nome || "Admin",
                             excecaoParametroMotivo: motivo.trim(),
                             excecaoParametroEm: new Date().toISOString().slice(0, 16).replace("T", " "),
                           }));

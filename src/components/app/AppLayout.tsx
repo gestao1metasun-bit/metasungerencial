@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
 import { WorkspaceTabBar } from "@/components/app/WorkspaceTabBar";
 import { featureFlags } from "@/lib/feature-flags";
+import logoMetaSun from "@/assets/logo-metasun.png";
 
 export function AppLayout() {
   const identidade = useIdentidade();

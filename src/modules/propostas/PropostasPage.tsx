@@ -2044,7 +2044,20 @@ function PropostaSheet({
             )}
           </Bloco>
 
+          {/* BLOCO 9.1 — Gráficos */}
+          <Bloco icon={<Calculator className="h-4 w-4" />} title="9.1 Gráficos da Proposta">
+            <PropostaGraficos
+              custoTotal={res.custoTotal}
+              lucroBruto={res.lucroBruto}
+              valorFinal={res.valorFinal}
+              comissaoValor={comissao.valor}
+              bonusValor={comissao.bonus}
+              custos={p.custos}
+            />
+          </Bloco>
+
           {/* BLOCO 10 — Observações */}
+
           <Bloco icon={<FileText className="h-4 w-4" />} title="10. Observações">
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Observações internas (não aparecem na proposta)">

@@ -343,6 +343,7 @@ export const ROUTE_TABS: Record<string, { default: string; tabs: SubTab[] }> = {
       { value: "cfg-engenharia", label: "Engenharia", group: "Módulos" },
       { value: "cfg-financeiro", label: "Financeiro", group: "Módulos" },
       { value: "proposta", label: "Orçamentos — Fórmulas", group: "Orçamentos" },
+      { value: "comissionamento", label: "Política de Comissionamento", group: "Orçamentos" },
       { value: "orcamentos-cad", label: "Orçamentos — Cadastros", group: "Orçamentos" },
       { value: "integracoes", label: "Integrações", group: "Sistema" },
       { value: "sistema", label: "Feature Flags", group: "Sistema" },

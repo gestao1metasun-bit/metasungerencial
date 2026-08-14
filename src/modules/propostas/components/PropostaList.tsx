@@ -1125,6 +1125,14 @@ function LeadDetail({
         {/* Faixa de identificação */}
         <DialogHeader className="space-y-0 bg-meta-bar px-5 py-4 text-meta-bar-foreground">
           <DialogTitle className="flex flex-wrap items-center gap-3 text-left">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onClose}
+              className="h-9 gap-1 bg-red-500 text-xs font-semibold text-white hover:bg-red-600"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </Button>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
               {iniciais || "?"}
             </span>

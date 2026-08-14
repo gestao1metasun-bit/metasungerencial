@@ -168,11 +168,30 @@ export function PropostaImpressao({ proposta, onClose }: { proposta: PropostaFV;
             Telefone de contato: {proposta.clienteTelefone || "(__) _____-____"}
           </section>
         </div>
+        )}
 
         <DialogFooter className="no-print">
           <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2"><LayoutTemplate className="h-4 w-4" /> Modelo da proposta</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel>Modelo usado ao gerar</DropdownMenuLabel>
+              {MODELOS_PROPOSTA.map((m) => (
+                <DropdownMenuItem key={m.id} onSelect={() => setModeloProposta(m.id)} className="flex items-start gap-2">
+                  <Check className={`mt-0.5 h-4 w-4 ${modelo === m.id ? "opacity-100" : "opacity-0"}`} />
+                  <span>
+                    <span className="block text-xs font-medium">{m.nome}</span>
+                    <span className="block text-[11px] text-muted-foreground">{m.descricao}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={imprimir} className="gap-2"><Printer className="h-4 w-4" /> Imprimir / Salvar PDF</Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

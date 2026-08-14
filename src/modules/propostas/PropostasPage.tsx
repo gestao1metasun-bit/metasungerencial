@@ -1405,7 +1405,7 @@ function PropostaSheet({
   const res = calcResultado(p);
   const potTotalInv = potenciaInversores(p, inversores);
   const comissaoPolicy = useComissaoPolicy();
-  const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy);
+  const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy, dim.potenciaFinalKwp);
 
   // sincroniza qtd final em modulosQtd
   useEffect(() => {

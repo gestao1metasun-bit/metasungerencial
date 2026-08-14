@@ -119,13 +119,20 @@ export function AppLayout() {
           </Button>
         </div>
       </header>
-      <MaintenanceBanner />
-      <TopNav />
-      <WorkspaceTabBar />
 
-      <main className="min-w-0 flex-1 overflow-x-hidden p-3">
-        <Outlet />
-      </main>
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <MaintenanceBanner />
+          <TopNav />
+          <WorkspaceTabBar />
+
+          <main className="min-w-0 flex-1 overflow-x-hidden p-3">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+
 
       {/* Painel contextual sob demanda — drawer lateral direita */}
       <Sheet open={contextOpen} onOpenChange={setContextOpen}>

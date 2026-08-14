@@ -21,6 +21,7 @@ export function ComissionamentoConfigTab() {
   const [base, setBase] = useState<typeof pol.base>(pol.base);
   const [parametroBase, setParametroBase] = useState<number>(pol.parametroBase);
   const [bonusPct, setBonusPct] = useState<number>(pol.bonusExcedentePct);
+  const [paramMin, setParamMin] = useState<number>(pol.parametroMinimoSemAutorizacao ?? pol.parametroBase);
 
   function setFaixa(i: number, patch: Partial<FaixaComissao>) {
     setFaixas((cur) => cur.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));

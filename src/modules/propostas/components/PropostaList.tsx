@@ -1123,47 +1123,51 @@ function LeadDetail({
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-0">
         {/* Faixa de identificação */}
-        <DialogHeader className="space-y-0 bg-meta-bar px-5 py-4 text-meta-bar-foreground">
-          <DialogTitle className="flex flex-wrap items-center gap-3 text-left">
+        <DialogHeader className="space-y-0 border-b bg-meta-bar px-5 py-3 text-meta-bar-foreground">
+          <DialogTitle className="flex min-w-0 items-center gap-3 text-left">
             <Button
               size="sm"
-              variant="secondary"
+              variant="ghost"
               onClick={onClose}
-              className="h-9 gap-1 bg-red-500 text-xs font-semibold text-white hover:bg-red-600"
+              className="h-8 shrink-0 gap-1 rounded-md border border-white/25 bg-transparent px-2.5 text-xs font-medium text-current hover:bg-white/15"
             >
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
+            <span className="h-6 w-px shrink-0 bg-white/20" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/12 text-xs font-semibold ring-1 ring-white/20">
               {iniciais || "?"}
             </span>
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-lg font-semibold leading-tight">{lead.clienteNome}</span>
-              <span className="truncate text-[11px] font-normal opacity-80">
+              <span className="truncate text-[15px] font-semibold leading-tight">{lead.clienteNome}</span>
+              <span className="truncate text-[11px] font-normal opacity-70">
                 {lead.consultor || "Sem consultor"} · {formatDoc(lead.clienteDoc || "") || "Sem documento"} · há {lead.diasCriacao} dia(s)
               </span>
             </span>
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
-              {lead.status}
-            </span>
-            {lead.bloqueado && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/25 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
-                <Lock className="h-3 w-3" /> Assinado
+            <span className="ml-3 flex shrink-0 items-center gap-1.5">
+              <span className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                {lead.status}
               </span>
-            )}
-            <span className="ml-auto flex items-center gap-2">
+              {lead.bloqueado && (
+                <span className="inline-flex items-center gap-1 rounded border border-emerald-300/30 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                  <Lock className="h-3 w-3" /> Assinado
+                </span>
+              )}
+            </span>
+            <span className="ml-auto flex shrink-0 items-center gap-2">
               {telDigits.length >= 10 && (
-                <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
+                <Button asChild size="sm" variant="ghost" className="h-8 rounded-md border border-white/25 px-2.5 text-xs font-medium text-current hover:bg-white/15">
                   <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
                 </Button>
               )}
               {!lead.bloqueado && (
-                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-8 gap-1 bg-white text-[color:var(--meta-bar)] hover:bg-white/90">
+                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-8 gap-1 bg-white px-2.5 text-xs font-semibold text-[color:var(--meta-bar)] hover:bg-white/90">
                   <FilePlus2 className="h-4 w-4" /> Nova proposta
                 </Button>
               )}
             </span>
           </DialogTitle>
         </DialogHeader>
+
 
         <div className="space-y-5 px-5 pb-5">
           {/* KPIs coloridos */}

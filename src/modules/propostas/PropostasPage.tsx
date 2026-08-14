@@ -2082,10 +2082,9 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="final" className="space-y-4">
-
-          {/* BLOCO 11 — Validade */}
-          <Bloco icon={<FileText className="h-4 w-4" />} title="11. Validade da Proposta">
+          <TabsContent value="validade" className="space-y-4">
+          {/* BLOCO 10 — Validade */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="10. Validade da Proposta">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Validade da proposta">
                 <Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} />
@@ -2093,6 +2092,16 @@ function PropostaSheet({
             </div>
           </Bloco>
           </TabsContent>
+
+          <TabsContent value="produtos" className="space-y-4">
+          <Bloco icon={<Sun className="h-4 w-4" />} title="Cadastro de módulos fotovoltaicos">
+            <CrudModulos />
+          </Bloco>
+          <Bloco icon={<Wrench className="h-4 w-4" />} title="Cadastro de inversores">
+            <CrudInversores />
+          </Bloco>
+          </TabsContent>
+
         </Tabs>
 
 

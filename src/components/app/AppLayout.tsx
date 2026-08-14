@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
 import { WorkspaceTabBar } from "@/components/app/WorkspaceTabBar";
 import { featureFlags } from "@/lib/feature-flags";
+import logoMetaSun from "@/assets/logo-metasun.png";
 
 export function AppLayout() {
   const identidade = useIdentidade();
@@ -64,11 +65,12 @@ export function AppLayout() {
   const [contextOpen, setContextOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-      {/* Topbar corporativo enxuto: logo + macro nav (TopNav) + identidade */}
-      <header className="sticky top-0 z-20 flex h-11 items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
+      {/* Topbar corporativo full-width: logo + identidade */}
+      <header className="sticky top-0 z-40 flex h-11 w-full items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
+        <Link to="/dashboard" className="flex shrink-0 items-center gap-2">
+          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
+        </Link>
         <div className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight text-white/90">
           Meta Sun Gerencial
         </div>
@@ -118,13 +120,20 @@ export function AppLayout() {
           </Button>
         </div>
       </header>
-      <MaintenanceBanner />
-      <TopNav />
-      <WorkspaceTabBar />
 
-      <main className="min-w-0 flex-1 overflow-x-hidden p-3">
-        <Outlet />
-      </main>
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <MaintenanceBanner />
+          <TopNav />
+          <WorkspaceTabBar />
+
+          <main className="min-w-0 flex-1 overflow-x-hidden p-3">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+
 
       {/* Painel contextual sob demanda — drawer lateral direita */}
       <Sheet open={contextOpen} onOpenChange={setContextOpen}>
@@ -137,7 +146,6 @@ export function AppLayout() {
       </Sheet>
 
       <CommandPalette />
-      </div>
     </div>
   );
 }

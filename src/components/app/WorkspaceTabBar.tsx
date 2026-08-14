@@ -271,6 +271,17 @@ export function WorkspaceTabBar() {
           </ContextMenu>
         );
       })}
+
+      <button
+        type="button"
+        onClick={handleCloseAll}
+        title="Fechar todas as abas"
+        aria-label="Fechar todas as abas"
+        className="sticky right-0 ml-auto flex shrink-0 items-center gap-1 self-stretch border-l border-border bg-muted/90 px-2 text-[11px] text-muted-foreground backdrop-blur transition-colors hover:bg-destructive/10 hover:text-destructive"
+      >
+        <XCircle className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Fechar todas</span>
+      </button>
     </div>
   );
 }

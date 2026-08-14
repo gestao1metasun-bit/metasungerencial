@@ -2094,6 +2094,11 @@ function PropostaSheet({
 
 
         <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-end gap-2 border-t bg-background px-6 py-3">
+          {bloqueadoPorParametro && (
+            <span className="mr-auto text-[11px] text-warning-foreground">
+              Parâmetro abaixo de {fmtBRL(paramMinimo)}/kWp — requer autorização do superior.
+            </span>
+          )}
           <Button size="sm" variant="outline" className="gap-1" onClick={onClose}>
             <XCircle className="h-4 w-4" /> Cancelar
           </Button>
@@ -2103,6 +2108,10 @@ function PropostaSheet({
             onClick={() => {
               const errs = validarParaGeracao(p);
               if (errs.length) { toast.error("Preencha: " + errs.join(", ")); return; }
+              if (bloqueadoPorParametro) {
+                toast.error("Parâmetro abaixo do mínimo. Solicite autorização do superior na aba Precificação.");
+                return;
+              }
               const final: PropostaFV = {
                 ...p,
                 status: "GERADA",
@@ -2110,14 +2119,16 @@ function PropostaSheet({
                 custos: p.custos.length ? p.custos : gerarCustosSugeridos(p, custos),
               };
               upsertProposta(final);
-              toast.success(`${final.numero} gerada com sucesso.`);
+              toast.success(`${final.numero} gerada. Abrindo para impressão/download.`);
               onGerada?.();
+              onVisualizar(final.id);
             }}
-            disabled={erros.length > 0}
+            disabled={erros.length > 0 || bloqueadoPorParametro}
           >
             <CheckCircle2 className="h-4 w-4" /> Gerar Proposta
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
 

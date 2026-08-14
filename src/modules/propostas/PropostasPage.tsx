@@ -1407,6 +1407,9 @@ function PropostaSheet({
   const potTotalInv = potenciaInversores(p, inversores);
   const comissaoPolicy = useComissaoPolicy();
   const comissao = calcularComissao(p.parametroPorKwp || 0, pre.valorFinal, pre.valorBruto, comissaoPolicy, dim.potenciaFinalKwp);
+  const paramMinimo = comissaoPolicy.parametroMinimoSemAutorizacao ?? comissaoPolicy.parametroBase;
+  const precisaAutorizacao = (p.parametroPorKwp || 0) < paramMinimo;
+  const bloqueadoPorParametro = precisaAutorizacao && !p.excecaoParametroAutorizada;
 
   // sincroniza qtd final em modulosQtd
   useEffect(() => {

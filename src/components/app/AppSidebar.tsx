@@ -10,7 +10,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { MACRO_MODULES, NAV_ITEMS, macroAtivoPorRota, type MacroKey } from "@/lib/nav-structure";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
-import logoMetaSun from "@/assets/logo-metasun.png";
+
 
 const LS_KEY = "ui.sidebar.collapsed.v1";
 const LS_SECOES = "ui.sidebar.secoes.v1";

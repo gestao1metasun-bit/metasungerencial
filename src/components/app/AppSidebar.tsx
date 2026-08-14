@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { MACRO_MODULES, NAV_ITEMS, macroAtivoPorRota, type MacroKey } from "@/lib/nav-structure";
+import { ROUTE_TABS } from "@/lib/route-tabs";
 import { useIdentidade, canAccessModule } from "@/lib/identidade";
 
 
@@ -31,7 +32,15 @@ const SECOES: Secao[] = [
 
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const hash = useRouterState({ select: (s) => s.location.hash });
   const identidade = useIdentidade();
+
+  /** aba ativa lida do hash (#tab=valor) */
+  const tabAtiva = (() => {
+    const raw = (hash ?? "").replace(/^#/, "");
+    const m = /(?:^|&)tab=([^&]+)/.exec(raw);
+    return m ? decodeURIComponent(m[1]) : "";
+  })();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -41,6 +50,10 @@ export function AppSidebar() {
   const macroAtivo = macroAtivoPorRota(path);
   const [aberto, setAberto] = useState<MacroKey | null>(macroAtivo?.key ?? null);
   const macroAberto = aberto ?? macroAtivo?.key ?? null;
+
+  /** item (3º nível) expandido — accordion também aqui */
+  const [subAberto, setSubAberto] = useState<string | null>(null);
+  const itemAberto = subAberto ?? (ROUTE_TABS[path] ? path : null);
 
   const [secoesAbertas, setSecoesAbertas] = useState<Record<string, boolean>>(() => {
     const base = Object.fromEntries(SECOES.map((s) => [s.id, s.defaultOpen]));
@@ -137,26 +150,71 @@ export function AppSidebar() {
             {filhos.map((n) => {
               const active = path === n.to;
               const ItemIcon = n.icon;
+              const abas = (ROUTE_TABS[n.to]?.tabs ?? []).filter((t) => !t.hidden);
+              const subOpen = itemAberto === n.to && abas.length > 0;
               return (
-                <Link
-                  key={`${m.key}-${n.to}-${n.ordem}`}
-                  to={n.to}
-                  className={`flex items-center gap-2 truncate rounded-md py-1.5 pl-2 pr-2 text-[11.5px] transition-colors ${
-                    active
-                      ? "bg-primary/10 font-semibold text-primary"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  }`}
-                >
-                  <ItemIcon
-                    className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : "text-muted-foreground/70"}`}
-                    strokeWidth={1.9}
-                  />
-                  <span className="truncate">{n.label}</span>
-                </Link>
+                <div key={`${m.key}-${n.to}-${n.ordem}`}>
+                  <div
+                    className={`flex items-center rounded-md transition-colors ${
+                      active
+                        ? "bg-primary/10 font-semibold text-primary"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    }`}
+                  >
+                    <Link
+                      to={n.to}
+                      onClick={() => abas.length > 0 && setSubAberto(n.to)}
+                      className="flex min-w-0 flex-1 items-center gap-2 truncate py-1.5 pl-2 pr-1 text-[11.5px]"
+                    >
+                      <ItemIcon
+                        className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary" : "text-muted-foreground/70"}`}
+                        strokeWidth={1.9}
+                      />
+                      <span className="truncate">{n.label}</span>
+                    </Link>
+                    {abas.length > 0 && (
+                      <button
+                        type="button"
+                        aria-label={`${subOpen ? "Recolher" : "Expandir"} ${n.label}`}
+                        aria-expanded={subOpen}
+                        onClick={() => setSubAberto(subOpen ? "" : n.to)}
+                        className="mr-1 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${subOpen ? "" : "-rotate-90"}`} />
+                      </button>
+                    )}
+                  </div>
+
+                  {subOpen && (
+                    <div className="my-0.5 ml-[14px] space-y-px border-l border-border/60 pl-2.5">
+                      {abas.map((t) => {
+                        const destino = t.to ?? n.to;
+                        const abaAtiva = t.to
+                          ? path === t.to
+                          : path === n.to && (tabAtiva || ROUTE_TABS[n.to]?.default) === t.value;
+                        return (
+                          <Link
+                            key={`${n.to}-${t.value}`}
+                            to={destino}
+                            hash={t.to ? undefined : `tab=${t.value}`}
+                            className={`block truncate rounded py-1 pl-2 pr-1.5 text-[11px] transition-colors ${
+                              abaAtiva
+                                ? "bg-primary/10 font-semibold text-primary"
+                                : "text-muted-foreground/90 hover:bg-muted/60 hover:text-foreground"
+                            }`}
+                          >
+                            {t.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
         )}
+
       </div>
     );
   }

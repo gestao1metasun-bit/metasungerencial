@@ -10,7 +10,6 @@ import { useIdentidade } from "@/lib/identidade";
 import { toast } from "sonner";
 import { MaintenanceBanner } from "@/components/app/MaintenanceBanner";
 import { FavoritosMenu, useRegisterRecente } from "@/components/app/FavoritosMenu";
-import { TopNav } from "@/components/app/TopNav";
 import { ContextualSidebar } from "@/components/app/ContextualSidebar";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { CommandPalette } from "@/components/app/CommandPalette";
@@ -125,7 +124,6 @@ export function AppLayout() {
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <MaintenanceBanner />
-          <TopNav />
           <WorkspaceTabBar />
 
           <main className="min-w-0 flex-1 overflow-x-hidden p-3">

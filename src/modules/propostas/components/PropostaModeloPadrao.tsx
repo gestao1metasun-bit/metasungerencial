@@ -159,32 +159,36 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
 
       {/* ---------- Página 1 — capa ---------- */}
       <div className="mp-page mp-capa">
+        <div className="mp-capa-diag2" />
+        <img src={capaPaineis} alt="Painéis solares" className="mp-capa-foto" width={1024} height={768} />
         <div className="mp-capa-diag" />
         <div className="mp-capa-ano">{anoCapa}</div>
         <div className="mp-capa-inner">
           <div style={{ textAlign: "center" }}>
-            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 80, objectFit: "contain", display: "inline-block" }} />
+            <img src={metaSunLogo.url} alt="Meta Sun Energia Solar" style={{ height: 78, objectFit: "contain", display: "inline-block" }} />
           </div>
 
-          <div style={{ marginTop: "26mm" }}>
-            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#1b2430" }}>PROPOSTA</div>
-            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-.01em", color: "#0d2a56" }}>COMERCIAL</div>
-            <div style={{ fontSize: "14pt", color: "#5b6672", marginTop: 8, letterSpacing: ".04em" }}>Sistema Fotovoltaico</div>
+          <div style={{ marginTop: "18mm" }}>
+            <div style={{ fontSize: "34pt", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-.02em", color: "#1b2430" }}>PROPOSTA</div>
+            <div style={{ fontSize: "38pt", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-.02em", color: "#0d2a56" }}>COMERCIAL</div>
+            <div style={{ fontSize: "15pt", color: "#3d4854", marginTop: 4 }}>Sistema Fotovoltaico</div>
           </div>
 
-          <div style={{ marginTop: "20mm", fontSize: "12pt", lineHeight: 1.9 }}>
+          <div style={{ marginTop: "14mm", fontSize: "12.5pt", lineHeight: 1.55, color: "#1b2430" }}>
             <div>Cliente: {p.clienteNome || "—"}</div>
             <div>Geração média mensal: {fmtNum(dim.geracaoMensalKwh, 2)} kWh</div>
             <div>Potência do Sistema: {fmtNum(dim.potenciaFinalKwp, 2)} kWp</div>
             <div>Consultor: {p.consultor || "—"}</div>
           </div>
 
-          <div style={{ marginTop: "12mm", fontSize: "10pt", color: "#5b6672" }}>
-            <div>Proposta válida até: {p.validade || "—"}</div>
-            <div>Número da Proposta: <strong>{p.numero}</strong></div>
+          <div style={{ marginTop: "8mm", fontSize: "9.5pt", color: "#3d4854", lineHeight: 1.6 }}>
+            <div>Proposta válida até: {validadeBR}</div>
+            <div>Número da Proposta: <strong>{numeroCapa}</strong></div>
           </div>
         </div>
       </div>
+
+
 
       {/* ---------- Página 2 — institucional ---------- */}
       <Pagina numero="01">

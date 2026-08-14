@@ -1634,19 +1634,24 @@ function PropostaSheet({
         </DialogHeader>
 
 
-        <Tabs defaultValue="dados" className="pt-4">
-          <TabsList className="sticky top-[68px] z-10 grid w-full grid-cols-5">
-            <TabsTrigger value="dados">Dados</TabsTrigger>
-            <TabsTrigger value="tecnico">Técnico</TabsTrigger>
-            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-            <TabsTrigger value="graficos">Gráficos</TabsTrigger>
-            <TabsTrigger value="final">Finalização</TabsTrigger>
+        <Tabs defaultValue="localizacao" className="pt-4">
+          <TabsList className="sticky top-[68px] z-10 flex w-full flex-wrap justify-start gap-1">
+            <TabsTrigger value="localizacao">1. Localização</TabsTrigger>
+            <TabsTrigger value="fatura">2. Fatura</TabsTrigger>
+            <TabsTrigger value="consumo">3. Consumo</TabsTrigger>
+            <TabsTrigger value="dimensionamento">4. Dimensionamento</TabsTrigger>
+            <TabsTrigger value="modulo">5. Módulo</TabsTrigger>
+            <TabsTrigger value="inversores">6. Inversores</TabsTrigger>
+            <TabsTrigger value="precificacao">7. Precificação</TabsTrigger>
+            <TabsTrigger value="resultado">8. Resultado</TabsTrigger>
+            <TabsTrigger value="graficos">9. Gráficos</TabsTrigger>
+            <TabsTrigger value="validade">10. Validade</TabsTrigger>
+            <TabsTrigger value="produtos">Produtos</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dados" className="space-y-4">
-
-          {/* BLOCO 2 — Localização */}
-          <Bloco icon={<MapPin className="h-4 w-4" />} title="2. Localização">
+          <TabsContent value="localizacao" className="space-y-4">
+          {/* BLOCO 1 — Localização */}
+          <Bloco icon={<MapPin className="h-4 w-4" />} title="1. Localização">
             <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <Label>Cidade cadastrada</Label>

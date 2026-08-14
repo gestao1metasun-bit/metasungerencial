@@ -4,7 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Trash2, Eye, FileText, Printer, Copy, CheckCircle2, Send,
-  XCircle, Sparkles, Calculator, Users, MapPin, Zap, Sun, Wrench, DollarSign,
+  XCircle, Sparkles, Users, MapPin, Zap, Sun, Wrench, DollarSign,
   Receipt, AlertTriangle, Save, FileSearch, Settings as SettingsIcon, Pencil,
   Undo2,
 } from "lucide-react";
@@ -74,7 +74,6 @@ import { X as XIcon } from "lucide-react";
 import { PropostaList, statusVariant, duplicarProposta, excluirProposta, AprovarPropostaDialog } from "./components/PropostaList";
 import { PropostaImpressao } from "./components/PropostaImpressao";
 import { CrudTarifas } from "./components/CrudTarifas";
-import { PropostaGraficos } from "./components/PropostaGraficos";
 
 import { EnterpriseRecordToolbar, layoutBarRm, AttachmentDialog, ModuloHistoricoDrawer } from "@/components/app/enterprise";
 
@@ -1636,19 +1635,19 @@ function PropostaSheet({
 
 
         <Tabs defaultValue="localizacao" className="pt-4">
-          <TabsList className="sticky top-[68px] z-10 flex w-full flex-wrap justify-start gap-1">
-            <TabsTrigger value="localizacao">1. Localização</TabsTrigger>
-            <TabsTrigger value="fatura">2. Fatura</TabsTrigger>
-            <TabsTrigger value="consumo">3. Consumo</TabsTrigger>
-            <TabsTrigger value="dimensionamento">4. Dimensionamento</TabsTrigger>
-            <TabsTrigger value="modulo">5. Módulo</TabsTrigger>
-            <TabsTrigger value="inversores">6. Inversores</TabsTrigger>
-            <TabsTrigger value="precificacao">7. Precificação</TabsTrigger>
-            <TabsTrigger value="resultado">8. Resultado</TabsTrigger>
-            <TabsTrigger value="graficos">9. Gráficos</TabsTrigger>
-            <TabsTrigger value="validade">10. Validade</TabsTrigger>
-            <TabsTrigger value="produtos">Produtos</TabsTrigger>
+          <TabsList className="sticky top-0 z-20 flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-md border bg-muted/60 p-1 shadow-sm [scrollbar-width:thin]">
+            <TabsTrigger value="localizacao" className="shrink-0 whitespace-nowrap">1. Localização</TabsTrigger>
+            <TabsTrigger value="fatura" className="shrink-0 whitespace-nowrap">2. Fatura</TabsTrigger>
+            <TabsTrigger value="consumo" className="shrink-0 whitespace-nowrap">3. Consumo</TabsTrigger>
+            <TabsTrigger value="dimensionamento" className="shrink-0 whitespace-nowrap">4. Dimensionamento</TabsTrigger>
+            <TabsTrigger value="modulo" className="shrink-0 whitespace-nowrap">5. Módulo</TabsTrigger>
+            <TabsTrigger value="inversores" className="shrink-0 whitespace-nowrap">6. Inversores</TabsTrigger>
+            <TabsTrigger value="precificacao" className="shrink-0 whitespace-nowrap">7. Precificação</TabsTrigger>
+            <TabsTrigger value="resultado" className="shrink-0 whitespace-nowrap">8. Resultado</TabsTrigger>
+            <TabsTrigger value="validade" className="shrink-0 whitespace-nowrap">9. Validade</TabsTrigger>
+            <TabsTrigger value="produtos" className="shrink-0 whitespace-nowrap">Produtos</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="localizacao" className="space-y-4">
           {/* BLOCO 1 — Localização */}
@@ -2089,23 +2088,9 @@ function PropostaSheet({
           </Bloco>
           </TabsContent>
 
-          <TabsContent value="graficos" className="space-y-4">
-          {/* BLOCO 9 — Gráficos */}
-          <Bloco icon={<Calculator className="h-4 w-4" />} title="9. Gráficos da Proposta">
-            <PropostaGraficos
-              custoTotal={res.custoTotal}
-              lucroBruto={res.lucroBruto}
-              valorFinal={res.valorFinal}
-              comissaoValor={comissao.valor}
-              bonusValor={comissao.bonus}
-              custos={p.custos}
-            />
-          </Bloco>
-          </TabsContent>
-
           <TabsContent value="validade" className="space-y-4">
-          {/* BLOCO 10 — Validade */}
-          <Bloco icon={<FileText className="h-4 w-4" />} title="10. Validade da Proposta">
+          {/* BLOCO 9 — Validade */}
+          <Bloco icon={<FileText className="h-4 w-4" />} title="9. Validade da Proposta">
             <div className="grid gap-3 md:grid-cols-3">
               <Field label="Validade da proposta">
                 <Input type="date" value={p.validade} onChange={(e) => update("validade", e.target.value)} />
@@ -2113,6 +2098,7 @@ function PropostaSheet({
             </div>
           </Bloco>
           </TabsContent>
+
 
           <TabsContent value="produtos" className="space-y-4">
           <Bloco icon={<Sun className="h-4 w-4" />} title="Cadastro de módulos fotovoltaicos">

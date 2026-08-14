@@ -143,13 +143,13 @@ export function PropostaModeloPadrao({ proposta }: { proposta: PropostaFV }) {
 
         .proposta-modelo .mp-capa { position:relative; padding:0; overflow:hidden; background:#fff; }
         .proposta-modelo .mp-capa-inner { padding:18mm 16mm; position:relative; z-index:4; }
-        .proposta-modelo .mp-capa-foto { position:absolute; right:0; bottom:0; width:78%; height:46%; object-fit:cover; z-index:1;
-          clip-path:polygon(18% 100%, 100% 26%, 100% 100%); }
-        .proposta-modelo .mp-capa-diag { position:absolute; right:0; bottom:34%; width:76%; height:26%; background:var(--orange); z-index:2;
-          clip-path:polygon(0 46%, 100% 0, 100% 72%, 0 100%); }
-        .proposta-modelo .mp-capa-diag2 { position:absolute; right:0; top:0; width:52%; height:100%; background:linear-gradient(135deg,#f2f4f7 0%,#ffffff 70%); z-index:0;
-          clip-path:polygon(38% 0, 100% 0, 100% 100%, 0 100%); }
-        .proposta-modelo .mp-capa-ano { position:absolute; right:14mm; bottom:40%; z-index:3; font-size:40pt; font-weight:800; color:#1b2430; line-height:1; }
+        .proposta-modelo .mp-capa-foto { position:absolute; left:0; right:0; bottom:0; width:100%; height:38%; object-fit:cover; z-index:1;
+          clip-path:polygon(0 62%, 100% 0, 100% 100%, 0 100%); }
+        .proposta-modelo .mp-capa-diag { position:absolute; right:0; bottom:26%; width:82%; height:20%; background:var(--orange); z-index:2;
+          clip-path:polygon(0 52%, 100% 0, 100% 60%, 0 100%); }
+        .proposta-modelo .mp-capa-diag2 { position:absolute; right:0; top:0; width:58%; height:100%; background:linear-gradient(150deg,#eef1f5 0%,#ffffff 65%); z-index:0;
+          clip-path:polygon(42% 0, 100% 0, 100% 100%, 0 100%); }
+        .proposta-modelo .mp-capa-ano { position:absolute; right:16mm; bottom:31%; z-index:3; font-size:34pt; font-weight:800; color:#1b2430; line-height:1; }
 
 
         @media print {

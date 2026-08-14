@@ -1635,19 +1635,19 @@ function PropostaSheet({
 
 
         <Tabs defaultValue="localizacao" className="pt-4">
-          <TabsList className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-md border bg-muted/60 p-1 shadow-sm [scrollbar-width:thin]">
-
-            <TabsTrigger value="localizacao" className="shrink-0 whitespace-nowrap">1. Localização</TabsTrigger>
-            <TabsTrigger value="fatura" className="shrink-0 whitespace-nowrap">2. Fatura</TabsTrigger>
-            <TabsTrigger value="consumo" className="shrink-0 whitespace-nowrap">3. Consumo</TabsTrigger>
-            <TabsTrigger value="dimensionamento" className="shrink-0 whitespace-nowrap">4. Dimensionamento</TabsTrigger>
-            <TabsTrigger value="modulo" className="shrink-0 whitespace-nowrap">5. Módulo</TabsTrigger>
-            <TabsTrigger value="inversores" className="shrink-0 whitespace-nowrap">6. Inversores</TabsTrigger>
-            <TabsTrigger value="precificacao" className="shrink-0 whitespace-nowrap">7. Precificação</TabsTrigger>
-            <TabsTrigger value="resultado" className="shrink-0 whitespace-nowrap">8. Resultado</TabsTrigger>
-            <TabsTrigger value="validade" className="shrink-0 whitespace-nowrap">9. Validade</TabsTrigger>
-            <TabsTrigger value="produtos" className="shrink-0 whitespace-nowrap">Produtos</TabsTrigger>
+          <TabsList className="grid h-auto w-full grid-cols-10 gap-1 overflow-visible rounded-md border bg-muted/60 p-1 shadow-sm">
+            <TabsTrigger value="localizacao" className="min-w-0 truncate px-1.5 text-[11px]">1. Localização</TabsTrigger>
+            <TabsTrigger value="fatura" className="min-w-0 truncate px-1.5 text-[11px]">2. Fatura</TabsTrigger>
+            <TabsTrigger value="consumo" className="min-w-0 truncate px-1.5 text-[11px]">3. Consumo</TabsTrigger>
+            <TabsTrigger value="dimensionamento" className="min-w-0 truncate px-1.5 text-[11px]">4. Dimensionam.</TabsTrigger>
+            <TabsTrigger value="modulo" className="min-w-0 truncate px-1.5 text-[11px]">5. Módulo</TabsTrigger>
+            <TabsTrigger value="inversores" className="min-w-0 truncate px-1.5 text-[11px]">6. Inversores</TabsTrigger>
+            <TabsTrigger value="precificacao" className="min-w-0 truncate px-1.5 text-[11px]">7. Precificação</TabsTrigger>
+            <TabsTrigger value="resultado" className="min-w-0 truncate px-1.5 text-[11px]">8. Resultado</TabsTrigger>
+            <TabsTrigger value="validade" className="min-w-0 truncate px-1.5 text-[11px]">9. Validade</TabsTrigger>
+            <TabsTrigger value="produtos" className="min-w-0 truncate px-1.5 text-[11px]">Produtos</TabsTrigger>
           </TabsList>
+
 
 
           <TabsContent value="localizacao" className="space-y-4">

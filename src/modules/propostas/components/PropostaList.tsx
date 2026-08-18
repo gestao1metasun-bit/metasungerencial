@@ -1103,7 +1103,9 @@ function LeadDetail({
 }) {
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
   const [verCadastro, setVerCadastro] = useState(false);
+  const [aba, setAba] = useState<"timeline" | "propostas" | "tecnico" | "cadastro">("timeline");
   if (!lead) return null;
+
   const enderecoLinha = [
     lead.clienteEndereco,
     lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : "",

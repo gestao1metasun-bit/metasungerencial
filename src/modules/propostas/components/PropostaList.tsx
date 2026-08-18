@@ -1169,25 +1169,26 @@ function LeadDetail({
         </DialogHeader>
 
 
-        <div className="space-y-5 px-5 pb-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
           {/* KPIs coloridos */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {[
               { t: "Propostas", v: String(lead.propostas.length), c: "border-l-primary" },
               { t: "Em aberto", v: String(lead.emAberto), c: "border-l-amber-500" },
               { t: "Valor da última", v: fmtBRL(lead.valor), c: "border-l-emerald-500" },
               { t: "Maior proposta", v: fmtBRL(maiorValor), c: "border-l-sky-500" },
             ].map((k) => (
-              <div key={k.t} className={`rounded-md border border-l-4 bg-card p-3 ${k.c}`}>
+              <div key={k.t} className={`rounded-md border border-l-4 bg-card px-3 py-2 ${k.c}`}>
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.t}</div>
-                <div className="mt-1 text-base font-semibold tabular-nums">{k.v}</div>
+                <div className="text-base font-semibold tabular-nums">{k.v}</div>
               </div>
             ))}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-12">
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-12">
             {/* Propostas */}
-            <div className="space-y-4 lg:col-span-8">
+            <div className="flex min-h-0 flex-col gap-3 lg:col-span-8">
+
               <div className="overflow-hidden rounded-md border">
                 <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
                   <div className="text-xs font-semibold uppercase tracking-wide">

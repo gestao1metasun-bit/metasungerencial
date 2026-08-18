@@ -1139,9 +1139,10 @@ function LeadModal({
           </DialogHeader>
         </div>
 
-        <div className="px-6 py-5">
-          <div className="rounded-lg border bg-card p-4 space-y-3">
-            <div>
+        <div className="mx-auto w-full max-w-3xl px-6 py-6">
+          <div className="rounded-xl border bg-card p-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+
               <Label className="text-xs">Tipo de pessoa *</Label>
               <div className="mt-1.5 grid grid-cols-2 gap-2">
                 <Button
@@ -1164,7 +1165,8 @@ function LeadModal({
                 </Button>
               </div>
             </div>
-            <div>
+            <div className="sm:col-span-2">
+
               <Label className="text-xs">{tipoPessoa === "PF" ? "Nome completo" : "Razão social"} *</Label>
               <div className="relative mt-1.5">
                 <Input
@@ -1177,7 +1179,8 @@ function LeadModal({
                 {isLocked("nome", nome) && <LockX field="nome" />}
               </div>
             </div>
-            <div>
+            <div className="sm:col-span-2">
+
               <Label className="text-xs">{tipoPessoa === "PF" ? "CPF" : "CNPJ"} <span className="text-muted-foreground font-normal">(opcional — exigido na aprovação)</span></Label>
               <div className="relative mt-1.5 flex gap-2">
                 <Input
@@ -1289,7 +1292,8 @@ function LeadModal({
               )}
               </div>
             </div>
-            <div>
+            <div className="sm:col-span-2">
+
               <Label className="text-xs">Endereço (opcional)</Label>
               <div className="relative mt-1.5">
                 <Input
@@ -1306,11 +1310,14 @@ function LeadModal({
         </div>
 
         <div className="border-t bg-muted/30 px-6 py-3">
-          <DialogFooter>
-            <Button variant="outline" onClick={onCancel}>Voltar</Button>
-            <Button onClick={continuar} className="bg-primary text-primary-foreground">Salvar cliente</Button>
-          </DialogFooter>
+          <div className="mx-auto w-full max-w-3xl">
+            <DialogFooter>
+              <Button variant="outline" onClick={onCancel}>Voltar</Button>
+              <Button onClick={continuar} className="bg-primary text-primary-foreground">Salvar cliente</Button>
+            </DialogFooter>
+          </div>
         </div>
+
       </DialogContent>
 
       <ConsultorRapidoModal

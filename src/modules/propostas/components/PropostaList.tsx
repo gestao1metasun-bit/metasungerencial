@@ -1121,9 +1121,10 @@ function LeadDetail({
 
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-0">
+      <DialogContent className="flex max-h-[92vh] max-w-6xl flex-col overflow-hidden p-0">
         {/* Faixa de identificação */}
-        <DialogHeader className="space-y-0 border-b bg-meta-bar px-5 py-3 text-meta-bar-foreground">
+        <DialogHeader className="shrink-0 space-y-0 border-b bg-meta-bar px-5 py-3 text-meta-bar-foreground">
+
           <DialogTitle className="flex min-w-0 items-center gap-3 text-left">
             <Button
               size="sm"

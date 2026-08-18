@@ -1145,6 +1145,133 @@ function LinhaDado({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
+type EventoTimeline = {
+  id: string;
+  tipo: "criado" | "proposta" | "status" | "contrato";
+  autor: string;
+  data?: string;
+  titulo: React.ReactNode;
+  propostaId?: string;
+};
+
+function LinhaDoTempo({
+  lead, onVisualizar,
+}: { lead: Lead; onVisualizar: (id: string) => void }) {
+  const [filtro, setFiltro] = useState<"todos" | "propostas" | "status">("todos");
+
+  const eventos = useMemo<EventoTimeline[]>(() => {
+    const evs: EventoTimeline[] = [];
+    for (const p of lead.propostas) {
+      const valor = fmtBRL(calcPrecificacao(p).valorFinal || 0);
+      evs.push({
+        id: `${p.id}-criada`,
+        tipo: "proposta",
+        autor: p.consultor || lead.consultor || "Sistema",
+        data: p.criadoEm,
+        propostaId: p.id,
+        titulo: <>Proposta <b>{p.numero}</b> gerada — <b>{valor}</b>.</>,
+      });
+      if (p.status !== "RASCUNHO") {
+        evs.push({
+          id: `${p.id}-status`,
+          tipo: ["CONTRATO_PENDENTE", "CONTRATADA"].includes(p.status) ? "contrato" : "status",
+          autor: p.consultor || lead.consultor || "Sistema",
+          data: p.atualizadoEm || p.criadoEm,
+          propostaId: p.id,
+          titulo: <>Proposta <b>{p.numero}</b> mudou para <b>{ROTULO_ETAPA[p.status] ?? p.status}</b>.</>,
+        });
+      }
+    }
+    evs.push({
+      id: "lead-criado",
+      tipo: "criado",
+      autor: lead.consultor || "Sistema",
+      data: [...lead.propostas].map((p) => p.criadoEm).filter(Boolean).sort()[0],
+      titulo: <>Lead criado para <b>{lead.clienteNome}</b>.</>,
+    });
+    return evs.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+  }, [lead]);
+
+  const visiveis = eventos.filter((e) =>
+    filtro === "todos" ? true : filtro === "propostas" ? e.tipo === "proposta" : e.tipo !== "proposta",
+  );
+
+  const corIcone: Record<EventoTimeline["tipo"], string> = {
+    criado: "bg-emerald-500 text-white",
+    proposta: "bg-primary/15 text-primary",
+    status: "bg-sky-500/15 text-sky-600",
+    contrato: "bg-amber-500/15 text-amber-600",
+  };
+  const Icone: Record<EventoTimeline["tipo"], typeof FileText> = {
+    criado: Sparkles,
+    proposta: FileText,
+    status: RotateCcw,
+    contrato: Check,
+  };
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-1 border-b">
+        {([
+          { k: "todos", t: "Histórico completo" },
+          { k: "propostas", t: "Propostas" },
+          { k: "status", t: "Modificações" },
+        ] as const).map((f) => (
+          <button
+            key={f.k}
+            type="button"
+            onClick={() => setFiltro(f.k)}
+            className={`-mb-px border-b-2 px-3 py-1.5 text-[12px] font-medium transition-colors ${
+              filtro === f.k ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f.t}
+          </button>
+        ))}
+        <span className="ml-auto py-1.5 text-[11px] text-muted-foreground">{visiveis.length} evento(s)</span>
+      </div>
+
+      <ol className="relative space-y-3 pl-8">
+        <span className="absolute bottom-2 left-[15px] top-2 w-px bg-border" aria-hidden />
+        {visiveis.map((e) => {
+          const Ic = Icone[e.tipo];
+          return (
+            <li key={e.id} className="relative">
+              <span className={`absolute -left-8 top-1.5 flex h-7 w-7 items-center justify-center rounded-full ring-4 ring-background ${corIcone[e.tipo]}`}>
+                <Ic className="h-3.5 w-3.5" />
+              </span>
+              <div className="rounded-md border bg-card px-3 py-2 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
+                    {(e.autor || "?").slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="text-[12px] font-semibold">{e.autor}</span>
+                  <span className="text-[11px] text-muted-foreground">{fmtData(e.data)}</span>
+                </div>
+                <div className="mt-1 text-[12px]">{e.titulo}</div>
+                {e.propostaId && (
+                  <button
+                    type="button"
+                    onClick={() => onVisualizar(e.propostaId!)}
+                    className="mt-1 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    Visualizar
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+        {visiveis.length === 0 && (
+          <li className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
+            Sem eventos registrados.
+          </li>
+        )}
+      </ol>
+    </div>
+  );
+}
+
 
 function LeadDetail({
   lead, onClose, onVisualizar, onNova, onEditar,

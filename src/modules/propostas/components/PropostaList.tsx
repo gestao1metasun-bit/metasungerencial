@@ -1303,8 +1303,9 @@ function LeadDetail({
 
 
             {/* Lateral: contato + técnico */}
-            <div className="space-y-4 lg:col-span-4">
+            <div className="flex min-h-0 flex-col gap-3 overflow-auto lg:col-span-4">
               <div className="rounded-md border">
+
                 <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">Contato</div>
                 <div className="grid grid-cols-2 gap-3 p-3">
                   <Field label="Telefone" value={lead.clienteTelefone} />

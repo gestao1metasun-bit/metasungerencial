@@ -1338,16 +1338,9 @@ function LeadDetail({
               )}
             </span>
             <span className="ml-auto flex shrink-0 items-center gap-2">
-              {telDigits.length >= 10 && (
-                <Button asChild size="sm" variant="ghost" className="h-8 rounded-md border border-white/25 px-2.5 text-xs font-medium text-current hover:bg-white/15">
-                  <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                </Button>
-              )}
-              {!lead.bloqueado && (
-                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-8 gap-1 bg-white px-2.5 text-xs font-semibold text-[color:var(--meta-bar)] hover:bg-white/90">
-                  <FilePlus2 className="h-4 w-4" /> Nova proposta
-                </Button>
-              )}
+              <span className="text-[11px] opacity-70">
+                {lead.propostas.length} proposta(s) · {fmtBRL(valorTotal)}
+              </span>
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -1355,6 +1348,17 @@ function LeadDetail({
 
         {/* Esteira de etapas (pipeline) */}
         <EsteiraEtapas atual={String(lead.status || "")} />
+
+        {/* Barra operacional enterprise */}
+        <AcoesLeadToolbar
+          lead={lead}
+          selecionada={selecionada}
+          onNova={() => onNova(presetFromLead(lead))}
+          onAprovar={() => selecionada && setAprovando(selecionada)}
+          onVisualizar={() => selecionada && onVisualizar(selecionada.id)}
+          onEditar={() => selecionada && onEditar(selecionada)}
+        />
+
 
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* Coluna esquerda — dados básicos fixos */}

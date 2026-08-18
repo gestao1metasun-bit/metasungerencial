@@ -1170,7 +1170,7 @@ function LeadDetail({
         </DialogHeader>
 
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-4 pb-4">
           {/* KPIs coloridos */}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {[

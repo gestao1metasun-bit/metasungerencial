@@ -98,15 +98,16 @@ export function ChartCard({
 export type SerieDef = { key: string; label: string; color?: string };
 
 export function TrendArea({
-  data, series, xKey = "label", money = true,
+  data, series, xKey = "label", money = true, ...rest
 }: {
   data: Record<string, any>[];
   series: SerieDef[];
   xKey?: string;
   money?: boolean;
+  [k: string]: any;
 }) {
   return (
-    <AreaChart data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+    <AreaChart {...rest} data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
       <defs>
         {series.map((s, i) => (
           <linearGradient key={s.key} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -135,15 +136,16 @@ export function TrendArea({
 }
 
 export function TrendLine({
-  data, series, xKey = "label", money = false,
+  data, series, xKey = "label", money = false, ...rest
 }: {
   data: Record<string, any>[];
   series: SerieDef[];
   xKey?: string;
   money?: boolean;
+  [k: string]: any;
 }) {
   return (
-    <LineChart data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+    <LineChart {...rest} data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
       <XAxis dataKey={xKey} tickLine={false} axisLine={false} {...AXIS} />
       <YAxis tickLine={false} axisLine={false} width={money ? 58 : 34} {...AXIS}
@@ -161,16 +163,17 @@ export function TrendLine({
 /* ─────────────────────────── Ranking ─────────────────────────── */
 
 export function RankBars({
-  data, valueKey = "valor", labelKey = "label", money = true, color,
+  data, valueKey = "valor", labelKey = "label", money = true, color, ...rest
 }: {
   data: Record<string, any>[];
   valueKey?: string;
   labelKey?: string;
   money?: boolean;
   color?: string;
+  [k: string]: any;
 }) {
   return (
-    <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+    <BarChart {...rest} data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
       <XAxis type="number" tickLine={false} axisLine={false} {...AXIS}
         tickFormatter={(v) => (money ? compactBRL(Number(v)) : String(v))} />
@@ -188,15 +191,16 @@ export function RankBars({
 /* ─────────────────────────── Distribuição ─────────────────────────── */
 
 export function Donut({
-  data, valueKey = "valor", labelKey = "label", money = true,
+  data, valueKey = "valor", labelKey = "label", money = true, ...rest
 }: {
   data: Record<string, any>[];
   valueKey?: string;
   labelKey?: string;
   money?: boolean;
+  [k: string]: any;
 }) {
   return (
-    <PieChart>
+    <PieChart {...rest}>
       <Pie
         data={data} dataKey={valueKey} nameKey={labelKey}
         innerRadius="55%" outerRadius="80%" paddingAngle={2} stroke="var(--card)"

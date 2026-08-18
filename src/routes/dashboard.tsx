@@ -21,6 +21,8 @@ import { useEstoquePendencias } from "@/lib/repositories/use-estoque-pendencias"
 import { useContratos } from "@/lib/contratos-store";
 import { vendedores, propostas } from "@/lib/mock-data";
 import { IndicadoresTab } from "@/routes/comercial";
+import { ChartCard, TrendArea, RankBars, Donut, FunnelBars } from "@/components/app/charts/ChartKit";
+import { useSeriesMensais } from "@/lib/repositories/use-series-mensais";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Operacional — Meta Sun Gerencial" }] }),
@@ -38,8 +40,13 @@ function DashboardGeral() {
   const wf = useWorkflowAprovacoes("pendentes_para_mim");
   const pend = useEstoquePendencias();
   const liveContratos = useContratos();
+  const series = useSeriesMensais(6);
+  const semSerieFin = series.meses.every(
+    (m) => m.entradas === 0 && m.saidas === 0 && m.previstoReceber === 0,
+  );
+  const rankPorValor = series.rankingConsultores.some((r) => r.valor > 0);
 
-  const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); };
+  const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); void series.reload(); };
 
   const fin = kpis.financeiro;
   const com = kpis.comercial;
@@ -103,7 +110,64 @@ function DashboardGeral() {
             />
           </div>
 
+          {/* Gráficos — dados reais dos últimos 6 meses */}
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="xl:col-span-2">
+              <ChartCard
+                title="Fluxo financeiro — últimos 6 meses"
+                subtitle="Entradas e saídas realizadas, com previsto a receber"
+                loading={series.loading}
+                empty={!series.loading && semSerieFin}
+                height={260}
+              >
+                <TrendArea
+                  data={series.meses}
+                  series={[
+                    { key: "entradas", label: "Entradas", color: "var(--chart-4)" },
+                    { key: "saidas", label: "Saídas", color: "var(--chart-5)" },
+                    { key: "previstoReceber", label: "Previsto a receber", color: "var(--chart-3)" },
+                  ]}
+                />
+              </ChartCard>
+            </div>
+            <ChartCard
+              title="Funil comercial"
+              subtitle="Da proposta ao contrato assinado"
+              loading={series.loading}
+              empty={!series.loading && series.funilComercial.every((f) => f.qtd === 0)}
+              height={260}
+            >
+              <FunnelBars steps={series.funilComercial} />
+            </ChartCard>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <ChartCard
+              title="Ranking de consultores"
+              subtitle={rankPorValor ? "Valor total de contratos por consultor" : "Quantidade de contratos por consultor"}
+              loading={series.loading}
+              empty={!series.loading && series.rankingConsultores.length === 0}
+              height={240}
+            >
+              <RankBars
+                data={series.rankingConsultores}
+                valueKey={rankPorValor ? "valor" : "qtd"}
+                money={rankPorValor}
+              />
+            </ChartCard>
+            <ChartCard
+              title="Carteira por status"
+              subtitle="Saldo em aberto dos títulos financeiros"
+              loading={series.loading}
+              empty={!series.loading && series.distribuicaoStatusFin.length === 0}
+              height={240}
+            >
+              <Donut data={series.distribuicaoStatusFin} />
+            </ChartCard>
+          </div>
+
           {/* Barras */}
+
           <div className="grid gap-4 xl:grid-cols-2">
             <PanelCard title="Distribuição financeira">
               <BarRow label="A vencer" value={BRL(emAberto)} pct={pct(emAberto)} tone="warning" />

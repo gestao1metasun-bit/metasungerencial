@@ -1285,6 +1285,7 @@ function LeadDetail({
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
   const [verCadastro, setVerCadastro] = useState(false);
   const [aba, setAba] = useState<"timeline" | "propostas" | "tecnico" | "cadastro">("timeline");
+  const [selId, setSelId] = useState<string | null>(null);
   if (!lead) return null;
 
   const enderecoLinha = [
@@ -1301,6 +1302,8 @@ function LeadDetail({
   const iniciais = (lead.clienteNome || "?")
     .split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
   const telDigits = (lead.clienteTelefone || "").replace(/\D/g, "");
+  const selecionada = lead.propostas.find((p) => p.id === selId) ?? lead.ultima ?? null;
+
 
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>

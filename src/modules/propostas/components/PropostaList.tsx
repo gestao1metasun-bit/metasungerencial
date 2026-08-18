@@ -1273,7 +1273,130 @@ function LinhaDoTempo({
 }
 
 
+/** Botão redondo de ação (padrão enterprise RM). */
+function AcaoRedonda({
+  icon: Ic, label, tone, onClick, disabled,
+}: {
+  icon: typeof Eye; label: string;
+  tone: "primary" | "success" | "danger" | "warning" | "info" | "muted";
+  onClick?: () => void; disabled?: boolean;
+}) {
+  const tones: Record<string, string> = {
+    primary: "bg-primary/10 text-primary hover:bg-primary/20 ring-primary/20",
+    success: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 ring-emerald-500/20",
+    danger: "bg-destructive/10 text-destructive hover:bg-destructive/20 ring-destructive/20",
+    warning: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 ring-amber-500/20",
+    info: "bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 ring-sky-500/20",
+    muted: "bg-muted text-muted-foreground hover:bg-muted/80 ring-border",
+  };
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 transition-colors disabled:pointer-events-none disabled:opacity-40 ${tones[tone]}`}
+    >
+      <Ic className="h-4 w-4" />
+    </button>
+  );
+}
+
+/** Barra operacional do detalhe do lead — ações sobre a proposta selecionada. */
+function AcoesLeadToolbar({
+  lead, selecionada, onNova, onAprovar, onVisualizar, onEditar,
+}: {
+  lead: Lead;
+  selecionada: PropostaFV | null;
+  onNova: () => void;
+  onAprovar: () => void;
+  onVisualizar: () => void;
+  onEditar: () => void;
+}) {
+  const p = selecionada;
+  const bloq = !!lead.bloqueado;
+  const statusFechado: StatusProposta[] = ["APROVADA", "ATIVA", "CONTRATO_PENDENTE", "CONTRATADA", "CANCELADA"];
+  const podeAprovar = !!p && !bloq && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+  const podeEditar = !!p && !bloq && !statusFechado.includes(p.status);
+  const podeCancelar = podeEditar;
+  const podeReativar = !!p && p.status === "CANCELADA";
+  const podeExcluir = !!p && !bloq && p.status === "RASCUNHO";
+  const telDigits = (lead.clienteTelefone || "").replace(/\D/g, "");
+
+  const exportarCSV = () => {
+    const linhas = [
+      ["Numero", "Status", "Criada", "Valor"].join(";"),
+      ...lead.propostas.map((x) =>
+        [x.numero, x.status, fmtData(x.criadoEm || x.atualizadoEm), String(calcPrecificacao(x).valorFinal || 0)].join(";"),
+      ),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([linhas], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lead-${(lead.clienteNome || "cliente").replace(/\s+/g, "-").toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-card px-4 py-2">
+      <Button
+        size="sm"
+        onClick={onNova}
+        disabled={bloq}
+        className="h-8 gap-1.5 px-3 text-xs font-semibold"
+      >
+        <FilePlus2 className="h-4 w-4" /> Nova proposta
+      </Button>
+      <Button
+        size="sm"
+        onClick={onAprovar}
+        disabled={!podeAprovar}
+        className="h-8 gap-1.5 bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700"
+      >
+        <Check className="h-4 w-4" /> Aprovar
+      </Button>
+
+      <span className="mx-1 h-6 w-px bg-border" />
+
+      <AcaoRedonda icon={Eye} label="Visualizar" tone="info" onClick={onVisualizar} disabled={!p} />
+      <AcaoRedonda icon={Pencil} label="Editar" tone="warning" onClick={onEditar} disabled={!podeEditar} />
+      <AcaoRedonda icon={Copy} label="Duplicar" tone="primary" onClick={() => p && duplicarProposta(p)} disabled={!p || bloq} />
+      <AcaoRedonda icon={RotateCcw} label="Reativar" tone="primary" onClick={() => p && reativarProposta(p)} disabled={!podeReativar} />
+      <AcaoRedonda icon={Ban} label="Cancelar" tone="danger" onClick={() => p && cancelarProposta(p)} disabled={!podeCancelar} />
+      <AcaoRedonda icon={Trash2} label="Excluir rascunho" tone="danger" onClick={() => p && excluirProposta(p)} disabled={!podeExcluir} />
+
+      <span className="mx-1 h-6 w-px bg-border" />
+
+      <AcaoRedonda
+        icon={ArrowRight}
+        label="WhatsApp do cliente"
+        tone="success"
+        disabled={telDigits.length < 10}
+        onClick={() => window.open(`https://wa.me/55${telDigits}`, "_blank", "noreferrer")}
+      />
+      <AcaoRedonda
+        icon={FileText}
+        label="Enviar por e-mail"
+        tone="info"
+        disabled={!lead.clienteEmail}
+        onClick={() => window.open(`mailto:${lead.clienteEmail}?subject=Proposta ${p?.numero ?? ""}`, "_blank")}
+      />
+      <AcaoRedonda icon={Copy} label="Copiar telefone" tone="muted" disabled={!telDigits}
+        onClick={() => { navigator.clipboard?.writeText(lead.clienteTelefone || ""); toast.success("Telefone copiado"); }} />
+      <AcaoRedonda icon={ArrowDown} label="Exportar CSV" tone="muted" onClick={exportarCSV} disabled={!lead.propostas.length} />
+      <AcaoRedonda icon={RotateCcw} label="Atualizar" tone="muted" onClick={() => { void refreshPropostas(); toast.success("Atualizado"); }} />
+
+      <span className="ml-auto text-[11px] text-muted-foreground">
+        {p ? <>Selecionada: <b className="text-foreground">{p.numero}</b> · {p.status}</> : "Nenhuma proposta selecionada"}
+      </span>
+    </div>
+  );
+}
+
 function LeadDetail({
+
   lead, onClose, onVisualizar, onNova, onEditar,
 }: {
   lead: Lead | null;
@@ -1285,6 +1408,7 @@ function LeadDetail({
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
   const [verCadastro, setVerCadastro] = useState(false);
   const [aba, setAba] = useState<"timeline" | "propostas" | "tecnico" | "cadastro">("timeline");
+  const [selId, setSelId] = useState<string | null>(null);
   if (!lead) return null;
 
   const enderecoLinha = [
@@ -1301,6 +1425,8 @@ function LeadDetail({
   const iniciais = (lead.clienteNome || "?")
     .split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
   const telDigits = (lead.clienteTelefone || "").replace(/\D/g, "");
+  const selecionada = lead.propostas.find((p) => p.id === selId) ?? lead.ultima ?? null;
+
 
   return (
     <Dialog open={!!lead} onOpenChange={(v) => !v && onClose()}>
@@ -1338,16 +1464,9 @@ function LeadDetail({
               )}
             </span>
             <span className="ml-auto flex shrink-0 items-center gap-2">
-              {telDigits.length >= 10 && (
-                <Button asChild size="sm" variant="ghost" className="h-8 rounded-md border border-white/25 px-2.5 text-xs font-medium text-current hover:bg-white/15">
-                  <a href={`https://wa.me/55${telDigits}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                </Button>
-              )}
-              {!lead.bloqueado && (
-                <Button size="sm" onClick={() => onNova(presetFromLead(lead))} className="h-8 gap-1 bg-white px-2.5 text-xs font-semibold text-[color:var(--meta-bar)] hover:bg-white/90">
-                  <FilePlus2 className="h-4 w-4" /> Nova proposta
-                </Button>
-              )}
+              <span className="text-[11px] opacity-70">
+                {lead.propostas.length} proposta(s) · {fmtBRL(valorTotal)}
+              </span>
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -1355,6 +1474,17 @@ function LeadDetail({
 
         {/* Esteira de etapas (pipeline) */}
         <EsteiraEtapas atual={String(lead.status || "")} />
+
+        {/* Barra operacional enterprise */}
+        <AcoesLeadToolbar
+          lead={lead}
+          selecionada={selecionada}
+          onNova={() => onNova(presetFromLead(lead))}
+          onAprovar={() => selecionada && setAprovando(selecionada)}
+          onVisualizar={() => selecionada && onVisualizar(selecionada.id)}
+          onEditar={() => selecionada && onEditar(selecionada)}
+        />
+
 
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* Coluna esquerda — dados básicos fixos */}
@@ -1445,7 +1575,12 @@ function LeadDetail({
                         if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
                         if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
                         return (
-                          <TableRow key={p.id}>
+                          <TableRow
+                            key={p.id}
+                            onClick={() => setSelId(p.id)}
+                            data-state={selId === p.id ? "selected" : undefined}
+                            className="cursor-pointer"
+                          >
                             <TableCell className="font-medium">{p.numero}</TableCell>
                             <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
                             <TableCell className="text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>

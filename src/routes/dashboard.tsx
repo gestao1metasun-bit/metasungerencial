@@ -21,6 +21,8 @@ import { useEstoquePendencias } from "@/lib/repositories/use-estoque-pendencias"
 import { useContratos } from "@/lib/contratos-store";
 import { vendedores, propostas } from "@/lib/mock-data";
 import { IndicadoresTab } from "@/routes/comercial";
+import { ChartCard, TrendArea, RankBars, Donut, FunnelBars } from "@/components/app/charts/ChartKit";
+import { useSeriesMensais } from "@/lib/repositories/use-series-mensais";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard Operacional — Meta Sun Gerencial" }] }),

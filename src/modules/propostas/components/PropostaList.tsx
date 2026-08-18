@@ -1363,7 +1363,7 @@ function LeadDetail({
           </div>
         </div>
 
-        <DialogFooter className="border-t px-5 py-3">
+        <DialogFooter className="shrink-0 border-t px-5 py-2.5">
           <Button
             onClick={onClose}
             className="gap-1 bg-red-500 font-semibold text-white hover:bg-red-600"

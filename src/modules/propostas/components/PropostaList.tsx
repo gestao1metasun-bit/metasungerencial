@@ -1306,7 +1306,7 @@ function LeadDetail({
 
 
             {/* Lateral: contato + técnico */}
-            <div className="flex min-h-0 flex-col gap-3 overflow-auto lg:col-span-4">
+            <div className="flex flex-col gap-3 lg:col-span-4">
               <div className="rounded-md border">
 
                 <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">Contato</div>

@@ -84,9 +84,7 @@ export function ChartCard({
             </span>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={height}>
-            {children as any}
-          </ResponsiveContainer>
+          children
         )}
       </div>
     </Card>
@@ -107,6 +105,7 @@ export function TrendArea({
   [k: string]: any;
 }) {
   return (
+    <ResponsiveContainer width="100%" height="100%">
     <AreaChart {...rest} data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
       <defs>
         {series.map((s, i) => (
@@ -132,6 +131,7 @@ export function TrendArea({
         />
       ))}
     </AreaChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -145,6 +145,7 @@ export function TrendLine({
   [k: string]: any;
 }) {
   return (
+    <ResponsiveContainer width="100%" height="100%">
     <LineChart {...rest} data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
       <XAxis dataKey={xKey} tickLine={false} axisLine={false} {...AXIS} />
@@ -157,6 +158,7 @@ export function TrendLine({
           stroke={s.color ?? CHART_PALETTE[i % CHART_PALETTE.length]} strokeWidth={2} />
       ))}
     </LineChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -173,6 +175,7 @@ export function RankBars({
   [k: string]: any;
 }) {
   return (
+    <ResponsiveContainer width="100%" height="100%">
     <BarChart {...rest} data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
       <XAxis type="number" tickLine={false} axisLine={false} {...AXIS}
@@ -185,6 +188,7 @@ export function RankBars({
         ))}
       </Bar>
     </BarChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -200,6 +204,7 @@ export function Donut({
   [k: string]: any;
 }) {
   return (
+    <ResponsiveContainer width="100%" height="100%">
     <PieChart {...rest}>
       <Pie
         data={data} dataKey={valueKey} nameKey={labelKey}
@@ -212,6 +217,7 @@ export function Donut({
       <Tooltip formatter={(v: any) => (money ? fullBRL(Number(v)) : v)} {...tooltipStyle()} />
       <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
     </PieChart>
+    </ResponsiveContainer>
   );
 }
 

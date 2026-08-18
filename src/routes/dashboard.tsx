@@ -72,7 +72,7 @@ function DashboardGeral() {
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="visao" className="mt-3 space-y-4">
+        <TabsContent value="visao" className="mt-1 space-y-5">
           {/* Faixa de contexto */}
           <div className="rounded-md border border-success/30 bg-success/10 px-4 py-2.5 text-[12.5px] text-foreground">
             Base carregada do backend — <b>{fin?.totalTitulos ?? 0}</b> títulos financeiros,{" "}
@@ -80,7 +80,7 @@ function DashboardGeral() {
           </div>
 
           {/* KPIs principais */}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <KpiCard
               title="Total a receber" tone="success" icon={<CircleDollarSign className="h-4 w-4" />}
               value={BRL(total)} caption={`${fin?.totalTitulos ?? 0} títulos em aberto`}
@@ -104,7 +104,7 @@ function DashboardGeral() {
           </div>
 
           {/* Barras */}
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <PanelCard title="Distribuição financeira">
               <BarRow label="A vencer" value={BRL(emAberto)} pct={pct(emAberto)} tone="warning" />
               <BarRow label="Vencido" value={BRL(atrasado)} pct={pct(atrasado)} tone="danger" />
@@ -142,7 +142,7 @@ function DashboardGeral() {
           </div>
 
           {/* Listas */}
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <PanelCard title="Aprovações pendentes" href="/aprovacoes">
               {wf.isLoading ? (
                 <EmptyLine text="Carregando…" />
@@ -178,7 +178,7 @@ function DashboardGeral() {
           </div>
 
           {/* Atalhos por área */}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <AreaCard title="Financeiro" icon={<Wallet className="h-4 w-4" />} href="/financeiro-titulos"
               rows={[["Em aberto", BRL(emAberto)], ["Atrasado", BRL(atrasado)], ["Títulos", String(fin?.totalTitulos ?? 0)]]} />
             <AreaCard title="Comercial" icon={<FileText className="h-4 w-4" />} href="/pedidos-venda"
@@ -242,14 +242,14 @@ function KpiCard({ title, value, caption, tone, icon }: {
   title: string; value: string; caption: string; tone: Tone; icon: React.ReactNode;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <div className="flex items-start justify-between gap-2">
         <span className="text-[12px] font-medium text-muted-foreground">{title}</span>
         <span className={`flex h-7 w-7 items-center justify-center rounded-md ${toneBadge(tone)}`}>
           {icon}
         </span>
       </div>
-      <div className="mt-2 font-mono text-[22px] font-semibold tracking-tight text-foreground">
+      <div className="mt-2 font-mono text-[26px] font-semibold tracking-tight text-foreground">
         {value}
       </div>
       <div className="mt-1 text-[11.5px] text-muted-foreground">{caption}</div>
@@ -261,9 +261,9 @@ function PanelCard({ title, href, children }: {
   title: string; href?: string; children: React.ReactNode;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[13.5px] font-semibold text-foreground">{title}</h2>
+        <h2 className="text-[14px] font-semibold text-foreground">{title}</h2>
         {href && (
           <Link to={href} className="text-[11.5px] font-semibold text-primary hover:underline">
             Abrir →
@@ -311,7 +311,7 @@ function AreaCard({ title, icon, href, rows }: {
   title: string; icon: React.ReactNode; href: string; rows: [string, string][];
 }) {
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
           <span className="text-primary">{icon}</span> {title}

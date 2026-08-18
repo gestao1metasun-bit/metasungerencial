@@ -203,19 +203,19 @@ export function AppSidebar() {
       </div>
 
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
         {/* Modo Início — menu enxuto: Dashboard + módulos */}
         {modoInicio && (
           <>
             <Link
               to="/dashboard"
               title="Dashboard"
-              className={`flex items-center gap-2 rounded-md py-1.5 text-[12px] transition-colors ${
-                collapsed ? "justify-center px-0" : "pl-3 pr-1"
+              className={`flex items-center gap-2.5 rounded-lg py-2 text-[13px] font-medium transition-colors ${
+                collapsed ? "justify-center px-0" : "px-3"
               } ${
                 rotaInicial
                   ? "bg-primary/10 font-semibold text-primary"
-                  : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground"
+                  : "text-foreground/85 hover:bg-muted"
               }`}
             >
               <Home className="h-4 w-4 shrink-0" strokeWidth={2} />
@@ -223,7 +223,7 @@ export function AppSidebar() {
             </Link>
 
             {!collapsed && (
-              <div className="px-3 pt-4 text-[11px] leading-relaxed text-muted-foreground/60">
+              <div className="mt-4 rounded-xl bg-muted/50 px-3 py-3 text-[12px] leading-relaxed text-muted-foreground">
                 Selecione um módulo acima para abrir suas opções.
               </div>
             )}
@@ -231,6 +231,11 @@ export function AppSidebar() {
         )}
 
         {/* Abas do módulo selecionado aparecem direto, sem repetir o nome do módulo */}
+        {!collapsed && abasDoModulo.length > 0 && (
+          <div className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+            {moduloAtual?.label}
+          </div>
+        )}
 
         {!collapsed &&
           abasDoModulo.map((t) => {
@@ -243,16 +248,22 @@ export function AppSidebar() {
                 key={`mod-${t.value}`}
                 to={destino}
                 hash={t.to ? undefined : `tab=${t.value}`}
-                className={`block truncate rounded py-1.5 pl-3 pr-1.5 text-[12px] transition-colors ${
+                className={`block truncate rounded-lg px-3 py-2 text-[13px] transition-colors ${
                   abaAtiva
                     ? "bg-primary/10 font-semibold text-primary"
-                    : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground"
+                    : "text-foreground/85 hover:bg-muted"
                 }`}
               >
                 {t.label}
               </Link>
             );
           })}
+
+        {filhos.length > 0 && !collapsed && (
+          <div className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+            Telas
+          </div>
+        )}
 
         {filhos.map((n) => {
           const active = path === n.to;
@@ -263,21 +274,18 @@ export function AppSidebar() {
           return (
             <div key={`${n.to}-${n.ordem}`}>
               <div
-                className={`group relative flex items-center rounded-md transition-colors ${
+                className={`group relative flex items-center rounded-lg transition-colors ${
                   active
                     ? "bg-primary/10 font-semibold text-primary"
-                    : "text-foreground/90 hover:bg-meta-bar hover:text-meta-bar-foreground [&_svg]:hover:text-meta-bar-foreground"
+                    : "text-foreground/85 hover:bg-muted"
                 }`}
               >
-                {active && (
-                  <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-primary" aria-hidden />
-                )}
                 <Link
                   to={n.to}
                   title={n.label}
                   onClick={() => abas.length > 0 && setSubAberto(n.to)}
-                  className={`flex min-w-0 flex-1 items-center gap-2 truncate py-1.5 text-[12px] ${
-                    collapsed ? "justify-center px-0" : "pl-3 pr-1"
+                  className={`flex min-w-0 flex-1 items-center gap-2.5 truncate py-2 text-[13px] ${
+                    collapsed ? "justify-center px-0" : "px-3"
                   }`}
                 >
                   <ItemIcon
@@ -292,15 +300,15 @@ export function AppSidebar() {
                     aria-label={`${subOpen ? "Recolher" : "Expandir"} ${n.label}`}
                     aria-expanded={subOpen}
                     onClick={() => setSubAberto(subOpen ? "" : n.to)}
-                    className="mr-1 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="mr-1.5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                   >
-                    <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${subOpen ? "" : "-rotate-90"}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${subOpen ? "" : "-rotate-90"}`} />
                   </button>
                 )}
               </div>
 
               {subOpen && (
-                <div className="my-0.5 ml-[19px] space-y-px border-l border-border/70 pl-2.5">
+                <div className="my-1 ml-6 space-y-0.5 border-l border-border pl-3">
                   {abas.map((t) => {
                     const destino = t.to ?? n.to;
                     const abaAtiva = t.to
@@ -311,10 +319,10 @@ export function AppSidebar() {
                         key={`${n.to}-${t.value}`}
                         to={destino}
                         hash={t.to ? undefined : `tab=${t.value}`}
-                        className={`block truncate rounded py-1 pl-2 pr-1.5 text-[11.5px] transition-colors ${
+                        className={`block truncate rounded-md px-2.5 py-1.5 text-[12.5px] transition-colors ${
                           abaAtiva
                             ? "bg-primary/10 font-semibold text-primary"
-                            : "text-muted-foreground hover:bg-meta-bar hover:text-meta-bar-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                       >
                         {t.label}
@@ -332,10 +340,11 @@ export function AppSidebar() {
         type="button"
         onClick={toggleCollapsed}
         title={collapsed ? "Expandir menu" : "Recolher menu"}
-        className="flex items-center justify-center gap-1.5 border-t py-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        className="flex items-center justify-center gap-1.5 border-t border-border/70 py-2.5 text-[12px] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
       >
-        {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <><ChevronsLeft className="h-3.5 w-3.5" /> Recolher</>}
+        {collapsed ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4" /> Recolher</>}
       </button>
     </aside>
   );
 }
+

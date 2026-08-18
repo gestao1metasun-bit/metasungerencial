@@ -1213,7 +1213,15 @@ function LeadDetail({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {lead.propostas.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                          Nenhuma proposta neste lead.
+                        </TableCell>
+                      </TableRow>
+                    )}
                     {lead.propostas.map((p) => {
+
                       const v = calcPrecificacao(p).valorFinal || 0;
                       const ehRascunho = p.status === "RASCUNHO";
                       const podeExcluir = ehRascunho && !lead.bloqueado;

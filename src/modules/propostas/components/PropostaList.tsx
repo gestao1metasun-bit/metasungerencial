@@ -1342,7 +1342,8 @@ function LeadDetail({
           </div>
 
           {/* Dados cadastrais — recolhido por padrão */}
-          <div className="rounded-md border">
+          <div className="shrink-0 rounded-md border">
+
             <button
               type="button"
               onClick={() => setVerCadastro((s) => !s)}

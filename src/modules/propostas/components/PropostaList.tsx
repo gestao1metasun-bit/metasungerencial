@@ -1281,40 +1281,9 @@ function LeadDetail({
 
             <div className="min-h-0 flex-1 overflow-auto bg-muted/10 p-4">
               {aba === "timeline" && (
-                <ol className="space-y-3">
-                  {[...lead.propostas]
-                    .sort((a, b) => String(b.criadoEm || b.atualizadoEm || "").localeCompare(String(a.criadoEm || a.atualizadoEm || "")))
-                    .map((p) => (
-                      <li key={p.id} className="flex items-start gap-3">
-                        <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-                          {(p.numero || "").slice(-3)}
-                        </span>
-                        <div className="min-w-0 flex-1 rounded-md border bg-card px-3 py-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-semibold">{p.numero}</span>
-                            <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
-                            <span className="text-[11px] text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
-                          </div>
-                          <div className="mt-0.5 text-[11px] text-muted-foreground">
-                            {fmtBRL(calcPrecificacao(p).valorFinal || 0)} · {p.consultor || "sem consultor"}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => onVisualizar(p.id)}
-                            className="mt-1 text-[11px] font-medium text-primary hover:underline"
-                          >
-                            Visualizar
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  {lead.propostas.length === 0 && (
-                    <li className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
-                      Sem eventos registrados.
-                    </li>
-                  )}
-                </ol>
+                <LinhaDoTempo lead={lead} onVisualizar={onVisualizar} />
               )}
+
 
               {aba === "propostas" && (
                 <div className="overflow-hidden rounded-md border bg-card">

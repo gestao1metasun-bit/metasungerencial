@@ -1092,6 +1092,60 @@ function ColunasManager({
 
 /* ===================== Lead Detail Dialog ===================== */
 
+const ETAPAS_LEAD = [
+  "RASCUNHO", "GERADA", "ENVIADA", "APROVADA", "CONTRATO_PENDENTE", "CONTRATADA",
+] as const;
+
+const ROTULO_ETAPA: Record<string, string> = {
+  RASCUNHO: "Rascunho",
+  GERADA: "Proposta gerada",
+  ENVIADA: "Proposta enviada",
+  APROVADA: "Aprovada",
+  CONTRATO_PENDENTE: "Contrato pendente",
+  CONTRATADA: "Contrato assinado",
+};
+
+function EsteiraEtapas({ atual }: { atual: string }) {
+  const idxAtual = ETAPAS_LEAD.indexOf(atual as (typeof ETAPAS_LEAD)[number]);
+  return (
+    <div className="flex shrink-0 items-stretch gap-px overflow-x-auto border-b bg-muted/30 px-3 py-2">
+      {ETAPAS_LEAD.map((e, i) => {
+        const feito = idxAtual >= 0 && i < idxAtual;
+        const ativo = i === idxAtual;
+        return (
+          <div
+            key={e}
+            className={`relative flex min-w-[130px] flex-1 items-center justify-center whitespace-nowrap px-4 py-1.5 text-[11px] font-medium uppercase tracking-wide ${
+              ativo
+                ? "bg-primary text-primary-foreground"
+                : feito
+                  ? "bg-primary/15 text-primary"
+                  : "bg-card text-muted-foreground"
+            } ${i === 0 ? "rounded-l-md" : ""} ${i === ETAPAS_LEAD.length - 1 ? "rounded-r-md" : ""}`}
+            style={
+              i === ETAPAS_LEAD.length - 1
+                ? undefined
+                : { clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%)" }
+            }
+          >
+            {ROTULO_ETAPA[e] ?? e}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LinhaDado({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 px-4 py-2">
+      <dt className="text-[11px] text-muted-foreground">{rotulo}</dt>
+      <dd className="break-words text-[12px] font-medium">{valor || "—"}</dd>
+    </div>
+  );
+}
+
+
 function LeadDetail({
   lead, onClose, onVisualizar, onNova, onEditar,
 }: {

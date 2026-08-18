@@ -1092,6 +1092,60 @@ function ColunasManager({
 
 /* ===================== Lead Detail Dialog ===================== */
 
+const ETAPAS_LEAD = [
+  "RASCUNHO", "GERADA", "ENVIADA", "APROVADA", "CONTRATO_PENDENTE", "CONTRATADA",
+] as const;
+
+const ROTULO_ETAPA: Record<string, string> = {
+  RASCUNHO: "Rascunho",
+  GERADA: "Proposta gerada",
+  ENVIADA: "Proposta enviada",
+  APROVADA: "Aprovada",
+  CONTRATO_PENDENTE: "Contrato pendente",
+  CONTRATADA: "Contrato assinado",
+};
+
+function EsteiraEtapas({ atual }: { atual: string }) {
+  const idxAtual = ETAPAS_LEAD.indexOf(atual as (typeof ETAPAS_LEAD)[number]);
+  return (
+    <div className="flex shrink-0 items-stretch gap-px overflow-x-auto border-b bg-muted/30 px-3 py-2">
+      {ETAPAS_LEAD.map((e, i) => {
+        const feito = idxAtual >= 0 && i < idxAtual;
+        const ativo = i === idxAtual;
+        return (
+          <div
+            key={e}
+            className={`relative flex min-w-[130px] flex-1 items-center justify-center whitespace-nowrap px-4 py-1.5 text-[11px] font-medium uppercase tracking-wide ${
+              ativo
+                ? "bg-primary text-primary-foreground"
+                : feito
+                  ? "bg-primary/15 text-primary"
+                  : "bg-card text-muted-foreground"
+            } ${i === 0 ? "rounded-l-md" : ""} ${i === ETAPAS_LEAD.length - 1 ? "rounded-r-md" : ""}`}
+            style={
+              i === ETAPAS_LEAD.length - 1
+                ? undefined
+                : { clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%)" }
+            }
+          >
+            {ROTULO_ETAPA[e] ?? e}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LinhaDado({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 px-4 py-2">
+      <dt className="text-[11px] text-muted-foreground">{rotulo}</dt>
+      <dd className="break-words text-[12px] font-medium">{valor || "—"}</dd>
+    </div>
+  );
+}
+
+
 function LeadDetail({
   lead, onClose, onVisualizar, onNova, onEditar,
 }: {
@@ -1103,7 +1157,9 @@ function LeadDetail({
 }) {
   const [aprovando, setAprovando] = useState<PropostaFV | null>(null);
   const [verCadastro, setVerCadastro] = useState(false);
+  const [aba, setAba] = useState<"timeline" | "propostas" | "tecnico" | "cadastro">("timeline");
   if (!lead) return null;
+
   const enderecoLinha = [
     lead.clienteEndereco,
     lead.cidade ? `${lead.cidade}${lead.estado ? "/" + lead.estado : ""}` : "",
@@ -1170,200 +1226,201 @@ function LeadDetail({
         </DialogHeader>
 
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-4 pb-4">
-          {/* KPIs coloridos */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {[
-              { t: "Propostas", v: String(lead.propostas.length), c: "border-l-primary" },
-              { t: "Em aberto", v: String(lead.emAberto), c: "border-l-amber-500" },
-              { t: "Valor da última", v: fmtBRL(lead.valor), c: "border-l-emerald-500" },
-              { t: "Maior proposta", v: fmtBRL(maiorValor), c: "border-l-sky-500" },
-            ].map((k) => (
-              <div key={k.t} className={`rounded-md border border-l-4 bg-card px-3 py-2 ${k.c}`}>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.t}</div>
-                <div className="text-base font-semibold tabular-nums">{k.v}</div>
-              </div>
-            ))}
-          </div>
+        {/* Esteira de etapas (pipeline) */}
+        <EsteiraEtapas atual={String(lead.status || "")} />
 
-          <div className="grid items-start gap-3 lg:grid-cols-12">
-            {/* Propostas */}
-            <div className="flex flex-col gap-3 lg:col-span-8">
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)]">
+          {/* Coluna esquerda — dados básicos fixos */}
+          <aside className="min-h-0 overflow-auto border-r bg-muted/20">
+            <div className="border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Dados básicos
+            </div>
+            <dl className="divide-y">
+              <LinhaDado rotulo="Cliente" valor={lead.clienteNome} />
+              <LinhaDado rotulo="Documento" valor={formatDoc(lead.clienteDoc || "") || "—"} />
+              <LinhaDado rotulo="Consultor" valor={lead.consultor || "—"} />
+              <LinhaDado rotulo="Status" valor={String(lead.status)} />
+              <LinhaDado rotulo="Telefone" valor={lead.clienteTelefone || "—"} />
+              <LinhaDado rotulo="E-mail" valor={lead.clienteEmail || "—"} />
+              <LinhaDado rotulo="Endereço" valor={enderecoLinha || "—"} />
+              <LinhaDado rotulo="Propostas" valor={String(lead.propostas.length)} />
+              <LinhaDado rotulo="Em aberto" valor={String(lead.emAberto)} />
+              <LinhaDado rotulo="Valor total" valor={fmtBRL(valorTotal)} />
+              <LinhaDado rotulo="Ticket médio" valor={fmtBRL(ticket)} />
+              <LinhaDado rotulo="Maior proposta" valor={fmtBRL(maiorValor)} />
+              <LinhaDado rotulo="Criado há" valor={`${lead.diasCriacao} dia(s)`} />
+            </dl>
+          </aside>
 
+          {/* Coluna direita — abas */}
+          <section className="flex min-h-0 flex-col">
+            <nav className="flex shrink-0 items-center gap-1 border-b px-3">
+              {([
+                { k: "timeline", t: "Linha do tempo" },
+                { k: "propostas", t: `Propostas (${lead.propostas.length})` },
+                { k: "tecnico", t: "Técnico" },
+                { k: "cadastro", t: "Cadastro" },
+              ] as const).map((it) => (
+                <button
+                  key={it.k}
+                  type="button"
+                  onClick={() => setAba(it.k)}
+                  className={`-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors ${
+                    aba === it.k
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {it.t}
+                </button>
+              ))}
+              <span className="ml-auto text-[11px] text-muted-foreground">
+                {lead.bloqueado ? "Card bloqueado — proposta aprovada" : "Aprove uma proposta para enviá-la ao Comercial"}
+              </span>
+            </nav>
 
-              <div className="overflow-hidden rounded-md border">
-                <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
-                  <div className="text-xs font-semibold uppercase tracking-wide">
-                    Propostas <span className="text-muted-foreground">({lead.propostas.length})</span>
-                  </div>
-                  {lead.bloqueado ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
-                      <Lock className="h-3.5 w-3.5" /> Aprovada — card bloqueado
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Aprove uma proposta para enviá-la ao Comercial</span>
-                  )}
-                </div>
-
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nº</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Criada</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead className="w-[180px] text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {lead.propostas.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
-                          Nenhuma proposta neste lead.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {lead.propostas.map((p) => {
-
-                      const v = calcPrecificacao(p).valorFinal || 0;
-                      const ehRascunho = p.status === "RASCUNHO";
-                      const podeExcluir = ehRascunho && !lead.bloqueado;
-                      const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
-                      const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
-                      const podeReativar = p.status === "CANCELADA";
-                      const podeAprovar = !lead.bloqueado && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
-                      const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
-                      if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
-                      if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
-                      if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
-                      return (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-medium">{p.numero}</TableCell>
-                          <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
-                          <TableCell className="text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
-                          <TableCell className="text-right font-medium tabular-nums">{fmtBRL(v)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-end gap-1">
-                              {podeAprovar && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => setAprovando(p)}
-                                  className="h-7 gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-                                >
-                                  <Check className="h-3.5 w-3.5" /> Aprovar
-                                </Button>
-                              )}
-                              <RowActions
-                                rowId={p.id}
-                                actions={actions}
-                                onAction={(kind) => {
-                                  if (kind === "visualizar") onVisualizar(p.id);
-                                  else if (kind === "aprovar") reativarProposta(p);
-                                  else if (kind === "cancelar") cancelarProposta(p);
-                                  else if (kind === "excluir") excluirProposta(p);
-                                }}
-                              />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Linha do tempo */}
-              <div className="flex flex-col rounded-md border">
-                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
-                  Linha do tempo
-                </div>
-                <ol className="max-h-64 space-y-2 overflow-auto p-3">
-
-
+            <div className="min-h-0 flex-1 overflow-auto bg-muted/10 p-4">
+              {aba === "timeline" && (
+                <ol className="space-y-3">
                   {[...lead.propostas]
                     .sort((a, b) => String(b.criadoEm || b.atualizadoEm || "").localeCompare(String(a.criadoEm || a.atualizadoEm || "")))
                     .map((p) => (
                       <li key={p.id} className="flex items-start gap-3">
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                        <div className="min-w-0 flex-1">
+                        <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                          {(p.numero || "").slice(-3)}
+                        </span>
+                        <div className="min-w-0 flex-1 rounded-md border bg-card px-3 py-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs font-semibold">{p.numero}</span>
                             <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
                             <span className="text-[11px] text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
                           </div>
-                          <div className="text-[11px] text-muted-foreground">
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
                             {fmtBRL(calcPrecificacao(p).valorFinal || 0)} · {p.consultor || "sem consultor"}
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => onVisualizar(p.id)}
+                            className="mt-1 text-[11px] font-medium text-primary hover:underline"
+                          >
+                            Visualizar
+                          </button>
                         </div>
                       </li>
                     ))}
                   {lead.propostas.length === 0 && (
-                    <li className="text-xs text-muted-foreground">Sem eventos registrados.</li>
+                    <li className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground">
+                      Sem eventos registrados.
+                    </li>
                   )}
                 </ol>
-              </div>
+              )}
+
+              {aba === "propostas" && (
+                <div className="overflow-hidden rounded-md border bg-card">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nº</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Criada</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="w-[180px] text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lead.propostas.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                            Nenhuma proposta neste lead.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {lead.propostas.map((p) => {
+                        const v = calcPrecificacao(p).valorFinal || 0;
+                        const ehRascunho = p.status === "RASCUNHO";
+                        const podeExcluir = ehRascunho && !lead.bloqueado;
+                        const statusFechado: StatusProposta[] = ["APROVADA","ATIVA","CONTRATO_PENDENTE","CONTRATADA","CANCELADA"];
+                        const podeCancelar = !lead.bloqueado && !statusFechado.includes(p.status);
+                        const podeReativar = p.status === "CANCELADA";
+                        const podeAprovar = !lead.bloqueado && ["RASCUNHO", "GERADA", "ENVIADA"].includes(p.status);
+                        const actions: RowAction[] = [{ kind: "visualizar", label: "Visualizar" }];
+                        if (podeReativar) actions.push({ kind: "aprovar", label: "Reativar", icon: RotateCcw, overflow: true });
+                        if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
+                        if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
+                        return (
+                          <TableRow key={p.id}>
+                            <TableCell className="font-medium">{p.numero}</TableCell>
+                            <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
+                            <TableCell className="text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>
+                            <TableCell className="text-right font-medium tabular-nums">{fmtBRL(v)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-end gap-1">
+                                {podeAprovar && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setAprovando(p)}
+                                    className="h-7 gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                                  >
+                                    <Check className="h-3.5 w-3.5" /> Aprovar
+                                  </Button>
+                                )}
+                                <RowActions
+                                  rowId={p.id}
+                                  actions={actions}
+                                  onAction={(kind) => {
+                                    if (kind === "visualizar") onVisualizar(p.id);
+                                    else if (kind === "aprovar") reativarProposta(p);
+                                    else if (kind === "cancelar") cancelarProposta(p);
+                                    else if (kind === "excluir") excluirProposta(p);
+                                  }}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {aba === "tecnico" && (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-md border bg-card">
+                    <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                      Técnico — {u.numero}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 p-3">
+                      <Field label="Potência" value={`${dimU.potenciaFinalKwp.toFixed(2)} kWp`} />
+                      <Field label="Módulos" value={`${dimU.qtdFinal} × ${u.moduloPotenciaWp || 0} W`} />
+                      <Field label="Geração média" value={`${dimU.geracaoMensalKwh.toFixed(0)} kWh/mês`} />
+                      <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
+                    </div>
+                  </div>
+                  <div className="rounded-md border bg-card">
+                    <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                      Resumo financeiro
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 p-3">
+                      <Field label="Valor total" value={fmtBRL(valorTotal)} />
+                      <Field label="Ticket médio" value={fmtBRL(ticket)} />
+                      <Field label="Em aberto" value={String(lead.emAberto)} />
+                      <Field label="Maior proposta" value={fmtBRL(maiorValor)} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {aba === "cadastro" && (
+                <div className="rounded-md border bg-card p-4">
+                  <DadosEditaveis lead={lead} />
+                </div>
+              )}
             </div>
-
-
-            {/* Lateral: contato + técnico */}
-            <div className="flex flex-col gap-3 lg:col-span-4">
-              <div className="rounded-md border">
-
-                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">Contato</div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  <Field label="Telefone" value={lead.clienteTelefone} />
-                  <Field label="E-mail" value={lead.clienteEmail} />
-                  <Field label="Endereço" value={enderecoLinha} className="col-span-2" />
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
-                  Técnico — {u.numero}
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  <Field label="Potência" value={`${dimU.potenciaFinalKwp.toFixed(2)} kWp`} />
-                  <Field label="Módulos" value={`${dimU.qtdFinal} × ${u.moduloPotenciaWp || 0} W`} />
-                  <Field label="Geração média" value={`${dimU.geracaoMensalKwh.toFixed(0)} kWh/mês`} />
-                  <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
-                  Resumo financeiro
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  <Field label="Valor total" value={fmtBRL(valorTotal)} />
-                  <Field label="Ticket médio" value={fmtBRL(ticket)} />
-                  <Field label="Em aberto" value={String(lead.emAberto)} />
-                  <Field label="Maior proposta" value={fmtBRL(maiorValor)} />
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Dados cadastrais — recolhido por padrão */}
-          <div className="shrink-0 rounded-md border">
-
-            <button
-              type="button"
-              onClick={() => setVerCadastro((s) => !s)}
-              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-muted/40"
-            >
-              Dados cadastrais
-              <span className="text-[11px] font-normal normal-case text-muted-foreground">
-                {verCadastro ? "Ocultar" : "Editar"}
-              </span>
-            </button>
-            {verCadastro && (
-              <div className="border-t p-4">
-                <DadosEditaveis lead={lead} />
-              </div>
-            )}
-          </div>
+          </section>
         </div>
+
 
         <DialogFooter className="shrink-0 border-t px-5 py-2.5">
           <Button

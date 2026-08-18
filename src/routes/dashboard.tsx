@@ -143,12 +143,16 @@ function DashboardGeral() {
           <div className="grid gap-4 xl:grid-cols-2">
             <ChartCard
               title="Ranking de consultores"
-              subtitle="Valor total de contratos por consultor"
+              subtitle={rankPorValor ? "Valor total de contratos por consultor" : "Quantidade de contratos por consultor"}
               loading={series.loading}
               empty={!series.loading && series.rankingConsultores.length === 0}
               height={240}
             >
-              <RankBars data={series.rankingConsultores} />
+              <RankBars
+                data={series.rankingConsultores}
+                valueKey={rankPorValor ? "valor" : "qtd"}
+                money={rankPorValor}
+              />
             </ChartCard>
             <ChartCard
               title="Carteira por status"

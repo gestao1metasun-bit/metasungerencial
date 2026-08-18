@@ -1213,7 +1213,15 @@ function LeadDetail({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {lead.propostas.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                          Nenhuma proposta neste lead.
+                        </TableCell>
+                      </TableRow>
+                    )}
                     {lead.propostas.map((p) => {
+
                       const v = calcPrecificacao(p).valorFinal || 0;
                       const ehRascunho = p.status === "RASCUNHO";
                       const podeExcluir = ehRascunho && !lead.bloqueado;
@@ -1260,7 +1268,37 @@ function LeadDetail({
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Linha do tempo */}
+              <div className="rounded-md border">
+                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                  Linha do tempo
+                </div>
+                <ol className="space-y-3 p-3">
+                  {[...lead.propostas]
+                    .sort((a, b) => String(b.criadoEm || b.atualizadoEm || "").localeCompare(String(a.criadoEm || a.atualizadoEm || "")))
+                    .map((p) => (
+                      <li key={p.id} className="flex items-start gap-3">
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-semibold">{p.numero}</span>
+                            <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
+                            <span className="text-[11px] text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {fmtBRL(calcPrecificacao(p).valorFinal || 0)} · {p.consultor || "sem consultor"}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  {lead.propostas.length === 0 && (
+                    <li className="text-xs text-muted-foreground">Sem eventos registrados.</li>
+                  )}
+                </ol>
+              </div>
             </div>
+
 
             {/* Lateral: contato + técnico */}
             <div className="space-y-4 lg:col-span-4">
@@ -1284,7 +1322,20 @@ function LeadDetail({
                   <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
                 </div>
               </div>
+
+              <div className="rounded-md border">
+                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                  Resumo financeiro
+                </div>
+                <div className="grid grid-cols-2 gap-3 p-3">
+                  <Field label="Valor total" value={fmtBRL(valorTotal)} />
+                  <Field label="Ticket médio" value={fmtBRL(ticket)} />
+                  <Field label="Em aberto" value={String(lead.emAberto)} />
+                  <Field label="Maior proposta" value={fmtBRL(maiorValor)} />
+                </div>
+              </div>
             </div>
+
           </div>
 
           {/* Dados cadastrais — recolhido por padrão */}

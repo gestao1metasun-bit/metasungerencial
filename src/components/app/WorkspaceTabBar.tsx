@@ -156,7 +156,7 @@ export function WorkspaceTabBar() {
   };
 
   return (
-    <div className="sticky top-0 z-30 flex h-9 w-full items-center gap-1 overflow-x-auto border-b border-border bg-background px-2">
+    <div className="sticky top-0 z-30 flex h-10 w-full items-center gap-1.5 overflow-x-auto border-b border-border/70 bg-card px-3">
       {tabs.map((t) => {
         const Icon = iconForRoute(t.to);
         const isActive = t.id === activeId;
@@ -170,15 +170,16 @@ export function WorkspaceTabBar() {
                 onAuxClick={(e) => {
                   if (e.button === 1 && !t.pinned) handleClose(e, t.id);
                 }}
-                className={`group inline-flex h-7 shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-md px-2.5 text-[11.5px] transition-colors ${
+                className={`group inline-flex h-7 shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-full px-3 text-[12px] transition-colors ${
                   isActive
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-muted-foreground hover:bg-muted"
                 }`}
                 title={t.to}
               >
                 {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" /> : null}
                 <span className="max-w-[160px] truncate">{t.label}</span>
+
                 {t.pinned ? (
                   <Pin className="h-3 w-3 text-muted-foreground/60" />
                 ) : (

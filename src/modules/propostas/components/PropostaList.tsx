@@ -1271,11 +1271,12 @@ function LeadDetail({
               </div>
 
               {/* Linha do tempo */}
-              <div className="rounded-md border">
+              <div className="flex min-h-0 flex-1 flex-col rounded-md border">
                 <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
                   Linha do tempo
                 </div>
-                <ol className="space-y-3 p-3">
+                <ol className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
+
                   {[...lead.propostas]
                     .sort((a, b) => String(b.criadoEm || b.atualizadoEm || "").localeCompare(String(a.criadoEm || a.atualizadoEm || "")))
                     .map((p) => (

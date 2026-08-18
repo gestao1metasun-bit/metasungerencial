@@ -84,7 +84,7 @@ export function ChartCard({
             </span>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={height}>
             {children as any}
           </ResponsiveContainer>
         )}

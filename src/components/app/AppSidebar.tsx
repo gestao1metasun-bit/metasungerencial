@@ -216,38 +216,11 @@ export function AppSidebar() {
               {!collapsed && <span className="truncate">Dashboard</span>}
             </Link>
 
-            {SECOES.map((sec) => {
-              const itens = sec.macros
-                .map((k) => modulos.find((m) => m.key === k))
-                .filter(Boolean) as typeof MACRO_MODULES;
-              if (itens.length === 0) return null;
-              return (
-                <div key={`inicio-${sec.id}`} className="pt-2">
-                  {!collapsed && (
-                    <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
-                      {sec.label}
-                    </div>
-                  )}
-                  {itens.map((m) => {
-                    const Icon = m.icon;
-                    return (
-                      <button
-                        key={`inicio-${m.key}`}
-                        type="button"
-                        title={m.label}
-                        onClick={() => selecionarModulo(m.key)}
-                        className={`flex w-full items-center gap-2 rounded-md py-1.5 text-left text-[12px] text-foreground/90 transition-colors hover:bg-meta-bar hover:text-meta-bar-foreground [&_svg]:hover:text-meta-bar-foreground ${
-                          collapsed ? "justify-center px-0" : "pl-3 pr-1"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.9} />
-                        {!collapsed && <span className="truncate">{m.label}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })}
+            {!collapsed && (
+              <div className="px-3 pt-4 text-[11px] leading-relaxed text-muted-foreground/60">
+                Selecione um módulo acima para abrir suas opções.
+              </div>
+            )}
           </>
         )}
 

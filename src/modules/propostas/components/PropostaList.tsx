@@ -1170,7 +1170,7 @@ function LeadDetail({
         </DialogHeader>
 
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-4 pb-4">
           {/* KPIs coloridos */}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {[
@@ -1186,9 +1186,10 @@ function LeadDetail({
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-12">
+          <div className="grid items-start gap-3 lg:grid-cols-12">
             {/* Propostas */}
-            <div className="flex min-h-0 flex-col gap-3 lg:col-span-8">
+            <div className="flex flex-col gap-3 lg:col-span-8">
+
 
               <div className="overflow-hidden rounded-md border">
                 <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
@@ -1272,11 +1273,12 @@ function LeadDetail({
               </div>
 
               {/* Linha do tempo */}
-              <div className="flex min-h-0 flex-1 flex-col rounded-md border">
+              <div className="flex flex-col rounded-md border">
                 <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
                   Linha do tempo
                 </div>
-                <ol className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
+                <ol className="max-h-64 space-y-2 overflow-auto p-3">
+
 
                   {[...lead.propostas]
                     .sort((a, b) => String(b.criadoEm || b.atualizadoEm || "").localeCompare(String(a.criadoEm || a.atualizadoEm || "")))
@@ -1304,7 +1306,7 @@ function LeadDetail({
 
 
             {/* Lateral: contato + técnico */}
-            <div className="flex min-h-0 flex-col gap-3 overflow-auto lg:col-span-4">
+            <div className="flex flex-col gap-3 lg:col-span-4">
               <div className="rounded-md border">
 
                 <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">Contato</div>

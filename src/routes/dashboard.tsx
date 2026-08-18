@@ -40,8 +40,12 @@ function DashboardGeral() {
   const wf = useWorkflowAprovacoes("pendentes_para_mim");
   const pend = useEstoquePendencias();
   const liveContratos = useContratos();
+  const series = useSeriesMensais(6);
+  const semSerieFin = series.meses.every(
+    (m) => m.entradas === 0 && m.saidas === 0 && m.previstoReceber === 0,
+  );
 
-  const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); };
+  const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); void series.reload(); };
 
   const fin = kpis.financeiro;
   const com = kpis.comercial;

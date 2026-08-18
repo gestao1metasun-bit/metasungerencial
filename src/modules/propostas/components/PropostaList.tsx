@@ -1575,7 +1575,12 @@ function LeadDetail({
                         if (podeCancelar) actions.push({ kind: "cancelar", label: "Cancelar", overflow: true });
                         if (podeExcluir) actions.push({ kind: "excluir", label: "Excluir rascunho", overflow: true });
                         return (
-                          <TableRow key={p.id}>
+                          <TableRow
+                            key={p.id}
+                            onClick={() => setSelId(p.id)}
+                            data-state={selId === p.id ? "selected" : undefined}
+                            className="cursor-pointer"
+                          >
                             <TableCell className="font-medium">{p.numero}</TableCell>
                             <TableCell><Badge variant={statusVariant(p.status)}>{p.status}</Badge></TableCell>
                             <TableCell className="text-muted-foreground">{fmtData(p.criadoEm || p.atualizadoEm)}</TableCell>

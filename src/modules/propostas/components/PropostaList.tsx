@@ -1322,7 +1322,20 @@ function LeadDetail({
                   <Field label="Tarifa" value={u.tarifa ? fmtBRL(u.tarifa) : ""} />
                 </div>
               </div>
+
+              <div className="rounded-md border">
+                <div className="border-b bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+                  Resumo financeiro
+                </div>
+                <div className="grid grid-cols-2 gap-3 p-3">
+                  <Field label="Valor total" value={fmtBRL(valorTotal)} />
+                  <Field label="Ticket médio" value={fmtBRL(ticket)} />
+                  <Field label="Em aberto" value={String(lead.emAberto)} />
+                  <Field label="Maior proposta" value={fmtBRL(maiorValor)} />
+                </div>
+              </div>
             </div>
+
           </div>
 
           {/* Dados cadastrais — recolhido por padrão */}

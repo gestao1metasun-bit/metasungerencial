@@ -94,24 +94,25 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       {/* Topbar corporativo full-width: logo + identidade */}
-      <header className="sticky top-0 z-40 flex h-11 w-full items-center gap-2 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-3 shadow-sm">
-        <Link to="/dashboard" className="flex shrink-0 items-center gap-2">
-          <img src={logoMetaSun} alt="META SUN" className="h-6 w-auto object-contain" />
+      <header className="sticky top-0 z-40 flex h-14 w-full items-center gap-3 border-b border-meta-bar-active/40 bg-meta-bar text-meta-bar-foreground px-4 shadow-sm">
+        <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5">
+          <img src={logoMetaSun} alt="META SUN" className="h-7 w-auto object-contain" />
         </Link>
-        <div className="min-w-0 flex-1 truncate text-[12px] font-semibold tracking-tight text-white/90">
+        <div className="hidden min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight text-white/85 sm:block">
           Meta Sun Gerencial
         </div>
+        <div className="flex-1 sm:hidden" />
 
-        <div className="flex shrink-0 items-center gap-1.5 pl-2 ml-1 border-l border-white/15">
+        <div className="flex shrink-0 items-center gap-2 border-l border-white/15 pl-3">
           <FavoritosMenu />
           {!identidade.sessionLoading && !identidade.isAuthenticated && (
             <button
               type="button"
               onClick={() => void navigate({ to: "/login" })}
               title="Faça login para habilitar ações administrativas."
-              className="hidden md:inline-flex items-center gap-1.5 rounded border border-amber-300/60 bg-amber-400/20 px-2 py-0.5 text-[10.5px] font-semibold text-amber-100 hover:bg-amber-400/30"
+              className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-400/20 px-2.5 py-1 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/30"
             >
-              <LogIn className="h-3 w-3" /> Sem sessão
+              <LogIn className="h-3.5 w-3.5" /> Sem sessão
             </button>
           )}
           <NotificacoesBell />
@@ -121,29 +122,29 @@ export function AppLayout() {
             size="icon"
             onClick={() => setContextOpen(true)}
             title="Painel de contexto (favoritos, recentes, pendências)"
-            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10"
+            className="h-8 w-8 rounded-lg text-white/80 hover:bg-white/10 hover:text-white"
           >
             <PanelRight className="h-4 w-4" />
           </Button>
           <Link
             to="/configuracoes"
-            className="hidden md:flex items-center gap-2 rounded border border-white/15 bg-white/10 px-2 py-0.5 hover:bg-white/15"
+            className="hidden md:flex items-center gap-2.5 rounded-full border border-white/15 bg-white/10 py-1 pl-1 pr-2.5 transition-colors hover:bg-white/20"
           >
-            <div className="grid h-6 w-6 place-items-center rounded-full bg-meta-bar-active text-[10px] font-bold text-white ring-1 ring-gold/40">{initials}</div>
+            <div className="grid h-7 w-7 place-items-center rounded-full bg-meta-bar-active text-[11px] font-bold text-white ring-1 ring-gold/40">{initials}</div>
             <div className="leading-tight text-left">
-              <div className="text-[11.5px] font-semibold tracking-tight text-white">{displayName}</div>
-              <div className="text-[9.5px] text-white/60">{displayPerfil}</div>
+              <div className="text-[12px] font-semibold tracking-tight text-white">{displayName}</div>
+              <div className="text-[10px] text-white/60">{displayPerfil}</div>
             </div>
-            <ChevronDown className="h-3 w-3 text-white/60" />
+            <ChevronDown className="h-3.5 w-3.5 text-white/60" />
           </Link>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             title="Sair"
-            className="h-7 w-7 text-white/80 hover:text-red-200 hover:bg-white/10"
+            className="h-8 w-8 rounded-lg text-white/80 hover:bg-white/10 hover:text-red-200"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -156,11 +157,12 @@ export function AppLayout() {
         <div ref={contentRef} className="flex min-w-0 flex-1 flex-col">
           <MaintenanceBanner />
 
-          <main className="min-w-0 flex-1 overflow-x-hidden p-3 pb-10">
+          <main className="mx-auto w-full min-w-0 max-w-[1600px] flex-1 overflow-x-hidden px-5 py-5 pb-12">
             <Outlet />
           </main>
         </div>
       </div>
+
 
 
 

@@ -1186,9 +1186,10 @@ function LeadDetail({
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-12">
+          <div className="grid items-start gap-3 lg:grid-cols-12">
             {/* Propostas */}
-            <div className="flex min-h-0 flex-col gap-3 lg:col-span-8">
+            <div className="flex flex-col gap-3 lg:col-span-8">
+
 
               <div className="overflow-hidden rounded-md border">
                 <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">

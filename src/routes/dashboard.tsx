@@ -44,6 +44,7 @@ function DashboardGeral() {
   const semSerieFin = series.meses.every(
     (m) => m.entradas === 0 && m.saidas === 0 && m.previstoReceber === 0,
   );
+  const rankPorValor = series.rankingConsultores.some((r) => r.valor > 0);
 
   const reload = () => { kpis.reload(); wf.refetch(); pend.reload(); void series.reload(); };
 

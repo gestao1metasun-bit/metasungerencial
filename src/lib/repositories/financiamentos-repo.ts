@@ -62,6 +62,8 @@ export interface FinOperacao {
   previsao_liberacao: string | null;
   andamento: string | null;
   observacao: string | null;
+  status_lib: string | null;
+  liberacao_em: string | null;
   motivo_cancelamento: string | null;
   created_at: string;
   updated_at: string;
@@ -193,7 +195,7 @@ async function listOperacoes(): Promise<FinOperacao[]> {
   const { data, error } = await supabase
     .from("financiamentos_operacoes")
     .select(
-      "id, codigo, contrato_id, cliente_id, cliente_nome, vendedor, pfpj, cpfcnpj, valor_contrato, valor_financiado, kwp, banco_id, banco_nome, gerente_id, gerente_nome, envio_em, status, prazo_dias, data_base, previsao_liberacao, andamento, observacao, motivo_cancelamento, created_at, updated_at"
+      "id, codigo, contrato_id, cliente_id, cliente_nome, vendedor, pfpj, cpfcnpj, valor_contrato, valor_financiado, kwp, banco_id, banco_nome, gerente_id, gerente_nome, envio_em, status, prazo_dias, data_base, previsao_liberacao, andamento, observacao, status_lib, liberacao_em, motivo_cancelamento, created_at, updated_at"
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false });

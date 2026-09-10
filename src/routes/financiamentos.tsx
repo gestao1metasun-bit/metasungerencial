@@ -462,7 +462,7 @@ function PendenciasTab() {
                     className="bg-success text-success-foreground hover:bg-success/90"
                     disabled={!p.banco || p.status !== "Aprovado"}
                     title={!p.banco ? "Selecione o banco" : p.status !== "Aprovado" ? "Status precisa estar Aprovado" : "Liberar Engenharia"}
-                    onClick={() => confirmarLiberacao(p.id, p.cliente)}
+                    onClick={() => confirmarLiberacao(p)}
                   >
                     <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Pode liberar Engenharia
                   </Button>
@@ -528,7 +528,7 @@ function DashboardFin({
   const total = ops.length;
   const valorTotal = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const comContrato = ops.filter((o) => !!o.contrato);
-  const semContrato = finsSemContrato;
+  const semContrato = ops.filter((o) => !o.contrato);
   const emAnalise = ops.filter((o) => o.statusOp === "Em análise");
   const aguardandoLib = ops.filter((o) => ["Aguardando documentação", "Aguardando liberação", "Aprovado"].includes(o.statusOp));
   const liberados = ops.filter((o) => o.statusOp === "Liberado");

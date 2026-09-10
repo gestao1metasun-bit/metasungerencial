@@ -1150,9 +1150,22 @@ function SemContratoTab() {
           gerentes={gerentes.map((g) => g.nome)}
           onClose={() => setEditingAvulso(null)}
           onSave={(patch) => {
-            setLista((prev) => prev.map((x) => x.id === editingAvulso.id ? { ...x, ...patch } : x));
+            const dbPatch: Record<string, unknown> = {};
+            if (patch.cliente !== undefined) dbPatch.cliente_nome = patch.cliente;
+            if (patch.doc !== undefined) dbPatch.cpfcnpj = patch.doc;
+            if (patch.banco !== undefined) dbPatch.banco_nome = patch.banco;
+            if (patch.gerente !== undefined) dbPatch.gerente_nome = patch.gerente;
+            if (patch.valor !== undefined) dbPatch.valor_financiado = patch.valor;
+            if (patch.statusOp !== undefined) dbPatch.status = ST_OP_DB[patch.statusOp] ?? patch.statusOp;
+            if (patch.statusLiberacao !== undefined) dbPatch.status_lib = patch.statusLiberacao;
+            if (patch.liberacao !== undefined) dbPatch.liberacao_em = patch.liberacao || null;
+            if (patch.previsao !== undefined) dbPatch.previsao_liberacao = patch.previsao || null;
+            if (patch.obs !== undefined) dbPatch.observacao = patch.obs;
+            atualizarOp.mutate({ id: editingAvulso.id, ...(dbPatch as Partial<FinOperacao>) }, {
+              onSuccess: () => toast.success("Operação atualizada"),
+              onError: (e) => toast.error(e.message),
+            });
             setEditingAvulso(null);
-            toast.success("Operação atualizada");
           }}
         />
       )}
@@ -1213,8 +1226,10 @@ function SemContratoTab() {
         onClose={() => setVincularId(null)}
         onConfirm={(contratoId) => {
           if (vincularId) {
-            setLista((prev) => prev.filter((x) => x.id !== vincularId));
-            toast.success(`Operação vinculada ao contrato ${contratoId}`);
+            atualizarOp.mutate({ id: vincularId, contrato_id: contratoId, status: "COM_CONTRATO" }, {
+              onSuccess: () => toast.success("Operação vinculada ao contrato."),
+              onError: (e) => toast.error(e.message),
+            });
           }
           setVincularId(null);
         }}

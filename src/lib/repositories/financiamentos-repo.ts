@@ -85,7 +85,7 @@ export interface FinPendencia {
 const TAG = "[FinanciamentosRepo]";
 
 function fail(label: string, error: unknown): never {
-  logError({ origem: "financiamentos-repo", mensagem: `${label}: ${String((error as { message?: string })?.message ?? error)}` });
+  void logError({ modulo: "financiamentos", tela: "financiamentos-repo", acao: label, mensagem: `${label}: ${String((error as { message?: string })?.message ?? error)}`, severidade: "error" });
   throw error instanceof Error ? error : new Error(String((error as { message?: string })?.message ?? error));
 }
 

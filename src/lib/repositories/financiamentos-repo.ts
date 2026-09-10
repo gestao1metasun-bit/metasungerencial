@@ -95,6 +95,7 @@ export interface FinPendencia {
   observacao: string | null;
   status: FinPendStatus;
   motivo_decisao: string | null;
+  decidido_em: string | null;
   created_at: string;
 }
 
@@ -313,7 +314,7 @@ export function useFinPendencias() {
     queryFn: async (): Promise<FinPendencia[]> => {
       const { data, error } = await supabase
         .from("financiamentos_pendencias")
-        .select("id, contrato_id, cliente_id, cliente_nome, vendedor, valor_contrato, valor_financiado, kwp, banco_sugerido, banco_definitivo, gerente, andamento, observacao, status, motivo_decisao, created_at")
+        .select("id, contrato_id, cliente_id, cliente_nome, vendedor, valor_contrato, valor_financiado, kwp, banco_sugerido, banco_definitivo, gerente, andamento, observacao, status, motivo_decisao, decidido_em, created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) fail("listar pendências", error);

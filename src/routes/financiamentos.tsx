@@ -802,10 +802,13 @@ function Carteira({
   ops, updateOp, filterFin = false,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void; filterFin?: boolean }) {
   const bancos = useBancosAtivos();
+  const replicar = useReplicarOperacao();
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("todos");
   const [status, setStatus] = useState("todos");
   const [editing, setEditing] = useState<FinOp | null>(null);
+  const [replicando, setReplicando] = useState<FinOp | null>(null);
+  const [bancoReplica, setBancoReplica] = useState("");
 
   const list = useMemo(() =>
     ops
@@ -875,7 +878,7 @@ function Carteira({
                 <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><SquarePen className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => toast.success("Operação replicada")}><Copy className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => { setReplicando(o); setBancoReplica(""); }}><Copy className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Finalizar" onClick={() => { updateOp(o.id, { statusOp: "Finalizado" }); toast.success("Operação finalizada"); }}><CheckCircle2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>

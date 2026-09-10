@@ -1730,7 +1730,9 @@ function EditFinAvulsoDialog({
 /* ---------------- CANCELADOS (financiamentos) ---------------- */
 function CanceladosFinTab() {
   const contratos = useContratos();
-  const [pendAll] = useFinPendencias();
+  const { data: pendRaw = [] } = useFinPendencias();
+  const atualizarPend = useAtualizarPendencia();
+  const pendAll = useMemo(() => pendRaw.map(adaptPend), [pendRaw]);
   const pendCanceladas = pendAll.filter((p) => p.status === "Cancelado");
   const cancelados = contratos.filter((c) => c.cancelado === true && c.possuiFinanciamento === true);
   const totalPerdido =
@@ -1739,9 +1741,9 @@ function CanceladosFinTab() {
 
   function reativarPend(id: string) {
     if (!window.confirm("Reativar pendência? Volta para a aba Pendências.")) return;
-    import("@/lib/fin-pendencias").then(({ reativarPendenciaFin }) => {
-      reativarPendenciaFin(id, "Financiamentos");
-      toast.success("Pendência reativada.");
+    atualizarPend.mutate({ id, status: "PENDENTE", motivo_decisao: null, decidido_em: null } as never, {
+      onSuccess: () => toast.success("Pendência reativada."),
+      onError: (e) => toast.error(e.message),
     });
   }
 

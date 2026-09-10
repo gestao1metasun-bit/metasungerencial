@@ -334,14 +334,14 @@ export function useAtualizarPendencia() {
   });
 }
 
-/** Libera a pendência para Engenharia: marca APROVADO e cria operação na carteira. */
+/** Libera a pendência para Engenharia: marca LIBEROU_ENGENHARIA e cria operação na carteira. */
 export function useLiberarPendencia() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (p: FinPendencia) => {
       const { error: e1 } = await supabase
         .from("financiamentos_pendencias")
-        .update({ status: "APROVADO", decidido_em: new Date().toISOString() })
+        .update({ status: "LIBEROU_ENGENHARIA", decidido_em: new Date().toISOString() })
         .eq("id", p.id);
       if (e1) fail("liberar pendência", e1);
       // Cria operação COM_CONTRATO se ainda não existir para este contrato
@@ -355,11 +355,13 @@ export function useLiberarPendencia() {
         const { error: e2 } = await supabase.from("financiamentos_operacoes").insert({
           contrato_id: p.contrato_id,
           cliente_id: p.cliente_id,
-          cliente_nome: p.vendedor ?? "—",
+          cliente_nome: p.cliente_nome ?? "—",
           vendedor: p.vendedor,
           valor_contrato: p.valor_contrato,
           valor_financiado: p.valor_financiado ?? 0,
+          kwp: p.kwp,
           banco_nome: p.banco_definitivo ?? p.banco_sugerido,
+          gerente_nome: p.gerente,
           status: "COM_CONTRATO",
           observacao: p.observacao,
         });

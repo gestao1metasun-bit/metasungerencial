@@ -51,7 +51,154 @@ const STATUS_LIST = [
   "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado", "Finalizado", "Cancelado",
 ];
 
-type FinOp = (typeof finSeed)[number];
+/* ---- FIN.MIG — forma visual da operação (adaptada do Supabase) ---- */
+interface FinOp {
+  id: string;
+  cliente: string;
+  vendedor: string;
+  contrato: string;
+  pfpj: "PF" | "PJ";
+  cpfcnpj: string;
+  envio: string;
+  banco: string;
+  gerente: string;
+  valorContrato: number;
+  valorFinanciado: number;
+  statusOp: string;
+  statusLib: string;
+  prazo: number;
+  dataBase: string;
+  previsao: string;
+  liberacao: string;
+  restantes: number;
+  obs: string;
+  kwp: number;
+}
+
+const ST_OP_DB: Record<string, FinOpStatus> = {
+  "Sem contrato": "SEM_CONTRATO", "Com contrato": "COM_CONTRATO", "Em análise": "EM_ANALISE",
+  "Pendente banco": "PENDENTE_BANCO", "Pendente cliente": "PENDENTE_CLIENTE",
+  "Aguardando documentação": "AGUARDANDO_DOCUMENTACAO", "Aguardando liberação": "AGUARDANDO_LIBERACAO",
+  "Aprovado": "APROVADO", "Liberado": "LIBERADO", "Finalizado": "FINALIZADO", "Cancelado": "CANCELADO",
+};
+const ST_OP_LABEL = Object.fromEntries(Object.entries(ST_OP_DB).map(([l, d]) => [d, l])) as Record<FinOpStatus, string>;
+
+function adaptOp(o: FinOperacao): FinOp {
+  return {
+    id: o.codigo || o.id.slice(0, 8).toUpperCase(),
+    _uuid: o.id,
+    cliente: o.cliente_nome,
+    vendedor: o.vendedor ?? "",
+    contrato: o.contrato_id ?? "",
+    pfpj: o.pfpj,
+    cpfcnpj: o.cpfcnpj ?? "",
+    envio: o.envio_em ?? "",
+    banco: o.banco_nome ?? "",
+    gerente: o.gerente_nome ?? "",
+    valorContrato: Number(o.valor_contrato) || 0,
+    valorFinanciado: Number(o.valor_financiado) || 0,
+    statusOp: ST_OP_LABEL[o.status] ?? o.status,
+    statusLib: o.status_lib ?? "",
+    prazo: o.prazo_dias ?? 0,
+    dataBase: o.data_base ?? "",
+    previsao: o.previsao_liberacao ?? "",
+    liberacao: o.liberacao_em ?? "",
+    restantes: 0,
+    obs: o.observacao ?? "",
+    kwp: o.kwp != null ? Number(o.kwp) : 0,
+  } as FinOp & { _uuid: string };
+}
+
+function opPatchToDb(patch: Partial<FinOp>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (patch.banco !== undefined) out.banco_nome = patch.banco;
+  if (patch.gerente !== undefined) out.gerente_nome = patch.gerente;
+  if (patch.statusOp !== undefined) {
+    out.status = ST_OP_DB[patch.statusOp] ?? patch.statusOp;
+    if (patch.statusOp === "Finalizado") out.finalizado_em = new Date().toISOString();
+    if (patch.statusOp === "Cancelado") out.cancelado_em = new Date().toISOString();
+  }
+  if (patch.statusLib !== undefined) out.status_lib = patch.statusLib;
+  if (patch.valorFinanciado !== undefined) out.valor_financiado = patch.valorFinanciado;
+  if (patch.valorContrato !== undefined) out.valor_contrato = patch.valorContrato;
+  if (patch.prazo !== undefined) out.prazo_dias = patch.prazo;
+  if (patch.dataBase !== undefined) out.data_base = patch.dataBase || null;
+  if (patch.previsao !== undefined) out.previsao_liberacao = !patch.previsao || patch.previsao === "—" ? null : patch.previsao;
+  if (patch.liberacao !== undefined) out.liberacao_em = patch.liberacao || null;
+  if (patch.envio !== undefined) out.envio_em = patch.envio || null;
+  if (patch.obs !== undefined) out.observacao = patch.obs;
+  if (patch.pfpj !== undefined) out.pfpj = patch.pfpj;
+  if (patch.kwp !== undefined) out.kwp = patch.kwp;
+  return out;
+}
+
+/* ---- Wrappers: bancos/gerentes agora vêm do banco, mesmo formato de antes ---- */
+function useBancosAtivos() {
+  const { data = [] } = useFinBancos();
+  return data.filter((b) => b.ativo).map((b) => ({ id: b.id, nome: b.nome, status: "Ativo" }));
+}
+
+function useGerentesAtivos() {
+  const { data = [] } = useFinGerentes();
+  return data.filter((g) => g.ativo).map((g) => ({ id: g.id, nome: g.nome, banco: g.banco_nome ?? "" }));
+}
+
+/* ---- Pendências: adaptação Supabase → forma visual legada ---- */
+const ST_PEND_DB: Record<string, FinPendStatus> = {
+  "Pendente": "PENDENTE", "Em análise": "EM_ANALISE", "Pendente banco": "PENDENTE_BANCO",
+  "Pendente cliente": "PENDENTE_CLIENTE", "Aguardando documentação": "AGUARDANDO_DOCUMENTACAO",
+  "Aguardando liberação": "AGUARDANDO_LIBERACAO", "Aprovado": "APROVADO",
+  "Cancelado": "CANCELADO", "Liberou Engenharia": "LIBEROU_ENGENHARIA", "Reprovado": "REPROVADO",
+};
+const ST_PEND_LABEL = Object.fromEntries(Object.entries(ST_PEND_DB).map(([l, d]) => [d, l])) as Record<FinPendStatus, string>;
+
+interface PendUI {
+  id: string;
+  raw: FinPendencia;
+  cliente: string;
+  dataCadastro: string;
+  vendedor: string;
+  valor: number;
+  valorFinanciado: number | null;
+  kwp: number;
+  banco: string;
+  gerente: string;
+  andamento: string;
+  observacao: string;
+  status: string;
+  motivoCancelamento: string | null;
+  canceladoEm: string | null;
+}
+
+function adaptPend(p: FinPendencia): PendUI {
+  return {
+    id: p.id,
+    raw: p,
+    cliente: p.cliente_nome ?? "—",
+    dataCadastro: p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "",
+    vendedor: p.vendedor ?? "—",
+    valor: Number(p.valor_contrato) || 0,
+    valorFinanciado: p.valor_financiado != null ? Number(p.valor_financiado) : null,
+    kwp: p.kwp != null ? Number(p.kwp) : 0,
+    banco: p.banco_definitivo ?? p.banco_sugerido ?? "",
+    gerente: p.gerente ?? "",
+    andamento: p.andamento ?? "",
+    observacao: p.observacao ?? "",
+    status: ST_PEND_LABEL[p.status] ?? p.status,
+    motivoCancelamento: p.motivo_decisao,
+    canceladoEm: p.decidido_em,
+  };
+}
+
+function pendPatchToDb(patch: { banco?: string; gerente?: string; andamento?: string; observacao?: string; status?: string }): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (patch.banco !== undefined) out.banco_definitivo = patch.banco;
+  if (patch.gerente !== undefined) out.gerente = patch.gerente;
+  if (patch.andamento !== undefined) out.andamento = patch.andamento;
+  if (patch.observacao !== undefined) out.observacao = patch.observacao;
+  if (patch.status !== undefined) out.status = ST_PEND_DB[patch.status] ?? patch.status;
+  return out;
+}
 
 /** Formata contrato vindo do cadastro (ex.: "CT-2025-0142") como "142/2026".
  *  Manuais (sem contrato vinculado) ficam em branco. */

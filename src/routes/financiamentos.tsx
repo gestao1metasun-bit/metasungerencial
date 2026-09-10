@@ -904,6 +904,40 @@ function Carteira({
         setEditing(null);
         toast.success("Operação atualizada");
       }} />
+
+      {/* Replicar para outro banco */}
+      <Dialog open={!!replicando} onOpenChange={(v) => { if (!v) setReplicando(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replicar operação</DialogTitle>
+            <DialogDescription>
+              {replicando?.cliente} — uma cópia da operação será criada no banco escolhido, em análise.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label className="text-xs">Banco de destino</Label>
+            <Select value={bancoReplica} onValueChange={setBancoReplica}>
+              <SelectTrigger><SelectValue placeholder="Selecione o banco" /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplicando(null)}>Cancelar</Button>
+            <Button
+              disabled={!bancoReplica}
+              onClick={() => {
+                const uuid = (replicando as (FinOp & { _uuid?: string }) | null)?._uuid;
+                if (!replicando || !uuid) { toast.error("Operação não encontrada."); return; }
+                const bancoAlvo = bancos.find((b) => b.nome === bancoReplica);
+                replicar.mutate({ id: uuid, bancoId: bancoAlvo?.id ?? null, bancoNome: bancoReplica }, {
+                  onSuccess: () => { toast.success(`Operação replicada para ${bancoReplica}.`); setReplicando(null); },
+                  onError: (e) => toast.error(e.message),
+                });
+              }}
+            >Replicar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

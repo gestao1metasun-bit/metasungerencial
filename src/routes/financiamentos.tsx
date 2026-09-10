@@ -26,10 +26,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { financiamentos as finSeed, finsSemContrato, fmtBRL } from "@/lib/mock-data";
-import { useBancosAtivos } from "@/lib/bancos-store";
-import { useGerentesAtivos } from "@/lib/gerentes-store";
-import { useFinPendencias } from "@/lib/fin-pendencias";
+import { fmtBRL } from "@/lib/mock-data";
+import {
+  useFinBancos, useFinGerentes, useFinOperacoes, useCriarOperacao, useAtualizarOperacao,
+  useFinalizarOperacao, useReplicarOperacao,
+  useFinPendencias, useAtualizarPendencia, useLiberarPendencia, useCancelarPendencia,
+  type FinOperacao, type FinOpStatus, type FinPendencia, type FinPendStatus,
+} from "@/lib/repositories/financiamentos-repo";
 import { useContratos, updateContratoAudit, reativarContrato } from "@/lib/contratos-store";
 import { gerarARdeLiberacaoFinanciamento } from "@/lib/fin-titulos-store";
 import { Link } from "@tanstack/react-router";

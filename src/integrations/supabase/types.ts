@@ -3516,6 +3516,230 @@ export type Database = {
         }
         Relationships: []
       }
+      financiamentos_gerentes: {
+        Row: {
+          ativo: boolean
+          banco_id: string | null
+          banco_nome: string | null
+          created_at: string
+          criado_por: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          email: string | null
+          id: string
+          nome: string
+          observacao: string | null
+          row_version: number
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          banco_id?: string | null
+          banco_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          observacao?: string | null
+          row_version?: number
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          banco_id?: string | null
+          banco_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          row_version?: number
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financiamentos_gerentes_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financiamentos_operacoes: {
+        Row: {
+          andamento: string | null
+          banco_id: string | null
+          banco_nome: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          cliente_id: string | null
+          cliente_nome: string
+          codigo: string | null
+          codigo_externo: string | null
+          contrato_id: string | null
+          cpfcnpj: string | null
+          created_at: string
+          criado_por: string | null
+          data_base: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          envio_em: string | null
+          finalizado_em: string | null
+          finalizado_por: string | null
+          gerente_id: string | null
+          gerente_nome: string | null
+          hash_integracao: string | null
+          id: string
+          kwp: number | null
+          motivo_cancelamento: string | null
+          observacao: string | null
+          pfpj: string
+          prazo_dias: number
+          previsao_liberacao: string | null
+          row_version: number
+          sistema_destino: string | null
+          status: string
+          status_integracao: string
+          updated_at: string
+          valor_contrato: number
+          valor_financiado: number
+          vendedor: string | null
+          vendedor_id: string | null
+        }
+        Insert: {
+          andamento?: string | null
+          banco_id?: string | null
+          banco_nome?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          cliente_id?: string | null
+          cliente_nome: string
+          codigo?: string | null
+          codigo_externo?: string | null
+          contrato_id?: string | null
+          cpfcnpj?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_base?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          envio_em?: string | null
+          finalizado_em?: string | null
+          finalizado_por?: string | null
+          gerente_id?: string | null
+          gerente_nome?: string | null
+          hash_integracao?: string | null
+          id?: string
+          kwp?: number | null
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          pfpj?: string
+          prazo_dias?: number
+          previsao_liberacao?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_financiado?: number
+          vendedor?: string | null
+          vendedor_id?: string | null
+        }
+        Update: {
+          andamento?: string | null
+          banco_id?: string | null
+          banco_nome?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string
+          codigo?: string | null
+          codigo_externo?: string | null
+          contrato_id?: string | null
+          cpfcnpj?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_base?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          envio_em?: string | null
+          finalizado_em?: string | null
+          finalizado_por?: string | null
+          gerente_id?: string | null
+          gerente_nome?: string | null
+          hash_integracao?: string | null
+          id?: string
+          kwp?: number | null
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          pfpj?: string
+          prazo_dias?: number
+          previsao_liberacao?: string | null
+          row_version?: number
+          sistema_destino?: string | null
+          status?: string
+          status_integracao?: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_financiado?: number
+          vendedor?: string | null
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financiamentos_operacoes_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_operacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_operacoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_operacoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "vw_bridge_pv"
+            referencedColumns: ["contrato_id"]
+          },
+          {
+            foreignKeyName: "financiamentos_operacoes_gerente_id_fkey"
+            columns: ["gerente_id"]
+            isOneToOne: false
+            referencedRelation: "financiamentos_gerentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financiamentos_pendencias: {
         Row: {
           banco_definitivo: string | null

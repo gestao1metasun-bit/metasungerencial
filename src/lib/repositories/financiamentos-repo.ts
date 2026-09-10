@@ -67,17 +67,33 @@ export interface FinOperacao {
   updated_at: string;
 }
 
+export type FinPendStatus =
+  | "PENDENTE"
+  | "EM_ANALISE"
+  | "PENDENTE_BANCO"
+  | "PENDENTE_CLIENTE"
+  | "AGUARDANDO_DOCUMENTACAO"
+  | "AGUARDANDO_LIBERACAO"
+  | "APROVADO"
+  | "REPROVADO"
+  | "LIBEROU_ENGENHARIA"
+  | "CANCELADO";
+
 export interface FinPendencia {
   id: string;
   contrato_id: string;
   cliente_id: string | null;
+  cliente_nome: string | null;
   vendedor: string | null;
   valor_contrato: number;
   valor_financiado: number | null;
+  kwp: number | null;
   banco_sugerido: string | null;
   banco_definitivo: string | null;
+  gerente: string | null;
+  andamento: string | null;
   observacao: string | null;
-  status: "PENDENTE" | "EM_ANALISE" | "APROVADO" | "REPROVADO" | "CANCELADO";
+  status: FinPendStatus;
   motivo_decisao: string | null;
   created_at: string;
 }
@@ -297,7 +313,7 @@ export function useFinPendencias() {
     queryFn: async (): Promise<FinPendencia[]> => {
       const { data, error } = await supabase
         .from("financiamentos_pendencias")
-        .select("id, contrato_id, cliente_id, vendedor, valor_contrato, valor_financiado, banco_sugerido, banco_definitivo, observacao, status, motivo_decisao, created_at")
+        .select("id, contrato_id, cliente_id, cliente_nome, vendedor, valor_contrato, valor_financiado, kwp, banco_sugerido, banco_definitivo, gerente, andamento, observacao, status, motivo_decisao, created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) fail("listar pendências", error);

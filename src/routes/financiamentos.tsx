@@ -544,13 +544,7 @@ function DashboardFin({
 
   const [openModal, setOpenModal] = useState<null | string>(null);
 
-  const semAsOps: FinOp[] = semContrato.map((s) => ({
-    ...(s as object as FinOp),
-    valorFinanciado: s.valor,
-    contrato: "",
-    previsao: "",
-    prazo: 0,
-  }) as FinOp);
+  const semAsOps: FinOp[] = semContrato;
   const cancelados = ops.filter((o) => o.statusOp === "Cancelado");
 
   const modalContent: Record<string, { title: string; ops: FinOp[] }> = {
@@ -591,7 +585,7 @@ function DashboardFin({
         <StatCard label="Total Financiado" value={fmtBRL(valorTotal)} hint={`${total} operações`} icon={Banknote} tone="primary" trend={{ value: "12.4%", positive: true }} onView={() => setOpenModal("total")} />
         <StatCard label="Operações" value={`${ativos.length} (${pct(ativos.length, total)})`} hint={fmtBRL(ativos.reduce((s, o) => s + o.valorFinanciado, 0))} icon={FileText} tone="info" onView={() => setOpenModal("operacoes")} />
         <StatCard label="Com Contrato" value={`${comContrato.length} (${pct(comContrato.length, total)})`} hint={fmtBRL(comContrato.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("com")} />
-        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valor, 0))} icon={AlertCircle} tone="warning" onView={() => setOpenModal("sem")} />
+        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valorFinanciado, 0))} icon={AlertCircle} tone="warning" onView={() => setOpenModal("sem")} />
         <StatCard label="Em Análise" value={`${emAnalise.length} (${pct(emAnalise.length, total)})`} hint={fmtBRL(emAnalise.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Hourglass} tone="info" onView={() => setOpenModal("analise")} />
         <StatCard label="Aguardando Liberação" value={`${aguardandoLib.length} (${pct(aguardandoLib.length, total)})`} hint={fmtBRL(aguardandoLib.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Clock} tone="warning" onView={() => setOpenModal("aguardando")} />
         <StatCard label="Liberados" value={`${liberados.length} (${pct(liberados.length, total)})`} hint={fmtBRL(liberados.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("liberados")} />

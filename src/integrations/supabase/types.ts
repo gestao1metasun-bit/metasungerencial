@@ -3605,6 +3605,7 @@ export type Database = {
           hash_integracao: string | null
           id: string
           kwp: number | null
+          liberacao_em: string | null
           motivo_cancelamento: string | null
           observacao: string | null
           pfpj: string
@@ -3614,6 +3615,7 @@ export type Database = {
           sistema_destino: string | null
           status: string
           status_integracao: string
+          status_lib: string | null
           updated_at: string
           valor_contrato: number
           valor_financiado: number
@@ -3646,6 +3648,7 @@ export type Database = {
           hash_integracao?: string | null
           id?: string
           kwp?: number | null
+          liberacao_em?: string | null
           motivo_cancelamento?: string | null
           observacao?: string | null
           pfpj?: string
@@ -3655,6 +3658,7 @@ export type Database = {
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
+          status_lib?: string | null
           updated_at?: string
           valor_contrato?: number
           valor_financiado?: number
@@ -3687,6 +3691,7 @@ export type Database = {
           hash_integracao?: string | null
           id?: string
           kwp?: number | null
+          liberacao_em?: string | null
           motivo_cancelamento?: string | null
           observacao?: string | null
           pfpj?: string
@@ -3696,6 +3701,7 @@ export type Database = {
           sistema_destino?: string | null
           status?: string
           status_integracao?: string
+          status_lib?: string | null
           updated_at?: string
           valor_contrato?: number
           valor_financiado?: number
@@ -3742,9 +3748,11 @@ export type Database = {
       }
       financiamentos_pendencias: {
         Row: {
+          andamento: string | null
           banco_definitivo: string | null
           banco_sugerido: string | null
           cliente_id: string | null
+          cliente_nome: string | null
           codigo_externo: string | null
           contrato_id: string
           created_at: string
@@ -3754,8 +3762,10 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
+          gerente: string | null
           hash_integracao: string | null
           id: string
+          kwp: number | null
           motivo_decisao: string | null
           observacao: string | null
           row_version: number
@@ -3769,9 +3779,11 @@ export type Database = {
           vendedor_id: string | null
         }
         Insert: {
+          andamento?: string | null
           banco_definitivo?: string | null
           banco_sugerido?: string | null
           cliente_id?: string | null
+          cliente_nome?: string | null
           codigo_externo?: string | null
           contrato_id: string
           created_at?: string
@@ -3781,8 +3793,10 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          gerente?: string | null
           hash_integracao?: string | null
           id?: string
+          kwp?: number | null
           motivo_decisao?: string | null
           observacao?: string | null
           row_version?: number
@@ -3796,9 +3810,11 @@ export type Database = {
           vendedor_id?: string | null
         }
         Update: {
+          andamento?: string | null
           banco_definitivo?: string | null
           banco_sugerido?: string | null
           cliente_id?: string | null
+          cliente_nome?: string | null
           codigo_externo?: string | null
           contrato_id?: string
           created_at?: string
@@ -3808,8 +3824,10 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          gerente?: string | null
           hash_integracao?: string | null
           id?: string
+          kwp?: number | null
           motivo_decisao?: string | null
           observacao?: string | null
           row_version?: number

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { logError } from "@/lib/error-logger";
+import { logError } from "@/lib/repositories/error-log-repo";
 
 /* ============================================================
  * FIN.MIG — Repositório oficial Financiamentos (Supabase)
@@ -272,15 +272,17 @@ export function useReplicarOperacao() {
         .single();
       if (e1) fail("replicar: ler origem", e1);
       const { id: _id, codigo: _c, created_at: _ca, updated_at: _ua, finalizado_em: _fe, finalizado_por: _fp, cancelado_em: _ce, cancelado_por: _cp, row_version: _rv, ...rest } = orig as Record<string, unknown>;
-      const { error } = await supabase.from("financiamentos_operacoes").insert({
-        ...rest,
+      const payload = {
+        ...(rest as Record<string, unknown>),
+        cliente_nome: (orig as { cliente_nome: string }).cliente_nome,
         banco_id: bancoId,
         banco_nome: bancoNome,
         gerente_id: null,
         gerente_nome: null,
-        status: "EM_ANALISE",
+        status: "EM_ANALISE" as const,
         motivo_cancelamento: null,
-      });
+      };
+      const { error } = await supabase.from("financiamentos_operacoes").insert(payload as never);
       if (error) fail("replicar operação", error);
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["fin-operacoes"] }),

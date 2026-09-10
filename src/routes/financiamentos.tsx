@@ -26,10 +26,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { financiamentos as finSeed, finsSemContrato, fmtBRL } from "@/lib/mock-data";
-import { useBancosAtivos } from "@/lib/bancos-store";
-import { useGerentesAtivos } from "@/lib/gerentes-store";
-import { useFinPendencias } from "@/lib/fin-pendencias";
+import { fmtBRL } from "@/lib/mock-data";
+import {
+  useFinBancos, useFinGerentes, useFinOperacoes, useCriarOperacao, useAtualizarOperacao,
+  useFinalizarOperacao, useReplicarOperacao,
+  useFinPendencias, useAtualizarPendencia, useLiberarPendencia, useCancelarPendencia,
+  type FinOperacao, type FinOpStatus, type FinPendencia, type FinPendStatus,
+} from "@/lib/repositories/financiamentos-repo";
 import { useContratos, updateContratoAudit, reativarContrato } from "@/lib/contratos-store";
 import { gerarARdeLiberacaoFinanciamento } from "@/lib/fin-titulos-store";
 import { Link } from "@tanstack/react-router";
@@ -48,7 +51,154 @@ const STATUS_LIST = [
   "Aguardando documentação", "Aguardando liberação", "Aprovado", "Liberado", "Finalizado", "Cancelado",
 ];
 
-type FinOp = (typeof finSeed)[number];
+/* ---- FIN.MIG — forma visual da operação (adaptada do Supabase) ---- */
+interface FinOp {
+  id: string;
+  cliente: string;
+  vendedor: string;
+  contrato: string;
+  pfpj: "PF" | "PJ";
+  cpfcnpj: string;
+  envio: string;
+  banco: string;
+  gerente: string;
+  valorContrato: number;
+  valorFinanciado: number;
+  statusOp: string;
+  statusLib: string;
+  prazo: number;
+  dataBase: string;
+  previsao: string;
+  liberacao: string;
+  restantes: number;
+  obs: string;
+  kwp: number;
+}
+
+const ST_OP_DB: Record<string, FinOpStatus> = {
+  "Sem contrato": "SEM_CONTRATO", "Com contrato": "COM_CONTRATO", "Em análise": "EM_ANALISE",
+  "Pendente banco": "PENDENTE_BANCO", "Pendente cliente": "PENDENTE_CLIENTE",
+  "Aguardando documentação": "AGUARDANDO_DOCUMENTACAO", "Aguardando liberação": "AGUARDANDO_LIBERACAO",
+  "Aprovado": "APROVADO", "Liberado": "LIBERADO", "Finalizado": "FINALIZADO", "Cancelado": "CANCELADO",
+};
+const ST_OP_LABEL = Object.fromEntries(Object.entries(ST_OP_DB).map(([l, d]) => [d, l])) as Record<FinOpStatus, string>;
+
+function adaptOp(o: FinOperacao): FinOp {
+  return {
+    id: o.codigo || o.id.slice(0, 8).toUpperCase(),
+    _uuid: o.id,
+    cliente: o.cliente_nome,
+    vendedor: o.vendedor ?? "",
+    contrato: o.contrato_id ?? "",
+    pfpj: o.pfpj,
+    cpfcnpj: o.cpfcnpj ?? "",
+    envio: o.envio_em ?? "",
+    banco: o.banco_nome ?? "",
+    gerente: o.gerente_nome ?? "",
+    valorContrato: Number(o.valor_contrato) || 0,
+    valorFinanciado: Number(o.valor_financiado) || 0,
+    statusOp: ST_OP_LABEL[o.status] ?? o.status,
+    statusLib: o.status_lib ?? "",
+    prazo: o.prazo_dias ?? 0,
+    dataBase: o.data_base ?? "",
+    previsao: o.previsao_liberacao ?? "",
+    liberacao: o.liberacao_em ?? "",
+    restantes: 0,
+    obs: o.observacao ?? "",
+    kwp: o.kwp != null ? Number(o.kwp) : 0,
+  } as FinOp & { _uuid: string };
+}
+
+function opPatchToDb(patch: Partial<FinOp>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (patch.banco !== undefined) out.banco_nome = patch.banco;
+  if (patch.gerente !== undefined) out.gerente_nome = patch.gerente;
+  if (patch.statusOp !== undefined) {
+    out.status = ST_OP_DB[patch.statusOp] ?? patch.statusOp;
+    if (patch.statusOp === "Finalizado") out.finalizado_em = new Date().toISOString();
+    if (patch.statusOp === "Cancelado") out.cancelado_em = new Date().toISOString();
+  }
+  if (patch.statusLib !== undefined) out.status_lib = patch.statusLib;
+  if (patch.valorFinanciado !== undefined) out.valor_financiado = patch.valorFinanciado;
+  if (patch.valorContrato !== undefined) out.valor_contrato = patch.valorContrato;
+  if (patch.prazo !== undefined) out.prazo_dias = patch.prazo;
+  if (patch.dataBase !== undefined) out.data_base = patch.dataBase || null;
+  if (patch.previsao !== undefined) out.previsao_liberacao = !patch.previsao || patch.previsao === "—" ? null : patch.previsao;
+  if (patch.liberacao !== undefined) out.liberacao_em = patch.liberacao || null;
+  if (patch.envio !== undefined) out.envio_em = patch.envio || null;
+  if (patch.obs !== undefined) out.observacao = patch.obs;
+  if (patch.pfpj !== undefined) out.pfpj = patch.pfpj;
+  if (patch.kwp !== undefined) out.kwp = patch.kwp;
+  return out;
+}
+
+/* ---- Wrappers: bancos/gerentes agora vêm do banco, mesmo formato de antes ---- */
+function useBancosAtivos() {
+  const { data = [] } = useFinBancos();
+  return data.filter((b) => b.ativo).map((b) => ({ id: b.id, nome: b.nome, status: "Ativo" }));
+}
+
+function useGerentesAtivos() {
+  const { data = [] } = useFinGerentes();
+  return data.filter((g) => g.ativo).map((g) => ({ id: g.id, nome: g.nome, banco: g.banco_nome ?? "" }));
+}
+
+/* ---- Pendências: adaptação Supabase → forma visual legada ---- */
+const ST_PEND_DB: Record<string, FinPendStatus> = {
+  "Pendente": "PENDENTE", "Em análise": "EM_ANALISE", "Pendente banco": "PENDENTE_BANCO",
+  "Pendente cliente": "PENDENTE_CLIENTE", "Aguardando documentação": "AGUARDANDO_DOCUMENTACAO",
+  "Aguardando liberação": "AGUARDANDO_LIBERACAO", "Aprovado": "APROVADO",
+  "Cancelado": "CANCELADO", "Liberou Engenharia": "LIBEROU_ENGENHARIA", "Reprovado": "REPROVADO",
+};
+const ST_PEND_LABEL = Object.fromEntries(Object.entries(ST_PEND_DB).map(([l, d]) => [d, l])) as Record<FinPendStatus, string>;
+
+interface PendUI {
+  id: string;
+  raw: FinPendencia;
+  cliente: string;
+  dataCadastro: string;
+  vendedor: string;
+  valor: number;
+  valorFinanciado: number | null;
+  kwp: number;
+  banco: string;
+  gerente: string;
+  andamento: string;
+  observacao: string;
+  status: string;
+  motivoCancelamento: string | null;
+  canceladoEm: string | null;
+}
+
+function adaptPend(p: FinPendencia): PendUI {
+  return {
+    id: p.id,
+    raw: p,
+    cliente: p.cliente_nome ?? "—",
+    dataCadastro: p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "",
+    vendedor: p.vendedor ?? "—",
+    valor: Number(p.valor_contrato) || 0,
+    valorFinanciado: p.valor_financiado != null ? Number(p.valor_financiado) : null,
+    kwp: p.kwp != null ? Number(p.kwp) : 0,
+    banco: p.banco_definitivo ?? p.banco_sugerido ?? "",
+    gerente: p.gerente ?? "",
+    andamento: p.andamento ?? "",
+    observacao: p.observacao ?? "",
+    status: ST_PEND_LABEL[p.status] ?? p.status,
+    motivoCancelamento: p.motivo_decisao,
+    canceladoEm: p.decidido_em,
+  };
+}
+
+function pendPatchToDb(patch: { banco?: string; gerente?: string; andamento?: string; observacao?: string; status?: string }): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (patch.banco !== undefined) out.banco_definitivo = patch.banco;
+  if (patch.gerente !== undefined) out.gerente = patch.gerente;
+  if (patch.andamento !== undefined) out.andamento = patch.andamento;
+  if (patch.observacao !== undefined) out.observacao = patch.observacao;
+  if (patch.status !== undefined) out.status = ST_PEND_DB[patch.status] ?? patch.status;
+  return out;
+}
 
 /** Formata contrato vindo do cadastro (ex.: "CT-2025-0142") como "142/2026".
  *  Manuais (sem contrato vinculado) ficam em branco. */
@@ -64,13 +214,19 @@ function fmtContrato(id?: string): string {
 
 function FinanciamentosPage() {
   const [tab, setTab] = useTabFromHash("/financiamentos");
-  const [ops, setOps] = useState<FinOp[]>(() => finSeed);
-  const [pend] = useFinPendencias();
-  const pendCount = pend.filter((p) => p.status === "Pendente").length;
+  const { data: opsRaw = [], refetch } = useFinOperacoes();
+  const ops = useMemo(() => opsRaw.map(adaptOp), [opsRaw]);
+  const { data: pendRaw = [] } = useFinPendencias();
+  const pendCount = pendRaw.filter((p) => p.status === "PENDENTE").length;
   const [histOpen, setHistOpen] = useState(false);
+  const atualizarOp = useAtualizarOperacao();
 
   const updateOp = (id: string, patch: Partial<FinOp>) => {
-    setOps((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    const uuid = (opsRaw.find((o) => (o.codigo || o.id.slice(0, 8).toUpperCase()) === id) ?? {}).id;
+    if (!uuid) { toast.error("Operação não encontrada."); return; }
+    atualizarOp.mutate({ id: uuid, ...(opPatchToDb(patch) as Partial<FinOperacao>) }, {
+      onError: (e) => toast.error(e.message),
+    });
   };
 
   return (
@@ -91,7 +247,7 @@ function FinanciamentosPage() {
           })}
           layoutBar={layoutBarRm()}
           onAction={(a) => {
-            if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
+            if (a === "atualizar") { void refetch(); toast.success("Carteira recarregada."); }
             else if (a === "novo") setTab("sem");
             else if (a === "editar") setTab("pendencias");
             else if (a === "cancelar") setTab("cancelados");
@@ -151,21 +307,31 @@ function FinanciamentosPage() {
 function PendenciasTab() {
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const [pendAll, update, remove] = useFinPendencias();
+  const { data: pendRaw = [] } = useFinPendencias();
+  const atualizarPend = useAtualizarPendencia();
+  const liberarPend = useLiberarPendencia();
+  const cancelarPend = useCancelarPendencia();
+  const pendAll = useMemo(() => pendRaw.map(adaptPend), [pendRaw]);
   const pend = pendAll.filter((p) => p.status !== "Cancelado" && p.status !== "Liberou Engenharia");
   const liberadas = pendAll.filter((p) => p.status === "Liberou Engenharia");
 
   const [cancelOpen, setCancelOpen] = useState<string | null>(null);
   const [cancelMotivo, setCancelMotivo] = useState("");
 
-  function confirmarLiberacao(id: string, cliente: string) {
+  function update(id: string, patch: Parameters<typeof pendPatchToDb>[0]) {
+    atualizarPend.mutate({ id, ...(pendPatchToDb(patch) as Partial<FinPendencia>) }, {
+      onError: (e) => toast.error(e.message),
+    });
+  }
+
+  function confirmarLiberacao(p: PendUI) {
     if (!window.confirm(
-      `Liberar Engenharia para o contrato de ${cliente}?\n\n` +
-      `O projeto sairá de Stand-by e entrará automaticamente em "Novo projeto" na Engenharia.`
+      `Liberar Engenharia para o contrato de ${p.cliente}?\n\n` +
+      `A operação será criada na carteira e a pendência marcada como liberada.`
     )) return;
-    import("@/lib/fin-pendencias").then(({ liberarParaEngenharia }) => {
-      liberarParaEngenharia(id, "Financiamentos");
-      toast.success("Engenharia liberada. Projeto promovido para Novo projeto.");
+    liberarPend.mutate(p.raw, {
+      onSuccess: () => toast.success("Engenharia liberada. Operação criada na carteira."),
+      onError: (e) => toast.error(e.message),
     });
   }
 
@@ -173,11 +339,13 @@ function PendenciasTab() {
     if (!cancelOpen) return;
     const motivo = cancelMotivo.trim();
     if (!motivo) { toast.error("Informe o motivo do cancelamento."); return; }
-    import("@/lib/fin-pendencias").then(({ cancelarPendenciaFin }) => {
-      cancelarPendenciaFin(cancelOpen, motivo, "Financiamentos");
-      toast.success("Pendência movida para Cancelados.");
-      setCancelOpen(null);
-      setCancelMotivo("");
+    cancelarPend.mutate({ id: cancelOpen, motivo }, {
+      onSuccess: () => {
+        toast.success("Pendência movida para Cancelados.");
+        setCancelOpen(null);
+        setCancelMotivo("");
+      },
+      onError: (e) => toast.error(e.message),
     });
   }
 
@@ -294,7 +462,7 @@ function PendenciasTab() {
                     className="bg-success text-success-foreground hover:bg-success/90"
                     disabled={!p.banco || p.status !== "Aprovado"}
                     title={!p.banco ? "Selecione o banco" : p.status !== "Aprovado" ? "Status precisa estar Aprovado" : "Liberar Engenharia"}
-                    onClick={() => confirmarLiberacao(p.id, p.cliente)}
+                    onClick={() => confirmarLiberacao(p)}
                   >
                     <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Pode liberar Engenharia
                   </Button>
@@ -360,7 +528,7 @@ function DashboardFin({
   const total = ops.length;
   const valorTotal = ops.reduce((s, o) => s + o.valorFinanciado, 0);
   const comContrato = ops.filter((o) => !!o.contrato);
-  const semContrato = finsSemContrato;
+  const semContrato = ops.filter((o) => !o.contrato);
   const emAnalise = ops.filter((o) => o.statusOp === "Em análise");
   const aguardandoLib = ops.filter((o) => ["Aguardando documentação", "Aguardando liberação", "Aprovado"].includes(o.statusOp));
   const liberados = ops.filter((o) => o.statusOp === "Liberado");
@@ -376,13 +544,7 @@ function DashboardFin({
 
   const [openModal, setOpenModal] = useState<null | string>(null);
 
-  const semAsOps: FinOp[] = semContrato.map((s) => ({
-    ...(s as object as FinOp),
-    valorFinanciado: s.valor,
-    contrato: "",
-    previsao: "",
-    prazo: 0,
-  }) as FinOp);
+  const semAsOps: FinOp[] = semContrato;
   const cancelados = ops.filter((o) => o.statusOp === "Cancelado");
 
   const modalContent: Record<string, { title: string; ops: FinOp[] }> = {
@@ -423,7 +585,7 @@ function DashboardFin({
         <StatCard label="Total Financiado" value={fmtBRL(valorTotal)} hint={`${total} operações`} icon={Banknote} tone="primary" trend={{ value: "12.4%", positive: true }} onView={() => setOpenModal("total")} />
         <StatCard label="Operações" value={`${ativos.length} (${pct(ativos.length, total)})`} hint={fmtBRL(ativos.reduce((s, o) => s + o.valorFinanciado, 0))} icon={FileText} tone="info" onView={() => setOpenModal("operacoes")} />
         <StatCard label="Com Contrato" value={`${comContrato.length} (${pct(comContrato.length, total)})`} hint={fmtBRL(comContrato.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("com")} />
-        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valor, 0))} icon={AlertCircle} tone="warning" onView={() => setOpenModal("sem")} />
+        <StatCard label="Sem Contrato" value={semContrato.length} hint={fmtBRL(semContrato.reduce((s, o) => s + o.valorFinanciado, 0))} icon={AlertCircle} tone="warning" onView={() => setOpenModal("sem")} />
         <StatCard label="Em Análise" value={`${emAnalise.length} (${pct(emAnalise.length, total)})`} hint={fmtBRL(emAnalise.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Hourglass} tone="info" onView={() => setOpenModal("analise")} />
         <StatCard label="Aguardando Liberação" value={`${aguardandoLib.length} (${pct(aguardandoLib.length, total)})`} hint={fmtBRL(aguardandoLib.reduce((s, o) => s + o.valorFinanciado, 0))} icon={Clock} tone="warning" onView={() => setOpenModal("aguardando")} />
         <StatCard label="Liberados" value={`${liberados.length} (${pct(liberados.length, total)})`} hint={fmtBRL(liberados.reduce((s, o) => s + o.valorFinanciado, 0))} icon={CheckCircle2} tone="success" onView={() => setOpenModal("liberados")} />
@@ -640,10 +802,13 @@ function Carteira({
   ops, updateOp, filterFin = false,
 }: { ops: FinOp[]; updateOp: (id: string, patch: Partial<FinOp>) => void; filterFin?: boolean }) {
   const bancos = useBancosAtivos();
+  const replicar = useReplicarOperacao();
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("todos");
   const [status, setStatus] = useState("todos");
   const [editing, setEditing] = useState<FinOp | null>(null);
+  const [replicando, setReplicando] = useState<FinOp | null>(null);
+  const [bancoReplica, setBancoReplica] = useState("");
 
   const list = useMemo(() =>
     ops
@@ -713,7 +878,7 @@ function Carteira({
                 <TableCell className="text-muted-foreground">{o.previsao}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => setEditing(o)}><SquarePen className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => toast.success("Operação replicada")}><Copy className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Replicar" onClick={() => { setReplicando(o); setBancoReplica(""); }}><Copy className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" title="Finalizar" onClick={() => { updateOp(o.id, { statusOp: "Finalizado" }); toast.success("Operação finalizada"); }}><CheckCircle2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>
@@ -739,6 +904,40 @@ function Carteira({
         setEditing(null);
         toast.success("Operação atualizada");
       }} />
+
+      {/* Replicar para outro banco */}
+      <Dialog open={!!replicando} onOpenChange={(v) => { if (!v) setReplicando(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replicar operação</DialogTitle>
+            <DialogDescription>
+              {replicando?.cliente} — uma cópia da operação será criada no banco escolhido, em análise.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label className="text-xs">Banco de destino</Label>
+            <Select value={bancoReplica} onValueChange={setBancoReplica}>
+              <SelectTrigger><SelectValue placeholder="Selecione o banco" /></SelectTrigger>
+              <SelectContent>{bancos.map((b) => <SelectItem key={b.id} value={b.nome}>{b.nome}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplicando(null)}>Cancelar</Button>
+            <Button
+              disabled={!bancoReplica}
+              onClick={() => {
+                const uuid = (replicando as (FinOp & { _uuid?: string }) | null)?._uuid;
+                if (!replicando || !uuid) { toast.error("Operação não encontrada."); return; }
+                const bancoAlvo = bancos.find((b) => b.nome === bancoReplica);
+                replicar.mutate({ id: uuid, bancoId: bancoAlvo?.id ?? null, bancoNome: bancoReplica }, {
+                  onSuccess: () => { toast.success(`Operação replicada para ${bancoReplica}.`); setReplicando(null); },
+                  onError: (e) => toast.error(e.message),
+                });
+              }}
+            >Replicar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -883,29 +1082,59 @@ type FinAvulso = {
 function SemContratoTab() {
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const [lista, setLista] = useState<FinAvulso[]>(() =>
-    finsSemContrato.map((f) => ({
-      id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
-      gerente: f.gerente, valor: f.valor, statusOp: f.statusOp,
-    }))
+  const { data: opsRaw = [] } = useFinOperacoes();
+  const criarOp = useCriarOperacao();
+  const atualizarOp = useAtualizarOperacao();
+  const lista: FinAvulso[] = useMemo(
+    () => opsRaw
+      .filter((o) => !o.contrato_id)
+      .map((o) => ({
+        id: o.id,
+        cliente: o.cliente_nome,
+        doc: o.cpfcnpj ?? "",
+        banco: o.banco_nome ?? "",
+        gerente: o.gerente_nome ?? "",
+        valor: Number(o.valor_financiado) || 0,
+        statusOp: ST_OP_LABEL[o.status] ?? o.status,
+        vendedor: o.vendedor ?? "",
+        envio: o.envio_em ?? "",
+        obs: o.observacao ?? "",
+        liberacao: o.liberacao_em ?? "",
+        statusLiberacao: o.status_lib ?? "",
+        previsao: o.previsao_liberacao ?? "",
+      })),
+    [opsRaw]
   );
   const [openNovo, setOpenNovo] = useState(false);
   const [vincularId, setVincularId] = useState<string | null>(null);
 
+  const bancoDefault = bancos[0]?.nome ?? "";
   const [form, setForm] = useState<FinAvulso>({
-    id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise",
+    id: "", cliente: "", doc: "", banco: "", gerente: "", valor: 0, statusOp: "Em análise",
   });
 
-  const reset = () => setForm({ id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise" });
+  const reset = () => setForm({ id: "", cliente: "", doc: "", banco: bancoDefault, gerente: "", valor: 0, statusOp: "Em análise" });
 
   const salvar = () => {
     if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
     if (!form.gerente.trim()) { toast.error("Selecione o gerente"); return; }
-    const id = `FIN-AV-${Date.now().toString().slice(-5)}`;
-    setLista((prev) => [{ ...form, id, cliente: form.cliente.toUpperCase(), gerente: form.gerente.toUpperCase(), banco: form.banco.toUpperCase() }, ...prev]);
-    toast.success("Financiamento avulso cadastrado");
-    setOpenNovo(false);
-    reset();
+    criarOp.mutate({
+      cliente_nome: form.cliente.toUpperCase(),
+      cpfcnpj: form.doc || null,
+      pfpj: pfPjFromDoc(form.doc) || "PF",
+      banco_nome: form.banco.toUpperCase(),
+      gerente_nome: form.gerente.toUpperCase(),
+      valor_financiado: form.valor || 0,
+      valor_contrato: form.valor || 0,
+      status: ST_OP_DB[form.statusOp] ?? "SEM_CONTRATO",
+    }, {
+      onSuccess: () => {
+        toast.success("Financiamento avulso cadastrado");
+        setOpenNovo(false);
+        reset();
+      },
+      onError: (e) => toast.error(e.message),
+    });
   };
 
   const rows: OpRow[] = lista.map((f) => ({
@@ -958,9 +1187,22 @@ function SemContratoTab() {
           gerentes={gerentes.map((g) => g.nome)}
           onClose={() => setEditingAvulso(null)}
           onSave={(patch) => {
-            setLista((prev) => prev.map((x) => x.id === editingAvulso.id ? { ...x, ...patch } : x));
+            const dbPatch: Record<string, unknown> = {};
+            if (patch.cliente !== undefined) dbPatch.cliente_nome = patch.cliente;
+            if (patch.doc !== undefined) dbPatch.cpfcnpj = patch.doc;
+            if (patch.banco !== undefined) dbPatch.banco_nome = patch.banco;
+            if (patch.gerente !== undefined) dbPatch.gerente_nome = patch.gerente;
+            if (patch.valor !== undefined) dbPatch.valor_financiado = patch.valor;
+            if (patch.statusOp !== undefined) dbPatch.status = ST_OP_DB[patch.statusOp] ?? patch.statusOp;
+            if (patch.statusLiberacao !== undefined) dbPatch.status_lib = patch.statusLiberacao;
+            if (patch.liberacao !== undefined) dbPatch.liberacao_em = patch.liberacao || null;
+            if (patch.previsao !== undefined) dbPatch.previsao_liberacao = patch.previsao || null;
+            if (patch.obs !== undefined) dbPatch.observacao = patch.obs;
+            atualizarOp.mutate({ id: editingAvulso.id, ...(dbPatch as Partial<FinOperacao>) }, {
+              onSuccess: () => toast.success("Operação atualizada"),
+              onError: (e) => toast.error(e.message),
+            });
             setEditingAvulso(null);
-            toast.success("Operação atualizada");
           }}
         />
       )}
@@ -1021,8 +1263,10 @@ function SemContratoTab() {
         onClose={() => setVincularId(null)}
         onConfirm={(contratoId) => {
           if (vincularId) {
-            setLista((prev) => prev.filter((x) => x.id !== vincularId));
-            toast.success(`Operação vinculada ao contrato ${contratoId}`);
+            atualizarOp.mutate({ id: vincularId, contrato_id: contratoId, status: "COM_CONTRATO" }, {
+              onSuccess: () => toast.success("Operação vinculada ao contrato."),
+              onError: (e) => toast.error(e.message),
+            });
           }
           setVincularId(null);
         }}
@@ -1269,7 +1513,17 @@ function ContratosComercialFin() {
   const gerentes = useGerentesAtivos();
   const lista = contratos.filter((c) => c.possuiFinanciamento && !c.cancelado);
   const [editing, setEditing] = useState<typeof lista[number] | null>(null);
-  if (lista.length === 0) return null;
+  if (lista.length === 0) {
+    return (
+      <Card className="p-10 text-center">
+        <Banknote className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
+        <div className="text-sm font-semibold">Nenhum contrato em financiamento</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Contratos assinados com financiamento aparecem aqui automaticamente. Operações avulsas ficam em <b>Sem Financiamento</b>.
+        </div>
+      </Card>
+    );
+  }
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
 
   const rows: OpRow[] = lista.map((c) => ({
@@ -1523,7 +1777,9 @@ function EditFinAvulsoDialog({
 /* ---------------- CANCELADOS (financiamentos) ---------------- */
 function CanceladosFinTab() {
   const contratos = useContratos();
-  const [pendAll] = useFinPendencias();
+  const { data: pendRaw = [] } = useFinPendencias();
+  const atualizarPend = useAtualizarPendencia();
+  const pendAll = useMemo(() => pendRaw.map(adaptPend), [pendRaw]);
   const pendCanceladas = pendAll.filter((p) => p.status === "Cancelado");
   const cancelados = contratos.filter((c) => c.cancelado === true && c.possuiFinanciamento === true);
   const totalPerdido =
@@ -1532,9 +1788,9 @@ function CanceladosFinTab() {
 
   function reativarPend(id: string) {
     if (!window.confirm("Reativar pendência? Volta para a aba Pendências.")) return;
-    import("@/lib/fin-pendencias").then(({ reativarPendenciaFin }) => {
-      reativarPendenciaFin(id, "Financiamentos");
-      toast.success("Pendência reativada.");
+    atualizarPend.mutate({ id, status: "PENDENTE", motivo_decisao: null, decidido_em: null } as never, {
+      onSuccess: () => toast.success("Pendência reativada."),
+      onError: (e) => toast.error(e.message),
     });
   }
 

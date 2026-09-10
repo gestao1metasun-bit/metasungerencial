@@ -247,7 +247,7 @@ function FinanciamentosPage() {
           })}
           layoutBar={layoutBarRm()}
           onAction={(a) => {
-            if (a === "atualizar") { setOps([...finSeed]); toast.success("Carteira recarregada."); }
+            if (a === "atualizar") { void refetch(); toast.success("Carteira recarregada."); }
             else if (a === "novo") setTab("sem");
             else if (a === "editar") setTab("pendencias");
             else if (a === "cancelar") setTab("cancelados");
@@ -307,21 +307,31 @@ function FinanciamentosPage() {
 function PendenciasTab() {
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const [pendAll, update, remove] = useFinPendencias();
+  const { data: pendRaw = [] } = useFinPendencias();
+  const atualizarPend = useAtualizarPendencia();
+  const liberarPend = useLiberarPendencia();
+  const cancelarPend = useCancelarPendencia();
+  const pendAll = useMemo(() => pendRaw.map(adaptPend), [pendRaw]);
   const pend = pendAll.filter((p) => p.status !== "Cancelado" && p.status !== "Liberou Engenharia");
   const liberadas = pendAll.filter((p) => p.status === "Liberou Engenharia");
 
   const [cancelOpen, setCancelOpen] = useState<string | null>(null);
   const [cancelMotivo, setCancelMotivo] = useState("");
 
-  function confirmarLiberacao(id: string, cliente: string) {
+  function update(id: string, patch: Parameters<typeof pendPatchToDb>[0]) {
+    atualizarPend.mutate({ id, ...(pendPatchToDb(patch) as Partial<FinPendencia>) }, {
+      onError: (e) => toast.error(e.message),
+    });
+  }
+
+  function confirmarLiberacao(p: PendUI) {
     if (!window.confirm(
-      `Liberar Engenharia para o contrato de ${cliente}?\n\n` +
-      `O projeto sairá de Stand-by e entrará automaticamente em "Novo projeto" na Engenharia.`
+      `Liberar Engenharia para o contrato de ${p.cliente}?\n\n` +
+      `A operação será criada na carteira e a pendência marcada como liberada.`
     )) return;
-    import("@/lib/fin-pendencias").then(({ liberarParaEngenharia }) => {
-      liberarParaEngenharia(id, "Financiamentos");
-      toast.success("Engenharia liberada. Projeto promovido para Novo projeto.");
+    liberarPend.mutate(p.raw, {
+      onSuccess: () => toast.success("Engenharia liberada. Operação criada na carteira."),
+      onError: (e) => toast.error(e.message),
     });
   }
 
@@ -329,11 +339,13 @@ function PendenciasTab() {
     if (!cancelOpen) return;
     const motivo = cancelMotivo.trim();
     if (!motivo) { toast.error("Informe o motivo do cancelamento."); return; }
-    import("@/lib/fin-pendencias").then(({ cancelarPendenciaFin }) => {
-      cancelarPendenciaFin(cancelOpen, motivo, "Financiamentos");
-      toast.success("Pendência movida para Cancelados.");
-      setCancelOpen(null);
-      setCancelMotivo("");
+    cancelarPend.mutate({ id: cancelOpen, motivo }, {
+      onSuccess: () => {
+        toast.success("Pendência movida para Cancelados.");
+        setCancelOpen(null);
+        setCancelMotivo("");
+      },
+      onError: (e) => toast.error(e.message),
     });
   }
 

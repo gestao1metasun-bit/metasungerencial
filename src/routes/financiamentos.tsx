@@ -214,13 +214,19 @@ function fmtContrato(id?: string): string {
 
 function FinanciamentosPage() {
   const [tab, setTab] = useTabFromHash("/financiamentos");
-  const [ops, setOps] = useState<FinOp[]>(() => finSeed);
-  const [pend] = useFinPendencias();
-  const pendCount = pend.filter((p) => p.status === "Pendente").length;
+  const { data: opsRaw = [], refetch } = useFinOperacoes();
+  const ops = useMemo(() => opsRaw.map(adaptOp), [opsRaw]);
+  const { data: pendRaw = [] } = useFinPendencias();
+  const pendCount = pendRaw.filter((p) => p.status === "PENDENTE").length;
   const [histOpen, setHistOpen] = useState(false);
+  const atualizarOp = useAtualizarOperacao();
 
   const updateOp = (id: string, patch: Partial<FinOp>) => {
-    setOps((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    const uuid = (opsRaw.find((o) => (o.codigo || o.id.slice(0, 8).toUpperCase()) === id) ?? {}).id;
+    if (!uuid) { toast.error("Operação não encontrada."); return; }
+    atualizarOp.mutate({ id: uuid, ...(opPatchToDb(patch) as Partial<FinOperacao>) }, {
+      onError: (e) => toast.error(e.message),
+    });
   };
 
   return (

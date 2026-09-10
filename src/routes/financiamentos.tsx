@@ -1513,7 +1513,17 @@ function ContratosComercialFin() {
   const gerentes = useGerentesAtivos();
   const lista = contratos.filter((c) => c.possuiFinanciamento && !c.cancelado);
   const [editing, setEditing] = useState<typeof lista[number] | null>(null);
-  if (lista.length === 0) return null;
+  if (lista.length === 0) {
+    return (
+      <Card className="p-10 text-center">
+        <Banknote className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
+        <div className="text-sm font-semibold">Nenhum contrato em financiamento</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Contratos assinados com financiamento aparecem aqui automaticamente. Operações avulsas ficam em <b>Sem Financiamento</b>.
+        </div>
+      </Card>
+    );
+  }
   const total = lista.reduce((s, c) => s + (Number(c.financiamentoValor) || Number(c.valor) || 0), 0);
 
   const rows: OpRow[] = lista.map((c) => ({

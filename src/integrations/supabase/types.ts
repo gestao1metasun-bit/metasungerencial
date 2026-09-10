@@ -16160,6 +16160,7 @@ export type Database = {
         | "comercial.comissao.substituir"
         | "comercial.contrato.aprovar_minuta"
         | "comercial.contrato.editar_minuta"
+        | "financiamento.criar"
       app_role: "admin_master" | "admin_geral" | "usuario"
       comercial_comissao_origem: "CONTRATO" | "ADITIVO" | "AJUSTE"
       comercial_comissao_status:
@@ -16567,6 +16568,7 @@ export const Constants = {
         "comercial.comissao.substituir",
         "comercial.contrato.aprovar_minuta",
         "comercial.contrato.editar_minuta",
+        "financiamento.criar",
       ],
       app_role: ["admin_master", "admin_geral", "usuario"],
       comercial_comissao_origem: ["CONTRATO", "ADITIVO", "AJUSTE"],

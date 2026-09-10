@@ -1045,29 +1045,59 @@ type FinAvulso = {
 function SemContratoTab() {
   const bancos = useBancosAtivos();
   const gerentes = useGerentesAtivos();
-  const [lista, setLista] = useState<FinAvulso[]>(() =>
-    finsSemContrato.map((f) => ({
-      id: f.id, cliente: f.cliente, doc: f.doc, banco: f.banco,
-      gerente: f.gerente, valor: f.valor, statusOp: f.statusOp,
-    }))
+  const { data: opsRaw = [] } = useFinOperacoes();
+  const criarOp = useCriarOperacao();
+  const atualizarOp = useAtualizarOperacao();
+  const lista: FinAvulso[] = useMemo(
+    () => opsRaw
+      .filter((o) => !o.contrato_id)
+      .map((o) => ({
+        id: o.id,
+        cliente: o.cliente_nome,
+        doc: o.cpfcnpj ?? "",
+        banco: o.banco_nome ?? "",
+        gerente: o.gerente_nome ?? "",
+        valor: Number(o.valor_financiado) || 0,
+        statusOp: ST_OP_LABEL[o.status] ?? o.status,
+        vendedor: o.vendedor ?? "",
+        envio: o.envio_em ?? "",
+        obs: o.observacao ?? "",
+        liberacao: o.liberacao_em ?? "",
+        statusLiberacao: o.status_lib ?? "",
+        previsao: o.previsao_liberacao ?? "",
+      })),
+    [opsRaw]
   );
   const [openNovo, setOpenNovo] = useState(false);
   const [vincularId, setVincularId] = useState<string | null>(null);
 
+  const bancoDefault = bancos[0]?.nome ?? "";
   const [form, setForm] = useState<FinAvulso>({
-    id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise",
+    id: "", cliente: "", doc: "", banco: "", gerente: "", valor: 0, statusOp: "Em análise",
   });
 
-  const reset = () => setForm({ id: "", cliente: "", doc: "", banco: "BASA", gerente: "", valor: 0, statusOp: "Em análise" });
+  const reset = () => setForm({ id: "", cliente: "", doc: "", banco: bancoDefault, gerente: "", valor: 0, statusOp: "Em análise" });
 
   const salvar = () => {
     if (!form.cliente.trim()) { toast.error("Informe o cliente"); return; }
     if (!form.gerente.trim()) { toast.error("Selecione o gerente"); return; }
-    const id = `FIN-AV-${Date.now().toString().slice(-5)}`;
-    setLista((prev) => [{ ...form, id, cliente: form.cliente.toUpperCase(), gerente: form.gerente.toUpperCase(), banco: form.banco.toUpperCase() }, ...prev]);
-    toast.success("Financiamento avulso cadastrado");
-    setOpenNovo(false);
-    reset();
+    criarOp.mutate({
+      cliente_nome: form.cliente.toUpperCase(),
+      cpfcnpj: form.doc || null,
+      pfpj: pfPjFromDoc(form.doc) || "PF",
+      banco_nome: form.banco.toUpperCase(),
+      gerente_nome: form.gerente.toUpperCase(),
+      valor_financiado: form.valor || 0,
+      valor_contrato: form.valor || 0,
+      status: ST_OP_DB[form.statusOp] ?? "SEM_CONTRATO",
+    }, {
+      onSuccess: () => {
+        toast.success("Financiamento avulso cadastrado");
+        setOpenNovo(false);
+        reset();
+      },
+      onError: (e) => toast.error(e.message),
+    });
   };
 
   const rows: OpRow[] = lista.map((f) => ({

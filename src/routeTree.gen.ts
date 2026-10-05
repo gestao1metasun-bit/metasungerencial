@@ -9,221 +9,76 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AnalisesRouteImport } from './routes/analises'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
-import { Route as AssinaturasRouteImport } from './routes/assinaturas'
-import { Route as AuditoriaRouteImport } from './routes/auditoria'
-import { Route as CadastrarRouteImport } from './routes/cadastrar'
-import { Route as CadastrosRouteImport } from './routes/cadastros'
-import { Route as ComercialRouteImport } from './routes/comercial'
-import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as DashboardsRouteImport } from './routes/dashboards'
-import { Route as EngenhariaRouteImport } from './routes/engenharia'
-import { Route as EstoqueRouteImport } from './routes/estoque'
-import { Route as EstoqueFundacaoRouteImport } from './routes/estoque-fundacao'
-import { Route as FinanceiroRouteImport } from './routes/financeiro'
-import { Route as FinanceiroTitulosRouteImport } from './routes/financeiro-titulos'
-import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
-import { Route as FornecedoresRouteImport } from './routes/fornecedores'
-import { Route as LeadsRouteImport } from './routes/leads'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as NotificacoesRouteImport } from './routes/notificacoes'
-import { Route as OperacoesFinanceirasRouteImport } from './routes/operacoes-financeiras'
-import { Route as PaineisRouteImport } from './routes/paineis'
-import { Route as PedidosVendaRouteImport } from './routes/pedidos-venda'
-import { Route as PosvendaRouteImport } from './routes/posvenda'
-import { Route as PropostasRouteImport } from './routes/propostas'
-import { Route as RelatoriosRouteImport } from './routes/relatorios'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as SolicitacoesMaterialRouteImport } from './routes/solicitacoes-material'
-import { Route as SuprimentosRouteImport } from './routes/suprimentos'
 import { Route as TarefasRouteImport } from './routes/tarefas'
-import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
-import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comercial'
-import { Route as AnalyticsEngenhariaRouteImport } from './routes/analytics.engenharia'
-import { Route as AnalyticsErrosRouteImport } from './routes/analytics.erros'
-import { Route as AnalyticsEstoqueRouteImport } from './routes/analytics.estoque'
-import { Route as AnalyticsFinanceiroRouteImport } from './routes/analytics.financeiro'
-import { Route as AnalyticsFinanciamentosRouteImport } from './routes/analytics.financiamentos'
-import { Route as AnalyticsGovernancaRouteImport } from './routes/analytics.governanca'
-import { Route as AnalyticsPerformanceRouteImport } from './routes/analytics.performance'
-import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
-import { Route as AnalyticsSaudeDadosRouteImport } from './routes/analytics.saude-dados'
-import { Route as AnalyticsSaudeSistemaRouteImport } from './routes/analytics.saude-sistema'
-import { Route as ComercialPropostasRouteImport } from './routes/comercial.propostas'
-import { Route as ConfiguracoesContabilRouteImport } from './routes/configuracoes.contabil'
-import { Route as ConfiguracoesTestesCargaRouteImport } from './routes/configuracoes.testes-carga'
-import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
-import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
-import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
-import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoque'
-import { Route as DashboardsFinanceiroRouteImport } from './routes/dashboards.financeiro'
-import { Route as DashboardsFinanciamentosRouteImport } from './routes/dashboards.financiamentos'
-import { Route as DashboardsPosvendaRouteImport } from './routes/dashboards.posvenda'
+import { Route as SuprimentosRouteImport } from './routes/suprimentos'
+import { Route as SolicitacoesMaterialRouteImport } from './routes/solicitacoes-material'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as PropostasRouteImport } from './routes/propostas'
+import { Route as PosvendaRouteImport } from './routes/posvenda'
+import { Route as PedidosVendaRouteImport } from './routes/pedidos-venda'
+import { Route as PaineisRouteImport } from './routes/paineis'
+import { Route as OperacoesFinanceirasRouteImport } from './routes/operacoes-financeiras'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeadsRouteImport } from './routes/leads'
+import { Route as FornecedoresRouteImport } from './routes/fornecedores'
+import { Route as FinanciamentosRouteImport } from './routes/financiamentos'
+import { Route as FinanceiroTitulosRouteImport } from './routes/financeiro-titulos'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as EstoqueFundacaoRouteImport } from './routes/estoque-fundacao'
+import { Route as EstoqueRouteImport } from './routes/estoque'
+import { Route as EngenhariaRouteImport } from './routes/engenharia'
+import { Route as DashboardsRouteImport } from './routes/dashboards'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as ComercialRouteImport } from './routes/comercial'
+import { Route as CadastrosRouteImport } from './routes/cadastros'
+import { Route as CadastrarRouteImport } from './routes/cadastrar'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as AssinaturasRouteImport } from './routes/assinaturas'
+import { Route as AprovacoesRouteImport } from './routes/aprovacoes'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AnalisesRouteImport } from './routes/analises'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaineisSplatRouteImport } from './routes/paineis.$'
-import { Route as ComercialClientesIndexRouteImport } from './routes/comercial.clientes.index'
-import { Route as ComercialClientesClienteIdRouteImport } from './routes/comercial.clientes.$clienteId'
-import { Route as ComercialClientesBackfillRouteImport } from './routes/comercial.clientes.backfill'
-import { Route as ComercialComissoesIndexRouteImport } from './routes/comercial.comissoes.index'
-import { Route as ComercialComissoesComissaoIdRouteImport } from './routes/comercial.comissoes.$comissaoId'
-import { Route as ComercialContratosIndexRouteImport } from './routes/comercial.contratos.index'
-import { Route as ComercialContratosContratoIdRouteImport } from './routes/comercial.contratos.$contratoId'
-import { Route as ComercialProjetosProjetoIdRouteImport } from './routes/comercial.projetos.$projetoId'
+import { Route as DashboardsPosvendaRouteImport } from './routes/dashboards.posvenda'
+import { Route as DashboardsFinanciamentosRouteImport } from './routes/dashboards.financiamentos'
+import { Route as DashboardsFinanceiroRouteImport } from './routes/dashboards.financeiro'
+import { Route as DashboardsEstoqueRouteImport } from './routes/dashboards.estoque'
+import { Route as DashboardsEngenhariaRouteImport } from './routes/dashboards.engenharia'
+import { Route as DashboardsComercialRouteImport } from './routes/dashboards.comercial'
+import { Route as DashboardsAprovacoesRouteImport } from './routes/dashboards.aprovacoes'
+import { Route as ConfiguracoesTestesCargaRouteImport } from './routes/configuracoes.testes-carga'
+import { Route as ConfiguracoesContabilRouteImport } from './routes/configuracoes.contabil'
+import { Route as ComercialPropostasRouteImport } from './routes/comercial.propostas'
+import { Route as AnalyticsSaudeSistemaRouteImport } from './routes/analytics.saude-sistema'
+import { Route as AnalyticsSaudeDadosRouteImport } from './routes/analytics.saude-dados'
+import { Route as AnalyticsPosvendaRouteImport } from './routes/analytics.posvenda'
+import { Route as AnalyticsPerformanceRouteImport } from './routes/analytics.performance'
+import { Route as AnalyticsGovernancaRouteImport } from './routes/analytics.governanca'
+import { Route as AnalyticsFinanciamentosRouteImport } from './routes/analytics.financiamentos'
+import { Route as AnalyticsFinanceiroRouteImport } from './routes/analytics.financeiro'
+import { Route as AnalyticsEstoqueRouteImport } from './routes/analytics.estoque'
+import { Route as AnalyticsErrosRouteImport } from './routes/analytics.erros'
+import { Route as AnalyticsEngenhariaRouteImport } from './routes/analytics.engenharia'
+import { Route as AnalyticsComercialRouteImport } from './routes/analytics.comercial'
+import { Route as AnalyticsAprovacoesRouteImport } from './routes/analytics.aprovacoes'
 import { Route as EngenhariaGestaoServicosIndexRouteImport } from './routes/engenharia.gestao-servicos.index'
-import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
+import { Route as ComercialContratosIndexRouteImport } from './routes/comercial.contratos.index'
+import { Route as ComercialComissoesIndexRouteImport } from './routes/comercial.comissoes.index'
+import { Route as ComercialClientesIndexRouteImport } from './routes/comercial.clientes.index'
 import { Route as EngenhariaGestaoServicosModelosRouteImport } from './routes/engenharia.gestao-servicos.modelos'
+import { Route as EngenhariaGestaoServicosOsIdRouteImport } from './routes/engenharia.gestao-servicos.$osId'
+import { Route as ComercialProjetosProjetoIdRouteImport } from './routes/comercial.projetos.$projetoId'
+import { Route as ComercialContratosContratoIdRouteImport } from './routes/comercial.contratos.$contratoId'
+import { Route as ComercialComissoesComissaoIdRouteImport } from './routes/comercial.comissoes.$comissaoId'
+import { Route as ComercialClientesBackfillRouteImport } from './routes/comercial.clientes.backfill'
+import { Route as ComercialClientesClienteIdRouteImport } from './routes/comercial.clientes.$clienteId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnalisesRoute = AnalisesRouteImport.update({
-  id: '/analises',
-  path: '/analises',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AprovacoesRoute = AprovacoesRouteImport.update({
-  id: '/aprovacoes',
-  path: '/aprovacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssinaturasRoute = AssinaturasRouteImport.update({
-  id: '/assinaturas',
-  path: '/assinaturas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuditoriaRoute = AuditoriaRouteImport.update({
-  id: '/auditoria',
-  path: '/auditoria',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastrarRoute = CadastrarRouteImport.update({
-  id: '/cadastrar',
-  path: '/cadastrar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastrosRoute = CadastrosRouteImport.update({
-  id: '/cadastros',
-  path: '/cadastros',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComercialRoute = ComercialRouteImport.update({
-  id: '/comercial',
-  path: '/comercial',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardsRoute = DashboardsRouteImport.update({
-  id: '/dashboards',
-  path: '/dashboards',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EngenhariaRoute = EngenhariaRouteImport.update({
-  id: '/engenharia',
-  path: '/engenharia',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EstoqueRoute = EstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EstoqueFundacaoRoute = EstoqueFundacaoRouteImport.update({
-  id: '/estoque-fundacao',
-  path: '/estoque-fundacao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FinanceiroRoute = FinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FinanceiroTitulosRoute = FinanceiroTitulosRouteImport.update({
-  id: '/financeiro-titulos',
-  path: '/financeiro-titulos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FinanciamentosRoute = FinanciamentosRouteImport.update({
-  id: '/financiamentos',
-  path: '/financiamentos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FornecedoresRoute = FornecedoresRouteImport.update({
-  id: '/fornecedores',
-  path: '/fornecedores',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeadsRoute = LeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificacoesRoute = NotificacoesRouteImport.update({
-  id: '/notificacoes',
-  path: '/notificacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperacoesFinanceirasRoute = OperacoesFinanceirasRouteImport.update({
-  id: '/operacoes-financeiras',
-  path: '/operacoes-financeiras',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaineisRoute = PaineisRouteImport.update({
-  id: '/paineis',
-  path: '/paineis',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PedidosVendaRoute = PedidosVendaRouteImport.update({
-  id: '/pedidos-venda',
-  path: '/pedidos-venda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PosvendaRoute = PosvendaRouteImport.update({
-  id: '/posvenda',
-  path: '/posvenda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PropostasRoute = PropostasRouteImport.update({
-  id: '/propostas',
-  path: '/propostas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RelatoriosRoute = RelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SolicitacoesMaterialRoute = SolicitacoesMaterialRouteImport.update({
-  id: '/solicitacoes-material',
-  path: '/solicitacoes-material',
+const TarefasRoute = TarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuprimentosRoute = SuprimentosRouteImport.update({
@@ -231,110 +86,164 @@ const SuprimentosRoute = SuprimentosRouteImport.update({
   path: '/suprimentos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TarefasRoute = TarefasRouteImport.update({
-  id: '/tarefas',
-  path: '/tarefas',
+const SolicitacoesMaterialRoute = SolicitacoesMaterialRouteImport.update({
+  id: '/solicitacoes-material',
+  path: '/solicitacoes-material',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalyticsAprovacoesRoute = AnalyticsAprovacoesRouteImport.update({
-  id: '/aprovacoes',
-  path: '/aprovacoes',
-  getParentRoute: () => AnalyticsRoute,
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AnalyticsComercialRoute = AnalyticsComercialRouteImport.update({
-  id: '/comercial',
-  path: '/comercial',
-  getParentRoute: () => AnalyticsRoute,
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AnalyticsEngenhariaRoute = AnalyticsEngenhariaRouteImport.update({
-  id: '/engenharia',
-  path: '/engenharia',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsErrosRoute = AnalyticsErrosRouteImport.update({
-  id: '/erros',
-  path: '/erros',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsEstoqueRoute = AnalyticsEstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsFinanceiroRoute = AnalyticsFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsFinanciamentosRoute = AnalyticsFinanciamentosRouteImport.update({
-  id: '/financiamentos',
-  path: '/financiamentos',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsGovernancaRoute = AnalyticsGovernancaRouteImport.update({
-  id: '/governanca',
-  path: '/governanca',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsPerformanceRoute = AnalyticsPerformanceRouteImport.update({
-  id: '/performance',
-  path: '/performance',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsPosvendaRoute = AnalyticsPosvendaRouteImport.update({
-  id: '/posvenda',
-  path: '/posvenda',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsSaudeDadosRoute = AnalyticsSaudeDadosRouteImport.update({
-  id: '/saude-dados',
-  path: '/saude-dados',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const AnalyticsSaudeSistemaRoute = AnalyticsSaudeSistemaRouteImport.update({
-  id: '/saude-sistema',
-  path: '/saude-sistema',
-  getParentRoute: () => AnalyticsRoute,
-} as any)
-const ComercialPropostasRoute = ComercialPropostasRouteImport.update({
+const PropostasRoute = PropostasRouteImport.update({
   id: '/propostas',
   path: '/propostas',
-  getParentRoute: () => ComercialRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ConfiguracoesContabilRoute = ConfiguracoesContabilRouteImport.update({
-  id: '/contabil',
-  path: '/contabil',
-  getParentRoute: () => ConfiguracoesRoute,
+const PosvendaRoute = PosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ConfiguracoesTestesCargaRoute =
-  ConfiguracoesTestesCargaRouteImport.update({
-    id: '/testes-carga',
-    path: '/testes-carga',
-    getParentRoute: () => ConfiguracoesRoute,
-  } as any)
-const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
-  id: '/aprovacoes',
-  path: '/aprovacoes',
-  getParentRoute: () => DashboardsRoute,
+const PedidosVendaRoute = PedidosVendaRouteImport.update({
+  id: '/pedidos-venda',
+  path: '/pedidos-venda',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardsComercialRoute = DashboardsComercialRouteImport.update({
-  id: '/comercial',
-  path: '/comercial',
-  getParentRoute: () => DashboardsRoute,
+const PaineisRoute = PaineisRouteImport.update({
+  id: '/paineis',
+  path: '/paineis',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardsEngenhariaRoute = DashboardsEngenhariaRouteImport.update({
-  id: '/engenharia',
-  path: '/engenharia',
-  getParentRoute: () => DashboardsRoute,
+const OperacoesFinanceirasRoute = OperacoesFinanceirasRouteImport.update({
+  id: '/operacoes-financeiras',
+  path: '/operacoes-financeiras',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardsEstoqueRoute = DashboardsEstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
-  getParentRoute: () => DashboardsRoute,
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardsFinanceiroRoute = DashboardsFinanceiroRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsRoute = LeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FornecedoresRoute = FornecedoresRouteImport.update({
+  id: '/fornecedores',
+  path: '/fornecedores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanciamentosRoute = FinanciamentosRouteImport.update({
+  id: '/financiamentos',
+  path: '/financiamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroTitulosRoute = FinanceiroTitulosRouteImport.update({
+  id: '/financeiro-titulos',
+  path: '/financeiro-titulos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstoqueFundacaoRoute = EstoqueFundacaoRouteImport.update({
+  id: '/estoque-fundacao',
+  path: '/estoque-fundacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstoqueRoute = EstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngenhariaRoute = EngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardsRoute = DashboardsRouteImport.update({
+  id: '/dashboards',
+  path: '/dashboards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComercialRoute = ComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrosRoute = CadastrosRouteImport.update({
+  id: '/cadastros',
+  path: '/cadastros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastrarRoute = CadastrarRouteImport.update({
+  id: '/cadastrar',
+  path: '/cadastrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssinaturasRoute = AssinaturasRouteImport.update({
+  id: '/assinaturas',
+  path: '/assinaturas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AprovacoesRoute = AprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalisesRoute = AnalisesRouteImport.update({
+  id: '/analises',
+  path: '/analises',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaineisSplatRoute = PaineisSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => PaineisRoute,
+} as any)
+const DashboardsPosvendaRoute = DashboardsPosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
   getParentRoute: () => DashboardsRoute,
 } as any)
 const DashboardsFinanciamentosRoute =
@@ -343,65 +252,132 @@ const DashboardsFinanciamentosRoute =
     path: '/financiamentos',
     getParentRoute: () => DashboardsRoute,
   } as any)
-const DashboardsPosvendaRoute = DashboardsPosvendaRouteImport.update({
-  id: '/posvenda',
-  path: '/posvenda',
+const DashboardsFinanceiroRoute = DashboardsFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => DashboardsRoute,
 } as any)
-const PaineisSplatRoute = PaineisSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => PaineisRoute,
+const DashboardsEstoqueRoute = DashboardsEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => DashboardsRoute,
 } as any)
-const ComercialClientesIndexRoute = ComercialClientesIndexRouteImport.update({
-  id: '/clientes/',
-  path: '/clientes/',
+const DashboardsEngenhariaRoute = DashboardsEngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsComercialRoute = DashboardsComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const DashboardsAprovacoesRoute = DashboardsAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => DashboardsRoute,
+} as any)
+const ConfiguracoesTestesCargaRoute =
+  ConfiguracoesTestesCargaRouteImport.update({
+    id: '/testes-carga',
+    path: '/testes-carga',
+    getParentRoute: () => ConfiguracoesRoute,
+  } as any)
+const ConfiguracoesContabilRoute = ConfiguracoesContabilRouteImport.update({
+  id: '/contabil',
+  path: '/contabil',
+  getParentRoute: () => ConfiguracoesRoute,
+} as any)
+const ComercialPropostasRoute = ComercialPropostasRouteImport.update({
+  id: '/propostas',
+  path: '/propostas',
   getParentRoute: () => ComercialRoute,
 } as any)
-const ComercialClientesClienteIdRoute =
-  ComercialClientesClienteIdRouteImport.update({
-    id: '/clientes/$clienteId',
-    path: '/clientes/$clienteId',
-    getParentRoute: () => ComercialRoute,
-  } as any)
-const ComercialClientesBackfillRoute =
-  ComercialClientesBackfillRouteImport.update({
-    id: '/clientes/backfill',
-    path: '/clientes/backfill',
-    getParentRoute: () => ComercialRoute,
-  } as any)
-const ComercialComissoesIndexRoute = ComercialComissoesIndexRouteImport.update({
-  id: '/comissoes/',
-  path: '/comissoes/',
-  getParentRoute: () => ComercialRoute,
+const AnalyticsSaudeSistemaRoute = AnalyticsSaudeSistemaRouteImport.update({
+  id: '/saude-sistema',
+  path: '/saude-sistema',
+  getParentRoute: () => AnalyticsRoute,
 } as any)
-const ComercialComissoesComissaoIdRoute =
-  ComercialComissoesComissaoIdRouteImport.update({
-    id: '/comissoes/$comissaoId',
-    path: '/comissoes/$comissaoId',
-    getParentRoute: () => ComercialRoute,
+const AnalyticsSaudeDadosRoute = AnalyticsSaudeDadosRouteImport.update({
+  id: '/saude-dados',
+  path: '/saude-dados',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsPosvendaRoute = AnalyticsPosvendaRouteImport.update({
+  id: '/posvenda',
+  path: '/posvenda',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsPerformanceRoute = AnalyticsPerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsGovernancaRoute = AnalyticsGovernancaRouteImport.update({
+  id: '/governanca',
+  path: '/governanca',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsFinanciamentosRoute = AnalyticsFinanciamentosRouteImport.update({
+  id: '/financiamentos',
+  path: '/financiamentos',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsFinanceiroRoute = AnalyticsFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsEstoqueRoute = AnalyticsEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsErrosRoute = AnalyticsErrosRouteImport.update({
+  id: '/erros',
+  path: '/erros',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsEngenhariaRoute = AnalyticsEngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsComercialRoute = AnalyticsComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const AnalyticsAprovacoesRoute = AnalyticsAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AnalyticsRoute,
+} as any)
+const EngenhariaGestaoServicosIndexRoute =
+  EngenhariaGestaoServicosIndexRouteImport.update({
+    id: '/gestao-servicos/',
+    path: '/gestao-servicos/',
+    getParentRoute: () => EngenhariaRoute,
   } as any)
 const ComercialContratosIndexRoute = ComercialContratosIndexRouteImport.update({
   id: '/contratos/',
   path: '/contratos/',
   getParentRoute: () => ComercialRoute,
 } as any)
-const ComercialContratosContratoIdRoute =
-  ComercialContratosContratoIdRouteImport.update({
-    id: '/contratos/$contratoId',
-    path: '/contratos/$contratoId',
-    getParentRoute: () => ComercialRoute,
-  } as any)
-const ComercialProjetosProjetoIdRoute =
-  ComercialProjetosProjetoIdRouteImport.update({
-    id: '/projetos/$projetoId',
-    path: '/projetos/$projetoId',
-    getParentRoute: () => ComercialRoute,
-  } as any)
-const EngenhariaGestaoServicosIndexRoute =
-  EngenhariaGestaoServicosIndexRouteImport.update({
-    id: '/gestao-servicos/',
-    path: '/gestao-servicos/',
+const ComercialComissoesIndexRoute = ComercialComissoesIndexRouteImport.update({
+  id: '/comissoes/',
+  path: '/comissoes/',
+  getParentRoute: () => ComercialRoute,
+} as any)
+const ComercialClientesIndexRoute = ComercialClientesIndexRouteImport.update({
+  id: '/clientes/',
+  path: '/clientes/',
+  getParentRoute: () => ComercialRoute,
+} as any)
+const EngenhariaGestaoServicosModelosRoute =
+  EngenhariaGestaoServicosModelosRouteImport.update({
+    id: '/gestao-servicos/modelos',
+    path: '/gestao-servicos/modelos',
     getParentRoute: () => EngenhariaRoute,
   } as any)
 const EngenhariaGestaoServicosOsIdRoute =
@@ -410,11 +386,35 @@ const EngenhariaGestaoServicosOsIdRoute =
     path: '/gestao-servicos/$osId',
     getParentRoute: () => EngenhariaRoute,
   } as any)
-const EngenhariaGestaoServicosModelosRoute =
-  EngenhariaGestaoServicosModelosRouteImport.update({
-    id: '/gestao-servicos/modelos',
-    path: '/gestao-servicos/modelos',
-    getParentRoute: () => EngenhariaRoute,
+const ComercialProjetosProjetoIdRoute =
+  ComercialProjetosProjetoIdRouteImport.update({
+    id: '/projetos/$projetoId',
+    path: '/projetos/$projetoId',
+    getParentRoute: () => ComercialRoute,
+  } as any)
+const ComercialContratosContratoIdRoute =
+  ComercialContratosContratoIdRouteImport.update({
+    id: '/contratos/$contratoId',
+    path: '/contratos/$contratoId',
+    getParentRoute: () => ComercialRoute,
+  } as any)
+const ComercialComissoesComissaoIdRoute =
+  ComercialComissoesComissaoIdRouteImport.update({
+    id: '/comissoes/$comissaoId',
+    path: '/comissoes/$comissaoId',
+    getParentRoute: () => ComercialRoute,
+  } as any)
+const ComercialClientesBackfillRoute =
+  ComercialClientesBackfillRouteImport.update({
+    id: '/clientes/backfill',
+    path: '/clientes/backfill',
+    getParentRoute: () => ComercialRoute,
+  } as any)
+const ComercialClientesClienteIdRoute =
+  ComercialClientesClienteIdRouteImport.update({
+    id: '/clientes/$clienteId',
+    path: '/clientes/$clienteId',
+    getParentRoute: () => ComercialRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -866,214 +866,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/analises': {
-      id: '/analises'
-      path: '/analises'
-      fullPath: '/analises'
-      preLoaderRoute: typeof AnalisesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aprovacoes': {
-      id: '/aprovacoes'
-      path: '/aprovacoes'
-      fullPath: '/aprovacoes'
-      preLoaderRoute: typeof AprovacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assinaturas': {
-      id: '/assinaturas'
-      path: '/assinaturas'
-      fullPath: '/assinaturas'
-      preLoaderRoute: typeof AssinaturasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auditoria': {
-      id: '/auditoria'
-      path: '/auditoria'
-      fullPath: '/auditoria'
-      preLoaderRoute: typeof AuditoriaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastrar': {
-      id: '/cadastrar'
-      path: '/cadastrar'
-      fullPath: '/cadastrar'
-      preLoaderRoute: typeof CadastrarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastros': {
-      id: '/cadastros'
-      path: '/cadastros'
-      fullPath: '/cadastros'
-      preLoaderRoute: typeof CadastrosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comercial': {
-      id: '/comercial'
-      path: '/comercial'
-      fullPath: '/comercial'
-      preLoaderRoute: typeof ComercialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/configuracoes': {
-      id: '/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/configuracoes'
-      preLoaderRoute: typeof ConfiguracoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboards': {
-      id: '/dashboards'
-      path: '/dashboards'
-      fullPath: '/dashboards'
-      preLoaderRoute: typeof DashboardsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/engenharia': {
-      id: '/engenharia'
-      path: '/engenharia'
-      fullPath: '/engenharia'
-      preLoaderRoute: typeof EngenhariaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/estoque': {
-      id: '/estoque'
-      path: '/estoque'
-      fullPath: '/estoque'
-      preLoaderRoute: typeof EstoqueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/estoque-fundacao': {
-      id: '/estoque-fundacao'
-      path: '/estoque-fundacao'
-      fullPath: '/estoque-fundacao'
-      preLoaderRoute: typeof EstoqueFundacaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/financeiro': {
-      id: '/financeiro'
-      path: '/financeiro'
-      fullPath: '/financeiro'
-      preLoaderRoute: typeof FinanceiroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/financeiro-titulos': {
-      id: '/financeiro-titulos'
-      path: '/financeiro-titulos'
-      fullPath: '/financeiro-titulos'
-      preLoaderRoute: typeof FinanceiroTitulosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/financiamentos': {
-      id: '/financiamentos'
-      path: '/financiamentos'
-      fullPath: '/financiamentos'
-      preLoaderRoute: typeof FinanciamentosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fornecedores': {
-      id: '/fornecedores'
-      path: '/fornecedores'
-      fullPath: '/fornecedores'
-      preLoaderRoute: typeof FornecedoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/leads': {
-      id: '/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof LeadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notificacoes': {
-      id: '/notificacoes'
-      path: '/notificacoes'
-      fullPath: '/notificacoes'
-      preLoaderRoute: typeof NotificacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operacoes-financeiras': {
-      id: '/operacoes-financeiras'
-      path: '/operacoes-financeiras'
-      fullPath: '/operacoes-financeiras'
-      preLoaderRoute: typeof OperacoesFinanceirasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paineis': {
-      id: '/paineis'
-      path: '/paineis'
-      fullPath: '/paineis'
-      preLoaderRoute: typeof PaineisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pedidos-venda': {
-      id: '/pedidos-venda'
-      path: '/pedidos-venda'
-      fullPath: '/pedidos-venda'
-      preLoaderRoute: typeof PedidosVendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/posvenda': {
-      id: '/posvenda'
-      path: '/posvenda'
-      fullPath: '/posvenda'
-      preLoaderRoute: typeof PosvendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/propostas': {
-      id: '/propostas'
-      path: '/propostas'
-      fullPath: '/propostas'
-      preLoaderRoute: typeof PropostasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/relatorios': {
-      id: '/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof RelatoriosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/solicitacoes-material': {
-      id: '/solicitacoes-material'
-      path: '/solicitacoes-material'
-      fullPath: '/solicitacoes-material'
-      preLoaderRoute: typeof SolicitacoesMaterialRouteImport
+    '/tarefas': {
+      id: '/tarefas'
+      path: '/tarefas'
+      fullPath: '/tarefas'
+      preLoaderRoute: typeof TarefasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suprimentos': {
@@ -1083,151 +880,228 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuprimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tarefas': {
-      id: '/tarefas'
-      path: '/tarefas'
-      fullPath: '/tarefas'
-      preLoaderRoute: typeof TarefasRouteImport
+    '/solicitacoes-material': {
+      id: '/solicitacoes-material'
+      path: '/solicitacoes-material'
+      fullPath: '/solicitacoes-material'
+      preLoaderRoute: typeof SolicitacoesMaterialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analytics/aprovacoes': {
-      id: '/analytics/aprovacoes'
-      path: '/aprovacoes'
-      fullPath: '/analytics/aprovacoes'
-      preLoaderRoute: typeof AnalyticsAprovacoesRouteImport
-      parentRoute: typeof AnalyticsRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/analytics/comercial': {
-      id: '/analytics/comercial'
-      path: '/comercial'
-      fullPath: '/analytics/comercial'
-      preLoaderRoute: typeof AnalyticsComercialRouteImport
-      parentRoute: typeof AnalyticsRoute
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/analytics/engenharia': {
-      id: '/analytics/engenharia'
-      path: '/engenharia'
-      fullPath: '/analytics/engenharia'
-      preLoaderRoute: typeof AnalyticsEngenhariaRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/erros': {
-      id: '/analytics/erros'
-      path: '/erros'
-      fullPath: '/analytics/erros'
-      preLoaderRoute: typeof AnalyticsErrosRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/estoque': {
-      id: '/analytics/estoque'
-      path: '/estoque'
-      fullPath: '/analytics/estoque'
-      preLoaderRoute: typeof AnalyticsEstoqueRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/financeiro': {
-      id: '/analytics/financeiro'
-      path: '/financeiro'
-      fullPath: '/analytics/financeiro'
-      preLoaderRoute: typeof AnalyticsFinanceiroRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/financiamentos': {
-      id: '/analytics/financiamentos'
-      path: '/financiamentos'
-      fullPath: '/analytics/financiamentos'
-      preLoaderRoute: typeof AnalyticsFinanciamentosRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/governanca': {
-      id: '/analytics/governanca'
-      path: '/governanca'
-      fullPath: '/analytics/governanca'
-      preLoaderRoute: typeof AnalyticsGovernancaRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/performance': {
-      id: '/analytics/performance'
-      path: '/performance'
-      fullPath: '/analytics/performance'
-      preLoaderRoute: typeof AnalyticsPerformanceRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/posvenda': {
-      id: '/analytics/posvenda'
-      path: '/posvenda'
-      fullPath: '/analytics/posvenda'
-      preLoaderRoute: typeof AnalyticsPosvendaRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/saude-dados': {
-      id: '/analytics/saude-dados'
-      path: '/saude-dados'
-      fullPath: '/analytics/saude-dados'
-      preLoaderRoute: typeof AnalyticsSaudeDadosRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/analytics/saude-sistema': {
-      id: '/analytics/saude-sistema'
-      path: '/saude-sistema'
-      fullPath: '/analytics/saude-sistema'
-      preLoaderRoute: typeof AnalyticsSaudeSistemaRouteImport
-      parentRoute: typeof AnalyticsRoute
-    }
-    '/comercial/propostas': {
-      id: '/comercial/propostas'
+    '/propostas': {
+      id: '/propostas'
       path: '/propostas'
-      fullPath: '/comercial/propostas'
-      preLoaderRoute: typeof ComercialPropostasRouteImport
-      parentRoute: typeof ComercialRoute
+      fullPath: '/propostas'
+      preLoaderRoute: typeof PropostasRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/configuracoes/contabil': {
-      id: '/configuracoes/contabil'
-      path: '/contabil'
-      fullPath: '/configuracoes/contabil'
-      preLoaderRoute: typeof ConfiguracoesContabilRouteImport
-      parentRoute: typeof ConfiguracoesRoute
+    '/posvenda': {
+      id: '/posvenda'
+      path: '/posvenda'
+      fullPath: '/posvenda'
+      preLoaderRoute: typeof PosvendaRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/configuracoes/testes-carga': {
-      id: '/configuracoes/testes-carga'
-      path: '/testes-carga'
-      fullPath: '/configuracoes/testes-carga'
-      preLoaderRoute: typeof ConfiguracoesTestesCargaRouteImport
-      parentRoute: typeof ConfiguracoesRoute
+    '/pedidos-venda': {
+      id: '/pedidos-venda'
+      path: '/pedidos-venda'
+      fullPath: '/pedidos-venda'
+      preLoaderRoute: typeof PedidosVendaRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboards/aprovacoes': {
-      id: '/dashboards/aprovacoes'
-      path: '/aprovacoes'
-      fullPath: '/dashboards/aprovacoes'
-      preLoaderRoute: typeof DashboardsAprovacoesRouteImport
-      parentRoute: typeof DashboardsRoute
+    '/paineis': {
+      id: '/paineis'
+      path: '/paineis'
+      fullPath: '/paineis'
+      preLoaderRoute: typeof PaineisRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboards/comercial': {
-      id: '/dashboards/comercial'
-      path: '/comercial'
-      fullPath: '/dashboards/comercial'
-      preLoaderRoute: typeof DashboardsComercialRouteImport
-      parentRoute: typeof DashboardsRoute
+    '/operacoes-financeiras': {
+      id: '/operacoes-financeiras'
+      path: '/operacoes-financeiras'
+      fullPath: '/operacoes-financeiras'
+      preLoaderRoute: typeof OperacoesFinanceirasRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboards/engenharia': {
-      id: '/dashboards/engenharia'
-      path: '/engenharia'
-      fullPath: '/dashboards/engenharia'
-      preLoaderRoute: typeof DashboardsEngenhariaRouteImport
-      parentRoute: typeof DashboardsRoute
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboards/estoque': {
-      id: '/dashboards/estoque'
-      path: '/estoque'
-      fullPath: '/dashboards/estoque'
-      preLoaderRoute: typeof DashboardsEstoqueRouteImport
-      parentRoute: typeof DashboardsRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboards/financeiro': {
-      id: '/dashboards/financeiro'
+    '/leads': {
+      id: '/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fornecedores': {
+      id: '/fornecedores'
+      path: '/fornecedores'
+      fullPath: '/fornecedores'
+      preLoaderRoute: typeof FornecedoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financiamentos': {
+      id: '/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/financiamentos'
+      preLoaderRoute: typeof FinanciamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro-titulos': {
+      id: '/financeiro-titulos'
+      path: '/financeiro-titulos'
+      fullPath: '/financeiro-titulos'
+      preLoaderRoute: typeof FinanceiroTitulosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
       path: '/financeiro'
-      fullPath: '/dashboards/financeiro'
-      preLoaderRoute: typeof DashboardsFinanceiroRouteImport
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estoque-fundacao': {
+      id: '/estoque-fundacao'
+      path: '/estoque-fundacao'
+      fullPath: '/estoque-fundacao'
+      preLoaderRoute: typeof EstoqueFundacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estoque': {
+      id: '/estoque'
+      path: '/estoque'
+      fullPath: '/estoque'
+      preLoaderRoute: typeof EstoqueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engenharia': {
+      id: '/engenharia'
+      path: '/engenharia'
+      fullPath: '/engenharia'
+      preLoaderRoute: typeof EngenhariaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboards': {
+      id: '/dashboards'
+      path: '/dashboards'
+      fullPath: '/dashboards'
+      preLoaderRoute: typeof DashboardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comercial': {
+      id: '/comercial'
+      path: '/comercial'
+      fullPath: '/comercial'
+      preLoaderRoute: typeof ComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastros': {
+      id: '/cadastros'
+      path: '/cadastros'
+      fullPath: '/cadastros'
+      preLoaderRoute: typeof CadastrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastrar': {
+      id: '/cadastrar'
+      path: '/cadastrar'
+      fullPath: '/cadastrar'
+      preLoaderRoute: typeof CadastrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assinaturas': {
+      id: '/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/assinaturas'
+      preLoaderRoute: typeof AssinaturasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aprovacoes': {
+      id: '/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/aprovacoes'
+      preLoaderRoute: typeof AprovacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analises': {
+      id: '/analises'
+      path: '/analises'
+      fullPath: '/analises'
+      preLoaderRoute: typeof AnalisesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paineis/$': {
+      id: '/paineis/$'
+      path: '/$'
+      fullPath: '/paineis/$'
+      preLoaderRoute: typeof PaineisSplatRouteImport
+      parentRoute: typeof PaineisRoute
+    }
+    '/dashboards/posvenda': {
+      id: '/dashboards/posvenda'
+      path: '/posvenda'
+      fullPath: '/dashboards/posvenda'
+      preLoaderRoute: typeof DashboardsPosvendaRouteImport
       parentRoute: typeof DashboardsRoute
     }
     '/dashboards/financiamentos': {
@@ -1237,39 +1111,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsFinanciamentosRouteImport
       parentRoute: typeof DashboardsRoute
     }
-    '/dashboards/posvenda': {
-      id: '/dashboards/posvenda'
-      path: '/posvenda'
-      fullPath: '/dashboards/posvenda'
-      preLoaderRoute: typeof DashboardsPosvendaRouteImport
+    '/dashboards/financeiro': {
+      id: '/dashboards/financeiro'
+      path: '/financeiro'
+      fullPath: '/dashboards/financeiro'
+      preLoaderRoute: typeof DashboardsFinanceiroRouteImport
       parentRoute: typeof DashboardsRoute
     }
-    '/paineis/$': {
-      id: '/paineis/$'
-      path: '/$'
-      fullPath: '/paineis/$'
-      preLoaderRoute: typeof PaineisSplatRouteImport
-      parentRoute: typeof PaineisRoute
+    '/dashboards/estoque': {
+      id: '/dashboards/estoque'
+      path: '/estoque'
+      fullPath: '/dashboards/estoque'
+      preLoaderRoute: typeof DashboardsEstoqueRouteImport
+      parentRoute: typeof DashboardsRoute
     }
-    '/comercial/clientes/': {
-      id: '/comercial/clientes/'
-      path: '/clientes'
-      fullPath: '/comercial/clientes/'
-      preLoaderRoute: typeof ComercialClientesIndexRouteImport
+    '/dashboards/engenharia': {
+      id: '/dashboards/engenharia'
+      path: '/engenharia'
+      fullPath: '/dashboards/engenharia'
+      preLoaderRoute: typeof DashboardsEngenhariaRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/comercial': {
+      id: '/dashboards/comercial'
+      path: '/comercial'
+      fullPath: '/dashboards/comercial'
+      preLoaderRoute: typeof DashboardsComercialRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/dashboards/aprovacoes': {
+      id: '/dashboards/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/dashboards/aprovacoes'
+      preLoaderRoute: typeof DashboardsAprovacoesRouteImport
+      parentRoute: typeof DashboardsRoute
+    }
+    '/configuracoes/testes-carga': {
+      id: '/configuracoes/testes-carga'
+      path: '/testes-carga'
+      fullPath: '/configuracoes/testes-carga'
+      preLoaderRoute: typeof ConfiguracoesTestesCargaRouteImport
+      parentRoute: typeof ConfiguracoesRoute
+    }
+    '/configuracoes/contabil': {
+      id: '/configuracoes/contabil'
+      path: '/contabil'
+      fullPath: '/configuracoes/contabil'
+      preLoaderRoute: typeof ConfiguracoesContabilRouteImport
+      parentRoute: typeof ConfiguracoesRoute
+    }
+    '/comercial/propostas': {
+      id: '/comercial/propostas'
+      path: '/propostas'
+      fullPath: '/comercial/propostas'
+      preLoaderRoute: typeof ComercialPropostasRouteImport
       parentRoute: typeof ComercialRoute
     }
-    '/comercial/clientes/$clienteId': {
-      id: '/comercial/clientes/$clienteId'
-      path: '/clientes/$clienteId'
-      fullPath: '/comercial/clientes/$clienteId'
-      preLoaderRoute: typeof ComercialClientesClienteIdRouteImport
-      parentRoute: typeof ComercialRoute
+    '/analytics/saude-sistema': {
+      id: '/analytics/saude-sistema'
+      path: '/saude-sistema'
+      fullPath: '/analytics/saude-sistema'
+      preLoaderRoute: typeof AnalyticsSaudeSistemaRouteImport
+      parentRoute: typeof AnalyticsRoute
     }
-    '/comercial/clientes/backfill': {
-      id: '/comercial/clientes/backfill'
-      path: '/clientes/backfill'
-      fullPath: '/comercial/clientes/backfill'
-      preLoaderRoute: typeof ComercialClientesBackfillRouteImport
+    '/analytics/saude-dados': {
+      id: '/analytics/saude-dados'
+      path: '/saude-dados'
+      fullPath: '/analytics/saude-dados'
+      preLoaderRoute: typeof AnalyticsSaudeDadosRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/posvenda': {
+      id: '/analytics/posvenda'
+      path: '/posvenda'
+      fullPath: '/analytics/posvenda'
+      preLoaderRoute: typeof AnalyticsPosvendaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/performance': {
+      id: '/analytics/performance'
+      path: '/performance'
+      fullPath: '/analytics/performance'
+      preLoaderRoute: typeof AnalyticsPerformanceRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/governanca': {
+      id: '/analytics/governanca'
+      path: '/governanca'
+      fullPath: '/analytics/governanca'
+      preLoaderRoute: typeof AnalyticsGovernancaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/financiamentos': {
+      id: '/analytics/financiamentos'
+      path: '/financiamentos'
+      fullPath: '/analytics/financiamentos'
+      preLoaderRoute: typeof AnalyticsFinanciamentosRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/financeiro': {
+      id: '/analytics/financeiro'
+      path: '/financeiro'
+      fullPath: '/analytics/financeiro'
+      preLoaderRoute: typeof AnalyticsFinanceiroRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/estoque': {
+      id: '/analytics/estoque'
+      path: '/estoque'
+      fullPath: '/analytics/estoque'
+      preLoaderRoute: typeof AnalyticsEstoqueRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/erros': {
+      id: '/analytics/erros'
+      path: '/erros'
+      fullPath: '/analytics/erros'
+      preLoaderRoute: typeof AnalyticsErrosRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/engenharia': {
+      id: '/analytics/engenharia'
+      path: '/engenharia'
+      fullPath: '/analytics/engenharia'
+      preLoaderRoute: typeof AnalyticsEngenhariaRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/comercial': {
+      id: '/analytics/comercial'
+      path: '/comercial'
+      fullPath: '/analytics/comercial'
+      preLoaderRoute: typeof AnalyticsComercialRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/analytics/aprovacoes': {
+      id: '/analytics/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/analytics/aprovacoes'
+      preLoaderRoute: typeof AnalyticsAprovacoesRouteImport
+      parentRoute: typeof AnalyticsRoute
+    }
+    '/engenharia/gestao-servicos/': {
+      id: '/engenharia/gestao-servicos/'
+      path: '/gestao-servicos'
+      fullPath: '/engenharia/gestao-servicos/'
+      preLoaderRoute: typeof EngenhariaGestaoServicosIndexRouteImport
+      parentRoute: typeof EngenhariaRoute
+    }
+    '/comercial/contratos/': {
+      id: '/comercial/contratos/'
+      path: '/contratos'
+      fullPath: '/comercial/contratos/'
+      preLoaderRoute: typeof ComercialContratosIndexRouteImport
       parentRoute: typeof ComercialRoute
     }
     '/comercial/comissoes/': {
@@ -1279,39 +1272,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComercialComissoesIndexRouteImport
       parentRoute: typeof ComercialRoute
     }
-    '/comercial/comissoes/$comissaoId': {
-      id: '/comercial/comissoes/$comissaoId'
-      path: '/comissoes/$comissaoId'
-      fullPath: '/comercial/comissoes/$comissaoId'
-      preLoaderRoute: typeof ComercialComissoesComissaoIdRouteImport
+    '/comercial/clientes/': {
+      id: '/comercial/clientes/'
+      path: '/clientes'
+      fullPath: '/comercial/clientes/'
+      preLoaderRoute: typeof ComercialClientesIndexRouteImport
       parentRoute: typeof ComercialRoute
     }
-    '/comercial/contratos/': {
-      id: '/comercial/contratos/'
-      path: '/contratos'
-      fullPath: '/comercial/contratos/'
-      preLoaderRoute: typeof ComercialContratosIndexRouteImport
-      parentRoute: typeof ComercialRoute
-    }
-    '/comercial/contratos/$contratoId': {
-      id: '/comercial/contratos/$contratoId'
-      path: '/contratos/$contratoId'
-      fullPath: '/comercial/contratos/$contratoId'
-      preLoaderRoute: typeof ComercialContratosContratoIdRouteImport
-      parentRoute: typeof ComercialRoute
-    }
-    '/comercial/projetos/$projetoId': {
-      id: '/comercial/projetos/$projetoId'
-      path: '/projetos/$projetoId'
-      fullPath: '/comercial/projetos/$projetoId'
-      preLoaderRoute: typeof ComercialProjetosProjetoIdRouteImport
-      parentRoute: typeof ComercialRoute
-    }
-    '/engenharia/gestao-servicos/': {
-      id: '/engenharia/gestao-servicos/'
-      path: '/gestao-servicos'
-      fullPath: '/engenharia/gestao-servicos/'
-      preLoaderRoute: typeof EngenhariaGestaoServicosIndexRouteImport
+    '/engenharia/gestao-servicos/modelos': {
+      id: '/engenharia/gestao-servicos/modelos'
+      path: '/gestao-servicos/modelos'
+      fullPath: '/engenharia/gestao-servicos/modelos'
+      preLoaderRoute: typeof EngenhariaGestaoServicosModelosRouteImport
       parentRoute: typeof EngenhariaRoute
     }
     '/engenharia/gestao-servicos/$osId': {
@@ -1321,12 +1293,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngenhariaGestaoServicosOsIdRouteImport
       parentRoute: typeof EngenhariaRoute
     }
-    '/engenharia/gestao-servicos/modelos': {
-      id: '/engenharia/gestao-servicos/modelos'
-      path: '/gestao-servicos/modelos'
-      fullPath: '/engenharia/gestao-servicos/modelos'
-      preLoaderRoute: typeof EngenhariaGestaoServicosModelosRouteImport
-      parentRoute: typeof EngenhariaRoute
+    '/comercial/projetos/$projetoId': {
+      id: '/comercial/projetos/$projetoId'
+      path: '/projetos/$projetoId'
+      fullPath: '/comercial/projetos/$projetoId'
+      preLoaderRoute: typeof ComercialProjetosProjetoIdRouteImport
+      parentRoute: typeof ComercialRoute
+    }
+    '/comercial/contratos/$contratoId': {
+      id: '/comercial/contratos/$contratoId'
+      path: '/contratos/$contratoId'
+      fullPath: '/comercial/contratos/$contratoId'
+      preLoaderRoute: typeof ComercialContratosContratoIdRouteImport
+      parentRoute: typeof ComercialRoute
+    }
+    '/comercial/comissoes/$comissaoId': {
+      id: '/comercial/comissoes/$comissaoId'
+      path: '/comissoes/$comissaoId'
+      fullPath: '/comercial/comissoes/$comissaoId'
+      preLoaderRoute: typeof ComercialComissoesComissaoIdRouteImport
+      parentRoute: typeof ComercialRoute
+    }
+    '/comercial/clientes/backfill': {
+      id: '/comercial/clientes/backfill'
+      path: '/clientes/backfill'
+      fullPath: '/comercial/clientes/backfill'
+      preLoaderRoute: typeof ComercialClientesBackfillRouteImport
+      parentRoute: typeof ComercialRoute
+    }
+    '/comercial/clientes/$clienteId': {
+      id: '/comercial/clientes/$clienteId'
+      path: '/clientes/$clienteId'
+      fullPath: '/comercial/clientes/$clienteId'
+      preLoaderRoute: typeof ComercialClientesClienteIdRouteImport
+      parentRoute: typeof ComercialRoute
     }
   }
 }
